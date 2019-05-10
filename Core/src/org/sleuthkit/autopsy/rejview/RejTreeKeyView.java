@@ -39,7 +39,7 @@ import org.openide.util.NbBundle.Messages;
 public final class RejTreeKeyView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
-    private final RejTreeKeyNode _node;
+    private final RejTreeKeyNode node;
 
     @Messages({"RejTreeKeyView.failedToParse.keyName=FAILED TO PARSE KEY NAME",
         "RejTreeKeyView.columns.name=Name",
@@ -52,7 +52,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         "RejTreeKeyView.template.numberOfValues=Number of values:"})
     public RejTreeKeyView(RejTreeKeyNode node) {
         super(new BorderLayout());
-        this._node = node;
+        this.node = node;
 
         /**
          * @param 1 Name
@@ -71,19 +71,19 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         int numValues;
 
         try {
-            keyName = this._node.getKey().getName();
+            keyName = this.node.getKey().getName();
         } catch (UnsupportedEncodingException ex) {
             keyName = Bundle.RejTreeKeyView_failedToParse_keyName();
         }
 
         try {
-            numSubkeys = this._node.getKey().getSubkeyList().size();
+            numSubkeys = this.node.getKey().getSubkeyList().size();
         } catch (RegistryParseException ex) {
             numSubkeys = -1;
         }
 
         try {
-            numValues = this._node.getKey().getValueList().size();
+            numValues = this.node.getKey().getValueList().size();
         } catch (RegistryParseException ex) {
             numValues = -1;
         }
@@ -96,7 +96,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         Object[][] data = new Object[numValues][3];
 
         try {
-            Iterator<RegistryValue> valit = this._node.getKey().getValueList().iterator();
+            Iterator<RegistryValue> valit = this.node.getKey().getValueList().iterator();
             int i = 0;
             while (valit.hasNext()) {
                 RegistryValue val = valit.next();
@@ -119,7 +119,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         table.setAutoCreateRowSorter(true);
         table.setCellSelectionEnabled(false);
         table.setRowSelectionAllowed(true);
-        table.setIntercellSpacing(new Dimension(10, 1));
+        table.setIntercellSpacing(new Dimension(0, 0));
 
         // inspiration for packing the columns from:
         //   http://jroller.com/santhosh/entry/packing_jtable_columns

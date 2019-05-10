@@ -35,17 +35,17 @@ public final class RejTreeValueNode implements RejTreeNode {
 
     private static final Logger logger = Logger.getLogger(RejTreeValueNode.class.getName());
     static final String DEFAULT_VALUE_NAME = Bundle.RejTreeValueNode_defaultValueName_text();
-    private final RegistryValue _value;
+    private final RegistryValue value;
 
     public RejTreeValueNode(RegistryValue value) {
-        this._value = value;
+        this.value = value;
     }
 
     @Messages({"RejTreeValueNode.failureValueName.text=PARSE FAILED"})
     @Override
     public String toString() {
         try {
-            String valueName = this._value.getName();
+            String valueName = this.value.getName();
             if (valueName.isEmpty()) {
                 return DEFAULT_VALUE_NAME;
             }
@@ -70,7 +70,7 @@ public final class RejTreeValueNode implements RejTreeNode {
      * @scope: package-protected
      */
     RegistryValue getValue() {
-        return this._value;
+        return this.value;
     }
 
     /**

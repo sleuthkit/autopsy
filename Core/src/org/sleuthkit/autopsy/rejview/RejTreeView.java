@@ -23,7 +23,6 @@ package org.sleuthkit.autopsy.rejview;
 
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryParseException;
-import java.awt.Dimension;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -42,35 +41,34 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
 
     private static final Logger logger = Logger.getLogger(HexView.class.getName());
     private static final long serialVersionUID = 1L;
-    private final DefaultTreeModel _tree_model;
-    private final RegistryHive _hive;
-    private final CopyOnWriteArrayList<RejTreeNodeSelectionListener> _nodeSelectionListeners;
-    private final JTree _tree;
+    private final DefaultTreeModel treeModel;
+    private final RegistryHive hive;
+    private final CopyOnWriteArrayList<RejTreeNodeSelectionListener> nodeSelectionListeners;
+    private final JTree tree;
     @NbBundle.Messages({"RejTreeView.failureValueName.text=PARSE FAILED"})
     RejTreeView(RegistryHive hive) {
-        this._hive = hive;
+        this.hive = hive;
         DefaultMutableTreeNode rootNode;
-        this._nodeSelectionListeners = new CopyOnWriteArrayList<>();
+        this.nodeSelectionListeners = new CopyOnWriteArrayList<>();
 
         try {
-            rootNode = getTreeNode(new RejTreeKeyNode(this._hive.getRoot()));
+            rootNode = getTreeNode(new RejTreeKeyNode(this.hive.getRoot()));
         } catch (RegistryParseException ex) {
             logger.log(Level.WARNING, "Failed to parse root key", ex);
             rootNode = new DefaultMutableTreeNode(Bundle.RejTreeView_failureValueName_text());
         }
 
-        this._tree_model = new DefaultTreeModel(rootNode);
-        this._tree_model.setAsksAllowsChildren(true);
+        this.treeModel = new DefaultTreeModel(rootNode);
+        this.treeModel.setAsksAllowsChildren(true);
 
-        this._tree = new JTree(this._tree_model);
-        this._tree.addTreeExpansionListener(this);
-        this._tree.addTreeSelectionListener(this);
+        this.tree = new JTree(this.treeModel);
+        this.tree.addTreeExpansionListener(this);
+        this.tree.addTreeSelectionListener(this);
         // here's a bit of a hack to force the children to be loaded and shown
-        this._tree.collapsePath(new TreePath(rootNode.getPath()));
-        this._tree.expandPath(new TreePath(rootNode.getPath()));
+        this.tree.collapsePath(new TreePath(rootNode.getPath()));
+        this.tree.expandPath(new TreePath(rootNode.getPath()));
 
-        setViewportView(this._tree);
-        setPreferredSize(new Dimension(250, 400));
+        setViewportView(this.tree);
     }
 
     /**
@@ -89,12 +87,12 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         TreePath path = event.getPath();
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
 
-        if (node instanceof RejTreeNode && node.getChildCount() == 0) {
+        if (node.getChildCount() == 0 && node.getUserObject() instanceof RejTreeNode) {
             RejTreeNode n = (RejTreeNode) node.getUserObject();
             for (RejTreeNode rejTreeNode : n.getChildren()) {
                 node.add(getTreeNode(rejTreeNode));
             }
-            this._tree_model.nodeStructureChanged(node);
+            this.treeModel.nodeStructureChanged(node);
         }
     }
 
@@ -110,16 +108,16 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
     }
 
     void addRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
-        this._nodeSelectionListeners.add(l);
+        this.nodeSelectionListeners.add(l);
     }
 
     void removeRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
-        this._nodeSelectionListeners.remove(l);
+        this.nodeSelectionListeners.remove(l);
     }
 
     void triggerRejTreeNodeSelection(RejTreeNode n) {
         RejTreeNodeSelectionEvent e = new RejTreeNodeSelectionEvent(n);
-        for (RejTreeNodeSelectionListener listener : this._nodeSelectionListeners) {
+        for (RejTreeNodeSelectionListener listener : this.nodeSelectionListeners) {
             listener.nodeSelected(e);
         }
     }

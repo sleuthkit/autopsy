@@ -23,13 +23,13 @@ package org.sleuthkit.autopsy.rejview;
 
 public final class RejTreeNodeSelectionEvent {
 
-    private final RejTreeNode _node;
+    private final RejTreeNode node;
 
     public RejTreeNodeSelectionEvent(RejTreeNode n) {
-        this._node = n;
+        this.node = n;
     }
 
     public RejTreeNode getNode() {
-        return this._node;
+        return this.node;
     }
 }

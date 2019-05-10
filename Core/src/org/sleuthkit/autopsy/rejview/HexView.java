@@ -57,20 +57,20 @@ final class HexView extends JPanel implements CaretListener {
     private final static char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     private static final Logger logger = Logger.getLogger(HexView.class.getName());
     private static final long serialVersionUID = 1L;
-    private final int _bytesPerLine;
-    private final ByteBuffer _buf;
-    private final JTextComponent _offsetView;
-    private final JTextComponent _hexView;
-    private final JTextComponent _asciiView;
-    private final JLabel _statusLabel;
-    private final Color _highlightColor;
-    private final DefaultHighlighter.DefaultHighlightPainter _highlighterPainter;
+    private final int bytesPerLine;
+    private final ByteBuffer buf;
+    private final JTextComponent offsetView;
+    private final JTextComponent hexView;
+    private final JTextComponent asciiView;
+    private final JLabel statusLabel;
+    private final Color highlightColor;
+    private final DefaultHighlighter.DefaultHighlightPainter highlighterPainter;
     // these flags are used to ensure we don't end up in a circular event loop where
     //   one component fires an event on the other, who volley's it back.
-    private int _hexLastSelectionStart = 0;
-    private int _hexLastSelectionEnd = 0;
-    private int _asciiLastSelectionStart = 0;
-    private int _asciiLastSelectionEnd = 0;
+    private int hexLastSelectionStart = 0;
+    private int hexLastSelectionEnd = 0;
+    private int asciiLastSelectionStart = 0;
+    private int asciiLastSelectionEnd = 0;
 
     /**
      * Uses the default 0x10 bytes per line.
@@ -87,41 +87,40 @@ final class HexView extends JPanel implements CaretListener {
      */
     HexView(ByteBuffer buf, int bytesPerLine) {
         super(new BorderLayout());
-        this._buf = buf;
-        this._bytesPerLine = bytesPerLine;
+        this.buf = buf;
+        this.bytesPerLine = bytesPerLine;
 
         Font font = new Font("Monospaced", Font.PLAIN, 12);  //Non-NLS
 
-        this._offsetView = new JTextArea();
-        this._hexView = new JTextArea();
-        this._asciiView = new JTextArea();
-        JPanel _statusView = new JPanel();
+        this.offsetView = new JTextArea();
+        this.hexView = new JTextArea();
+        this.asciiView = new JTextArea();
+        JPanel statusView = new JPanel();
 
         // status bar
-        _statusView.setBorder(new BevelBorder(BevelBorder.LOWERED));
-        this.add(_statusView, BorderLayout.SOUTH);
-        _statusView.setPreferredSize(new Dimension(this.getWidth(), 18));
-        _statusView.setLayout(new BoxLayout(_statusView, BoxLayout.X_AXIS));
-        this._statusLabel = new JLabel("");
-        this._statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
-        _statusView.add(this._statusLabel);
+        statusView.setBorder(new BevelBorder(BevelBorder.LOWERED));
+        this.add(statusView, BorderLayout.SOUTH);
+        statusView.setLayout(new BoxLayout(statusView, BoxLayout.X_AXIS));
+        this.statusLabel = new JLabel("");
+        this.statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        statusView.add(this.statusLabel);
 
         // right panes are split
-        JSplitPane _splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, this._hexView, this._asciiView);
-        _splitPane.setResizeWeight(0.5);
-        _splitPane.setOneTouchExpandable(true);
-        _splitPane.setContinuousLayout(true);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, this.hexView, this.asciiView);
+        splitPane.setResizeWeight(0.5);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setContinuousLayout(true);
 
         // three panes sitting together
         JPanel panes = new JPanel(new BorderLayout());
-        panes.add(this._offsetView, BorderLayout.WEST);
-        panes.add(_splitPane, BorderLayout.CENTER);
+        panes.add(this.offsetView, BorderLayout.WEST);
+        panes.add(splitPane, BorderLayout.CENTER);
         JScrollPane scroller = new JScrollPane(panes);
         this.add(scroller, BorderLayout.CENTER);
 
-        _offsetView.setFont(font);
-        _hexView.setFont(font);
-        _asciiView.setFont(font);
+        offsetView.setFont(font);
+        hexView.setFont(font);
+        asciiView.setFont(font);
 
         StringBuilder offsetSB = new StringBuilder();
         StringBuilder hexSB = new StringBuilder();
@@ -129,7 +128,7 @@ final class HexView extends JPanel implements CaretListener {
 
         buf.position(0x0);
         for (int i = 0; i < buf.limit(); i++) {
-            if (i % this._bytesPerLine == 0x0) {
+            if (i % this.bytesPerLine == 0x0) {
                 offsetSB.append(String.format("0x%x  \n", i));
             }
 
@@ -146,29 +145,29 @@ final class HexView extends JPanel implements CaretListener {
                 asciiSB.append('.');
             }
 
-            if (i % this._bytesPerLine == this._bytesPerLine - 1) {
+            if (i % this.bytesPerLine == this.bytesPerLine - 1) {
                 hexSB.append("\n");
                 asciiSB.append("\n");
             }
         }
 
-        this._offsetView.setText(offsetSB.toString());
-        this._hexView.setText(hexSB.toString());
-        this._asciiView.setText(asciiSB.toString());
-        this._hexView.addCaretListener(this);
-        this._asciiView.addCaretListener(this);
-        this._asciiView.setSelectedTextColor(this._asciiView.getForeground());
-        this._hexView.setSelectedTextColor(this._asciiView.getForeground());
-        this._highlightColor = this._hexView.getSelectionColor();
-        this._highlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(this._highlightColor);
+        this.offsetView.setText(offsetSB.toString());
+        this.hexView.setText(hexSB.toString());
+        this.asciiView.setText(asciiSB.toString());
+        this.hexView.addCaretListener(this);
+        this.asciiView.addCaretListener(this);
+        this.asciiView.setSelectedTextColor(this.asciiView.getForeground());
+        this.hexView.setSelectedTextColor(this.asciiView.getForeground());
+        this.highlightColor = this.hexView.getSelectionColor();
+        this.highlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(this.highlightColor);
     }
 
     /**
      * clearHighlight removes any colors applied to the text views.
      */
     private void clearHighlight() {
-        this._asciiView.getHighlighter().removeAllHighlights();
-        this._hexView.getHighlighter().removeAllHighlights();
+        this.asciiView.getHighlighter().removeAllHighlights();
+        this.hexView.getHighlighter().removeAllHighlights();
     }
 
     /**
@@ -178,14 +177,14 @@ final class HexView extends JPanel implements CaretListener {
      * @param endByte   The ending byte index of the selection.
      */
     private void setHighlight(int startByte, int endByte) {
-        int startRows = (startByte - (startByte % this._bytesPerLine)) / this._bytesPerLine;
-        int endRows = (endByte - (endByte % this._bytesPerLine)) / this._bytesPerLine;
+        int startRows = (startByte - (startByte % this.bytesPerLine)) / this.bytesPerLine;
+        int endRows = (endByte - (endByte % this.bytesPerLine)) / this.bytesPerLine;
 
         this.clearHighlight();
 
         try {
-            this._asciiView.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, this._highlighterPainter);
-            this._hexView.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, this._highlighterPainter);
+            this.asciiView.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, this.highlighterPainter);
+            this.hexView.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, this.highlighterPainter);
         } catch (BadLocationException ex) {
             logger.log(Level.WARNING, "bad location", ex);
         }
@@ -225,13 +224,13 @@ final class HexView extends JPanel implements CaretListener {
                     String.format("0x%1$x", startByte),
                     String.format("0x%1$x", endByte),
                     String.format("0x%1$x", length));
-            this._statusLabel.setText(text);
+            this.statusLabel.setText(text);
         } else {
             /**
              * @param 1 Start
              */
             String text = Bundle.HexView_statusTemplate_zeroLength(startByte, String.format("0x%1$x", startByte));
-            this._statusLabel.setText(text);
+            this.statusLabel.setText(text);
         }
     }
 
@@ -241,7 +240,7 @@ final class HexView extends JPanel implements CaretListener {
             this.clearHighlight();
         }
 
-        if (e.getSource() == this._asciiView) {
+        if (e.getSource() == this.asciiView) {
             int startByte = e.getMark();
             int endByte = e.getDot();
 
@@ -252,22 +251,22 @@ final class HexView extends JPanel implements CaretListener {
             }
 
             // the number of line endings before the start,end points
-            int startRows = (startByte - (startByte % this._bytesPerLine)) / this._bytesPerLine;
-            int endRows = (endByte - (endByte % this._bytesPerLine)) / this._bytesPerLine;
+            int startRows = (startByte - (startByte % this.bytesPerLine)) / this.bytesPerLine;
+            int endRows = (endByte - (endByte % this.bytesPerLine)) / this.bytesPerLine;
 
             // the byte index of the start,end points in the ASCII view
             startByte -= startRows;
             endByte -= endRows;
 
             // avoid the loop
-            if (_asciiLastSelectionStart == startByte && _asciiLastSelectionEnd == endByte) {
+            if (asciiLastSelectionStart == startByte && asciiLastSelectionEnd == endByte) {
                 return;
             }
-            _asciiLastSelectionStart = startByte;
-            _asciiLastSelectionEnd = endByte;
+            asciiLastSelectionStart = startByte;
+            asciiLastSelectionEnd = endByte;
 
             this.setSelection(startByte, endByte);
-        } else if (e.getSource() == this._hexView) {
+        } else if (e.getSource() == this.hexView) {
             int startByte = e.getMark();
             int endByte = e.getDot();
 
@@ -278,8 +277,8 @@ final class HexView extends JPanel implements CaretListener {
             }
 
             // the number of line endings before the start,end points
-            int startRows = (startByte - (startByte % this._bytesPerLine)) / (3 * this._bytesPerLine);
-            int endRows = (endByte - (endByte % this._bytesPerLine)) / (3 * this._bytesPerLine);
+            int startRows = (startByte - (startByte % this.bytesPerLine)) / (3 * this.bytesPerLine);
+            int endRows = (endByte - (endByte % this.bytesPerLine)) / (3 * this.bytesPerLine);
 
             // the byte index of the start,end points in the ASCII view
             startByte -= startRows;
@@ -287,11 +286,11 @@ final class HexView extends JPanel implements CaretListener {
             endByte -= endRows;
             endByte /= 3;
 
-            if (_hexLastSelectionStart == startByte && _hexLastSelectionEnd == endByte) {
+            if (hexLastSelectionStart == startByte && hexLastSelectionEnd == endByte) {
                 return;
             }
-            _hexLastSelectionStart = startByte;
-            _hexLastSelectionEnd = endByte;
+            hexLastSelectionStart = startByte;
+            hexLastSelectionEnd = endByte;
 
             this.setSelection(startByte, endByte);
         } else {

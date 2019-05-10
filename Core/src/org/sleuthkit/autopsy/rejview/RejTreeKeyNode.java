@@ -36,17 +36,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public final class RejTreeKeyNode implements RejTreeNode {
 
     private static final Logger logger = Logger.getLogger(RejTreeKeyNode.class.getName());
-    private final RegistryKey _key;
+    private final RegistryKey key;
 
     public RejTreeKeyNode(RegistryKey key) {
-        this._key = key;
+        this.key = key;
     }
 
     @Messages({"RejTreeKeyNode.parseFailed.string=PARSE FAILED."})
     @Override
     public String toString() {
         try {
-            return this._key.getName();
+            return this.key.getName();
         } catch (UnsupportedEncodingException ex) {
             logger.log(Level.WARNING, "Failed to parse key name", ex);
             return Bundle.RejTreeKeyNode_parseFailed_string();
@@ -56,7 +56,7 @@ public final class RejTreeKeyNode implements RejTreeNode {
     @Override
     public boolean hasChildren() {
         try {
-            return this._key.getValueList().size() > 0 || this._key.getSubkeyList().size() > 0;
+            return this.key.getValueList().size() > 0 || this.key.getSubkeyList().size() > 0;
         } catch (RegistryParseException ex) {
             logger.log(Level.WARNING, "Failed to parse key children.", ex);
             return false;
@@ -68,12 +68,12 @@ public final class RejTreeKeyNode implements RejTreeNode {
         LinkedList<RejTreeNode> children = new LinkedList<>();
 
         try {
-            Iterator<RegistryKey> keyit = this._key.getSubkeyList().iterator();
+            Iterator<RegistryKey> keyit = this.key.getSubkeyList().iterator();
             while (keyit.hasNext()) {
                 children.add(new RejTreeKeyNode(keyit.next()));
             }
 
-            Iterator<RegistryValue> valueit = this._key.getValueList().iterator();
+            Iterator<RegistryValue> valueit = this.key.getValueList().iterator();
             while (valueit.hasNext()) {
                 children.add(new RejTreeValueNode(valueit.next()));
             }
@@ -87,7 +87,7 @@ public final class RejTreeKeyNode implements RejTreeNode {
      * @scope: package-protected
      */
     RegistryKey getKey() {
-        return this._key;
+        return this.key;
     }
 
     /**

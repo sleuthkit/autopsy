@@ -35,7 +35,7 @@ import org.openide.util.NbBundle.Messages;
 public final class RejTreeValueView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
-    private final RejTreeValueNode _node;
+    private final RejTreeValueNode node;
 
     @Messages({"RejTreeValueView.template.name=Name:",
         "RejTreeValueView.template.type=Type:",
@@ -46,7 +46,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
         "RejTreeValueView.valueBorder.title=Value",})
     public RejTreeValueView(RejTreeValueNode node) {
         super(new BorderLayout());
-        this._node = node;
+        this.node = node;
 
         /**
          * @param 1 Name
@@ -68,13 +68,13 @@ public final class RejTreeValueView extends RejTreeNodeView {
                 + "%1$s"
                 + "</html>";
         try {
-            valueName = this._node.getValue().getName();
+            valueName = this.node.getValue().getName();
         } catch (UnsupportedEncodingException e) {
             valueName = Bundle.RejTreeValueView_failedToDecode_valueName();
         }
 
         try {
-            valueType = this._node.getValue().getValueType().toString();
+            valueType = this.node.getValue().getValueType().toString();
         } catch (RegistryParseException e) {
             valueType = Bundle.RejTreeValueView_failedToDecode_valueType();
         }
@@ -86,7 +86,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
         // this valueComponent must be set in the follow try/catch block.
         JComponent valueComponent;
         try {
-            ValueData data = this._node.getValue().getValue();
+            ValueData data = this.node.getValue().getValue();
 
             // the case statements are a bit repetitive, but i think make more sense than confusingly-nested if/elses
             switch (data.getValueType()) {

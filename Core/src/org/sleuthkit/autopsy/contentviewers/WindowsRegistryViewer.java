@@ -43,6 +43,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(WindowsRegistryViewer.class.getName());
     private static final String[] SUPPORTED_MIMETYPES = new String[]{"custom/windows-nt-registry"};
+    //Registry log files which should be ignored share the same signature as Registry files but appear to have a size of 1024
     private static final int MIN_REGISTRY_FILE_SIZE = 1025; //size in bytes
     private RejView regview;
     private AbstractFile lastFile;
