@@ -101,6 +101,7 @@ final class HexView extends JPanel implements CaretListener {
         statusView.setBorder(new BevelBorder(BevelBorder.LOWERED));
         this.add(statusView, BorderLayout.SOUTH);
         statusView.setLayout(new BoxLayout(statusView, BoxLayout.X_AXIS));
+        statusView.setPreferredSize(new Dimension(0,0));
         this.statusLabel = new JLabel("");
         this.statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
         statusView.add(this.statusLabel);

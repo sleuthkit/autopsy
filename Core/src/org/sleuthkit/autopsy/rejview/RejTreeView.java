@@ -23,6 +23,7 @@ package org.sleuthkit.autopsy.rejview;
 
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryParseException;
+import java.awt.Dimension;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -67,8 +68,8 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         // here's a bit of a hack to force the children to be loaded and shown
         this.tree.collapsePath(new TreePath(rootNode.getPath()));
         this.tree.expandPath(new TreePath(rootNode.getPath()));
-
         setViewportView(this.tree);
+        setPreferredSize(new Dimension(0,0));
     }
 
     /**

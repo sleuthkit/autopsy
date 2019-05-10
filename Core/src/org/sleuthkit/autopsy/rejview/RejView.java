@@ -23,6 +23,7 @@ package org.sleuthkit.autopsy.rejview;
 
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryHiveBuffer;
+import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.nio.ByteBuffer;
 import javax.swing.JPanel;
@@ -57,17 +58,18 @@ public final class RejView extends JPanel implements RejTreeNodeSelectionListene
     }
 
     private void setupUI() {
-        this.splitPane.setResizeWeight(.5);
+        this.splitPane.setResizeWeight(0);
         this.splitPane.setOneTouchExpandable(true);
         this.splitPane.setContinuousLayout(true);
         this.add(this.splitPane, BorderLayout.CENTER);
+        this.setPreferredSize(new Dimension(0,0));
         this.treeView.addRejTreeNodeSelectionListener(this);
     }
 
     @Override
     public void nodeSelected(RejTreeNodeSelectionEvent e) {
         RejTreeNodeView v = e.getNode().getView();
-        int curDividerLocation = 250;
+        int curDividerLocation = this.splitPane.getDividerLocation();
         this.splitPane.setRightComponent(v);
         this.splitPane.setDividerLocation(curDividerLocation);
     }
