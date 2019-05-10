@@ -61,9 +61,9 @@ public final class RejTreeKeyView extends RejTreeNodeView {
          */
         String metadataTemplate = "<html><i>"
                 + Bundle.RejTreeKeyView_template_name()
-                + "</i><b>%1$s</b><br/><i>"
+                + "</i><b>  %1$s</b><br/><i>"
                 + Bundle.RejTreeKeyView_template_numberOfSubkeys()
-                + "</i>   %2$d<br/><i>"
+                + "</i>  %2$d<br/><i>"
                 + Bundle.RejTreeKeyView_template_numberOfValues()
                 + "</i>  %3$d<br/></html>";
         String keyName;

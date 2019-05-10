@@ -54,9 +54,9 @@ public final class RejTreeValueView extends RejTreeNodeView {
          */
         String metadataTemplate = "<html><i>"
                 + Bundle.RejTreeValueView_template_name()
-                + "</i><b>%1$s</b><br/><i>"
+                + "</i><b>  %1$s</b><br/><i>"
                 + Bundle.RejTreeValueView_template_type()
-                + "</i>   %2$s</html>";
+                + " </i>  %2$s</html>";
         String valueName;
         String valueType;
 
