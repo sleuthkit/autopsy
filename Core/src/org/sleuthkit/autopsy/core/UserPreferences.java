@@ -60,6 +60,7 @@ public final class UserPreferences {
     private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
+    private static final String TEXT_TRANSLATOR_NAME = "TextTranslatorName";
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
     public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
@@ -333,6 +334,14 @@ public final class UserPreferences {
 
     public static void setIndexingServerPort(int port) {
         preferences.putInt(INDEXING_SERVER_PORT, port);
+    }
+    
+    public static void setTextTranslatorName(String textTranslatorName){
+        preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
+    }
+    
+    public static String getTextTranslatorName(){
+        return preferences.get(TEXT_TRANSLATOR_NAME, null);
     }
 
     /**

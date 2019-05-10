@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *s
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final Logger LOGGER = Logger.getLogger(MediaFileViewer.class.getName());
+    private static final long serialVersionUID = 1L;
     private AbstractFile lastFile;
     //UI
     private MediaPlayerPanel mediaPlayerPanel;
@@ -48,7 +49,7 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
     /**
      * Creates a new MediaFileViewer.
      */
-    public MediaFileViewer() {
+    MediaFileViewer() {
 
         initComponents();
 
@@ -69,8 +70,8 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private void customizeComponents() {
         add(imagePanel, IMAGE_VIEWER_LAYER);
-        
-        if(mediaPlayerPanel != null) {
+
+        if (mediaPlayerPanel != null) {
             add(mediaPlayerPanel, MEDIA_PLAYER_LAYER);
         }
 
@@ -103,10 +104,10 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
         List<String> mimeTypes = new ArrayList<>();
 
         mimeTypes.addAll(this.imagePanel.getSupportedMimeTypes());
-        if(mediaPlayerPanel != null) {
+        if (mediaPlayerPanel != null) {
             mimeTypes.addAll(this.mediaPlayerPanel.getSupportedMimeTypes());
         }
-        
+
         return mimeTypes;
     }
 

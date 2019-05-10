@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2013-2018 Basis Technology Corp.
+ *
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.modules.stix;
 
+import com.williballenthin.rejistry.RegistryHiveFile;
+import com.williballenthin.rejistry.RegistryKey;
+import com.williballenthin.rejistry.RegistryParseException;
+import com.williballenthin.rejistry.RegistryValue;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-
 import java.util.List;
 import java.util.ArrayList;
 import java.io.IOException;
@@ -31,10 +34,8 @@ import java.io.UnsupportedEncodingException;
 import java.io.File;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
 import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.mitre.cybox.common_2.ConditionTypeEnum;
-import com.williballenthin.rejistry.*;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
@@ -43,9 +44,9 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 class EvalRegistryObj extends EvaluatableObject {
 
     private final WindowsRegistryKey obj;
-    private final List<RegistryFileInfo> regFiles = new ArrayList<RegistryFileInfo>();
+    private final List<RegistryFileInfo> regFiles = new ArrayList<>();
 
-    public EvalRegistryObj(WindowsRegistryKey a_obj, String a_id, String a_spacing, List<RegistryFileInfo> a_regFiles) {
+    EvalRegistryObj(WindowsRegistryKey a_obj, String a_id, String a_spacing, List<RegistryFileInfo> a_regFiles) {
         obj = a_obj;
         id = a_id;
         spacing = a_spacing;
@@ -80,7 +81,7 @@ class EvalRegistryObj extends EvaluatableObject {
         setUnsupportedFieldWarnings();
 
         // Make a list of hives to test
-        List<RegistryFileInfo> hiveList = new ArrayList<RegistryFileInfo>();
+        List<RegistryFileInfo> hiveList = new ArrayList<>();
         if (obj.getHive() == null) {
             // If the hive field is missing, add everything
             hiveList.addAll(regFiles);
@@ -88,9 +89,9 @@ class EvalRegistryObj extends EvaluatableObject {
             // If the hive name is HKEY_LOCAL_MACHINE, add the ones from the config directory.
             // Otherwise, add the others
             for (RegistryFileInfo regFile : regFiles) {
-                if (regFile.abstractFile.getParentPath() != null) {
+                if (regFile.getAbstractFile().getParentPath() != null) {
                     Pattern pattern = Pattern.compile("system32", Pattern.CASE_INSENSITIVE);
-                    Matcher matcher = pattern.matcher(regFile.abstractFile.getParentPath());
+                    Matcher matcher = pattern.matcher(regFile.getAbstractFile().getParentPath());
                     if (matcher.find()) {
                         // Looking for system files and found one, so add it to the list
                         if (obj.getHive().getValue().toString().equalsIgnoreCase("HKEY_LOCAL_MACHINE")) { //NON-NLS
@@ -112,7 +113,7 @@ class EvalRegistryObj extends EvaluatableObject {
             Pattern pattern = Pattern.compile("Temp.STIX." + stixHiveName, Pattern.CASE_INSENSITIVE);
 
             for (RegistryFileInfo hive : regFiles) {
-                Matcher matcher = pattern.matcher(hive.tempFileName);
+                Matcher matcher = pattern.matcher(hive.getTempFileName());
                 if (matcher.find()) {
                     hiveList.add(hive);
                 }
@@ -163,7 +164,7 @@ class EvalRegistryObj extends EvaluatableObject {
      */
     private ObservableResult testRegistryFile(RegistryFileInfo a_regInfo) {
         try {
-            RegistryKey root = openRegistry(a_regInfo.tempFileName);
+            RegistryKey root = openRegistry(a_regInfo.getTempFileName());
             RegistryKey result = findKey(root, obj.getKey().getValue().toString());
 
             if (result == null) {
@@ -192,8 +193,8 @@ class EvalRegistryObj extends EvaluatableObject {
 
             if ((obj.getValues() == null) || (obj.getValues().getValues().isEmpty())) {
                 // No values to test
-                List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
-                artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry")); //NON-NLS
+                List<StixArtifactData> artData = new ArrayList<>();
+                artData.add(new StixArtifactData(a_regInfo.getAbstractFile().getId(), id, "Registry")); //NON-NLS
                 return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue(), //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
             }
@@ -262,8 +263,8 @@ class EvalRegistryObj extends EvaluatableObject {
 
                         if (nameSuccess && valueSuccess) {
                             // Found a match for all values
-                            List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
-                            artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry")); //NON-NLS
+                            List<StixArtifactData> artData = new ArrayList<>();
+                            artData.add(new StixArtifactData(a_regInfo.getAbstractFile().getId(), id, "Registry")); //NON-NLS
                             return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue() //NON-NLS
                                     + " and value " + stixRegValue.getName().getValue().toString() //NON-NLS
                                     + " = " + stixRegValue.getData().getValue().toString(),
@@ -343,13 +344,13 @@ class EvalRegistryObj extends EvaluatableObject {
         List<AbstractFile> regFilesAbstract = findRegistryFiles();
 
         // List to hold all the extracted file names plus their abstract file
-        List<RegistryFileInfo> regFilesLocal = new ArrayList<RegistryFileInfo>();
+        List<RegistryFileInfo> regFilesLocal = new ArrayList<>();
 
         // Make the temp directory
         String tmpDir;
         try {
-           tmpDir = Case.getCurrentCaseThrows().getTempDirectory() + File.separator + "STIX"; //NON-NLS
-        } catch (NoCurrentCaseException ex) { 
+            tmpDir = Case.getCurrentCaseThrows().getTempDirectory() + File.separator + "STIX"; //NON-NLS
+        } catch (NoCurrentCaseException ex) {
             throw new TskCoreException(ex.getLocalizedMessage());
         }
         File dir = new File(tmpDir);
@@ -382,11 +383,11 @@ class EvalRegistryObj extends EvaluatableObject {
      * RecentActivity
      */
     private static List<AbstractFile> findRegistryFiles() throws TskCoreException {
-        List<AbstractFile> registryFiles = new ArrayList<AbstractFile>();
+        List<AbstractFile> registryFiles = new ArrayList<>();
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) { 
+        } catch (NoCurrentCaseException ex) {
             throw new TskCoreException(ex.getLocalizedMessage());
         }
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = openCase.getServices().getFileManager();
@@ -413,7 +414,7 @@ class EvalRegistryObj extends EvaluatableObject {
     }
 
     private void setUnsupportedFieldWarnings() {
-        List<String> fieldNames = new ArrayList<String>();
+        List<String> fieldNames = new ArrayList<>();
 
         if (obj.getNumberValues() != null) {
             fieldNames.add("Number_Values"); //NON-NLS
@@ -460,6 +461,24 @@ class EvalRegistryObj extends EvaluatableObject {
         public RegistryFileInfo(AbstractFile a_abstractFile, String a_tempFileName) {
             abstractFile = a_abstractFile;
             tempFileName = a_tempFileName;
+        }
+
+        /**
+         * Get the AbstractFile for this RegistryFileInfo
+         *
+         * @return the abstractFile
+         */
+        AbstractFile getAbstractFile() {
+            return abstractFile;
+        }
+
+        /**
+         * Get the Temporary file name for this RegistryFileInfo
+         *
+         * @return the tempFileName
+         */
+        String getTempFileName() {
+            return tempFileName;
         }
 
     }
