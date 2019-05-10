@@ -155,16 +155,12 @@ final class HexView extends JPanel implements CaretListener {
         this._offsetView.setText(offsetSB.toString());
         this._hexView.setText(hexSB.toString());
         this._asciiView.setText(asciiSB.toString());
-
+        this._hexView.addCaretListener(this);
+        this._asciiView.addCaretListener(this);
         this._asciiView.setSelectedTextColor(this._asciiView.getForeground());
         this._hexView.setSelectedTextColor(this._asciiView.getForeground());
         this._highlightColor = this._hexView.getSelectionColor();
         this._highlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(this._highlightColor);
-    }
-
-    void addCaretListeners() {
-        this._hexView.addCaretListener(this);
-        this._asciiView.addCaretListener(this);
     }
 
     /**
