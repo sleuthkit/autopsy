@@ -21,10 +21,13 @@
  */
 package org.sleuthkit.autopsy.rejview;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.LayoutManager;
+import javax.swing.JPanel;
 
 public class RejTreeNodeView extends JPanel {
+
+    private static final long serialVersionUID = 1L;
+
     public RejTreeNodeView() {
         super();
     }

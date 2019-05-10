@@ -21,25 +21,41 @@
  */
 package org.sleuthkit.autopsy.rejview;
 
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * HexView is a standard three-paned hex editor widget that displays binary data.
+ * HexView is a standard three-paned hex editor widget that displays binary
+ * data.
  *
- * Note, this does not do any intelligent paging of the data. You should estimate it to load three strings
- *   with length equal to the given ByteBuffer. So its probably not good to use this view with large files.
+ * Note, this does not do any intelligent paging of the data. You should
+ * estimate it to load three strings with length equal to the given ByteBuffer.
+ * So its probably not good to use this view with large files.
  */
 public class HexView extends JPanel implements CaretListener {
+
     private final static int DEFAULT_BYTES_PER_LINE = 0x10;
-    private final static char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    private final static char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    private static final Logger logger = Logger.getLogger(HexView.class.getName());
+    private static final long serialVersionUID = 1L;
     private final int _bytesPerLine;
     private final ByteBuffer _buf;
     private final JTextComponent _offsetView;
@@ -59,7 +75,7 @@ public class HexView extends JPanel implements CaretListener {
     }
 
     /**
-     * @param buf The binary data to display within this hex view.
+     * @param buf          The binary data to display within this hex view.
      * @param bytesPerLine The number of bytes to display per line.
      */
     public HexView(ByteBuffer buf, int bytesPerLine) {
@@ -118,7 +134,7 @@ public class HexView extends JPanel implements CaretListener {
             hexSB.append(hex);
 
             if (b >= ' ' && b <= '~') {
-                asciiSB.append((char)b);
+                asciiSB.append((char) b);
             } else {
                 asciiSB.append('.');
             }
@@ -142,7 +158,6 @@ public class HexView extends JPanel implements CaretListener {
         this._highlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(this._highlightColor);
     }
 
-
     /**
      * clearHighlight removes any colors applied to the text views.
      */
@@ -153,8 +168,9 @@ public class HexView extends JPanel implements CaretListener {
 
     /**
      * setHighlight colors the given byte range.
+     *
      * @param startByte The starting byte index of the selection.
-     * @param endByte The ending byte index of the selection.
+     * @param endByte   The ending byte index of the selection.
      */
     private void setHighlight(int startByte, int endByte) {
         int startRows = (startByte - (startByte % this._bytesPerLine)) / this._bytesPerLine;
@@ -164,17 +180,18 @@ public class HexView extends JPanel implements CaretListener {
 
         try {
             this._asciiView.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, this._highlighterPainter);
-            this._hexView.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows,  this._highlighterPainter);
-        } catch (BadLocationException e1) {
-            System.out.println("bad location");
+            this._hexView.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, this._highlighterPainter);
+        } catch (BadLocationException ex) {
+            logger.log(Level.WARNING, "bad location", ex);
         }
     }
 
     /**
-     * setSelection sets the given byte range as "selected", which from a GUI perspective means the
-     *   bytes are highlighted, and the status bar updated.
+     * setSelection sets the given byte range as "selected", which from a GUI
+     * perspective means the bytes are highlighted, and the status bar updated.
+     *
      * @param startByte The starting byte index of the selection.
-     * @param endByte The ending byte index of the selection.
+     * @param endByte   The ending byte index of the selection.
      */
     private void setSelection(int startByte, int endByte) {
         this.setHighlight(startByte, endByte);
@@ -224,8 +241,8 @@ public class HexView extends JPanel implements CaretListener {
             int endRows = (endByte - (endByte % this._bytesPerLine)) / this._bytesPerLine;
 
             // the byte index of the start,end points in the ASCII view
-            startByte = startByte - startRows;
-            endByte = endByte - endRows;
+            startByte -= startRows;
+            endByte -= endRows;
 
             // avoid the loop
             if (_asciiLastSelectionStart == startByte && _asciiLastSelectionEnd == endByte) {
@@ -250,10 +267,10 @@ public class HexView extends JPanel implements CaretListener {
             int endRows = (endByte - (endByte % this._bytesPerLine)) / (3 * this._bytesPerLine);
 
             // the byte index of the start,end points in the ASCII view
-            startByte = startByte - startRows;
-            startByte = startByte / 3;
-            endByte = endByte - endRows;
-            endByte = endByte / 3;
+            startByte -= startRows;
+            startByte /= 3;
+            endByte -= endRows;
+            endByte /= 3;
 
             if (_hexLastSelectionStart == startByte && _hexLastSelectionEnd == endByte) {
                 return;
@@ -263,7 +280,7 @@ public class HexView extends JPanel implements CaretListener {
 
             this.setSelection(startByte, endByte);
         } else {
-            System.out.println("from unknown");
+            logger.log(Level.INFO, "from unknown");
         }
     }
 }

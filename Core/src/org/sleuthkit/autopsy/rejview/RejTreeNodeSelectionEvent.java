@@ -22,7 +22,9 @@
 package org.sleuthkit.autopsy.rejview;
 
 public class RejTreeNodeSelectionEvent {
+
     private final RejTreeNode _node;
+
     public RejTreeNodeSelectionEvent(RejTreeNode n) {
         this._node = n;
     }

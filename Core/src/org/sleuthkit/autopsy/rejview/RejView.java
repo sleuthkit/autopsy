@@ -23,13 +23,15 @@ package org.sleuthkit.autopsy.rejview;
 
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryHiveBuffer;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.nio.ByteBuffer;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 
 public class RejView extends JPanel implements RejTreeNodeSelectionListener {
 
+    private static final long serialVersionUID = 1L;
     private final RegistryHive _hive;
     private final RejTreeView _tree_view;
     private final JSplitPane _splitPane;
@@ -37,12 +39,10 @@ public class RejView extends JPanel implements RejTreeNodeSelectionListener {
     public RejView(RegistryHive hive) {
         super(new BorderLayout());
         this._hive = hive;
-
         // have to do these cause they're final
         this._tree_view = new RejTreeView(this._hive);
         this._splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 this._tree_view, new JPanel());
-
         this.setupUI();
     }
 
@@ -54,7 +54,6 @@ public class RejView extends JPanel implements RejTreeNodeSelectionListener {
         this._tree_view = new RejTreeView(this._hive);
         this._splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 this._tree_view, new JPanel());
-
         this.setupUI();
     }
 
@@ -62,10 +61,8 @@ public class RejView extends JPanel implements RejTreeNodeSelectionListener {
         this._splitPane.setResizeWeight(0);
         this._splitPane.setOneTouchExpandable(true);
         this._splitPane.setContinuousLayout(true);
-
         this.add(this._splitPane, BorderLayout.CENTER);
         this.setPreferredSize(new Dimension(800, 600));
-
         this._tree_view.addRejTreeNodeSelectionListener(this);
     }
 

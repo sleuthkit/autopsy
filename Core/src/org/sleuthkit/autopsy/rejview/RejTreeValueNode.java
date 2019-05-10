@@ -26,26 +26,32 @@ import com.williballenthin.rejistry.RegistryValue;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.List;
+import org.openide.util.NbBundle.Messages;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class RejTreeValueNode implements RejTreeNode {
 
+    private static final Logger logger = Logger.getLogger(RejTreeValueNode.class.getName());
     private final RegistryValue _value;
 
     public RejTreeValueNode(RegistryValue value) {
         this._value = value;
     }
 
+    @Messages({"RejTreeValueNode.defaultValueName.text=(Default)",
+        "RejTreeValueNode.failureValueName.text=PARSE FAILED"})
     @Override
     public String toString() {
         try {
             String valueName = this._value.getName();
-            if (valueName == "") {
-                return "(Default)";
+            if (valueName.isEmpty()) {
+                return Bundle.RejTreeValueNode_defaultValueName_text();
             }
             return valueName;
-        } catch (UnsupportedEncodingException e) {
-            System.err.println("Failed to parse _value name");
-            return "PARSE FAILED.";
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.WARNING, "Failed to parse _value name", ex);
+            return Bundle.RejTreeValueNode_failureValueName_text();
         }
     }
 
@@ -56,7 +62,7 @@ public class RejTreeValueNode implements RejTreeNode {
 
     @Override
     public List<RejTreeNode> getChildren() {
-        return new LinkedList<RejTreeNode>();
+        return new LinkedList<>();
     }
 
     /**
@@ -69,6 +75,7 @@ public class RejTreeValueNode implements RejTreeNode {
     /**
      * TODO(wb): this isn't exactly MVC...
      */
+    @Override
     public RejTreeNodeView getView() {
         return new RejTreeValueView(this);
     }

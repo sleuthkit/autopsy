@@ -29,9 +29,12 @@ import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class RejTreeKeyNode implements RejTreeNode {
 
+    private static final Logger logger = Logger.getLogger(RejTreeKeyNode.class.getName());
     private final RegistryKey _key;
 
     public RejTreeKeyNode(RegistryKey key) {
@@ -42,8 +45,8 @@ public class RejTreeKeyNode implements RejTreeNode {
     public String toString() {
         try {
             return this._key.getName();
-        } catch (UnsupportedEncodingException e) {
-            System.err.println("Failed to parse key name");
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.WARNING, "Failed to parse key name", ex);
             return "PARSE FAILED.";
         }
     }
@@ -52,15 +55,15 @@ public class RejTreeKeyNode implements RejTreeNode {
     public boolean hasChildren() {
         try {
             return this._key.getValueList().size() > 0 || this._key.getSubkeyList().size() > 0;
-        } catch (RegistryParseException e) {
-            System.err.println("Failed to parse key children.");
+        } catch (RegistryParseException ex) {
+            logger.log(Level.WARNING, "Failed to parse key children.", ex);
             return false;
         }
     }
 
     @Override
     public List<RejTreeNode> getChildren() {
-        LinkedList<RejTreeNode> children = new LinkedList<RejTreeNode>();
+        LinkedList<RejTreeNode> children = new LinkedList<>();
 
         try {
             Iterator<RegistryKey> keyit = this._key.getSubkeyList().iterator();
@@ -72,8 +75,8 @@ public class RejTreeKeyNode implements RejTreeNode {
             while (valueit.hasNext()) {
                 children.add(new RejTreeValueNode(valueit.next()));
             }
-        } catch (RegistryParseException e) {
-            System.err.println("Failed to parse key children.");
+        } catch (RegistryParseException ex) {
+            logger.log(Level.WARNING, "Failed to parse key children.", ex);
         }
         return children;
     }
@@ -85,10 +88,10 @@ public class RejTreeKeyNode implements RejTreeNode {
         return this._key;
     }
 
-
     /**
      * TODO(wb): this isn't exactly MVC...
      */
+    @Override
     public RejTreeNodeView getView() {
         return new RejTreeKeyView(this);
     }

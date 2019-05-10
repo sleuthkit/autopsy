@@ -23,8 +23,7 @@ package org.sleuthkit.autopsy.rejview;
 
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryParseException;
-
-import javax.swing.*;
+import java.awt.Dimension;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -32,25 +31,30 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class RejTreeView extends JScrollPane implements TreeExpansionListener, TreeSelectionListener {
 
+    private static final Logger logger = Logger.getLogger(HexView.class.getName());
+    private static final long serialVersionUID = 1L;
     private final DefaultTreeModel _tree_model;
-    private JTree _tree;
     private final RegistryHive _hive;
     private final CopyOnWriteArrayList<RejTreeNodeSelectionListener> _nodeSelectionListeners;
+    private final JTree _tree;
 
     public RejTreeView(RegistryHive hive) {
         this._hive = hive;
         DefaultMutableTreeNode rootNode;
-        this._nodeSelectionListeners = new CopyOnWriteArrayList<RejTreeNodeSelectionListener>();
+        this._nodeSelectionListeners = new CopyOnWriteArrayList<>();
 
         try {
             rootNode = getTreeNode(new RejTreeKeyNode(this._hive.getRoot()));
-        } catch (RegistryParseException e) {
-            System.err.println("Failed to parse root key");
+        } catch (RegistryParseException ex) {
+            logger.log(Level.WARNING, "Failed to parse root key", ex);
             rootNode = new DefaultMutableTreeNode("PARSE FAILED");
         }
 
@@ -70,7 +74,8 @@ public class RejTreeView extends JScrollPane implements TreeExpansionListener, T
     }
 
     /**
-     * getTreeNode creates a TreeNode from a RejTreeNode, settings the appropriate fields.
+     * getTreeNode creates a TreeNode from a RejTreeNode, settings the
+     * appropriate fields.
      */
     private DefaultMutableTreeNode getTreeNode(RejTreeNode node) {
         DefaultMutableTreeNode ret;
@@ -85,7 +90,7 @@ public class RejTreeView extends JScrollPane implements TreeExpansionListener, T
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
 
         if (node.getChildCount() == 0) {
-            RejTreeNode n = (RejTreeNode)node.getUserObject();
+            RejTreeNode n = (RejTreeNode) node.getUserObject();
             for (RejTreeNode rejTreeNode : n.getChildren()) {
                 node.add(getTreeNode(rejTreeNode));
             }
@@ -100,16 +105,15 @@ public class RejTreeView extends JScrollPane implements TreeExpansionListener, T
     @Override
     public void valueChanged(TreeSelectionEvent e) {
         TreePath path = e.getPath();
-        System.out.println("Selected: " + path);
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-        this.triggerRejTreeNodeSelection((RejTreeNode)node.getUserObject());
+        this.triggerRejTreeNodeSelection((RejTreeNode) node.getUserObject());
     }
 
     public void addRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
         this._nodeSelectionListeners.add(l);
     }
 
-    public void removeRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l ) {
+    public void removeRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
         this._nodeSelectionListeners.remove(l);
     }
 

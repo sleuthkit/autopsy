@@ -23,15 +23,22 @@ package org.sleuthkit.autopsy.rejview;
 
 import com.williballenthin.rejistry.RegistryParseException;
 import com.williballenthin.rejistry.RegistryValue;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
-import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import java.awt.*;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 
 public class RejTreeKeyView extends RejTreeNodeView {
+
+    private static final long serialVersionUID = 1L;
     private final RejTreeKeyNode _node;
 
     public RejTreeKeyView(RejTreeKeyNode node) {
@@ -43,12 +50,12 @@ public class RejTreeKeyView extends RejTreeNodeView {
          * @param 2 Number of subkeys
          * @param 3 Number of values
          */
-        String metadataTemplate = "" +
-                "<html>" +
-                "<i>Name:</i>  <b>%1$s</b><br/>" +
-                "<i>Number of subkeys:</i>   %2$d<br/>" +
-                "<i>Number values:</i>  %3$d<br/>" +
-                "</html>";
+        String metadataTemplate = ""
+                + "<html>"
+                + "<i>Name:</i>  <b>%1$s</b><br/>"
+                + "<i>Number of subkeys:</i>   %2$d<br/>"
+                + "<i>Number values:</i>  %3$d<br/>"
+                + "</html>";
         String keyName;
         int numSubkeys;
         int numValues;
@@ -96,8 +103,7 @@ public class RejTreeKeyView extends RejTreeNodeView {
             // TODO(wb): need to add some warning here...
             // not sure how to do it, though, since some data may have already been added
             // but not necessarily all of it
-        }
-        catch (UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException e) {
             // TODO(wb): need to add some warning here...
         }
 
@@ -114,11 +120,11 @@ public class RejTreeKeyView extends RejTreeNodeView {
             int total = 0;
             for (int j = 0; j < width.length; j++) {
                 TableColumn column = table.getColumnModel().getColumn(j);
-                int w = (int)table.getTableHeader().getDefaultRenderer().getTableCellRendererComponent(table, column.getIdentifier(), false, false, -1, j).getPreferredSize().getWidth();
+                int w = (int) table.getTableHeader().getDefaultRenderer().getTableCellRendererComponent(table, column.getIdentifier(), false, false, -1, j).getPreferredSize().getWidth();
 
                 if (table.getRowCount() > 0) {
                     for (int i = 0; i < table.getRowCount(); i++) {
-                        int pw = (int)table.getCellRenderer(i, j).getTableCellRendererComponent(table, table.getValueAt(i, j), false, false, i, j).getPreferredSize().getWidth();
+                        int pw = (int) table.getCellRenderer(i, j).getTableCellRendererComponent(table, table.getValueAt(i, j), false, false, i, j).getPreferredSize().getWidth();
                         w = Math.max(w, pw);
                     }
                 }

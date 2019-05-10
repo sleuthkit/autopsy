@@ -30,17 +30,18 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 /**
- * Formats a ValueData to a string similar to Regedit.exe on Windows.
- *   For an example, see the nice sample here:
- *   http://raja5.files.wordpress.com/2009/08/wincleanup_regedit.jpg
+ * Formats a ValueData to a string similar to Regedit.exe on Windows. For an
+ * example, see the nice sample here:
+ * http://raja5.files.wordpress.com/2009/08/wincleanup_regedit.jpg
  */
 public class RegeditExeValueFormatter {
+
     public static String format(ValueData val) throws UnsupportedEncodingException, RegistryParseException {
         StringBuilder sb = new StringBuilder();
 
-        switch(val.getValueType()) {
+        switch (val.getValueType()) {
             case REG_SZ:
-            case REG_EXPAND_SZ:{
+            case REG_EXPAND_SZ: {
 
                 String valString = val.getAsString();
                 if (valString.length() == 0) {
@@ -93,5 +94,9 @@ public class RegeditExeValueFormatter {
             }
         }
         return sb.toString();
+    }
+
+    private RegeditExeValueFormatter() {
+        //contrsuctor intentially left blank
     }
 }

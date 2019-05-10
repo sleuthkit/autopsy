@@ -23,13 +23,17 @@ package org.sleuthkit.autopsy.rejview;
 
 import com.williballenthin.rejistry.RegistryParseException;
 import com.williballenthin.rejistry.ValueData;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.io.UnsupportedEncodingException;
-import java.util.Iterator;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 
 public class RejTreeValueView extends RejTreeNodeView {
+
+    private static final long serialVersionUID = 1L;
     private final RejTreeValueNode _node;
 
     public RejTreeValueView(RejTreeValueNode node) {
@@ -40,21 +44,21 @@ public class RejTreeValueView extends RejTreeNodeView {
          * @param 1 Name
          * @param 2 Type
          */
-        String metadataTemplate = "" +
-                "<html>" +
-                "<i>Name:</i>  <b>%1$s</b><br/>" +
-                "<i>Type:</i>   %2$s" +
-                "</html>";
+        String metadataTemplate = ""
+                + "<html>"
+                + "<i>Name:</i>  <b>%1$s</b><br/>"
+                + "<i>Type:</i>   %2$s"
+                + "</html>";
         String valueName;
         String valueType;
 
         /**
          * @param 1 Value
          */
-        String valueTemplate = "" +
-                "<html>" +
-                "%1$s" +
-                "</html>";
+        String valueTemplate = ""
+                + "<html>"
+                + "%1$s"
+                + "</html>";
         try {
             valueName = this._node.getValue().getName();
         } catch (UnsupportedEncodingException e) {
@@ -63,7 +67,7 @@ public class RejTreeValueView extends RejTreeNodeView {
 
         try {
             valueType = this._node.getValue().getValueType().toString();
-        } catch (RegistryParseException e ) {
+        } catch (RegistryParseException e) {
             valueType = "FAILED TO PARSE VALUE TYPE";
         }
 
@@ -77,11 +81,11 @@ public class RejTreeValueView extends RejTreeNodeView {
             ValueData data = this._node.getValue().getValue();
 
             // the case statements are a bit repetitive, but i think make more sense than confusingly-nested if/elses
-            switch(data.getValueType()) {
+            switch (data.getValueType()) {
                 case REG_SZ:
                 case REG_EXPAND_SZ: {
                     String valueValue = data.getAsString();
-                    JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue),  JLabel.LEFT);
+                    JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
                     valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
                     valueLabel.setVerticalAlignment(SwingConstants.TOP);
                     valueComponent = valueLabel;
@@ -94,7 +98,7 @@ public class RejTreeValueView extends RejTreeNodeView {
                         sb.append("<br />");
                     }
                     String valueValue = sb.toString();
-                    JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue),  JLabel.LEFT);
+                    JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
                     valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
                     valueLabel.setVerticalAlignment(SwingConstants.TOP);
                     valueComponent = valueLabel;
@@ -104,7 +108,7 @@ public class RejTreeValueView extends RejTreeNodeView {
                 case REG_QWORD:
                 case REG_BIG_ENDIAN: {
                     String valueValue = String.format("0x%x", data.getAsNumber());
-                    JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue),  JLabel.LEFT);
+                    JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
                     valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
                     valueLabel.setVerticalAlignment(SwingConstants.TOP);
                     valueComponent = valueLabel;
@@ -117,13 +121,8 @@ public class RejTreeValueView extends RejTreeNodeView {
                     break;
                 }
             }
-        } catch (RegistryParseException e) {
-            JLabel valueLabel = new JLabel(String.format(valueTemplate, "FAILED TO PARSE VALUE VALUE"),  JLabel.LEFT);
-            valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
-            valueLabel.setVerticalAlignment(SwingConstants.TOP);
-            valueComponent = valueLabel;
-        } catch (UnsupportedEncodingException e) {
-            JLabel valueLabel = new JLabel(String.format(valueTemplate, "FAILED TO PARSE VALUE VALUE"),  JLabel.LEFT);
+        } catch (RegistryParseException | UnsupportedEncodingException e) {
+            JLabel valueLabel = new JLabel(String.format(valueTemplate, "FAILED TO PARSE VALUE VALUE"), JLabel.LEFT);
             valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
             valueLabel.setVerticalAlignment(SwingConstants.TOP);
             valueComponent = valueLabel;
@@ -133,4 +132,3 @@ public class RejTreeValueView extends RejTreeNodeView {
         this.add(new JScrollPane(valueComponent), BorderLayout.CENTER);
     }
 }
-
