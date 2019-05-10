@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 public final class RejTreeKeyNode implements RejTreeNode {
@@ -41,13 +42,14 @@ public final class RejTreeKeyNode implements RejTreeNode {
         this._key = key;
     }
 
+    @Messages({"RejTreeKeyNode.parseFailed.string=PARSE FAILED."})
     @Override
     public String toString() {
         try {
             return this._key.getName();
         } catch (UnsupportedEncodingException ex) {
             logger.log(Level.WARNING, "Failed to parse key name", ex);
-            return "PARSE FAILED.";
+            return Bundle.RejTreeKeyNode_parseFailed_string();
         }
     }
 
