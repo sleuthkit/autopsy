@@ -119,17 +119,9 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        Path imagePath = configPanel.getImagePath();
-        if (!imagePath.toFile().exists()) {
-            // TODO: Better ways to detect ejected USB drive?
-            String msg = imagePath.toString() + " not found.\nUSB drive has been ejected.";
-            JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        String deviceId = UUID.randomUUID().toString();
-        String timeZone = "America/New_York"; // TODO: temporary
-        boolean ignoreFatOrphanFiles = false;
-        run(deviceId, imagePath.toString(), 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
+        Path dirPath = configPanel.getImageDirPath();
+        System.out.println("Choosen directory " + dirPath.toString());
+        // TODO: process the data source in 5011
     }
 
     /**
