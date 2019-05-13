@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -31,6 +31,9 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @Messages({"RejTreeValueNode.defaultValueName.text=(Default)"})
+/**
+ * Node for a RejTreeValueNode
+ */
 public final class RejTreeValueNode implements RejTreeNode {
 
     private static final Logger logger = Logger.getLogger(RejTreeValueNode.class.getName());

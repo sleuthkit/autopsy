@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -38,6 +38,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * FileTypeViewer which displays information for Windows Registry files
+ */
 class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;

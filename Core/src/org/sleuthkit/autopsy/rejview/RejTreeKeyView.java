@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -29,17 +29,22 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
+import java.util.logging.Level;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * JPanel for displaying the RejTreeKeyView
+ */
 public final class RejTreeKeyView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
-    private final RejTreeKeyNode node;
+    private static final Logger logger = Logger.getLogger(RejTreeKeyView.class.getName());
 
     @Messages({"RejTreeKeyView.failedToParse.keyName=FAILED TO PARSE KEY NAME",
         "RejTreeKeyView.columns.name=Name",
@@ -52,7 +57,6 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         "RejTreeKeyView.template.numberOfValues=Number of values:"})
     public RejTreeKeyView(RejTreeKeyNode node) {
         super(new BorderLayout());
-        this.node = node;
 
         /**
          * @param 1 Name
@@ -71,19 +75,19 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         int numValues;
 
         try {
-            keyName = this.node.getKey().getName();
+            keyName = node.getKey().getName();
         } catch (UnsupportedEncodingException ex) {
             keyName = Bundle.RejTreeKeyView_failedToParse_keyName();
         }
 
         try {
-            numSubkeys = this.node.getKey().getSubkeyList().size();
+            numSubkeys = node.getKey().getSubkeyList().size();
         } catch (RegistryParseException ex) {
             numSubkeys = -1;
         }
 
         try {
-            numValues = this.node.getKey().getValueList().size();
+            numValues = node.getKey().getValueList().size();
         } catch (RegistryParseException ex) {
             numValues = -1;
         }
@@ -96,7 +100,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         Object[][] data = new Object[numValues][3];
 
         try {
-            Iterator<RegistryValue> valit = this.node.getKey().getValueList().iterator();
+            Iterator<RegistryValue> valit = node.getKey().getValueList().iterator();
             int i = 0;
             while (valit.hasNext()) {
                 RegistryValue val = valit.next();
@@ -109,10 +113,9 @@ public final class RejTreeKeyView extends RejTreeNodeView {
                 data[i][2] = RegeditExeValueFormatter.format(val.getValue());
                 i++;
             }
-        } catch (RegistryParseException | UnsupportedEncodingException e) {
-            // TODO(wb): need to add some warning here...
-            // not sure how to do it, though, since some data may have already been added
-            // but not necessarily all of it
+        } catch (RegistryParseException | UnsupportedEncodingException ex) {
+            logger.log(Level.WARNING, "Error while getting RegistryValues.", ex);
+            //some data may have already been added but not necessarily all of it
         }
 
         JTable table = new JTable(data, columnNames);

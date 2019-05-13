@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -32,10 +32,12 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import org.openide.util.NbBundle.Messages;
 
+/**
+ * JPanel to display a RejTreeValueView
+ */
 public final class RejTreeValueView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
-    private final RejTreeValueNode node;
 
     @Messages({"RejTreeValueView.template.name=Name:",
         "RejTreeValueView.template.type=Type:",
@@ -46,8 +48,6 @@ public final class RejTreeValueView extends RejTreeNodeView {
         "RejTreeValueView.valueBorder.title=Value",})
     public RejTreeValueView(RejTreeValueNode node) {
         super(new BorderLayout());
-        this.node = node;
-
         /**
          * @param 1 Name
          * @param 2 Type
@@ -63,19 +63,16 @@ public final class RejTreeValueView extends RejTreeNodeView {
         /**
          * @param 1 Value
          */
-        String valueTemplate = ""
-                + "<html>"
-                + "%1$s"
-                + "</html>";
+        String valueTemplate = "<html>%1$s</html>";
         try {
-            valueName = this.node.getValue().getName();
-        } catch (UnsupportedEncodingException e) {
+            valueName = node.getValue().getName();
+        } catch (UnsupportedEncodingException ex) {
             valueName = Bundle.RejTreeValueView_failedToDecode_valueName();
         }
 
         try {
-            valueType = this.node.getValue().getValueType().toString();
-        } catch (RegistryParseException e) {
+            valueType = node.getValue().getValueType().toString();
+        } catch (RegistryParseException ex) {
             valueType = Bundle.RejTreeValueView_failedToDecode_valueType();
         }
 
@@ -86,7 +83,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
         // this valueComponent must be set in the follow try/catch block.
         JComponent valueComponent;
         try {
-            ValueData data = this.node.getValue().getValue();
+            ValueData data = node.getValue().getValue();
 
             // the case statements are a bit repetitive, but i think make more sense than confusingly-nested if/elses
             switch (data.getValueType()) {

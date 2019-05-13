@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -21,6 +21,9 @@
  */
 package org.sleuthkit.autopsy.rejview;
 
+/**
+ * Event to indicate which node has been selected
+ */
 public final class RejTreeNodeSelectionEvent {
 
     private final RejTreeNode node;

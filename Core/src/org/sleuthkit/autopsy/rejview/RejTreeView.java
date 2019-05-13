@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -47,9 +47,7 @@ final class RejTreeView extends JScrollPane {
     private static final long serialVersionUID = 1L;
     private final DefaultTreeModel treeModel;
     private final RejTreeViewListener rejTreeViewListener = new RejTreeViewListener();
-    private final RegistryHive hive;
     private final CopyOnWriteArrayList<RejTreeNodeSelectionListener> nodeSelectionListeners;
-    private final JTree tree;
 
     /**
      * Construct a new RejTreeView given the RegistrHive object
@@ -58,24 +56,23 @@ final class RejTreeView extends JScrollPane {
      */
     @NbBundle.Messages({"RejTreeView.failureValueName.text=PARSE FAILED"})
     RejTreeView(RegistryHive hive) {
-        this.hive = hive;
         DefaultMutableTreeNode rootNode;
         this.nodeSelectionListeners = new CopyOnWriteArrayList<>();
         try {
-            rootNode = getTreeNode(new RejTreeKeyNode(this.hive.getRoot()));
+            rootNode = getTreeNode(new RejTreeKeyNode(hive.getRoot()));
         } catch (RegistryParseException ex) {
             logger.log(Level.WARNING, "Failed to parse root key", ex);
             rootNode = new DefaultMutableTreeNode(Bundle.RejTreeView_failureValueName_text());
         }
         this.treeModel = new DefaultTreeModel(rootNode);
         this.treeModel.setAsksAllowsChildren(true);
-        this.tree = new JTree(this.treeModel);
-        this.tree.addTreeExpansionListener(rejTreeViewListener);
-        this.tree.addTreeSelectionListener(rejTreeViewListener);
+        JTree tree = new JTree(this.treeModel);
+        tree.addTreeExpansionListener(rejTreeViewListener);
+        tree.addTreeSelectionListener(rejTreeViewListener);
         // here's a bit of a hack to force the children to be loaded and shown
-        this.tree.collapsePath(new TreePath(rootNode.getPath()));
-        this.tree.expandPath(new TreePath(rootNode.getPath()));
-        setViewportView(this.tree);
+        tree.collapsePath(new TreePath(rootNode.getPath()));
+        tree.expandPath(new TreePath(rootNode.getPath()));
+        setViewportView(tree);
         setPreferredSize(new Dimension(350, 20));
     }
 
@@ -131,6 +128,7 @@ final class RejTreeView extends JScrollPane {
 
         @Override
         public void treeCollapsed(TreeExpansionEvent event) {
+            //Empty method 
         }
 
         @Override

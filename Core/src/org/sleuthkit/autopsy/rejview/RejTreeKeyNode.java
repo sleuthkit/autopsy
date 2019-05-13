@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -24,7 +24,6 @@ package org.sleuthkit.autopsy.rejview;
 import com.williballenthin.rejistry.RegistryKey;
 import com.williballenthin.rejistry.RegistryParseException;
 import com.williballenthin.rejistry.RegistryValue;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -33,6 +32,9 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * Node for a RejTreeKeyNode
+ */
 public final class RejTreeKeyNode implements RejTreeNode {
 
     private static final Logger logger = Logger.getLogger(RejTreeKeyNode.class.getName());

@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -24,7 +24,6 @@ package org.sleuthkit.autopsy.rejview;
 import com.williballenthin.rejistry.HexDump;
 import com.williballenthin.rejistry.RegistryParseException;
 import com.williballenthin.rejistry.ValueData;
-
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
@@ -42,7 +41,7 @@ final class RegeditExeValueFormatter {
         StringBuilder sb = new StringBuilder();
 
         switch (val.getValueType()) {
-            case REG_SZ:
+            case REG_SZ: // empty case - intentional fall-through
             case REG_EXPAND_SZ: {
 
                 String valString = val.getAsString();
@@ -71,7 +70,7 @@ final class RegeditExeValueFormatter {
                 }
                 break;
             }
-            case REG_DWORD:
+            case REG_DWORD: // empty case - intentional fall-through
             case REG_BIG_ENDIAN: {
                 sb.append(String.format("0x%08x (%d)", val.getAsNumber(), val.getAsNumber()));
                 break;

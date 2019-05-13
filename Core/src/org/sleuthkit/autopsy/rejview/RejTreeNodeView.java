@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -24,6 +24,9 @@ package org.sleuthkit.autopsy.rejview;
 import java.awt.LayoutManager;
 import javax.swing.JPanel;
 
+/**
+ * JPanel to display a RejTreeNodeView
+ */
 public class RejTreeNodeView extends JPanel {
 
     private static final long serialVersionUID = 1L;

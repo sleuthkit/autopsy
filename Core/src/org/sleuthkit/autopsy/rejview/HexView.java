@@ -1,5 +1,5 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -22,7 +22,6 @@
 package org.sleuthkit.autopsy.rejview;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import javax.swing.border.BevelBorder;
@@ -58,13 +57,10 @@ final class HexView extends JPanel {
     private static final Logger logger = Logger.getLogger(HexView.class.getName());
     private static final long serialVersionUID = 1L;
     private final int bytesPerLine;
-    private final ByteBuffer buf;
     private final HexViewListener hexViewListener = new HexViewListener();
-    private final JTextComponent offsetView;
-    private final JTextComponent hexView;
-    private final JTextComponent asciiView;
+    private final JTextComponent hexViewTextArea;
+    private final JTextComponent asciiViewTextArea;
     private final JLabel statusLabel;
-    private final Color highlightColor;
     private final DefaultHighlighter.DefaultHighlightPainter highlighterPainter;
     // these flags are used to ensure we don't end up in a circular event loop where
     //   one component fires an event on the other, who volley's it back.
@@ -88,14 +84,13 @@ final class HexView extends JPanel {
      */
     HexView(ByteBuffer buf, int bytesPerLine) {
         super(new BorderLayout());
-        this.buf = buf;
         this.bytesPerLine = bytesPerLine;
 
         Font font = new Font("Monospaced", Font.PLAIN, 12);  //Non-NLS
 
-        this.offsetView = new JTextArea();
-        this.hexView = new JTextArea();
-        this.asciiView = new JTextArea();
+        JTextComponent offsetView = new JTextArea();
+        this.hexViewTextArea = new JTextArea();
+        this.asciiViewTextArea = new JTextArea();
         JPanel statusView = new JPanel();
 
         // status bar
@@ -108,21 +103,21 @@ final class HexView extends JPanel {
         statusView.add(this.statusLabel);
 
         // right panes are split
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, this.hexView, this.asciiView);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, this.hexViewTextArea, this.asciiViewTextArea);
         splitPane.setResizeWeight(0.5);
         splitPane.setOneTouchExpandable(true);
         splitPane.setContinuousLayout(true);
 
         // three panes sitting together
         JPanel panes = new JPanel(new BorderLayout());
-        panes.add(this.offsetView, BorderLayout.WEST);
+        panes.add(offsetView, BorderLayout.WEST);
         panes.add(splitPane, BorderLayout.CENTER);
         JScrollPane scroller = new JScrollPane(panes);
         this.add(scroller, BorderLayout.CENTER);
 
         offsetView.setFont(font);
-        hexView.setFont(font);
-        asciiView.setFont(font);
+        hexViewTextArea.setFont(font);
+        asciiViewTextArea.setFont(font);
 
         StringBuilder offsetSB = new StringBuilder();
         StringBuilder hexSB = new StringBuilder();
@@ -148,22 +143,25 @@ final class HexView extends JPanel {
             }
 
             if (i % this.bytesPerLine == this.bytesPerLine - 1) {
-                hexSB.append("\n");
-                asciiSB.append("\n");
+                hexSB.append('\n');
+                asciiSB.append('\n');
             }
         }
 
-        this.offsetView.setText(offsetSB.toString());
-        this.hexView.setText(hexSB.toString());
-        this.asciiView.setText(asciiSB.toString());
-        this.hexView.addCaretListener(hexViewListener);
-        this.asciiView.addCaretListener(hexViewListener);
-        this.asciiView.setSelectedTextColor(this.asciiView.getForeground());
-        this.hexView.setSelectedTextColor(this.asciiView.getForeground());
-        this.highlightColor = this.hexView.getSelectionColor();
-        this.highlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(this.highlightColor);
+        offsetView.setText(offsetSB.toString());
+        this.hexViewTextArea.setText(hexSB.toString());
+        this.asciiViewTextArea.setText(asciiSB.toString());
+        this.hexViewTextArea.addCaretListener(hexViewListener);
+        this.asciiViewTextArea.addCaretListener(hexViewListener);
+        this.asciiViewTextArea.setSelectedTextColor(this.asciiViewTextArea.getForeground());
+        this.hexViewTextArea.setSelectedTextColor(this.asciiViewTextArea.getForeground());
+        this.highlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(this.hexViewTextArea.getSelectionColor());
     }
 
+    /**
+     * Private listener class to listen make changes based on events in the
+     * asciiViewTextArea component and the hexViewTextArea
+     */
     private class HexViewListener implements CaretListener {
 
         @Override
@@ -172,7 +170,7 @@ final class HexView extends JPanel {
                 this.clearHighlight();
             }
 
-            if (e.getSource() == asciiView) {
+            if (e.getSource() == asciiViewTextArea) {
                 int startByte = e.getMark();
                 int endByte = e.getDot();
 
@@ -198,7 +196,7 @@ final class HexView extends JPanel {
                 asciiLastSelectionEnd = endByte;
 
                 this.setSelection(startByte, endByte);
-            } else if (e.getSource() == hexView) {
+            } else if (e.getSource() == hexViewTextArea) {
                 int startByte = e.getMark();
                 int endByte = e.getDot();
 
@@ -226,7 +224,7 @@ final class HexView extends JPanel {
 
                 this.setSelection(startByte, endByte);
             } else {
-                logger.log(Level.INFO, "from unknown");
+                logger.log(Level.INFO, "Source of event was neither the ascii view or the hex view text area");
             }
         }
 
@@ -279,8 +277,8 @@ final class HexView extends JPanel {
          * clearHighlight removes any colors applied to the text views.
          */
         private void clearHighlight() {
-            asciiView.getHighlighter().removeAllHighlights();
-            hexView.getHighlighter().removeAllHighlights();
+            asciiViewTextArea.getHighlighter().removeAllHighlights();
+            hexViewTextArea.getHighlighter().removeAllHighlights();
         }
 
         /**
@@ -296,8 +294,8 @@ final class HexView extends JPanel {
             this.clearHighlight();
 
             try {
-                asciiView.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, highlighterPainter);
-                hexView.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, highlighterPainter);
+                asciiViewTextArea.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, highlighterPainter);
+                hexViewTextArea.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, highlighterPainter);
             } catch (BadLocationException ex) {
                 logger.log(Level.WARNING, "bad location", ex);
             }
