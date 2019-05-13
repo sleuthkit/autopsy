@@ -58,7 +58,7 @@ final class DataSourceSummaryNode extends AbstractNode {
      *                       DataSources which are this nodes children
      */
     DataSourceSummaryNode(List<DataSourceSummary> dataSourceList) {
-        super(Children.create(new DataSourceSummaryChildren(dataSourceList), true));
+        super(Children.create(new DataSourceSummaryChildren(dataSourceList), false));
     }
 
     /**
