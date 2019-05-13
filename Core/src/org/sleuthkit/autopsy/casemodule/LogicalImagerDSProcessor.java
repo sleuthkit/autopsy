@@ -19,15 +19,13 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.nio.file.Path;
-import java.util.UUID;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 
 /**
  * A Logical Imager data source processor that implements the DataSourceProcessor service
