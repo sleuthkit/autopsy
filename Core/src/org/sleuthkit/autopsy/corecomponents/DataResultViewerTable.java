@@ -909,7 +909,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 pageNextButton.setEnabled(currentPage != totalPages);
                 pagePrevButton.setEnabled(currentPage != 1);
-                gotoPageTextField.setEnabled(currentPage != totalPages);
+                gotoPageTextField.setEnabled(totalPages > 1);
                 gotoPageTextField.setText("");
             }
         }
