@@ -22,7 +22,6 @@ FiltersPanel.refreshButton.text=Refresh
 FiltersPanel.deviceRequiredLabel.text=Select at least one.
 FiltersPanel.accountTypeRequiredLabel.text=Select at least one.
 FiltersPanel.needsRefreshLabel.text=Displayed data is out of date. Press Refresh.
-MessageBrowser.DataResultViewerTable.title=Messages
 OpenCVTAction.displayName=Communications
 PinAccountsAction.pluralText=Add Selected Accounts to Visualization
 PinAccountsAction.singularText=Add Selected Account to Visualization
@@ -76,24 +75,19 @@ VisualizationPanel.zoomInButton.toolTipText=Zoom in
 VisualizationPanel.zoomInButton.text=
 VisualizationPanel.zoomOutButton.toolTipText=Zoom out
 VisualizationPanel.zoomOutButton.text=
-<<<<<<< HEAD
-VisualizationPanel.fastOrganicLayoutButton.text=Redraw
-VisualizationPanel.clearVizButton.text_1=Clear
+VisualizationPanel.fastOrganicLayoutButton.text=
 VisualizationPanel.backButton.text_1=
-VisualizationPanel.forwardButton.text=
-=======
 VisualizationPanel.circleLayoutButton.text=Circle
 VisualizationPanel.organicLayoutButton.text=Organic
-VisualizationPanel.fastOrganicLayoutButton.text=
 VisualizationPanel.hierarchyLayoutButton.text=Hierarchical
 VisualizationPanel.clearVizButton.text_1=
 VisualizationPanel.snapshotButton.text_1=Snapshot Report
->>>>>>> develop
 VisualizationPanel.clearVizButton.actionCommand=
 VisualizationPanel.backButton.toolTipText=Click to go back
 VisualizationPanel.forwardButton.toolTipText=Click to go forward
 VisualizationPanel.fastOrganicLayoutButton.toolTipText=Click to redraw the chart
 VisualizationPanel.clearVizButton.toolTipText=Click to clear the chart
+VisualizationPanel.forwardButton.text=
 VisualizationPanel_action_dialogs_title=Communications
 VisualizationPanel_action_name_text=Snapshot Report
 VisualizationPanel_module_name=Communications
