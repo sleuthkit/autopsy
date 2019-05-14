@@ -25,12 +25,14 @@ import com.williballenthin.rejistry.RegistryParseException;
 import com.williballenthin.rejistry.ValueData;
 import java.awt.BorderLayout;
 import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * JPanel to display a RejTreeValueView
@@ -38,6 +40,7 @@ import org.openide.util.NbBundle.Messages;
 public final class RejTreeValueView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(RejTreeValueView.class.getName());
 
     @Messages({"RejTreeValueView.template.name=Name:",
         "RejTreeValueView.template.type=Type:",
@@ -67,12 +70,14 @@ public final class RejTreeValueView extends RejTreeNodeView {
         try {
             valueName = node.getValue().getName();
         } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.WARNING, "Failed to get value name", ex);
             valueName = Bundle.RejTreeValueView_failedToDecode_valueName();
         }
 
         try {
             valueType = node.getValue().getValueType().toString();
         } catch (RegistryParseException ex) {
+            logger.log(Level.WARNING, "Failed to get value type", ex);
             valueType = Bundle.RejTreeValueView_failedToDecode_valueType();
         }
 
@@ -127,6 +132,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
                 }
             }
         } catch (RegistryParseException | UnsupportedEncodingException e) {
+            logger.log(Level.WARNING, "Failure getting or parsing value value", ex);
             JLabel valueLabel = new JLabel(String.format(valueTemplate, Bundle.RejTreeValueView_failedToParse_value()), JLabel.LEFT);
             valueLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_valueBorder_title()));
             valueLabel.setVerticalAlignment(SwingConstants.TOP);

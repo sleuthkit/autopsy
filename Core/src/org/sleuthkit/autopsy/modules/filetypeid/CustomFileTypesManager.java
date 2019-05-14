@@ -324,7 +324,7 @@ final class CustomFileTypesManager {
             byteArray = DatatypeConverter.parseHexBinary("72656766"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
-            fileType = new FileType("custom/windows-nt-registry", signatureList); //NON-NLS
+            fileType = new FileType("application/x.windows-registry", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
 
         } catch (IllegalArgumentException ex) {

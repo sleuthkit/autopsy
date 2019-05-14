@@ -77,18 +77,21 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         try {
             keyName = node.getKey().getName();
         } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.WARNING, "Failed to parse key name", ex);
             keyName = Bundle.RejTreeKeyView_failedToParse_keyName();
         }
 
         try {
             numSubkeys = node.getKey().getSubkeyList().size();
         } catch (RegistryParseException ex) {
+            logger.log(Level.WARNING, "Failed to get subkeylist from key", ex);
             numSubkeys = -1;
         }
 
         try {
             numValues = node.getKey().getValueList().size();
         } catch (RegistryParseException ex) {
+            logger.log(Level.WARNING, "Failed to get value list from key", ex);
             numValues = -1;
         }
 

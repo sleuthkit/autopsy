@@ -92,6 +92,7 @@ final class RegeditExeValueFormatter {
                 if (valData.limit() > 16) {
                     sb.append("...");
                 }
+                break;
             }
         }
         return sb.toString();

@@ -297,7 +297,7 @@ final class HexView extends JPanel {
                 asciiViewTextArea.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, highlighterPainter);
                 hexViewTextArea.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, highlighterPainter);
             } catch (BadLocationException ex) {
-                logger.log(Level.WARNING, "bad location", ex);
+                logger.log(Level.WARNING, "Invalid highlighting location specified", ex);
             }
         }
     }
