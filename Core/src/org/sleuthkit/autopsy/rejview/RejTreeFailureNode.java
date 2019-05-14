@@ -25,8 +25,15 @@ import java.util.List;
  * Node to serve as a place holder in the RejTree in when a failure occurs
  */
 public class RejTreeFailureNode implements RejTreeNode {
+
     private final String failureText;
 
+    /**
+     * Construct a RejTreeFailureNode
+     *
+     * @param text the text to display due to the failure, will appear as the
+     *             nodes name
+     */
     public RejTreeFailureNode(String text) {
         this.failureText = text;
     }
