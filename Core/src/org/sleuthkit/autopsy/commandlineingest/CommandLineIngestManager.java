@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import static org.sleuthkit.autopsy.casemodule.CaseMetadata.getFileExtension;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
@@ -150,6 +151,27 @@ public class CommandLineIngestManager {
                                 }
                                 break;
                             case ADD_DATA_SOURCE:
+                                try {
+                                    LOGGER.log(Level.INFO, "Processing 'add data source' command");
+                                    System.out.println("Processing 'add data source' command");
+                                    Map<String, String> inputs = command.getInputs();
+
+                                    // open the case, if it hasn't been already opened by CREATE_CASE command
+                                    if (caseForJob == null) {
+                                        String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                        openCase(caseDirPath);
+                                    }
+
+                                    String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
+                                    dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
+                                    runDataSourceProcessor(caseForJob, dataSource);
+                                } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | CaseActionException ex) {
+                                    String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
+                                    LOGGER.log(Level.SEVERE, "Error adding data source " + dataSourcePath, ex);
+                                    System.out.println("Error adding data source " + dataSourcePath);
+                                    // Do not process any other commands
+                                    return;
+                                }
                                 break;
                             case RUN_INGEST:
                                 break;
@@ -249,6 +271,54 @@ public class CommandLineIngestManager {
             LOGGER.log(Level.INFO, "Opened case {0}", caseForJob.getName());
         }
 
+        /**
+         * Opens existing case.
+         *
+         * @param caseFolderPath full path to case directory
+         * @throws CaseActionException
+         */
+        private void openCase(String caseFolderPath) throws CaseActionException {
+            
+            LOGGER.log(Level.INFO, "Opening case in directory {0}", caseFolderPath);
+
+            String metadataFilePath = findAutFile(caseFolderPath);
+            Case.openAsCurrentCase(metadataFilePath);
+
+            caseForJob = Case.getCurrentCase();
+            LOGGER.log(Level.INFO, "Opened case {0}", caseForJob.getName());
+        }
+        
+        /**
+         * Finds the path to the .aut file for the specified case directory.
+         *
+         * @param caseDirectory the directory to check for a .aut file
+         *
+         * @return the path to the first .aut file found in the directory
+         *
+         * @throws CaseActionException if there was an issue finding a .aut file
+         */
+        private String findAutFile(String caseDirectory) throws CaseActionException {
+            File caseFolder = Paths.get(caseDirectory).toFile();
+            if (caseFolder.exists()) {
+                /*
+                 * Search for '*.aut' files.
+                 */
+                File[] fileArray = caseFolder.listFiles();
+                if (fileArray == null) {
+                    throw new CaseActionException("No files found in case directory");
+                }
+                String autFilePath = null;
+                for (File file : fileArray) {
+                    String name = file.getName().toLowerCase();
+                    if (autFilePath == null && name.endsWith(getFileExtension())) {
+                        return file.getAbsolutePath();
+                    }
+                }
+                throw new CaseActionException("No .aut files found in case directory");
+            }
+            throw new CaseActionException("Case directory was not found");
+        } 
+        
         /**
          * Passes the data source for the current job through a data source
          * processor that adds it to the case database.
