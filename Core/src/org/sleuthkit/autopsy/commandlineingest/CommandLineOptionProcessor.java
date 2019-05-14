@@ -155,7 +155,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         // First create the "CREATE_CASE" command, if present
         if (values.containsKey(createCaseCommandOption)) {
 
-            if (dataSourcePath.isEmpty()) {
+            if (inputCaseName.isEmpty()) {
                 logger.log(Level.SEVERE, "'caseName' argument is empty");
                 System.out.println("'caseName' argument is empty");
                 runFromCommandLine = false;
