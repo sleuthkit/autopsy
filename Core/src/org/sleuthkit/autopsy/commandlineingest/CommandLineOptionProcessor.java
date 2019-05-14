@@ -68,7 +68,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         runFromCommandLine = false;
 
         // input arguments must contain at least one command
-        if (!values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption) /* || OtherCommands */) {
+        if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption) /* || OtherCommands */)) {
             // not running from command line
             logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
             System.out.println("No command line commands passed in as inputs. Not running from command line.");
