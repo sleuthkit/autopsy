@@ -39,7 +39,7 @@ class DataSourcesKnownAndSlackFilter<T extends Content> extends KnownAndSlackFil
         UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
             if (evt.getKey().equals(UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE)) {
                 filterKnown = UserPreferences.hideKnownFilesInDataSourcesTree();
-            } else if (evt.getKey().equals(UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE)) {
+            } else if (evt.getKey().equals(UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE)) {
                 filterSlack = UserPreferences.hideSlackFilesInDataSourcesTree();
             }
         });

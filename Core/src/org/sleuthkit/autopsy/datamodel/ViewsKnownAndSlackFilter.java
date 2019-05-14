@@ -39,7 +39,7 @@ class ViewsKnownAndSlackFilter<T extends Content> extends KnownAndSlackFilterBas
         UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
             if (evt.getKey().equals(UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE)) {
                 filterKnown = UserPreferences.hideKnownFilesInViewsTree();
-            } else if (evt.getKey().equals(UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE)) {
+            } else if (evt.getKey().equals(UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE)) {
                 filterSlack = UserPreferences.hideSlackFilesInViewsTree();
             }
         });
