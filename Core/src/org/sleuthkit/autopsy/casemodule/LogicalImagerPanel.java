@@ -27,12 +27,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileSystemView;
@@ -94,6 +94,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         LogicalImagerPanel instance = new LogicalImagerPanel(context);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
         instance.messageLabel.setText(Bundle.LogicalImagerPanel_messageLabel_clickScanOrBrowse());
+        instance.imageTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         return instance;
     }
 
@@ -227,7 +228,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                                 .addGroup(layout.createSequentialGroup()
                                     .addGap(144, 144, 144)
                                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap(68, Short.MAX_VALUE))))
+                        .addContainerGap(48, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -275,7 +276,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         // Scan external drives for sparse_image.vhd
         clearImageTable();
         setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_scanningExternalDrives());
-        Vector<String> listData = new Vector<>();
+        List<String> listData = new ArrayList<>();
         File[] roots = File.listRoots();
         int firstRemovableDrive = -1;
         int i = 0;
@@ -296,7 +297,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             }
             i++;
         }
-        driveList.setListData(listData);
+        driveList.setListData(listData.toArray(new String[0]));
         if (!listData.isEmpty()) {
             // auto-select the first external drive, if any
             driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
@@ -305,6 +306,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         } else {
             setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_noExternalDriveFound());
         }
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
     }//GEN-LAST:event_scanButtonActionPerformed
 
     @Messages({
@@ -333,7 +335,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             } else {
                 setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryFormatInvalid(path));
                 firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
-                return;
             }
         } else {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
@@ -434,14 +435,17 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     
     private void driveListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseClicked
         driveListSelect();
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
     }//GEN-LAST:event_driveListMouseClicked
 
     private void driveListKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_driveListKeyReleased
         driveListSelect();
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
     }//GEN-LAST:event_driveListKeyReleased
 
     private void imageTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_imageTableKeyReleased
         imageTableSelect();
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
     }//GEN-LAST:event_imageTableKeyReleased
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
