@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
+    private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
     private final LogicalImagerPanel configPanel;
     
     /*
@@ -125,10 +126,10 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        Path imagePath = configPanel.getImagePath();
-        if (!imagePath.toFile().exists()) {
+        Path imageDirPath = configPanel.getImageDirPath();
+        if (!imageDirPath.toFile().exists()) {
             // TODO: Better ways to detect ejected USB drive?
-            String msg = imagePath.toString() + " not found.\nUSB drive has been ejected.";
+            String msg = imageDirPath.toString() + " not found.\nUSB drive has been ejected.";
             JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -143,22 +144,22 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
                 return;
             }
         }
-        String imagePathParent = imagePath.getParent().toFile().getName();
-        File dest = Paths.get(logicalImagerDir.toString(), imagePathParent).toFile();
+        File dest = Paths.get(logicalImagerDir.toString(), imageDirPath.getFileName().toString()).toFile();
         if (dest.exists()) {
             // directory already exists
             String msg = "Directory " + dest.toString() + " already exists";
             JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
+            configPanel.popDownPanel();
             return;
         }
-        File src = imagePath.getParent().toFile();
+        File src = imageDirPath.toFile();
         try {
             configPanel.setMessageLabel("Copying " + src.toString() + " directory to " + dest.toString());
             FileUtils.copyDirectory(src, dest);
             configPanel.setMessageLabel("");
         } catch (IOException ex) {
             // Copy directory failed
-            String msg = "Failed to copy directory " + imagePath.getParent().toString() + " to " + dest.toString() ;
+            String msg = "Failed to copy directory " + src.toString() + " to " + dest.toString() ;
             JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -166,7 +167,7 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
         String deviceId = UUID.randomUUID().toString();
         String timeZone = Calendar.getInstance().getTimeZone().getID();
         boolean ignoreFatOrphanFiles = false;
-        run(deviceId, imagePath.toString(), 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
+        run(deviceId, Paths.get(src.toString(), SPARSE_IMAGE_VHD).toString(), 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
     }
     
     /**

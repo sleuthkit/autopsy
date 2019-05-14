@@ -172,6 +172,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             }
         ));
         imageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        imageTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         imageTable.setShowHorizontalLines(false);
         imageTable.setShowVerticalLines(false);
         imageTable.getTableHeader().setReorderingAllowed(false);
@@ -227,7 +228,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                                 .addGroup(layout.createSequentialGroup()
                                     .addGap(144, 144, 144)
                                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap(68, Short.MAX_VALUE))))
+                        .addContainerGap(48, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -468,6 +469,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_clickScanOrBrowse());
     }
 
+    public void popDownPanel() {
+    }
+    
     /**
      * Should we enable the next button of the wizard?
      *
