@@ -76,9 +76,6 @@ public final class RejTreeValueNode implements RejTreeNode {
         return this.value;
     }
 
-    /**
-     * TODO(wb): this isn't exactly MVC...
-     */
     @Override
     public RejTreeNodeView getView() {
         return new RejTreeValueView(this);

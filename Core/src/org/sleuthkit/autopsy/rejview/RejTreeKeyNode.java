@@ -92,9 +92,6 @@ public final class RejTreeKeyNode implements RejTreeNode {
         return this.key;
     }
 
-    /**
-     * TODO(wb): this isn't exactly MVC...
-     */
     @Override
     public RejTreeNodeView getView() {
         return new RejTreeKeyView(this);
