@@ -124,11 +124,11 @@ class ExtractRegistry extends Extract {
         rrHome = rrRoot.toPath();
         String rrPath = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
-        String rrFullPath = rrFullHome.resolve(executableToRun).toString();
 
         if (!(new File(rrPath).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
+        String rrFullPath = rrFullHome.resolve(executableToRun).toString();
         if (!(new File(rrFullPath).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
