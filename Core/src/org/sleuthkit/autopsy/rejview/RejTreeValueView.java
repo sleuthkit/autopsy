@@ -92,7 +92,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
 
             // the case statements are a bit repetitive, but i think make more sense than confusingly-nested if/elses
             switch (data.getValueType()) {
-                case REG_SZ:
+                case REG_SZ: // empty case - intentional fall-through
                 case REG_EXPAND_SZ: {
                     String valueValue = data.getAsString();
                     JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
@@ -114,8 +114,8 @@ public final class RejTreeValueView extends RejTreeNodeView {
                     valueComponent = valueLabel;
                     break;
                 }
-                case REG_DWORD:
-                case REG_QWORD:
+                case REG_DWORD: // empty case - intentional fall-through
+                case REG_QWORD: // empty case - intentional fall-through
                 case REG_BIG_ENDIAN: {
                     String valueValue = String.format("0x%x", data.getAsNumber());
                     JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
