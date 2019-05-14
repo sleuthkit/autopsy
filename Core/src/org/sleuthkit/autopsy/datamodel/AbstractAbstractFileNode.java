@@ -169,10 +169,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     // data sources branch of the tree. The parent nodes in other
                     // branches of the tree (e.g. File Types and Deleted Files) do
                     // not need to be refreshed.
-                    if (parentsChildren instanceof ContentChildren) {
-                        ((ContentChildren) parentsChildren).refreshChildren();
-                        parentsChildren.getNodesCount();
-                    }
+
+// TODO: How will this work with ChildFactory approach?
+//                    if (parentsChildren instanceof ContentChildren) {                     
+//                        ((ContentChildren) parentsChildren).refreshChildren();
+//                        parentsChildren.getNodesCount();
+//                    }
                 } catch (NullPointerException ex) {
                     // Skip
                 }

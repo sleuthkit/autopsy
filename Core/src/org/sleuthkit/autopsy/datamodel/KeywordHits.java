@@ -660,7 +660,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         private TermNode(String setName, String keyword) {
             super(Children.create(createChildFactory(setName, keyword), true), Lookups.singleton(keyword), keyword);
 
-           /**
+            /**
              * We differentiate between the programmatic name and the display
              * name. The programmatic name is used to create an association with
              * an event bus and must be the same as the node name passed by our

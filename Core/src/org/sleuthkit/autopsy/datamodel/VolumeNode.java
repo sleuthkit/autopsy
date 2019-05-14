@@ -109,7 +109,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                         if (parent.getParent().getId() == getContent().getId()) {
                             Children children = getChildren();
                             if (children != null) {
-                                ((ContentChildren) children).refreshChildren();
+//                                ((ContentChildren) children).refreshChildren();
                                 children.getNodesCount();
                             }
                         }

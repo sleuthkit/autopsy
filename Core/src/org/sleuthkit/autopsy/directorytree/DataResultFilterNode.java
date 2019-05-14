@@ -320,17 +320,17 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         protected Node[] createNodes(Node key) {
-            AbstractFile file = key.getLookup().lookup(AbstractFile.class);
-            if (file != null) {
-                if (filterKnown && (file.getKnown() == TskData.FileKnown.KNOWN)) {
-                    // Filter out child nodes that represent known files
-                    return new Node[]{};
-                }
-                if (filterSlack && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
-                    // Filter out child nodes that represent slack files
-                    return new Node[]{};
-                }
-            }
+//            AbstractFile file = key.getLookup().lookup(AbstractFile.class);
+//            if (file != null) {
+//                if (filterKnown && (file.getKnown() == TskData.FileKnown.KNOWN)) {
+//                    // Filter out child nodes that represent known files
+//                    return new Node[]{};
+//                }
+//                if (filterSlack && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+//                    // Filter out child nodes that represent slack files
+//                    return new Node[]{};
+//                }
+//            }
 
             // filter out all non-message artifacts, if displaying the results from the Data Source tree
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
