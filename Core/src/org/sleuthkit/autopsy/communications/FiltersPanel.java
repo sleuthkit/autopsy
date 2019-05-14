@@ -32,7 +32,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -240,19 +245,18 @@ final public class FiltersPanel extends JPanel {
                 //don't show a check box for credit cards
             } else {
                 accountTypeMap.computeIfAbsent(type, t -> {
-                    final JCheckBox jCheckBox = new JCheckBox(
-                            "<html><table cellpadding=0><tr><td><img src=\""
-                            + FiltersPanel.class.getResource(Utils.getIconFilePath(type))
-                            + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                            true
-                    );
-                    jCheckBox.addItemListener(validationListener);
-                    accountTypeListPane.add(jCheckBox);
+
+                    CheckBoxIconPanel panel = new CheckBoxIconPanel(
+                            type.getDisplayName(), 
+                            new ImageIcon(FiltersPanel.class.getResource(Utils.getIconFilePath(type))));
+                    panel.setSelected(true);
+                    panel.addItemListener(validationListener);
+                    accountTypeListPane.add(panel);
                     if (t.equals(Account.Type.DEVICE)) {
                         //Deveice type filter is enabled based on whether we are in table or graph view.
-                        jCheckBox.setEnabled(deviceAccountTypeEnabled);
+                        panel.setEnabled(deviceAccountTypeEnabled);
                     }
-                    return jCheckBox;
+                    return panel.getCheckBox();
                 });
             }
         });
@@ -402,6 +406,8 @@ final public class FiltersPanel extends JPanel {
             }
         });
 
+        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
+
         accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.Y_AXIS));
         accountTypesScrollPane.setViewportView(accountTypeListPane);
 
@@ -427,7 +433,7 @@ final public class FiltersPanel extends JPanel {
                         .addComponent(checkAllAccountTypesButton))
                     .addGroup(accountTypesPaneLayout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addComponent(accountTypesScrollPane)))
+                        .addComponent(accountTypesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(0, 0, 0))
         );
         accountTypesPaneLayout.setVerticalGroup(
@@ -437,8 +443,8 @@ final public class FiltersPanel extends JPanel {
                     .addComponent(accountTypesLabel)
                     .addComponent(accountTypeRequiredLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(accountTypesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(accountTypesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(accountTypesPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkAllAccountTypesButton)
                     .addComponent(unCheckAllAccountTypesButton)))
@@ -581,9 +587,9 @@ final public class FiltersPanel extends JPanel {
             }
         });
 
-        limitErrorMsgLabel.setForeground(new java.awt.Color(255, 0, 0));
         limitErrorMsgLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
         limitErrorMsgLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.limitErrorMsgLabel.text")); // NOI18N
+        limitErrorMsgLabel.setForeground(new java.awt.Color(255, 0, 0));
         limitErrorMsgLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
 
         javax.swing.GroupLayout limitPaneLayout = new javax.swing.GroupLayout(limitPane);
@@ -652,7 +658,7 @@ final public class FiltersPanel extends JPanel {
                 .addComponent(dateRangePane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(limitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(62, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -892,4 +898,64 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
+
+    
+    /**
+     * This class is a small panel that appears to just be a checkbox but 
+     * adds the functionality of being able to show an icon between the checkbox
+     * and label.
+     */
+    final class CheckBoxIconPanel extends JPanel{
+        private final JCheckBox checkbox;
+        private final JLabel label;
+        
+        /**
+         * Creates a JPanel instance with the specified label and image.
+         * 
+         * @param labelText The text to be displayed by the checkbox label.
+         * @param image The image to be dispayed by the label.
+         */
+        private CheckBoxIconPanel(String labelText, Icon image) {
+            checkbox = new JCheckBox();
+            label = new JLabel(labelText);
+            label.setIcon(image);
+            setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+            
+            add(checkbox);
+            add(label);
+            add(Box.createHorizontalGlue());
+        }
+        
+        /**
+         * Sets the state of the checkbox.
+         * 
+         * @param selected true if the button is selected, otherwise false
+         */
+        void setSelected(boolean selected) {
+            checkbox.setSelected(selected);
+        }
+        
+        @Override
+        public void setEnabled(boolean enabled) {
+            checkbox.setEnabled(enabled);
+        }
+        
+        /**
+         * Returns the instance of the JCheckBox.
+         * 
+         * @return JCheckbox instance
+         */
+        JCheckBox getCheckBox() {
+            return checkbox;
+        }
+        
+        /**
+         * Adds an ItemListener to the checkbox.
+         * 
+         * @param l the ItemListener to be added.
+         */
+        void addItemListener(ItemListener l) {
+            checkbox.addItemListener(l);
+        }
+    }
 }
