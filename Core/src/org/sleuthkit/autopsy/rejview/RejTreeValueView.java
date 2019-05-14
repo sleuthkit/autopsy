@@ -131,7 +131,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
                     break;
                 }
             }
-        } catch (RegistryParseException | UnsupportedEncodingException e) {
+        } catch (RegistryParseException | UnsupportedEncodingException ex) {
             logger.log(Level.WARNING, "Failure getting or parsing value value", ex);
             JLabel valueLabel = new JLabel(String.format(valueTemplate, Bundle.RejTreeValueView_failedToParse_value()), JLabel.LEFT);
             valueLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_valueBorder_title()));
