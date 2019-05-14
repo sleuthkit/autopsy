@@ -156,15 +156,15 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         if (values.containsKey(createCaseCommandOption)) {
 
             if (dataSourcePath.isEmpty()) {
-                logger.log(Level.SEVERE, "'dataSourcePath' argument is empty");
-                System.out.println("'dataSourcePath' argument is empty");
+                logger.log(Level.SEVERE, "'caseName' argument is empty");
+                System.out.println("'caseName' argument is empty");
                 runFromCommandLine = false;
                 return;
             }
 
-            if (caseDir.isEmpty()) {
-                logger.log(Level.SEVERE, "'caseDir' argument is empty");
-                System.out.println("'caseDir' argument is empty");
+            if (caseBaseDir.isEmpty()) {
+                logger.log(Level.SEVERE, "'caseBaseDir' argument is empty");
+                System.out.println("'caseBaseDir' argument is empty");
                 runFromCommandLine = false;
                 return;
             }
