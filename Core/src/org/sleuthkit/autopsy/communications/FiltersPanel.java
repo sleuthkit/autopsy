@@ -53,6 +53,7 @@ import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.MostRecentFilter;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
+import static org.sleuthkit.datamodel.Relationship.Type.CONTACT;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -675,7 +676,7 @@ final public class FiltersPanel extends JPanel {
         commsFilter.addAndFilter(getAccountTypeFilter());
         commsFilter.addAndFilter(getDateRangeFilter());
         commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
-                ImmutableSet.of(CALL_LOG, MESSAGE)));
+                ImmutableSet.of(CALL_LOG, MESSAGE, CONTACT)));
         commsFilter.addAndFilter(getMostRecentFilter());
         return commsFilter;
     }
