@@ -96,13 +96,11 @@ class ExtractRegistry extends Extract {
     final private static int MS_IN_SEC = 1000;
     final private static String NEVER_DATE = "Never";
     final private static String SECTION_DIVIDER = "-------------------------";
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    final private static Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
     private final List<String> rrCmd = new ArrayList<>();
     private final List<String> rrFullCmd = new ArrayList<>();
-    private String RR_PATH;
-    private String RR_FULL_PATH;
-    private Path rrHome;  // Path to the Autopsy version of RegRipper
-    private Path rrFullHome; // Path to the full version of RegRipper
+    private final Path rrHome;  // Path to the Autopsy version of RegRipper
+    private final Path rrFullHome; // Path to the full version of RegRipper
     private Content dataSource;
     private IngestJobContext context;
 
@@ -124,19 +122,19 @@ class ExtractRegistry extends Extract {
             executableToRun = RIP_PL;
         }
         rrHome = rrRoot.toPath();
-        RR_PATH = rrHome.resolve(executableToRun).toString();
+        String rrPath = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
-        RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
+        String rrFullPath = rrFullHome.resolve(executableToRun).toString();
 
-        if (!(new File(RR_PATH).exists())) {
+        if (!(new File(rrPath).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
-        if (!(new File(RR_FULL_PATH).exists())) {
+        if (!(new File(rrFullPath).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
         if (PlatformUtil.isWindowsOS()) {
-            rrCmd.add(RR_PATH);
-            rrFullCmd.add(RR_FULL_PATH);
+            rrCmd.add(rrPath);
+            rrFullCmd.add(rrFullPath);
         } else {
             String perl;
             File usrBin = new File("/usr/bin/perl");
@@ -149,9 +147,9 @@ class ExtractRegistry extends Extract {
                 throw new IngestModuleException("perl not found in your system");
             }
             rrCmd.add(perl);
-            rrCmd.add(RR_PATH);
+            rrCmd.add(rrPath);
             rrFullCmd.add(perl);
-            rrFullCmd.add(RR_FULL_PATH);
+            rrFullCmd.add(rrFullPath);
         }
     }
 
@@ -242,23 +240,19 @@ class ExtractRegistry extends Extract {
             }
 
             // parse the autopsy-specific output
-            if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
-                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
-                    this.addErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                    this.getName(), regFileName));
-                }
+            if (regOutputFiles.autopsyPlugins.isEmpty() == false && parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                this.getName(), regFileName));
             }
 
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
                 //parse the full regripper output from SAM hive files
-                if (regFileNameLocal.toLowerCase().contains("sam")) {
-                    if (parseSamPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
-                        this.addErrorMessage(
-                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                        this.getName(), regFileName));
-                    }
+                if (regFileNameLocal.toLowerCase().contains("sam") && parseSamPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                    this.getName(), regFileName));
                 }
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
@@ -277,7 +271,6 @@ class ExtractRegistry extends Extract {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
                 }
             }
-
             // delete the hive
             regFileNameLocalFile.delete();
         }
@@ -860,10 +853,9 @@ class ExtractRegistry extends Extract {
             String line = bufferedReader.readLine();
             Set<UserInfo> userSet = new HashSet<>();
             while (line != null) {
-                if (line.contains(SECTION_DIVIDER) && previousLine != null) {
-                    if (previousLine.contains(userInfoSection)) {
-                        readUsers(bufferedReader, userSet);
-                    }
+                if (line.contains(SECTION_DIVIDER) && previousLine != null && previousLine.contains(userInfoSection)) {
+                    readUsers(bufferedReader, userSet);
+
                 }
                 previousLine = line;
                 line = bufferedReader.readLine();
@@ -993,6 +985,9 @@ class ExtractRegistry extends Extract {
 
     }
 
+    /**
+     * Private wrapper class for Registry output files
+     */
     private class RegOutputFiles {
 
         public String autopsyPlugins = "";
