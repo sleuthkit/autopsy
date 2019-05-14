@@ -62,7 +62,7 @@ final class RejTreeView extends JScrollPane {
             rootNode = getTreeNode(new RejTreeKeyNode(hive.getRoot()));
         } catch (RegistryParseException ex) {
             logger.log(Level.WARNING, "Failed to parse root key", ex);
-            rootNode = new DefaultMutableTreeNode(Bundle.RejTreeView_failureValueName_text());
+            rootNode = new DefaultMutableTreeNode(new RejTreeFailureNode(Bundle.RejTreeView_failureValueName_text()));
         }
         this.treeModel = new DefaultTreeModel(rootNode);
         this.treeModel.setAsksAllowsChildren(true);
@@ -117,7 +117,7 @@ final class RejTreeView extends JScrollPane {
             TreePath path = event.getPath();
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
 
-            if (node.getChildCount() == 0 && node.getUserObject() instanceof RejTreeNode) {
+            if (node.getChildCount() == 0) {
                 RejTreeNode n = (RejTreeNode) node.getUserObject();
                 for (RejTreeNode rejTreeNode : n.getChildren()) {
                     node.add(getTreeNode(rejTreeNode));
