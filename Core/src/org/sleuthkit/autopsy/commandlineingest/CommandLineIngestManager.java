@@ -68,6 +68,7 @@ public class CommandLineIngestManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
     private Case caseForJob = null;
+    private AutoIngestDataSource dataSource = null;
 
     public CommandLineIngestManager() {
     }
