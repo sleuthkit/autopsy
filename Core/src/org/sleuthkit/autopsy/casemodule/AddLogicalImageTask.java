@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class AddLogicalImageTask extends AddImageTask {
 
-    private final Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());   
+    private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());   
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS
     private final static String USERS_TXT = "users.txt"; //NON-NLS
     private final File src;
