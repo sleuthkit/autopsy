@@ -19,23 +19,21 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Calendar;
+import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Logical Imager data source processor that implements the DataSourceProcessor service
@@ -48,10 +46,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 )
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
+    private final Logger logger = Logger.getLogger(LogicalImagerDSProcessor.class.getName());   
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
     private final LogicalImagerPanel configPanel;
-    private AddImageTask addImageTask;
+    private AddLogicalImageTask addLogicalImageTask;
     
     /*
      * Constructs a Logical Imager data source processor that implements the
@@ -127,26 +126,36 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param callback        Callback that will be used by the background task
      *                        to return results.
      */
+    @Messages({
+        "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
+        "LogicalImagerDSProcessor.failToCreateDirectory=Fail to create directory {0}",
+        "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
+    })
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
+        
         Path imageDirPath = configPanel.getImageDirPath();
         List<String> errorList = new ArrayList<>();
         List<Content> emptyDataSources = new ArrayList<>();
+        
         if (!imageDirPath.toFile().exists()) {
+            // This can happen if the USB drive was selected in the panel, but
+            // was ejected before pressing the NEXT button
             // TODO: Better ways to detect ejected USB drive?
-            String msg = imageDirPath.toString() + " not found.\nUSB drive has been ejected.";
+            String msg = Bundle.LogicalImagerDSProcessor_imageDirPathNotFound(imageDirPath.toString());
             errorList.add(msg);
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
+        
         // Create the LogicalImager directory under ModuleDirectory
         String moduleDirectory = Case.getCurrentCase().getModuleDirectory();
         File logicalImagerDir = Paths.get(moduleDirectory, LOGICAL_IMAGER_DIR).toFile();
         if (!logicalImagerDir.exists()) {
             if (!logicalImagerDir.mkdir()) {
                 // create failed
-                String msg = "Fail to create directory " + logicalImagerDir;
+                String msg = Bundle.LogicalImagerDSProcessor_failToCreateDirectory(logicalImagerDir);
                 errorList.add(msg);
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
                 return;
@@ -154,58 +163,22 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
         }
         File dest = Paths.get(logicalImagerDir.toString(), imageDirPath.getFileName().toString()).toFile();
         if (dest.exists()) {
-            // directory already exists
-            String msg = "Directory " + dest.toString() + " already exists";
+            // Destination directory already exists
+            String msg = Bundle.LogicalImagerDSProcessor_directoryAlreadyExists(dest.toString());
             errorList.add(msg);
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
         File src = imageDirPath.toFile();
-        try {
-            configPanel.setMessageLabel("Copying " + src.toString() + " directory to " + dest.toString());
-            FileUtils.copyDirectory(src, dest);
-            configPanel.setMessageLabel("");
-        } catch (IOException ex) {
-            // Copy directory failed
-            String msg = "Failed to copy directory " + src.toString() + " to " + dest.toString() ;
-            errorList.add(msg);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-        
-        // Add the alert.txt and users.txt into the case report
-        String status = addReport(Paths.get(dest.toString(), "alert.txt"), "alert.txt for " + imageDirPath.toString());
-        if (status != null) {
-            errorList.add(status);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-        status = addReport(Paths.get(dest.toString(), "users.txt"), "users.txt for " + imageDirPath.toString());
-        if (status != null) {
-            errorList.add(status);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-        
+
         String deviceId = UUID.randomUUID().toString();
         String timeZone = Calendar.getInstance().getTimeZone().getID();
         boolean ignoreFatOrphanFiles = false;
-        run(deviceId, Paths.get(src.toString(), SPARSE_IMAGE_VHD).toString(), 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
+        run(deviceId, Paths.get(src.toString(), SPARSE_IMAGE_VHD).toString(), 0, 
+            timeZone, ignoreFatOrphanFiles, null, null, null, src, dest,
+            progressMonitor, callback);
     }
     
-    /** 
-     *  returns null if success, or exception message 
-     *
-     */
-    private String addReport(Path reportPath, String reportName) {
-        try {
-            Case.getCurrentCase().addReport(reportPath.toString(), "LogicalImager", reportName);
-            return null;
-        } catch (TskCoreException ex) {
-            String msg = "Failed to add report " + reportPath.toString() + ". Reason= " + ex.getMessage();
-            return msg;
-        }        
-    }
     /**
      * Adds a "Logical Imager" data source to the case database using a background task in
      * a separate thread and the given settings instead of those provided by the
@@ -224,19 +197,27 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param chunkSize            The maximum size of each chunk of the raw
      *                             data source as it is divided up into virtual
      *                             unallocated space files.
+     * @param src                  The source directory of image.
+     * @param dest                 The destination directory to copy the source.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
-        new Thread(addImageTask).start();
+    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, 
+            boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, 
+            File src, File dest,
+            DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
+    ) {
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePath, sectorSize, 
+                timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, src, dest,
+                progressMonitor, callback);
+        new Thread(addLogicalImageTask).start();
     }
 
     @Override
     public void cancel() {
-        if (addImageTask != null) {
-            addImageTask.cancelTask();
+        if (addLogicalImageTask != null) {
+            addLogicalImageTask.cancelTask();
         }
     }
 
