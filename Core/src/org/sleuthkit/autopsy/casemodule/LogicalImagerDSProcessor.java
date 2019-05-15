@@ -46,7 +46,6 @@ import org.sleuthkit.datamodel.Content;
 )
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
-    private final Logger logger = Logger.getLogger(LogicalImagerDSProcessor.class.getName());   
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
     private final LogicalImagerPanel configPanel;
