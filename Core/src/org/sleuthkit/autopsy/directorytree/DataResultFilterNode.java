@@ -95,7 +95,20 @@ public class DataResultFilterNode extends FilterNode {
     static private final DisplayableItemNodeVisitor<List<Action>> getActionsDIV = new GetPopupActionsDisplayableItemNodeVisitor();
     private final DisplayableItemNodeVisitor<AbstractAction> getPreferredActionsDIV = new GetPreferredActionsDisplayableItemNodeVisitor();
 
+    // Assumptions are made in GetPreferredActionsDisplayableItemNodeVisitor that
+    // sourceEm is the directory tree explorer manager.
     private final ExplorerManager sourceEm;
+    
+       /**
+     * Constructs a node used to wrap another node before passing it to the
+     * result viewers. The wrapper node defines the actions associated with the
+     * wrapped node and may filter out some of its children.
+     *
+     * @param node The node to wrap.
+     */
+    public DataResultFilterNode(Node node) {
+       this(node, null);
+    }
 
     /**
      * Constructs a node used to wrap another node before passing it to the
@@ -549,6 +562,9 @@ public class DataResultFilterNode extends FilterNode {
             // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
             // to set that wrapped node as the selection and root context of the 
             // directory tree explorer manager (sourceEm)
+            if(sourceEm == null) {
+                return null;
+            }
             final Node currentSelectionInDirectoryTree = sourceEm.getSelectedNodes()[0];
 
             return new AbstractAction() {
@@ -589,6 +605,9 @@ public class DataResultFilterNode extends FilterNode {
          * @return
          */
         private AbstractAction openParent(AbstractNode node) {
+            if(sourceEm == null) {
+                return null;
+            }
             // @@@ Why do we ignore node?
             Node[] selectedFilterNodes = sourceEm.getSelectedNodes();
             Node selectedFilterNode = selectedFilterNodes[0];
