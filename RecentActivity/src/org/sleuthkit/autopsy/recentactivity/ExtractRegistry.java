@@ -411,7 +411,7 @@ class ExtractRegistry extends Extract {
                     Element timenode = (Element) timenodes.item(0);
                     String etime = timenode.getTextContent();
                     //sometimes etime will be an empty string and therefore can not be parsed into a date
-                    if (!etime.isEmpty()) {
+                    if (etime != null && !etime.isEmpty()) {
                         try {
                             mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                             String Tempdate = mtime.toString();
@@ -447,8 +447,14 @@ class ExtractRegistry extends Extract {
                             if (artchild.hasAttributes()) {
                                 Element artnode = (Element) artchild;
 
-                                String value = artnode.getTextContent().trim();
+                                String value = artnode.getTextContent();
+                                if (value != null) {
+                                    value = value.trim();
+                                }
                                 String name = artnode.getAttribute("name"); //NON-NLS
+                                if (name == null) {
+                                    continue;
+                                }
                                 switch (name) {
                                     case "ProductName": // NON-NLS
                                         version = value;
@@ -470,7 +476,7 @@ class ExtractRegistry extends Extract {
                                         regOrg = value;
                                         break;
                                     case "InstallDate": //NON-NLS
-                                        if (!value.isEmpty()) {
+                                        if (value != null && !value.isEmpty()) {
                                             try {
                                                 installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                                 String Tempdate = installtime.toString();
