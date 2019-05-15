@@ -1,38 +1,50 @@
-# {0} - File name
-CreatePortableCaseModule.copyContentToPortableCase.copyingFile=Copying file {0}
-# {0} - case folder
-CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists
-CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
-# {0} - folder
-CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}
-CreatePortableCaseModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
-CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed
-# {0} - tag name
-CreatePortableCaseModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
-# {0} - tag name
-CreatePortableCaseModule.generateReport.copyingFiles=Copying files tagged as {0}...
-CreatePortableCaseModule.generateReport.copyingTags=Copying tags...
-CreatePortableCaseModule.generateReport.creatingCase=Creating portable case database...
-CreatePortableCaseModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
-CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files
-CreatePortableCaseModule.generateReport.errorCopyingTags=Error copying tags
-# {0} - attribute type name
-CreatePortableCaseModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
-CreatePortableCaseModule.generateReport.noTagsSelected=No tags selected for export.
-# {0} - output folder
-CreatePortableCaseModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
-# {0} - output folder
-CreatePortableCaseModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
-CreatePortableCaseModule.generateReport.verifying=Verifying selected parameters...
-CreatePortableCaseModule.getDescription.description=Copies selected tagged items to a new single-user case that will work anywhere
-CreatePortableCaseModule.getName.name=Portable Case
-CreatePortableCasePanel.error.errorLoadingTags=Error loading tags
-CreatePortableCasePanel.error.errorTitle=Error getting tag names for case
-CreatePortableCasePanel.error.noOpenCase=There is no case open
 OpenIDE-Module-Name=Report
 CTL_ReportWizardAction=Run Report
 ArtifactSelectionDialog.titleLabel.text=Select which artifacts you would like to report on:
 ArtifactSelectionDialog.okButton.text=OK
+PortableCaseInterestingItemsListPanel.error.errorLoadingTags=Error loading interesting item set names
+PortableCaseInterestingItemsListPanel.error.errorTitle=Error getting intesting item set names for case
+PortableCaseInterestingItemsListPanel.error.noOpenCase=There is no case open
+PortableCaseReportModule.compressCase.canceled=Compression canceled by user
+PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case
+# {0} - Temp folder path
+PortableCaseReportModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}
+PortableCaseReportModule.compressCase.errorFinding7zip=Could not locate 7-Zip executable
+# {0} - File name
+PortableCaseReportModule.copyContentToPortableCase.copyingFile=Copying file {0}
+# {0} - case folder
+PortableCaseReportModule.createCase.caseDirExists=Case folder {0} already exists
+PortableCaseReportModule.createCase.errorCreatingCase=Error creating case
+# {0} - folder
+PortableCaseReportModule.createCase.errorCreatingFolder=Error creating folder {0}
+PortableCaseReportModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
+PortableCaseReportModule.generateReport.caseClosed=Current case has been closed
+PortableCaseReportModule.generateReport.compressingCase=Compressing case...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingFiles=Copying files tagged as {0}...
+PortableCaseReportModule.generateReport.copyingTags=Copying tags...
+PortableCaseReportModule.generateReport.creatingCase=Creating portable case database...
+PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
+PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files
+PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files
+PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results
+PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
+# {0} - attribute type name
+PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
+PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items
+PortableCaseReportModule.generateReport.noContentToCopy=No interesting files, results, or tagged items to copy
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
+PortableCaseReportModule.generateReport.verifying=Verifying selected parameters...
+PortableCaseReportModule.getDescription.description=Copies selected items to a new single-user case that can be easily shared
+PortableCaseReportModule.getName.name=Portable Case
+PortableCaseTagsListPanel.error.errorLoadingTags=Error loading tags
+PortableCaseTagsListPanel.error.errorTitle=Error getting tag names for case
+PortableCaseTagsListPanel.error.noOpenCase=There is no case open
 ReportExcel.exceptionMessage.dataTooLarge=Value is too long to fit into an Excel cell. 
 ReportExcel.exceptionMessage.errorText=Error showing data into an Excel cell.
 ReportExcel.writeSummary.caseName=Case Name:
@@ -85,7 +97,7 @@ FileReportDataTypes.knownStatus.text=Known Status
 FileReportDataTypes.perms.text=Permissions
 FileReportDataTypes.path.text=Full Path
 FileReportText.getName.text=Files - Text
-FileReportText.getDesc.text=A tab delimited text file containing information about individual files in the case.
+FileReportText.getDesc.text=A delimited text file containing information about individual files in the case.
 ReportBodyFile.progress.querying=Querying files...
 ReportBodyFile.ingestWarning.text=Warning, this report was run before ingest services completed\!
 ReportBodyFile.progress.loading=Loading files...
@@ -306,4 +318,18 @@ CreatePortableCasePanel.outputFolderTextField.text=jTextField1
 CreatePortableCasePanel.chooseOutputFolderButton.text=Choose folder
 CreatePortableCasePanel.jLabel1.text=Export files tagged as:
 CreatePortableCasePanel.jLabel2.text=Select output folder:
+CreatePortableCasePanel.compressCheckbox.text=Compress case
+CreatePortableCasePanel.chunkSizeLabel.text=Split into chunks of size:
+CreatePortableCasePanel.errorLabel.text_1=Windows only
+ReportWizardPortableCaseOptionsVisualPanel.errorLabel.text=Windows only
+ReportWizardPortableCaseOptionsVisualPanel.compressCheckbox.text=Package case into chunks of size: 
+PortableCaseTagsListPanel.deselectButton.text=Deselect All
+PortableCaseTagsListPanel.selectButton.text=Select All
+PortableCaseInterestingItemsListPanel.selectButton.text=Select All
+PortableCaseInterestingItemsListPanel.deselectButton.text=Deselect All
+ReportFileTextConfigurationPanel.tabDelimitedButton.text=Tab delimited
+ReportFileTextConfigurationPanel.commaDelimitedButton.text=Comma delimited
+PortableCaseTagsListPanel.descLabel.text=Include the following tags:
+PortableCaseInterestingItemsListPanel.descLabel.text=Include Interesting Items from these sets:
+ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
 TableReportGenerator.StatusColumn.Header=Review Status

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.List;
@@ -61,12 +62,15 @@ public final class CVTTopComponent extends TopComponent {
         associateLookup(proxyLookup);
         // Make sure the Global Actions Context is proxying the selection of the active tab.
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
-            Lookup.Provider selectedComponent = (Lookup.Provider) browseVisualizeTabPane.getSelectedComponent();
-            proxyLookup.setNewLookups(selectedComponent.getLookup());
+            Component selectedComponent = browseVisualizeTabPane.getSelectedComponent();
+            if(selectedComponent instanceof Lookup.Provider) {
+                Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
+                proxyLookup.setNewLookups(lookup);
+            }
             filtersPane.setDeviceAccountTypeEnabled(browseVisualizeTabPane.getSelectedIndex() != 0);
         });
-
-
+        
+        
         /*
          * Connect the filtersPane to the accountsBrowser and visualizaionPanel
          * via an Eventbus
@@ -74,6 +78,7 @@ public final class CVTTopComponent extends TopComponent {
         CVTEvents.getCVTEventBus().register(this);
         CVTEvents.getCVTEventBus().register(vizPanel);
         CVTEvents.getCVTEventBus().register(accountsBrowser);
+        CVTEvents.getCVTEventBus().register(filtersPane);
     }
 
     @Subscribe

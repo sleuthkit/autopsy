@@ -24,6 +24,7 @@ KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly
 KeywordSearchIngestModule.init.exception.errConnToSolr.msg=Error connecting to SOLR server: {0}.
 # {0} - Reason for not starting Solr
 KeywordSearchIngestModule.init.tryStopSolrMsg={0}<br />Please try stopping Java Solr processes if any exist and restart the application.
+KeywordSearchIngestModule.metadataTitle=METADATA
 KeywordSearchIngestModule.noOpenCase.errMsg=No open case available.
 KeywordSearchIngestModule.startUp.noOpenCore.msg=The index could not be opened or does not exist.
 # {0} - schema version number

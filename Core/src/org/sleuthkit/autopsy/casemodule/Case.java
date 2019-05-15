@@ -81,6 +81,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
@@ -1620,11 +1621,10 @@ public class Case {
         }
         if (getCaseType() == CaseType.MULTI_USER_CASE && !oldCaseDetails.getCaseDisplayName().equals(caseDetails.getCaseDisplayName())) {
             try {
-                CoordinationService coordinationService = CoordinationService.getInstance();
-                CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
+                CaseNodeData nodeData = CaseNodeData.readCaseNodeData(metadata.getCaseDirectory());
                 nodeData.setDisplayName(caseDetails.getCaseDisplayName());
-                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-            } catch (CoordinationServiceException | InterruptedException | IOException ex) {
+                CaseNodeData.writeCaseNodeData(nodeData);
+            } catch (CaseNodeDataException | InterruptedException ex) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
             }
         }
@@ -2005,10 +2005,8 @@ public class Case {
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
             progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseNodeData());
             try {
-                CoordinationService coordinationService = CoordinationService.getInstance();
-                CaseNodeData nodeData = new CaseNodeData(metadata);
-                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-            } catch (CoordinationServiceException | InterruptedException | ParseException | IOException ex) {
+                CaseNodeData.createCaseNodeData(metadata);
+            } catch (CaseNodeDataException | InterruptedException ex) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseNodeData(ex.getLocalizedMessage()), ex);
             }
         }
@@ -2033,27 +2031,10 @@ public class Case {
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
             progressIndicator.progress(Bundle.Case_progressMessage_updatingCaseNodeData());
             try {
-                CaseNodeData nodeData;
-                CoordinationService coordinationService = CoordinationService.getInstance();
-                byte[] nodeBytes = coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory());
-                if (nodeBytes != null && nodeBytes.length > 0) {
-                    /*
-                     * Update the last access date in the coordination service
-                     * node data for the case.
-                     */
-                    nodeData = new CaseNodeData(nodeBytes);
-                    nodeData.setLastAccessDate(new Date());
-                } else {
-                    /*
-                     * This is a "legacy" case with no data stored in its case
-                     * directory coordination service node yet, or the node is
-                     * empty due to some error, so create the coordination
-                     * service node data from the case metadata.
-                     */
-                    nodeData = new CaseNodeData(metadata);
-                }
-                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-            } catch (CoordinationServiceException | InterruptedException | ParseException | IOException ex) {
+                CaseNodeData nodeData = CaseNodeData.readCaseNodeData(metadata.getCaseDirectory());
+                nodeData.setLastAccessDate(new Date());
+                CaseNodeData.writeCaseNodeData(nodeData);
+            } catch (CaseNodeDataException | InterruptedException ex) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
             }
         }
@@ -2633,9 +2614,8 @@ public class Case {
 
             progressIndicator.progress(Bundle.Case_progressMessage_fetchingCoordSvcNodeData());
             try {
-                byte[] nodeBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory());
-                caseNodeData = new CaseNodeData(nodeBytes);
-            } catch (CoordinationServiceException | InterruptedException | IOException ex) {
+                caseNodeData = CaseNodeData.readCaseNodeData(metadata.getCaseDirectory());
+            } catch (CaseNodeDataException | InterruptedException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to get coordination service node data %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
                 throw new CaseActionException(Bundle.Case_exceptionMessage_failedToFetchCoordSvcNodeData(ex.getLocalizedMessage()));
             }
@@ -2899,9 +2879,8 @@ public class Case {
     private static void setDeletedItemFlag(CaseNodeData caseNodeData, CaseNodeData.DeletedFlags flag) throws InterruptedException {
         try {
             caseNodeData.setDeletedFlag(flag);
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            coordinationService.setNodeData(CategoryNode.CASES, caseNodeData.getDirectory().toString(), caseNodeData.toArray());
-        } catch (IOException | CoordinationServiceException ex) {
+            CaseNodeData.writeCaseNodeData(caseNodeData);
+        } catch (CaseNodeDataException ex) {
             logger.log(Level.SEVERE, String.format("Error updating deleted item flag %s for %s (%s) in %s", flag.name(), caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex);
         }
     }

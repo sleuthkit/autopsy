@@ -108,21 +108,39 @@ class Chrome extends Extract {
         
         progressBar.progress(Bundle.Progress_Message_Chrome_History());
         this.getHistory();
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Chrome_Bookmarks());
         this.getBookmark();
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Chrome_Cookies());
         this.getCookie();
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Chrome_Logins());
         this.getLogins();
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Chrome_AutoFill());
         this.getAutofill();
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Chrome_Downloads());
         this.getDownload();
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
         
         progressBar.progress(Bundle.Progress_Message_Chrome_Cache());
         ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context, progressBar);

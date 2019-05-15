@@ -19,12 +19,15 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.eventbus.Subscribe;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -49,6 +52,7 @@ import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
+import static org.sleuthkit.datamodel.Relationship.Type.CONTACT;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -258,6 +262,82 @@ final public class FiltersPanel extends JPanel {
             logger.log(Level.INFO, "Filter update cancelled.  Case is closed.");
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
+        }
+    }
+    
+    /**
+     * Given a list of subFilters, set the states of the panel controls 
+     * accordingly.
+     * 
+     * @param subFilters A list of subFilters
+     */
+    public void setFilters(CommunicationsFilter commFilter) {
+        List<CommunicationsFilter.SubFilter> subFilters = commFilter.getAndFilters();
+        subFilters.forEach(subFilter -> {
+            if( subFilter instanceof DeviceFilter ) {
+                setDeviceFilter((DeviceFilter)subFilter);
+            } else if( subFilter instanceof AccountTypeFilter) {
+                setAccountTypeFilter((AccountTypeFilter) subFilter);
+            }
+        });
+    }
+    
+    /**
+     * Sets the state of the device filter checkboxes
+     * 
+     * @param deviceFilter Selected devices
+     */
+    private void setDeviceFilter(DeviceFilter deviceFilter) {
+        Collection<String> deviceIDs = deviceFilter.getDevices();
+        devicesMap.forEach((type, cb) -> {
+            cb.setSelected(deviceIDs.contains(type));
+        });
+    }
+    
+     /**
+     * Set the state of the account type checkboxes to match the passed in filter
+     * 
+     * @param typeFilter Account Types to be selected
+     */
+    private void setAccountTypeFilter(AccountTypeFilter typeFilter){
+       
+        accountTypeMap.forEach((type, cb) -> {
+            cb.setSelected(typeFilter.getAccountTypes().contains(type));
+        });
+    }
+    
+    /**
+     * Set up the startDatePicker and startCheckBox based on the passed in 
+     * DateControlState.
+     * 
+     * @param state new control state
+     */
+    private void setStartDateControlState(DateControlState state) {
+        startDatePicker.setDate(state.getDate());
+        startCheckBox.setSelected(state.isEnabled());
+        startDatePicker.setEnabled(state.isEnabled());
+    }
+    
+    /**
+     * Set up the endDatePicker and endCheckBox based on the passed in 
+     * DateControlState. 
+     * 
+     * @param state new control state
+     */
+    private void setEndDateControlState(DateControlState state) {
+        endDatePicker.setDate(state.getDate());
+        endCheckBox.setSelected(state.isEnabled());
+        endDatePicker.setEnabled(state.isEnabled());
+    }
+    
+    @Subscribe
+    void filtersBack(CVTEvents.StateChangeEvent event) {
+        if(event.getCommunicationsState().getCommunicationsFilter() != null){
+            setFilters(event.getCommunicationsState().getCommunicationsFilter());
+            setStartDateControlState(event.getCommunicationsState().getStartControlState());
+            setEndDateControlState(event.getCommunicationsState().getEndControlState());
+            needsRefresh = false;
+            validateFilters();
         }
     }
 
@@ -503,18 +583,23 @@ final public class FiltersPanel extends JPanel {
      * Post an event with the new filters.
      */
     private void applyFilters() {
-        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter()));
+        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter(), getStartControlState(), getEndControlState()));
         needsRefresh = false;
         validateFilters();
     }
 
-    private CommunicationsFilter getFilter() {
+    /**
+     * Get an instance of CommunicationsFilters base on the current panel state.
+     * 
+     * @return an instance of CommunicationsFilter
+     */
+    protected CommunicationsFilter getFilter() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
         commsFilter.addAndFilter(getDateRangeFilter());
         commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
-                ImmutableSet.of(CALL_LOG, MESSAGE)));
+                ImmutableSet.of(CALL_LOG, MESSAGE, CONTACT)));
         return commsFilter;
     }
 
@@ -553,9 +638,17 @@ final public class FiltersPanel extends JPanel {
      */
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = Utils.getUserPreferredZoneId();
-        long start = startDatePicker.isEnabled() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
-        long end = endDatePicker.isEnabled() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
-        return new DateRangeFilter(start, end);
+        
+        return new DateRangeFilter( startCheckBox.isSelected() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0, 
+                                    endCheckBox.isSelected() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0);
+    }
+    
+    private DateControlState getStartControlState() {
+        return new DateControlState (startDatePicker.getDate(), startCheckBox.isSelected());
+    }
+    
+    private DateControlState getEndControlState() {
+        return new DateControlState (endDatePicker.getDate(), endCheckBox.isSelected());
     }
 
     /**
@@ -629,7 +722,47 @@ final public class FiltersPanel extends JPanel {
         endDatePicker.setEnabled(endCheckBox.isSelected());
     }//GEN-LAST:event_endCheckBoxStateChanged
 
-
+    /**
+     * A class to wrap the state of the date controls that consist of a date picker
+     * and a checkbox.
+     * 
+     */
+    final class DateControlState {
+        private final LocalDate date;
+        private final boolean enabled;
+        
+        /**
+         * Wraps the state of the date controls that consist of a date picker
+         * and checkbox
+         * 
+         * @param date LocalDate value of the datepicker
+         * @param enabled State of the checkbox
+         */
+        protected DateControlState(LocalDate date, boolean enabled) {
+            this.date = date;
+            this.enabled = enabled;
+        }
+        
+        /**
+         * Returns the given LocalDate from the datepicker 
+         * 
+         * @return Current state LocalDate
+         */
+        public LocalDate getDate(){
+            return date;
+        }
+        
+        /**
+         * Returns the given state of the datepicker checkbox
+         * 
+         * @return boolean, whether or not the datepicker was enabled
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+        
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private final javax.swing.JPanel accountTypePane = new javax.swing.JPanel();
     private final javax.swing.JLabel accountTypeRequiredLabel = new javax.swing.JLabel();
