@@ -59,14 +59,14 @@ class CommandLineCommand {
     /**
      * @return the inputs
      */
-    public Map<String, String> getInputs() {
+    Map<String, String> getInputs() {
         return inputs;
     }
 
     /**
      * @return the type
      */
-    public CommandType getType() {
+    CommandType getType() {
         return type;
     }    
 }
