@@ -232,7 +232,7 @@ public class DataResultFilterNode extends FilterNode {
     private static class DataResultFilterChildren extends FilterNode.Children {
 
         private final ExplorerManager sourceEm;
-        private boolean filterArtifacts;    // display message artifacts in the DataSource subtree
+        private final boolean filterArtifacts;    // display message artifacts in the DataSource subtree
 
         /**
          * the constructor
@@ -240,7 +240,8 @@ public class DataResultFilterNode extends FilterNode {
         private DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
             super(arg);
 
-            this.filterArtifacts = false;
+            filterArtifacts = SelectionContext.getSelectionContext(arg).equals(SelectionContext.DATA_SOURCES);
+
             this.sourceEm = sourceEm;
         }
 
