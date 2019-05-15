@@ -127,9 +127,9 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                        to return results.
      */
     @Messages({
-        "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
-        "LogicalImagerDSProcessor.failToCreateDirectory=Fail to create directory {0}",
-        "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
+        "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
+        "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Fail to create directory {0}",
+        "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
     })
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {

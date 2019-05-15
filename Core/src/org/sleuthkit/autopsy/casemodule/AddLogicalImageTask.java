@@ -66,11 +66,11 @@ public class AddLogicalImageTask extends AddImageTask {
      * Adds the image to the case database.
      */
     @Messages({
-        "AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}",
+        "# {0} - src", "# {1} - dest", "AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}",
         "AddLogicalImageTask.doneCopying=Done copying",
-        "AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}",
-        "AddLogicalImageTask.addingToReport=Adding {0} to report",
-        "AddLogicalImageTask.doneAddingToReport=Done adding {0} to report"
+        "# {0} - src", "# {1} - dest", "AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}",
+        "# {0} - file", "AddLogicalImageTask.addingToReport=Adding {0} to report",
+        "# {0} - file", "AddLogicalImageTask.doneAddingToReport=Done adding {0} to report"
     })
     @Override
     public void run() {
@@ -121,7 +121,7 @@ public class AddLogicalImageTask extends AddImageTask {
      *
      */
     @Messages({
-        "AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}"
+        "# {0} - file", "# {1} - exception message", "AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}"
     })
     private String addReport(Path reportPath, String reportName) {
         if (!reportPath.toFile().exists()) {
