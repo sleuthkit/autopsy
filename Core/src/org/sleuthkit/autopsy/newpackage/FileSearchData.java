@@ -24,6 +24,10 @@ class FileSearchData {
             this.displayName = displayName;
         }
         
+        int getRanking() {
+            return ranking;
+        }
+        
         @Override
         public String toString() {
             return displayName;
@@ -34,7 +38,9 @@ class FileSearchData {
         XL(0, 1000, -1, "1GB+"),
         LARGE(1, 200, 1000, "200MB - 1 GB"),
         MEDIUM(2, 50, 200, "50 - 200MB"),
-        SMALL(3, 0, 50, "Under 50MB");
+        //SMALL(3, 0, 50, "Under 50MB");
+        SMALL(3, 1, 50, "1 - 50MB"),
+        XS(4, 0, 1, "Under 1 MB");
 
         private final int ranking;
         private final long minBytes; // Note that the size must be greater than this to match
@@ -61,8 +67,10 @@ class FileSearchData {
                 return LARGE;
             } else if (size > MEDIUM.minBytes) {
                 return MEDIUM;
-            } else {
+            } else if (size > SMALL.minBytes) {
                 return SMALL;
+            } else {
+                return XS;
             }
         }
         
@@ -72,6 +80,11 @@ class FileSearchData {
         
         long getMinBytes() {
             return minBytes;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
         }
     }
    

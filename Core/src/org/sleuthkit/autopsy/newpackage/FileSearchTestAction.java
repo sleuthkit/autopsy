@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.FileSearchTestAction")
 @ActionReference(path = "Menu/Tools", position = 1852, separatorBefore = 1851)
@@ -65,8 +66,9 @@ public final class FileSearchTestAction extends CallableSystemAction {
         System.out.println("\n#########################\nTesting file search!!!");
         
         List<FileSearchFiltering.SubFilter> filters = new ArrayList<>();
-        filters.add( new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, FileSearchData.FileSize.SMALL)));
-        filters.add( new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE)));
+        filters.add( new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, 
+                FileSearchData.FileSize.SMALL, FileSearchData.FileSize.XS)));
+        filters.add( new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE)));
         EamDb crDb = null;
         if (EamDb.isEnabled()) {
             try {
@@ -75,9 +77,15 @@ public final class FileSearchTestAction extends CallableSystemAction {
                 ex.printStackTrace();
             }
         }
-        
+
         try {
-            List<ResultFile> results = FileSearchFiltering.runFilters(filters, 
+            
+            FileSearch.runFileSearch(filters, 
+                new FileSearch.FrequencyAttribute(), FileGroup.GroupSortingAlgorithm.BY_ATTRIBUTE, 
+                new FileSearch.FrequencyAttribute().getDefaultFileComparator(), 
+                Case.getCurrentCase().getSleuthkitCase(), crDb);
+            
+            /*List<ResultFile> results = FileSearchFiltering.runFilters(filters, 
                     Case.getCurrentCase().getSleuthkitCase(), crDb);
             
             int count = 0;
@@ -89,7 +97,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
                     System.out.println(" Not displaying " + left + " more files");
                     break;
                 }
-            }
+            }*/
         } catch (Exception ex) {
             ex.printStackTrace();
         }
