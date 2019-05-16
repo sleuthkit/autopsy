@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 /**
  * Panel for configuring view preferences.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
     private final boolean immediateUpdates;
@@ -85,6 +86,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         TextTranslationService tts = TextTranslationService.getInstance();
         fileNameTranslationColumnCheckbox.setEnabled(tts.hasProvider());
 
+        maxResultsSpinner.setValue(UserPreferences.getResultsTablePageSize());
+
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
         currentCaseSettingsPanel.setEnabled(caseIsOpen);
@@ -114,6 +117,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
         UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
         UserPreferences.setDisplayTranslatedFileNames(fileNameTranslationColumnCheckbox.isSelected());
+        UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -167,6 +171,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         translateTextLabel = new javax.swing.JLabel();
         commentsOccurencesColumnWrapAroundText = new javax.swing.JLabel();
         fileNameTranslationColumnCheckbox = new javax.swing.JCheckBox();
+        maxResultsLabel = new javax.swing.JLabel();
+        maxResultsSpinner = new javax.swing.JSpinner();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -284,6 +290,16 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(maxResultsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.text")); // NOI18N
+        maxResultsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.toolTipText")); // NOI18N
+
+        maxResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50000, 10000));
+        maxResultsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                maxResultsSpinnerStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout globalSettingsPanelLayout = new javax.swing.GroupLayout(globalSettingsPanel);
         globalSettingsPanel.setLayout(globalSettingsPanelLayout);
         globalSettingsPanelLayout.setHorizontalGroup(
@@ -333,7 +349,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                     .addComponent(keepCurrentViewerRadioButton)
                                     .addComponent(useBestViewerRadioButton)
                                     .addComponent(useLocalTimeRadioButton)
-                                    .addComponent(useAnotherTimeRadioButton))))))
+                                    .addComponent(useAnotherTimeRadioButton)))))
+                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                        .addComponent(maxResultsLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(maxResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
@@ -381,6 +401,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addComponent(translateTextLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(fileNameTranslationColumnCheckbox)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(maxResultsLabel)
+                    .addComponent(maxResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -593,6 +617,14 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_fileNameTranslationColumnCheckboxActionPerformed
 
+    private void maxResultsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_maxResultsSpinnerStateChanged
+        if (immediateUpdates) {
+            UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_maxResultsSpinnerStateChanged
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel centralRepoLabel;
@@ -613,6 +645,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel hideSlackFilesLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
+    private javax.swing.JLabel maxResultsLabel;
+    private javax.swing.JSpinner maxResultsSpinner;
     private javax.swing.JLabel selectFileLabel;
     private javax.swing.JList<String> timeZoneList;
     private javax.swing.JLabel translateTextLabel;
