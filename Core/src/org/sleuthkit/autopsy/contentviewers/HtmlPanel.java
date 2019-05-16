@@ -19,12 +19,18 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
 import javafx.scene.web.WebView;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Node;
 import org.openide.util.NbBundle.Messages;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.events.EventTarget;
 
 /**
  * A file content viewer for HTML files.
@@ -45,7 +51,19 @@ final class HtmlPanel extends javax.swing.JPanel {
         initComponents();
         Platform.runLater(() -> {
             webView = new WebView();
+            //disable the context menu so they can't open linked pages by right clicking
+            webView.setContextMenuEnabled(false);
+            //disable java script
             webView.getEngine().setJavaScriptEnabled(false);
+            //disable clicking on links 
+            webView.getEngine().getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
+                @Override
+                public void changed(ObservableValue<? extends Worker.State> observable, Worker.State oldValue, Worker.State newValue) {
+                    if (newValue == Worker.State.SUCCEEDED) {
+                        disableHyperLinks();
+                    }
+                }
+            });
             Scene scene = new Scene(webView);
             jfxPanel.setScene(scene);
             jfxPanel.setPreferredSize(htmlJPanel.getPreferredSize());
@@ -81,12 +99,9 @@ final class HtmlPanel extends javax.swing.JPanel {
      * @return The cleansed HTML String
      */
     private String cleanseHTML(String htmlInString) {
-        //this will not remove all images just the ones in the image tags matching this format
-        Document doc = Jsoup.parse(htmlInString);
-
-        // Update all 'img' tags.
-        doc.select("img[src]").forEach(img -> img.attr("src", ""));
-
+        org.jsoup.nodes.Document doc = Jsoup.parse(htmlInString);
+        // remove all 'img' tags.
+        doc.select("img").stream().forEach(Node::remove);
         return doc.html();
     }
 
@@ -163,6 +178,24 @@ final class HtmlPanel extends javax.swing.JPanel {
         refresh();
     }//GEN-LAST:event_showImagesToggleButtonActionPerformed
 
+    /**
+     * Disable the click events on hyper links so that new pages can not be
+     * opened.
+     */
+    private void disableHyperLinks() {
+        Platform.runLater(() -> {
+            Document document = webView.getEngine().getDocument();
+            if (document != null) {
+                NodeList nodeList = document.getElementsByTagName("a");
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    ((EventTarget) nodeList.item(i)).addEventListener("click", (evt) -> {
+                        evt.preventDefault();
+                        evt.stopPropagation();
+                    }, true);
+                }
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel htmlJPanel;
