@@ -33,8 +33,10 @@ import org.openide.util.NbBundle.Messages;
 final class HtmlPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final String TEXT_TYPE="text/plain";
     private WebView webView;
     private String htmlText;
+    
     private JFXPanel jfxPanel = new JFXPanel();
 
     /**
@@ -48,7 +50,8 @@ final class HtmlPanel extends javax.swing.JPanel {
             webView.getEngine().setJavaScriptEnabled(false);
             Scene scene = new Scene(webView);
             jfxPanel.setScene(scene);
-            htmlScrollPane.setViewportView(jfxPanel);
+            jfxPanel.setPreferredSize(htmlJPanel.getPreferredSize());
+            htmlJPanel.add(jfxPanel);
         });
     }
 
@@ -68,7 +71,7 @@ final class HtmlPanel extends javax.swing.JPanel {
     void reset() {
         //wjs
         Platform.runLater(() -> {
-            webView.getEngine().loadContent("");
+            webView.getEngine().loadContent("", TEXT_TYPE);
         });
         showImagesToggleButton.setEnabled(false);
     }
@@ -103,18 +106,18 @@ final class HtmlPanel extends javax.swing.JPanel {
                 if (showImagesToggleButton.isSelected()) {
                     showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_hide());
                     Platform.runLater(() -> {
-                        webView.getEngine().loadContent("JUST A STRING");
+                        webView.getEngine().loadContent(htmlText);
                     });
                 } else {
                     showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_show());
                     Platform.runLater(() -> {
-                        webView.getEngine().loadContent(cleanseHTML("JUST A STRING"));
+                        webView.getEngine().loadContent(cleanseHTML(htmlText));
                     });
                 }
                 showImagesToggleButton.setEnabled(true);
             } catch (Exception ignored) {
                 Platform.runLater(() -> {
-                    webView.getEngine().loadContent(Bundle.Html_text_display_error());
+                    webView.getEngine().loadContent(Bundle.Html_text_display_error(), TEXT_TYPE);
                 });
             }
         }
@@ -130,7 +133,7 @@ final class HtmlPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         showImagesToggleButton = new javax.swing.JToggleButton();
-        htmlScrollPane = new javax.swing.JScrollPane();
+        htmlJPanel = new javax.swing.JPanel();
 
         org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, org.openide.util.NbBundle.getMessage(HtmlPanel.class, "HtmlPanel.showImagesToggleButton.text")); // NOI18N
         showImagesToggleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -139,6 +142,8 @@ final class HtmlPanel extends javax.swing.JPanel {
             }
         });
 
+        htmlJPanel.setLayout(new java.awt.BorderLayout());
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -146,14 +151,14 @@ final class HtmlPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addGap(0, 203, Short.MAX_VALUE))
-            .addComponent(htmlScrollPane)
+            .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 74, Short.MAX_VALUE))
+                .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -163,7 +168,7 @@ final class HtmlPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane htmlScrollPane;
+    private javax.swing.JPanel htmlJPanel;
     private javax.swing.JToggleButton showImagesToggleButton;
     // End of variables declaration//GEN-END:variables
 }
