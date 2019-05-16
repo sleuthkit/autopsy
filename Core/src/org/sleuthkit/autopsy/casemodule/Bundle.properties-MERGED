@@ -186,7 +186,7 @@ LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
 # {0} - directory
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
 # {0} - directory
-LogicalImagerDSProcessor.failToCreateDirectory=Fail to create directory {0}
+LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
 # {0} - imageDirPath
 LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname

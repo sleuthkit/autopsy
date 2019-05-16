@@ -68,6 +68,7 @@ public class AddLogicalImageTask extends AddImageTask {
     @Messages({
         "# {0} - src", "# {1} - dest", "AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}",
         "AddLogicalImageTask.doneCopying=Done copying",
+        "# {0} - src", "# {1} - dest", "AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}",
         "# {0} - file", "AddLogicalImageTask.addingToReport=Adding {0} to report",
         "# {0} - file", "AddLogicalImageTask.doneAddingToReport=Done adding {0} to report"
     })
@@ -82,8 +83,7 @@ public class AddLogicalImageTask extends AddImageTask {
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneCopying());
         } catch (IOException ex) {
             // Copy directory failed
-            String msg = String.format("Failed to copy directory {0} to {1}", src.toString(), dest.toString());
-            logger.log(Level.SEVERE, msg);
+            String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
             errorList.add(msg);
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
@@ -119,6 +119,9 @@ public class AddLogicalImageTask extends AddImageTask {
      * @returns null if success, or exception message if failure
      *
      */
+    @Messages({
+        "# {0} - file", "# {1} - exception message", "AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}"
+    })
     private String addReport(Path reportPath, String reportName) {
         if (!reportPath.toFile().exists()) {
             return null; // if the reportPath doesn't exist, just ignore it.
@@ -127,8 +130,8 @@ public class AddLogicalImageTask extends AddImageTask {
             Case.getCurrentCase().addReport(reportPath.toString(), "LogicalImager", reportName); //NON-NLS
             return null;
         } catch (TskCoreException ex) {
-            String msg = String.format("Failed to add report {0}. Reason= {1}", reportPath.toString(), ex.getMessage());
-            logger.log(Level.SEVERE, msg);
+            String msg = Bundle.AddLogicalImageTask_failedToAddReport(reportPath.toString(), ex.getMessage());
+            logger.log(Level.SEVERE, String.format("Failed to add report {0}. Reason= {1}", reportPath.toString(), ex.getMessage()));
             return msg;
         }        
     }
