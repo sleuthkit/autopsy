@@ -172,7 +172,10 @@ LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
 LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
 LogicalImagerPanel.messageLabel.clickScanOrBrowse=Click SCAN or BROWSE button to find images
+# {0} - sparseImageDirectory
+# {1} - image
 LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}
+# {0} - invalidFormatDirectory
 LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
 LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
 LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found

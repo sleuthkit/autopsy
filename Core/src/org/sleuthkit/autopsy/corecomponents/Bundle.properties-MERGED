@@ -36,6 +36,9 @@ DataResultViewerTable.firstColLbl=Name
 DataResultViewerTable.goToPageTextField.err=Invalid page number
 # {0} - totalPages
 DataResultViewerTable.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}
+# {0} - currentPage
+# {1} - totalPages
+DataResultViewerTable.pageNumbers.curOfTotal={0} of {1}
 DataResultViewerTable.scoreRender.name=S
 DataResultViewerTable.scoreRender.toolTip=S(core) indicates whether the item is interesting or notable
 DataResultViewerTable.title=Table
