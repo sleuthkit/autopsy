@@ -94,7 +94,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
     @Test
     @Override
     public void testEquals() {
-        System.out.println("equals");
         RootFilterState other = new RootFilterState(rootFilterInstance.copyOf());
         assertFalse(instance.equals(null));
         assertTrue(instance.equals(instance));
@@ -117,8 +116,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
     @Test
     @Override
     public void testSelectedProperty() {
-        System.out.println("selectedProperty");
-
         assertTrue(instance.selectedProperty().getValue());
         assertTrue(instance.isSelected());
 
@@ -135,8 +132,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testDisabledProperty() {
-        System.out.println("disabledProperty");
-
         assertFalse(instance.disabledProperty().getValue());
         assertFalse(instance.isDisabled());
 
@@ -154,8 +149,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
     @Test
     @Override
     public void testActiveProperty() {
-        System.out.println("activeProperty");
-
         assertTrue(instance.isActive());
         assertTrue(instance.activeProperty().getValue());
 
@@ -178,10 +171,9 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testIntersect() {
-        System.out.println("intersect");
         assertThat(instance.getSubFilterStates().size(), is(7));
 
-        RootFilterState intersection = instance.intersect(new DefaultFilterState<>(new TextFilter("intersection test")));
+        RootFilterState intersection = instance.intersect(new SqlFilterState<>(new TextFilter("intersection test")));
 
         assertFalse(intersection.equals(instance));
         assertThat(intersection.getSubFilterStates().size(), is(8));
@@ -193,12 +185,10 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testAddSubFilterState() {
-        System.out.println("addSubFilterState");
-
         assertThat(instance.getSubFilterStates().size(), is(7));
         assertThat(instance.getFilter().getSubFilters().size(), is(7));
 
-        instance.addSubFilterState(new DefaultFilterState<>(new TextFilter("intersection test")));
+        instance.addSubFilterState(new SqlFilterState<>(new TextFilter("intersection test")));
 
         assertThat(instance.getSubFilterStates().size(), is(8));
         assertThat(instance.getFilter().getSubFilters().size(), is(8));
@@ -212,8 +202,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testGetEventTypeFilterState() {
-        System.out.println("getEventTypeFilterState");
-
         CompoundFilterState<EventTypeFilter, EventTypeFilter> expResult = new CompoundFilterState<>(new EventTypeFilter(EventType.ROOT_EVENT_TYPE));
         assertEquals(expResult, instance.getEventTypeFilterState());
     }
@@ -223,8 +211,7 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testGetKnownFilterState() {
-        System.out.println("getKnownFilterState");
-        DefaultFilterState<?> expResult = new DefaultFilterState<>(new HideKnownFilter());
+        SqlFilterState<?> expResult = new SqlFilterState<>(new HideKnownFilter());
         assertEquals(expResult, instance.getKnownFilterState());
     }
 
@@ -233,8 +220,7 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testGetTextFilterState() {
-        System.out.println("getTextFilterState");
-        DefaultFilterState<?> expResult = new DefaultFilterState<>(new TextFilter());
+        SqlFilterState<?> expResult = new SqlFilterState<>(new TextFilter());
         assertEquals(expResult, instance.getTextFilterState());
     }
 
@@ -243,7 +229,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testGetTagsFilterState() {
-        System.out.println("getTagsFilterState");
         TimelineFilter.TagsFilter tagsFilter2 = new TimelineFilter.TagsFilter();
         tagsFilter2.addSubFilter(new TimelineFilter.TagNameFilter(bookmarkTagName));
         tagsFilter2.addSubFilter(new TimelineFilter.TagNameFilter(followupTagName));
@@ -257,11 +242,10 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testGetHashHitsFilterState() {
-        System.out.println("getHashHitsFilterState");
         HashHitsFilter hashHitsFilter1 = new HashHitsFilter();
         hashHitsFilter1.addSubFilter(new HashSetFilter("hashset 1"));
         hashHitsFilter1.addSubFilter(new HashSetFilter("hashset 2"));
-        DefaultFilterState<?> expResult = new CompoundFilterState<>(hashHitsFilter1);
+        SqlFilterState<?> expResult = new CompoundFilterState<>(hashHitsFilter1);
         assertEquals(expResult, instance.getHashHitsFilterState());
     }
 
@@ -270,8 +254,7 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testGetDataSourcesFilterState() {
-        System.out.println("getDataSourcesFilterState");
-        DefaultFilterState<?> expResult = new CompoundFilterState<>(new DataSourcesFilter());
+        SqlFilterState<?> expResult = new CompoundFilterState<>(new DataSourcesFilter());
         assertEquals(expResult, instance.getDataSourcesFilterState());
     }
 
@@ -280,8 +263,7 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testGetFileTypesFilterState() {
-        System.out.println("getFileTypesFilterState");
-        DefaultFilterState<?> expResult = new CompoundFilterState<>(new FileTypesFilter());
+        SqlFilterState<?> expResult = new CompoundFilterState<>(new FileTypesFilter());
         assertEquals(expResult, instance.getFileTypesFilterState());
     }
 
@@ -291,7 +273,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
     @Test
     @Override
     public void testGetActiveFilter() {
-        System.out.println("getActiveFilter");
         RootFilter expected = new RootFilter(null, null, null, null, null, null, null, Collections.emptyList());
         assertEquals(expected, instance.getActiveFilter());
 
@@ -305,8 +286,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testHasActiveHashFilters() {
-        System.out.println("hasActiveHashFilters");
-
         assertEquals(false, instance.hasActiveHashFilters());
         instance.getHashHitsFilterState().setSelected(Boolean.TRUE);
 
@@ -321,8 +300,6 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
      */
     @Test
     public void testHasActiveTagsFilters() {
-        System.out.println("hasActiveTagsFilters");
-
         assertEquals(false, instance.hasActiveTagsFilters());
         instance.getTagsFilterState().setSelected(Boolean.TRUE);
 
@@ -330,24 +307,23 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
         instance.getTagsFilterState().setSelected(Boolean.FALSE);
         assertEquals(false, instance.hasActiveTagsFilters());
     }
-    
-      /**
+
+    /**
      * Test of copyOf method, of class DefaultFilterState.
      */
     @Test
     @Override
     public void testCopyOf() {
         super.testCopyOf();
-        System.out.println(this.getClass().getSimpleName() + " - copyOf");
-        
+
         instance.setSelected(Boolean.TRUE);
         instance.getSubFilterStates().get(0).setSelected(Boolean.TRUE);
         instance.getSubFilterStates().get(1).setSelected(Boolean.FALSE);
-        
+
         RootFilterState copyOf = instance.copyOf();
-        
+
         assertEquals(instance, copyOf);
-        
+
         assertThat(copyOf.isSelected(), is(true));
         assertThat(copyOf.isDisabled(), is(false));
         assertThat(copyOf.getSubFilterStates().get(0).isSelected(), is(true));

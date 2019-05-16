@@ -29,14 +29,14 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter;
 /**
  *
  */
-public class DefaultFilterStateTest extends FilterStateTestAbstract<  DefaultFilterState<?>> {
+public class SqlFilterStateTest extends FilterStateTestAbstract<  SqlFilterState<?>> {
 
-    public DefaultFilterStateTest() {
+    public SqlFilterStateTest() {
     }
 
     @Before
     public void setup() {
-        instance = new DefaultFilterState<>(new TimelineFilter.HideKnownFilter());
+        instance = new SqlFilterState<>(new TimelineFilter.HideKnownFilter());
     }
 
     /**
@@ -45,14 +45,11 @@ public class DefaultFilterStateTest extends FilterStateTestAbstract<  DefaultFil
     @Test
     @Override
     public void testGetActiveFilter() {
-        System.out.println("getActiveFilter");
-
         assertNull(instance.getActiveFilter());
         instance.setSelected(Boolean.TRUE);
         assertEquals(new TimelineFilter.HideKnownFilter(), instance.getActiveFilter());
         instance.setDisabled(Boolean.TRUE);
         assertNull(instance.getActiveFilter());
-
     }
 
     /**
@@ -61,11 +58,9 @@ public class DefaultFilterStateTest extends FilterStateTestAbstract<  DefaultFil
     @Test
     @Override
     public void testEquals() {
-        System.out.println("equals");
-
-        DefaultFilterState<?> instance2 = new DefaultFilterState<>(new TimelineFilter.HideKnownFilter(), true);
-        DefaultFilterState<?> instance3 = new DefaultFilterState<>(new TimelineFilter.HideKnownFilter(), false);
-        DefaultFilterState<?> instance4 = new DefaultFilterState<>(new TimelineFilter.TextFilter("test"));
+        SqlFilterState<?> instance2 = new SqlFilterState<>(new TimelineFilter.HideKnownFilter(), true);
+        SqlFilterState<?> instance3 = new SqlFilterState<>(new TimelineFilter.HideKnownFilter(), false);
+        SqlFilterState<?> instance4 = new SqlFilterState<>(new TimelineFilter.TextFilter("test"));
         assertTrue(instance.equals(instance));
         assertTrue(instance.equals(instance3));
         assertFalse(instance.equals(instance2));

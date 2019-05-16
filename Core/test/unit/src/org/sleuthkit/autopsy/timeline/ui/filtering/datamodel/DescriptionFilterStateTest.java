@@ -44,8 +44,6 @@ public class DescriptionFilterStateTest extends FilterStateTestAbstract<  Filter
     @Test
     @Override
     public void testGetActiveFilter() {
-        System.out.println("getActiveFilter");
-
         assertNull(instance.getActiveFilter());
         instance.setSelected(Boolean.TRUE);
         assertEquals(new DescriptionFilter(DescriptionLoD.SHORT, "text"), instance.getActiveFilter());
@@ -60,14 +58,12 @@ public class DescriptionFilterStateTest extends FilterStateTestAbstract<  Filter
     @Test
     @Override
     public void testEquals() {
-        System.out.println("equals");
-
         DescriptionFilterState instance2 = new DescriptionFilterState(new DescriptionFilter(DescriptionLoD.SHORT, "text"), false);
         DescriptionFilterState instance3 = new DescriptionFilterState(new DescriptionFilter(DescriptionLoD.SHORT, "text foo"), false);
         DescriptionFilterState instance4 = new DescriptionFilterState(new DescriptionFilter(DescriptionLoD.FULL, "text"), false);
         DescriptionFilterState instance5 = new DescriptionFilterState(new DescriptionFilter(DescriptionLoD.SHORT, "text"), true);
         DescriptionFilterState instance6 = new DescriptionFilterState(new DescriptionFilter(DescriptionLoD.SHORT, "text"), true);
-        DefaultFilterState<?> instance7 = new DefaultFilterState<>(new TimelineFilter.TextFilter("test"));
+        SqlFilterState<?> instance7 = new SqlFilterState<>(new TimelineFilter.TextFilter("test"));
 
         assertThat(instance, equalTo(instance));
         assertThat(instance, equalTo(instance2));

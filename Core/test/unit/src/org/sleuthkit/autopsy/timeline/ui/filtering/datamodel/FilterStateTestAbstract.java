@@ -38,8 +38,6 @@ public abstract class FilterStateTestAbstract<FS extends FilterState<?>> {
      */
     @Test
     public void testSelectedProperty() {
-        System.out.println("selectedProperty");
-
         assertFalse(instance.isSelected());
 
         instance.setSelected(Boolean.TRUE);
@@ -56,8 +54,6 @@ public abstract class FilterStateTestAbstract<FS extends FilterState<?>> {
      */
     @Test
     public void testActiveProperty() {
-        System.out.println("activeProperty");
-
         assertFalse(instance.isActive());
         assertFalse(instance.activeProperty().getValue());
 
@@ -76,10 +72,7 @@ public abstract class FilterStateTestAbstract<FS extends FilterState<?>> {
      */
     @Test
     public void testCopyOf() {
-        System.out.println(this.getClass().getSimpleName()+ " - copyOf");
-        FilterState<?> copyOf = instance.copyOf();
-
-        assertEquals(instance, copyOf);
+        assertEquals(instance, instance.copyOf());
     }
 
     /**

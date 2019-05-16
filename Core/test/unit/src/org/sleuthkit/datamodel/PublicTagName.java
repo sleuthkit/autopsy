@@ -31,4 +31,5 @@ public class PublicTagName extends TagName {
     public String toString() {
         return "PublicTagName{" + getDisplayName() + '}'; //NON-NLS
     }
+
 }

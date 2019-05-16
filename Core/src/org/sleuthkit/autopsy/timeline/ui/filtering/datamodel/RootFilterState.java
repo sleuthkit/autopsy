@@ -46,8 +46,8 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
 public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFilter> {
 
     private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
-    private final DefaultFilterState<HideKnownFilter> knownFilterState;
-    private final DefaultFilterState<TextFilter> textFilterState;
+    private final SqlFilterState<HideKnownFilter> knownFilterState;
+    private final SqlFilterState<TextFilter> textFilterState;
     private final TagsFilterState tagsFilterState;
     private final CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState;
     private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState;
@@ -61,8 +61,8 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     public RootFilterState(RootFilter delegate) {
         this(delegate,
                 new CompoundFilterState<>(delegate.getEventTypeFilter()),
-                new DefaultFilterState<>(delegate.getKnownFilter()),
-                new DefaultFilterState<>(delegate.getTextFilter()),
+                new SqlFilterState<>(delegate.getKnownFilter()),
+                new SqlFilterState<>(delegate.getTextFilter()),
                 new TagsFilterState(delegate.getTagsFilter()),
                 new CompoundFilterState<>(delegate.getHashHitsFilter()),
                 new CompoundFilterState<>(delegate.getDataSourcesFilter()),
@@ -72,8 +72,8 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
 
     private RootFilterState(RootFilter filter,
                             CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
-                            DefaultFilterState<HideKnownFilter> knownFilterState,
-                            DefaultFilterState<TextFilter> textFilterState,
+                            SqlFilterState<HideKnownFilter> knownFilterState,
+                            SqlFilterState<TextFilter> textFilterState,
                             TagsFilterState tagsFilterState,
                             CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState,
                             CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState,
@@ -125,11 +125,11 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         return eventTypeFilterState;
     }
 
-    public DefaultFilterState<HideKnownFilter> getKnownFilterState() {
+    public SqlFilterState<HideKnownFilter> getKnownFilterState() {
         return knownFilterState;
     }
 
-    public DefaultFilterState<TextFilter> getTextFilterState() {
+    public SqlFilterState<TextFilter> getTextFilterState() {
         return textFilterState;
     }
 
@@ -203,6 +203,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         }
 
         final RootFilterState other = (RootFilterState) obj;
+      
         if (false == Objects.equals(this.getFilter(), other.getFilter())) {
             return false;
         }

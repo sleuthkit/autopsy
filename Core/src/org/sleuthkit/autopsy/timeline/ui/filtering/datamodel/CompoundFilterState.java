@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
  *                        CompoundFilter
  * @param <FilterType>    The type of the underlying CompoundFilter
  */
-public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterType extends CompoundFilter<SubFilterType>> extends DefaultFilterState<FilterType> {
+public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterType extends CompoundFilter<SubFilterType>> extends SqlFilterState<FilterType> {
 
     private final ObservableList< FilterState<? extends SubFilterType>> subFilterStates = FXCollections.observableArrayList();
 
@@ -57,7 +57,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
                 FilterState<SubFilterType> compoundFilterState = (FilterState<SubFilterType>) new CompoundFilterState<>((CompoundFilter<?>) newSubFilter);
                 addSubFilterStateInternal(compoundFilterState);
             } else {
-                addSubFilterStateInternal(new DefaultFilterState<>(newSubFilter));
+                addSubFilterStateInternal(new SqlFilterState<>(newSubFilter));
             }
         });
 
@@ -95,7 +95,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
                                 addSubFilterStateInternal(compoundFilterState);
 
                             } else {
-                                addSubFilterStateInternal(new DefaultFilterState<>(newSubFilter));
+                                addSubFilterStateInternal(new SqlFilterState<>(newSubFilter));
                             }
 
                         }
@@ -229,11 +229,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
 
     @Override
     public String toString() {
-        return "CompoundFilterState{"
-               + " selected=" + isSelected()
-               + ", disabled=" + isDisabled()
-               + ", activeProp=" + isActive()
-               + ",subFilterStates=" + subFilterStates + '}'; //NON-NLS
+        return "CompoundFilterState{ selected=" + isSelected() + ", disabled=" + isDisabled() + ", activeProp=" + isActive() + ",subFilterStates=" + subFilterStates + '}';
     }
-
+    
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,45 +24,26 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
- *
- *
- * @param <FilterType>
+ * Abstract base class for FilterStates. Provides selected, disabled, and active
+ * properties.
  */
-public class DefaultFilterState<FilterType extends TimelineFilter> implements FilterState<FilterType> {
-
-    private final FilterType filter;
+abstract class AbstractFilterState<F> implements FilterState<F> {
 
     private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
     private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
+    private final F filter;
 
-    /**
-     * Selected = false, Disabled = false
-     *
-     * @param filter
-     */
-    public DefaultFilterState(FilterType filter) {
-        this(filter, false);
+    @Override
+    public F getFilter() {
+        return filter;
     }
 
-    /**
-     * Disabled = false
-     *
-     * @param filter
-     * @param selected True to select this filter initialy.
-     */
-    public DefaultFilterState(FilterType filter, boolean selected) {
+    AbstractFilterState(F filter, Boolean select) {
         this.filter = filter;
-        this.selected.set(selected);
-    }
-
-    protected DefaultFilterState(FilterType filter, boolean selected, boolean disabled) {
-        this.filter = filter;
-        this.selected.set(selected);
-        this.disabled.set(disabled);
+        selected.set(select);
     }
 
     @Override
@@ -92,7 +73,7 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
 
     @Override
     public boolean isDisabled() {
-        return disabled.get();
+        return disabledProperty().get();
     }
 
     @Override
@@ -106,35 +87,16 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
     }
 
     @Override
-    public String getDisplayName() {
-        return filter.getDisplayName();
-    }
-
-    @Override
-    public DefaultFilterState<FilterType> copyOf() {
-        @SuppressWarnings("unchecked")
-        DefaultFilterState<FilterType> copy = new DefaultFilterState<>((FilterType) filter.copyOf());
-        copy.setSelected(isSelected());
-        copy.setDisabled(isDisabled());
-        return copy;
-    }
-
-    @Override
-    public FilterType getFilter() {
-        return filter;
-    }
-
-    @Override
-    public FilterType getActiveFilter() {
+    public F getActiveFilter() {
         return isActive() ? getFilter() : null;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 37 * hash + Objects.hashCode(this.filter);
-        hash = 37 * hash + Objects.hashCode(this.selected);
-        hash = 37 * hash + Objects.hashCode(this.disabled);
+        hash = 37 * hash + Objects.hashCode(this.getFilter());
+        hash = 37 * hash + Objects.hashCode(this.isSelected());
+        hash = 37 * hash + Objects.hashCode(this.isDisabled());
         return hash;
     }
 
@@ -149,27 +111,13 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final DefaultFilterState<?> other = (DefaultFilterState<?>) obj;
-        if (!Objects.equals(this.filter, other.filter)) {
+        final AbstractFilterState<?> other = (AbstractFilterState<?>) obj;
+        if (!Objects.equals(this.getFilter(), other.getFilter())) {
             return false;
         }
         if (!Objects.equals(this.isSelected(), other.isSelected())) {
             return false;
         }
-        if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.isDisabled(), other.isDisabled());
     }
-
-    @Override
-    public String toString() {
-        activeProp.get();
-        return "DefaultFilterState{"
-               + " filter=" + filter
-               + ", selected=" + selected
-               + ", disabled=" + disabled
-               + ", activeProp=" + activeProp + '}'; //NON-NLS
-    }
-
 }
