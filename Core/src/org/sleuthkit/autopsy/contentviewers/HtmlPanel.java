@@ -102,6 +102,8 @@ final class HtmlPanel extends javax.swing.JPanel {
         org.jsoup.nodes.Document doc = Jsoup.parse(htmlInString);
         // remove all 'img' tags.
         doc.select("img").stream().forEach(Node::remove);
+        // remove all 'span' tags, these are often images which are ads
+        doc.select("span").stream().forEach(Node::remove);
         return doc.html();
     }
 
