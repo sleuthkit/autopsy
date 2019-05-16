@@ -33,18 +33,16 @@ import org.openide.util.NbBundle.Messages;
 final class HtmlPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String TEXT_TYPE="text/plain";
+    private static final String TEXT_TYPE = "text/plain";
+    private final JFXPanel jfxPanel = new JFXPanel();
     private WebView webView;
     private String htmlText;
-    
-    private JFXPanel jfxPanel = new JFXPanel();
 
     /**
      * Creates new form HtmlViewerPanel
      */
     HtmlPanel() {
         initComponents();
-        //wjs
         Platform.runLater(() -> {
             webView = new WebView();
             webView.getEngine().setJavaScriptEnabled(false);
@@ -69,7 +67,6 @@ final class HtmlPanel extends javax.swing.JPanel {
      * Clear the HTML in the text pane and disable the show/hide button.
      */
     void reset() {
-        //wjs
         Platform.runLater(() -> {
             webView.getEngine().loadContent("", TEXT_TYPE);
         });
@@ -84,7 +81,7 @@ final class HtmlPanel extends javax.swing.JPanel {
      * @return The cleansed HTML String
      */
     private String cleanseHTML(String htmlInString) {
-
+        //this will not remove all images just the ones in the image tags matching this format
         Document doc = Jsoup.parse(htmlInString);
 
         // Update all 'img' tags.
@@ -150,7 +147,7 @@ final class HtmlPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
-                .addGap(0, 203, Short.MAX_VALUE))
+                .addGap(0, 95, Short.MAX_VALUE))
             .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -158,7 +155,7 @@ final class HtmlPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE))
+                .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
