@@ -242,13 +242,6 @@ public class CommandLineIngestManager {
                     }
 
                     /* EL: will need this code for next stories
-                    // run data source processor
-                    AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
-                    runDataSourceProcessor(caseForJob, dataSource);
-
-                    // run ingest manager
-                    analyze(dataSource);
-
                     // generate CASE-UCO report
                     Long selectedDataSourceId = getDataSourceId(dataSource);
                     Path reportFolderPath = Paths.get(caseForJob.getReportDirectory(), "CASE-UCO", "Data_Source_ID_" + selectedDataSourceId.toString() + "_" + TimeStampUtils.createTimeStamp(), ReportCaseUco.getReportFileName()); //NON_NLS

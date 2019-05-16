@@ -42,6 +42,16 @@ public class DataSourceLoader {
 
     private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
 
+    /**
+     * Query case database for a list of all existing logical data sources and
+     * their object IDs. Method can return either full path to data sources or
+     * just data source file names.
+     *
+     * @param tskDb SleuthkitCase database handle
+     * @param dataSourceMap map to which to add data sources
+     * @throws TskCoreException
+     * @throws SQLException
+     */
     private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
         //try block releases resources - exceptions are handled in done()
         try (
@@ -55,7 +65,19 @@ public class DataSourceLoader {
         }
     }
 
-    private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSourceMap) throws SQLException, TskCoreException {
+    /**
+     * Query case database for a list of all existing image data sources and
+     * their object IDs. Method can return either full path to data sources or
+     * just data source file names.
+     *
+     * @param tskDb SleuthkitCase database handle
+     * @param dataSourceMap map to which to add data sources
+     * @param fullPath true if full path to data source is needed, false
+     * otherwise
+     * @throws SQLException
+     * @throws TskCoreException
+     */
+    private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSourceMap, boolean fullPath) throws SQLException, TskCoreException {
         //try block releases resources - exceptions are handled in done()
         try (
                 SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
@@ -65,18 +87,23 @@ public class DataSourceLoader {
                 Long objectId = resultSet.getLong(1);
                 if (!dataSourceMap.containsKey(objectId)) {
                     String dataSourceName = resultSet.getString(2);
-                    File image = new File(dataSourceName);
-                    String dataSourceNameTrimmed = image.getName();
-                    dataSourceMap.put(objectId, dataSourceNameTrimmed);
+                    if (fullPath) {
+                        dataSourceMap.put(objectId, dataSourceName);
+                    } else {
+                        File image = new File(dataSourceName);
+                        String dataSourceNameTrimmed = image.getName();
+                        dataSourceMap.put(objectId, dataSourceNameTrimmed);
+                    }
                 }
             }
         }
     }
 
     /**
-     * Get a map of data source Ids to their string names for the current case.
+     * Get a map of data source Ids to their string names (data source file name
+     * only) for the current case.
      *
-     * @return Map of Long (id) to String (name)
+     * @return Map of Long (id) to String (data source file name only)
      *
      * @throws NoCurrentCaseException
      * @throws TskCoreException
@@ -90,7 +117,30 @@ public class DataSourceLoader {
 
         loadLogicalSources(tskDb, dataSouceMap);
 
-        loadImageSources(tskDb, dataSouceMap);
+        loadImageSources(tskDb, dataSouceMap, false);
+
+        return dataSouceMap;
+    }
+
+    /**
+     * Get a map of data source Ids to their string names (full path) for the
+     * current case.
+     *
+     * @return Map of Long (id) to String (full path to data source)
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     * @throws SQLException
+     */
+    public Map<Long, String> getFullPathDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
+        Map<Long, String> dataSouceMap = new HashMap<>();
+
+        Case currentCase = Case.getCurrentCaseThrows();
+        SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+
+        loadLogicalSources(tskDb, dataSouceMap);
+
+        loadImageSources(tskDb, dataSouceMap, true);
 
         return dataSouceMap;
     }
