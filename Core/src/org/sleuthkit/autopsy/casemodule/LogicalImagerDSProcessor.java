@@ -32,7 +32,6 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -127,7 +126,7 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      */
     @Messages({
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
-        "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Fail to create directory {0}",
+        "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
     })
     @Override
