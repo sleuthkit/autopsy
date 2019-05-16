@@ -26,7 +26,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
 /**
- * Abstacrt base class for FilterStates
+ * Abstract base class for FilterStates. Provides selected, disabled, and active
+ * properties.
  */
 abstract class AbstractFilterState<F> implements FilterState<F> {
 
@@ -117,9 +118,6 @@ abstract class AbstractFilterState<F> implements FilterState<F> {
         if (!Objects.equals(this.isSelected(), other.isSelected())) {
             return false;
         }
-        if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.isDisabled(), other.isDisabled());
     }
 }

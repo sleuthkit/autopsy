@@ -56,22 +56,21 @@ public class TagsFilterStateTest extends FilterStateTestAbstract<TagsFilterState
      */
     @Test
     public void testListeners() {
-        System.out.println("listeners");
         //filters added through initial filterstate constructor are not selected
         assertThat(instance.getSubFilterStates().get(0).isSelected(), equalTo(false));
         assertThat(instance.getSubFilterStates().get(1).isSelected(), equalTo(false));
 
         //filter starts unselected
-        DefaultFilterState<TimelineFilter.TagNameFilter> tagNameState
-                = new DefaultFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME3));
+        SqlFilterState<TimelineFilter.TagNameFilter> tagNameState
+                = new SqlFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME3));
         assertThat(tagNameState.isSelected(), equalTo(false));
         instance.getSubFilterStates().add(tagNameState);
         //filter is selected after adding to TagsFilterState.
         assertThat(tagNameState.isSelected(), equalTo(true));
 
         //filter starts unselected
-        DefaultFilterState<TimelineFilter.TagNameFilter> tagNameState2
-                = new DefaultFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME4), false);
+        SqlFilterState<TimelineFilter.TagNameFilter> tagNameState2
+                = new SqlFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME4), false);
         assertThat(tagNameState2.isSelected(), equalTo(false));
         instance.addSubFilterState(tagNameState2);
         //filter is selected after adding to TagsFilterState.
@@ -101,8 +100,6 @@ public class TagsFilterStateTest extends FilterStateTestAbstract<TagsFilterState
     @Test
     @Override
     public void testGetActiveFilter() {
-        System.out.println("getActiveFilter");
-
         assertNull(instance.getActiveFilter());
 
         instance.setSelected(Boolean.TRUE);

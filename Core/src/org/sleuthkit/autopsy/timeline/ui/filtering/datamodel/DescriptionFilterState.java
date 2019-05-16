@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 /**
- * A FilterState implementation for DescriptionFilters
+ * A FilterState implementation for DescriptionFilters.
  */
 public class DescriptionFilterState extends AbstractFilterState<DescriptionFilter> {
 
@@ -33,58 +33,23 @@ public class DescriptionFilterState extends AbstractFilterState<DescriptionFilte
 
     @Override
     public String getDisplayName() {
-        return filter.getDescription();
-    }
-
-    @Override
-    public DescriptionFilter getFilter() {
-        return filter;
-    }
-
-    @Override
-    public DescriptionFilter getActiveFilter() {
-        return isActive() ? getFilter() : null;
+        return getFilter().getDescription();
     }
 
     @Override
     public DescriptionFilterState copyOf() {
-        DescriptionFilterState copy = new DescriptionFilterState(filter);
+        DescriptionFilterState copy = new DescriptionFilterState(getFilter());
         copy.setSelected(isSelected());
         copy.setDisabled(isDisabled());
         return copy;
     }
 
     @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 37 * hash + Objects.hashCode(this.filter);
-        hash = 37 * hash + Objects.hashCode(this.selected);
-        hash = 37 * hash + Objects.hashCode(this.disabled);
-        return hash;
+    public String toString() {
+        return "DescriptionFilterState{"
+               + " filter=" + getFilter().toString()
+               + ", selected=" + isSelected()
+               + ", disabled=" + isDisabled()
+               + ", activeProp=" + isActive() + '}'; //NON-NLS
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final DescriptionFilterState other = (DescriptionFilterState) obj;
-        if (!Objects.equals(this.filter, other.filter)) {
-            return false;
-        }
-        if (!Objects.equals(this.isSelected(), other.isSelected())) {
-            return false;
-        }
-        if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
-            return false;
-        }
-        return true;
-    }
-
 }

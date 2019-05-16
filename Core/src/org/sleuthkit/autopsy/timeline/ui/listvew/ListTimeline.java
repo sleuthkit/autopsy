@@ -49,6 +49,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -67,6 +68,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -623,7 +625,9 @@ class ListTimeline extends BorderPane {
             }
             super.updateItem(item, empty);
 
-            if (!empty && item != null) {
+            if (empty || item == null) {
+                setOnContextMenuRequested(ListTimeline::NOOPConsumer);
+            } else {
                 visibleEvents.add(item);
                 setOnContextMenuRequested(contextMenuEvent -> {
                     //make a new context menu on each request in order to include uptodate tag names and hash sets
@@ -669,9 +673,11 @@ class ListTimeline extends BorderPane {
                         });
                     }
                 });
-            } else {
             }
         }
+    }
+
+    public static <X> void NOOPConsumer(X event) {
     }
 
     private class ScrollToFirst extends org.controlsfx.control.action.Action {

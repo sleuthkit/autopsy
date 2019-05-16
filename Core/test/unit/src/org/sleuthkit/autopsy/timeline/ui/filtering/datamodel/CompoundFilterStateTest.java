@@ -71,8 +71,6 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
      */
     @Test
     public void testStateListeners() {
-        System.out.println("listeners");
-
         //assert initial conditions
         assertThat(instance.isSelected(), is(false));
         assertThat(instance.isDisabled(), is(false));
@@ -128,14 +126,13 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
      */
     @Test
     public void testGetSubFilterStates() {
-        System.out.println("getSubFilterStates");
         assertEquals(instance.getSubFilterStates(), Arrays.asList(
-                new DefaultFilterState<>(PNG_FILTER, false, true),
-                new DefaultFilterState<>(JPG_FILTER, false, true)));
+                new SqlFilterState<>(PNG_FILTER, false, true),
+                new SqlFilterState<>(JPG_FILTER, false, true)));
         instance.setSelected(Boolean.TRUE);
         assertEquals(instance.getSubFilterStates(), Arrays.asList(
-                new DefaultFilterState<>(PNG_FILTER, Boolean.TRUE, false),
-                new DefaultFilterState<>(JPG_FILTER, Boolean.TRUE, false)));
+                new SqlFilterState<>(PNG_FILTER, Boolean.TRUE, false),
+                new SqlFilterState<>(JPG_FILTER, Boolean.TRUE, false)));
     }
 
     /**
@@ -144,8 +141,6 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
     @Test
     @Override
     public void testGetActiveFilter() {
-        System.out.println("getActiveFilter");
-
         assertNull(instance.getActiveFilter());
         instance.setSelected(Boolean.TRUE);
         assertEquals(instance.getActiveFilter(), new IntersectionFilter<>(Arrays.asList(PNG_FILTER, JPG_FILTER)));
@@ -155,10 +150,9 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
 
     @Override
     public void testEquals() {
-        assertThat(instance, equalTo(instance));
-
         CompoundFilterState<?, ?> instance2 = new CompoundFilterState<>(new IntersectionFilter<>(Arrays.asList(PNG_FILTER, JPG_FILTER)));
 
+        assertThat(instance, equalTo(instance));
         assertThat(instance, equalTo(instance2));
         instance2.setSelected(Boolean.TRUE);
         assertThat(instance, not(equalTo(instance2)));
@@ -169,8 +163,6 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
 
     @Test
     public void testSubFilterAddedListeners() {
-        System.out.println("subFilterAddedListeners");
-
         DataSourcesFilter dataSourcesfilter = new TimelineFilter.DataSourcesFilter();
         dataSourcesfilter.addSubFilter(new DataSourceFilter("data source 1", 1));
         dataSourcesfilter.addSubFilter(new DataSourceFilter("data source 2", 2));
@@ -206,8 +198,6 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
      */
     @Test
     public void testAddSubFilterState() {
-        System.out.println("addSubFilterState");
-
         //subfilters should always match through whether they are access though the sub filterstates, or as the subfilters of instance's filter.
         assertThat(instance.getFilter().getSubFilters().size(), is(2));
         assertThat(instance.getFilter().getSubFilters().get(0), is(PNG_FILTER));
@@ -221,7 +211,7 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
             assertThat(filterState.isDisabled(), is(true));
         });
 
-        instance.addSubFilterState(new DefaultFilterState<>(BMP_FILTER));
+        instance.addSubFilterState(new SqlFilterState<>(BMP_FILTER));
 
         //subfilters should always match through whether they are access though the sub filterstates, or as the subfilters of instance's filter.
         assertThat(instance.getFilter().getSubFilters().size(), is(3));
@@ -239,7 +229,7 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
         });
 
         instance.setSelected(Boolean.TRUE);
-        instance.addSubFilterState(new DefaultFilterState<>(GIF_FILTER));
+        instance.addSubFilterState(new SqlFilterState<>(GIF_FILTER));
 
         //subfilters should always match through whether they are access though the sub filterstates, or as the subfilters of instance's filter.
         assertThat(instance.getFilter().getSubFilters().size(), is(4));
@@ -271,7 +261,6 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
     @Override
     public void testCopyOf() {
         super.testCopyOf();
-        System.out.println(this.getClass().getSimpleName() + " - copyOf");
 
         instance.setSelected(Boolean.TRUE);
         instance.getSubFilterStates().get(0).setSelected(Boolean.TRUE);

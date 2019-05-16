@@ -80,7 +80,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.SqlFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
@@ -618,7 +618,7 @@ public class TimeLineController {
             @Override
             protected Collection< Long> call() throws Exception {
                 synchronized (TimeLineController.this) {
-                    return filteredEvents.getEventIDs(timeRange, new DefaultFilterState<>(new EventTypeFilter(type), true));
+                    return filteredEvents.getEventIDs(timeRange, new SqlFilterState<>(new EventTypeFilter(type), true));
                 }
             }
 
