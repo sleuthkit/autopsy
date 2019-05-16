@@ -48,6 +48,7 @@ import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorC
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
+import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSource;
 import org.sleuthkit.autopsy.datasourceprocessors.AddDataSourceCallback;
@@ -296,7 +297,30 @@ public class CommandLineIngestManager {
             Content content = dataSource.getContent().get(0);
             return content.getId();
         }
+        
+        /**
+         * Provides object ID of the data source by querying all existing data sources 
+         * from case database.
+         * 
+         * @param dataSourcePath full path to data source
+         * @return object id of the data source, NULL if data source was not found
+         * @throws NoCurrentCaseException
+         * @throws TskCoreException
+         * @throws SQLException 
+         */
+        private Long getDataSourceIdFromDatabase(String dataSourcePath) throws NoCurrentCaseException, TskCoreException, SQLException {
+            // look up all data sources in the current case
+            Map<Long, String> dataSourceMap = new DataSourceLoader().getFullPathDataSourceMap();
 
+            // get data source ID for the input data source
+            for (Map.Entry<Long, String> entry : dataSourceMap.entrySet()) {
+                if (entry.getValue().equalsIgnoreCase(dataSourcePath)) {
+                    return entry.getKey();
+                }
+            }            
+            return null;
+        }
+        
         /**
          * Creates a new case using arguments passed in from command line
          * CREATE_CASE command.
