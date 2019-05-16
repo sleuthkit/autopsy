@@ -45,6 +45,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option dataSourcePathOption = Option.requiredArgument('s', "dataSourcePath");
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
+    private final Option runIngestCommandOption = Option.withoutArgument('i', "runIngest");
     private boolean runFromCommandLine = false;
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
@@ -58,6 +59,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(dataSourcePathOption);
         set.add(addDataSourceCommandOption);
         set.add(caseDirOption);
+        set.add(runIngestCommandOption);
         return set;
     }
 
@@ -68,7 +70,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         runFromCommandLine = false;
 
         // input arguments must contain at least one command
-        if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption) /* || OtherCommands */)) {
+        if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption)  || values.containsKey(runIngestCommandOption))) {
             // not running from command line
             logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
             System.out.println("No command line commands passed in as inputs. Not running from command line.");
@@ -201,6 +203,28 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         }
 
         // Add RUN_INGEST command, if present
+        if (values.containsKey(runIngestCommandOption)) {
+
+            if (dataSourcePath.isEmpty()) {
+                logger.log(Level.SEVERE, "'dataSourcePath' argument is empty");
+                System.out.println("'dataSourcePath' argument is empty");
+                runFromCommandLine = false;
+                return;
+            }
+
+            if (caseDir.isEmpty()) {
+                logger.log(Level.SEVERE, "'caseDir' argument is empty");
+                System.out.println("'caseDir' argument is empty");
+                runFromCommandLine = false;
+                return;
+            }
+
+            CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
+            newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_PATH.name(), dataSourcePath);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+            commands.add(newCommand);
+            runFromCommandLine = true;
+        }  
     }
 
     /**
