@@ -18,6 +18,10 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import javafx.application.Platform;
+import javafx.scene.web.WebView;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.openide.util.NbBundle.Messages;
@@ -29,45 +33,44 @@ import org.openide.util.NbBundle.Messages;
 final class HtmlPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    
+    private WebView webView;
     private String htmlText;
-    
+    private JFXPanel jfxPanel = new JFXPanel();
+
     /**
      * Creates new form HtmlViewerPanel
      */
     HtmlPanel() {
         initComponents();
-        
-        Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
+        //wjs
+        Platform.runLater(() -> {
+            webView = new WebView();
+            webView.getEngine().setJavaScriptEnabled(false);
+            Scene scene = new Scene(webView);
+            jfxPanel.setScene(scene);
+            htmlScrollPane.setViewportView(jfxPanel);
+        });
     }
-    
+
     /**
      * Set the text pane's HTML text and refresh the view to display it.
-     * 
+     *
      * @param htmlText The HTML text to be applied to the text pane.
      */
     void setHtmlText(String htmlText) {
         this.htmlText = htmlText;
         refresh();
     }
-    
+
     /**
      * Clear the HTML in the text pane and disable the show/hide button.
      */
     void reset() {
-        htmlbodyTextPane.setText("");
+        //wjs
+        Platform.runLater(() -> {
+            webView.getEngine().loadContent("");
+        });
         showImagesToggleButton.setEnabled(false);
-    }
-
-    /**
-     * Guarantee the HTML text has 'html' and 'body' tags.
-     * 
-     * @param htmlText The HTML text
-     * 
-     * @return The HTML text with the 'html' and 'body' tags applied.
-     */
-    private String wrapInHtmlBody(String htmlText) {
-        return "<html><body>" + htmlText + "</body></html>";
     }
 
     /**
@@ -86,29 +89,33 @@ final class HtmlPanel extends javax.swing.JPanel {
 
         return doc.html();
     }
-    
+
     /**
      * Refresh the panel to reflect the current show/hide images setting.
      */
     @Messages({
         "HtmlPanel_showImagesToggleButton_show=Show Images",
         "HtmlPanel_showImagesToggleButton_hide=Hide Images",
-        "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",
-    })
+        "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",})
     private void refresh() {
         if (false == htmlText.isEmpty()) {
             try {
                 if (showImagesToggleButton.isSelected()) {
                     showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_hide());
-                    this.htmlbodyTextPane.setText(wrapInHtmlBody(htmlText));
+                    Platform.runLater(() -> {
+                        webView.getEngine().loadContent("JUST A STRING");
+                    });
                 } else {
                     showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_show());
-                    this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
+                    Platform.runLater(() -> {
+                        webView.getEngine().loadContent(cleanseHTML("JUST A STRING"));
+                    });
                 }
                 showImagesToggleButton.setEnabled(true);
-                htmlbodyTextPane.setCaretPosition(0); 
-            } catch(Exception ex) {
-                this.htmlbodyTextPane.setText(wrapInHtmlBody(Bundle.Html_text_display_error()));
+            } catch (Exception ignored) {
+                Platform.runLater(() -> {
+                    webView.getEngine().loadContent(Bundle.Html_text_display_error());
+                });
             }
         }
     }
@@ -122,14 +129,8 @@ final class HtmlPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        htmlScrollPane = new javax.swing.JScrollPane();
-        htmlbodyTextPane = new javax.swing.JTextPane();
         showImagesToggleButton = new javax.swing.JToggleButton();
-
-        htmlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-        htmlbodyTextPane.setEditable(false);
-        htmlScrollPane.setViewportView(htmlbodyTextPane);
+        htmlScrollPane = new javax.swing.JScrollPane();
 
         org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, org.openide.util.NbBundle.getMessage(HtmlPanel.class, "HtmlPanel.showImagesToggleButton.text")); // NOI18N
         showImagesToggleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -142,17 +143,17 @@ final class HtmlPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 203, Short.MAX_VALUE))
+            .addComponent(htmlScrollPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE))
+                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 74, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -163,7 +164,6 @@ final class HtmlPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane htmlScrollPane;
-    private javax.swing.JTextPane htmlbodyTextPane;
     private javax.swing.JToggleButton showImagesToggleButton;
     // End of variables declaration//GEN-END:variables
 }
