@@ -52,6 +52,8 @@ import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.Content;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.texttranslation.ui.TranslationContentPanel.DisplayDropdownOptions;
 
@@ -60,6 +62,8 @@ import org.sleuthkit.autopsy.texttranslation.ui.TranslationContentPanel.DisplayD
  */
 @ServiceProvider(service = TextViewer.class, position = 4)
 public final class TranslatedTextViewer implements TextViewer {
+
+    private static final Logger logger = Logger.getLogger(TranslatedTextViewer.class.getName()); 
 
     private static final boolean OCR_ENABLED = true;
     private static final boolean OCR_DISABLED = false;
@@ -169,16 +173,20 @@ public final class TranslatedTextViewer implements TextViewer {
                 try {
                     return getFileText(node);
                 } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error getting text", ex);
                     return Bundle.TranslatedContentViewer_errorMsg();
                 } catch (TextExtractor.InitReaderException ex) {
+                    logger.log(Level.WARNING, "Error getting text", ex);
                     return Bundle.TranslatedContentViewer_errorExtractingText();
                 }
             } else {
                 try {
                     return translate(getFileText(node));
                 } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error translating text", ex);
                     return Bundle.TranslatedContentViewer_errorMsg();
                 } catch (TextExtractor.InitReaderException ex) {
+                    logger.log(Level.WARNING, "Error translating text", ex);
                     return Bundle.TranslatedContentViewer_errorExtractingText();
                 }
             }
@@ -247,7 +255,8 @@ public final class TranslatedTextViewer implements TextViewer {
             } catch (NoServiceProviderException ex) {
                 return Bundle.TranslatedContentViewer_noServiceProvider();
             } catch (TranslationException ex) {
-                return Bundle.TranslatedContentViewer_translationException();
+                logger.log(Level.WARNING, "Error translating text", ex);
+                return Bundle.TranslatedContentViewer_translationException() + " (" + ex.getMessage() + ")";
             }
         }
 
@@ -287,7 +296,7 @@ public final class TranslatedTextViewer implements TextViewer {
 
             //Correct for UTF-8
             byte[] resultInUTF8Bytes = result.getBytes("UTF8");
-            byte[] trimTo1MB = Arrays.copyOfRange(resultInUTF8Bytes, 0, MAX_SIZE_1MB / 1000);
+            byte[] trimTo1MB = Arrays.copyOfRange(resultInUTF8Bytes, 0, MAX_SIZE_1MB );
             return new String(trimTo1MB, "UTF-8");
         }
 
@@ -333,7 +342,8 @@ public final class TranslatedTextViewer implements TextViewer {
                 bytesRead += read;
             }
 
-            return textBuilder.toString();
+            // The trim is on here because HTML files were observed with nearly 1MB of white space at the end
+            return textBuilder.toString().trim();
         }
 
         /**
