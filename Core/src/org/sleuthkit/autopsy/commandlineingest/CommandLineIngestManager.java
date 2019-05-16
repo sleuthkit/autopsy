@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.Collection;
@@ -38,9 +40,11 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import static org.sleuthkit.autopsy.casemodule.CaseMetadata.getFileExtension;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
+import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
@@ -58,6 +62,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 //import org.sleuthkit.autopsy.report.caseuco.CaseUcoFormatExporter;
 //import org.sleuthkit.autopsy.report.caseuco.ReportCaseUco;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Allows Autopsy to be invoked with a command line arguments. Causes Autopsy to
@@ -175,6 +180,60 @@ public class CommandLineIngestManager {
                                 }
                                 break;
                             case RUN_INGEST:
+                                try {
+                                    LOGGER.log(Level.INFO, "Processing 'run ingest' command");
+                                    System.out.println("Processing 'run ingest' command");
+                                    Map<String, String> inputs = command.getInputs();
+                                    
+                                    // open the case, if it hasn't been already opened by CREATE_CASE or ADD_DATA_SOURCE commands
+                                    if (caseForJob == null) {
+                                        String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                        openCase(caseDirPath);
+                                    }
+                                    
+                                    // populate the AutoIngestDataSource structure, if that hasn't been done by ADD_DATA_SOURCE command
+                                    if (dataSource == null) {
+                                        // create a new AutoIngestDataSource
+                                        String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
+                                        
+                                        // query case database for data source object ID
+                                        Long dataSourceObjId;
+                                        try {
+                                            dataSourceObjId = getDataSourceIdFromDatabase(dataSourcePath);
+                                        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+                                            LOGGER.log(Level.SEVERE, "Error querying case database for data source " + dataSourcePath, ex);
+                                            System.out.println("Error querying case database for data source " + dataSourcePath);
+                                            // Do not process any other commands
+                                            return;
+                                        }
+                                        
+                                        if (dataSourceObjId == null) {
+                                            LOGGER.log(Level.SEVERE, "Unable to find data source {0} in case database", dataSourcePath);
+                                            System.out.println("Unable to find data source " + dataSourcePath + " in case database");
+                                            // Do not process any other commands
+                                            return;                                            
+                                        }
+                                        
+                                        // get Content object for the data source
+                                        Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(dataSourceObjId);
+                                        
+                                        // populate the AutoIngestDataSource structure
+                                        dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
+                                        List<Content> contentList = new ArrayList<>();
+                                        contentList.add(content);
+                                        List<String> errorList = new ArrayList<>();
+                                        dataSource.setDataSourceProcessorOutput(NO_ERRORS, errorList, contentList);
+                                    }
+                                    
+                                    // run ingest
+                                    analyze(dataSource);
+                                } catch (InterruptedException | CaseActionException ex) {
+                                    String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
+                                    LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
+                                    System.out.println("Error running ingest on data source " + dataSourcePath);
+                                    // Do not process any other commands
+                                    return;
+                                }
                                 break;
                             default:
                                 break;
