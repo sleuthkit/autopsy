@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /*
  * A runnable that 
- *   - copy the logical image folder to a destinction folder
+ *   - copy the logical image folder to a destination folder
  *   - add alert.txt and users.txt files to report
  *   - add an image data source to the case database.
  */
