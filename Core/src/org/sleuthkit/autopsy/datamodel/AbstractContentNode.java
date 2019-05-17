@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.nodes.Children;
 
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
@@ -65,8 +66,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param lookup   The Lookup object for the node.
      */
     AbstractContentNode(T content, Lookup lookup) {
-         //TODO consider child factory for the content children
-        super(new ContentChildren(content), lookup);
+        super(Children.create(new ContentChildren(content), true), lookup);
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));
         super.setName("content_" + Long.toString(content.getId())); //NON-NLS

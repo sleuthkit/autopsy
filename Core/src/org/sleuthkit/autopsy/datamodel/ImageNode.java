@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -47,6 +46,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
 
 /**
  * This class is used to represent the "Node" for the image. The children of
@@ -224,18 +224,23 @@ public class ImageNode extends AbstractContentNode<Image> {
                 if (parent != null) {
                     // Is this a new carved file?
                     if (parent.getName().equals(VirtualDirectory.NAME_CARVED)) {
-                        // Was this new carved file produced from this image?
-                        if (parent.getParent().getId() == getContent().getId()) {
-                            Children children = getChildren();
-                            if (children != null) {
-                                ((ContentChildren) children).refreshChildren();
-                                children.getNodesCount();
+                        // Is this new carved file for this data source?
+                        if (newContent.getDataSource().getId() == getContent().getDataSource().getId()) {
+                            // Find the image (if any) associated with the new content and
+                            // trigger a refresh if it matches the image wrapped by this node.
+                            while ((parent = parent.getParent()) != null) {
+                                if (parent.getId() == getContent().getId()) {
+                                    BaseChildFactory.post(getName(), new BaseChildFactory.RefreshKeysEvent());
+                                    break;
+                                }
                             }
                         }
                     }
                 }
             } catch (TskCoreException ex) {
                 // Do nothing.
+            } catch (NoSuchEventBusException ex) {
+                logger.log(Level.WARNING, "Failed to post key refresh event.", ex); // NON-NLS
             }
         } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
             if (evt.getNewValue() == null) {
