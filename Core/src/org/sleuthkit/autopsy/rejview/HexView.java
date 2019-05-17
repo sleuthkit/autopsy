@@ -54,6 +54,7 @@ final class HexView extends JPanel {
 
     private final static int DEFAULT_BYTES_PER_LINE = 0x10;
     private final static char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    private final static int CHAR_ARRAY_SIZE = 3;
     private static final Logger logger = Logger.getLogger(HexView.class.getName());
     private static final long serialVersionUID = 1L;
     private final int bytesPerLine;
@@ -130,7 +131,7 @@ final class HexView extends JPanel {
             }
 
             byte b = buf.get();
-            char[] hex = new char[3];
+            char[] hex = new char[CHAR_ARRAY_SIZE];
             hex[0] = HEX_DIGITS[(b >>> 4) & 0x0F];
             hex[1] = HEX_DIGITS[b & 0x0F];
             hex[2] = ' ';
@@ -207,14 +208,14 @@ final class HexView extends JPanel {
                 }
 
                 // the number of line endings before the start,end points
-                int startRows = (startByte - (startByte % bytesPerLine)) / (3 * bytesPerLine);
-                int endRows = (endByte - (endByte % bytesPerLine)) / (3 * bytesPerLine);
+                int startRows = (startByte - (startByte % bytesPerLine)) / (CHAR_ARRAY_SIZE * bytesPerLine);
+                int endRows = (endByte - (endByte % bytesPerLine)) / (CHAR_ARRAY_SIZE * bytesPerLine);
 
                 // the byte index of the start,end points in the ASCII view
                 startByte -= startRows;
-                startByte /= 3;
+                startByte /= CHAR_ARRAY_SIZE;
                 endByte -= endRows;
-                endByte /= 3;
+                endByte /= CHAR_ARRAY_SIZE;
 
                 if (hexLastSelectionStart == startByte && hexLastSelectionEnd == endByte) {
                     return;
@@ -295,7 +296,7 @@ final class HexView extends JPanel {
 
             try {
                 asciiViewTextArea.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, highlighterPainter);
-                hexViewTextArea.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, highlighterPainter);
+                hexViewTextArea.getHighlighter().addHighlight((startByte * CHAR_ARRAY_SIZE) + startRows, (endByte * CHAR_ARRAY_SIZE) + endRows, highlighterPainter);
             } catch (BadLocationException ex) {
                 logger.log(Level.WARNING, "Invalid highlighting location specified", ex);
             }

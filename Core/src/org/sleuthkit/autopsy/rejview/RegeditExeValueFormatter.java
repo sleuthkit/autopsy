@@ -36,7 +36,11 @@ import org.openide.util.NbBundle.Messages;
  */
 final class RegeditExeValueFormatter {
 
-    @Messages({"RegeditExeValueFormatter.valueNotSet.text=(value not set)"})
+    private static final int MAX_STRING_LENGTH = 48;
+    private static final int MAX_BUFFER_SIZE = 16;
+    private static final String OVER_MAX_LENGTH_ENDING = "...";
+
+    private static @Messages({"RegeditExeValueFormatter.valueNotSet.text=(value not set)"})
     static String format(ValueData val) throws UnsupportedEncodingException, RegistryParseException {
         StringBuilder sb = new StringBuilder();
 
@@ -50,9 +54,9 @@ final class RegeditExeValueFormatter {
                 } else {
                     sb.append(valString);
                 }
-                if (sb.length() > 48) {
-                    sb.setLength(45);
-                    sb.append("...");
+                if (sb.length() > MAX_STRING_LENGTH) {
+                    sb.setLength(MAX_STRING_LENGTH - OVER_MAX_LENGTH_ENDING.length());
+                    sb.append(OVER_MAX_LENGTH_ENDING);
                 }
                 break;
             }
@@ -64,9 +68,9 @@ final class RegeditExeValueFormatter {
                         sb.append(", ");
                     }
                 }
-                if (sb.length() > 48) {
-                    sb.setLength(45);
-                    sb.append("...");
+                if (sb.length() > MAX_STRING_LENGTH) {
+                    sb.setLength(MAX_STRING_LENGTH - OVER_MAX_LENGTH_ENDING.length());
+                    sb.append(OVER_MAX_LENGTH_ENDING);
                 }
                 break;
             }
@@ -82,15 +86,15 @@ final class RegeditExeValueFormatter {
             default: {
                 ByteBuffer valData = val.getAsRawData();
                 valData.position(0x0);
-                for (int i = 0; i < Math.min(16, valData.limit()); i++) {
+                for (int i = 0; i < Math.min(MAX_BUFFER_SIZE, valData.limit()); i++) {
                     byte b = valData.get();
                     sb.append(HexDump.toHexString(b));
-                    if (i != 15) { // magic number, sorry.
+                    if (i != MAX_BUFFER_SIZE - 1) { // don't append when at index for max length
                         sb.append(' ');
                     }
                 }
-                if (valData.limit() > 16) {
-                    sb.append("...");
+                if (valData.limit() > MAX_BUFFER_SIZE) {
+                    sb.append(OVER_MAX_LENGTH_ENDING);
                 }
                 break;
             }
