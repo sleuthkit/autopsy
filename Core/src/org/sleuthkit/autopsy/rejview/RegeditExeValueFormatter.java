@@ -37,10 +37,10 @@ import org.openide.util.NbBundle.Messages;
 final class RegeditExeValueFormatter {
 
     private static final int MAX_STRING_LENGTH = 48;
-    private static final int MAX_BUFFER_SIZE = 16;
+    private static final int MAX_BUFFER_SIZE = 16; 
     private static final String OVER_MAX_LENGTH_ENDING = "...";
 
-    private static @Messages({"RegeditExeValueFormatter.valueNotSet.text=(value not set)"})
+    @Messages({"RegeditExeValueFormatter.valueNotSet.text=(value not set)"})
     static String format(ValueData val) throws UnsupportedEncodingException, RegistryParseException {
         StringBuilder sb = new StringBuilder();
 
