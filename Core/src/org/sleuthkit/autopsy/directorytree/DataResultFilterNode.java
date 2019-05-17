@@ -26,8 +26,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.explorer.ExplorerManager;
@@ -41,7 +39,6 @@ import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
@@ -80,7 +77,6 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -95,33 +91,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataResultFilterNode extends FilterNode {
 
     private static final Logger LOGGER = Logger.getLogger(DataResultFilterNode.class.getName());
-
-    private static boolean filterKnownFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
-    private static boolean filterKnownFromViews = UserPreferences.hideKnownFilesInViewsTree();
-    private static boolean filterSlackFromDataSources = UserPreferences.hideSlackFilesInDataSourcesTree();
-    private static boolean filterSlackFromViews = UserPreferences.hideSlackFilesInViewsTree();
-
-    static {
-        UserPreferences.addChangeListener(new PreferenceChangeListener() {
-            @Override
-            public void preferenceChange(PreferenceChangeEvent evt) {
-                switch (evt.getKey()) {
-                    case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
-                        filterKnownFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
-                        break;
-                    case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
-                        filterKnownFromViews = UserPreferences.hideKnownFilesInViewsTree();
-                        break;
-                    case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
-                        filterSlackFromDataSources = UserPreferences.hideSlackFilesInDataSourcesTree();
-                        break;
-                    case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:
-                        filterSlackFromViews = UserPreferences.hideSlackFilesInViewsTree();
-                        break;
-                }
-            }
-        });
-    }
 
     static private final DisplayableItemNodeVisitor<List<Action>> getActionsDIV = new GetPopupActionsDisplayableItemNodeVisitor();
     private final DisplayableItemNodeVisitor<AbstractAction> getPreferredActionsDIV = new GetPreferredActionsDisplayableItemNodeVisitor();
@@ -152,24 +121,6 @@ public class DataResultFilterNode extends FilterNode {
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
-        this.sourceEm = em;
-    }
-
-    /**
-     * Constructs a node used to wrap another node before passing it to the
-     * result viewers. The wrapper node defines the actions associated with the
-     * wrapped node and may filter out some of its children.
-     *
-     * @param node        The node to wrap.
-     * @param em          The ExplorerManager for the component that is creating
-     *                    the node.
-     * @param filterKnown Whether or not to filter out children that represent
-     *                    known files.
-     * @param filterSlack Whether or not to filter out children that represent
-     *                    virtual slack space files.
-     */
-    private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
-        super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
         this.sourceEm = em;
     }
 
@@ -294,10 +245,7 @@ public class DataResultFilterNode extends FilterNode {
     private static class DataResultFilterChildren extends FilterNode.Children {
 
         private final ExplorerManager sourceEm;
-
-        private boolean filterKnown;
-        private boolean filterSlack;
-        private boolean filterArtifacts;    // display message artifacts in the DataSource subtree
+        private final boolean filterArtifacts;    // display message artifacts in the DataSource subtree
 
         /**
          * the constructor
@@ -305,46 +253,13 @@ public class DataResultFilterNode extends FilterNode {
         private DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
             super(arg);
 
-            this.filterArtifacts = false;
-            switch (SelectionContext.getSelectionContext(arg)) {
-                case DATA_SOURCES:
-                    filterSlack = filterSlackFromDataSources;
-                    filterKnown = filterKnownFromDataSources;
-                    filterArtifacts = true;
-                    break;
-                case VIEWS:
-                    filterSlack = filterSlackFromViews;
-                    filterKnown = filterKnownFromViews;
-                    break;
-                default:
-                    filterSlack = false;
-                    filterKnown = false;
-                    break;
-            }
-            this.sourceEm = sourceEm;
-        }
+            filterArtifacts = SelectionContext.getSelectionContext(arg).equals(SelectionContext.DATA_SOURCES);
 
-        private DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
-            super(arg);
-            this.filterKnown = filterKnown;
-            this.filterSlack = filterSlack;
             this.sourceEm = sourceEm;
         }
 
         @Override
         protected Node[] createNodes(Node key) {
-            AbstractFile file = key.getLookup().lookup(AbstractFile.class);
-            if (file != null) {
-                if (filterKnown && (file.getKnown() == TskData.FileKnown.KNOWN)) {
-                    // Filter out child nodes that represent known files
-                    return new Node[]{};
-                }
-                if (filterSlack && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
-                    // Filter out child nodes that represent slack files
-                    return new Node[]{};
-                }
-            }
-
             // filter out all non-message artifacts, if displaying the results from the Data Source tree
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
             if (art != null
@@ -354,9 +269,8 @@ public class DataResultFilterNode extends FilterNode {
                 return new Node[]{};
             }
 
-            return new Node[]{new DataResultFilterNode(key, sourceEm, filterKnown, filterSlack)};
+            return new Node[]{new DataResultFilterNode(key, sourceEm)};
         }
-
     }
 
     @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")

@@ -43,6 +43,8 @@ ArtifactStringContent.attrsTableHeader.type=Type
 ArtifactStringContent.attrsTableHeader.value=Value
 ArtifactStringContent.failedToGetAttributes.message=Failed to get some or all attributes from case database
 ArtifactStringContent.failedToGetSourcePath.message=Failed to get source file path from case database
+# {0} - node name
+BaseChildFactory.NoSuchEventBusException.message=No event bus for node: {0}
 BlackboardArtifactNode.createSheet.artifactDetails.displayName=Result Details
 BlackboardArtifactNode.createSheet.artifactDetails.name=Result Details
 BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash
