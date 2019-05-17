@@ -150,14 +150,12 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
         // Create the LogicalImager directory under ModuleDirectory
         String moduleDirectory = Case.getCurrentCase().getModuleDirectory();
         File logicalImagerDir = Paths.get(moduleDirectory, LOGICAL_IMAGER_DIR).toFile();
-        if (!logicalImagerDir.exists()) {
-            if (!logicalImagerDir.mkdir()) {
-                // create failed
-                String msg = Bundle.LogicalImagerDSProcessor_failToCreateDirectory(logicalImagerDir);
-                errorList.add(msg);
-                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-                return;
-            }
+        if (!logicalImagerDir.exists() && !logicalImagerDir.mkdir()) {
+            // create failed
+            String msg = Bundle.LogicalImagerDSProcessor_failToCreateDirectory(logicalImagerDir);
+            errorList.add(msg);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
         }
         File dest = Paths.get(logicalImagerDir.toString(), imageDirPath.getFileName().toString()).toFile();
         if (dest.exists()) {

@@ -34,6 +34,12 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/*
+ * A runnable that 
+ *   - copy the logical image folder to a destinction folder
+ *   - add alert.txt and users.txt files to report
+ *   - add an image data source to the case database.
+ */
 public class AddLogicalImageTask extends AddImageTask {
 
     private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());   

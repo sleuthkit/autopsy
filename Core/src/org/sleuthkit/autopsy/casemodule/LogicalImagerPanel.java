@@ -473,9 +473,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_clickScanOrBrowse());
     }
 
-    public void popDownPanel() {
-    }
-    
     /**
      * Should we enable the next button of the wizard?
      *
