@@ -68,7 +68,14 @@ public final class FileSearchTestAction extends CallableSystemAction {
         List<FileSearchFiltering.SubFilter> filters = new ArrayList<>();
         filters.add( new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, 
                 FileSearchData.FileSize.SMALL, FileSearchData.FileSize.XS)));
-        filters.add( new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE)));
+        //filters.add( new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.XL)));
+        //filters.add( new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE)));
+        filters.add( new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE, FileSearchData.Frequency.COMMON)));
+        
+        //Comparator<ResultFile> fileSort = FileSearch.getFileNameComparator();
+        //Comparator<ResultFile> fileSort = new FileSearch.FrequencyAttribute().getDefaultFileComparator();
+        Comparator<ResultFile> fileSort = new FileSearch.FileSizeAttribute().getDefaultFileComparator();
+        
         EamDb crDb = null;
         if (EamDb.isEnabled()) {
             try {
@@ -82,22 +89,11 @@ public final class FileSearchTestAction extends CallableSystemAction {
             
             FileSearch.runFileSearch(filters, 
                 new FileSearch.FrequencyAttribute(), FileGroup.GroupSortingAlgorithm.BY_ATTRIBUTE, 
-                new FileSearch.FrequencyAttribute().getDefaultFileComparator(), 
+                fileSort, 
                 Case.getCurrentCase().getSleuthkitCase(), crDb);
             
-            /*List<ResultFile> results = FileSearchFiltering.runFilters(filters, 
-                    Case.getCurrentCase().getSleuthkitCase(), crDb);
             
-            int count = 0;
-            for (ResultFile file: results) {
-                file.print();
-                count++;
-                if (count > 10) {
-                    int left = results.size() - 10;
-                    System.out.println(" Not displaying " + left + " more files");
-                    break;
-                }
-            }*/
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }

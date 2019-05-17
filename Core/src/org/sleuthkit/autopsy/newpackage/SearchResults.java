@@ -6,6 +6,7 @@
 package org.sleuthkit.autopsy.newpackage;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -41,14 +42,38 @@ class SearchResults {
         }
     }
     
+    void finish() {
+        
+        // First sort the files
+        for (FileGroup group : groupMap.values()) {
+            group.sortFiles();
+        }
+        
+        // Now put the groups in a list and sort them
+        List<FileGroup> groupList = new ArrayList<>(groupMap.values());
+        Collections.sort(groupList);
+        
+        System.out.println("\nSearchResults (List)");
+        for (FileGroup group : groupList) {
+            System.out.println("  " + group.getDisplayName());
+            
+            for (ResultFile file : group.getResultFiles()) {
+                file.print("    ");
+            }
+        }
+    }
+    
     void print() {
         
-        System.out.println("\nSearchResults");
+        System.out.println("\nSearchResults (Map)");
         for (Object key : groupMap.keySet()) {
             System.out.println("  " + groupMap.get(key).getDisplayName());
             
-            for (AbstractFile file : groupMap.get(key).getAbstractFiles()) {
-                System.out.println("    " + file.getName());
+            //for (AbstractFile file : groupMap.get(key).getAbstractFiles()) {
+            //    System.out.println("    " + file.getName());
+            //}
+            for (ResultFile file : groupMap.get(key).getResultFiles()) {
+                file.print("    ");
             }
         }
         

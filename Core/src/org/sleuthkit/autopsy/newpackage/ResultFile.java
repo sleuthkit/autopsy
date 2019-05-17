@@ -40,17 +40,29 @@ class ResultFile {
         return abstractFile;
     }
     
-    void print() {
-        System.out.println("Obj ID: " + abstractFile.getId());
-        System.out.println("Name: " + abstractFile.getName());
-        System.out.println("Size: " + abstractFile.getSize());
-        System.out.println("Parent: " + abstractFile.getParentPath());
-        System.out.println("Data Source: " + abstractFile.getDataSourceObjectId());
-        System.out.println("Frequency: " + frequency.toString());
-        System.out.print("Keyword lists: ");
+    void print(String prefix) {
+        String kw = "";
         for (String name:keywordListNames) {
-            System.out.print(name + " ");
+            if (! kw.isEmpty()) {
+                kw += "_";
+            }
+            kw += name;
         }
-        System.out.println("\n");
+        System.out.println(prefix + abstractFile.getName() + "(" + abstractFile.getId() + ") - "
+                + abstractFile.getSize() + ", " + abstractFile.getParentPath() + ", " 
+                + abstractFile.getDataSourceObjectId() + ", " + frequency.toString()
+                + kw + ", " + abstractFile.getMIMEType());
+        
+        //System.out.println("Obj ID: " + abstractFile.getId());
+        //System.out.println("Name: " + abstractFile.getName());
+        //System.out.println("Size: " + abstractFile.getSize());
+        //System.out.println("Parent: " + abstractFile.getParentPath());
+        //System.out.println("Data Source: " + abstractFile.getDataSourceObjectId());
+        //System.out.println("Frequency: " + frequency.toString());
+        //System.out.print("Keyword lists: ");
+        //for (String name:keywordListNames) {
+        //    System.out.print(name + " ");
+        //}
+        //System.out.println("\n");
     }
 }

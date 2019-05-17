@@ -6,6 +6,7 @@
 package org.sleuthkit.autopsy.newpackage;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,7 +16,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  *
  */
-class FileGroup {
+class FileGroup implements Comparable<FileGroup> {
     
     private final FileGroup.GroupSortingAlgorithm groupSortingType;
     private final FileSearch.AttributeType attrType;
@@ -38,13 +39,34 @@ class FileGroup {
     }
     
     String getDisplayName() {
-        return displayName;
+        return displayName + " (" + files.size() + ")";
     }
     
     List<AbstractFile> getAbstractFiles() {
         return files.stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
     }
     
+    void sortFiles() {
+        Collections.sort(files, fileSortingMethod);
+    }
+    
+    // Probably only for testing
+    List<ResultFile> getResultFiles() {
+        return files;
+    }
+    
+    @Override
+    public int compareTo(FileGroup otherGroup) {
+        
+        if (groupSortingType == FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE) {
+            return -1 * Long.compare(files.size(), otherGroup.files.size()); // High to low
+        }
+        
+        // Otherwise, compare the first two files using the default sorting of the grouping attribute.
+        // File groups are never empty.
+        Comparator<ResultFile> comparator = attrType.getDefaultFileComparator();
+        return comparator.compare(files.get(0), otherGroup.files.get(0));
+    }   
     
     enum GroupSortingAlgorithm {
 	BY_GROUP_SIZE,

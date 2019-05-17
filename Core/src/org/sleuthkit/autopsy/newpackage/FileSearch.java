@@ -31,12 +31,25 @@ class FileSearch {
         for (ResultFile file : resultFiles) {
             searchResults.add(file);
         }
-        searchResults.print();
-        //searchResults.finish();
+        
+        searchResults.finish();
+        
+        //searchResults.print();
+        
         //return searchResults.getTranferrableVersion();
     }
 
-    
+    static Comparator<ResultFile> getFileNameComparator() {
+        return new Comparator<ResultFile>() {
+            @Override
+            public int compare(ResultFile file1, ResultFile file2) {
+                if (file1 == null) {
+                    return 1;
+                }
+                return file1.getAbstractFile().getName().compareToIgnoreCase(file2.getAbstractFile().getName());
+            }
+        };
+    }
     
     abstract static class AttributeType {
         abstract Object getGroupIdentifier(ResultFile file);
@@ -61,7 +74,7 @@ class FileSearch {
             return new Comparator<ResultFile>() {
                 @Override
                 public int compare(ResultFile file1, ResultFile file2) {
-                    return Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize());
+                    return -1 * Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize()); // Large to small
                 }
             };
         }
