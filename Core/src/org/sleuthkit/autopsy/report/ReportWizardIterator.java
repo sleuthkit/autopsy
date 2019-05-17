@@ -31,34 +31,40 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
 
     private int index;
 
-    private ReportWizardPanel1 firstPanel;
-    private ReportWizardPanel2 tableConfigPanel;
-    private ReportWizardFileOptionsPanel fileConfigPanel;
+    private final ReportWizardPanel1 firstPanel;
+    private final ReportWizardPanel2 tableConfigPanel;
+    private final ReportWizardFileOptionsPanel fileConfigPanel;
+    private final ReportWizardPortableCaseOptionsPanel portableCaseConfigPanel;
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
 
     // Panels that should be shown if both Table and File report modules should
     // be configured.
-    private WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
-    private String[] allConfigIndex;
+    private final WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
+
     // Panels that should be shown if only Table report modules should
     // be configured.
-    private WizardDescriptor.Panel<WizardDescriptor>[] tableConfigPanels;
-    private String[] tableConfigIndex;
+    private final WizardDescriptor.Panel<WizardDescriptor>[] tableConfigPanels;
+
     // Panels that should be shown if only File report modules should
     // be configured.
-    private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
-    private String[] fileConfigIndex;
+    private final WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
+
+    // Panels that should be shown if only Portable Case report modules should
+    // be configured.
+    private final WizardDescriptor.Panel<WizardDescriptor>[] portableCaseConfigPanels;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     ReportWizardIterator() {
         firstPanel = new ReportWizardPanel1();
         tableConfigPanel = new ReportWizardPanel2();
         fileConfigPanel = new ReportWizardFileOptionsPanel();
+        portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel();
 
-        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel};
+        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
         tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
         fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
+        portableCaseConfigPanels = new WizardDescriptor.Panel[]{firstPanel, portableCaseConfigPanel};
     }
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
@@ -78,10 +84,6 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
                     jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
                 }
             }
-
-            allConfigIndex = steps;
-            tableConfigIndex = new String[]{steps[0], steps[1]};
-            fileConfigIndex = new String[]{steps[0], steps[2]};
         }
         return panels;
     }
@@ -93,13 +95,17 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
      * @param moreConfig  true if a GeneralReportModule was selected
      * @param tableConfig true if a TReportModule was selected
      */
-    private void enableConfigPanels(boolean generalModule, boolean tableModule) {
+    private void enableConfigPanels(boolean generalModule, boolean tableModule, boolean portableCaseModule) {
         if (generalModule) {
             // General Module selected, no additional panels
         } else if (tableModule) {
             // Table Module selected, need Artifact Configuration Panel
             // (ReportWizardPanel2)
             panels = Arrays.asList(tableConfigPanels);
+        } else if (portableCaseModule) {
+            // Portable Case Module selected, need Portable Case Configuration Panel
+            // (ReportWizardPortableCaseOptionsPanel)
+            panels = Arrays.asList(portableCaseConfigPanels);
         } else {
             // File Module selected, need File Report Configuration Panel
             // (ReportWizardFileOptionsPanel)
@@ -135,11 +141,12 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
 
         if (index == 0) {
             // Update path through configuration panels
-            boolean generalModule, tableModule;
+            boolean generalModule, tableModule, portableModule;
             // These preferences are set in ReportWizardPanel1.storeSettings()
             generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true); //NON-NLS
             tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true); //NON-NLS
-            enableConfigPanels(generalModule, tableModule);
+            portableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("portableCaseModule", true); //NON-NLS
+            enableConfigPanels(generalModule, tableModule, portableModule);
         }
 
         index++;

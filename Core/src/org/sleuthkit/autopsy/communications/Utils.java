@@ -28,12 +28,12 @@ import org.sleuthkit.datamodel.Account;
 /**
  * Utility class with helpers for dealing with accounts.
  */
-class Utils {
+public final class Utils {
 
     private Utils() {
     }
 
-    static ZoneId getUserPreferredZoneId() {
+    static public ZoneId getUserPreferredZoneId() {
         ZoneId zone = UserPreferences.displayTimesInLocalTime() ?
                 ZoneOffset.systemDefault() : TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays()).toZoneId();
         return zone;
@@ -44,7 +44,7 @@ class Utils {
      *
      * @return The path of the icon for the given Account Type.
      */
-    static final String getIconFilePath(Account.Type type) {
+    static public final String getIconFilePath(Account.Type type) {
         return Accounts.getIconFilePath(type);
     }
 
