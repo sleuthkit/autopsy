@@ -701,6 +701,22 @@
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\vorbis-java-tika-0.8.jar</binary-origin>
             </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-core-http-1.70.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-core-http-1.70.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-translate-1.70.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-translate-1.70.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-core-1.70.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-core-1.70.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/proto-google-cloud-translate-v3beta1-0.53.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/proto-google-cloud-translate-v3beta1-0.53.0.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>
