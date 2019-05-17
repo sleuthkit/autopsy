@@ -73,6 +73,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
             content.read(data, 0x0, content.getSize());
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to read file content.", ex);
+            return;
         }
         ByteBuffer buf = ByteBuffer.wrap(data);
 
@@ -116,6 +117,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
             file.read(header, 0x0, Math.min(0x4000, file.getSize()));
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to read file content", ex);
+            return false;
         }
         ByteBuffer buf = ByteBuffer.wrap(header);
 
