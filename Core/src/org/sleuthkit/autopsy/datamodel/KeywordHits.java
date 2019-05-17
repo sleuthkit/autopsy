@@ -160,14 +160,18 @@ public class KeywordHits implements AutopsyVisitableItem {
                     public int compare(String o1, String o2) {  
                         // ideally, they would not be hard coded, but this module
                         // doesn't know about Keyword Search NBM
-                        if (o1.startsWith("Single Literal Keyword Search"))
+                        if (o1.startsWith("Single Literal Keyword Search")) {
                             return -1;
-                        if (o2.startsWith("Single Literal Keyword Search"))
+                        }
+                        else if (o2.startsWith("Single Literal Keyword Search")) {
                             return 1;
-                        if (o1.startsWith("Single Regular Expression Search"))
+                        }
+                        else if (o1.startsWith("Single Regular Expression Search")) {
                             return -1;
-                        if (o2.startsWith("Single Regular Expression Search"))
+                        }
+                        else if (o2.startsWith("Single Regular Expression Search")) {
                             return 1;
+                        }
                         return o1.compareTo(o2);
                     }
                 });
