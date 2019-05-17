@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/*
+/**
  * A runnable that 
  *   - copy the logical image folder to a destination folder
  *   - add alert.txt and users.txt files to report
