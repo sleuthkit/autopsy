@@ -85,6 +85,7 @@ public class AddLogicalImageTask extends AddImageTask {
             // Copy directory failed
             String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
             errorList.add(msg);
+            logger.log(Level.SEVERE, String.format("Failed to copy directory {0} to {1}", src.toString(), dest.toString()));
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
