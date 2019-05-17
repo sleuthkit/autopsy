@@ -11,12 +11,7 @@ ExtractArchiveWithPasswordAction.progress.text=Unpacking contents of archive: {0
 ExtractArchiveWithPasswordAction.prompt.text=Enter Password
 ExtractArchiveWithPasswordAction.prompt.title=Enter Password
 OpenIDE-Module-Display-Category=Ingest Module
-OpenIDE-Module-Long-Description=\
-    Embedded File Extraction Ingest Module\n\nThe Embedded File Extraction Ingest Module processes document files (such as doc, docx, ppt, pptx, xls, xlsx) and archive files (such as zip and others archive types supported by the 7zip extractor).\n\
-    Contents of these files are extracted and the derived files are added back to the current ingest to be processed by the configured ingest modules.\n\
-    If the derived file happens to be an archive file, it will be re-processed by the 7zip extractor - the extractor will process archive files N-levels deep.\n\n\
-    The extracted files are navigable in the directory tree.\n\n\
-    The module is supported on Windows, Linux and Mac operating systems.
+OpenIDE-Module-Long-Description=Embedded File Extraction Ingest Module\n\nThe Embedded File Extraction Ingest Module processes document files (such as doc, docx, ppt, pptx, xls, xlsx) and archive files (such as zip and others archive types supported by the 7zip extractor).\nContents of these files are extracted and the derived files are added back to the current ingest to be processed by the configured ingest modules.\nIf the derived file happens to be an archive file, it will be re-processed by the 7zip extractor - the extractor will process archive files N-levels deep.\n\nThe extracted files are navigable in the directory tree.\n\nThe module is supported on Windows, Linux and Mac operating systems.
 OpenIDE-Module-Name=Embedded File Extraction
 OpenIDE-Module-Short-Description=Embedded File Extraction Ingest Module
 EmbeddedFileExtractorIngestModule.SevenZipContentReadStream.seek.exception.invalidOrigin=Invalid seek origin: {0}
