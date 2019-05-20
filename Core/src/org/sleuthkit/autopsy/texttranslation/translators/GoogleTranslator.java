@@ -18,27 +18,58 @@
  */
 package org.sleuthkit.autopsy.texttranslation.translators;
 
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
 import java.awt.Component;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
 @ServiceProvider(service = TextTranslator.class)
-public class GoogleTranslator implements TextTranslator {
+public final class GoogleTranslator implements TextTranslator {
 
     private static final Logger logger = Logger.getLogger(GoogleTranslator.class.getName());
     private static final int MAX_STRING_LENGTH = 15000;
-    private final Translate translate;
+    private final GoogleTranslatorSettingsPanel settingsPanel = new GoogleTranslatorSettingsPanel();
+    private Translate translate = null;
 
     public GoogleTranslator() {
         // Instantiates a client
-        translate = TranslateOptions.getDefaultInstance().getService();
+        loadTranslator();
+    }
+
+    void loadTranslator() {
+        InputStream credentialStream = null;
+        Credentials creds = null;
+        try {
+            credentialStream = new FileInputStream(settingsPanel.getCredentialPath());
+        } catch (FileNotFoundException ex) {
+            System.out.println("EXCEPTION1: " + ex.getMessage());
+        }
+        if (credentialStream != null) {
+            System.out.println("STREAM NOT NULL");
+            try {
+                creds = ServiceAccountCredentials.fromStream(credentialStream);
+            } catch (IOException ex) {
+                System.out.println("EXCEPTION2: " + ex.getMessage());
+            }
+        }
+        if (creds == null) {
+            translate = null;
+        } else {
+            TranslateOptions.Builder builder = TranslateOptions.newBuilder();
+            builder.setCredentials(creds);
+            translate = builder.build().getService();
+        }
     }
 
     @Override
@@ -79,14 +110,15 @@ public class GoogleTranslator implements TextTranslator {
         return Bundle.GoogleTranslator_name_text();
     }
 
-    
     @Override
     public Component getComponent() {
-        return new JLabel("There are no settings to configure for Google Translate");
+        return settingsPanel;
     }
 
     @Override
     public void saveSettings() {
+        settingsPanel.saveSettings();
+        loadTranslator();
         //There are no settings to configure for Google Translate
         //Possible settings for the future:
         //source language, target language, API key, path to JSON file of API key.
