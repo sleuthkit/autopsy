@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.Collection;
@@ -170,7 +171,7 @@ public class CommandLineIngestManager {
                                     }
 
                                     String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
-                                    dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
+                                    dataSource = new AutoIngestDataSource(dataSourcePath /*ELTODO ""*/, Paths.get(dataSourcePath));
                                     runDataSourceProcessor(caseForJob, dataSource);
                                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
@@ -220,8 +221,7 @@ public class CommandLineIngestManager {
                                         
                                         // populate the AutoIngestDataSource structure
                                         dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
-                                        List<Content> contentList = new ArrayList<>();
-                                        contentList.add(content);
+                                        List<Content> contentList = Arrays.asList(new Content[]{content});
                                         List<String> errorList = new ArrayList<>();
                                         dataSource.setDataSourceProcessorOutput(NO_ERRORS, errorList, contentList);
                                     }
