@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -53,17 +54,17 @@ public final class GoogleTranslator implements TextTranslator {
         try {
             credentialStream = new FileInputStream(settingsPanel.getCredentialPath());
         } catch (FileNotFoundException ex) {
-            System.out.println("EXCEPTION1: " + ex.getMessage());
+            logger.log(Level.WARNING, "JSON file for GoogleTranslator credentials not found", ex);
         }
         if (credentialStream != null) {
-            System.out.println("STREAM NOT NULL");
             try {
                 creds = ServiceAccountCredentials.fromStream(credentialStream);
             } catch (IOException ex) {
-                System.out.println("EXCEPTION2: " + ex.getMessage());
+                logger.log(Level.WARNING, "Error converting JSON file to Credentials object for GoogleTranslator");
             }
         }
         if (creds == null) {
+            logger.log(Level.INFO, "Credentials were not successfully made, no translations will be available from the GoogleTranslator");
             translate = null;
         } else {
             TranslateOptions.Builder builder = TranslateOptions.newBuilder();
@@ -74,33 +75,37 @@ public final class GoogleTranslator implements TextTranslator {
 
     @Override
     public String translate(String string) throws TranslationException {
-        try {
-            // Translates some text into English, without specifying the source language.
+        if (translate != null) {
+            try {
+                // Translates some text into English, without specifying the source language.
 
-            // HTML files were producing lots of white space at the end
-            String substring = string.trim();
+                // HTML files were producing lots of white space at the end
+                String substring = string.trim();
 
-            // WE can't currently set parameters, so we are using the default behavior of
-            // asuming the input is HTML. We need to replace newlines with <br> for Google to preserve them
-            substring = substring.replaceAll("(\r\n|\n)", "<br />");
+                // WE can't currently set parameters, so we are using the default behavior of
+                // asuming the input is HTML. We need to replace newlines with <br> for Google to preserve them
+                substring = substring.replaceAll("(\r\n|\n)", "<br />");
 
-            // The API complains if the "Payload" is over 204800 bytes. I'm assuming that 
-            // deals with the full request.  At some point, we get different errors about too
-            // much text.  Officially, Google says they will translate only 5k chars,
-            // but we have seen more than that working.
-            // there could be a value betwen 15k and 25k that works.  I (BC) didn't test further
-            if (substring.length() > MAX_STRING_LENGTH) {
-                substring = substring.substring(0, MAX_STRING_LENGTH);
+                // The API complains if the "Payload" is over 204800 bytes. I'm assuming that 
+                // deals with the full request.  At some point, we get different errors about too
+                // much text.  Officially, Google says they will translate only 5k chars,
+                // but we have seen more than that working.
+                // there could be a value betwen 15k and 25k that works.  I (BC) didn't test further
+                if (substring.length() > MAX_STRING_LENGTH) {
+                    substring = substring.substring(0, MAX_STRING_LENGTH);
+                }
+                Translation translation
+                        = translate.translate(substring);
+                String translatedString = translation.getTranslatedText();
+
+                // put back the newlines
+                translatedString = translatedString.replaceAll("<br />", "\n");
+                return translatedString;
+            } catch (Throwable e) {
+                throw new TranslationException(e.getMessage());
             }
-            Translation translation
-                    = translate.translate(substring);
-            String translatedString = translation.getTranslatedText();
-
-            // put back the newlines
-            translatedString = translatedString.replaceAll("<br />", "\n");
-            return translatedString;
-        } catch (Throwable e) {
-            throw new TranslationException(e.getMessage());
+        } else {
+            throw new TranslationException("Google Translator has not been configured, credentials need to be specified");
         }
     }
 
