@@ -343,7 +343,6 @@
                 <package>org.sleuthkit.autopsy.textextractors</package>
                 <package>org.sleuthkit.autopsy.textextractors.configs</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
-                <package>org.sleuthkit.autopsy.texttranslation.translators</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
@@ -702,7 +701,7 @@
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\vorbis-java-tika-0.8.jar</binary-origin>
             </class-path-extension>
-<class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/grpc-context-1.19.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/grpc-context-1.19.0.jar</binary-origin>
             </class-path-extension>
