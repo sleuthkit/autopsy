@@ -763,10 +763,6 @@
                 <package>schemaorg_apache_xmlbeans.system.sXMLTOOLS</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.2-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.2-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imageio-thumbsdb-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-thumbsdb-3.2.jar</binary-origin>
             </class-path-extension>
@@ -803,10 +799,6 @@
                 <binary-origin>release/modules/ext/imageio-icns-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/imgscalr-lib-4.2-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imgscalr-lib-4.2-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/AppleJavaExtensions-1.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/AppleJavaExtensions-1.4.jar</binary-origin>
             </class-path-extension>
@@ -817,6 +809,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jna-3.4.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gson-2.8.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-2.8.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-common-8.0-r4.jar</runtime-relative-path>
@@ -843,10 +839,6 @@
                 <binary-origin>release/modules/ext/xmlbeans-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.0-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.0-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
             </class-path-extension>
@@ -865,10 +857,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/activation-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/activation-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/joda-time-2.4-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/joda-time-2.4-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-4.0.1.jar</runtime-relative-path>
@@ -899,10 +887,6 @@
                 <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sigar-1.6.4-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sigar-1.6.4-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/avalon-framework-4.1.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/avalon-framework-4.1.5.jar</binary-origin>
             </class-path-extension>
@@ -927,10 +911,6 @@
                 <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/joda-time-2.4-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/joda-time-2.4-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-fxml-8.0-r4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r4.jar</binary-origin>
             </class-path-extension>
@@ -941,18 +921,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-compress-1.18.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-compress-1.18.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.2-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-2.8.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
@@ -977,10 +945,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-bmp-3.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.0-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.0-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/platform-3.4.0.jar</runtime-relative-path>
@@ -1057,10 +1021,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-metadata-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-metadata-3.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/imgscalr-lib-4.2-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imgscalr-lib-4.2-sources.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,7 +79,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
     /**
      * Creates new form PListViewer
      */
-    public PListViewer() {
+    PListViewer() {
 
         // Create an Outlineview and add to the panel
         outlineView = new org.openide.explorer.view.OutlineView();
@@ -193,16 +193,16 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) { 
-                JOptionPane.showMessageDialog(this,
-                        "Failed to export plist file.",
-                        Bundle.PListViewer_ExportFailed_message(),
-                        JOptionPane.ERROR_MESSAGE);
+        } catch (NoCurrentCaseException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to export plist file.",
+                    Bundle.PListViewer_ExportFailed_message(),
+                    JOptionPane.ERROR_MESSAGE);
 
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-                return;
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            return;
         }
-        
+
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
         fileChooser.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
@@ -289,11 +289,11 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
                 // Read in and parse the file
                 final byte[] plistFileBuf = new byte[(int) plistFile.getSize()];
                 plistFile.read(plistFileBuf, 0, plistFile.getSize());
-                final List<PropKeyValue>   plist = parsePList(plistFileBuf);
-               
+                final List<PropKeyValue> plist = parsePList(plistFileBuf);
+
                 return plist;
             }
-            
+
             @Override
             protected void done() {
                 super.done();
@@ -301,28 +301,28 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
                 try {
                     plist = get();
                     setupTable(plist);
-                    
+
                     SwingUtilities.invokeLater(() -> {
-                         setColumnWidths();
+                        setColumnWidths();
                     });
                 } catch (InterruptedException ex) {
                     logger.log(Level.SEVERE, "Interruption while parsing/dislaying  plist file " + plistFile.getName(), ex);
-                      
-                   JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                        ex.getMessage(),
-                                        Bundle.PListViewer_processPlist_interruptedMessage(),
-                                        JOptionPane.ERROR_MESSAGE);
-                    
+
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getMessage(),
+                            Bundle.PListViewer_processPlist_interruptedMessage(),
+                            JOptionPane.ERROR_MESSAGE);
+
                 } catch (ExecutionException ex) {
                     logger.log(Level.SEVERE, "Exception while parsing/dislaying  plist file " + plistFile.getName(), ex);
-                      JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                        ex.getCause().getMessage(),
-                                        Bundle.PListViewer_processPlist_errorMessage(),
-                                        JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getCause().getMessage(),
+                            Bundle.PListViewer_processPlist_errorMessage(),
+                            JOptionPane.ERROR_MESSAGE);
                 }
-                      
+
             }
-        }.execute(); 
+        }.execute();
     }
 
     /**
@@ -431,16 +431,16 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
          * else is unexpected and will be ignored.
          */
         if (rootDict instanceof NSArray) {
-            for (int i=0; i < ((NSArray)rootDict).count(); i++) {
-                final PropKeyValue pkv = parseProperty("", ((NSArray)rootDict).objectAtIndex(i));
+            for (int i = 0; i < ((NSArray) rootDict).count(); i++) {
+                final PropKeyValue pkv = parseProperty("", ((NSArray) rootDict).objectAtIndex(i));
                 if (null != pkv) {
                     plist.add(pkv);
                 }
             }
         } else if (rootDict instanceof NSDictionary) {
-            final String[] keys = ((NSDictionary)rootDict).allKeys();
+            final String[] keys = ((NSDictionary) rootDict).allKeys();
             for (final String key : keys) {
-                final PropKeyValue pkv = parseProperty(key, ((NSDictionary)rootDict).objectForKey(key));
+                final PropKeyValue pkv = parseProperty(key, ((NSDictionary) rootDict).objectForKey(key));
                 if (null != pkv) {
                     plist.add(pkv);
                 }
@@ -533,7 +533,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
                         .map(child -> new PropKeyValue(child))
                         .toArray(PropKeyValue[]::new);
             }
-            
+
         }
 
     }

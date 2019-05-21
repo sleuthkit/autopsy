@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -292,7 +293,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          *               should refresh
          */
         FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
-            super(typesRoot, Children.create(new FileExtensionNodeChildren(filter, skCase, o), true),
+            super(typesRoot, Children.create(new FileExtensionNodeChildren(filter, skCase, o, filter.getDisplayName()), true),
                     Lookups.singleton(filter.getDisplayName()));
             this.filter = filter;
             super.setName(filter.getDisplayName());
@@ -377,7 +378,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     /**
      * Child node factory for a specific file type - does the database query.
      */
-    private class FileExtensionNodeChildren extends ChildFactory.Detachable<FileTypesKey> implements Observer {
+    private class FileExtensionNodeChildren extends BaseChildFactory<FileTypesKey> implements Observer {
 
         private final SleuthkitCase skCase;
         private final FileTypesByExtension.SearchFilterInterface filter;
@@ -390,22 +391,22 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that will notify when there could be new
          *               data to display
          */
-        private FileExtensionNodeChildren(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
-            super();
+        private FileExtensionNodeChildren(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o, String nodeName) {
+            super(nodeName, new ViewsKnownAndSlackFilter<>());
             this.filter = filter;
             this.skCase = skCase;
             notifier = o;
         }
 
         @Override
-        protected void addNotify() {
+        protected void onAdd() {
             if (notifier != null) {
                 notifier.addObserver(this);
             }
         }
 
         @Override
-        protected void removeNotify() {
+        protected void onRemove() {
             if (notifier != null) {
                 notifier.deleteObserver(this);
             }
@@ -417,19 +418,19 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<FileTypesKey> list) {
-            try {
-                list.addAll(skCase.findAllFilesWhere(createQuery(filter))
-                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList()));
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
-            }
-            return true;
+        protected Node createNodeForKey(FileTypesKey key) {
+            return key.accept(new FileTypes.FileNodeCreationVisitor());
         }
 
         @Override
-        protected Node createNodeForKey(FileTypesKey key) {
-            return key.accept(new FileTypes.FileNodeCreationVisitor());
+        protected List<FileTypesKey> makeKeys() {
+            try {
+                return skCase.findAllFilesWhere(createQuery(filter))
+                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
+            }
+            return Collections.emptyList();
         }
     }
 
