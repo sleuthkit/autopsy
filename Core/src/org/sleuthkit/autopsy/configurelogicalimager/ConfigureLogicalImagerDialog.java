@@ -18,7 +18,24 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.swing.JFileChooser;
+import javax.swing.JTable;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.AbstractTableModel;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -139,8 +156,6 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
 
         rulesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"example-rule-1", "Pictures under the Google folder"},
-                {"example-rule-2", "All exe files larger than 10MB"},
                 {null, null},
                 {null, null}
             },
@@ -156,6 +171,10 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
                 return types [columnIndex];
             }
         });
+        rulesTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        rulesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        rulesTable.setShowHorizontalLines(false);
+        rulesTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(rulesTable);
         if (rulesTable.getColumnModel().getColumnCount() > 0) {
             rulesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigureLogicalImagerDialog.class, "ConfigureLogicalImagerDialog.rulesTable.columnModel.title0")); // NOI18N
@@ -185,21 +204,11 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(filenamesLabel, org.openide.util.NbBundle.getMessage(ConfigureLogicalImagerDialog.class, "ConfigureLogicalImagerDialog.filenamesLabel.text")); // NOI18N
 
-        filenamesList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "program.exe", "autoexec.bat", "readme.txt", "somefile.dll" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         filenamesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(filenamesList);
 
         org.openide.awt.Mnemonics.setLocalizedText(folderNamesLabel, org.openide.util.NbBundle.getMessage(ConfigureLogicalImagerDialog.class, "ConfigureLogicalImagerDialog.folderNamesLabel.text")); // NOI18N
 
-        folderNamesList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Google", "work", "hidden", "Private" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         folderNamesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane3.setViewportView(folderNamesList);
 
@@ -225,11 +234,6 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
         org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(ConfigureLogicalImagerDialog.class, "ConfigureLogicalImagerDialog.daysIncludedLabel.text")); // NOI18N
         daysIncludedLabel.setEnabled(false);
 
-        folderNamesList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Documents and Settings/All Users/Documents/My Pictures/Sample Pictures/Blue hills.jpg", "Documents and Settings/All Users/Documents/My Pictures/Sample Pictures/sunset.jpg", "Documents and Settings/All Users/Documents/My Pictures/Sample Pictures/winter.jpg" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         folderNamesList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane4.setViewportView(folderNamesList1);
 
@@ -256,8 +260,7 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(loadButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(saveButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(saveButton))
                             .addComponent(configFile)))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGap(26, 26, 26)
@@ -358,7 +361,6 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(fullPathsLabel)
                     .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(1, 1, 1)
@@ -385,13 +387,20 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
     private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
         // TODO add your handling code here:
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select a Logical Image folder");
+        fileChooser.setDialogTitle("Select a Logical Image configuration json file");
         fileChooser.setDragEnabled(false);
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        FileFilter filter = new FileNameExtensionFilter("configuration json file", new String[] {"json"});
+        fileChooser.setFileFilter(filter);
         fileChooser.setMultiSelectionEnabled(false);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
             System.out.println("Selected " + path);
+            try {
+                loadConfigFile(path);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
     }//GEN-LAST:event_loadButtonActionPerformed
 
@@ -487,4 +496,109 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox shouldAlertCheckBox;
     private javax.swing.JCheckBox shouldSaveCheckBox;
     // End of variables declaration//GEN-END:variables
+
+    private void loadConfigFile(String path) throws FileNotFoundException {
+        FileInputStream is = new FileInputStream(path);
+        InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
+        gsonBuilder.registerTypeAdapter(LogicalImagerConfig.class, new LogicalImagerConfigDeserializer());
+        Gson gson = gsonBuilder.create();
+        try {
+            LogicalImagerConfig config = gson.fromJson(reader, LogicalImagerConfig.class);
+            //System.out.println(gson.toJson(config));
+            updatePanel(path, config);
+        } catch (JsonParseException e) {
+            System.err.println("Error parsing " + path + ". Reason= " + e.getMessage());
+        }
+    }
+
+    private void updatePanel(String configFilePath, LogicalImagerConfig config) {
+        configFile.setText(configFilePath);
+        finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
+        Map<String, LogicalImagerRule> ruleSet = config.getRuleSet();
+        RulesTableModel rulesTableModel = new RulesTableModel();
+        int row = 0;
+        for (Entry<String, LogicalImagerRule> rule : ruleSet.entrySet()) {
+            rulesTableModel.setValueAt(rule.getKey(), row, 0);
+            rulesTableModel.setValueAt(rule.getValue().getDescription(), row, 1);
+            row++;
+        };
+        rulesTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        rulesTable.setModel(rulesTableModel);
+    }
+    
+        private class RulesTableModel extends AbstractTableModel {
+
+        private final List<String> ruleName = new ArrayList<>();
+        private final List<String> ruleDescription = new ArrayList<>();
+
+        @Override
+        public int getRowCount() {
+            return ruleName.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Messages({
+            "ConfigureLogicalImagerDialog.rulesTable.columnModel.title0=Rule name",
+            "ConfigureLogicalImagerDialog.rulesTable.columnModel.title1=Description"
+        })
+        @Override
+        public String getColumnName(int column) {
+            String colName = null;
+            switch (column) {
+                case 0:
+                    colName = Bundle.ConfigureLogicalImagerDialog_rulesTable_columnModel_title0();
+                    break;
+                case 1:
+                    colName = Bundle.ConfigureLogicalImagerDialog_rulesTable_columnModel_title1();
+                    break;
+                default:
+                    break;
+            }
+            return colName;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object ret = null;
+            switch (columnIndex) {
+                case 0:
+                    ret = ruleName.get(rowIndex);
+                    break;
+                case 1:
+                    ret = ruleDescription.get(rowIndex);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
+            }
+            return ret;
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return false;
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            switch (columnIndex) {
+                case 0:
+                    ruleName.add((String) aValue);
+                    break;
+                case 1:
+                    ruleDescription.add((String) aValue);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
+            }
+            // Only show the hostname and extractDates column
+            if (columnIndex < 2) {
+                super.setValueAt(aValue, rowIndex, columnIndex);
+            }
+        }
+    }
 }

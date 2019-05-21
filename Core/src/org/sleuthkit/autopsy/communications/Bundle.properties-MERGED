@@ -76,7 +76,7 @@ VisualizationPanel.zoomInButton.toolTipText=Zoom in
 VisualizationPanel.zoomInButton.text=
 VisualizationPanel.zoomOutButton.toolTipText=Zoom out
 VisualizationPanel.zoomOutButton.text=
-<<<<<<<=HEAD
+<<<<<<< HEAD
 VisualizationPanel.fastOrganicLayoutButton.text=Redraw
 VisualizationPanel.clearVizButton.text_1=Clear
 VisualizationPanel.backButton.text_1=
@@ -88,7 +88,7 @@ VisualizationPanel.fastOrganicLayoutButton.text=
 VisualizationPanel.hierarchyLayoutButton.text=Hierarchical
 VisualizationPanel.clearVizButton.text_1=
 VisualizationPanel.snapshotButton.text_1=Snapshot Report
->>>>>>>=develop
+>>>>>>> develop
 VisualizationPanel.clearVizButton.actionCommand=
 VisualizationPanel.backButton.toolTipText=Click to go back
 VisualizationPanel.forwardButton.toolTipText=Click to go forward

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
+<Form version="1.6" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <NonVisualComponents>
     <Component class="javax.swing.JSpinner" name="fileSizeSpinner">
       <Properties>
@@ -70,7 +70,6 @@
                               <Component id="loadButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="saveButton" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
                           </Group>
                           <Component id="configFile" max="32767" attributes="0"/>
                       </Group>
@@ -200,7 +199,6 @@
                   <Component id="fullPathsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jScrollPane4" alignment="0" min="-2" pref="51" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
@@ -303,21 +301,12 @@
         <Component class="javax.swing.JTable" name="rulesTable">
           <Properties>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-              <Table columnCount="2" rowCount="4">
-                <Column editable="true" title="Rule-name" type="java.lang.String">
-                  <Data value="example-rule-1"/>
-                  <Data value="example-rule-2"/>
-                  <Data value="null"/>
-                  <Data value="null"/>
-                </Column>
-                <Column editable="true" title="Description" type="java.lang.String">
-                  <Data value="Pictures under the Google folder"/>
-                  <Data value="All exe files larger than 10MB"/>
-                  <Data value="null"/>
-                  <Data value="null"/>
-                </Column>
+              <Table columnCount="2" rowCount="2">
+                <Column editable="true" title="Rule-name" type="java.lang.String"/>
+                <Column editable="true" title="Description" type="java.lang.String"/>
               </Table>
             </Property>
+            <Property name="autoResizeMode" type="int" value="4"/>
             <Property name="columnModel" type="javax.swing.table.TableColumnModel" editor="org.netbeans.modules.form.editors2.TableColumnModelEditor">
               <TableColumnModel selectionModel="0">
                 <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
@@ -336,6 +325,11 @@
                 </Column>
               </TableColumnModel>
             </Property>
+            <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
+              <JTableSelectionModel selectionMode="0"/>
+            </Property>
+            <Property name="showHorizontalLines" type="boolean" value="false"/>
+            <Property name="showVerticalLines" type="boolean" value="false"/>
             <Property name="tableHeader" type="javax.swing.table.JTableHeader" editor="org.netbeans.modules.form.editors2.JTableHeaderEditor">
               <TableHeader reorderingAllowed="true" resizingAllowed="true"/>
             </Property>
@@ -429,12 +423,7 @@
         <Component class="javax.swing.JList" name="filenamesList">
           <Properties>
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
-              <StringArray count="4">
-                <StringItem index="0" value="program.exe"/>
-                <StringItem index="1" value="autoexec.bat"/>
-                <StringItem index="2" value="readme.txt"/>
-                <StringItem index="3" value="somefile.dll"/>
-              </StringArray>
+              <StringArray count="0"/>
             </Property>
             <Property name="selectionMode" type="int" value="0"/>
           </Properties>
@@ -461,12 +450,7 @@
         <Component class="javax.swing.JList" name="folderNamesList">
           <Properties>
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
-              <StringArray count="4">
-                <StringItem index="0" value="Google"/>
-                <StringItem index="1" value="work"/>
-                <StringItem index="2" value="hidden"/>
-                <StringItem index="3" value="Private"/>
-              </StringArray>
+              <StringArray count="0"/>
             </Property>
             <Property name="selectionMode" type="int" value="0"/>
           </Properties>
@@ -555,11 +539,7 @@
         <Component class="javax.swing.JList" name="folderNamesList1">
           <Properties>
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
-              <StringArray count="3">
-                <StringItem index="0" value="Documents and Settings/All Users/Documents/My Pictures/Sample Pictures/Blue hills.jpg"/>
-                <StringItem index="1" value="Documents and Settings/All Users/Documents/My Pictures/Sample Pictures/sunset.jpg"/>
-                <StringItem index="2" value="Documents and Settings/All Users/Documents/My Pictures/Sample Pictures/winter.jpg"/>
-              </StringArray>
+              <StringArray count="0"/>
             </Property>
             <Property name="selectionMode" type="int" value="0"/>
           </Properties>
