@@ -44,8 +44,7 @@ public class DataSourceLoader {
 
     /**
      * Query case database for a list of all existing logical data sources and
-     * their object IDs. Method can return either full path to data sources or
-     * just data source file names.
+     * their object IDs. 
      *
      * @param tskDb SleuthkitCase database handle
      * @param dataSourceMap map to which to add data sources
