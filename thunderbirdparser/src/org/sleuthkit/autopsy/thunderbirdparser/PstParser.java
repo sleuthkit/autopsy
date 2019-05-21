@@ -193,13 +193,24 @@ class PstParser {
         email.setSubject(msg.getSubject());
         email.setId(msg.getDescriptorNodeId());
         email.setMessageID(msg.getInternetMessageId());
-        email.setInReplyToID(msg.getInReplyToId());
+        
+        String inReplyToID = msg.getInReplyToId();
+        email.setInReplyToID(inReplyToID);
 
         if (msg.hasAttachments()) {
             extractAttachments(email, msg, fileID);
         }
         
-        email.setReferences(extractReferences(msg.getTransportMessageHeaders()));
+        List<String> references = extractReferences(msg.getTransportMessageHeaders());
+        if (inReplyToID != null && !inReplyToID.isEmpty()) {
+            if (references == null) {
+                references = new ArrayList<>();
+                references.add(inReplyToID);
+            } else if (!references.contains(inReplyToID)) {
+                references.add(inReplyToID);
+            }
+        }
+        email.setReferences(references);
 
         return email;
     }
@@ -349,28 +360,33 @@ class PstParser {
     
     /**
      * Returns the references value from the email header.
-     * 
+     *
      * @param emailHeader
-     * @return 
+     *
+     * @return A list of message-IDs
      */
-    private String extractReferences( String emailHeader ){
+    private List<String> extractReferences(String emailHeader) {
         Scanner scanner = new Scanner(emailHeader);
         StringBuilder buffer = null;
-        while(scanner.hasNextLine()) {
+        while (scanner.hasNextLine()) {
             String token = scanner.nextLine();
-            
-            if( token.matches("^References:.*") ) {
+
+            if (token.matches("^References:.*")) {
                 buffer = new StringBuilder();
-                buffer.append((token.substring(token.indexOf(":")+1)).trim());
-            } else if ( buffer != null ) {
-                if(token.matches("^\\w+:.*$")){
-                    return buffer.toString();
+                buffer.append((token.substring(token.indexOf(":") + 1)).trim());
+            } else if (buffer != null) {
+                if (token.matches("^\\w+:.*$")) {
+                    List<String> references = new ArrayList<>();
+                    for (String id : buffer.toString().split(">")) {
+                        references.add(id.trim() + ">");
+                    }
+                    return references;
                 } else {
                     buffer.append(token.trim());
                 }
             }
         }
-        
-        return "";
-    }       
+
+        return null;
+    }    
 }

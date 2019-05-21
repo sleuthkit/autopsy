@@ -47,7 +47,7 @@ class EmailMessage {
     private long id = -1L;
     private String messageID = "";
     private String inReplyToID = "";
-    private String references = "";
+    private List<String> references = null;
 
     boolean hasAttachment() {
         return hasAttachment;
@@ -226,7 +226,7 @@ class EmailMessage {
      * 
      * @return reference list or empty string if non is available.
      */
-    String getReferences() {
+    List<String> getReferences() {
         return references;
     }
     
@@ -235,7 +235,7 @@ class EmailMessage {
      * 
      * @param references 
      */
-    void setReferences(String references) {
+    void setReferences(List<String> references) {
         this.references = references;
     }
 
