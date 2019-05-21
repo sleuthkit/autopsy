@@ -32,6 +32,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.actions.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
@@ -99,7 +100,7 @@ public class ImageNode extends AbstractContentNode<Image> {
      */
     @Override
     @Messages({"ImageNode.action.runIngestMods.text=Run Ingest Modules",
-        "ImageNode.getActions.openFileSearchByAttr.text=Open File Search by Attributes",})
+        "ImageNode.getActions.openFileSearchByAttr.text=Open File Search by Attributes"})
     public Action[] getActions(boolean context) {
 
         List<Action> actionsList = new ArrayList<>();
@@ -113,6 +114,9 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
+        if (checkSchemaVersion()) {
+            actionsList.add(new DeleteDataSourceAction(content.getId()));
+        }
         return actionsList.toArray(new Action[0]);
     }
 
@@ -200,6 +204,25 @@ public class ImageNode extends AbstractContentNode<Image> {
         return getClass().getName();
     }
 
+    private final Boolean checkSchemaVersion() {
+        String sqlStatement = "SELECT a.value creationMajorVersion, b.value creationMinorVersion FROM tsk_db_info_extended a, tsk_db_info_extended b " +
+                              " WHERE a.name = 'CREATION_SCHEMA_MAJOR_VERSION' and b.name = 'CREATION_SCHEMA_MINOR_VERSION';";
+        try (CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(sqlStatement);) {
+            ResultSet schemaVersion = query.getResultSet();
+            while (schemaVersion.next()) {
+                int creationMajorVersion = schemaVersion.getInt("creationMajorVersion");
+                int creationMinorVersion = schemaVersion.getInt("creationMinorVersion");
+                if ((creationMajorVersion == 8 && creationMinorVersion >= 3) || creationMajorVersion > 8) {
+                    return true;
+                }
+            }
+        } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get the Create Major and Minor Schema Versions", ex);
+        }
+        
+        return false;
+    }
+     
     /*
      * This property change listener refreshes the tree when a new file is
      * carved out of this image (i.e, the image is being treated as raw bytes
