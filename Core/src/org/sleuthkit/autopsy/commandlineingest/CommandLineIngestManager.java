@@ -168,7 +168,7 @@ public class CommandLineIngestManager {
                                     }
 
                                     String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
-                                    dataSource = new AutoIngestDataSource(dataSourcePath /*ELTODO ""*/, Paths.get(dataSourcePath));
+                                    dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
                                     runDataSourceProcessor(caseForJob, dataSource);
                                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
@@ -194,10 +194,25 @@ public class CommandLineIngestManager {
                                     if (dataSource == null) {
 
                                         String dataSourceId = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_ID.name());
-                                        Long dataSourceObjId = Long.getLong(dataSourceId);
+                                        Long dataSourceObjId = Long.valueOf(dataSourceId);
                                         
                                         // get Content object for the data source
-                                        Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(dataSourceObjId);
+                                        Content content = null;
+                                        try {
+                                            content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(dataSourceObjId);
+                                        } catch (TskCoreException ex) {
+                                            LOGGER.log(Level.SEVERE, "Exception while trying to find data source with object ID " + dataSourceId, ex);
+                                            System.out.println("Exception while trying to find data source with object ID " + dataSourceId);
+                                            // Do not process any other commands
+                                            return;
+                                        }
+                                        
+                                        if (content == null) {
+                                            LOGGER.log(Level.SEVERE, "Unable to find data source with object ID {0}", dataSourceId);
+                                            System.out.println("Unable to find data source with object ID " + dataSourceId);
+                                            // Do not process any other commands
+                                            return;                                            
+                                        }
                                         
                                         // populate the AutoIngestDataSource structure
                                         dataSource = new AutoIngestDataSource("", Paths.get(content.getName()));
