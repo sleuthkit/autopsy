@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-19 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.textextractors;
 
 import java.io.Reader;
-import java.util.Collections;
-import java.util.Map;
 import org.openide.util.Lookup;
 
 /**
@@ -62,15 +60,6 @@ public interface TextExtractor {
      */
     default void setExtractionSettings(Lookup context) {
         //no-op by default
-    }
-    
-    /**
-     * Retrieves content metadata, if any.
-     * 
-     * @return Metadata as key -> value map
-     */
-    default Map<String, String> getMetadata() {
-        return Collections.emptyMap();
     }
 
     /**

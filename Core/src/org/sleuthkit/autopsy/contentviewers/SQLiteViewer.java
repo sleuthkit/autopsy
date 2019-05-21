@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -74,7 +74,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     /**
      * Constructs a file content viewer for SQLite database files.
      */
-    SQLiteViewer() {
+    public SQLiteViewer() {
         initComponents();
         jTableDataPanel.add(selectedTableView, BorderLayout.CENTER);
     }
@@ -544,19 +544,19 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             @Override
             public void accept(String columnName) {
                 columnIndex++;
-                String csvString = columnName;
+
                 //Format the value to adhere to the format of a CSV file
                 if (columnIndex == 1) {
-                    csvString = "\"" + csvString + "\"";
+                    columnName = "\"" + columnName + "\"";
                 } else {
-                    csvString = ",\"" + csvString + "\"";
+                    columnName = ",\"" + columnName + "\"";
                 }
                 if (columnIndex == totalColumnCount) {
-                    csvString += "\n";
+                    columnName += "\n";
                 }
 
                 try {
-                    out.write(csvString.getBytes());
+                    out.write(columnName.getBytes());
                 } catch (IOException ex) {
                     /*
                      * If we can no longer write to the output stream, toss a
@@ -613,7 +613,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                      */
                     throw new RuntimeException(ex);
                 }
-                rowIndex %= totalColumnCount;
+                rowIndex = rowIndex % totalColumnCount;
             }
         };
     }

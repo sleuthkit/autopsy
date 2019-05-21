@@ -52,7 +52,6 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private final List<GeneralReportModule> generalModules = new ArrayList<>();
     private final List<TableReportModule> tableModules = new ArrayList<>();
     private final List<FileReportModule> fileModules = new ArrayList<>();
-    private PortableCaseReportModule portableCaseModule;
     private Integer selectedIndex;
 
     /**
@@ -102,13 +101,6 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             } else {
                 popupWarning(module);
             }
-        }
-        
-        portableCaseModule = new PortableCaseReportModule();
-        if (moduleIsValid(portableCaseModule)) {
-            modules.add(portableCaseModule);
-        } else {
-            popupWarning(portableCaseModule);
         }
 
         Collections.sort(modules, new Comparator<ReportModule>() {
@@ -203,19 +195,6 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         ReportModule mod = getSelectedModule();
         if (fileModules.contains(mod)) {
             return (FileReportModule) mod;
-        }
-        return null;
-    }
-    
-    /**
-     * Get the selection status of the Portable Case report module.
-     *
-     * @return
-     */
-    PortableCaseReportModule getPortableCaseModule() {
-        ReportModule mod = getSelectedModule();
-        if (portableCaseModule.equals(mod)) {
-            return (PortableCaseReportModule) mod;
         }
         return null;
     }

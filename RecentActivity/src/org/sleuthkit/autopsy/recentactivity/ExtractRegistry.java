@@ -22,16 +22,11 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.io.BufferedReader;
+import java.io.*;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -45,6 +40,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
+import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.w3c.dom.Document;
@@ -54,14 +50,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.HashSet;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -69,13 +57,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
-import org.sleuthkit.datamodel.Report;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -90,19 +72,21 @@ import org.sleuthkit.datamodel.TskCoreException;
 })
 class ExtractRegistry extends Extract {
 
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private String RR_PATH;
+    private String RR_FULL_PATH;
+    private Path rrHome;  // Path to the Autopsy version of RegRipper
+    private Path rrFullHome; // Path to the full version of RegRipper
+    private Content dataSource;
+    private IngestJobContext context;
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
     final private static int MS_IN_SEC = 1000;
     final private static String NEVER_DATE = "Never";
     final private static String SECTION_DIVIDER = "-------------------------";
-    final private static Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
     private final List<String> rrCmd = new ArrayList<>();
     private final List<String> rrFullCmd = new ArrayList<>();
-    private final Path rrHome;  // Path to the Autopsy version of RegRipper
-    private final Path rrFullHome; // Path to the full version of RegRipper
-    private Content dataSource;
-    private IngestJobContext context;
 
     ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
@@ -122,19 +106,19 @@ class ExtractRegistry extends Extract {
             executableToRun = RIP_PL;
         }
         rrHome = rrRoot.toPath();
-        String rrPath = rrHome.resolve(executableToRun).toString();
+        RR_PATH = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
+        RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
 
-        if (!(new File(rrPath).exists())) {
+        if (!(new File(RR_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
-        String rrFullPath = rrFullHome.resolve(executableToRun).toString();
-        if (!(new File(rrFullPath).exists())) {
+        if (!(new File(RR_FULL_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
         if (PlatformUtil.isWindowsOS()) {
-            rrCmd.add(rrPath);
-            rrFullCmd.add(rrFullPath);
+            rrCmd.add(RR_PATH);
+            rrFullCmd.add(RR_FULL_PATH);
         } else {
             String perl;
             File usrBin = new File("/usr/bin/perl");
@@ -147,9 +131,9 @@ class ExtractRegistry extends Extract {
                 throw new IngestModuleException("perl not found in your system");
             }
             rrCmd.add(perl);
-            rrCmd.add(rrPath);
+            rrCmd.add(RR_PATH);
             rrFullCmd.add(perl);
-            rrFullCmd.add(rrFullPath);
+            rrFullCmd.add(RR_FULL_PATH);
         }
     }
 
@@ -240,19 +224,23 @@ class ExtractRegistry extends Extract {
             }
 
             // parse the autopsy-specific output
-            if (regOutputFiles.autopsyPlugins.isEmpty() == false && parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                this.getName(), regFileName));
+            if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
+                if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                    this.getName(), regFileName));
+                }
             }
 
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
                 //parse the full regripper output from SAM hive files
-                if (regFileNameLocal.toLowerCase().contains("sam") && parseSamPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
-                    this.addErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                    this.getName(), regFileName));
+                if (regFileNameLocal.toLowerCase().contains("sam")) {
+                    if (parseSamPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
+                        this.addErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                        this.getName(), regFileName));
+                    }
                 }
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
@@ -271,6 +259,7 @@ class ExtractRegistry extends Extract {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
                 }
             }
+
             // delete the hive
             regFileNameLocalFile.delete();
         }
@@ -282,6 +271,12 @@ class ExtractRegistry extends Extract {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
+    }
+
+    private class RegOutputFiles {
+
+        public String autopsyPlugins = "";
+        public String fullPlugins = "";
     }
 
     /**
@@ -397,11 +392,11 @@ class ExtractRegistry extends Extract {
             // that we will submit in a ModuleDataEvent for additional processing.
             Collection<BlackboardArtifact> wifiBBartifacts = new ArrayList<>();
             for (int i = 0; i < len; i++) {
-
+                
                 if (context.dataSourceIngestIsCancelled()) {
                     return false;
                 }
-
+                
                 Element tempnode = (Element) children.item(i);
 
                 String dataType = tempnode.getNodeName();
@@ -411,11 +406,12 @@ class ExtractRegistry extends Extract {
                     Element timenode = (Element) timenodes.item(0);
                     String etime = timenode.getTextContent();
                     try {
-                        mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                        Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                        mtime = epochtime;
                         String Tempdate = mtime.toString();
                         mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                     } catch (ParseException ex) {
-                        logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry.", ex); //NON-NLS
+                        logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry."); //NON-NLS
                     }
                 }
 
@@ -428,6 +424,7 @@ class ExtractRegistry extends Extract {
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
                 String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
+                String winver = "";
 
                 // If all artifact nodes should really go under one Blackboard artifact, need to process it differently
                 switch (dataType) {
@@ -511,6 +508,7 @@ class ExtractRegistry extends Extract {
                     case "Profiler": // NON-NLS
                         String os = "";
                         String procArch = "";
+                        String procId = "";
                         String tempDir = "";
                         for (int j = 0; j < myartlist.getLength(); j++) {
                             Node artchild = myartlist.item(j);
@@ -528,6 +526,7 @@ class ExtractRegistry extends Extract {
                                         procArch = value;
                                         break;
                                     case "PROCESSOR_IDENTIFIER": //NON-NLS
+                                        procId = value;
                                         break;
                                     case "TEMP": //NON-NLS
                                         tempDir = value;
@@ -653,7 +652,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime(); //NON-NLS
                                             itemMtime = epochtime;
-                                            itemMtime /= MS_IN_SEC;
+                                            itemMtime = itemMtime / MS_IN_SEC;
                                         } catch (ParseException e) {
                                             logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
                                         }
@@ -739,7 +738,7 @@ class ExtractRegistry extends Extract {
                                             } else {
                                                 //add attributes to existing artifact
                                                 BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
-
+                                                
                                                 if (bbattr == null) {
                                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                                                             parentModuleName, username));
@@ -853,9 +852,10 @@ class ExtractRegistry extends Extract {
             String line = bufferedReader.readLine();
             Set<UserInfo> userSet = new HashSet<>();
             while (line != null) {
-                if (line.contains(SECTION_DIVIDER) && previousLine != null && previousLine.contains(userInfoSection)) {
-                    readUsers(bufferedReader, userSet);
-
+                if (line.contains(SECTION_DIVIDER) && previousLine != null) {
+                    if (previousLine.contains(userInfoSection)) {
+                        readUsers(bufferedReader, userSet);
+                    } 
                 }
                 previousLine = line;
                 line = bufferedReader.readLine();
@@ -923,7 +923,7 @@ class ExtractRegistry extends Extract {
         } catch (ParseException ex) {
             logger.log(Level.SEVERE, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
+             logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         }
         return false;
     }
@@ -953,7 +953,8 @@ class ExtractRegistry extends Extract {
             if (line.contains(userNameLabel)) {
                 String userNameAndIdString = line.replace(userNameLabel, "");
                 userName = userNameAndIdString.substring(0, userNameAndIdString.lastIndexOf('[')).trim();
-            } else if (line.contains(sidLabel) && !userName.isEmpty()) {
+            }
+            else if (line.contains(sidLabel) && !userName.isEmpty()){
                 String sid = line.replace(sidLabel, "").trim();
                 UserInfo userInfo = new UserInfo(userName, sid);
                 //continue reading this users information until end of file or a blank line between users
@@ -979,19 +980,10 @@ class ExtractRegistry extends Extract {
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
-
+        
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
         analyzeRegistryFiles();
 
-    }
-
-    /**
-     * Private wrapper class for Registry output files
-     */
-    private class RegOutputFiles {
-
-        public String autopsyPlugins = "";
-        public String fullPlugins = "";
     }
 
     /**
@@ -1009,7 +1001,7 @@ class ExtractRegistry extends Extract {
         /**
          * Create a UserInfo object
          *
-         * @param name          - the os user account name
+         * @param name         - the os user account name
          * @param userSidString - the SID for the user account
          */
         private UserInfo(String name, String userSidString) {

@@ -50,7 +50,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private DocumentEmbeddedContentExtractor documentExtractor;
+    private MSOfficeEmbeddedContentExtractor officeExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
     private long jobId;
@@ -115,10 +115,10 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         }
         /*
          * Construct an embedded content extractor for processing Microsoft
-         * Office documents and PDF documents.
+         * Office documents.
          */
         try {
-            this.documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+            this.officeExtractor = new MSOfficeEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
@@ -155,8 +155,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          */
         if (archiveExtractor.isSevenZipExtractionSupported(abstractFile)) {
             archiveExtractor.unpack(abstractFile, mapOfDepthTrees.get(jobId));
-        } else if (documentExtractor.isContentExtractionSupported(abstractFile)) {
-            documentExtractor.extractEmbeddedContent(abstractFile);
+        } else if (officeExtractor.isContentExtractionSupported(abstractFile)) {
+            officeExtractor.extractEmbeddedContent(abstractFile);
         }
         return ProcessResult.OK;
     }

@@ -123,13 +123,15 @@ class Ingester {
     }
 
     /**
-     * Read and chunk the source text for indexing in Solr.
+     * Use the given TextExtractor to extract text from the given source. The
+     * text will be chunked and each chunk passed to Solr to add to the index.
      *
      *
      * @param <A>       The type of the Appendix provider that provides
      *                  additional text to append to the final chunk.
      * @param <T>       A subclass of SleuthkitVisibleItem.
-     * @param Reader    The reader containing extracted text.
+     * @param extractor The TextExtractor that will be used to extract text from
+     *                  the given source.
      * @param source    The source from which text will be extracted, chunked,
      *                  and indexed.
      * @param context   The ingest job context that can be used to cancel this

@@ -20,14 +20,12 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeDataCollector;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
-import static org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils.isCaseAutoIngestLogNodePath;
-import static org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils.isCaseNameNodePath;
-import static org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils.isCaseResourcesNodePath;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -40,8 +38,6 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
 
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final ProgressIndicator progress;
-    private int nodesCount;
-    private int casesCount;
 
     /**
      * Constucts an instance of a task for deleting case coordination service
@@ -57,8 +53,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
     @NbBundle.Messages({
         "DeleteOrphanCaseNodesTask.progress.startMessage=Starting orphaned case znode cleanup",
         "DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service",
-        "DeleteOrphanCaseNodesTask.progress.gettingCaseZnodes=Querying the coordination service for case znodes",
-        "DeleteOrphanCaseNodesTask.progress.lookingForOrphanedCaseZnodes=Looking for orphaned case znodes"
+        "DeleteOrphanCaseNodesTask.progress.gettingCaseNodesListing=Querying coordination service for case znodes"
     })
     public void run() {
         progress.start(Bundle.DeleteOrphanCaseNodesTask_progress_startMessage());
@@ -73,30 +68,24 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
                 return;
             }
 
-            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseZnodes());
-            logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseZnodes());
-            List<String> nodePaths;
+            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseNodesListing());
+            logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseNodesListing());
+            List<CaseNodeData> nodeDataList;
             try {
-                nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
+                nodeDataList = CaseNodeDataCollector.getNodeData();
             } catch (CoordinationService.CoordinationServiceException ex) {
-                logger.log(Level.SEVERE, "Error getting case znode list", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error collecting case node data", ex); //NON-NLS
                 return;
             } catch (InterruptedException unused) {
-                logger.log(Level.WARNING, "Task cancelled while getting case znode list"); //NON-NLS
+                logger.log(Level.WARNING, "Task cancelled while collecting case node data"); //NON-NLS
                 return;
             }
 
-            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_lookingForOrphanedCaseZnodes());
-            logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_lookingForOrphanedCaseZnodes());
-            for (String caseNodePath : nodePaths) {
-                if (isCaseNameNodePath(caseNodePath) || isCaseResourcesNodePath(caseNodePath) || isCaseAutoIngestLogNodePath(caseNodePath)) {
-                    continue;
-                }
-
-                final Path caseDirectoryPath = Paths.get(caseNodePath);
+            for (CaseNodeData nodeData : nodeDataList) {
+                final Path caseDirectoryPath = nodeData.getDirectory();
                 final File caseDirectory = caseDirectoryPath.toFile();
                 if (!caseDirectory.exists()) {
-                    String caseName = CoordinationServiceUtils.getCaseNameNodePath(caseDirectoryPath);
+                    String caseName = nodeData.getDisplayName();
                     String nodePath = ""; // NON-NLS
                     try {
                         nodePath = CoordinationServiceUtils.getCaseNameNodePath(caseDirectoryPath);
@@ -111,21 +100,12 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
                         nodePath = CoordinationServiceUtils.getCaseDirectoryNodePath(caseDirectoryPath);
                         deleteNode(coordinationService, caseName, nodePath);
 
-                        ++casesCount;
-                        
-                        /*
-                         * Back to looking for orphans...
-                         */
-                        progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_lookingForOrphanedCaseZnodes());
-                        logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_lookingForOrphanedCaseZnodes());
-
                     } catch (InterruptedException unused) {
                         logger.log(Level.WARNING, String.format("Task cancelled while deleting orphaned znode %s for %s", nodePath, caseName)); //NON-NLS
                         return;
                     }
                 }
             }
-
         } catch (Exception ex) {
             /*
              * This is an unexpected runtime exceptions firewall. It is here
@@ -137,7 +117,6 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
             throw ex;
 
         } finally {
-            logger.log(Level.INFO, String.format("Deleted %d orphaned case znodes for %d cases", nodesCount, casesCount));
             progress.finish();
         }
     }
@@ -158,12 +137,11 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
     private void deleteNode(CoordinationService coordinationService, String caseName, String nodePath) throws InterruptedException {
         try {
             progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_deletingOrphanedCaseNode(nodePath));
-            logger.log(Level.INFO, String.format("Deleting orphaned case node %s for case %s", nodePath, caseName)); //NON-NLS
+            logger.log(Level.INFO, String.format("Deleting orphaned case node %s for %s", nodePath, caseName)); //NON-NLS
             coordinationService.deleteNode(CoordinationService.CategoryNode.CASES, nodePath);
-            ++nodesCount;
         } catch (CoordinationService.CoordinationServiceException ex) {
             if (!DeleteCaseUtils.isNoNodeException(ex)) {
-                logger.log(Level.SEVERE, String.format("Error deleting orphaned case node %s for case %s", nodePath, caseName), ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error deleting orphaned case node %s for %s", nodePath, caseName), ex); //NON-NLS
             }
         }
     }

@@ -219,21 +219,6 @@ class ReportGenerator {
             displayProgressPanel();
         }
     }
-    
-    /**
-     * Run the Portable Case Report Module
-     */
-    void generatePortableCaseReport(PortableCaseReportModule portableCaseReportModule, PortableCaseReportModule.PortableCaseOptions options) throws IOException {
-        if (portableCaseReportModule != null) {
-            String reportDir = createReportDirectory(portableCaseReportModule);
-            setupProgressPanel(portableCaseReportModule, reportDir);
-            ReportWorker worker = new ReportWorker(() -> {
-                portableCaseReportModule.generateReport(reportDir, options, progressPanel);
-            });
-            worker.execute();
-            displayProgressPanel();
-        }
-    }
 
     /**
      * Get all files in the image.

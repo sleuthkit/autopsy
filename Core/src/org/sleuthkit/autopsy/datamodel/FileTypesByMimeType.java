@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -445,14 +445,25 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * files that match MimeType which is represented by this position in the
      * tree.
      */
-    private class MediaSubTypeNodeChildren extends BaseChildFactory<FileTypesKey> implements Observer {
+    private class MediaSubTypeNodeChildren extends ChildFactory.Detachable<FileTypesKey> implements Observer {
 
         private final String mimeType;
 
         private MediaSubTypeNodeChildren(String mimeType) {
-            super(mimeType, new ViewsKnownAndSlackFilter<>());
+            super();
             addObserver(this);
             this.mimeType = mimeType;
+        }
+
+        @Override
+        protected boolean createKeys(List<FileTypesKey> list) {
+            try {
+                list.addAll(skCase.findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
+                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList())); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
+            }
+            return true;
         }
 
         @Override
@@ -463,27 +474,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         protected Node createNodeForKey(FileTypesKey key) {
             return key.accept(new FileTypes.FileNodeCreationVisitor());
-        }
-
-        @Override
-        protected List<FileTypesKey> makeKeys() {
-            try {
-                return skCase.findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
-                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList()); //NON-NLS
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
-            }
-            return Collections.emptyList();
-        }
-
-        @Override
-        protected void onAdd() {
-            // No-op
-        }
-
-        @Override
-        protected void onRemove() {
-            // No-op
         }
     }
 }

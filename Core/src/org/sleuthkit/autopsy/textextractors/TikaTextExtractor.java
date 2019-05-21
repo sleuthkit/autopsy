@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,10 +29,8 @@ import java.io.InputStream;
 import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,11 +40,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.tika.Tika;
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParsingReader;
@@ -68,10 +65,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-import com.google.common.collect.ImmutableMap; 
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -126,16 +119,6 @@ final class TikaTextExtractor implements TextExtractor {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
-    //Tika should ignore types with embedded files that can be handled by the unpacking modules
-    private static final List<String> EMBEDDED_FILE_MIME_TYPES
-            = ImmutableList.of("application/msword", //NON-NLS
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
-                    "application/vnd.ms-powerpoint", //NON-NLS
-                    "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
-                    "application/vnd.ms-excel", //NON-NLS
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
-                    "application/pdf"); //NON-NLS
-
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
 
@@ -153,8 +136,7 @@ final class TikaTextExtractor implements TextExtractor {
     private static final File TESSERACT_PATH = locateTesseractExecutable();
     private String languagePacks = formatLanguagePacks(PlatformUtil.getOcrLanguagePacks());
     private static final String TESSERACT_OUTPUT_FILE_NAME = "tess_output"; //NON-NLS
-    private Map<String, String> metadataMap;
-
+    
     private ProcessTerminator processTerminator;
 
     private static final List<String> TIKA_SUPPORTED_TYPES
@@ -169,8 +151,8 @@ final class TikaTextExtractor implements TextExtractor {
 
     /**
      * If Tesseract has been installed and is set to be used through
-     * configuration, then ocr is enabled. OCR can only currently be run on 64
-     * bit Windows OS.
+     * configuration, then ocr is enabled. OCR can only currently be run on
+     * 64 bit Windows OS.
      *
      * @return Flag indicating if OCR is set to be used.
      */
@@ -195,14 +177,7 @@ final class TikaTextExtractor implements TextExtractor {
         InputStream stream = null;
 
         ParseContext parseContext = new ParseContext();
-
-        //Disable appending embedded file text to output for EFE supported types
-        //JIRA-4975
-        if(content instanceof AbstractFile && EMBEDDED_FILE_MIME_TYPES.contains(((AbstractFile)content).getMIMEType())) {
-            parseContext.set(Parser.class, new EmptyParser());
-        } else {
-            parseContext.set(Parser.class, parser);
-        }
+        parseContext.set(Parser.class, parser);
 
         if (ocrEnabled() && content instanceof AbstractFile) {
             AbstractFile file = ((AbstractFile) content);
@@ -226,7 +201,7 @@ final class TikaTextExtractor implements TextExtractor {
                 TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
                 String tesseractFolder = TESSERACT_PATH.getParent();
                 ocrConfig.setTesseractPath(tesseractFolder);
-
+                
                 ocrConfig.setLanguage(languagePacks);
                 ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
                 parseContext.set(TesseractOCRConfig.class, ocrConfig);
@@ -258,16 +233,9 @@ final class TikaTextExtractor implements TextExtractor {
                         + "Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
-            
-            //Save the metadata if it has not been fetched already.
-            if (metadataMap == null) {
-                metadataMap = new HashMap<>();
-                for (String mtdtKey : metadata.names()) {
-                    metadataMap.put(mtdtKey, metadata.get(mtdtKey));
-                }
-            }
-            
-            return new ReaderCharSource(pushbackReader).openStream();
+            //concatenate parsed content and meta data into a single reader.
+            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
+            return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(),
                     "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
@@ -305,7 +273,7 @@ final class TikaTextExtractor implements TextExtractor {
         File outputFile = null;
         try {
             String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
-
+            
             //Appending file id makes the name unique
             String tempFileName = FileUtil.escapeFileName(file.getId() + file.getName());
             inputFile = Paths.get(tempDirectory, tempFileName).toFile();
@@ -346,7 +314,7 @@ final class TikaTextExtractor implements TextExtractor {
             }
         }
     }
-
+    
     /**
      * Wraps the creation of a TikaReader into a Future so that it can be
      * cancelled.
@@ -435,33 +403,20 @@ final class TikaTextExtractor implements TextExtractor {
     }
 
     /**
-     * Get the content metadata, if any.
+     * Gets a CharSource that wraps a formated representation of the given
+     * Metadata.
      *
-     * @return Metadata as a name -> value map
+     * @param metadata The Metadata to wrap as a CharSource
+     *
+     * @return A CharSource for the given MetaData
      */
-    @Override
-    public Map<String, String> getMetadata() {
-        if (metadataMap != null) {
-            return ImmutableMap.copyOf(metadataMap);
-        }
-        
-        try {
-            metadataMap = new HashMap<>();
-            InputStream stream = new ReadContentInputStream(content);
-            ContentHandler doNothingContentHandler = new DefaultHandler();
-            Metadata mtdt = new Metadata();
-            parser.parse(stream, doNothingContentHandler, mtdt);
-            for (String mtdtKey : mtdt.names()) {
-                metadataMap.put(mtdtKey, mtdt.get(mtdtKey));
-            }
-        } catch (IOException | SAXException | TikaException ex) {
-            AUTOPSY_LOGGER.log(Level.WARNING, String.format("Error getting metadata for file [id=%d] %s, see Tika log for details...", //NON-NLS
-                    content.getId(), content.getName()));
-            TIKA_LOGGER.log(Level.WARNING, "Exception: Unable to get metadata for " //NON-NLS
-                    + "content" + content.getId() + ": " + content.getName(), ex); //NON-NLS
-        }
-
-        return metadataMap;
+    static private CharSource getMetaDataCharSource(Metadata metadata) {
+        return CharSource.wrap(
+                new StringBuilder("\n\n------------------------------METADATA------------------------------\n\n")
+                        .append(Stream.of(metadata.names()).sorted()
+                                .map(key -> key + ": " + metadata.get(key))
+                                .collect(Collectors.joining("\n"))
+                        ));
     }
 
     /**
@@ -471,11 +426,11 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public boolean isSupported() {
-        if (!(content instanceof AbstractFile)) {
+        if(!(content instanceof AbstractFile)) {
             return false;
         }
-
-        String detectedType = ((AbstractFile) content).getMIMEType();
+        
+        String detectedType = ((AbstractFile)content).getMIMEType();
         if (detectedType == null
                 || BINARY_MIME_TYPES.contains(detectedType) //any binary unstructured blobs (string extraction will be used)
                 || ARCHIVE_MIME_TYPES.contains(detectedType)
@@ -484,7 +439,7 @@ final class TikaTextExtractor implements TextExtractor {
                 ) {
             return false;
         }
-
+        
         return TIKA_SUPPORTED_TYPES.contains(detectedType);
     }
 
@@ -534,11 +489,11 @@ final class TikaTextExtractor implements TextExtractor {
         if (context != null) {
             ImageConfig configInstance = context.lookup(ImageConfig.class);
             if (configInstance != null) {
-                if (Objects.nonNull(configInstance.getOCREnabled())) {
+                if(Objects.nonNull(configInstance.getOCREnabled())) {
                     this.tesseractOCREnabled = configInstance.getOCREnabled();
                 }
-
-                if (Objects.nonNull(configInstance.getOCRLanguages())) {
+                
+                if(Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }
             }

@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -34,7 +33,7 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
  */
 final class DeleteOrphanManifestNodesTask implements Runnable {
 
-    private static final Logger logger = AutoIngestDashboardLogger.getLogger();
+    private static final Logger logger = Logger.getLogger(DeleteOrphanManifestNodesTask.class.getName());
     private final ProgressIndicator progress;
 
     /**
@@ -52,15 +51,13 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
         "DeleteOrphanManifestNodesTask.progress.startMessage=Starting orphaned manifest file znode cleanup",
         "DeleteOrphanManifestNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service",
         "DeleteOrphanManifestNodesTask.progress.gettingManifestNodes=Querying the coordination service for manifest file znodes",
-        "DeleteOrphanManifestNodesTask.progress.lookingForOrphanedManifestFileZnodes=Looking for orphaned manifest file znodes",
         "# {0} - node path", "DeleteOrphanManifestNodesTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file znode {0}"
     })
     public void run() {
         progress.start(Bundle.DeleteOrphanManifestNodesTask_progress_startMessage());
-        int nodesCount = 0;
         try {
             progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_connectingToCoordSvc());
-            logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_connectingToCoordSvc());
+            logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_connectingToCoordSvc());            
             CoordinationService coordinationService;
             try {
                 coordinationService = CoordinationService.getInstance();
@@ -71,45 +68,36 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
 
             progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_gettingManifestNodes());
             logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_gettingManifestNodes());
-            List<String> nodePaths;
+            List<AutoIngestJobNodeData> nodeDataList;
             try {
-                nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
+                nodeDataList = AutoIngestJobNodeDataCollector.getNodeData();
             } catch (CoordinationService.CoordinationServiceException ex) {
-                logger.log(Level.SEVERE, "Error getting manifest file znode list", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error collecting auto ingest job node data", ex); // NON-NLS
                 return;
             } catch (InterruptedException unused) {
-                logger.log(Level.WARNING, "Task cancelled while getting manifest file znode list"); // NON-NLS
+                logger.log(Level.WARNING, "Task cancelled while collecting auto ingest job node data"); // NON-NLS
                 return;
             }
 
-            progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_lookingForOrphanedManifestFileZnodes());
-            logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_lookingForOrphanedManifestFileZnodes());
-            for (String nodePath : nodePaths) {
-                final Path manifestFilePath = Paths.get(nodePath);
+            for (AutoIngestJobNodeData nodeData : nodeDataList) {
+                final String caseName = nodeData.getCaseName();
+                final Path manifestFilePath = nodeData.getManifestFilePath();
                 final File manifestFile = manifestFilePath.toFile();
                 if (!manifestFile.exists()) {
                     try {
                         progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_deletingOrphanedManifestNode(manifestFilePath));
-                        logger.log(Level.INFO, String.format("Deleting orphaned manifest file znode %s", manifestFilePath));
+                        logger.log(Level.INFO, String.format("Deleting orphaned manifest file znode %s for %s", manifestFilePath, caseName));
                         coordinationService.deleteNode(CoordinationService.CategoryNode.MANIFESTS, manifestFilePath.toString());
-                        ++nodesCount;
                     } catch (CoordinationService.CoordinationServiceException ex) {
                         if (!DeleteCaseUtils.isNoNodeException(ex)) {
-                            logger.log(Level.SEVERE, String.format("Error deleting orphaned manifest file %s", manifestFilePath), ex);  // NON-NLS
+                            logger.log(Level.SEVERE, String.format("Error deleting %s znode for %s", manifestFilePath, caseName), ex);  // NON-NLS
                         }
                     } catch (InterruptedException unused) {
-                        logger.log(Level.WARNING, String.format("Task cancelled while deleting orphaned manifest file %s", manifestFilePath));  // NON-NLS
+                        logger.log(Level.WARNING, String.format("Task cancelled while deleting %s znode for %s", manifestFilePath, caseName));  // NON-NLS
                         return;
                     }
-
-                    /*
-                     * Back to looking for orphans...
-                     */
-                    progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_lookingForOrphanedManifestFileZnodes());
-                    logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_lookingForOrphanedManifestFileZnodes());
                 }
             }
-
         } catch (Exception ex) {
             /*
              * This is an unexpected runtime exceptions firewall. It is here
@@ -121,7 +109,6 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
             throw ex;
 
         } finally {
-            logger.log(Level.INFO, String.format("Deleted %d orphaned manifest file znodes", nodesCount));
             progress.finish();
         }
     }

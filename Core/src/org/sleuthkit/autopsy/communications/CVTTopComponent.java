@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.List;
@@ -62,11 +61,8 @@ public final class CVTTopComponent extends TopComponent {
         associateLookup(proxyLookup);
         // Make sure the Global Actions Context is proxying the selection of the active tab.
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
-            Component selectedComponent = browseVisualizeTabPane.getSelectedComponent();
-            if(selectedComponent instanceof Lookup.Provider) {
-                Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
-                proxyLookup.setNewLookups(lookup);
-            }
+            Lookup.Provider selectedComponent = (Lookup.Provider) browseVisualizeTabPane.getSelectedComponent();
+            proxyLookup.setNewLookups(selectedComponent.getLookup());
             filtersPane.setDeviceAccountTypeEnabled(browseVisualizeTabPane.getSelectedIndex() != 0);
         });
         

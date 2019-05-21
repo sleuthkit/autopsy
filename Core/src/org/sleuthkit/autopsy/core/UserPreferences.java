@@ -60,7 +60,6 @@ public final class UserPreferences {
     private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
-    private static final String TEXT_TRANSLATOR_NAME = "TextTranslatorName";
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
     public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
@@ -77,7 +76,6 @@ public final class UserPreferences {
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
-    public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -336,14 +334,6 @@ public final class UserPreferences {
     public static void setIndexingServerPort(int port) {
         preferences.putInt(INDEXING_SERVER_PORT, port);
     }
-    
-    public static void setTextTranslatorName(String textTranslatorName){
-        preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
-    }
-    
-    public static String getTextTranslatorName(){
-        return preferences.get(TEXT_TRANSLATOR_NAME, null);
-    }
 
     /**
      * Persists message service connection info.
@@ -499,24 +489,6 @@ public final class UserPreferences {
      */
     public static void setMaxSolrVMSize(int maxSize) {
         preferences.putInt(SOLR_MAX_JVM_SIZE, maxSize);
-    }
-
-    /**
-     * Get the maximum number of results to display in a result table.
-     *
-     * @return Saved value or default (0) which indicates no max.
-     */
-    public static int getResultsTablePageSize() {
-        return preferences.getInt(RESULTS_TABLE_PAGE_SIZE, 0);
-    }
-
-    /**
-     * Set the maximum number of results to display in a result table.
-     *
-     * @param pageSize
-     */
-    public static void setResultsTablePageSize(int pageSize) {
-        preferences.putInt(RESULTS_TABLE_PAGE_SIZE, pageSize);
     }
 
     /**

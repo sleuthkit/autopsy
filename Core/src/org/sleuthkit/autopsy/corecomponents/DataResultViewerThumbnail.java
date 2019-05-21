@@ -386,13 +386,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             rootNodeChildren.cancelLoadingThumbnails();
         }
         try {
-            // There is an issue with ThumbnailViewChildren
-            // addNotify, that it's call to getChildren.getNodes() does not cause the 
-            // children nodes to be created.  Adding a call to getChildren.getNodesCount()
-            // here will assure that the children nodes are created particularly in the
-            // case where the DataResultViewerThumbnail stands along from the 
-            // DataResultViewer.  See DataResultViewer setNode for more information.
-            if (givenNode != null && givenNode.getChildren().getNodesCount() > 0) {
+            if (givenNode != null) {
                 rootNode = (TableFilterNode) givenNode;
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will

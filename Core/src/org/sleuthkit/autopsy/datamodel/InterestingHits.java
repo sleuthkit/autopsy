@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -449,57 +449,51 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
-    private class HitFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
+    private class HitFactory extends ChildFactory<Long> implements Observer {
 
         private final String setName;
         private final String typeName;
         private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
 
         private HitFactory(String setName, String typeName) {
-            super(typeName);
+            super();
             this.setName = setName;
             this.typeName = typeName;
             interestingResults.addObserver(this);
         }
 
         @Override
-        protected List<BlackboardArtifact> makeKeys() {
+        protected boolean createKeys(List<Long> list) {
 
-            if (skCase != null) {
-                interestingResults.getArtifactIds(setName, typeName).forEach((id) -> {
-                    try {
-                        if (!artifactHits.containsKey(id)) {
-                            BlackboardArtifact art = skCase.getBlackboardArtifact(id);
-                            artifactHits.put(id, art);
-                        }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
-                    }
-                });
-
-                return new ArrayList<>(artifactHits.values());
+            if (skCase == null) {
+                return true;
             }
-            return Collections.emptyList();
+
+            interestingResults.getArtifactIds(setName, typeName).forEach((id) -> {
+                try {
+                    if (!artifactHits.containsKey(id)) {
+                        BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                        artifactHits.put(id, art);  
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
+                }
+            });
+
+            list.addAll(artifactHits.keySet());
+
+            return true;
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact art) {
-            return new BlackboardArtifactNode(art);
+        protected Node createNodeForKey(Long l) {
+            BlackboardArtifact art = artifactHits.get(l);
+            return (null == art) ? null : new BlackboardArtifactNode(art);
         }
 
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);
-        }
-
-        @Override
-        protected void onAdd() {
-            // No-op
-        }
-
-        @Override
-        protected void onRemove() {
-            // No-op
         }
     }
 }

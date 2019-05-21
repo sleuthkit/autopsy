@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,15 +33,17 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Makes the children nodes / keys for a given content object. Has knowledge
  * about the structure of the directory tree and what levels should be ignored.
+ * TODO consider a ContentChildren child factory
  */
 class ContentChildren extends AbstractContentChildren<Content> {
 
     private static final Logger logger = Logger.getLogger(ContentChildren.class.getName());
+    //private static final int MAX_CHILD_COUNT = 1000000;
 
     private final Content parent;
 
     ContentChildren(Content parent) {
-        super("content_" + Long.toString(parent.getId()));
+        super(); //initialize lazy behavior
         this.parent = parent;
     }
 
@@ -88,7 +90,7 @@ class ContentChildren extends AbstractContentChildren<Content> {
                     children.add(c);
                 }
             } else if (c instanceof LocalDirectory) {
-                LocalDirectory localDir = (LocalDirectory) c;
+                LocalDirectory localDir = (LocalDirectory)c;
                 if (localDir.isRoot()) {
                     children.addAll(getDisplayChildren(localDir));
                 } else {
@@ -102,13 +104,27 @@ class ContentChildren extends AbstractContentChildren<Content> {
     }
 
     @Override
-    protected List<Content> makeKeys() {
-        return getDisplayChildren(parent);
+    protected void addNotify() {
+        super.addNotify();
+
+        //TODO check global settings
+        //if above limit, query and return subrange
+        //StopWatch s2 = new StopWatch();
+        //s2.start();
+        //logger.log(Level.INFO, "GETTING CHILDREN CONTENT for parent: " + parent.getName());
+        List<Content> children = getDisplayChildren(parent);
+        //s2.stop();
+        //logger.log(Level.INFO, "GOT CHILDREN CONTENTS:" + children.size() + ", took: " + s2.getElapsedTime());
+
+        //limit number children
+        //setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
+        setKeys(children);
     }
 
     @Override
-    protected void onAdd() {
-        // No-op
+    protected void removeNotify() {
+        super.removeNotify();
+        setKeys(new ArrayList<>());
     }
 
     /**
@@ -117,11 +133,7 @@ class ContentChildren extends AbstractContentChildren<Content> {
      * them).
      */
     void refreshChildren() {
-        refresh(true);
-    }
-
-    @Override
-    protected void onRemove() {
-        // No-op
+        List<Content> children = getDisplayChildren(parent);
+        setKeys(children);
     }
 }

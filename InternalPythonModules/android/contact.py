@@ -141,7 +141,6 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 name = resultSet.getString("display_name")
                 data1 = resultSet.getString("data1") # the phone number or email
                 mimetype = resultSet.getString("mimetype") # either phone or email
-                attributes = ArrayList()
                 if name != oldName:
                     artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
                     attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))

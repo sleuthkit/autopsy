@@ -18,19 +18,9 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
-import javafx.scene.web.WebView;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Node;
+import org.jsoup.nodes.Document;
 import org.openide.util.NbBundle.Messages;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.events.EventTarget;
 
 /**
  * A file content viewer for HTML files.
@@ -39,56 +29,45 @@ import org.w3c.dom.events.EventTarget;
 final class HtmlPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String TEXT_TYPE = "text/plain";
-    private final JFXPanel jfxPanel = new JFXPanel();
-    private WebView webView;
+    
     private String htmlText;
-
+    
     /**
      * Creates new form HtmlViewerPanel
      */
     HtmlPanel() {
         initComponents();
-        Platform.runLater(() -> {
-            webView = new WebView();
-            //disable the context menu so they can't open linked pages by right clicking
-            webView.setContextMenuEnabled(false);
-            //disable java script
-            webView.getEngine().setJavaScriptEnabled(false);
-            //disable clicking on links 
-            webView.getEngine().getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
-                @Override
-                public void changed(ObservableValue<? extends Worker.State> observable, Worker.State oldValue, Worker.State newValue) {
-                    if (newValue == Worker.State.SUCCEEDED) {
-                        disableHyperLinks();
-                    }
-                }
-            });
-            Scene scene = new Scene(webView);
-            jfxPanel.setScene(scene);
-            jfxPanel.setPreferredSize(htmlJPanel.getPreferredSize());
-            htmlJPanel.add(jfxPanel);
-        });
+        
+        Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
     }
-
+    
     /**
      * Set the text pane's HTML text and refresh the view to display it.
-     *
+     * 
      * @param htmlText The HTML text to be applied to the text pane.
      */
     void setHtmlText(String htmlText) {
         this.htmlText = htmlText;
         refresh();
     }
-
+    
     /**
      * Clear the HTML in the text pane and disable the show/hide button.
      */
     void reset() {
-        Platform.runLater(() -> {
-            webView.getEngine().loadContent("", TEXT_TYPE);
-        });
+        htmlbodyTextPane.setText("");
         showImagesToggleButton.setEnabled(false);
+    }
+
+    /**
+     * Guarantee the HTML text has 'html' and 'body' tags.
+     * 
+     * @param htmlText The HTML text
+     * 
+     * @return The HTML text with the 'html' and 'body' tags applied.
+     */
+    private String wrapInHtmlBody(String htmlText) {
+        return "<html><body>" + htmlText + "</body></html>";
     }
 
     /**
@@ -99,40 +78,37 @@ final class HtmlPanel extends javax.swing.JPanel {
      * @return The cleansed HTML String
      */
     private String cleanseHTML(String htmlInString) {
-        org.jsoup.nodes.Document doc = Jsoup.parse(htmlInString);
-        // remove all 'img' tags.
-        doc.select("img").stream().forEach(Node::remove);
-        // remove all 'span' tags, these are often images which are ads
-        doc.select("span").stream().forEach(Node::remove);
+
+        Document doc = Jsoup.parse(htmlInString);
+
+        // Update all 'img' tags.
+        doc.select("img[src]").forEach(img -> img.attr("src", ""));
+
         return doc.html();
     }
-
+    
     /**
      * Refresh the panel to reflect the current show/hide images setting.
      */
     @Messages({
         "HtmlPanel_showImagesToggleButton_show=Show Images",
         "HtmlPanel_showImagesToggleButton_hide=Hide Images",
-        "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",})
+        "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",
+    })
     private void refresh() {
         if (false == htmlText.isEmpty()) {
             try {
                 if (showImagesToggleButton.isSelected()) {
                     showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_hide());
-                    Platform.runLater(() -> {
-                        webView.getEngine().loadContent(htmlText);
-                    });
+                    this.htmlbodyTextPane.setText(wrapInHtmlBody(htmlText));
                 } else {
                     showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_show());
-                    Platform.runLater(() -> {
-                        webView.getEngine().loadContent(cleanseHTML(htmlText));
-                    });
+                    this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
                 }
                 showImagesToggleButton.setEnabled(true);
-            } catch (Exception ignored) {
-                Platform.runLater(() -> {
-                    webView.getEngine().loadContent(Bundle.Html_text_display_error(), TEXT_TYPE);
-                });
+                htmlbodyTextPane.setCaretPosition(0); 
+            } catch(Exception ex) {
+                this.htmlbodyTextPane.setText(wrapInHtmlBody(Bundle.Html_text_display_error()));
             }
         }
     }
@@ -146,8 +122,14 @@ final class HtmlPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        htmlScrollPane = new javax.swing.JScrollPane();
+        htmlbodyTextPane = new javax.swing.JTextPane();
         showImagesToggleButton = new javax.swing.JToggleButton();
-        htmlJPanel = new javax.swing.JPanel();
+
+        htmlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
+        htmlbodyTextPane.setEditable(false);
+        htmlScrollPane.setViewportView(htmlbodyTextPane);
 
         org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, org.openide.util.NbBundle.getMessage(HtmlPanel.class, "HtmlPanel.showImagesToggleButton.text")); // NOI18N
         showImagesToggleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -156,23 +138,21 @@ final class HtmlPanel extends javax.swing.JPanel {
             }
         });
 
-        htmlJPanel.setLayout(new java.awt.BorderLayout());
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
-                .addGap(0, 95, Short.MAX_VALUE))
-            .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE))
+                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -180,27 +160,10 @@ final class HtmlPanel extends javax.swing.JPanel {
         refresh();
     }//GEN-LAST:event_showImagesToggleButtonActionPerformed
 
-    /**
-     * Disable the click events on hyper links so that new pages can not be
-     * opened.
-     */
-    private void disableHyperLinks() {
-        Platform.runLater(() -> {
-            Document document = webView.getEngine().getDocument();
-            if (document != null) {
-                NodeList nodeList = document.getElementsByTagName("a");
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    ((EventTarget) nodeList.item(i)).addEventListener("click", (evt) -> {
-                        evt.preventDefault();
-                        evt.stopPropagation();
-                    }, true);
-                }
-            }
-        });
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel htmlJPanel;
+    private javax.swing.JScrollPane htmlScrollPane;
+    private javax.swing.JTextPane htmlbodyTextPane;
     private javax.swing.JToggleButton showImagesToggleButton;
     // End of variables declaration//GEN-END:variables
 }

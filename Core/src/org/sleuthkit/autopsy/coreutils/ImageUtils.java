@@ -29,7 +29,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -799,12 +798,7 @@ public class ImageUtils {
             imageSaver.execute(() -> {
                 try {
                     synchronized (cacheFile) {
-                        Path path = Paths.get(cacheFile.getParent()); 
-                        File thumbsDir = Paths.get(cacheFile.getParent()).toFile();
-                        if (!thumbsDir.exists()) {
-                            thumbsDir.mkdirs();
-                        }
-        
+                        Files.createParentDirs(cacheFile);
                         if (cacheFile.exists()) {
                             cacheFile.delete();
                         }

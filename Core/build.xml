@@ -44,11 +44,6 @@
         <copy todir="${basedir}/release/gstreamer" >
             <fileset dir="${thirdparty.dir}/gstreamer"/>
         </copy>
-		
-		<!--Copy 7-Zip to release-->
-        <copy todir="${basedir}/release/7-Zip" >
-            <fileset dir="${thirdparty.dir}/7-Zip"/>
-        </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
         have it stored in a ZIP file. We'll extract it in place and remove
@@ -110,11 +105,11 @@
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
 	<get src="https://drive.google.com/uc?id=1FkinvA7EFqP4nOSOyTAOli5KefM67ufA" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1zPlIn1xmOeC1VYKmV3fJHl5qE6E_M7K-" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1brQqmX8MJnBPUFEbsdUvZ1X81PmQNVCY" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1JACMDyH4y54ypGzFWl82ZzMQf3qbrioP" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=17sGybvmBGsWWJYo1IWKmO04oG9hKpPi3" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>	    
         <get src="https://drive.google.com/uc?id=1bghoSm7z7nhmGIxlllyY1MMlbLntxm7n" dest="${test-input}/IngestFilters_local1_v1.zip" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1Ovyv_xVty8xMYgsc3C45pvphfhbdKg1x" dest="${test-input}/PasswordDetection_img1_v1.img" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1BrSiUQ1fzxFS9vIaK4mYKX6qIVp9kRWT" dest="${test-input}/PasswordDetection_img1_v1.img" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1HD8s4rculgHV1qZT5g80Kg7j4m1qccrN" dest="${test-input}/VeracryptDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1mr9waEDG5H8GBBn_yXwMUQ6senwC1goL" dest="${test-input}/CommonFiles_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1-vmbmAAb2HBLbf58GpAA97ozGUFiYHbN" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>

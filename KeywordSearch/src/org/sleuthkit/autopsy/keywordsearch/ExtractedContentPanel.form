@@ -45,22 +45,22 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="controlScrollPane" alignment="0" pref="54" max="32767" attributes="0"/>
-          <Component id="extractedScrollPane" alignment="0" pref="54" max="32767" attributes="0"/>
+          <Component id="jScrollPane2" alignment="0" pref="100" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" alignment="0" pref="100" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="controlScrollPane" min="-2" pref="29" max="-2" attributes="0"/>
+              <Component id="jScrollPane2" min="-2" pref="46" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="extractedScrollPane" pref="23" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="23" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="javax.swing.JScrollPane" name="extractedScrollPane">
+    <Container class="javax.swing.JScrollPane" name="jScrollPane1">
       <Properties>
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -90,7 +90,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JScrollPane" name="controlScrollPane">
+    <Container class="javax.swing.JScrollPane" name="jScrollPane2">
       <Properties>
         <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
         <Property name="verticalScrollBarPolicy" type="int" value="21"/>
@@ -101,7 +101,7 @@
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
-        <Container class="javax.swing.JPanel" name="controlPanel">
+        <Container class="javax.swing.JPanel" name="jPanel1">
           <Properties>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[0, 0]"/>
@@ -114,71 +114,78 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="hitLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="hitCountLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                      <Component id="hitOfLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                      <Component id="hitTotalLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                      <Component id="hitButtonsLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Component id="hitPreviousButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                      <Component id="hitNextButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="jSeparator2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="pagesLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Component id="pageCurLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                      <Component id="pageOfLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Component id="pageTotalLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
-                      <Component id="pageButtonsLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="pagePreviousButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                      <Component id="pageNextButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
-                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="sourceComboBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace min="0" pref="600" max="32767" attributes="0"/>
+                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="hitLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="hitCountLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                          <Component id="hitOfLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                          <Component id="hitTotalLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                          <Component id="hitButtonsLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                          <Component id="hitPreviousButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+                          <Component id="hitNextButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Component id="jSeparator2" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Component id="pagesLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                          <Component id="pageCurLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                          <Component id="pageOfLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                          <Component id="pageTotalLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
+                          <Component id="pageButtonsLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                          <Component id="pagePreviousButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+                          <Component id="pageNextButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
+                          <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="sourceComboBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                      </Group>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <Group type="103" groupAlignment="2" attributes="0">
-                          <Component id="hitPreviousButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="jLabel1" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="hitNextButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="pageButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="pagePreviousButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="pageNextButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="jSeparator1" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="sourceComboBox" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="pagesLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="hitLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="jSeparator2" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="pageCurLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="pageOfLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="hitCountLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="pageTotalLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="hitOfLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="hitTotalLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
-                          <Component id="hitButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="0" pref="81" max="32767" attributes="0"/>
+                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="2" attributes="0">
+                              <Component id="hitPreviousButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel1" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="hitNextButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="pageButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="pagePreviousButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="pageNextButton" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="jSeparator1" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="sourceComboBox" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="pagesLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="hitLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="jSeparator2" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="pageCurLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="pageOfLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="hitCountLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="pageTotalLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="hitOfLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="hitTotalLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="hitButtonsLabel" linkSize="1" alignment="2" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

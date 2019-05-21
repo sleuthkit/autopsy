@@ -423,12 +423,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
     /**
      * Creates children for a given artifact type
      */
-    private class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> {
+    private class ArtifactFactory extends ChildFactory.Detachable<BlackboardArtifact> {
 
         private BlackboardArtifact.Type type;
 
         public ArtifactFactory(BlackboardArtifact.Type type) {
-            super(type.getTypeName());
+            super();
             this.type = type;
         }
 
@@ -481,34 +481,36 @@ public class ExtractedContent implements AutopsyVisitableItem {
         };
 
         @Override
-        protected void onAdd() {
+        protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
         }
 
         @Override
-        protected void onRemove() {
+        protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact key) {
-            return new BlackboardArtifactNode(key);
-        }
-
-        @Override
-        protected List<BlackboardArtifact> makeKeys() {
+        protected boolean createKeys(List<BlackboardArtifact> list) {
             if (skCase != null) {
                 try {
-                    return Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
-                            ? blackboard.getArtifacts(type.getTypeID(), datasourceObjId)
-                            : skCase.getBlackboardArtifacts(type.getTypeID());
+                    List<BlackboardArtifact> arts = 
+                            Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ?
+                            blackboard.getArtifacts(type.getTypeID(), datasourceObjId) :
+                            skCase.getBlackboardArtifacts(type.getTypeID());
+                    list.addAll(arts);
                 } catch (TskException ex) {
                     Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
                 }
             }
-            return Collections.emptyList();
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(BlackboardArtifact key) {
+            return new BlackboardArtifactNode(key);
         }
     }
 }

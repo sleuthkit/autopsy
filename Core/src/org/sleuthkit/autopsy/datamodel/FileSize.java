@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -361,7 +361,7 @@ public class FileSize implements AutopsyVisitableItem {
         /*
          * Makes children, which are nodes for files of a given range
          */
-        static class FileSizeChildren extends BaseChildFactory<AbstractFile> {
+        static class FileSizeChildren extends ChildFactory.Detachable<AbstractFile> {
 
             private final SleuthkitCase skCase;
             private final FileSizeFilter filter;
@@ -377,7 +377,6 @@ public class FileSize implements AutopsyVisitableItem {
              *               added to case
              */
             FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase, Observable o, long dsObjId) {
-                super(filter.getName(), new ViewsKnownAndSlackFilter<>());
                 this.skCase = skCase;
                 this.filter = filter;
                 this.notifier = o;
@@ -386,25 +385,20 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             @Override
-            protected void onAdd() {
+            protected void addNotify() {
                 if (notifier != null) {
                     notifier.addObserver(observer);
                 }
             }
 
             @Override
-            protected void onRemove() {
+            protected void removeNotify() {
                 if (notifier != null) {
                     notifier.deleteObserver(observer);
                 }
             }
 
             private final Observer observer = new FileSizeChildrenObserver();
-
-            @Override
-            protected List<AbstractFile> makeKeys() {
-                return runFsQuery();
-            }
 
             // Cause refresh of children if there are changes
             private class FileSizeChildrenObserver implements Observer {
@@ -413,6 +407,12 @@ public class FileSize implements AutopsyVisitableItem {
                 public void update(Observable o, Object arg) {
                     refresh(true);
                 }
+            }
+
+            @Override
+            protected boolean createKeys(List<AbstractFile> list) {
+                list.addAll(runFsQuery());
+                return true;
             }
 
             private static String makeQuery(FileSizeFilter filter, long filteringDSObjId) {
@@ -436,6 +436,17 @@ public class FileSize implements AutopsyVisitableItem {
                 // Ignore unallocated block files.
                 query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
                 
+                // Hide known files if indicated in the user preferences.
+                if(UserPreferences.hideKnownFilesInViewsTree()) {
+                    query += " AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue() //NON-NLS
+                            + " OR known IS NULL)"; //NON-NLS
+                }
+                
+                // Hide slack files if indicated in the user preferences.
+                if(UserPreferences.hideSlackFilesInViewsTree()) {
+                    query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + ")"; //NON-NLS
+                }
+
                 // filter by datasource if indicated in case preferences
                 if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     query +=  " AND data_source_obj_id = " + filteringDSObjId;

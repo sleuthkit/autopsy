@@ -1,19 +1,5 @@
 AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
-# {0} - file
-AddLogicalImageTask.addingToReport=Adding {0} to report
-# {0} - src
-# {1} - dest
-AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
-# {0} - file
-AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
-AddLogicalImageTask.doneCopying=Done copying
-# {0} - file
-# {1} - exception message
-AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
-# {0} - src
-# {1} - dest
-AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory
@@ -132,7 +118,6 @@ CTL_CaseNewAction=New Case
 CTL_CaseDetailsAction=Case Details
 CTL_CaseDeleteAction=Delete Case
 CTL_CaseOpenAction=Open Case
-CTL_UnpackagePortableCaseAction=Unpackage Portable Case
 EditOptionalCasePropertiesPanel.cancelButton.text=Cancel
 EditOptionalCasePropertiesPanel.saveButton.text=Save
 GeneralFilter.encaseImageDesc.text=Encase Images (*.e01)
@@ -182,27 +167,6 @@ LogicalEvidenceFilePanel.pathValidation.getOpenCase.Error=Warning: Exception whi
 LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here.
 LogicalFilesDspPanel.subTypeComboBox.l01FileOption.text=Logical evidence file (L01)
 LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders
-LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
-# {0} - directory
-LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
-# {0} - directory
-LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
-# {0} - imageDirPath
-LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
-LogicalImagerPanel.imageTable.columnModel.title0=Hostname
-LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
-LogicalImagerPanel.messageLabel.clickScanOrBrowse=Click SCAN or BROWSE button to find images
-# {0} - sparseImageDirectory
-# {1} - image
-LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}
-# {0} - invalidFormatDirectory
-LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
-LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
-LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found
-LogicalImagerPanel.messageLabel.noImageSelected=No image selected
-LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...
-LogicalImagerPanel.messageLabel.selectedImage=Selected folder
-LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive
 Menu/Case/OpenRecentCase=Open Recent Case
 CTL_CaseDeleteAction=Delete Case
 OpenIDE-Module-Name=Case
@@ -364,20 +328,6 @@ RecentCases.getName.text=Clear Recent Cases
 RecentItems.openRecentCase.msgDlg.text=Case {0} no longer exists.
 SelectDataSourceProcessorPanel.name.text=Select Type of Data Source To Add
 StartupWindow.title.text=Welcome
-UnpackagePortableCaseDialog.title.text=Unpackage Portable Case
-UnpackagePortableCaseDialog.UnpackagePortableCaseDialog.extensions=Portable case package (.zip, .zip.001)
-UnpackagePortableCaseDialog.validatePaths.badExtension=File extension must be .zip or .zip.001
-# {0} - case folder
-UnpackagePortableCaseDialog.validatePaths.caseFolderExists=Folder {0} already exists
-UnpackagePortableCaseDialog.validatePaths.caseIsNotFile=Selected path is not a file
-UnpackagePortableCaseDialog.validatePaths.caseNotFound=File does not exist
-UnpackagePortableCaseDialog.validatePaths.folderNotFound=Folder does not exist
-UnpackagePortableCaseDialog.validatePaths.notAFolder=Output location is not a directory
-UnpackagePortableCaseProgressDialog.propertyChange.success=Successfully unpacked case
-UnpackagePortableCaseProgressDialog.title.text=Unpackage Portable Case Progress
-UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user
-UnpackageWorker.doInBackground.errorCompressingCase=Error unpackaging case
-UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executable
 UpdateRecentCases.menuItem.clearRecentCases.text=Clear Recent Cases
 UpdateRecentCases.menuItem.empty=-Empty-
 AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text=Cancel
@@ -475,25 +425,3 @@ OpenMultiUserCasePanel.cancelButton.text=Cancel
 OpenMultiUserCasePanel.openSingleUserCaseButton.text=Open Single-User Case...
 OpenMultiUserCasePanel.openSelectedCaseButton.text=Open Selected Case
 OpenMultiUserCasePanel.searchLabel.text=Select any case and start typing to search by case name
-LogicalImagerPanel.jLabel1.text=Insert external drive
-LogicalImagerPanel.scanButton.text=Scan
-LogicalImagerPanel.jLabel6.text=Or, pick a Logical Imager folder
-LogicalImagerPanel.browseButton.text=Browse
-LogicalImagerPanel.topLabel.text=Import Autopsy Imager Results
-LogicalImagerPanel.selectDriveLabel.text=Select Drive
-LogicalImagerPanel.messageLabel.text=Error/Status message
-UnpackagePortableCaseDialog.desc2Label.text=Portable Case Report Module.
-UnpackagePortableCaseDialog.desc1Label.text=Unpackage a portable case so it can be opened in Autopsy. Portable cases are created through the
-UnpackagePortableCaseDialog.exitButton.text=Exit
-UnpackagePortableCaseDialog.unpackageButton.text=Unpackage
-UnpackagePortableCaseDialog.caseSelectButton.text=Browse
-UnpackagePortableCaseDialog.outputSelectButton.text=Browse
-UnpackagePortableCaseDialog.caseTextField.text=
-UnpackagePortableCaseDialog.outputTextField.text=
-UnpackagePortableCaseDialog.caseErrorLabel.text=jLabel1
-UnpackagePortableCaseDialog.outputErrorLabel.text=jLabel1
-UnpackagePortableCaseProgressDialog.cancelButton.text=Cancel
-UnpackagePortableCaseProgressDialog.okButton.text=OK
-UnpackagePortableCaseProgressDialog.resultLabel.text=resultLabel
-UnpackagePortableCaseDialog.extractLabel.text=Folder to extract to:
-UnpackagePortableCaseDialog.caseLabel.text=Portable Case:
