@@ -213,6 +213,7 @@ public class ImageNode extends AbstractContentNode<Image> {
                 int creationMajorVersion = schemaVersion.getInt("creationMajorVersion");
                 int creationMinorVersion = schemaVersion.getInt("creationMinorVersion");
                 if ((creationMajorVersion == 8 && creationMinorVersion >= 3) || creationMajorVersion > 8) {
+                    schemaVersion.close();
                     return true;
                 }
             }
