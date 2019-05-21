@@ -6,10 +6,10 @@
 package org.sleuthkit.autopsy.texttranslation.translators;
 
 import com.google.cloud.translate.Language;
-//import com.google.cloud.translate.Translate;
+import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import java.io.File;
-//import java.util.List;
+import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle.Messages;
@@ -24,38 +24,64 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private static final String DEFAULT_CREDENTIAL_PATH = "";
     private static final String DEFAULT_TARGET_LANGUAGE = TranslateOptions.getDefaultInstance().getTargetLanguage();
     private static final long serialVersionUID = 1L;
-    private String targetLanguage = "";
+    private final GoogleTranslatorSettings settings;
+    private Language targetLanguage;
+    private String targetLanguageCode = "";
     private String credentialPath = "";
 
     /**
      * Creates new form GoogleTranslatorSettingsPanel
      */
-    public GoogleTranslatorSettingsPanel() {
+    public GoogleTranslatorSettingsPanel(GoogleTranslatorSettings settings) {
         initComponents();
         loadSettings();
+        settings.loadTranslator(credentialPath, targetLanguageCode);
+        this.settings = settings;
     }
 
     String getCredentialPath() {
         return credentialPath;
     }
-    
+
     String getTargetLanguage() {
-        return targetLanguage;
+        return targetLanguageCode;
     }
 
-//    void populateTargetLanguageComboBox() {
-//        List<Language> listSupportedLanguages = TranslateOptions.getDefaultInstance().getService().listSupportedLanguages(Translate.LanguageListOption.targetLanguage(targetLanguage));
-//        targetLanguageComboBox.removeAllItems();
-//        if (listSupportedLanguages != null) {
-//            listSupportedLanguages.forEach((lang) -> {
-//                targetLanguageComboBox.addItem(lang);
-//            });
-//        }
-//        targetLanguageComboBox.setSelectedItem(Translate.LanguageListOption.targetLanguage(targetLanguage));
-//    }
+    void populateTargetLanguageComboBox() {
+        try {
+            if (settings.getTranslator() != null) {
+                System.out.println("translator exists");;
+                List<Language> listSupportedLanguages = settings.getTranslator().listSupportedLanguages(Translate.LanguageListOption.targetLanguage(targetLanguageCode));
+                targetLanguageComboBox.removeAllItems();
+                if (listSupportedLanguages != null) {
+                    listSupportedLanguages.forEach((lang) -> {
+                        targetLanguageComboBox.addItem(new LanguageWrapper(lang));
+                    });
+                }
+                selectLanguageByCode(targetLanguageCode);
+                System.out.println("enabling combo box");
+                targetLanguageComboBox.setEnabled(true);
+            } else {
+                System.out.println("disabling combo box");
+                targetLanguageComboBox.setEnabled(false);
+            }
+        } catch (Throwable throwable) {
+            targetLanguageComboBox.setEnabled(false);
+            System.out.println("THROWN: " + throwable.getMessage());
+            System.out.println(throwable.getStackTrace());
+        }
+    }
 
-    
-    
+    private void selectLanguageByCode(String code) {
+        for (int i = 0; i < targetLanguageComboBox.getModel().getSize(); i++) {
+            if (targetLanguageComboBox.getItemAt(i).getLanguage().getCode().equals(targetLanguageCode)) {
+                targetLanguageComboBox.setSelectedIndex(i);
+                return;
+            }
+        }
+
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -77,6 +103,12 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
+            }
+        });
+
+        targetLanguageComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                targetLanguageComboBoxActionPerformed(evt);
             }
         });
 
@@ -134,16 +166,26 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
+    private void targetLanguageComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_targetLanguageComboBoxActionPerformed
+        targetLanguage = ((LanguageWrapper) targetLanguageComboBox.getSelectedItem()).getLanguage();
+    }//GEN-LAST:event_targetLanguageComboBoxActionPerformed
+
     void saveSettings() {
         credentialPath = credentialsPathField.getText();
-        targetLanguage = "en"; //((Language)targetLanguageComboBox.getSelectedItem()).getCode();
+        if (targetLanguage != null) {
+            targetLanguageCode = targetLanguage.getCode();
+        }
+        else {
+            targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
+        }
+        populateTargetLanguageComboBox();
+        settings.loadTranslator(credentialPath, targetLanguageCode);
     }
 
     private void loadSettings() {
         credentialPath = DEFAULT_CREDENTIAL_PATH;
-        targetLanguage = DEFAULT_TARGET_LANGUAGE;
+        targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
         credentialsPathField.setText(credentialPath);
-//        populateTargetLanguageComboBox();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -151,6 +193,6 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel credentialsLabel;
     private javax.swing.JTextField credentialsPathField;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JComboBox<Language> targetLanguageComboBox;
+    private javax.swing.JComboBox<LanguageWrapper> targetLanguageComboBox;
     // End of variables declaration//GEN-END:variables
 }

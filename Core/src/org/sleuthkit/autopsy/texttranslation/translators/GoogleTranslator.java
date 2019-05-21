@@ -18,17 +18,8 @@
  */
 package org.sleuthkit.autopsy.texttranslation.translators;
 
-import com.google.auth.Credentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.translate.Translate;
-import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
 import java.awt.Component;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -40,43 +31,21 @@ public final class GoogleTranslator implements TextTranslator {
 
     private static final Logger logger = Logger.getLogger(GoogleTranslator.class.getName());
     private static final int MAX_STRING_LENGTH = 15000;
-    private final GoogleTranslatorSettingsPanel settingsPanel = new GoogleTranslatorSettingsPanel();
-    private Translate translate = null;
+    private final GoogleTranslatorSettingsPanel settingsPanel;
+    private final GoogleTranslatorSettings settings = new GoogleTranslatorSettings();
 
     public GoogleTranslator() {
         // Instantiates a client
-        loadTranslator();
+       settingsPanel = new GoogleTranslatorSettingsPanel(settings);
     }
 
-    void loadTranslator() {
-        InputStream credentialStream = null;
-        Credentials creds = null;
-        try {
-            credentialStream = new FileInputStream(settingsPanel.getCredentialPath());
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.WARNING, "JSON file for GoogleTranslator credentials not found", ex);
-        }
-        if (credentialStream != null) {
-            try {
-                creds = ServiceAccountCredentials.fromStream(credentialStream);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error converting JSON file to Credentials object for GoogleTranslator", ex);
-            }
-        }
-        if (creds == null) {
-            logger.log(Level.INFO, "Credentials were not successfully made, no translations will be available from the GoogleTranslator");
-            translate = null;
-        } else {
-            TranslateOptions.Builder builder = TranslateOptions.newBuilder();
-            builder.setCredentials(creds);
-            builder.setTargetLanguage(settingsPanel.getTargetLanguage());
-            translate = builder.build().getService();
-        }
-    }
+    
+    
+    
 
     @Override
     public String translate(String string) throws TranslationException {
-        if (translate != null) {
+        if (settings.getTranslator() != null) {
             try {
                 // Translates some text into English, without specifying the source language.
 
@@ -96,7 +65,7 @@ public final class GoogleTranslator implements TextTranslator {
                     substring = substring.substring(0, MAX_STRING_LENGTH);
                 }
                 Translation translation
-                        = translate.translate(substring);
+                        = settings.getTranslator().translate(substring);
                 String translatedString = translation.getTranslatedText();
 
                 // put back the newlines
@@ -124,7 +93,6 @@ public final class GoogleTranslator implements TextTranslator {
     @Override
     public void saveSettings() {
         settingsPanel.saveSettings();
-        loadTranslator();
         //There are no settings to configure for Google Translate
         //Possible settings for the future:
         //source language, target language, API key, path to JSON file of API key.
