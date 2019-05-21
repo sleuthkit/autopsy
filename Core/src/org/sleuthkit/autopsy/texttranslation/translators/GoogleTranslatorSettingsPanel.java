@@ -5,9 +5,14 @@
  */
 package org.sleuthkit.autopsy.texttranslation.translators;
 
+import com.google.cloud.translate.Language;
+//import com.google.cloud.translate.Translate;
+import com.google.cloud.translate.TranslateOptions;
 import java.io.File;
+//import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.openide.util.NbBundle.Messages;
 
 /**
  *
@@ -15,8 +20,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  */
 public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
 
+    private static final String JSON_EXTENSION = "json";
     private static final String DEFAULT_CREDENTIAL_PATH = "";
+    private static final String DEFAULT_TARGET_LANGUAGE = TranslateOptions.getDefaultInstance().getTargetLanguage();
     private static final long serialVersionUID = 1L;
+    private String targetLanguage = "";
     private String credentialPath = "";
 
     /**
@@ -30,7 +38,24 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     String getCredentialPath() {
         return credentialPath;
     }
+    
+    String getTargetLanguage() {
+        return targetLanguage;
+    }
 
+//    void populateTargetLanguageComboBox() {
+//        List<Language> listSupportedLanguages = TranslateOptions.getDefaultInstance().getService().listSupportedLanguages(Translate.LanguageListOption.targetLanguage(targetLanguage));
+//        targetLanguageComboBox.removeAllItems();
+//        if (listSupportedLanguages != null) {
+//            listSupportedLanguages.forEach((lang) -> {
+//                targetLanguageComboBox.addItem(lang);
+//            });
+//        }
+//        targetLanguageComboBox.setSelectedItem(Translate.LanguageListOption.targetLanguage(targetLanguage));
+//    }
+
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -43,10 +68,10 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         credentialsLabel = new javax.swing.JLabel();
         credentialsPathField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
+        targetLanguageComboBox = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(credentialsLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsLabel.text")); // NOI18N
-
-        credentialsPathField.setText(org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsPathField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -55,18 +80,27 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(credentialsLabel)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(credentialsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(credentialsPathField, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(browseButton)
-                .addGap(14, 14, 14))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(credentialsPathField, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(browseButton)
+                        .addGap(14, 14, 14))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 317, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -76,10 +110,16 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
                     .addComponent(credentialsLabel)
                     .addComponent(credentialsPathField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(browseButton))
-                .addContainerGap(78, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(47, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"GoogleTranslatorSettingsPanel.json.description=JSON Files",
+        "GoogleTranslatorSettingsPanel.fileChooser.confirmButton=Select"})
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDragEnabled(false);
@@ -88,24 +128,29 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         }
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("JSON Files", "json"));
-        if (fileChooser.showDialog(this, "Select") == JFileChooser.APPROVE_OPTION) {
+        fileChooser.setFileFilter(new FileNameExtensionFilter(Bundle.GoogleTranslatorSettingsPanel_json_description(), JSON_EXTENSION));
+        if (fileChooser.showDialog(this, Bundle.GoogleTranslatorSettingsPanel_fileChooser_confirmButton()) == JFileChooser.APPROVE_OPTION) {
             credentialsPathField.setText(fileChooser.getSelectedFile().getPath());
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
     void saveSettings() {
         credentialPath = credentialsPathField.getText();
+        targetLanguage = "en"; //((Language)targetLanguageComboBox.getSelectedItem()).getCode();
     }
 
     private void loadSettings() {
         credentialPath = DEFAULT_CREDENTIAL_PATH;
+        targetLanguage = DEFAULT_TARGET_LANGUAGE;
         credentialsPathField.setText(credentialPath);
+//        populateTargetLanguageComboBox();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel credentialsLabel;
     private javax.swing.JTextField credentialsPathField;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JComboBox<Language> targetLanguageComboBox;
     // End of variables declaration//GEN-END:variables
 }

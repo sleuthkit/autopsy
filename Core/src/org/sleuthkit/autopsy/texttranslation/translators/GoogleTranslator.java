@@ -60,7 +60,7 @@ public final class GoogleTranslator implements TextTranslator {
             try {
                 creds = ServiceAccountCredentials.fromStream(credentialStream);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error converting JSON file to Credentials object for GoogleTranslator");
+                logger.log(Level.WARNING, "Error converting JSON file to Credentials object for GoogleTranslator", ex);
             }
         }
         if (creds == null) {
@@ -69,6 +69,7 @@ public final class GoogleTranslator implements TextTranslator {
         } else {
             TranslateOptions.Builder builder = TranslateOptions.newBuilder();
             builder.setCredentials(creds);
+            builder.setTargetLanguage(settingsPanel.getTargetLanguage());
             translate = builder.build().getService();
         }
     }

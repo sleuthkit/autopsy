@@ -1,1 +1,6 @@
 GoogleTranslator.name.text=Google Translate
+GoogleTranslatorSettingsPanel.browseButton.text=Browse
+GoogleTranslatorSettingsPanel.credentialsLabel.text=Credentials:
+GoogleTranslatorSettingsPanel.fileChooser.confirmButton=Select
+GoogleTranslatorSettingsPanel.jLabel1.text=Target Language:
+GoogleTranslatorSettingsPanel.json.description=JSON Files
