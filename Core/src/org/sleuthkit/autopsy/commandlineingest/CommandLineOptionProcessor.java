@@ -43,9 +43,10 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option caseBaseDirOption = Option.requiredArgument('o', "caseBaseDir");
     private final Option createCaseCommandOption = Option.withoutArgument('c', "createCase");
     private final Option dataSourcePathOption = Option.requiredArgument('s', "dataSourcePath");
+    private final Option dataSourceObjectIdOption = Option.requiredArgument('i', "dataSourceObjectId");    
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
-    private final Option runIngestCommandOption = Option.withoutArgument('i', "runIngest");
+    private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
     private boolean runFromCommandLine = false;
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
@@ -58,6 +59,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(caseBaseDirOption);
         set.add(dataSourcePathOption);
         set.add(addDataSourceCommandOption);
+        set.add(dataSourceObjectIdOption);
         set.add(caseDirOption);
         set.add(runIngestCommandOption);
         return set;
@@ -106,11 +108,17 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
             caseBaseDir = argDirs[0];
             
-            if (caseBaseDir == null || caseBaseDir.isEmpty() || !(new File(caseBaseDir).exists()) || !(new File(caseBaseDir).isDirectory())) {
-                logger.log(Level.SEVERE, "'caseBaseDir' directory doesn't exist or is not a directory");
-                System.out.println("'caseBaseDir' directory doesn't exist or is not a directory");
+            if (caseBaseDir == null || caseBaseDir.isEmpty()) {
+                logger.log(Level.SEVERE, "Missing argument 'caseBaseDir'");
+                System.out.println("Missing argument 'caseBaseDir'");
                 return;
             } 
+            
+            if (!(new File(caseBaseDir).exists()) || !(new File(caseBaseDir).isDirectory())) {
+                logger.log(Level.SEVERE, "''caseBaseDir'' {0} directory doesn''t exist or is not a directory", caseBaseDir);
+                System.out.println("'caseBaseDir' directory doesn't exist or is not a directory: " + caseBaseDir);
+                return;
+            }             
         }
 
         String dataSourcePath = "";
@@ -127,11 +135,37 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
             // verify inputs
             if (dataSourcePath == null || dataSourcePath.isEmpty() || !(new File(dataSourcePath).exists())) {
+                logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
+                System.out.println("Missing argument 'dataSourcePath'");
+                return;
+            }
+            
+            if (!(new File(dataSourcePath).exists())) {
                 logger.log(Level.SEVERE, "Input data source file {0} doesn''t exist", dataSourcePath);
                 System.out.println("Input data source file " + dataSourcePath + " doesn't exist");
                 return;
             }
         }
+        
+        String dataSourceId = "";
+        if (values.containsKey(dataSourceObjectIdOption)) {
+
+            argDirs = values.get(dataSourceObjectIdOption);
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'dataSourceObjectIdOption'");
+                System.out.println("Missing argument 'dataSourceObjectIdOption'");
+                return;
+
+            }
+            dataSourceId = argDirs[0];
+
+            // verify inputs
+            if (dataSourceId == null || dataSourceId.isEmpty()) {
+                logger.log(Level.SEVERE, "Input data source id is empty");
+                System.out.println("Input data source id is empty");
+                return;
+            } 
+        }        
         
         String caseDir = "";
         if (values.containsKey(caseDirOption)) {
@@ -146,11 +180,17 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             caseDir = argDirs[0];
 
             // verify inputs
-            if (caseDir == null || caseDir.isEmpty() || !(new File(caseDir).exists()) || !(new File(caseDir).isDirectory())) {
+            if (caseDir == null || caseDir.isEmpty()) {
+                logger.log(Level.SEVERE, "Missing argument 'caseDirOption'");
+                System.out.println("Missing argument 'caseDirOption'");
+                return;
+            }
+            
+            if (!(new File(caseDir).exists()) || !(new File(caseDir).isDirectory())) {
                 logger.log(Level.SEVERE, "Case directory {0} doesn''t exist or is not a directory", caseDir);
                 System.out.println("Case directory " + caseDir + " doesn't exist or is not a directory");
                 return;
-            }
+            }            
         }        
 
         // Create commands in order in which they should be executed:
@@ -205,9 +245,9 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         // Add RUN_INGEST command, if present
         if (values.containsKey(runIngestCommandOption)) {
 
-            if (dataSourcePath.isEmpty()) {
-                logger.log(Level.SEVERE, "'dataSourcePath' argument is empty");
-                System.out.println("'dataSourcePath' argument is empty");
+            if (dataSourceId.isEmpty()) {
+                logger.log(Level.SEVERE, "'dataSourceId' argument is empty");
+                System.out.println("'dataSourceId' argument is empty");
                 runFromCommandLine = false;
                 return;
             }
@@ -220,11 +260,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
-            newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_PATH.name(), dataSourcePath);
+            newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             commands.add(newCommand);
             runFromCommandLine = true;
-        }  
+        }
     }
 
     /**

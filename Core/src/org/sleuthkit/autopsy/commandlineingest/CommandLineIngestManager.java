@@ -60,9 +60,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
-//import org.sleuthkit.autopsy.report.ReportProgressPanel;
-//import org.sleuthkit.autopsy.report.caseuco.CaseUcoFormatExporter;
-//import org.sleuthkit.autopsy.report.caseuco.ReportCaseUco;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -195,32 +192,15 @@ public class CommandLineIngestManager {
                                     
                                     // populate the AutoIngestDataSource structure, if that hasn't been done by ADD_DATA_SOURCE command
                                     if (dataSource == null) {
-                                        // create a new AutoIngestDataSource
-                                        String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
-                                        
-                                        // query case database for data source object ID
-                                        Long dataSourceObjId;
-                                        try {
-                                            dataSourceObjId = getDataSourceIdFromDatabase(dataSourcePath);
-                                        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
-                                            LOGGER.log(Level.SEVERE, "Error querying case database for data source " + dataSourcePath, ex);
-                                            System.out.println("Error querying case database for data source " + dataSourcePath);
-                                            // Do not process any other commands
-                                            return;
-                                        }
-                                        
-                                        if (dataSourceObjId == null) {
-                                            LOGGER.log(Level.SEVERE, "Unable to find data source {0} in case database", dataSourcePath);
-                                            System.out.println("Unable to find data source " + dataSourcePath + " in case database");
-                                            // Do not process any other commands
-                                            return;                                            
-                                        }
+
+                                        String dataSourceId = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_ID.name());
+                                        Long dataSourceObjId = Long.getLong(dataSourceId);
                                         
                                         // get Content object for the data source
                                         Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(dataSourceObjId);
                                         
                                         // populate the AutoIngestDataSource structure
-                                        dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
+                                        dataSource = new AutoIngestDataSource("", Paths.get(content.getName()));
                                         List<Content> contentList = Arrays.asList(new Content[]{content});
                                         List<String> errorList = new ArrayList<>();
                                         dataSource.setDataSourceProcessorOutput(NO_ERRORS, errorList, contentList);
@@ -240,17 +220,6 @@ public class CommandLineIngestManager {
                                 break;
                         }
                     }
-
-                    /* EL: will need this code for next stories
-                    // generate CASE-UCO report
-                    Long selectedDataSourceId = getDataSourceId(dataSource);
-                    Path reportFolderPath = Paths.get(caseForJob.getReportDirectory(), "CASE-UCO", "Data_Source_ID_" + selectedDataSourceId.toString() + "_" + TimeStampUtils.createTimeStamp(), ReportCaseUco.getReportFileName()); //NON_NLS
-                    ReportProgressPanel progressPanel = new ReportProgressPanel("CASE_UCO", rootOutputDir); // dummy progress panel
-                    CaseUcoFormatExporter.generateReport(selectedDataSourceId, reportFolderPath.toString(), progressPanel);
-                } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | AnalysisStartupException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to ingest data source " + dataSourcePath + ". Exiting...", ex);
-                    System.out.println("Unable to ingest data source " + dataSourcePath + ". Exiting...");
-                    */
                 } catch (Throwable ex) {
                     /*
                     * Unexpected runtime exceptions firewall. This task is designed to
@@ -289,29 +258,6 @@ public class CommandLineIngestManager {
         private Long getDataSourceId(AutoIngestDataSource dataSource) {
             Content content = dataSource.getContent().get(0);
             return content.getId();
-        }
-        
-        /**
-         * Provides object ID of the data source by querying all existing data sources 
-         * from case database.
-         * 
-         * @param dataSourcePath full path to data source
-         * @return object id of the data source, NULL if data source was not found
-         * @throws NoCurrentCaseException
-         * @throws TskCoreException
-         * @throws SQLException 
-         */
-        private Long getDataSourceIdFromDatabase(String dataSourcePath) throws NoCurrentCaseException, TskCoreException, SQLException {
-            // look up all data sources in the current case
-            Map<Long, String> dataSourceMap = new DataSourceLoader().getFullPathDataSourceMap();
-
-            // get data source ID for the input data source
-            for (Map.Entry<Long, String> entry : dataSourceMap.entrySet()) {
-                if (entry.getValue().equalsIgnoreCase(dataSourcePath)) {
-                    return entry.getKey();
-                }
-            }            
-            return null;
         }
         
         /**

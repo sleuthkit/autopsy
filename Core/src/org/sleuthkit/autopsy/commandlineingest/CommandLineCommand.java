@@ -42,7 +42,8 @@ class CommandLineCommand {
         CASE_NAME,
         CASES_BASE_DIR_PATH,
         CASE_FOLDER_PATH,
-        DATA_SOURCE_PATH;
+        DATA_SOURCE_PATH,
+        DATA_SOURCE_ID;
     }
     
     private final CommandType type;
