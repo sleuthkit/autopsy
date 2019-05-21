@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.james.mime4j.dom.BinaryBody;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
+import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.TextBody;
@@ -178,6 +179,17 @@ class MboxParser {
         email.setSubject(msg.getSubject());
         email.setSentDate(msg.getDate());
         email.setLocalPath(localPath);
+        email.setMessageID(msg.getMessageId());
+        
+        Field field =  msg.getHeader().getField("in-reply-to"); //NON-NLS
+        if (field != null) {
+            email.setInReplyToID(field.getBody());
+        }
+        
+        field = msg.getHeader().getField("references");
+        if (field != null ) {
+            email.setReferences(field.getBody());
+        }
 
         // Body
         if (msg.isMultipart()) {
@@ -185,7 +197,7 @@ class MboxParser {
         } else {
             handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
         }
-
+        
         return email;
     }
 

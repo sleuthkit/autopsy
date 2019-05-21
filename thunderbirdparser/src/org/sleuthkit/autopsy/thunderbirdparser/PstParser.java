@@ -30,11 +30,11 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
@@ -192,10 +192,14 @@ class PstParser {
         email.setLocalPath(localPath);
         email.setSubject(msg.getSubject());
         email.setId(msg.getDescriptorNodeId());
+        email.setMessageID(msg.getInternetMessageId());
+        email.setInReplyToID(msg.getInReplyToId());
 
         if (msg.hasAttachments()) {
             extractAttachments(email, msg, fileID);
         }
+        
+        email.setReferences(extractReferences(msg.getTransportMessageHeaders()));
 
         return email;
     }
@@ -342,4 +346,31 @@ class PstParser {
     private void addErrorMessage(String msg) {
         errors.append("<li>").append(msg).append("</li>"); //NON-NLS
     }
+    
+    /**
+     * Returns the references value from the email header.
+     * 
+     * @param emailHeader
+     * @return 
+     */
+    private String extractReferences( String emailHeader ){
+        Scanner scanner = new Scanner(emailHeader);
+        StringBuilder buffer = null;
+        while(scanner.hasNextLine()) {
+            String token = scanner.nextLine();
+            
+            if( token.matches("^References:.*") ) {
+                buffer = new StringBuilder();
+                buffer.append((token.substring(token.indexOf(":")+1)).trim());
+            } else if ( buffer != null ) {
+                if(token.matches("^\\w+:.*$")){
+                    return buffer.toString();
+                } else {
+                    buffer.append(token.trim());
+                }
+            }
+        }
+        
+        return "";
+    }       
 }
