@@ -172,6 +172,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             }
         ));
         imageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        imageTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         imageTable.setShowHorizontalLines(false);
         imageTable.setShowVerticalLines(false);
         imageTable.getTableHeader().setReorderingAllowed(false);
@@ -485,6 +486,10 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     Path getImageDirPath() {
         return choosenImageDirPath;
+    }
+    
+    public void setMessageLabel(String message) {
+        messageLabel.setText(message);
     }
 
     @Override
