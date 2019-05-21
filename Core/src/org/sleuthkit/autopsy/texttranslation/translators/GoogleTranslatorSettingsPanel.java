@@ -5,13 +5,22 @@
  */
 package org.sleuthkit.autopsy.texttranslation.translators;
 
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.translate.Language;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -20,38 +29,60 @@ import org.openide.util.NbBundle.Messages;
  */
 public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
 
+    private static final Logger logger = Logger.getLogger(GoogleTranslatorSettingsPanel.class.getName());
     private static final String JSON_EXTENSION = "json";
-    private static final String DEFAULT_CREDENTIAL_PATH = "";
-    private static final String DEFAULT_TARGET_LANGUAGE = TranslateOptions.getDefaultInstance().getTargetLanguage();
     private static final long serialVersionUID = 1L;
-    private final GoogleTranslatorSettings settings;
-    private Language targetLanguage;
     private String targetLanguageCode = "";
-    private String credentialPath = "";
 
     /**
      * Creates new form GoogleTranslatorSettingsPanel
      */
-    public GoogleTranslatorSettingsPanel(GoogleTranslatorSettings settings) {
+    public GoogleTranslatorSettingsPanel(String credentialsPath, String languageCode) {
         initComponents();
-        loadSettings();
-        settings.loadTranslator(credentialPath, targetLanguageCode);
-        this.settings = settings;
+        targetLanguageCode = languageCode;
+        credentialsPathField.setText(credentialsPath);
     }
 
-    String getCredentialPath() {
-        return credentialPath;
-    }
-
-    String getTargetLanguage() {
-        return targetLanguageCode;
-    }
-
-    void populateTargetLanguageComboBox() {
+    /**
+     * Private method to make a temporary translation service given the current
+     * settings to allow for population of combobox with target language for yet
+     * unsaved settings
+     *
+     * @return a google translation service
+     */
+    private Translate makeTemporaryService() {
+        InputStream credentialStream = null;
+        Credentials creds = null;
         try {
-            if (settings.getTranslator() != null) {
-                System.out.println("translator exists");;
-                List<Language> listSupportedLanguages = settings.getTranslator().listSupportedLanguages(Translate.LanguageListOption.targetLanguage(targetLanguageCode));
+            credentialStream = new FileInputStream(credentialsPathField.getText());
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.WARNING, "JSON file for GoogleTranslator credentials not found", ex);
+        }
+        if (credentialStream != null) {
+            try {
+                creds = ServiceAccountCredentials.fromStream(credentialStream);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Error converting JSON file to Credentials object for GoogleTranslator", ex);
+            }
+        }
+        if (creds == null) {
+            logger.log(Level.INFO, "Credentials were not successfully made, no translations will be available from the GoogleTranslator");
+            return null;
+        } else {
+            TranslateOptions.Builder builder = TranslateOptions.newBuilder();
+            builder.setCredentials(creds);
+            builder.setTargetLanguage(targetLanguageCode);
+            return builder.build().getService();
+        }
+    }
+
+    /**
+     * Populate the target th
+     */
+    private void populateTargetLanguageComboBox() {
+        try {
+            if (!StringUtils.isBlank(credentialsPathField.getText())) {
+                List<Language> listSupportedLanguages = makeTemporaryService().listSupportedLanguages(Translate.LanguageListOption.targetLanguage(targetLanguageCode));
                 targetLanguageComboBox.removeAllItems();
                 if (listSupportedLanguages != null) {
                     listSupportedLanguages.forEach((lang) -> {
@@ -72,14 +103,19 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Given a language code select the corresponding language in the combo box
+     * if it is present
+     *
+     * @param code language code such as "en" for English
+     */
     private void selectLanguageByCode(String code) {
         for (int i = 0; i < targetLanguageComboBox.getModel().getSize(); i++) {
-            if (targetLanguageComboBox.getItemAt(i).getLanguage().getCode().equals(targetLanguageCode)) {
+            if (targetLanguageComboBox.getItemAt(i).getLanguage().getCode().equals(code)) {
                 targetLanguageComboBox.setSelectedIndex(i);
                 return;
             }
         }
-
     }
 
     /**
@@ -155,38 +191,23 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDragEnabled(false);
-        if (!credentialPath.isEmpty()) {
-            fileChooser.setCurrentDirectory(new File(credentialPath).getParentFile());
+        //if they previously had a path set, start navigation there
+        if (!StringUtils.isBlank(credentialsPathField.getText())) {
+            fileChooser.setCurrentDirectory(new File(credentialsPathField.getText()).getParentFile());
         }
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.setFileFilter(new FileNameExtensionFilter(Bundle.GoogleTranslatorSettingsPanel_json_description(), JSON_EXTENSION));
         if (fileChooser.showDialog(this, Bundle.GoogleTranslatorSettingsPanel_fileChooser_confirmButton()) == JFileChooser.APPROVE_OPTION) {
             credentialsPathField.setText(fileChooser.getSelectedFile().getPath());
+            populateTargetLanguageComboBox();
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
     private void targetLanguageComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_targetLanguageComboBoxActionPerformed
-        targetLanguage = ((LanguageWrapper) targetLanguageComboBox.getSelectedItem()).getLanguage();
-    }//GEN-LAST:event_targetLanguageComboBoxActionPerformed
-
-    void saveSettings() {
-        credentialPath = credentialsPathField.getText();
-        if (targetLanguage != null) {
-            targetLanguageCode = targetLanguage.getCode();
-        }
-        else {
-            targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
-        }
+        targetLanguageCode = ((LanguageWrapper) targetLanguageComboBox.getSelectedItem()).getLanguage().getCode();
         populateTargetLanguageComboBox();
-        settings.loadTranslator(credentialPath, targetLanguageCode);
-    }
-
-    private void loadSettings() {
-        credentialPath = DEFAULT_CREDENTIAL_PATH;
-        targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
-        credentialsPathField.setText(credentialPath);
-    }
+    }//GEN-LAST:event_targetLanguageComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
@@ -195,4 +216,12 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JComboBox<LanguageWrapper> targetLanguageComboBox;
     // End of variables declaration//GEN-END:variables
+
+    String getTargetLanguageCode() {
+        return targetLanguageCode;
+    }
+
+    String getCredentialsPath() {
+        return credentialsPathField.getText();
+    }
 }

@@ -5,53 +5,66 @@
  */
 package org.sleuthkit.autopsy.texttranslation.translators;
 
-import com.google.auth.Credentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  *
  * @author wschaefer
  */
-public class GoogleTranslatorSettings {
+public final class GoogleTranslatorSettings {
 
-    private static final Logger logger = Logger.getLogger(GoogleTranslatorSettings.class.getName());
-    private Translate translate = null;
-    
-    Translate getTranslator(){
-        return translate;
+    private static final String DEFAULT_TARGET_LANGUAGE = TranslateOptions.getDefaultInstance().getTargetLanguage();
+    private static final String CREDENTIAL_PATH_KEY = "CredentialPath";
+    private static final String TARGET_LANGUAGE_CODE_KEY = "TargetLanguageCode";
+    private static final String GOOGLE_TRANSLATE_NAME = "GoogleTranslate";
+    private static final String DEFAULT_CREDENTIAL_PATH = "";
+    private String targetLanguageCode;
+    private String credentialPath;
+
+    GoogleTranslatorSettings() {
+        loadSettings();
     }
-    
-    void loadTranslator(String credentialPath, String targetLanguage) {
-        InputStream credentialStream = null;
-        Credentials creds = null;
-        try {
-            credentialStream = new FileInputStream(credentialPath);
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.WARNING, "JSON file for GoogleTranslator credentials not found", ex);
-        }
-        if (credentialStream != null) {
-            try {
-                creds = ServiceAccountCredentials.fromStream(credentialStream);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error converting JSON file to Credentials object for GoogleTranslator", ex);
-            }
-        }
-        if (creds == null) {
-            logger.log(Level.INFO, "Credentials were not successfully made, no translations will be available from the GoogleTranslator");
-            translate = null;
+
+    String getTargetLanguageCode() {
+        return targetLanguageCode;
+    }
+
+    String getCredentialPath() {
+        return credentialPath;
+    }
+
+    void setCredentialPath(String path) {
+        credentialPath = path;
+    }
+
+    void setTargetLanguageCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
         } else {
-            TranslateOptions.Builder builder = TranslateOptions.newBuilder();
-            builder.setCredentials(creds);
-            builder.setTargetLanguage(targetLanguage);
-            translate = builder.build().getService();
+            targetLanguageCode = code;
         }
+    }
+
+    void loadSettings() {
+        if (!ModuleSettings.configExists(GOOGLE_TRANSLATE_NAME)) {
+            ModuleSettings.makeConfigFile(GOOGLE_TRANSLATE_NAME);
+        }
+        if (ModuleSettings.settingExists(GOOGLE_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY)) {
+            targetLanguageCode = ModuleSettings.getConfigSetting(GOOGLE_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY);
+        } else {
+            targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
+        }
+        if (ModuleSettings.settingExists(GOOGLE_TRANSLATE_NAME, CREDENTIAL_PATH_KEY)) {
+            credentialPath = ModuleSettings.getConfigSetting(GOOGLE_TRANSLATE_NAME, CREDENTIAL_PATH_KEY);
+        } else {
+            credentialPath = DEFAULT_CREDENTIAL_PATH;
+        }
+    }
+
+    void saveSettings() {
+        ModuleSettings.setConfigSetting(GOOGLE_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY, targetLanguageCode);
+        ModuleSettings.setConfigSetting(GOOGLE_TRANSLATE_NAME, CREDENTIAL_PATH_KEY, credentialPath);
     }
 }
