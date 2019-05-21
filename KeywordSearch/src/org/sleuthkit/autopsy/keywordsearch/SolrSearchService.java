@@ -192,6 +192,28 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
+     * Deletes a data source from Solr for a case.
+     * 
+     * @param dataSourceId the id of the data source to delete.
+     * 
+     * @throws org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException 
+     */
+    @NbBundle.Messages({
+        "SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore=DeleteDataSource did not contain a current Solr core so could not delete the Data Source",
+    })
+    @Override
+    public void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
+        try {
+            KeywordSearch.getServer().deleteDataSource(dataSourceId);
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class,
+                "SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore"));
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
+                    "SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore"));
+        }
+    }
+    
+    /**
      * Deletes Solr core for a case.
      *
      * @param metadata The CaseMetadata which will have its core deleted.

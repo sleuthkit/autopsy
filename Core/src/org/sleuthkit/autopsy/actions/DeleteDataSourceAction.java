@@ -22,10 +22,15 @@ import java.awt.event.ActionEvent;
 import java.text.MessageFormat;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -48,11 +53,20 @@ public final class DeleteDataSourceAction extends AbstractAction {
         try {
             //VersionNumber checkVersionNumber = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaVersion();
             Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectDataSource);
-        } catch (NoCurrentCaseException | TskCoreException e) {
+            deleteDataSource(selectDataSource);
+        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
 	    String msg = MessageFormat.format(Bundle.ErrorDeletingDataSource_name_text(), selectDataSource);
             logger.log(Level.WARNING, msg, e);
             //throw new TskCoreException(msg, e);
         }
     }
-
+    private static void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
+        try {
+            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+            kwsService.deleteDataSource(dataSourceId);
+        } catch (KeywordSearchServiceException e) {
+            logger.log(Level.WARNING, "KWS Error", e);
+        }
+        
+    }
 }

@@ -54,6 +54,7 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
@@ -1216,6 +1217,25 @@ public class Server {
     }
 
     /**
+     * Delete a data source fo SOLR.
+     * 
+     * @param dataSourceId to delete
+     * 
+     * @throws NoOpenCoreException
+     */
+    public void deleteDataSource(Long dataSourceId) throws NoOpenCoreException {
+        currentCoreLock.writeLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            currentCore.deleteDataSource(dataSourceId);
+        } finally {
+            currentCoreLock.writeLock().unlock();
+        }    
+    }
+    
+    /**
      * Get the text contents of the given file as stored in SOLR.
      *
      * @param content to get the text for
@@ -1456,6 +1476,18 @@ public class Server {
             }
         }
 
+        private void deleteDataSource(Long dsObjId) {
+            String dataSourceId = Long.toString(dsObjId);
+            String deleteQuery = "image_id:" + dataSourceId;
+            try {
+                // Get the first result. 
+                UpdateResponse updateResponse = solrCore.deleteByQuery(deleteQuery);
+                int x = 0;
+            } catch (SolrServerException | IOException ex) {
+                logger.log(Level.SEVERE, "Error deleting content from Solr. Solr image id " + dataSourceId, ex); //NON-NLS
+            }
+        }
+        
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
             try {
                 solrCore.add(doc);
