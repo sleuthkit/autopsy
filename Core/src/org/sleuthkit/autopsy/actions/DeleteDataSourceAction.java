@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.VersionNumber;
 
 /**
  *
@@ -35,7 +34,7 @@ import org.sleuthkit.datamodel.VersionNumber;
  */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private static Long selectDataSource;
+    private final Long selectDataSource;
     
     @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
     public DeleteDataSourceAction(Long selectedDataSource) {
@@ -55,6 +54,5 @@ public final class DeleteDataSourceAction extends AbstractAction {
             //throw new TskCoreException(msg, e);
         }
     }
-
 
 }
