@@ -410,7 +410,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) {
         List<AbstractFile> derivedFiles = new ArrayList<>();
         
-       
+        EmailMessageThreader threader = new EmailMessageThreader();
+        threader.threadMessages(emails);
         
         for (EmailMessage email : emails) {
             BlackboardArtifact msgArtifact = addEmailArtifact(email, abstractFile);
