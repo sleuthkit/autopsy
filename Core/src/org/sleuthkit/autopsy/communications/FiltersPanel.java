@@ -22,7 +22,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -46,6 +50,7 @@ import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
@@ -151,6 +156,29 @@ final public class FiltersPanel extends JPanel {
 
         applyFiltersButton.addActionListener(e -> applyFilters());
         refreshButton.addActionListener(e -> applyFilters());
+        
+        try {
+            String queryString = "max(date_time) as max,  min(date_time) as min from account_relationships"; // NON-NLS
+            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
+                @Override
+                public void process(ResultSet rs) {
+                    try {
+                        if (rs.next()) {
+                            int startDate = rs.getInt("min"); // NON-NLS
+                            int endData = rs.getInt("max"); // NON-NLS
+
+                            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(startDate), Utils.getUserPreferredZoneId()).toLocalDate());
+                            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(endData), Utils.getUserPreferredZoneId()).toLocalDate());
+                        }
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "Unable to set filter date pickers due to SQL exception", ex); //NON-NLS
+                    }
+                }
+
+            });
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to set filter date pickers due to exception", ex); //NON-NLS
+        }
     }
 
     /**
@@ -789,4 +817,17 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * A simple class that implements CaseDbAccessQueryCallback. Can be used
+     * as an anonymous innerclass with the CaseDbAccessManager select function.
+     */
+    class FilterPanelQueryCallback implements CaseDbAccessQueryCallback {
+
+        @Override
+        public void process(ResultSet rs) {
+            // Subclasses can implement their own process function.
+        }
+    }
+
 }
