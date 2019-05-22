@@ -181,7 +181,7 @@ final public class FiltersPanel extends JPanel {
     
     private boolean validateLimitValue() {
         String selectedValue = (String)limitComboBox.getSelectedItem();
-        if(selectedValue.trim().toLowerCase().equals("all")) {
+        if(selectedValue.trim().equalsIgnoreCase("all")) {
             return true;
         } else {
             try{
@@ -729,7 +729,7 @@ final public class FiltersPanel extends JPanel {
     
     private MostRecentFilter getMostRecentFilter() {
         String value = (String)limitComboBox.getSelectedItem();
-        if(value.trim().toLowerCase().equals("all")){
+        if(value.trim().equalsIgnoreCase("all")){
             return new MostRecentFilter(-1);
         } else{
             try {
