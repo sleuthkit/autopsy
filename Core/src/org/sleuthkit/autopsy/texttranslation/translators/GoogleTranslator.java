@@ -113,7 +113,7 @@ public final class GoogleTranslator implements TextTranslator {
             }
         }
         if (creds == null) {
-            logger.log(Level.INFO, "Credentials were not successfully made, no translations will be available from the GoogleTranslator");
+            logger.log(Level.WARNING, "Credentials were not successfully made, no translations will be available from the GoogleTranslator");
             translate = null;
         } else {
             TranslateOptions.Builder builder = TranslateOptions.newBuilder();
