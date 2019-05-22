@@ -79,6 +79,7 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
@@ -1444,6 +1445,19 @@ public class Case {
      */
     public void notifyDataSourceNameChanged(Content dataSource, String newName) {
         eventPublisher.publish(new DataSourceNameChangedEvent(dataSource, newName));
+    }
+
+    /**
+     * Notifies case event subscribers that a data source has been delete from 
+     * the case database.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param dataSource The data source.
+     * @param newName    The new name for the data source
+     */
+    public void notifyDataSourceDeleted() {
+        eventPublisher.publish(new DataSourceDeletedEvent());
     }
 
     /**

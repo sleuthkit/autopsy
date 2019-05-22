@@ -54,6 +54,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
             //VersionNumber checkVersionNumber = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaVersion();
             Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectDataSource);
             deleteDataSource(selectDataSource);
+            Case.getCurrentCaseThrows().notifyDataSourceDeleted();
         } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
 	    String msg = MessageFormat.format(Bundle.ErrorDeletingDataSource_name_text(), selectDataSource);
             logger.log(Level.WARNING, msg, e);
