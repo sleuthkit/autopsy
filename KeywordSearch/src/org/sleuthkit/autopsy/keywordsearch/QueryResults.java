@@ -220,7 +220,7 @@ class QueryResults {
                     logger.log(Level.SEVERE, "Failed to get text source object for ", tskCoreException); //NON-NLS
                 }
                 
-                if (saveResults) {
+                if ((saveResults) && (content != null)) {
                     /*
                     * Post an artifact for the hit to the blackboard.
                      */
