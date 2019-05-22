@@ -42,15 +42,14 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * Panel for adding an logical image file from drive letters. Allows the user
- * to select a file.
+ * Panel for adding an logical image file from drive letters. Allows the user to
+ * select a file.
  */
 @Messages({
     "LogicalImagerPanel.messageLabel.selectedImage=Selected folder",
     "LogicalImagerPanel.messageLabel.noImageSelected=No image selected",
     "LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images",
-    "LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive",
-})
+    "LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive",})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
@@ -66,12 +65,12 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     private final String contextName;
     private Path choosenImageDirPath;
     private TableModel imageTableModel;
-    
+
     /**
      * Creates new form LogicalImagerPanel
      *
-     * @param context            A string context name used to read/store last
-     *                           used settings.
+     * @param context A string context name used to read/store last used
+     *                settings.
      */
     private LogicalImagerPanel(String context) {
         this.contextName = context;
@@ -82,9 +81,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     /**
      * Creates and returns an instance of a LogicalImagerPanel.
      *
-     * @param context            A string context name used to read/store last
-     *                           used settings.
-     * 
+     * @param context A string context name used to read/store last used
+     *                settings.
+     *
      * @return instance of the LogicalImagerPanel
      */
     @Messages({
@@ -173,6 +172,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             }
         ));
         imageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        imageTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         imageTable.setShowHorizontalLines(false);
         imageTable.setShowVerticalLines(false);
         imageTable.getTableHeader().setReorderingAllowed(false);
@@ -262,12 +262,12 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) {
             return bytes + " B"; //NON-NLS
-        } 
+        }
         int exp = (int) (Math.log(bytes) / Math.log(unit));
-        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i"); //NON-NLS
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); //NON-NLS
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //NON-NLS
     }
-    
+
     @Messages({
         "LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...",
         "LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found"
@@ -310,8 +310,11 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     }//GEN-LAST:event_scanButtonActionPerformed
 
     @Messages({
+        "# {0} - sparseImageDirectory",
+        "# {1} - image",
         "LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}",
-        "LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS"        
+        "# {0} - invalidFormatDirectory",
+        "LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS"
     })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         imageTable.clearSelection();
@@ -325,13 +328,13 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             if (m.find()) {
                 Path vhdPath = Paths.get(path, SPARSE_IMAGE_VHD);
                 if (!vhdPath.toFile().exists()) {
-                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path,SPARSE_IMAGE_VHD));
+                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path, SPARSE_IMAGE_VHD));
                     firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
                     return;
                 }
                 choosenImageDirPath = Paths.get(path);
                 setNormalMessage(SELECTED_IMAGE + " " + path);
-                firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);                
+                firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             } else {
                 setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryFormatInvalid(path));
                 firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
@@ -351,7 +354,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             choosenImageDirPath = null;
             setErrorMessage(NO_IMAGE_SELECTED);
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
-        }        
+        }
     }
 
     private void imageTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_imageTableMouseClicked
@@ -372,9 +375,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             int row = 0;
             // Find all directories with name like Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
             // and has a sparse_image.vhd file in it
-            for (File file : fList) {      
-                if (file.isDirectory() 
-                    && Paths.get(driveLetter, file.getName(), SPARSE_IMAGE_VHD).toFile().exists()) {
+            for (File file : fList) {
+                if (file.isDirectory()
+                        && Paths.get(driveLetter, file.getName(), SPARSE_IMAGE_VHD).toFile().exists()) {
                     String dir = file.getName();
                     Matcher m = regex.matcher(dir);
                     if (m.find()) {
@@ -386,7 +389,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                         String hour = m.group(5);
                         String minute = m.group(6);
                         String second = m.group(7);
-                        String extractDate = year + "/" + month + "/" + day 
+                        String extractDate = year + "/" + month + "/" + day
                                 + " " + hour + ":" + minute + ":" + second;
                         imageTableModel.setValueAt(hostname, row, 0);
                         imageTableModel.setValueAt(extractDate, row, 1);
@@ -408,31 +411,31 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                 choosenImageDirPath = null;
                 setErrorMessage(DRIVE_HAS_NO_IMAGES);
             }
-        }                
+        }
     }
-    
+
     private void fixImageTableColumnWidth() {
         int width = imageScrollPane.getPreferredSize().width - 2;
         imageTable.getColumnModel().getColumn(0).setPreferredWidth((int) (.60 * width));
         imageTable.getColumnModel().getColumn(1).setPreferredWidth((int) (.40 * width));
     }
-    
+
     private void setErrorMessage(String msg) {
         messageLabel.setForeground(Color.red);
-        messageLabel.setText(msg);        
+        messageLabel.setText(msg);
     }
-    
+
     private void setNormalMessage(String msg) {
         messageLabel.setForeground(Color.black);
-        messageLabel.setText(msg);        
+        messageLabel.setText(msg);
     }
 
     private void clearImageTable() {
         imageTableModel = new ImageTableModel();
-        imageTable.setModel(imageTableModel);        
+        imageTable.setModel(imageTableModel);
         fixImageTableColumnWidth();
     }
-    
+
     private void driveListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseClicked
         driveListSelect();
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
@@ -480,9 +483,13 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     public boolean validatePanel() {
         return choosenImageDirPath != null && choosenImageDirPath.toFile().exists();
     }
-    
+
     Path getImageDirPath() {
         return choosenImageDirPath;
+    }
+    
+    public void setMessageLabel(String message) {
+        messageLabel.setText(message);
     }
 
     @Override
@@ -501,6 +508,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     }
 
     private class ImageTableModel extends AbstractTableModel {
+
         private final List<String> hostnames = new ArrayList<>();
         private final List<String> extractDates = new ArrayList<>();
         private final List<String> imageDirPaths = new ArrayList<>();
@@ -534,7 +542,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             }
             return colName;
         }
-        
+
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
@@ -553,7 +561,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             }
             return ret;
         }
-        
+
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return false;

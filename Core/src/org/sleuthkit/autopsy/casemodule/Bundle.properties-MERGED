@@ -1,5 +1,19 @@
 AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
+# {0} - file
+AddLogicalImageTask.addingToReport=Adding {0} to report
+# {0} - src
+# {1} - dest
+AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
+# {0} - file
+AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
+AddLogicalImageTask.doneCopying=Done copying
+# {0} - file
+# {1} - exception message
+AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
+# {0} - src
+# {1} - dest
+AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory
@@ -169,10 +183,19 @@ LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01
 LogicalFilesDspPanel.subTypeComboBox.l01FileOption.text=Logical evidence file (L01)
 LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders
 LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
+# {0} - directory
+LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
+# {0} - directory
+LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
+# {0} - imageDirPath
+LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
 LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
 LogicalImagerPanel.messageLabel.clickScanOrBrowse=Click SCAN or BROWSE button to find images
+# {0} - sparseImageDirectory
+# {1} - image
 LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}
+# {0} - invalidFormatDirectory
 LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
 LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
 LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found

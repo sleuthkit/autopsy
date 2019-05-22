@@ -46,6 +46,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParsingReader;
@@ -125,6 +126,16 @@ final class TikaTextExtractor implements TextExtractor {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
+    //Tika should ignore types with embedded files that can be handled by the unpacking modules
+    private static final List<String> EMBEDDED_FILE_MIME_TYPES
+            = ImmutableList.of("application/msword", //NON-NLS
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
+                    "application/vnd.ms-powerpoint", //NON-NLS
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
+                    "application/vnd.ms-excel", //NON-NLS
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
+                    "application/pdf"); //NON-NLS
+
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
 
@@ -184,7 +195,14 @@ final class TikaTextExtractor implements TextExtractor {
         InputStream stream = null;
 
         ParseContext parseContext = new ParseContext();
-        parseContext.set(Parser.class, parser);
+
+        //Disable appending embedded file text to output for EFE supported types
+        //JIRA-4975
+        if(content instanceof AbstractFile && EMBEDDED_FILE_MIME_TYPES.contains(((AbstractFile)content).getMIMEType())) {
+            parseContext.set(Parser.class, new EmptyParser());
+        } else {
+            parseContext.set(Parser.class, parser);
+        }
 
         if (ocrEnabled() && content instanceof AbstractFile) {
             AbstractFile file = ((AbstractFile) content);
@@ -516,11 +534,11 @@ final class TikaTextExtractor implements TextExtractor {
         if (context != null) {
             ImageConfig configInstance = context.lookup(ImageConfig.class);
             if (configInstance != null) {
-                if(Objects.nonNull(configInstance.getOCREnabled())) {
+                if (Objects.nonNull(configInstance.getOCREnabled())) {
                     this.tesseractOCREnabled = configInstance.getOCREnabled();
                 }
-                
-                if(Objects.nonNull(configInstance.getOCRLanguages())) {
+
+                if (Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }
             }
