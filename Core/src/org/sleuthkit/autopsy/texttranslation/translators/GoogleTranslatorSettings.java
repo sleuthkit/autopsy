@@ -22,6 +22,9 @@ import com.google.cloud.translate.TranslateOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
+/**
+ * Class to handle the settings associated with the GoogleTranslator
+ */
 public final class GoogleTranslatorSettings {
 
     private static final String DEFAULT_TARGET_LANGUAGE = TranslateOptions.getDefaultInstance().getTargetLanguage();
@@ -32,22 +35,46 @@ public final class GoogleTranslatorSettings {
     private String targetLanguageCode;
     private String credentialPath;
 
+    /**
+     * Construct a new GoogleTranslatorSettingsObject
+     */
     GoogleTranslatorSettings() {
         loadSettings();
     }
 
+    /**
+     * Get the target language code
+     *
+     * @return the code used to identify the target language
+     */
     String getTargetLanguageCode() {
         return targetLanguageCode;
     }
 
+    /**
+     * Get the path to the JSON credentials file
+     *
+     * @return the path to the credentials file
+     */
     String getCredentialPath() {
         return credentialPath;
     }
 
+    /**
+     * Set the path to the JSON credentials file
+     *
+     * @param path the path to the credentials file
+     */
     void setCredentialPath(String path) {
         credentialPath = path;
     }
 
+    /**
+     * Set the target language code. If a blank code is specified it sets the
+     * default code instead.
+     *
+     * @param code the target language code to set
+     */
     void setTargetLanguageCode(String code) {
         if (StringUtils.isBlank(code)) {
             targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
@@ -56,6 +83,9 @@ public final class GoogleTranslatorSettings {
         }
     }
 
+    /**
+     * Load the settings into memory from their on disk storage
+     */
     void loadSettings() {
         if (!ModuleSettings.configExists(GOOGLE_TRANSLATE_NAME)) {
             ModuleSettings.makeConfigFile(GOOGLE_TRANSLATE_NAME);
@@ -72,6 +102,9 @@ public final class GoogleTranslatorSettings {
         }
     }
 
+    /**
+     * Save the setting from memory to their location on disk
+     */
     void saveSettings() {
         ModuleSettings.setConfigSetting(GOOGLE_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY, targetLanguageCode);
         ModuleSettings.setConfigSetting(GOOGLE_TRANSLATE_NAME, CREDENTIAL_PATH_KEY, credentialPath);

@@ -35,6 +35,10 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
+/**
+ * TextTranslator which utilizes Google Cloud Translation to perform translation
+ * in Autopsy
+ */
 @ServiceProvider(service = TextTranslator.class)
 public final class GoogleTranslator implements TextTranslator {
 
@@ -44,6 +48,9 @@ public final class GoogleTranslator implements TextTranslator {
     private final GoogleTranslatorSettings settings = new GoogleTranslatorSettings();
     private Translate translate;
 
+    /**
+     * Constructs a new GoogleTranslator
+     */
     public GoogleTranslator() {
         // Instantiates a client
         settingsPanel = new GoogleTranslatorSettingsPanel(settings.getCredentialPath(), settings.getTargetLanguageCode());
@@ -97,6 +104,10 @@ public final class GoogleTranslator implements TextTranslator {
         return settingsPanel;
     }
 
+    /**
+     * Load the Google Cloud Translation service give the currently saved
+     * settings
+     */
     private void loadTranslator() {
         InputStream credentialStream = null;
         Credentials creds = null;

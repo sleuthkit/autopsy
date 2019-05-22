@@ -37,6 +37,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 
+/**
+ * Settings panel for the GoogleTranslator
+ */
 public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(GoogleTranslatorSettingsPanel.class.getName());
@@ -58,19 +61,19 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     /**
      * Private method to make a temporary translation service given the current
      * settings and use it to retrieve the available target languages for
-     * population of combobox with target language with unsaved settings
+     * population of combobox with target language with unsaved settings.
      *
      * @return A list of Languages
      */
     @Messages({"GoogleTranslatorSettingsPanel.errorMessage.fileNotFound=Credentials file not found, please set the location to be a valid JSON credentials file.",
-    "GoogleTranslatorSettingsPanel.errorMessage.unableToReadCredentials=Unable to read credentials from credentials file, please set the location to be a valid JSON credentials file.",
-    "GoogleTranslatorSettingsPanel.errorMessage.unableToMakeCredentials=Unable to construct credentials object from credentials file, please set the location to be a valid JSON credentials file.",
-    "GoogleTranslatorSettingsPanel.errorMessage.unknownFailureGetting=Failure getting list of supported languages with current credentials file.",})
-    
+        "GoogleTranslatorSettingsPanel.errorMessage.unableToReadCredentials=Unable to read credentials from credentials file, please set the location to be a valid JSON credentials file.",
+        "GoogleTranslatorSettingsPanel.errorMessage.unableToMakeCredentials=Unable to construct credentials object from credentials file, please set the location to be a valid JSON credentials file.",
+        "GoogleTranslatorSettingsPanel.errorMessage.unknownFailureGetting=Failure getting list of supported languages with current credentials file.",})
     private List<Language> getListOfTargetLanguages() {
+        //This method also has the side effect of more or less validating the JSON file which was selected as it is necessary to get the list of target languages
         try {
-            InputStream credentialStream = null;
-            Credentials creds = null;
+            InputStream credentialStream;
+            Credentials creds;
             try {
                 credentialStream = new FileInputStream(credentialsPathField.getText());
             } catch (FileNotFoundException ignored) {
@@ -90,7 +93,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
             } else {
                 TranslateOptions.Builder builder = TranslateOptions.newBuilder();
                 builder.setCredentials(creds);
-                builder.setTargetLanguage(targetLanguageCode);
+                builder.setTargetLanguage(targetLanguageCode); //localize the list to the currently selected target language
                 warningLabel.setText("");  //clear any previous warning text
                 return builder.build().getService().listSupportedLanguages();
             }
@@ -102,10 +105,10 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Populate the target th
+     * Populate the target language selection combo box
      */
     @Messages({"GoogleTranslatorSettingsPanel.errorMessage.noFileSelected=A JSON file must be selected to provide your credentials for Google Translate.",
-    "GoogleTranslatorSettingsPanel.errorMessage.unknownFailurePopulating=Failure populating list of supported languages with current credentials file."})
+        "GoogleTranslatorSettingsPanel.errorMessage.unknownFailurePopulating=Failure populating list of supported languages with current credentials file."})
     private void populateTargetLanguageComboBox() {
         targetLanguageComboBox.removeItemListener(listener);
         try {
@@ -254,14 +257,28 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Get the currently selected target language code
+     *
+     * @return the target language code of the language selected in the combobox
+     */
     String getTargetLanguageCode() {
         return targetLanguageCode;
     }
 
+    /**
+     * Get the currently set path to the JSON credentials file
+     *
+     * @return the path to the credentials file specified in the textarea
+     */
     String getCredentialsPath() {
         return credentialsPathField.getText();
     }
 
+    /**
+     * Listener to identfy when a combo box item has been selected and update
+     * the combo box to reflect that
+     */
     private class ComboBoxSelectionListener implements ItemListener {
 
         @Override
