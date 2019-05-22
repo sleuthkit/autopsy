@@ -1230,6 +1230,9 @@ public class Server {
                 throw new NoOpenCoreException();
             }
             currentCore.deleteDataSource(dataSourceId);
+            currentCore.commit();
+        } catch (SolrServerException ex) {
+            logger.log(Level.SEVERE, "Solr delete data dource failed for data source: " + Long.toString(dataSourceId), ex); //NON-NLS
         } finally {
             currentCoreLock.writeLock().unlock();
         }    
@@ -1482,7 +1485,6 @@ public class Server {
             try {
                 // Get the first result. 
                 UpdateResponse updateResponse = solrCore.deleteByQuery(deleteQuery);
-                int x = 0;
             } catch (SolrServerException | IOException ex) {
                 logger.log(Level.SEVERE, "Error deleting content from Solr. Solr image id " + dataSourceId, ex); //NON-NLS
             }
