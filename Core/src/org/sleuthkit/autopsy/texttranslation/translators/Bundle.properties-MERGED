@@ -8,6 +8,6 @@ GoogleTranslatorSettingsPanel.errorMessage.unableToReadCredentials=Unable to rea
 GoogleTranslatorSettingsPanel.errorMessage.unknownFailureGetting=Failure getting list of supported languages with current credentials file.
 GoogleTranslatorSettingsPanel.errorMessage.unknownFailurePopulating=Failure populating list of supported languages with current credentials file.
 GoogleTranslatorSettingsPanel.fileChooser.confirmButton=Select
-GoogleTranslatorSettingsPanel.jLabel1.text=Target Language:
 GoogleTranslatorSettingsPanel.json.description=JSON Files
 GoogleTranslatorSettingsPanel.warningLabel.text=
+GoogleTranslatorSettingsPanel.targetLanguageLabel.text=Target Language:

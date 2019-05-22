@@ -46,7 +46,7 @@ public final class GoogleTranslator implements TextTranslator {
     private static final int MAX_STRING_LENGTH = 15000;
     private final GoogleTranslatorSettingsPanel settingsPanel;
     private final GoogleTranslatorSettings settings = new GoogleTranslatorSettings();
-    private Translate translate;
+    private Translate googleTranslate;
 
     /**
      * Constructs a new GoogleTranslator
@@ -59,7 +59,7 @@ public final class GoogleTranslator implements TextTranslator {
 
     @Override
     public String translate(String string) throws TranslationException {
-        if (translate != null) {
+        if (googleTranslate != null) {
             try {
                 // Translates some text into English, without specifying the source language.
 
@@ -72,21 +72,22 @@ public final class GoogleTranslator implements TextTranslator {
 
                 // The API complains if the "Payload" is over 204800 bytes. I'm assuming that 
                 // deals with the full request.  At some point, we get different errors about too
-                // much text.  Officially, Google says they will translate only 5k chars,
+                // much text.  Officially, Google says they will googleTranslate only 5k chars,
                 // but we have seen more than that working.
                 // there could be a value betwen 15k and 25k that works.  I (BC) didn't test further
                 if (substring.length() > MAX_STRING_LENGTH) {
                     substring = substring.substring(0, MAX_STRING_LENGTH);
                 }
                 Translation translation
-                        = translate.translate(substring);
+                        = googleTranslate.translate(substring);
                 String translatedString = translation.getTranslatedText();
 
                 // put back the newlines
                 translatedString = translatedString.replaceAll("<br />", "\n");
                 return translatedString;
-            } catch (Throwable e) {
-                throw new TranslationException(e.getMessage());
+            } catch (Throwable ex) {  
+                //Catching throwables because some of this Google Translate code throws throwables
+                throw new TranslationException("Failure translating using GoogleTranslator", ex);
             }
         } else {
             throw new TranslationException("Google Translator has not been configured, credentials need to be specified");
@@ -125,12 +126,12 @@ public final class GoogleTranslator implements TextTranslator {
         }
         if (creds == null) {
             logger.log(Level.WARNING, "Credentials were not successfully made, no translations will be available from the GoogleTranslator");
-            translate = null;
+            googleTranslate = null;
         } else {
             TranslateOptions.Builder builder = TranslateOptions.newBuilder();
             builder.setCredentials(creds);
             builder.setTargetLanguage(settings.getTargetLanguageCode());
-            translate = builder.build().getService();
+            googleTranslate = builder.build().getService();
         }
     }
 

@@ -73,13 +73,13 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         //This method also has the side effect of more or less validating the JSON file which was selected as it is necessary to get the list of target languages
         try {
             InputStream credentialStream;
-            Credentials creds;
             try {
                 credentialStream = new FileInputStream(credentialsPathField.getText());
             } catch (FileNotFoundException ignored) {
                 warningLabel.setText(Bundle.GoogleTranslatorSettingsPanel_errorMessage_fileNotFound());
                 return new ArrayList<>();
             }
+            Credentials creds;
             try {
                 creds = ServiceAccountCredentials.fromStream(credentialStream);
             } catch (IOException ignored) {
@@ -98,6 +98,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
                 return builder.build().getService().listSupportedLanguages();
             }
         } catch (Throwable throwable) {
+            //Catching throwables because some of this Google Translate code throws throwables
             warningLabel.setText(Bundle.GoogleTranslatorSettingsPanel_errorMessage_unknownFailureGetting());
             logger.log(Level.WARNING, "Throwable caught while getting list of supported languages", throwable);
             return new ArrayList<>();
@@ -164,7 +165,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         credentialsPathField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
         targetLanguageComboBox = new javax.swing.JComboBox<>();
-        jLabel1 = new javax.swing.JLabel();
+        targetLanguageLabel = new javax.swing.JLabel();
         warningLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(credentialsLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsLabel.text")); // NOI18N
@@ -180,7 +181,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
 
         targetLanguageComboBox.setEnabled(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(targetLanguageLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.targetLanguageLabel.text")); // NOI18N
 
         warningLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(warningLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.warningLabel.text")); // NOI18N
@@ -198,7 +199,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(credentialsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(targetLanguageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -220,7 +221,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
                     .addComponent(browseButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
+                    .addComponent(targetLanguageLabel)
                     .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -252,8 +253,8 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel credentialsLabel;
     private javax.swing.JTextField credentialsPathField;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JComboBox<org.sleuthkit.autopsy.texttranslation.translators.GoogleLanguageWrapper> targetLanguageComboBox;
+    private javax.swing.JLabel targetLanguageLabel;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
 

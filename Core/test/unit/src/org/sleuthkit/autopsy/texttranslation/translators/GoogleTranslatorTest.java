@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.texttranslation.translators;
 
 import org.junit.Test;
 
+/**
+ * Tests for the GoogleTranslator
+ */
 public class GoogleTranslatorTest {
 
     /**
