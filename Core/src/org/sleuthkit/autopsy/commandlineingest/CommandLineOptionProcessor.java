@@ -129,12 +129,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
                 System.out.println("Missing argument 'dataSourcePath'");
                 return;
-
             }
             dataSourcePath = argDirs[0];
 
             // verify inputs
-            if (dataSourcePath == null || dataSourcePath.isEmpty() || !(new File(dataSourcePath).exists())) {
+            if (dataSourcePath == null || dataSourcePath.isEmpty()) {
                 logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
                 System.out.println("Missing argument 'dataSourcePath'");
                 return;
@@ -155,7 +154,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 logger.log(Level.SEVERE, "Missing argument 'dataSourceObjectIdOption'");
                 System.out.println("Missing argument 'dataSourceObjectIdOption'");
                 return;
-
             }
             dataSourceId = argDirs[0];
 
@@ -175,7 +173,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 logger.log(Level.SEVERE, "Missing argument 'caseDirOption'");
                 System.out.println("Missing argument 'caseDirOption'");
                 return;
-
             }
             caseDir = argDirs[0];
 
