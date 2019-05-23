@@ -20,25 +20,32 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 public class DataSourceDeletedEvent extends AutopsyEvent implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+    private final long dataSourceId;
+    
     /**
      * Constructs an event published when a data source is added to a case.
      *
-     * @param dataSource   The data source that was added.
-     * @param newName      The new name of the data source
+     * @param dataSourceId   The data source that was deleted.
      */
-    public DataSourceDeletedEvent() {
+    public DataSourceDeletedEvent(Long dataSourceId) {
         
-        super(Case.Events.DATA_SOURCE_DELETED.toString(), null, null);
-
+        super(Case.Events.DATA_SOURCE_DELETED.toString(), null, dataSourceId);
+        this.dataSourceId = dataSourceId;
     }    
+    
+    /**
+     * Gets the data source id that is being deleted
+     *
+     * @return The data source id.
+     */
+    public long getDataSourced() {
+        return dataSourceId;
+    }
+    
 }
