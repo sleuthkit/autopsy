@@ -23,6 +23,7 @@ import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -117,12 +118,16 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         outlineViewPanel.getExplorerManager().getRootContext().addNodeListener(new NodeAdapter(){
             @Override
             public void childrenAdded(NodeMemberEvent nme) {
-               updateOutlineViewPanel();
+                SwingUtilities.invokeLater(() -> {
+                    updateOutlineViewPanel();
+                });
             }
 
             @Override
             public void childrenRemoved(NodeMemberEvent nme) {
-               updateOutlineViewPanel();
+               updateOutlineViewPanel(); SwingUtilities.invokeLater(() -> {
+                    updateOutlineViewPanel();
+                });
             }       
         });
     }
