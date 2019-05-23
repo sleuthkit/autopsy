@@ -183,7 +183,6 @@ final public class FiltersPanel extends JPanel {
     void updateAndApplyFilters(boolean initialState) {
         updateFilters(initialState);
         applyFilters();
-        
         initalizeDateTimeFilters();
     }
 
