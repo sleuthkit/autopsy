@@ -130,16 +130,12 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
         outlineViewPanel.getExplorerManager().getRootContext().addNodeListener(new NodeAdapter() {
             @Override
             public void childrenAdded(NodeMemberEvent nme) {
-                SwingUtilities.invokeLater(() -> {
-                    updateOutlineViewPanel();
-                });
+                updateOutlineViewPanel();
             }
 
             @Override
             public void childrenRemoved(NodeMemberEvent nme) {
-                SwingUtilities.invokeLater(() -> {
-                    updateOutlineViewPanel();
-                });
+                updateOutlineViewPanel();
             }
         });
     }
