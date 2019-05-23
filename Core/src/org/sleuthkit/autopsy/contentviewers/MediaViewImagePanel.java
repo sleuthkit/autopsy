@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagCreator;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.StoredTag;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.StoredTagListener;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.TopLevelTagsGroup;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.StoredTagEvent;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.util.Collections;
@@ -32,6 +37,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -49,11 +55,8 @@ import javax.swing.JPanel;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
-import javafx.scene.Group;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ControlType;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -74,9 +77,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final boolean fxInited;
 
     private JFXPanel fxPanel;
-    private Group imageGroup;
-    private ImageTaggingTool tagger;
+    private TopLevelTagsGroup imageGroup;
+    private ImageTagCreator tagger;
     private ImageView fxImageView;
+    private Node focusedNode;
     private ScrollPane scrollPane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
@@ -121,8 +125,18 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
-                imageGroup = new Group();
-                imageGroup.getChildren().add(fxImageView);
+                imageGroup = new TopLevelTagsGroup(fxImageView);
+                deleteTagButton.setEnabled(false);
+                imageGroup.addFocusChangeListener((event) -> {
+                    if(event.getType() == ControlType.NOT_FOCUSED || event.getNode() == fxImageView) {
+                        deleteTagButton.setEnabled(false);
+                        createTagButton.setEnabled(true);
+                    } else if (event.getType() == ControlType.FOCUSED) {
+                        deleteTagButton.setEnabled(true);
+                        createTagButton.setEnabled(false);
+                        focusedNode = event.getNode();
+                    }
+                });
                 scrollPane = new ScrollPane(imageGroup); // scrolls and sizes imageview
                 scrollPane.getStyleClass().add("bg"); //NOI18N
                 scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
@@ -154,8 +168,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         Platform.runLater(() -> {
             fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
             fxImageView.setImage(null);
-            tagger.defaultSettings();
-
+            imageGroup.getChildren().clear();
             scrollPane.setContent(null);
             scrollPane.setContent(imageGroup);
         });
@@ -205,11 +218,17 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 try {
                     Image fxImage = readImageTask.get();
+                    imageGroup.getChildren().clear();
+                    imageGroup.getChildren().add(fxImageView);
                     if (nonNull(fxImage)) {
                         // We have a non-null image, so let's show it.
                         fxImageView.setImage(fxImage);
-                        imageGroup.getChildren().remove(tagger);
-                        tagger = new ImageTaggingTool(fxImageView, Color.RED);
+                        tagger = new ImageTagCreator(fxImageView);
+                        StoredTagListener newTagListener = (StoredTagEvent evt) -> {
+                            StoredTag tag = evt.getTag();
+                            imageGroup.getChildren().add(tag);
+                        };
+                        tagger.addNewTagListener(newTagListener);
                         imageGroup.getChildren().add(tagger);
                         resetView();
                         scrollPane.setContent(imageGroup);
@@ -293,6 +312,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jMenu1 = new javax.swing.JMenu();
+        jPopupMenu1 = new javax.swing.JPopupMenu();
+        jPopupMenu2 = new javax.swing.JPopupMenu();
         toolbar = new javax.swing.JToolBar();
         rotationTextField = new javax.swing.JTextField();
         rotateLeftButton = new javax.swing.JButton();
@@ -303,6 +325,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         zoomInButton = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         zoomResetButton = new javax.swing.JButton();
+        jSeparator3 = new javax.swing.JToolBar.Separator();
+        createTagButton = new javax.swing.JButton();
+        jSeparator4 = new javax.swing.JToolBar.Separator();
+        deleteTagButton = new javax.swing.JButton();
+
+        org.openide.awt.Mnemonics.setLocalizedText(jMenu1, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.jMenu1.text")); // NOI18N
 
         setBackground(new java.awt.Color(0, 0, 0));
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -406,6 +434,30 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             }
         });
         toolbar.add(zoomResetButton);
+        toolbar.add(jSeparator3);
+
+        org.openide.awt.Mnemonics.setLocalizedText(createTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.createTagButton.text")); // NOI18N
+        createTagButton.setFocusable(false);
+        createTagButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        createTagButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        createTagButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createTagButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(createTagButton);
+        toolbar.add(jSeparator4);
+
+        org.openide.awt.Mnemonics.setLocalizedText(deleteTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.deleteTagButton.text")); // NOI18N
+        deleteTagButton.setFocusable(false);
+        deleteTagButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        deleteTagButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        deleteTagButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteTagButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(deleteTagButton);
 
         add(toolbar);
     }// </editor-fold>//GEN-END:initComponents
@@ -450,9 +502,24 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         updateView();
     }//GEN-LAST:event_formComponentResized
 
+    private void deleteTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagButtonActionPerformed
+        imageGroup.deleteNode(focusedNode);
+    }//GEN-LAST:event_deleteTagButtonActionPerformed
+
+    private void createTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createTagButtonActionPerformed
+
+    }//GEN-LAST:event_createTagButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton createTagButton;
+    private javax.swing.JButton deleteTagButton;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JPopupMenu jPopupMenu1;
+    private javax.swing.JPopupMenu jPopupMenu2;
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar.Separator jSeparator2;
+    private javax.swing.JToolBar.Separator jSeparator3;
+    private javax.swing.JToolBar.Separator jSeparator4;
     private javax.swing.JButton rotateLeftButton;
     private javax.swing.JButton rotateRightButton;
     private javax.swing.JTextField rotationTextField;
@@ -617,108 +684,5 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         zoomInButton.setEnabled(zoomRatio < MAX_ZOOM_RATIO);
         rotationTextField.setText((int) rotation + "°");
         zoomTextField.setText((Math.round(zoomRatio * 100.0)) + "%");
-    }
-
-    /**
-     * Enables users to 'tag' a region of an image by clicking and dragging a
-     * rectangle overtop.
-     */
-    class ImageTaggingTool extends Rectangle {
-
-        private final double imageWidth;
-        private final double imageHeight;
-        private final double imageOriginX;
-        private final double imageOriginY;
-
-        //Origin of the drag event.
-        private double rectangleOriginX;
-        private double rectangleOriginY;
-
-        //Rectangle lines should be 1.5% of the image. This level of thickness has
-        //a good balance between visual acuity and loss of selection at the borders
-        //of the image.
-        private double lineThicknessAsPercent = 1.5;
-
-        /**
-         * Adds tagging support to an image, where the 'tag' rectangle will be
-         * the specified color.
-         *
-         * @param image Image to tag
-         * @param color Color of the 'tag' rectangle
-         */
-        private ImageTaggingTool(ImageView image, Color color) {
-            defaultSettings();
-
-            imageWidth = image.getImage().getWidth();
-            imageHeight = image.getImage().getHeight();
-            imageOriginX = image.getX();
-            imageOriginY = image.getY();
-
-            setStroke(color);
-            setFill(color.deriveColor(0, 0, 0, 0));
-
-            //Calculate how many pixels the stroke width should be to guarentee
-            //a consistent % of image consumed by the rectangle border.
-            double min = Math.min(imageWidth, imageHeight);
-            double lineThicknessPixels = min * lineThicknessAsPercent / 100.0;
-            setStrokeWidth(lineThicknessPixels);
-            setVisible(false);
-
-            //Create a rectangle by left clicking on the image
-            image.setOnMousePressed((MouseEvent event) -> {
-                if (event.isSecondaryButtonDown()) {
-                    return;
-                }
-
-                //Reset box on new click.
-                defaultSettings();
-
-                rectangleOriginX = event.getX();
-                rectangleOriginY = event.getY();
-
-                setX(rectangleOriginX);
-                setY(rectangleOriginY);
-            });
-
-            //Adjust the rectangle by dragging the left mouse button
-            image.setOnMouseDragged((MouseEvent event) -> {
-                if (event.isSecondaryButtonDown()) {
-                    return;
-                }
-
-                /**
-                 * Ensure the rectangle is contained within image boundaries and
-                 * that the line thickness is kept within bounds.
-                 */
-                double newX = Math.min(Math.max(event.getX(), imageOriginX)
-                        + lineThicknessPixels / 2, imageWidth - lineThicknessPixels / 2);
-                double newY = Math.min(Math.max(event.getY(), imageOriginY)
-                        + lineThicknessPixels / 2, imageHeight - lineThicknessPixels / 2);
-
-                setVisible(true);
-                double offsetX = newX - rectangleOriginX;
-                if (offsetX < 0) {
-                    setX(newX);
-                }
-                setWidth(Math.abs(offsetX));
-
-                double offsetY = newY - rectangleOriginY;
-                if (offsetY < 0) {
-                    setY(newY);
-                }
-                setHeight(Math.abs(offsetY));
-            });
-        }
-
-        /**
-         * Reset the rectangle to default dimensions.
-         */
-        public final void defaultSettings() {
-            setX(0);
-            setY(0);
-            setWidth(0);
-            setHeight(0);
-            setVisible(false);
-        }
     }
 }
