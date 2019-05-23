@@ -67,6 +67,8 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
      */
     public ContactsViewer() {
         initComponents();
+        
+        outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
 
         proxyLookup = new ModifiableProxyLookup(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
         nodeFactory = new ContactsChildNodeFactory(null);
