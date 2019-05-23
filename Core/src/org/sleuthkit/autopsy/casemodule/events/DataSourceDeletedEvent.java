@@ -44,7 +44,7 @@ public class DataSourceDeletedEvent extends AutopsyEvent implements Serializable
      *
      * @return The data source id.
      */
-    public long getDataSourced() {
+    public long getDataSourceId() {
         return dataSourceId;
     }
     
