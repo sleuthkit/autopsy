@@ -1,62 +1,179 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.newpackage;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.newpackage.FileSearchData.FileSize;
+import org.sleuthkit.autopsy.newpackage.FileSearchData.FileType;
 import org.sleuthkit.autopsy.newpackage.FileSearchData.Frequency;
 
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+
 /**
- *
+ * Main class to perform the file search.
  */
 class FileSearch {
     
+    private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
     
-    static void runFileSearch(List<FileSearchFiltering.SubFilter> filters, 
-            AttributeType attrType, FileGroup.GroupSortingAlgorithm groupSortingType, 
+    /**
+     * Run the file search.
+     * 
+     * @param filters            The filters to apply
+     * @param groupAttributeType The attribute to use for grouping
+     * @param groupSortingType   The method to use to sort the groups
+     * @param fileSortingMethod  The method to use to sort the files within the groups
+     * @param attributesNeededForGroupingOrSorting  Any attributes that will used for grouping or sorting
+     * @param caseDb             The case database
+     * @param centralRepoDb      The central repository database. Can be null if not needed.
+     * 
+     * @return A LinkedHashMap grouped and sorted according to the parameters
+     * 
+     * @throws FileSearchException 
+     */
+    static LinkedHashMap<String, List<AbstractFile>> runFileSearch(
+            List<FileSearchFiltering.SubFilter> filters, 
+            AttributeType groupAttributeType, 
+            FileGroup.GroupSortingAlgorithm groupSortingType, 
             Comparator<ResultFile> fileSortingMethod, 
+            List<AttributeType> attributesNeededForGroupingOrSorting,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        List<ResultFile> resultFiles = FileSearchFiltering.runFilters(filters, caseDb, centralRepoDb);
+        
+        // Run the queries for each filter
+        List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
 
-        SearchResults searchResults = new SearchResults(groupSortingType, attrType, fileSortingMethod);
+        // Add the data to resultFiles for any attributes needed for sorting and grouping
+        addAttributes(attributesNeededForGroupingOrSorting, resultFiles, caseDb, centralRepoDb);
+        
+        // Collect everything in the search results
+        // TODO move add into Searchresults
+        SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         for (ResultFile file : resultFiles) {
             searchResults.add(file);
         }
-        
-        searchResults.finish();
-        
-        //searchResults.print();
-        
-        //return searchResults.getTranferrableVersion();
+
+        // Return a version of the results in general Java objects
+        return searchResults.toLinkedHashMap();
+    }
+    
+    /**
+     * Add any attributes corresponding to the attribute list to the given result files.
+     * For example, specifying the KeywordListAttribute will populate the list of
+     * keyword set names in the ResultFile objects.
+     * 
+     * @param attrs         The attributes to add to the list of result files
+     * @param resultFiles   The result files
+     * @param caseDb        The case database
+     * @param centralRepoDb The central repository database. Can be null if not needed.
+     * 
+     * @throws FileSearchException 
+     */
+    static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, EamDb centralRepoDb)
+            throws FileSearchException {
+        for (AttributeType attr : attrs) {
+            attr.addAttributeToResultFiles(resultFiles, caseDb, centralRepoDb);
+        }
     }
 
+    /**
+     * Get a comparator for sorting on file name
+     * 
+     * @return comparator for case-insensitive sort on the abstract file name field 
+     */
     static Comparator<ResultFile> getFileNameComparator() {
         return new Comparator<ResultFile>() {
             @Override
             public int compare(ResultFile file1, ResultFile file2) {
-                if (file1 == null) {
-                    return 1;
-                }
                 return file1.getAbstractFile().getName().compareToIgnoreCase(file2.getAbstractFile().getName());
             }
         };
     }
     
+    /**
+     * Base class for the grouping attributes.
+     */
     abstract static class AttributeType {
+        /**
+         * For a given file, return the key for the group it belongs to 
+         * for this attribute type.
+         * 
+         * @param file the result file to be grouped
+         * 
+         * @return the key for the group this file goes in
+         */
         abstract Object getGroupIdentifier(ResultFile file);
+        
+        /**
+         * Get the printable group name.
+         * No two group identifiers should map to the same group name.
+         * 
+         * @param file the result file
+         * 
+         * @return The name of the group this file belongs to
+         */
         abstract String getGroupName(ResultFile file);
+        
+        /**
+         * Get the file comparator based on this attribute.
+         * 
+         * @return the file comparator based on this attribute
+         */
         abstract Comparator<ResultFile> getDefaultFileComparator();
+        
+        /**
+         * Add any extra data to the ResultFile object from this attribute.
+         * 
+         * @param files         The list of files to enhance
+         * @param caseDb        The case database
+         * @param centralRepoDb The central repository database. Can be null if not needed.
+         * 
+         * @throws FileSearchException 
+         */
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+            // Default is to do nothing
+        }
     }
     
+    /**
+     * Attribute for grouping/sorting by file size
+     */
     static class FileSizeAttribute extends AttributeType {
         
         @Override
@@ -74,12 +191,291 @@ class FileSearch {
             return new Comparator<ResultFile>() {
                 @Override
                 public int compare(ResultFile file1, ResultFile file2) {
-                    return -1 * Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize()); // Large to small
+                    // Sort large to small
+                    if (file1.getAbstractFile().getSize() != file2.getAbstractFile().getSize()) {
+                        return -1 * Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize());
+                    }
+                    
+                    // Secondary sort on file name
+                    return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
                 }
             };
         }
     }
     
+    /**
+     * Attribute for grouping/sorting by parent path
+     */
+    static class ParentPathAttribute extends AttributeType {
+        
+        @Override
+        Object getGroupIdentifier(ResultFile file) {
+            return file.getAbstractFile().getParentPath();
+        }
+        
+        @Override
+        String getGroupName(ResultFile file) {
+            return file.getAbstractFile().getParentPath();
+        }
+        
+        @Override
+        Comparator<ResultFile> getDefaultFileComparator() {
+            return new Comparator<ResultFile>() {
+                @Override
+                public int compare(ResultFile file1, ResultFile file2) {
+                    // Handle missing paths
+                    if (file1.getAbstractFile().getParentPath() == null) {
+                        if (file2.getAbstractFile().getParentPath() == null) {
+                            // Secondary sort on file name
+                            return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
+                        } else {
+                            return 1;
+                        }
+                    } else if (file2.getAbstractFile().getParentPath() == null) {
+                        return -1;
+                    } 
+                    
+                    // Secondary sort on file name if the parent paths are the same
+                    if (file1.getAbstractFile().getParentPath().equals(file2.getAbstractFile().getParentPath())) {
+                        return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
+                    }
+                    
+                    // Case insensitive comparison on the parent path
+                    return file1.getAbstractFile().getParentPath().compareToIgnoreCase(file2.getAbstractFile().getParentPath());
+                }
+            };
+        }
+    }
+    
+    /**
+     * Attribute for grouping/sorting by data source
+     */
+    static class DataSourceAttribute extends AttributeType {
+        
+        @Override
+        Object getGroupIdentifier(ResultFile file) {
+            return file.getAbstractFile().getDataSourceObjectId();
+        }
+        
+        @NbBundle.Messages({
+            "# {0} - Data source name",
+            "# {1} - Data source ID",
+            "FileSearch.DataSourceAttribute.datasourceAndID={0}(ID: {1})",
+            "# {0} - Data source ID",
+            "FileSearch.DataSourceAttribute.idOnly=Data source (ID: {0})",
+        })
+        @Override
+        String getGroupName(ResultFile file) {
+            try {
+                // This is going to query the case database, but it only gets called when
+                // adding the first file to a new data source-based group so it shouldn't
+                // cause a slowdown.
+                Content ds = file.getAbstractFile().getDataSource();
+                return Bundle.FileSearch_DataSourceAttribute_datasourceAndID(ds.getName(), ds.getId());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error looking up data source with ID " + file.getAbstractFile().getDataSourceObjectId(), ex); // NON-NLS
+                return Bundle.FileSearch_DataSourceAttribute_idOnly(file.getAbstractFile().getDataSourceObjectId());
+            }
+        }
+        
+        @Override
+        Comparator<ResultFile> getDefaultFileComparator() {
+            return new Comparator<ResultFile>() {
+                @Override
+                public int compare(ResultFile file1, ResultFile file2) {
+                    // Primary sort on data source object ID, small to large
+                    if (file1.getAbstractFile().getDataSourceObjectId() != file2.getAbstractFile().getDataSourceObjectId()) {
+                        return Long.compare(file1.getAbstractFile().getDataSourceObjectId(), file2.getAbstractFile().getDataSourceObjectId());
+                    }
+                    
+                    // Secondary sort on file name
+                    return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
+                }
+            };
+        }
+    }    
+
+    /**
+     * Attribute for grouping/sorting by file type
+     */
+    static class FileTypeAttribute extends AttributeType {
+        
+        @Override
+        Object getGroupIdentifier(ResultFile file) {
+            return file.getFileType();
+        }
+        
+        @Override
+        String getGroupName(ResultFile file) {
+            return file.getFileType().getDisplayName();
+        }
+        
+        @Override
+        Comparator<ResultFile> getDefaultFileComparator() {
+            return new Comparator<ResultFile>() {
+                @Override
+                public int compare(ResultFile file1, ResultFile file2) {
+                    if (file1.getFileType() != file2.getFileType()) {
+                        // Primary sort on the file type enum
+                        return Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
+                    } else {
+                        String mimeType1 = file1.getAbstractFile().getMIMEType();
+                        String mimeType2 = file2.getAbstractFile().getMIMEType();
+
+                        // Handle missing MIME types
+                        if (mimeType1 == null) {
+                            if (mimeType2 == null) {
+                                // Tertiary sort on file name
+                                return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
+                            } else {
+                                return 1;
+                            }
+                        } else if (mimeType2 == null) {
+                            return -1;
+                        } 
+
+                        // Secondary sort on MIME type
+                        if ( ! StringUtils.equals(mimeType1, mimeType2)) {
+                            return mimeType1.compareToIgnoreCase(mimeType2);
+                        }
+                        
+                        // Tertiary sort on file name
+                        return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
+                    }
+                }
+            };
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            for (ResultFile file : files) {
+                if (file.getFileType().equals(FileType.OTHER)) {
+                    file.setFileType(FileType.fromMIMEtype(file.getAbstractFile().getMIMEType()));
+                }
+            }
+        }
+    }        
+    
+    /**
+     * Attribute for grouping/sorting by keyword lists
+     */
+    static class KeywordListAttribute extends AttributeType {
+        
+        @Override
+        Object getGroupIdentifier(ResultFile file) {
+            return file.getKeywords();
+        }
+        
+        @Override
+        String getGroupName(ResultFile file) {
+            return file.getKeywords();
+        }
+        
+        @Override
+        Comparator<ResultFile> getDefaultFileComparator() {
+            return new Comparator<ResultFile>() {
+                @Override
+                public int compare(ResultFile file1, ResultFile file2) {
+                    
+                    // Force "no keyword hits" to the bottom
+                    if (! file1.hasKeywords()) {
+                        if (! file2.hasKeywords()) {
+                            // Secondary sort on file name
+                            return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
+                        }
+                        return 1;
+                    }else if (! file2.hasKeywords()) {
+                        return -1;
+                    }
+                    
+                    if (file1.getKeywords().equals(file2.getKeywords())) {
+                        // Secondary sort on file name
+                        return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
+                    }
+                    return file1.getKeywords().compareToIgnoreCase(file2.getKeywords());
+                }
+            };
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            // Concatenate the object IDs in the list of files
+            String objIdList = ""; // NON-NLS
+            for (ResultFile file : files) {
+                if ( ! objIdList.isEmpty()) {
+                    objIdList += ","; // NON-NLS
+                }
+                objIdList += "\'" + file.getAbstractFile().getId() + "\'"; // NON-NLS
+            }
+            
+            // Get pairs of (object ID, keyword list name) for all files in the list of files that have
+            // keyword list hits.
+            String selectQuery = "blackboard_artifacts.obj_id AS object_id, blackboard_attributes.value_text AS keyword_list_name " +
+                            "FROM blackboard_artifacts " +
+                            "INNER JOIN blackboard_attributes ON blackboard_artifacts.artifact_id=blackboard_attributes.artifact_id " +
+                            "WHERE blackboard_attributes.artifact_type_id=\'" + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + "\' " +
+                            "AND blackboard_attributes.attribute_type_id=\'" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "\' " +
+                            "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
+            
+            SetKeywordListNamesCallback callback = new SetKeywordListNamesCallback(files);
+            try {
+                caseDb.getCaseDbAccessManager().select(selectQuery, callback);
+            } catch (TskCoreException ex) {
+                throw new FileSearchException("Error looking up keyword list attributes", ex);
+            }
+        }
+        
+        /**
+         * Callback to process the results of the CaseDbAccessManager select query. Will add
+         * the keyword list names to the list of ResultFile objects.
+         */
+        private static class SetKeywordListNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+            private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(SetKeywordListNamesCallback.class.getName());
+            List<ResultFile> resultFiles;
+            
+            /**
+             * Create the callback.
+             * 
+             * @param resultFiles List of files to add keyword list names to
+             */
+            SetKeywordListNamesCallback(List<ResultFile> resultFiles) {
+                this.resultFiles = resultFiles;
+            }
+            
+            @Override
+            public void process(ResultSet rs) {
+                try {
+                    // Create a temporary map of object ID to ResultFile
+                    Map<Long, ResultFile> tempMap = new HashMap<>();
+                    for (ResultFile file : resultFiles) {
+                        tempMap.put(file.getAbstractFile().getId(), file);
+                    }
+                    
+                    while (rs.next()) {
+                        try {
+                            Long objId = rs.getLong("object_id"); // NON-NLS
+                            String keywordListName = rs.getString("keyword_list_name"); // NON-NLS
+
+                            tempMap.get(objId).addKeywordListName(keywordListName);
+
+                        } catch (SQLException ex) {
+                            logger.log(Level.SEVERE, "Unable to get object_id or keyword_list_name from result set", ex); // NON-NLS
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get keyword list names", ex); // NON-NLS
+                }
+            }   
+        }
+    }    
+    
+    /**
+     * Attribute for grouping/sorting by frequency in the central repository
+     */
     static class FrequencyAttribute extends AttributeType {
         
         @Override
@@ -97,9 +493,61 @@ class FileSearch {
             return new Comparator<ResultFile>() {
                 @Override
                 public int compare(ResultFile file1, ResultFile file2) {
-                    return Long.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
+                    if (file1.getFrequency() != file2.getFrequency()) {
+                        return Long.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
+                    } 
+                    
+                    // Secondary sort on file name
+                    return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
                 }
             };
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            if (centralRepoDb == null) {
+                return; // TODO - this should be an error once we don't always run this
+            }
+            
+            // We'll make this more efficient later - for now, add the frequency of each file individually
+            for (ResultFile file : files) {
+                if (file.getFrequency() == Frequency.UNKNOWN) {
+                    try {
+                        if (file.getAbstractFile().getMd5Hash() != null && ! file.getAbstractFile().getMd5Hash().isEmpty()) {
+                            CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
+                            long count = centralRepoDb.getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, file.getAbstractFile().getMd5Hash());
+                            file.setFrequency(Frequency.fromCount(count));
+                        }
+                    } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+                        throw new FileSearchException("Error looking up central repository frequency for file with ID " 
+                                + file.getAbstractFile().getId(), ex);
+                    }
+                }
+            }
+        }        
+    }
+    
+    /**
+     * Default attribute used to make one group
+     */
+    static class DefaultAttribute extends AttributeType {
+        
+        @Override
+        Object getGroupIdentifier(ResultFile file) {
+            return 0; // Everything will go in the same group
+        }
+        
+        @Override
+        String getGroupName(ResultFile file) {
+            return "All files";
+        }
+        
+        @Override
+        Comparator<ResultFile> getDefaultFileComparator() {
+            // Default to sort by file name
+            return FileSearch.getFileNameComparator();
         }
     }
     

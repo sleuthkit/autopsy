@@ -43,8 +43,10 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.DataSource;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.FileSearchTestAction")
 @ActionReference(path = "Menu/Tools", position = 1852, separatorBefore = 1851)
@@ -65,16 +67,62 @@ public final class FileSearchTestAction extends CallableSystemAction {
     public void performAction() {
         System.out.println("\n#########################\nTesting file search!!!");
         
-        List<FileSearchFiltering.SubFilter> filters = new ArrayList<>();
-        filters.add( new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, 
-                FileSearchData.FileSize.SMALL, FileSearchData.FileSize.XS)));
-        //filters.add( new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.XL)));
-        //filters.add( new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE)));
-        filters.add( new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE, FileSearchData.Frequency.COMMON)));
+        // Set up all the test filters
+        FileSearchFiltering.SubFilter size_medSmallXS = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, FileSearchData.FileSize.SMALL, FileSearchData.FileSize.XS));
+        FileSearchFiltering.SubFilter size_XL = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.XL));
+        FileSearchFiltering.SubFilter size_largeXL = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.LARGE, FileSearchData.FileSize.XL));
+        FileSearchFiltering.SubFilter size_medLargeXL = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, FileSearchData.FileSize.LARGE, FileSearchData.FileSize.XL));
+
+        FileSearchFiltering.SubFilter kw_alphaBeta = new FileSearchFiltering.KeywordListSubFilter(Arrays.asList("Alpha", "Beta"));
+        FileSearchFiltering.SubFilter kw_alpha = new FileSearchFiltering.KeywordListSubFilter(Arrays.asList("Alpha"));
         
-        //Comparator<ResultFile> fileSort = FileSearch.getFileNameComparator();
+        FileSearchFiltering.SubFilter freq_uniqueRare = new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE));
+        
+        FileSearchFiltering.SubFilter path_II = new FileSearchFiltering.ParentSubFilter(Arrays.asList(new FileSearchFiltering.ParentSearchTerm("II", false)));
+        FileSearchFiltering.SubFilter path_IIfolderA = new FileSearchFiltering.ParentSubFilter(Arrays.asList(new FileSearchFiltering.ParentSearchTerm("II", false), 
+                new FileSearchFiltering.ParentSearchTerm("/Rare in CR/Folder A/", true)));
+        
+        FileSearchFiltering.SubFilter type_video = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.VIDEO));
+        FileSearchFiltering.SubFilter type_imageAudio = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.IMAGE, 
+                FileTypeUtils.FileTypeCategory.AUDIO));
+        FileSearchFiltering.SubFilter type_image = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.IMAGE));
+        FileSearchFiltering.SubFilter type_doc = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.DOCUMENTS));
+ 
+        FileSearchFiltering.SubFilter ds_46 = null;
+        try {
+            DataSource ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(46);
+            ds_46 = new FileSearchFiltering.DataSourceSubFilter(Arrays.asList(ds));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return;
+        }
+        
+        //////////////////////
+        // Set up test
+        
+        // Select test filters
+        List<FileSearchFiltering.SubFilter> filters = new ArrayList<>();
+        filters.add(type_doc);
+        filters.add(kw_alpha);
+        filters.add(freq_uniqueRare);
+        
+        // Choose grouping attribute
+        //FileSearch.AttributeType groupingAttr = new FileSearch.FileTypeAttribute();
+        //FileSearch.AttributeType groupingAttr = new FileSearch.DefaultAttribute();
+        //FileSearch.AttributeType groupingAttr = new FileSearch.KeywordListAttribute();
+        //FileSearch.AttributeType groupingAttr = new FileSearch.FrequencyAttribute();
+        FileSearch.AttributeType groupingAttr = new FileSearch.ParentPathAttribute();
+        
+        // Choose group sorting method
+        //FileGroup.GroupSortingAlgorithm groupSortAlgorithm = FileGroup.GroupSortingAlgorithm.BY_ATTRIBUTE;
+        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE;
+        
+        // Choose file sorting method
+        Comparator<ResultFile> fileSort = FileSearch.getFileNameComparator();
         //Comparator<ResultFile> fileSort = new FileSearch.FrequencyAttribute().getDefaultFileComparator();
-        Comparator<ResultFile> fileSort = new FileSearch.FileSizeAttribute().getDefaultFileComparator();
+        //Comparator<ResultFile> fileSort = new FileSearch.FileSizeAttribute().getDefaultFileComparator();
+        //Comparator<ResultFile> fileSort = new FileSearch.ParentPathAttribute().getDefaultFileComparator();
+        //Comparator<ResultFile> fileSort = new FileSearch.FileTypeAttribute().getDefaultFileComparator();
         
         EamDb crDb = null;
         if (EamDb.isEnabled()) {
@@ -87,9 +135,17 @@ public final class FileSearchTestAction extends CallableSystemAction {
 
         try {
             
+            // Make a list of attributes that we want to add values for. Eventually this can be based on user input but
+            // for now just add all of them.
+            List<FileSearch.AttributeType> attributesNeededForSorting = Arrays.asList(new FileSearch.DataSourceAttribute(),
+                    new FileSearch.FileSizeAttribute(), new FileSearch.FileTypeAttribute(), new FileSearch.FrequencyAttribute(),
+                    new FileSearch.KeywordListAttribute(), new FileSearch.ParentPathAttribute());
+            
             FileSearch.runFileSearch(filters, 
-                new FileSearch.FrequencyAttribute(), FileGroup.GroupSortingAlgorithm.BY_ATTRIBUTE, 
+                groupingAttr, 
+                groupSortAlgorithm, 
                 fileSort, 
+                attributesNeededForSorting,
                 Case.getCurrentCase().getSleuthkitCase(), crDb);
             
             
