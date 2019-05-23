@@ -1453,11 +1453,10 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param dataSource The data source.
-     * @param newName    The new name for the data source
+     * @param dataSourceId The data source that was deleted.
      */
-    public void notifyDataSourceDeleted() {
-        eventPublisher.publish(new DataSourceDeletedEvent());
+    public void notifyDataSourceDeleted(Long dataSourceId) {
+        eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));
     }
 
     /**
