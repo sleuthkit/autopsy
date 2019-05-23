@@ -482,7 +482,7 @@ public class IngestEventsListener {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
                                 }
                             }
-                            if (flagPreviousItemsEnabled
+                            if (flagPreviousItemsEnabled && !eamArtifact.getCorrelationCase().getCaseUUID().equals(Case.getCurrentCase().getName())
                                     && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
