@@ -171,7 +171,7 @@ public class IngestEventsListener {
     }
 
     /**
-     * Configure the listener to flag previously seen devices or not.
+     * Configure the listener to flag devices previously seen in other cases or not.
      *
      * @param value True to flag seen devices; otherwise false.
      */
