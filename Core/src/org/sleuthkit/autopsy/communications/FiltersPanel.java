@@ -157,28 +157,7 @@ final public class FiltersPanel extends JPanel {
         applyFiltersButton.addActionListener(e -> applyFilters());
         refreshButton.addActionListener(e -> applyFilters());
         
-        try {
-            String queryString = "max(date_time) as max,  min(date_time) as min from account_relationships"; // NON-NLS
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
-                @Override
-                public void process(ResultSet rs) {
-                    try {
-                        if (rs.next()) {
-                            int startDate = rs.getInt("min"); // NON-NLS
-                            int endData = rs.getInt("max"); // NON-NLS
-
-                            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(startDate), Utils.getUserPreferredZoneId()).toLocalDate());
-                            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(endData), Utils.getUserPreferredZoneId()).toLocalDate());
-                        }
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Unable to set filter date pickers due to SQL exception", ex); //NON-NLS
-                    }
-                }
-
-            });
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Unable to set filter date pickers due to exception", ex); //NON-NLS
-        }
+        initalizeDateTimeFilters();
     }
 
     /**
@@ -227,6 +206,10 @@ final public class FiltersPanel extends JPanel {
             //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesPane.removeAll();
+            
+            if(evt.getNewValue() != null) { // Case was opened
+                initalizeDateTimeFilters();
+            }
         });
     }
 
@@ -724,6 +707,38 @@ final public class FiltersPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
+    }
+    
+    private void initalizeDateTimeFilters() {
+        String queryString = "max(date_time) as max,  min(date_time) as min from account_relationships"; // NON-NLS
+        if(Case.isCaseOpen()) {
+            try {
+                Case.getCurrentCase().getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
+                    @Override
+                    public void process(ResultSet rs) {
+                        try {
+                            if (rs.next()) {
+                                int startDate = rs.getInt("min"); // NON-NLS
+                                int endData = rs.getInt("max"); // NON-NLS
+
+                                startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(startDate), Utils.getUserPreferredZoneId()).toLocalDate());
+                                endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(endData), Utils.getUserPreferredZoneId()).toLocalDate());
+                            }
+                        } catch (SQLException ex) {
+                            logger.log(Level.WARNING, "Unable to set filter date pickers due to SQL exception", ex); //NON-NLS
+                        }
+                    }
+
+                });
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Exception thrown while initalizing Date Time filters, using default values from date time", ex); //NON-NLS
+                startDatePicker.setDate(LocalDate.now().minusWeeks(3));
+                endDatePicker.setDate(LocalDate.now());
+            }
+        } else {
+            startDatePicker.setDate(LocalDate.now().minusWeeks(3));
+            endDatePicker.setDate(LocalDate.now());
+        }
     }
 
     private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
