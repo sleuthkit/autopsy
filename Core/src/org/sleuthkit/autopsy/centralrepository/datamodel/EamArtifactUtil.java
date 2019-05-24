@@ -266,8 +266,8 @@ public class EamArtifactUtil {
             correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getId());
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, String.format(
-                    "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
-                    content.getName(), content.getId(), ex.getMessage()));
+                    "Correlation attribute could not be retrieved for '%s' (id=%d): ",
+                    content.getName(), content.getId()), ex);
             return null;
         }
         //if there was no correlation attribute found for the item using object_id then check for attributes added with schema 1,1 which lack object_id  
@@ -278,8 +278,8 @@ public class EamArtifactUtil {
                 correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
             } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.WARNING, String.format(
-                        "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
-                        content.getName(), content.getId(), ex.getMessage()));
+                        "Correlation attribute could not be retrieved for '%s' (id=%d): ",
+                        content.getName(), content.getId()), ex);
                 return null;
             }
         }
