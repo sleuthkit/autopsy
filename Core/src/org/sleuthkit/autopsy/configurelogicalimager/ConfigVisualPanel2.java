@@ -113,6 +113,11 @@ public final class ConfigVisualPanel2 extends JPanel {
 
         newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newRuleButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.newRuleButton.text")); // NOI18N
+        newRuleButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newRuleButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.descriptionLabel.text")); // NOI18N
 
@@ -134,6 +139,11 @@ public final class ConfigVisualPanel2 extends JPanel {
 
         deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteRuleButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.deleteRuleButton.text")); // NOI18N
+        deleteRuleButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteRuleButtonActionPerformed(evt);
+            }
+        });
 
         fullPathsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -483,22 +493,56 @@ public final class ConfigVisualPanel2 extends JPanel {
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
         int row = rulesTable.getSelectedRow();
         if (row != -1) {
-            EditRulePanel editPanel = new EditRulePanel();
             String ruleName = (String) rulesTable.getModel().getValueAt(row, 0);
             LogicalImagerRule rule = config.getRuleSet().get(ruleName);
-            editPanel.setRule(rule);
+            EditRulePanel editPanel = new EditRulePanel(okButton, cancelButton, ruleName, rule);
             editPanel.setEnabled(true);
             editPanel.setVisible(true);
 
             int option = JOptionPane.OK_OPTION;
-            do {
-                option = JOptionPane.showOptionDialog(this, editPanel, "Edit rule", 
+            option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), "Edit rule", 
                         JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
                         null, new Object[]{okButton, cancelButton}, okButton);
-            } while (option == JOptionPane.OK_OPTION);
+            
+            System.out.println("option = " + option);
+            
+            if (option == JOptionPane.OK_OPTION) {
+                ;
+            }
         }   
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
+    private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
+        int option = JOptionPane.showOptionDialog(this, "Creating a full paths rule?", "New rule", 
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+
+        JPanel panel;
+
+        if (option == JOptionPane.YES_OPTION) {
+            panel = EditRulePanel.NewFullPathsRulePanel(okButton, cancelButton);
+        } else if (option == JOptionPane.NO_OPTION) {
+            panel = EditRulePanel.NewNonFullPathsRulePanel(okButton, cancelButton);
+        } else {
+            return;
+        }
+        
+        panel.setEnabled(true);
+        panel.setVisible(true);
+        option = JOptionPane.showOptionDialog(this, panel, "Edit rule", 
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
+                    null, new Object[]{okButton, cancelButton}, okButton);
+
+        System.out.println("option = " + option);
+
+        if (option == JOptionPane.OK_OPTION) {
+            ;
+        }        
+    }//GEN-LAST:event_newRuleButtonActionPerformed
+
+    private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_deleteRuleButtonActionPerformed
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField configFileTextField;
     private javax.swing.JLabel daysIncludedLabel;

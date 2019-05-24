@@ -322,6 +322,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/configurelogicalimager/Bundle.properties" key="ConfigVisualPanel2.newRuleButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newRuleButtonActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="descriptionLabel">
       <Properties>
@@ -363,6 +366,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/configurelogicalimager/Bundle.properties" key="ConfigVisualPanel2.deleteRuleButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteRuleButtonActionPerformed"/>
+      </Events>
     </Component>
     <Container class="javax.swing.JScrollPane" name="jScrollPane5">
       <AuxValues>

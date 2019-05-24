@@ -65,6 +65,12 @@ public class LogicalImagerRule {
         this.maxDate = maxDate;
     }
 
+    public LogicalImagerRule() {
+        this.shouldAlert = true;
+        this.shouldSave = false;
+        this.description = null;
+    }
+    
     public boolean isShouldAlert() {
         return shouldAlert;
     }
