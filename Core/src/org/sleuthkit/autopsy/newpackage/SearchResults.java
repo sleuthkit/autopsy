@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.newpackage;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,9 +33,9 @@ class SearchResults {
     
     private final FileGroup.GroupSortingAlgorithm groupSortingType;
     private final FileSearch.AttributeType attrType;
-    private final Comparator<ResultFile> fileSortingMethod;
+    private final FileSorter fileSorter;
     
-    private final Map<Object, FileGroup> groupMap = new HashMap<>();
+    private final Map<FileSearch.GroupKey, FileGroup> groupMap = new HashMap<>();
     private List<FileGroup> groupList = null;
     
     /**
@@ -47,24 +46,27 @@ class SearchResults {
      * @param fileSortingMethod The method that should be used to sortGroupsAndFiles the files in each group
      */
     SearchResults(FileGroup.GroupSortingAlgorithm groupSortingType, FileSearch.AttributeType attrType, 
-            Comparator<ResultFile> fileSortingMethod) {
+            FileSorter.SortingMethod fileSortingMethod) {
         this.groupSortingType = groupSortingType;
         this.attrType = attrType;
-        this.fileSortingMethod = fileSortingMethod;
+        this.fileSorter = new FileSorter(fileSortingMethod);
     }
     
     /**
-     * Add a ResultFile to the results
+     * Add a list of ResultFile to the results
      * 
-     * @param file the ResultFile
+     * @param files the ResultFiles
      */
-    void add(ResultFile file) {
-        FileSearch.GroupKey groupKey = attrType.getGroupKey(file);
-        
-        if ( ! groupMap.containsKey(groupKey)) {
-            groupMap.put(groupKey, new FileGroup(groupSortingType, fileSortingMethod, groupKey));            
+    void add(List<ResultFile> files) {
+        for (ResultFile file : files) {
+            // Add the file to the appropriate group, creating it if necessary
+            FileSearch.GroupKey groupKey = attrType.getGroupKey(file);
+
+            if ( ! groupMap.containsKey(groupKey)) {
+                groupMap.put(groupKey, new FileGroup(groupSortingType, groupKey));            
+            }
+            groupMap.get(groupKey).addFile(file);
         }
-        groupMap.get(groupKey).addFile(file);
     }
     
     /**
@@ -74,7 +76,7 @@ class SearchResults {
         
         // First sortGroupsAndFiles the files
         for (FileGroup group : groupMap.values()) {
-            group.sortFiles();
+            group.sortFiles(fileSorter);
         }
         
         // Now put the groups in a list and sortGroupsAndFiles them
@@ -82,6 +84,7 @@ class SearchResults {
         Collections.sort(groupList);
         
         // Debugging - print the results here
+        // This code should remain until we have a working UI.
         System.out.println("\nSearchResults");
         for (FileGroup group : groupList) {
             System.out.println("  " + group.getDisplayName());

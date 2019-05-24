@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.newpackage;
 
@@ -10,15 +23,22 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- *
+ * Class used to sort ResultFiles using the supplied method.
  */
 class FileSorter implements Comparator<ResultFile> {
     
-    List<Comparator<ResultFile>> comparators = new ArrayList<>();
+    private final List<Comparator<ResultFile>> comparators = new ArrayList<>();
     
+    /**
+     * Set up the sorter using the supplied sorting method.
+     * The sorting is defined by a list of ResultFile comparators. These
+     * comparators will be run in order until one returns a non-zero result.
+     * 
+     * @param method The method that should be used to sort the files
+     */
     FileSorter(SortingMethod method) {
         
-        // Set up the comparators that should run on the files
+        // Set up the primary comparators that should applied to the files
         switch (method) {
             case BY_DATA_SOURCE:
                 comparators.add(getDataSourceComparator());
@@ -34,12 +54,16 @@ class FileSorter implements Comparator<ResultFile> {
                 comparators.add(getFrequencyComparator());
                 break;
             case BY_KEYWORD_LIST_NAMES:
+                comparators.add(getKeywordListNameComparator());
                 break;
             case BY_PARENT_PATH:
+                comparators.add(getParentPathComparator());
                 break;
             case BY_FILE_NAME:
                 comparators.add(getFileNameComparator());
+                break;
             default:
+                // The default comparator will be added afterward
                 break;
         }
         
@@ -51,73 +75,106 @@ class FileSorter implements Comparator<ResultFile> {
     @Override
     public int compare(ResultFile file1, ResultFile file2) {
         
-        return 0;
+        int result = 0;
+        for (Comparator<ResultFile> comp : comparators) {
+            result = comp.compare(file1, file2);
+            if (result != 0) {
+                return result;
+            }
+        }
+        
+        // The files are the same
+        return result;
     }
     
+    /**
+     * Compare files using data source ID. Will order smallest to largest.
+     * 
+     * @return -1 if file1 has the lower data source ID, 0 if equal, 1 otherwise
+     */
     private static Comparator<ResultFile> getDataSourceComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                // Sort large to small
-                return Long.compare(file1.getAbstractFile().getDataSourceObjectId(), file2.getAbstractFile().getDataSourceObjectId());
-            }
-        };
+        return (ResultFile file1, ResultFile file2) -> Long.compare(file1.getAbstractFile().getDataSourceObjectId(), file2.getAbstractFile().getDataSourceObjectId());
     }    
     
+    /**
+     * Compare files using their FileType enum. Orders based on the ranking
+     * in the FileType enum.
+     * 
+     * @return -1 if file1 has the lower FileType value, 0 if equal, 1 otherwise
+     */
     private static Comparator<ResultFile> getFileTypeComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                return Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
-            }
-        };
+        return (ResultFile file1, ResultFile file2) -> Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
     }   
     
+    /**
+     * Compare files using a concatenated version of keyword list names. Alphabetical by
+     * the list names with files with no keyword list hits going last.
+     * 
+     * @return -1 if file1 has the earliest combined keyword list name, 0 if equal, 1 otherwise
+     */
+    private static Comparator<ResultFile> getKeywordListNameComparator() {
+        return (ResultFile file1, ResultFile file2) -> {
+            // Put empty lists at the bottom
+            if (file1.getKeywordListNames().isEmpty()) {
+                if (file2.getKeywordListNames().isEmpty()) {
+                    return 0;
+                }
+                return 1;
+            } else if (file2.getKeywordListNames().isEmpty()) {
+                return -1;
+            }
+            
+            String list1 = String.join(",", file1.getKeywordListNames());
+            String list2 = String.join(",", file2.getKeywordListNames());
+            return compareStrings(list1, list2);
+        };
+    }      
+    
+    /**
+     * Compare files based on parent path. Order alphabetically.
+     * 
+     * @return -1 if file1's path comes first alphabetically, 0 if equal, 1 otherwise
+     */
     private static Comparator<ResultFile> getParentPathComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                return compareStrings(file1.getAbstractFile().getParentPath(), file2.getAbstractFile().getParentPath());
-            }
-        };
+        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getAbstractFile().getParentPath(), file2.getAbstractFile().getParentPath());
     }   
     
+    /**
+     * Compare files based on number of occurrences in the central repository.
+     * Order from most rare to least rare Frequency enum.
+     * 
+     * @return -1 if file1's rarity is lower than file2, 0 if equal, 1 otherwise
+     */
     private static Comparator<ResultFile> getFrequencyComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                return Integer.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
-            }
-        };
+        return (ResultFile file1, ResultFile file2) -> Integer.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
     }  
     
+    /**
+     * Compare files based on MIME type. Order is alphabetical.
+     * 
+     * @return -1 if file1's MIME type comes before file2's, 0 if equal, 1 otherwise
+     */
     private static Comparator<ResultFile> getMIMETypeComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                // Secondary sort on the MIME type
-                return compareStrings(file1.getAbstractFile().getMIMEType(), file2.getAbstractFile().getMIMEType());
-            }
-        };
+        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getAbstractFile().getMIMEType(), file2.getAbstractFile().getMIMEType());
     }  
     
+    /**
+     * Compare files based on size. Order large to small.
+     * 
+     * @return -1 if file1 is larger than file2, 0 if equal, 1 otherwise
+     */
     private static Comparator<ResultFile> getFileSizeComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                // Sort large to small
-                return -1 * Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize());
-            }
-        };
+        return (ResultFile file1, ResultFile file2) -> -1 * Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize()) // Sort large to small
+        ;
     }
     
+    /**
+     * Compare files based on file name. Order alphabetically.
+     * 
+     * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
+     */
     private static Comparator<ResultFile> getFileNameComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                return compareStrings(file1.getAbstractFile().getName(), file2.getAbstractFile().getName());
-            }
-        };
+        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getAbstractFile().getName(), file2.getAbstractFile().getName());
     }
     
     /**
@@ -126,19 +183,16 @@ class FileSorter implements Comparator<ResultFile> {
      * should always include something like the object ID to ensure a 
      * consistent sorting when the rest of the compared fields are the same.
      * 
-     * @return 
+     * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getDefaultComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                // For now, compare file names and then object ID (to ensure a consistent sort)
-                int result = getFileNameComparator().compare(file1, file2);
-                if (result == 0) {
-                    return Long.compare(file1.getAbstractFile().getId(), file2.getAbstractFile().getId());
-                }
-                return result;
+        return (ResultFile file1, ResultFile file2) -> {
+            // Compare file names and then object ID (to ensure a consistent sort)
+            int result = getFileNameComparator().compare(file1, file2);
+            if (result == 0) {
+                return Long.compare(file1.getAbstractFile().getId(), file2.getAbstractFile().getId());
             }
+            return result;
         };
     }
     
@@ -148,7 +202,7 @@ class FileSorter implements Comparator<ResultFile> {
      * @param s1
      * @param s2
      * 
-     * @return 
+     * @return  -1 if s1 comes before s2, 0 if equal, 1 otherwise
      */
     private static int compareStrings(String s1, String s2) {
         if (s1 == null) {
@@ -160,13 +214,16 @@ class FileSorter implements Comparator<ResultFile> {
         return s1.compareTo(s2);
     }
 
+    /**
+     * Enum for selecting the primary method for sorting result files.
+     */
     enum SortingMethod {
-        BY_DATA_SOURCE,
-        BY_FILE_NAME,
-        BY_FILE_SIZE,
-        BY_FILE_TYPE,
-        BY_FREQUENCY,
-        BY_KEYWORD_LIST_NAMES,
-        BY_PARENT_PATH;
+        BY_DATA_SOURCE,  // Sort in increasing order of data source ID
+        BY_FILE_NAME,    // Sort alphabetically by file name
+        BY_FILE_SIZE,    // Sort in decreasing order of size
+        BY_FILE_TYPE,    // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
+        BY_FREQUENCY,    // Sort by decreasing rarity in the central repository
+        BY_KEYWORD_LIST_NAMES,  // Sort alphabetically by list of keyword list names found
+        BY_PARENT_PATH;  // Sort alphabetically by path
     }
 }

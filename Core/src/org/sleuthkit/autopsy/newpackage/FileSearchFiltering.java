@@ -33,12 +33,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Run various filters to return a subset of files from the current case.
  */
 class FileSearchFiltering {
+    
+    private final static Logger logger = Logger.getLogger(FileSearchFiltering.class.getName());
     
     /**
      * Run the given filters to get a list of matching files.
@@ -48,39 +52,37 @@ class FileSearchFiltering {
      * @param crDb     The central repo. Can be null as long as no filters need it.
      * @return 
      */
-    static List<ResultFile> runQueries(List<SubFilter> filters, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+    static List<ResultFile> runQueries(List<FileFilter> filters, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
         
         if (caseDb == null) {
             throw new FileSearchException("Case DB parameter is null"); // NON-NLS
         }
         
-        // Debug - print out the current filters. Could perhaps be an info statement.
-        System.out.println("Running filters: ");
-        for (SubFilter filter : filters) {
-            System.out.println("  " + filter.getDesc());
+        // Record the selected filters
+        String filterStr = "";
+        for (FileFilter filter : filters) {
+            filterStr += "  " + filter.getDesc() + "\n";
         }
-        System.out.println("\n");
+        logger.log(Level.INFO, "Running filters:\n{0}", filterStr);
         
         // Combine all the SQL queries from the filters into one query
         // TODO - maybe exclude directories and other non-file objects?
         String combinedQuery = "";
-        for (SubFilter subFilter : filters) {
-            if ( ! subFilter.getSQL().isEmpty()) {
+        for (FileFilter filter : filters) {
+            if ( ! filter.getWhereClause().isEmpty()) {
                 if ( ! combinedQuery.isEmpty()) {
                     combinedQuery += " AND "; // NON-NLS
                 }
-                combinedQuery += "(" + subFilter.getSQL() + ")"; // NON-NLS
+                combinedQuery += "(" + filter.getWhereClause() + ")"; // NON-NLS
             }
         }
         
         try {
             // Get all matching abstract files
             List<ResultFile> resultList = new ArrayList<>();
-            
-            // Debug - print the SQL. could also be info
-            System.out.println("SQL query: " + combinedQuery + "\n");
-            
+
             if ( ! combinedQuery.isEmpty()) {
+                logger.log(Level.INFO, "Running SQL query: {0}", combinedQuery);
                 List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
             
                 // If there are no results, return now
@@ -95,11 +97,12 @@ class FileSearchFiltering {
             }
             
             // Now run any non-SQL filters. Note that resultList could be empty at this point if we had no SQL queries -
-            // getMatchingFiles() will interpret this as no filters have been run up to this point
+            // applyAlternateFilter() will interpret this as no filters have been run up to this point
             // and act accordingly.
-            for (SubFilter subFilter : filters) {
-                if (subFilter.useAlternameFilter()) { // TODO typo
-                    resultList = subFilter.getMatchingFiles(resultList, caseDb, centralRepoDb); // TODO rename
+            // TODO maybe it is an error to have no SQL query
+            for (FileFilter subFilter : filters) {
+                if (subFilter.useAlternateFilter()) {
+                    resultList = subFilter.applyAlternateFilter(resultList, caseDb, centralRepoDb);
                 }
                 
                 // There are no matches for the filters run so far, so return
@@ -117,18 +120,18 @@ class FileSearchFiltering {
     /**
      * Base class for the filters.
      */
-    static abstract class SubFilter {
+    static abstract class FileFilter {
         /**
          * Returns part of a query on the tsk_files table that can be AND-ed with other pieces
          * @return the SQL query or an empty string if there is no SQL query for this filter.
          */
-        abstract String getSQL();
+        abstract String getWhereClause();
         
         /**
-         * Indicates whether this filter needs to use the secondary, non-SQL method getMatchingFiles().
+         * Indicates whether this filter needs to use the secondary, non-SQL method applyAlternateFilter().
          * @return false by default
          */
-        boolean useAlternameFilter() {
+        boolean useAlternateFilter() {
             return false;
         }
         
@@ -145,7 +148,7 @@ class FileSearchFiltering {
          * 
          * @throws FileSearchException 
          */
-        List<ResultFile> getMatchingFiles (List<ResultFile> currentResults, SleuthkitCase caseDb, 
+        List<ResultFile> applyAlternateFilter (List<ResultFile> currentResults, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
             return new ArrayList<>();
         }
@@ -161,7 +164,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying the file size
      */
-    static class SizeSubFilter extends SubFilter {
+    static class SizeSubFilter extends FileFilter {
         private final List<FileSize> fileSizes;
         
         /**
@@ -174,7 +177,7 @@ class FileSearchFiltering {
         }
         
         @Override
-        String getSQL() {
+        String getWhereClause() {
             String queryStr = ""; // NON-NLS
             for (FileSize size : fileSizes) {
                 if (! queryStr.isEmpty()) {
@@ -249,7 +252,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying parent path (either full path or substring)
      */    
-    static class ParentSubFilter extends SubFilter {
+    static class ParentSubFilter extends FileFilter {
         private final List<ParentSearchTerm> parentSearchTerms;
         
         /**
@@ -262,7 +265,7 @@ class FileSearchFiltering {
         }
         
         @Override
-        String getSQL() {
+        String getWhereClause() {
             String queryStr = ""; // NON-NLS
             for (ParentSearchTerm searchTerm : parentSearchTerms) {
                 if (! queryStr.isEmpty()) {
@@ -301,7 +304,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying data sources
      */ 
-    static class DataSourceSubFilter extends SubFilter {
+    static class DataSourceSubFilter extends FileFilter {
         private final List<DataSource> dataSources;
         
         /**
@@ -314,7 +317,7 @@ class FileSearchFiltering {
         }
         
         @Override
-        String getSQL() {
+        String getWhereClause() {
             String queryStr = ""; // NON-NLS
             for (DataSource ds : dataSources) {
                 if (! queryStr.isEmpty()) {
@@ -352,7 +355,7 @@ class FileSearchFiltering {
      * A filter for specifying keyword list names.
      * A file must contain a keyword from one of the given lists to pass.
      */
-    static class KeywordListSubFilter extends SubFilter {
+    static class KeywordListSubFilter extends FileFilter {
         private final List<String> listNames;
         
         /**
@@ -364,7 +367,7 @@ class FileSearchFiltering {
         }
         
         @Override
-        String getSQL() {
+        String getWhereClause() {
             String keywordListPart = ""; // NON-NLS
             for (String listName : listNames) {
                 if (! keywordListPart.isEmpty()) {
@@ -402,7 +405,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying file types.
      */    
-    static class FileTypeSubFilter extends SubFilter {
+    static class FileTypeSubFilter extends FileFilter {
         private final List<FileTypeUtils.FileTypeCategory> categories;
         
         /**
@@ -414,7 +417,7 @@ class FileSearchFiltering {
         }
         
         @Override
-        String getSQL() {
+        String getWhereClause() {
             String queryStr = ""; // NON-NLS
             for (FileTypeUtils.FileTypeCategory cat : categories) {
                 for (String type : cat.getMediaTypes()) {
@@ -450,7 +453,7 @@ class FileSearchFiltering {
     /**
      * A filter for specifying frequency in the central repository.
      */
-    static class FrequencySubFilter extends SubFilter {
+    static class FrequencySubFilter extends FileFilter {
         
         private final List<Frequency> frequencies;
         
@@ -464,19 +467,19 @@ class FileSearchFiltering {
         }
         
         @Override
-        String getSQL() {
+        String getWhereClause() {
             // Since this relies on the central repository database, there is no
             // query on the case database.
             return ""; // NON-NLS
         }
         
         @Override
-        boolean useAlternameFilter() {
+        boolean useAlternateFilter() {
             return true;
         }
         
         @Override
-        List<ResultFile> getMatchingFiles (List<ResultFile> currentResults, SleuthkitCase caseDb, 
+        List<ResultFile> applyAlternateFilter (List<ResultFile> currentResults, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
             
             if (centralRepoDb == null) {

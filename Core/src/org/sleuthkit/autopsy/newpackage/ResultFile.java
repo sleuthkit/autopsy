@@ -88,7 +88,7 @@ class ResultFile {
             keywordListNames.add(keywordListName);
         }
         
-        // Sort the list so the getKeywordListNames () will be consistent regardless of the order added
+        // Sort the list so the getKeywordListNames() will be consistent regardless of the order added
         Collections.sort(keywordListNames);
     }
     
@@ -99,15 +99,6 @@ class ResultFile {
      */
     List<String> getKeywordListNames() {
         return keywordListNames;
-    }
-    
-    /**
-     * Check whether this file has any keyword list matches
-     * 
-     * @return true if it has a keyword list match, false otherwise
-     */
-    boolean hasKeywords() {
-        return ! keywordListNames.isEmpty();
     }
     
     /**

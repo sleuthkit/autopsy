@@ -20,14 +20,12 @@ package org.sleuthkit.autopsy.newpackage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -70,10 +68,10 @@ class FileSearch {
      * @throws FileSearchException 
      */
     static LinkedHashMap<String, List<AbstractFile>> runFileSearch(
-            List<FileSearchFiltering.SubFilter> filters, 
+            List<FileSearchFiltering.FileFilter> filters, 
             AttributeType groupAttributeType, 
             FileGroup.GroupSortingAlgorithm groupSortingType, 
-            Comparator<ResultFile> fileSortingMethod, 
+            FileSorter.SortingMethod fileSortingMethod, 
             List<AttributeType> attributesNeededForGroupingOrSorting,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
         
@@ -84,11 +82,8 @@ class FileSearch {
         addAttributes(attributesNeededForGroupingOrSorting, resultFiles, caseDb, centralRepoDb);
         
         // Collect everything in the search results
-        // TODO move add into Searchresults
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
-        for (ResultFile file : resultFiles) {
-            searchResults.add(file);
-        }
+        searchResults.add(resultFiles);
 
         // Return a version of the results in general Java objects
         return searchResults.toLinkedHashMap();
@@ -112,20 +107,6 @@ class FileSearch {
             attr.addAttributeToResultFiles(resultFiles, caseDb, centralRepoDb);
         }
     }
-
-    /**
-     * Get a comparator for sorting on file name
-     * 
-     * @return comparator for case-insensitive sort on the abstract file name field 
-     */
-    static Comparator<ResultFile> getFileNameComparator() {
-        return new Comparator<ResultFile>() {
-            @Override
-            public int compare(ResultFile file1, ResultFile file2) {
-                return file1.getAbstractFile().getName().compareToIgnoreCase(file2.getAbstractFile().getName());
-            }
-        };
-    }
     
     /**
      * Base class for the grouping attributes.
@@ -140,13 +121,6 @@ class FileSearch {
          * @return the key for the group this file goes in
          */
         abstract GroupKey getGroupKey(ResultFile file);
-        
-        /**
-         * Get the file comparator based on this attribute.
-         * 
-         * @return the file comparator based on this attribute
-         */
-        abstract Comparator<ResultFile> getDefaultFileComparator();
         
         /**
          * Add any extra data to the ResultFile object from this attribute.
@@ -216,25 +190,12 @@ class FileSearch {
         GroupKey getGroupKey(ResultFile file) {
             return new FileSizeGroupKey(file);
         }
-        
-        @Override
-        Comparator<ResultFile> getDefaultFileComparator() {
-            return new Comparator<ResultFile>() {
-                @Override
-                public int compare(ResultFile file1, ResultFile file2) {
-                    // Sort large to small
-                    if (file1.getAbstractFile().getSize() != file2.getAbstractFile().getSize()) {
-                        return -1 * Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize());
-                    }
-                    
-                    // Secondary sort on file name
-                    return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                }
-            };
-        }
     }
     
-    static class FileSizeGroupKey extends GroupKey {
+    /**
+     * Key representing a file size group
+     */
+    private static class FileSizeGroupKey extends GroupKey {
         private final FileSize fileSize;
                 
         FileSizeGroupKey(ResultFile file) {
@@ -285,37 +246,12 @@ class FileSearch {
         GroupKey getGroupKey(ResultFile file) {
             return new ParentPathGroupKey(file);
         }
-        
-        @Override
-        Comparator<ResultFile> getDefaultFileComparator() {
-            return new Comparator<ResultFile>() {
-                @Override
-                public int compare(ResultFile file1, ResultFile file2) {
-                    // Handle missing paths
-                    if (file1.getAbstractFile().getParentPath() == null) {
-                        if (file2.getAbstractFile().getParentPath() == null) {
-                            // Secondary sort on file name
-                            return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                        } else {
-                            return 1;
-                        }
-                    } else if (file2.getAbstractFile().getParentPath() == null) {
-                        return -1;
-                    } 
-                    
-                    // Secondary sort on file name if the parent paths are the same
-                    if (file1.getAbstractFile().getParentPath().equals(file2.getAbstractFile().getParentPath())) {
-                        return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                    }
-                    
-                    // Case insensitive comparison on the parent path
-                    return file1.getAbstractFile().getParentPath().compareToIgnoreCase(file2.getAbstractFile().getParentPath());
-                }
-            };
-        }
     }
     
-    static class ParentPathGroupKey extends GroupKey {
+    /**
+     * Key representing a parent path group
+     */
+    private static class ParentPathGroupKey extends GroupKey {
         private final String parentPath;
                 
         ParentPathGroupKey(ResultFile file) {
@@ -370,25 +306,12 @@ class FileSearch {
         GroupKey getGroupKey(ResultFile file) {
             return new DataSourceGroupKey(file);
         }
-        
-        @Override
-        Comparator<ResultFile> getDefaultFileComparator() {
-            return new Comparator<ResultFile>() {
-                @Override
-                public int compare(ResultFile file1, ResultFile file2) {
-                    // Primary sort on data source object ID, small to large
-                    if (file1.getAbstractFile().getDataSourceObjectId() != file2.getAbstractFile().getDataSourceObjectId()) {
-                        return Long.compare(file1.getAbstractFile().getDataSourceObjectId(), file2.getAbstractFile().getDataSourceObjectId());
-                    }
-                    
-                    // Secondary sort on file name
-                    return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                }
-            };
-        }
     }    
-    
-    static class DataSourceGroupKey extends GroupKey {
+
+    /**
+     * Key representing a data source group
+     */    
+    private static class DataSourceGroupKey extends GroupKey {
         private final long dataSourceID;
         private String displayName;
         
@@ -458,42 +381,6 @@ class FileSearch {
         }
         
         @Override
-        Comparator<ResultFile> getDefaultFileComparator() {
-            return new Comparator<ResultFile>() {
-                @Override
-                public int compare(ResultFile file1, ResultFile file2) {
-                    if (file1.getFileType() != file2.getFileType()) {
-                        // Primary sort on the file type enum
-                        return Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
-                    } else {
-                        String mimeType1 = file1.getAbstractFile().getMIMEType();
-                        String mimeType2 = file2.getAbstractFile().getMIMEType();
-
-                        // Handle missing MIME types
-                        if (mimeType1 == null) {
-                            if (mimeType2 == null) {
-                                // Tertiary sort on file name
-                                return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                            } else {
-                                return 1;
-                            }
-                        } else if (mimeType2 == null) {
-                            return -1;
-                        } 
-
-                        // Secondary sort on MIME type
-                        if ( ! StringUtils.equals(mimeType1, mimeType2)) {
-                            return mimeType1.compareToIgnoreCase(mimeType2);
-                        }
-                        
-                        // Tertiary sort on file name
-                        return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                    }
-                }
-            };
-        }
-        
-        @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
             for (ResultFile file : files) {
@@ -504,7 +391,10 @@ class FileSearch {
         }
     }    
 
-    static class FileTypeGroupKey extends GroupKey {
+    /**
+     * Key representing a file type group
+     */    
+    private static class FileTypeGroupKey extends GroupKey {
         private final FileType fileType;
                 
         FileTypeGroupKey(ResultFile file) {
@@ -554,34 +444,6 @@ class FileSearch {
         @Override
         GroupKey getGroupKey(ResultFile file) {
             return new KeywordListGroupKey(file);
-        }
-        
-        @Override
-        Comparator<ResultFile> getDefaultFileComparator() {
-            return new Comparator<ResultFile>() {
-                @Override
-                public int compare(ResultFile file1, ResultFile file2) {
-                    
-                    // TODO fix sort
-                    // Force "no keyword hits" to the bottom
-                    if (! file1.hasKeywords()) {
-                        if (! file2.hasKeywords()) {
-                            // Secondary sort on file name
-                            return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                        }
-                        return 1;
-                    }else if (! file2.hasKeywords()) {
-                        return -1;
-                    }
-                    
-                    if (file1.getKeywordListNames().equals(file2.getKeywordListNames())) {
-                        // Secondary sort on file name
-                        return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                    }
-                    return -1;
-                    //return file1.getKeywordListNames().compareToIgnoreCase(file2.getKeywordListNames());
-                }
-            };
         }
         
         @Override
@@ -658,8 +520,11 @@ class FileSearch {
             }   
         }
     }   
-    
-    static class KeywordListGroupKey extends GroupKey {
+
+    /**
+     * Key representing a keyword list group
+     */    
+    private static class KeywordListGroupKey extends GroupKey {
         private final List<String> keywordListNames;
         private final String keywordListNamesString;
                 
@@ -672,11 +537,10 @@ class FileSearch {
             if (keywordListNames.isEmpty()) {
                 keywordListNamesString = Bundle.FileSearch_KeywordListGroupKey_noKeywords();
             } else {
-                keywordListNamesString = String.join(",", keywordListNames);
+                keywordListNamesString = String.join(",", keywordListNames); // NON-NLS
             }
         }
         
-         
         @Override
         String getDisplayName() {
             return keywordListNamesString;
@@ -686,6 +550,18 @@ class FileSearch {
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof KeywordListGroupKey) {
                 KeywordListGroupKey otherKeywordListNamesGroupKey = (KeywordListGroupKey)otherGroupKey;
+                
+                // Put the empty list at the end
+                if (keywordListNames.isEmpty()) {
+                    if (otherKeywordListNamesGroupKey.keywordListNames.isEmpty()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherKeywordListNamesGroupKey.keywordListNames.isEmpty()) {
+                    return -1;
+                }
+                
                 return keywordListNamesString.compareTo(otherKeywordListNamesGroupKey.keywordListNamesString);
             } else {
                 return compareClassNames(otherGroupKey);
@@ -701,7 +577,7 @@ class FileSearch {
             if (!(otherKey instanceof KeywordListGroupKey)) {
                 return false;
             }
-            // TODO put no kw group last
+            
             KeywordListGroupKey otherKeywordListGroupKey = (KeywordListGroupKey)otherKey;
             return keywordListNamesString.equals(otherKeywordListGroupKey.keywordListNamesString);
         }
@@ -720,21 +596,6 @@ class FileSearch {
         @Override
         GroupKey getGroupKey(ResultFile file) {
             return new FrequencyGroupKey(file);
-        }
-        
-        @Override
-        Comparator<ResultFile> getDefaultFileComparator() {
-            return new Comparator<ResultFile>() {
-                @Override
-                public int compare(ResultFile file1, ResultFile file2) {
-                    if (file1.getFrequency() != file2.getFrequency()) {
-                        return Long.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
-                    } 
-                    
-                    // Secondary sort on file name
-                    return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
-                }
-            };
         }
         
         @Override
@@ -763,7 +624,10 @@ class FileSearch {
         }        
     }
     
-    static class FrequencyGroupKey extends GroupKey {
+    /**
+     * Key representing a central repository frequency group
+     */    
+    private static class FrequencyGroupKey extends GroupKey {
         private final Frequency frequency;
                 
         FrequencyGroupKey(ResultFile file) {
@@ -814,15 +678,12 @@ class FileSearch {
         GroupKey getGroupKey(ResultFile file) {
             return new NoGroupingGroupKey();
         }
-        
-        @Override
-        Comparator<ResultFile> getDefaultFileComparator() {
-            // Default to sort by file name
-            return FileSearch.getFileNameComparator();
-        }
     }
     
-    static class NoGroupingGroupKey extends GroupKey {
+    /**
+     * Dummy key for when there is no grouping. All files will have the same key.
+     */
+    private static class NoGroupingGroupKey extends GroupKey {
                 
         NoGroupingGroupKey() {
             // Nothing to save - all files will get the same GroupKey
@@ -838,6 +699,7 @@ class FileSearch {
         
         @Override
         public int compareTo(GroupKey otherGroupKey) {
+            // As long as the other key is the same type, they are equal
             if (otherGroupKey instanceof NoGroupingGroupKey) {
                 return 0;
             } else {
@@ -855,6 +717,7 @@ class FileSearch {
                 return false;
             }
             
+            // As long as the other key is the same type, they are equal
             return true;
         }
 
