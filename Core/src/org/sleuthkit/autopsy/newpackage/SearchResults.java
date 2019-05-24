@@ -59,13 +59,12 @@ class SearchResults {
      * @param file the ResultFile
      */
     void add(ResultFile file) {
-        Object groupID = attrType.getGroupIdentifier(file);
+        FileSearch.GroupKey groupKey = attrType.getGroupKey(file);
         
-        if (groupMap.containsKey(groupID)) {
-            groupMap.get(groupID).addFile(file);
-        } else {
-            groupMap.put(groupID, new FileGroup(attrType, groupSortingType, fileSortingMethod, file));
+        if ( ! groupMap.containsKey(groupKey)) {
+            groupMap.put(groupKey, new FileGroup(groupSortingType, fileSortingMethod, groupKey));            
         }
+        groupMap.get(groupKey).addFile(file);
     }
     
     /**

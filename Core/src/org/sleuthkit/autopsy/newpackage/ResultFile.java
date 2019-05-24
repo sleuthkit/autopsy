@@ -34,7 +34,6 @@ class ResultFile {
     private FileSearchData.Frequency frequency;
     private final List<String> keywordListNames;
     private FileType fileType;
-    static final String NO_KEYWORDS_FOUND = "No keywords found"; // TODO - bundle
     
     ResultFile (AbstractFile abstractFile) {
         this.abstractFile = abstractFile;
@@ -89,22 +88,17 @@ class ResultFile {
             keywordListNames.add(keywordListName);
         }
         
-        // Sort the list so the getKeywords() string will be consistent regardless of the order added
+        // Sort the list so the getKeywordListNames () will be consistent regardless of the order added
         Collections.sort(keywordListNames);
     }
     
     /**
      * Get the keyword list names for this file
      * 
-     * @return the keyword lists matching this file as a comma separated list, 
-     *            or the NO_KEYWORDS_FOUND string if there were none
+     * @return the keyword lists that matched this file.
      */
-    // TODO hange name
-    String getKeywords() {
-        if (keywordListNames.isEmpty()) {
-            return NO_KEYWORDS_FOUND;
-        }
-        return String.join(",", keywordListNames);
+    List<String> getKeywordListNames() {
+        return keywordListNames;
     }
     
     /**
@@ -135,7 +129,7 @@ class ResultFile {
         System.out.println(prefix + abstractFile.getName() + "(" + abstractFile.getId() + ") - "
                 + abstractFile.getSize() + ", " + abstractFile.getParentPath() + ", " 
                 + abstractFile.getDataSourceObjectId() + ", " + frequency.toString() + ", "
-                + this.getKeywords() + ", " + abstractFile.getMIMEType());
+                + String.join(",", keywordListNames) + ", " + abstractFile.getMIMEType());
         
     }
 }

@@ -102,16 +102,16 @@ public final class FileSearchTestAction extends CallableSystemAction {
         
         // Select test filters
         List<FileSearchFiltering.SubFilter> filters = new ArrayList<>();
-        filters.add(type_doc);
-        filters.add(kw_alpha);
+        filters.add(size_medSmallXS);
+        //filters.add(kw_alpha);
         filters.add(freq_uniqueRare);
         
         // Choose grouping attribute
         //FileSearch.AttributeType groupingAttr = new FileSearch.FileTypeAttribute();
         //FileSearch.AttributeType groupingAttr = new FileSearch.DefaultAttribute();
-        //FileSearch.AttributeType groupingAttr = new FileSearch.KeywordListAttribute();
+        FileSearch.AttributeType groupingAttr = new FileSearch.KeywordListAttribute();
         //FileSearch.AttributeType groupingAttr = new FileSearch.FrequencyAttribute();
-        FileSearch.AttributeType groupingAttr = new FileSearch.ParentPathAttribute();
+        //FileSearch.AttributeType groupingAttr = new FileSearch.ParentPathAttribute();
         
         // Choose group sorting method
         //FileGroup.GroupSortingAlgorithm groupSortAlgorithm = FileGroup.GroupSortingAlgorithm.BY_ATTRIBUTE;

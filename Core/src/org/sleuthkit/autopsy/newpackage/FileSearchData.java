@@ -95,19 +95,21 @@ class FileSearchData {
         "FileSearchData.FileSize.XS.displayName=Under 1MB",
     })
     enum FileSize {
-        XL(1000, -1, Bundle.FileSearchData_FileSize_XL_displayName()),
-        LARGE(200, 1000, Bundle.FileSearchData_FileSize_large_displayName()),
-        MEDIUM(50, 200, Bundle.FileSearchData_FileSize_medium_displayName()),
-        SMALL(1, 50, Bundle.FileSearchData_FileSize_small_displayName()),
-        XS(0, 1, Bundle.FileSearchData_FileSize_XS_displayName());
+        XL(0, 1000, -1, Bundle.FileSearchData_FileSize_XL_displayName()),
+        LARGE(1, 200, 1000, Bundle.FileSearchData_FileSize_large_displayName()),
+        MEDIUM(2, 50, 200, Bundle.FileSearchData_FileSize_medium_displayName()),
+        SMALL(3, 1, 50, Bundle.FileSearchData_FileSize_small_displayName()),
+        XS(4, 0, 1, Bundle.FileSearchData_FileSize_XS_displayName());
 
+        private final int ranking;   // Must be unique for each value
         private final long minBytes; // Note that the size must be strictly greater than this to match
         private final long maxBytes;
         private final String displayName;  
         private final static long BYTES_PER_MB = 1048576;
         final static long NO_MAXIMUM = -1;
         
-        FileSize(long minMB, long maxMB, String displayName) {
+        FileSize(int ranking, long minMB, long maxMB, String displayName) {
+            this.ranking = ranking;
             this.minBytes = minMB * BYTES_PER_MB ;
             if (maxMB >= 0) {
                 this.maxBytes = maxMB * BYTES_PER_MB;
@@ -155,6 +157,15 @@ class FileSearchData {
          */
         long getMinBytes() {
             return minBytes;
+        }
+        
+        /**
+         * Get the rank for sorting.
+         * 
+         * @return the rank (lower should be displayed first)
+         */
+        int getRanking() {
+            return ranking;
         }
         
         @Override

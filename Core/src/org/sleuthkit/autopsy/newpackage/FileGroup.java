@@ -32,8 +32,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 class FileGroup implements Comparable<FileGroup> {
     
     private final FileGroup.GroupSortingAlgorithm groupSortingType;
-    private final FileSearch.AttributeType attrType;
+    //private final FileSearch.AttributeType attrType;
     private final Comparator<ResultFile> fileSortingMethod;
+    private final FileSearch.GroupKey groupKey;
     private final List<ResultFile> files;
     private final String displayName;
     
@@ -43,16 +44,17 @@ class FileGroup implements Comparable<FileGroup> {
      * @param attrType          The type of attribute being used for grouping
      * @param groupSortingType  The method for sorting the group
      * @param fileSortingMethod The method for sorting files within the group
-     * @param resultFile        The first file to add to this group
+     * @param groupKey          The GroupKey for this group
      */
-    FileGroup(FileSearch.AttributeType attrType, FileGroup.GroupSortingAlgorithm groupSortingType, 
-            Comparator<ResultFile> fileSortingMethod, ResultFile resultFile) {
+    FileGroup(//FileSearch.AttributeType attrType, 
+            FileGroup.GroupSortingAlgorithm groupSortingType, 
+            Comparator<ResultFile> fileSortingMethod, FileSearch.GroupKey groupKey) {
         this.groupSortingType = groupSortingType;
-        this.attrType = attrType;
+        //this.attrType = attrType;
         this.fileSortingMethod = fileSortingMethod;
+        this.groupKey = groupKey;
         files = new ArrayList<>();
-        files.add(resultFile);
-        this.displayName = attrType.getGroupName(resultFile);
+        this.displayName = groupKey.getDisplayName();
     }
     
     /**
@@ -111,20 +113,45 @@ class FileGroup implements Comparable<FileGroup> {
     @Override
     public int compareTo(FileGroup otherGroup) {
         
-        if (groupSortingType == FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE) {
-            
-            if (files.size() != otherGroup.files.size()) {
-                return -1 * Long.compare(files.size(), otherGroup.files.size()); // High to low
-            }
-            // If the groups have the same size, fall through to BY_ATTRIBUTE
+        switch (groupSortingType) {
+            case BY_GROUP_SIZE:
+                return compareGroupsBySize(this, otherGroup);
+            case BY_ATTRIBUTE:
+            default:
+                return compareGroupsByAttribute(this, otherGroup);
         }
+    }
+    
+    /**
+     * Compare two groups based on the grouping attribute.
+     * 
+     * @param group1
+     * @param group2
+     * 
+     * @return -1 if group1 should be displayed before group2, 1 otherwise
+     */
+    private static int compareGroupsByAttribute(FileGroup group1, FileGroup group2) {
+        return group1.groupKey.compareTo(group2.groupKey);
         
-        // Compare the first two files using the default sorting of the grouping attribute.
-        // File groups are never empty.
-        Comparator<ResultFile> comparator = attrType.getDefaultFileComparator();
-        return comparator.compare(files.get(0), otherGroup.files.get(0));
-        // TODO make separate methods
-    }   
+    }
+    
+    /**
+     * Compare two groups based on the group size.
+     * Falls back on the attribute if the groups are the same size.
+     * 
+     * @param group1
+     * @param group2
+     * 
+     * @return -1 if group1 should be displayed before group2, 1 otherwise
+     */
+    private static int compareGroupsBySize(FileGroup group1, FileGroup group2) {
+        if (group1.files.size() != group2.files.size()) {
+            return -1 * Long.compare(group1.files.size(), group2.files.size()); // High to low
+        } else {
+            // If the groups have the same size, fall through to the BY_ATTRIBUTE sorting
+            return compareGroupsByAttribute(group1, group2);
+        }
+    }
     
     /**
      * Enum to specify how to sort the group.

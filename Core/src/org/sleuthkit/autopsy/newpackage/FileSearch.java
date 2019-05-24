@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
@@ -138,17 +139,7 @@ class FileSearch {
          * 
          * @return the key for the group this file goes in
          */
-        abstract Object getGroupIdentifier(ResultFile file);
-        
-        /**
-         * Get the printable group name.
-         * No two group identifiers should map to the same group name.
-         * 
-         * @param file the result file
-         * 
-         * @return The name of the group this file belongs to
-         */
-        abstract String getGroupName(ResultFile file);
+        abstract GroupKey getGroupKey(ResultFile file);
         
         /**
          * Get the file comparator based on this attribute.
@@ -172,18 +163,58 @@ class FileSearch {
     }
     
     /**
+     * The key used for grouping for each attribute type.
+     */
+    abstract static class GroupKey implements Comparable<GroupKey> {
+        
+        /**
+         * Get the string version of the group key for display. Each
+         * display name should correspond to a unique GroupKey object.
+         * 
+         * @return The display name for this key
+         */
+        abstract String getDisplayName();
+        
+        /**
+         * Subclasses must implement equals().
+         * 
+         * @param otherKey
+         * 
+         * @return true if the keys are equal, false otherwise
+         */
+        @Override
+        abstract public boolean equals(Object otherKey);
+
+        /**
+         * Subclasses must implement hashCode().
+         * 
+         * @return the hash code 
+         */
+        @Override
+        abstract public int hashCode();
+        
+        /**
+         * It should not happen with the current setup, but we need to cover the case where 
+         * two different GroupKey subclasses are compared against each other.
+         * Use a lexicographic comparison on the class names.
+         * 
+         * @param otherGroupKey The other group key
+         * 
+         * @return result of alphabetical comparison on the class name
+         */
+        int compareClassNames(GroupKey otherGroupKey) {
+            return this.getClass().getName().compareTo(otherGroupKey.getClass().getName());
+        }
+    }
+    
+    /**
      * Attribute for grouping/sorting by file size
      */
     static class FileSizeAttribute extends AttributeType {
         
         @Override
-        Object getGroupIdentifier(ResultFile file) {
-            return FileSize.fromSize(file.getAbstractFile().getSize());
-        }
-        
-        @Override
-        String getGroupName(ResultFile file) {
-            return FileSize.fromSize(file.getAbstractFile().getSize()).toString();
+        GroupKey getGroupKey(ResultFile file) {
+            return new FileSizeGroupKey(file);
         }
         
         @Override
@@ -203,19 +234,56 @@ class FileSearch {
         }
     }
     
+    static class FileSizeGroupKey extends GroupKey {
+        private final FileSize fileSize;
+                
+        FileSizeGroupKey(ResultFile file) {
+            fileSize = FileSize.fromSize(file.getAbstractFile().getSize());
+        }
+        
+        @Override
+        String getDisplayName() {
+            return fileSize.name();
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof FileSizeGroupKey) {
+                FileSizeGroupKey otherFileSizeGroupKey = (FileSizeGroupKey)otherGroupKey;
+                return Integer.compare(fileSize.getRanking(), otherFileSizeGroupKey.fileSize.getRanking());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof FileSizeGroupKey)) {
+                return false;
+            }
+            
+            FileSizeGroupKey otherFileSizeGroupKey = (FileSizeGroupKey)otherKey;
+            return fileSize.equals(otherFileSizeGroupKey.fileSize);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fileSize.getRanking());
+        }
+    }
+    
     /**
      * Attribute for grouping/sorting by parent path
      */
     static class ParentPathAttribute extends AttributeType {
         
         @Override
-        Object getGroupIdentifier(ResultFile file) {
-            return file.getAbstractFile().getParentPath();
-        }
-        
-        @Override
-        String getGroupName(ResultFile file) {
-            return file.getAbstractFile().getParentPath();
+        GroupKey getGroupKey(ResultFile file) {
+            return new ParentPathGroupKey(file);
         }
         
         @Override
@@ -247,35 +315,60 @@ class FileSearch {
         }
     }
     
+    static class ParentPathGroupKey extends GroupKey {
+        private final String parentPath;
+                
+        ParentPathGroupKey(ResultFile file) {
+            if (file.getAbstractFile().getParentPath() != null) {
+                parentPath = file.getAbstractFile().getParentPath();
+            } else {
+                parentPath = ""; // NON-NLS
+            }
+        }
+        
+        @Override
+        String getDisplayName() {
+            return parentPath;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof ParentPathGroupKey) {
+                ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey)otherGroupKey;
+                return parentPath.compareTo(otherParentPathGroupKey.parentPath);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }        
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof ParentPathGroupKey)) {
+                return false;
+            }
+            
+            ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey)otherKey;
+            return parentPath.equals(otherParentPathGroupKey.parentPath);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(parentPath);
+        }
+    }    
+    
     /**
      * Attribute for grouping/sorting by data source
      */
     static class DataSourceAttribute extends AttributeType {
         
         @Override
-        Object getGroupIdentifier(ResultFile file) {
-            return file.getAbstractFile().getDataSourceObjectId();
-        }
-        
-        @NbBundle.Messages({
-            "# {0} - Data source name",
-            "# {1} - Data source ID",
-            "FileSearch.DataSourceAttribute.datasourceAndID={0}(ID: {1})",
-            "# {0} - Data source ID",
-            "FileSearch.DataSourceAttribute.idOnly=Data source (ID: {0})",
-        })
-        @Override
-        String getGroupName(ResultFile file) {
-            try {
-                // This is going to query the case database, but it only gets called when
-                // adding the first file to a new data source-based group so it shouldn't
-                // cause a slowdown.
-                Content ds = file.getAbstractFile().getDataSource();
-                return Bundle.FileSearch_DataSourceAttribute_datasourceAndID(ds.getName(), ds.getId());
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error looking up data source with ID " + file.getAbstractFile().getDataSourceObjectId(), ex); // NON-NLS
-                return Bundle.FileSearch_DataSourceAttribute_idOnly(file.getAbstractFile().getDataSourceObjectId());
-            }
+        GroupKey getGroupKey(ResultFile file) {
+            return new DataSourceGroupKey(file);
         }
         
         @Override
@@ -294,6 +387,65 @@ class FileSearch {
             };
         }
     }    
+    
+    static class DataSourceGroupKey extends GroupKey {
+        private final long dataSourceID;
+        private String displayName;
+        
+        @NbBundle.Messages({
+            "# {0} - Data source name",
+            "# {1} - Data source ID",
+            "FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})",
+            "# {0} - Data source ID",
+            "FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})",
+        })        
+        DataSourceGroupKey(ResultFile file) {
+            dataSourceID = file.getAbstractFile().getDataSourceObjectId();
+            
+            try {
+                // The data source should be cached so this won't actually be a database query.
+                Content ds = file.getAbstractFile().getDataSource();
+                displayName = Bundle.FileSearch_DataSourceGroupKey_datasourceAndID(ds.getName(), ds.getId());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error looking up data source with ID " + dataSourceID, ex); // NON-NLS
+                displayName = Bundle.FileSearch_DataSourceGroupKey_idOnly(dataSourceID);
+            }
+        }
+        
+        @Override
+        String getDisplayName() {
+            return displayName;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof DataSourceGroupKey) {
+                DataSourceGroupKey otherDataSourceGroupKey = (DataSourceGroupKey)otherGroupKey;
+                return Long.compare(dataSourceID, otherDataSourceGroupKey.dataSourceID);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }            
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof DataSourceGroupKey)) {
+                return false;
+            }
+            
+            DataSourceGroupKey otherDataSourceGroupKey = (DataSourceGroupKey)otherKey;
+            return dataSourceID == otherDataSourceGroupKey.dataSourceID;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dataSourceID);
+        }
+    }       
 
     /**
      * Attribute for grouping/sorting by file type
@@ -301,13 +453,8 @@ class FileSearch {
     static class FileTypeAttribute extends AttributeType {
         
         @Override
-        Object getGroupIdentifier(ResultFile file) {
-            return file.getFileType();
-        }
-        
-        @Override
-        String getGroupName(ResultFile file) {
-            return file.getFileType().getDisplayName();
+        GroupKey getGroupKey(ResultFile file) {
+            return new FileTypeGroupKey(file);
         }
         
         @Override
@@ -355,7 +502,49 @@ class FileSearch {
                 }
             }
         }
-    }        
+    }    
+
+    static class FileTypeGroupKey extends GroupKey {
+        private final FileType fileType;
+                
+        FileTypeGroupKey(ResultFile file) {
+            fileType = file.getFileType();
+        }
+        
+        @Override
+        String getDisplayName() {
+            return fileType.getDisplayName();
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof FileTypeGroupKey) {
+                FileTypeGroupKey otherFileTypeGroupKey = (FileTypeGroupKey)otherGroupKey;
+                return Integer.compare(fileType.getRanking(), otherFileTypeGroupKey.fileType.getRanking());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof FileTypeGroupKey)) {
+                return false;
+            }
+            
+            FileTypeGroupKey otherFileTypeGroupKey = (FileTypeGroupKey)otherKey;
+            return fileType.equals(otherFileTypeGroupKey.fileType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fileType.getRanking());
+        }    
+    }
     
     /**
      * Attribute for grouping/sorting by keyword lists
@@ -363,13 +552,8 @@ class FileSearch {
     static class KeywordListAttribute extends AttributeType {
         
         @Override
-        Object getGroupIdentifier(ResultFile file) {
-            return file.getKeywords();
-        }
-        
-        @Override
-        String getGroupName(ResultFile file) {
-            return file.getKeywords();
+        GroupKey getGroupKey(ResultFile file) {
+            return new KeywordListGroupKey(file);
         }
         
         @Override
@@ -378,6 +562,7 @@ class FileSearch {
                 @Override
                 public int compare(ResultFile file1, ResultFile file2) {
                     
+                    // TODO fix sort
                     // Force "no keyword hits" to the bottom
                     if (! file1.hasKeywords()) {
                         if (! file2.hasKeywords()) {
@@ -389,11 +574,12 @@ class FileSearch {
                         return -1;
                     }
                     
-                    if (file1.getKeywords().equals(file2.getKeywords())) {
+                    if (file1.getKeywordListNames().equals(file2.getKeywordListNames())) {
                         // Secondary sort on file name
                         return file1.getAbstractFile().getName().compareToIgnoreCase(file1.getAbstractFile().getName());
                     }
-                    return file1.getKeywords().compareToIgnoreCase(file2.getKeywords());
+                    return -1;
+                    //return file1.getKeywordListNames().compareToIgnoreCase(file2.getKeywordListNames());
                 }
             };
         }
@@ -471,6 +657,59 @@ class FileSearch {
                 }
             }   
         }
+    }   
+    
+    static class KeywordListGroupKey extends GroupKey {
+        private final List<String> keywordListNames;
+        private final String keywordListNamesString;
+                
+        @NbBundle.Messages({
+            "FileSearch.KeywordListGroupKey.noKeywords=None",
+        })
+        KeywordListGroupKey(ResultFile file) {
+            keywordListNames = file.getKeywordListNames();
+            
+            if (keywordListNames.isEmpty()) {
+                keywordListNamesString = Bundle.FileSearch_KeywordListGroupKey_noKeywords();
+            } else {
+                keywordListNamesString = String.join(",", keywordListNames);
+            }
+        }
+        
+         
+        @Override
+        String getDisplayName() {
+            return keywordListNamesString;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof KeywordListGroupKey) {
+                KeywordListGroupKey otherKeywordListNamesGroupKey = (KeywordListGroupKey)otherGroupKey;
+                return keywordListNamesString.compareTo(otherKeywordListNamesGroupKey.keywordListNamesString);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof KeywordListGroupKey)) {
+                return false;
+            }
+            // TODO put no kw group last
+            KeywordListGroupKey otherKeywordListGroupKey = (KeywordListGroupKey)otherKey;
+            return keywordListNamesString.equals(otherKeywordListGroupKey.keywordListNamesString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(keywordListNamesString);
+        }    
     }    
     
     /**
@@ -479,13 +718,8 @@ class FileSearch {
     static class FrequencyAttribute extends AttributeType {
         
         @Override
-        Object getGroupIdentifier(ResultFile file) {
-            return file.getFrequency();
-        }
-        
-        @Override
-        String getGroupName(ResultFile file) {
-            return file.getFrequency().toString();
+        GroupKey getGroupKey(ResultFile file) {
+            return new FrequencyGroupKey(file);
         }
         
         @Override
@@ -529,19 +763,56 @@ class FileSearch {
         }        
     }
     
-    /**
-     * Default attribute used to make one group
-     */
-    static class DefaultAttribute extends AttributeType {
-        
-        @Override
-        Object getGroupIdentifier(ResultFile file) {
-            return 0; // Everything will go in the same group
+    static class FrequencyGroupKey extends GroupKey {
+        private final Frequency frequency;
+                
+        FrequencyGroupKey(ResultFile file) {
+            frequency = file.getFrequency();
         }
         
         @Override
-        String getGroupName(ResultFile file) {
-            return "All files";
+        String getDisplayName() {
+            return frequency.name();
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof FrequencyGroupKey) {
+                FrequencyGroupKey otherFrequencyGroupKey = (FrequencyGroupKey)otherGroupKey;
+                return Integer.compare(frequency.getRanking(), otherFrequencyGroupKey.frequency.getRanking());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof FrequencyGroupKey)) {
+                return false;
+            }
+            
+            FrequencyGroupKey otherFrequencyGroupKey = (FrequencyGroupKey)otherKey;
+            return frequency.equals(otherFrequencyGroupKey.frequency);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(frequency.getRanking());
+        }    
+    }    
+    
+    /**
+     * Default attribute used to make one group
+     */
+    static class NoGroupingAttribute extends AttributeType {
+        
+        @Override
+        GroupKey getGroupKey(ResultFile file) {
+            return new NoGroupingGroupKey();
         }
         
         @Override
@@ -550,6 +821,48 @@ class FileSearch {
             return FileSearch.getFileNameComparator();
         }
     }
+    
+    static class NoGroupingGroupKey extends GroupKey {
+                
+        NoGroupingGroupKey() {
+            // Nothing to save - all files will get the same GroupKey
+        }
+        
+        @NbBundle.Messages({
+            "FileSearch.NoGroupingGroupKey.allFiles=All Files",
+        })
+        @Override
+        String getDisplayName() {
+            return Bundle.FileSearch_NoGroupingGroupKey_allFiles();
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof NoGroupingGroupKey) {
+                return 0;
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }        
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof NoGroupingGroupKey)) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }    
+    }      
     
     private FileSearch() {
         // Class should not be instantiated

@@ -1,0 +1,49 @@
+CTL_FileSearchTestAction=Test file search
+# {0} - Data source name
+# {1} - Data source ID
+FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
+# {0} - Data source ID
+FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
+FileSearch.KeywordListGroupKey.noKeywords=None
+FileSearch.NoGroupingGroupKey.allFiles=All Files
+FileSearchData.FileSize.large.displayName=200MB-1GB
+FileSearchData.FileSize.medium.displayName=50-200MB
+FileSearchData.FileSize.small.displayName=1-50MB
+FileSearchData.FileSize.XL.displayName=1GB+
+FileSearchData.FileSize.XS.displayName=Under 1MB
+FileSearchData.FileType.Audio.displayName=Audio
+FileSearchData.FileType.Documents.displayName=Documents
+FileSearchData.FileType.Executables.displayName=Executables
+FileSearchData.FileType.Image.displayName=Image
+FileSearchData.FileType.Other.displayName=Other/Unknown
+FileSearchData.FileType.Video.displayName=Video
+FileSearchData.Frequency.common.displayName=Common
+FileSearchData.Frequency.rare.displayName=Rare
+FileSearchData.Frequency.unique.displayName=Unique
+FileSearchData.Frequency.unknown.displayName=Unknown
+# {0} - Data source name
+# {1} - Data source ID
+FileSearchFiltering.DataSourceSubFilter.datasource={0}({1})
+# {0} - filters
+FileSearchFiltering.DataSourceSubFilter.desc=Files in data source(s): {0}
+FileSearchFiltering.DataSourceSubFilter.or=\ or 
+# {0} - filters
+FileSearchFiltering.FileTypeSubFilter.desc=Files with type: {0}
+FileSearchFiltering.FileTypeSubFilter.or=\ or 
+# {0} - filters
+FileSearchFiltering.FrequencySubFilter.desc=Files with frequency: {0}
+FileSearchFiltering.FrequencySubFilter.or=\ or 
+FileSearchFiltering.KeywordListSubFilter.comma=, 
+# {0} - filters
+FileSearchFiltering.KeywordListSubFilter.desc=Files with keywords in list(s): {0}
+# {0} - filters
+FileSearchFiltering.ParentSubFilter.desc=Files with paths matching: {0}
+FileSearchFiltering.ParentSubFilter.exact=(exact match)
+FileSearchFiltering.ParentSubFilter.or=\ or 
+FileSearchFiltering.ParentSubFilter.substring=(substring)
+# {0} - filters
+FileSearchFiltering.SizeSubFilter.desc=Files with size in range(s): {0}
+FileSearchFiltering.SizeSubFilter.or=\ or 
+# {0} - Minimum bytes
+# {1} - Maximum bytes
+FileSearchFiltering.SizeSubFilter.range=({0} to {1})
