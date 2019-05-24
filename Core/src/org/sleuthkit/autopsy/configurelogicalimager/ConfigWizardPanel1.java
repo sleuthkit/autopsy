@@ -1,0 +1,133 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.sleuthkit.autopsy.configurelogicalimager;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import org.openide.WizardDescriptor;
+import org.openide.WizardValidationException;
+import org.openide.util.HelpCtx;
+
+public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
+
+    /**
+     * The visual component that displays this panel. If you need to access the
+     * component from this class, just use getComponent().
+     */
+    private ConfigVisualPanel1 component;
+    private String configFilename = null;
+    private LogicalImagerConfig config = null;
+    boolean isValid = false;
+    private boolean newFile = true;
+
+    // Get the visual component for the panel. In this template, the component
+    // is kept separate. This can be more efficient: if the wizard is created
+    // but never displayed, or not all panels are displayed, it is better to
+    // create only those which really need to be visible.
+    @Override
+    public ConfigVisualPanel1 getComponent() {
+        if (component == null) {
+            component = new ConfigVisualPanel1();
+            component.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals("UPDATE_UI")) {
+                        isValid = component.isPanelValid();
+                        fireChangeEvent();
+                    }
+                }
+            });
+            
+        }
+        return component;
+    }
+
+    @Override
+    public HelpCtx getHelp() {
+        // Show no Help button for this panel:
+        return HelpCtx.DEFAULT_HELP;
+        // If you have context help:
+        // return new HelpCtx("help.key.here");
+    }
+
+    @Override
+    public boolean isValid() {
+        return isValid;
+        // If it depends on some condition (form filled out...) and
+        // this condition changes (last form field filled in...) then
+        // use ChangeSupport to implement add/removeChangeListener below.
+        // WizardDescriptor.ERROR/WARNING/INFORMATION_MESSAGE will also be useful.
+    }
+   
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
+
+    /**
+     * Adds a listener to changes of the panel's validity.
+     *
+     * @param l the change listener to add
+     */
+    @Override
+    public final void addChangeListener(ChangeListener l) {
+        synchronized (listeners) {
+            listeners.add(l);
+        }
+    }
+
+    /**
+     * Removes a listener to changes of the panel's validity.
+     *
+     * @param l the change listener to move
+     */
+    @Override
+    public final void removeChangeListener(ChangeListener l) {
+        synchronized (listeners) {
+            listeners.remove(l);
+        }
+    }
+
+    /**
+     * This method is auto-generated. It seems that this method is used to
+     * listen to any change in this wizard panel.
+     */
+    protected final void fireChangeEvent() {
+        Iterator<ChangeListener> it;
+        synchronized (listeners) {
+            it = new HashSet<>(listeners).iterator();
+        }
+        ChangeEvent ev = new ChangeEvent(this);
+        while (it.hasNext()) {
+            it.next().stateChanged(ev);
+        }
+    }
+
+    @Override
+    public void readSettings(WizardDescriptor wiz) {
+        // use wiz.getProperty to retrieve previous panel state
+        component.setConfigFilename((String) wiz.getProperty("configFilename"));
+    }
+
+    @Override
+    public void storeSettings(WizardDescriptor wiz) {
+        // use wiz.putProperty to remember current panel state
+        configFilename = component.getConfigFilename();
+        config = component.getConfig();
+        newFile = component.isNewFile();
+        wiz.putProperty("configFilename", configFilename);
+        wiz.putProperty("config", config);
+        wiz.putProperty("newFile", newFile);
+    }
+
+    @Override
+    public void validate() throws WizardValidationException {
+        isValid = component.isPanelValid();
+    }
+
+}
