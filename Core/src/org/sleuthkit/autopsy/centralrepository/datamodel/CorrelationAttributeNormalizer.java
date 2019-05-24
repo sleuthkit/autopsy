@@ -54,7 +54,7 @@ final public class CorrelationAttributeNormalizer {
             throw new CorrelationAttributeNormalizationException("Attribute type was null.");
         }
         if (data == null) {
-            throw new CorrelationAttributeNormalizationException("Data was null.");
+            throw new CorrelationAttributeNormalizationException("Correlation attribute value was null.");
         }
 
         String trimmedData = data.trim();
