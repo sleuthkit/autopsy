@@ -130,7 +130,7 @@ public class CommandLineIngestManager {
 
                 if (commands == null || commands.isEmpty()) {
                     LOGGER.log(Level.SEVERE, "No command line commands specified");
-                    System.out.println("No command line commands specified");
+                    System.err.println("No command line commands specified");
                     return;
                 }
                 
@@ -144,10 +144,13 @@ public class CommandLineIngestManager {
                                     LOGGER.log(Level.INFO, "Processing 'create case' command");
                                     System.out.println("Processing 'create case' command");
                                     openCase(command);
+                                    
+                                    String outputDirPath = "C:\\TEST\\DELETE";
+                                    OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath);
                                 } catch (CaseActionException ex) {
                                     String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
                                     LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
-                                    System.out.println("Error creating or opening case " + baseCaseName);
+                                    System.err.println("Error creating or opening case " + baseCaseName);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -167,10 +170,12 @@ public class CommandLineIngestManager {
                                     String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
                                     runDataSourceProcessor(caseForJob, dataSource);
+                                    
+                                    // ELTODO saveAddDataSourceOutput(dataSource);
                                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error adding data source " + dataSourcePath, ex);
-                                    System.out.println("Error adding data source " + dataSourcePath);
+                                    System.err.println("Error adding data source " + dataSourcePath);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -199,7 +204,7 @@ public class CommandLineIngestManager {
                                             content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(dataSourceObjId);
                                         } catch (TskCoreException ex) {
                                             LOGGER.log(Level.SEVERE, "Exception while trying to find data source with object ID " + dataSourceId, ex);
-                                            System.out.println("Exception while trying to find data source with object ID " + dataSourceId);
+                                            System.err.println("Exception while trying to find data source with object ID " + dataSourceId);
                                             // Do not process any other commands
                                             return;
                                         }
@@ -220,10 +225,12 @@ public class CommandLineIngestManager {
                                     
                                     // run ingest
                                     analyze(dataSource);
+                                    
+                                    // ELTODO saveRunIngestOutput();
                                 } catch (InterruptedException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
-                                    System.out.println("Error running ingest on data source " + dataSourcePath);
+                                    System.err.println("Error running ingest on data source " + dataSourcePath);
                                     // Do not process any other commands
                                     return;
                                 }
@@ -240,14 +247,14 @@ public class CommandLineIngestManager {
                     * such errors get logged.
                      */
                     LOGGER.log(Level.SEVERE, "Unexpected error", ex);
-                    System.out.println("Unexpected error. Exiting...");
+                    System.err.println("Unexpected error. Exiting...");
 
                 } finally {
                     try {
                         Case.closeCurrentCase();
                     } catch (CaseActionException ex) {
                         LOGGER.log(Level.WARNING, "Exception while closing case", ex);
-                        System.out.println("Exception while closing case");
+                        System.err.println("Exception while closing case");
                     }
                 }
 
