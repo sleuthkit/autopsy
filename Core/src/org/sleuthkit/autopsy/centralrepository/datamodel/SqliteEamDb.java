@@ -561,27 +561,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the aType and filePath
-     *
-     * @param aType    EamArtifact.Type to search for
-     * @param filePath File path to search for
-     *
-     * @return List of 0 or more EamArtifactInstances
-     *
-     * @throws EamDbException
-     */
-    @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesByPath(CorrelationAttributeInstance.Type aType, String filePath) throws EamDbException {
-        try {
-            acquireSharedLock();
-            return super.getArtifactInstancesByPath(aType, filePath);
-        } finally {
-            releaseSharedLock();
-        }
-    }
-
-    /**
      * Retrieves number of artifact instances in the database that are
      * associated with the ArtifactType and artifactValue of the given artifact.
      *
@@ -710,46 +689,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             super.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
         } finally {
             releaseExclusiveLock();
-        }
-    }
-
-    /**
-     * Gets list of matching eamArtifact instances that have knownStatus =
-     * "Bad".
-     *
-     * @param aType EamArtifact.Type to search for
-     * @param value Value to search for
-     *
-     * @return List with 0 or more matching eamArtifact instances.
-     */
-    @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        try {
-            acquireSharedLock();
-            return super.getArtifactInstancesKnownBad(aType, value);
-        } finally {
-            releaseSharedLock();
-        }
-    }
-
-    /**
-     *
-     * Gets list of matching eamArtifact instances that have knownStatus =
-     * "Bad".
-     *
-     * @param aType EamArtifact.Type to search for
-     *
-     * @return List with 0 or more matching eamArtifact instances.
-     *
-     * @throws EamDbException
-     */
-    @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType) throws EamDbException {
-        try {
-            acquireSharedLock();
-            return super.getArtifactInstancesKnownBad(aType);
-        } finally {
-            releaseSharedLock();
         }
     }
 

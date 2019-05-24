@@ -324,19 +324,6 @@ public interface EamDb {
     List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the aType and filePath
-     *
-     * @param aType    EamArtifact.Type to search for
-     * @param filePath File path to search for
-     *
-     * @return List of 0 or more EamArtifactInstances
-     *
-     * @throws EamDbException
-     */
-    List<CorrelationAttributeInstance> getArtifactInstancesByPath(CorrelationAttributeInstance.Type aType, String filePath) throws EamDbException;
-
-    /**
      * Retrieves number of artifact instances in the database that are
      * associated with the ArtifactType and artifactValue of the given artifact.
      *
@@ -463,29 +450,6 @@ public interface EamDb {
      * @param knownStatus The status to change the artifact to
      */
     void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
-
-    /**
-     * Gets list of matching eamArtifact instances that have knownStatus =
-     * "Bad".
-     *
-     * @param aType EamArtifact.Type to search for
-     * @param value Value to search for
-     *
-     * @return List with 0 or more matching eamArtifact instances.
-     */
-    List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
-
-    /**
-     * Gets list of matching eamArtifact instances that have knownStatus =
-     * "Bad".
-     *
-     * @param aType EamArtifact.Type to search for
-     *
-     * @return List with 0 or more matching eamArtifact instances.
-     *
-     * @throws EamDbException
-     */
-    List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType) throws EamDbException;
 
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
