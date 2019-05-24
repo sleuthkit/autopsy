@@ -34,10 +34,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -109,6 +111,8 @@ final public class FiltersPanel extends JPanel {
      * initially.
      */
     private boolean deviceAccountTypeEnabled;
+    
+    private Case openCase = null;
 
     @NbBundle.Messages({"refreshText=Refresh Results", "applyText=Apply"})
     public FiltersPanel() {
@@ -157,28 +161,6 @@ final public class FiltersPanel extends JPanel {
         applyFiltersButton.addActionListener(e -> applyFilters());
         refreshButton.addActionListener(e -> applyFilters());
         
-        try {
-            String queryString = "max(date_time) as max,  min(date_time) as min from account_relationships"; // NON-NLS
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
-                @Override
-                public void process(ResultSet rs) {
-                    try {
-                        if (rs.next()) {
-                            int startDate = rs.getInt("min"); // NON-NLS
-                            int endData = rs.getInt("max"); // NON-NLS
-
-                            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(startDate), Utils.getUserPreferredZoneId()).toLocalDate());
-                            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(endData), Utils.getUserPreferredZoneId()).toLocalDate());
-                        }
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Unable to set filter date pickers due to SQL exception", ex); //NON-NLS
-                    }
-                }
-
-            });
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Unable to set filter date pickers due to exception", ex); //NON-NLS
-        }
     }
 
     /**
@@ -205,6 +187,7 @@ final public class FiltersPanel extends JPanel {
     void updateAndApplyFilters(boolean initialState) {
         updateFilters(initialState);
         applyFilters();
+        initalizeDateTimeFilters();
     }
 
     private void updateTimeZone() {
@@ -724,6 +707,90 @@ final public class FiltersPanel extends JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
+    }
+    
+    /**
+     * initalize the DateTimePickers by grabbing the earliest and latest time
+     * from the autopsy db.
+     */
+    private void initalizeDateTimeFilters() {
+        Case currentCase = null;
+        try{
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) { 
+           // Don't really need to do anything;
+        }
+        
+        if(currentCase == null) {
+            setDateTimeFiltersToDefault();
+            openCase = null;
+            return;
+        }
+        
+        
+        SwingWorker<Map<String, Integer>, Void> worker = new SwingWorker<Map<String, Integer>, Void>() {
+            @Override
+            protected Map<String, Integer> doInBackground() throws Exception {
+                if(openCase == null) {
+                    return null;
+                }
+                
+                Map<String, Integer> resultMap = new HashMap<>();
+                String queryString = "max(date_time) as end,  min(date_time) as start from account_relationships"; // NON-NLS
+                
+                openCase.getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback(){
+                    @Override
+                    public void process(ResultSet rs) {
+                        try {
+                            if (rs.next()) {
+                                int startDate = rs.getInt("start"); // NON-NLS
+                                int endDate = rs.getInt("end"); // NON-NLS
+                                
+                                resultMap.put("start", startDate); // NON-NLS
+                                resultMap.put("end", endDate); // NON-NLS
+                            }
+                        } catch (SQLException ex) {
+                            // Not the end of the world if this fails.
+                            logger.log(Level.WARNING, String.format("SQL Exception thrown from Query: %s", queryString), ex);
+                        }
+                    }
+                });
+                
+                return resultMap;
+            }
+            
+            @Override
+            protected void done() {
+                try {
+                    Map<String,Integer> resultMap = get();
+                    if(resultMap != null) {
+                        Integer start = resultMap.get("start");
+                        Integer end = resultMap.get("end");
+
+                        if(start != null && start != 0) {
+                            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(start), Utils.getUserPreferredZoneId()).toLocalDate());
+                        }
+
+                        if(end != null && end != 0) {
+                            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(end), Utils.getUserPreferredZoneId()).toLocalDate());
+                        }
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.WARNING, "Exception occured after date time sql query", ex);
+                }
+            }
+        };
+                
+        if(openCase != currentCase) {
+            setDateTimeFiltersToDefault();
+            openCase = currentCase;
+            worker.execute();
+        }
+    }
+    
+    private void setDateTimeFiltersToDefault() {
+        startDatePicker.setDate(LocalDate.now().minusWeeks(3));
+        endDatePicker.setDate(LocalDate.now());
     }
 
     private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
