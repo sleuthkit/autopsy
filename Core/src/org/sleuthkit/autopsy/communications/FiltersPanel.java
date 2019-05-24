@@ -28,16 +28,20 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -94,6 +98,8 @@ final public class FiltersPanel extends JPanel {
      * and it should be refreshed (by reapplying the filters).
      */
     private boolean needsRefresh;
+   
+    Case openCase = null;
 
     /**
      * Listen to check box state changes and validates that at least one box is
@@ -710,38 +716,77 @@ final public class FiltersPanel extends JPanel {
      * from the autopsy db.
      */
     private void initalizeDateTimeFilters() {
-        String queryString = "max(date_time) as max,  min(date_time) as min from account_relationships"; // NON-NLS
-        if(Case.isCaseOpen()) {
-            try {
-                Case.getCurrentCase().getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
+        Case currentCase = null;
+        try{
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) { 
+           // Don't really need to do anything;
+        }
+        
+        if(currentCase == null) {
+            setDateTimeFiltersToDefault();
+            openCase = null;
+            return;
+        }
+        
+        
+        SwingWorker<Map<String, Integer>, Void> worker = new SwingWorker<Map<String, Integer>, Void>() {
+            @Override
+            protected Map<String, Integer> doInBackground() throws Exception {
+                if(openCase == null) {
+                    return null;
+                }
+                
+                Map<String, Integer> resultMap = new HashMap<>();
+                String queryString = "max(date_time) as end,  min(date_time) as start from account_relationships"; // NON-NLS
+                
+                openCase.getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback(){
                     @Override
                     public void process(ResultSet rs) {
                         try {
                             if (rs.next()) {
-                                int startDate = rs.getInt("min"); // NON-NLS
-                                int endDate = rs.getInt("max"); // NON-NLS
+                                int startDate = rs.getInt("start"); // NON-NLS
+                                int endDate = rs.getInt("end"); // NON-NLS
                                 
-                                if(startDate != 0 && endDate != 0) {
-                                    startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(startDate), Utils.getUserPreferredZoneId()).toLocalDate());
-                                    endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(endDate), Utils.getUserPreferredZoneId()).toLocalDate());
-                                } else {
-                                    setDateTimeFiltersToDefault();
-                                }
-                            } else {
-                                setDateTimeFiltersToDefault();
+                                resultMap.put("start", startDate); // NON-NLS
+                                resultMap.put("end", endDate); // NON-NLS
                             }
                         } catch (SQLException ex) {
-                            setDateTimeFiltersToDefault();
-                            logger.log(Level.WARNING, "Unable to set filter date pickers due to SQL exception", ex); //NON-NLS
+                            // Not the end of the world if this fails.
+                            logger.log(Level.WARNING, String.format("SQL Exception thrown from Query: %s", queryString), ex);
                         }
                     }
                 });
-            } catch (TskCoreException ex) {
-               logger.log(Level.WARNING, "Exception thrown while initalizing Date Time filters, using default values from date time", ex); //NON-NLS
-               setDateTimeFiltersToDefault();
+                
+                return resultMap;
             }
-        } else {
+            
+            @Override
+            protected void done() {
+                try {
+                    Map<String,Integer> resultMap = get();
+                    if(resultMap != null) {
+                        Integer start = resultMap.get("start");
+                        Integer end = resultMap.get("end");
+
+                        if(start != null && start != 0) {
+                            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(start), Utils.getUserPreferredZoneId()).toLocalDate());
+                        }
+
+                        if(end != null && end != 0) {
+                            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(end), Utils.getUserPreferredZoneId()).toLocalDate());
+                        }
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.WARNING, "Exception occured after date time sql query", ex);
+                }
+            }
+        };
+                
+        if(openCase != currentCase) {
             setDateTimeFiltersToDefault();
+            openCase = currentCase;
+            worker.execute();
         }
     }
     
