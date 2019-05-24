@@ -171,7 +171,8 @@ public class CommandLineIngestManager {
                                     dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
                                     runDataSourceProcessor(caseForJob, dataSource);
                                     
-                                    // ELTODO saveAddDataSourceOutput(dataSource);
+                                    String outputDirPath = "C:\\TEST\\DELETE";
+                                    OutputGenerator.saveAddDataSourceOutput(dataSource, outputDirPath);
                                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error adding data source " + dataSourcePath, ex);
@@ -265,18 +266,6 @@ public class CommandLineIngestManager {
                 // shut down Autopsy
                 stop();
             }
-        }
-
-        /**
-         * Provides object ID of the data source by reading it from Content
-         * object.
-         *
-         * @param dataSource DataSource object
-         * @return object ID
-         */
-        private Long getDataSourceId(AutoIngestDataSource dataSource) {
-            Content content = dataSource.getContent().get(0);
-            return content.getId();
         }
         
         /**
