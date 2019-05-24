@@ -28,7 +28,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -41,7 +40,6 @@ import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -98,8 +96,6 @@ final public class FiltersPanel extends JPanel {
      * and it should be refreshed (by reapplying the filters).
      */
     private boolean needsRefresh;
-   
-    Case openCase = null;
 
     /**
      * Listen to check box state changes and validates that at least one box is
@@ -115,6 +111,8 @@ final public class FiltersPanel extends JPanel {
      * initially.
      */
     private boolean deviceAccountTypeEnabled;
+    
+    private Case openCase = null;
 
     @NbBundle.Messages({"refreshText=Refresh Results", "applyText=Apply"})
     public FiltersPanel() {
