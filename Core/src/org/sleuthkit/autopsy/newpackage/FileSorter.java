@@ -22,17 +22,16 @@ class FileSorter implements Comparator<ResultFile> {
         switch (method) {
             case BY_DATA_SOURCE:
                 comparators.add(getDataSourceComparator());
-                comparators.add(getDefaultComparator());
                 break;
             case BY_FILE_SIZE:
                 comparators.add(getFileSizeComparator());
-                comparators.add(getDefaultComparator());
                 break;
             case BY_FILE_TYPE:
                 comparators.add(getFileTypeComparator());
-                comparators.add(getDefaultComparator());
+                comparators.add(getMIMETypeComparator());
                 break;
             case BY_FREQUENCY:
+                comparators.add(getFrequencyComparator());
                 break;
             case BY_KEYWORD_LIST_NAMES:
                 break;
@@ -40,11 +39,13 @@ class FileSorter implements Comparator<ResultFile> {
                 break;
             case BY_FILE_NAME:
                 comparators.add(getFileNameComparator());
-                comparators.add(getDefaultComparator());
             default:
-                comparators.add(getDefaultComparator());
                 break;
         }
+        
+        // Add the default comparator to the end. This will ensure a consistent sort
+        // order regardless of the order the files were added to the list.
+        comparators.add(getDefaultComparator());
     }
     
     @Override
@@ -67,15 +68,38 @@ class FileSorter implements Comparator<ResultFile> {
         return new Comparator<ResultFile>() {
             @Override
             public int compare(ResultFile file1, ResultFile file2) {
-                if (file1.getFileType() != file2.getFileType()) {
-                    // Primary sort on the file type enum
-                    return Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
-                }
+                return Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
+            }
+        };
+    }   
+    
+    private static Comparator<ResultFile> getParentPathComparator() {
+        return new Comparator<ResultFile>() {
+            @Override
+            public int compare(ResultFile file1, ResultFile file2) {
+                return compareStrings(file1.getAbstractFile().getParentPath(), file2.getAbstractFile().getParentPath());
+            }
+        };
+    }   
+    
+    private static Comparator<ResultFile> getFrequencyComparator() {
+        return new Comparator<ResultFile>() {
+            @Override
+            public int compare(ResultFile file1, ResultFile file2) {
+                return Integer.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
+            }
+        };
+    }  
+    
+    private static Comparator<ResultFile> getMIMETypeComparator() {
+        return new Comparator<ResultFile>() {
+            @Override
+            public int compare(ResultFile file1, ResultFile file2) {
                 // Secondary sort on the MIME type
                 return compareStrings(file1.getAbstractFile().getMIMEType(), file2.getAbstractFile().getMIMEType());
             }
         };
-    }   
+    }  
     
     private static Comparator<ResultFile> getFileSizeComparator() {
         return new Comparator<ResultFile>() {
@@ -96,6 +120,14 @@ class FileSorter implements Comparator<ResultFile> {
         };
     }
     
+    /**
+     * A final default comparison between two ResultFile objects.
+     * Currently this is on file name and then object ID. It can be changed but
+     * should always include something like the object ID to ensure a 
+     * consistent sorting when the rest of the compared fields are the same.
+     * 
+     * @return 
+     */
     private static Comparator<ResultFile> getDefaultComparator() {
         return new Comparator<ResultFile>() {
             @Override
