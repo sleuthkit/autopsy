@@ -718,7 +718,7 @@ final public class FiltersPanel extends JPanel {
         try{
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) { 
-           // Don't really need to do anything;
+           logger.log(Level.INFO, "Tried to intialize communication filters date range filters without an open case, using default values");
         }
         
         if(currentCase == null) {
@@ -726,65 +726,11 @@ final public class FiltersPanel extends JPanel {
             openCase = null;
             return;
         }
-        
-        
-        SwingWorker<Map<String, Integer>, Void> worker = new SwingWorker<Map<String, Integer>, Void>() {
-            @Override
-            protected Map<String, Integer> doInBackground() throws Exception {
-                if(openCase == null) {
-                    return null;
-                }
-                
-                Map<String, Integer> resultMap = new HashMap<>();
-                String queryString = "max(date_time) as end,  min(date_time) as start from account_relationships"; // NON-NLS
-                
-                openCase.getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback(){
-                    @Override
-                    public void process(ResultSet rs) {
-                        try {
-                            if (rs.next()) {
-                                int startDate = rs.getInt("start"); // NON-NLS
-                                int endDate = rs.getInt("end"); // NON-NLS
-                                
-                                resultMap.put("start", startDate); // NON-NLS
-                                resultMap.put("end", endDate); // NON-NLS
-                            }
-                        } catch (SQLException ex) {
-                            // Not the end of the world if this fails.
-                            logger.log(Level.WARNING, String.format("SQL Exception thrown from Query: %s", queryString), ex);
-                        }
-                    }
-                });
-                
-                return resultMap;
-            }
-            
-            @Override
-            protected void done() {
-                try {
-                    Map<String,Integer> resultMap = get();
-                    if(resultMap != null) {
-                        Integer start = resultMap.get("start");
-                        Integer end = resultMap.get("end");
-
-                        if(start != null && start != 0) {
-                            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(start), Utils.getUserPreferredZoneId()).toLocalDate());
-                        }
-
-                        if(end != null && end != 0) {
-                            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(end), Utils.getUserPreferredZoneId()).toLocalDate());
-                        }
-                    }
-                } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "Exception occured after date time sql query", ex);
-                }
-            }
-        };
-                
-        if(openCase != currentCase) {
+                      
+        if(!currentCase.equals(openCase)) {
             setDateTimeFiltersToDefault();
             openCase = currentCase;
-            worker.execute();
+            (new DatePickerWorker()).execute();
         }
     }
     
@@ -894,6 +840,60 @@ final public class FiltersPanel extends JPanel {
         @Override
         public void process(ResultSet rs) {
             // Subclasses can implement their own process function.
+        }
+    }
+    
+    final class DatePickerWorker extends SwingWorker<Map<String, Integer>, Void> {
+
+        @Override
+        protected Map<String, Integer> doInBackground() throws Exception {
+            if (openCase == null) {
+                return null;
+            }
+
+            Map<String, Integer> resultMap = new HashMap<>();
+            String queryString = "max(date_time) as end,  min(date_time) as start from account_relationships"; // NON-NLS
+
+            openCase.getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
+                @Override
+                public void process(ResultSet rs) {
+                    try {
+                        if (rs.next()) {
+                            int startDate = rs.getInt("start"); // NON-NLS
+                            int endDate = rs.getInt("end"); // NON-NLS
+
+                            resultMap.put("start", startDate); // NON-NLS
+                            resultMap.put("end", endDate); // NON-NLS
+                        }
+                    } catch (SQLException ex) {
+                        // Not the end of the world if this fails.
+                        logger.log(Level.WARNING, String.format("SQL Exception thrown from Query: %s", queryString), ex);
+                    }
+                }
+            });
+
+            return resultMap;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                Map<String, Integer> resultMap = get();
+                if (resultMap != null) {
+                    Integer start = resultMap.get("start");
+                    Integer end = resultMap.get("end");
+
+                    if (start != null && start != 0) {
+                        startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(start), Utils.getUserPreferredZoneId()).toLocalDate());
+                    }
+
+                    if (end != null && end != 0) {
+                        endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(end), Utils.getUserPreferredZoneId()).toLocalDate());
+                    }
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Exception occured after date time sql query", ex);
+            }
         }
     }
 
