@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Config;
@@ -71,7 +73,7 @@ final class HtmlTextExtractor implements TextExtractor {
     /**
      * Determines if this content type is supported by this extractor.
      *
-     * @param content        Content instance to be analyzed
+     * @param content Content instance to be analyzed
      * @param detectedFormat Mimetype of content instance
      *
      * @return flag indicating support
@@ -84,27 +86,21 @@ final class HtmlTextExtractor implements TextExtractor {
     }
 
     /**
-     * Returns a reader that will iterate over the text of an HTML document.
-     *
-     * @param content Html document source
-     *
-     * @return A reader instance containing the document source text
-     *
-     * @throws TextExtractorException
+     * Get the metadata as a key -> value map. HTML metadata will include
+     * scripts, links, images, comments, and misc attributes.
+     * 
+     * @return Map containing metadata key -> value pairs.
      */
     @Override
-    public Reader getReader() throws InitReaderException {
-        //TODO JIRA-4467, there is only harm in excluding HTML documents greater
-        //than 50MB due to our troubled approach of extraction.
-        ReadContentInputStream stream = new ReadContentInputStream(file);
-
-        //Parse the stream with Jericho and put the results in a Reader
+    public Map<String, String> getMetadata() {
+        Map<String, String> metadataMap = new HashMap<>();
         try {
-            StringBuilder scripts = new StringBuilder();
-            StringBuilder links = new StringBuilder();
-            StringBuilder images = new StringBuilder();
-            StringBuilder comments = new StringBuilder();
-            StringBuilder others = new StringBuilder();
+            ReadContentInputStream stream = new ReadContentInputStream(file);
+            StringBuilder scripts = new StringBuilder("\n");
+            StringBuilder links = new StringBuilder("\n");
+            StringBuilder images = new StringBuilder("\n");
+            StringBuilder comments = new StringBuilder("\n");
+            StringBuilder others = new StringBuilder("\n");
             int numScripts = 0;
             int numLinks = 0;
             int numImages = 0;
@@ -113,17 +109,8 @@ final class HtmlTextExtractor implements TextExtractor {
 
             Source source = new Source(stream);
             source.fullSequentialParse();
-            Renderer renderer = source.getRenderer();
-            renderer.setNewLine("\n");
-            renderer.setIncludeHyperlinkURLs(false);
-            renderer.setDecorateFontStyles(false);
-            renderer.setIncludeAlternateText(false);
 
-            String text = renderer.toString();
-            // Get all the tags in the source
             List<StartTag> tags = source.getAllStartTags();
-
-            StringBuilder stringBuilder = new StringBuilder();
             for (StartTag tag : tags) {
                 if (tag.getName().equals("script")) {                //NON-NLS
                     // If the <script> tag has attributes
@@ -164,30 +151,55 @@ final class HtmlTextExtractor implements TextExtractor {
                     }
                 }
             }
-            stringBuilder.append(text).append("\n\n");
-            stringBuilder.append("----------NONVISIBLE TEXT----------\n\n"); //NON-NLS
+
             if (numScripts > 0) {
-                stringBuilder.append("---Scripts---\n"); //NON-NLS
-                stringBuilder.append(scripts).append("\n");
+                metadataMap.put("Scripts", scripts.toString());
             }
             if (numLinks > 0) {
-                stringBuilder.append("---Links---\n"); //NON-NLS
-                stringBuilder.append(links).append("\n");
+                metadataMap.put("Links", links.toString());
             }
             if (numImages > 0) {
-                stringBuilder.append("---Images---\n"); //NON-NLS
-                stringBuilder.append(images).append("\n");
+                metadataMap.put("Images", images.toString());
             }
             if (numComments > 0) {
-                stringBuilder.append("---Comments---\n"); //NON-NLS
-                stringBuilder.append(comments).append("\n");
+                metadataMap.put("Comments", comments.toString());
             }
             if (numOthers > 0) {
-                stringBuilder.append("---Others---\n"); //NON-NLS
-                stringBuilder.append(others).append("\n");
+                metadataMap.put("Others", others.toString());
             }
-            // All done, now make it a reader
-            return new StringReader(stringBuilder.toString());
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error extracting HTML metadata from content.", ex);
+        }
+
+        return metadataMap;
+    }
+
+    /**
+     * Returns a reader that will iterate over the text of an HTML document.
+     *
+     * @param content Html document source
+     *
+     * @return A reader instance containing the document source text
+     *
+     * @throws TextExtractorException
+     */
+    @Override
+    public Reader getReader() throws InitReaderException {
+        //TODO JIRA-4467, there is only harm in excluding HTML documents greater
+        //than 50MB due to our troubled approach of extraction.
+        ReadContentInputStream stream = new ReadContentInputStream(file);
+
+        //Parse the stream with Jericho and put the results in a Reader
+        try {
+            Source source = new Source(stream);
+            source.fullSequentialParse();
+            Renderer renderer = source.getRenderer();
+            renderer.setNewLine("\n");
+            renderer.setIncludeHyperlinkURLs(false);
+            renderer.setDecorateFontStyles(false);
+            renderer.setIncludeAlternateText(false);
+            renderer.setMaxLineLength(0); // don't force wrapping
+            return new StringReader(renderer.toString());
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error extracting HTML from content.", ex);
             throw new InitReaderException("Error extracting HTML from content.", ex);

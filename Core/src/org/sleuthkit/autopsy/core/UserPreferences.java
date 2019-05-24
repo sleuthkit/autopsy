@@ -77,6 +77,7 @@ public final class UserPreferences {
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
+    public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -498,6 +499,24 @@ public final class UserPreferences {
      */
     public static void setMaxSolrVMSize(int maxSize) {
         preferences.putInt(SOLR_MAX_JVM_SIZE, maxSize);
+    }
+
+    /**
+     * Get the maximum number of results to display in a result table.
+     *
+     * @return Saved value or default (0) which indicates no max.
+     */
+    public static int getResultsTablePageSize() {
+        return preferences.getInt(RESULTS_TABLE_PAGE_SIZE, 0);
+    }
+
+    /**
+     * Set the maximum number of results to display in a result table.
+     *
+     * @param pageSize
+     */
+    public static void setResultsTablePageSize(int pageSize) {
+        preferences.putInt(RESULTS_TABLE_PAGE_SIZE, pageSize);
     }
 
     /**
