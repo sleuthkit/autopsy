@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -70,7 +71,8 @@ public class ImageGalleryModule {
             Case.Events.CURRENT_CASE,
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.CONTENT_TAG_ADDED,
-            Case.Events.CONTENT_TAG_DELETED
+            Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.DATA_SOURCE_DELETED
     );
     private static final Object controllerLock = new Object();
     @GuardedBy("controllerLock")
@@ -317,6 +319,11 @@ public class ImageGalleryModule {
                             currentController.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                         } // RJCTODO: Why not remove the tag from the cache?
                         break;
+                    case DATA_SOURCE_DELETED:
+                        final DataSourceDeletedEvent dataSourceDeletedEvent = (DataSourceDeletedEvent) event;
+                        long dataSoureObjId = dataSourceDeletedEvent.getDataSourceId();
+                        drawableDB = currentController.getDatabase();
+                        drawableDB.deleteDataSource(dataSoureObjId);
                     default:
                         logger.log(Level.SEVERE, String.format("Received %s event with no subscription", event.getPropertyName())); //NON-NLS
                         break;

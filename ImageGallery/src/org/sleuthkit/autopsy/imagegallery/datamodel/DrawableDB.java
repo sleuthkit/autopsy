@@ -106,8 +106,8 @@ public final class DrawableDB {
     private static final String IG_CREATION_SCHEMA_MAJOR_VERSION_KEY = "IG_CREATION_SCHEMA_MAJOR_VERSION";
     private static final String IG_CREATION_SCHEMA_MINOR_VERSION_KEY = "IG_CREATION_SCHEMA_MINOR_VERSION";
     
-    private static final VersionNumber IG_STARTING_SCHEMA_VERSION = new VersionNumber(1, 0, 0);    // IG Schema Starting version
-    private static final VersionNumber IG_SCHEMA_VERSION = new VersionNumber(1, 1, 0);    // IG Schema Current version
+    private static final VersionNumber IG_STARTING_SCHEMA_VERSION = new VersionNumber(1, 2, 0);    // IG Schema Starting version
+    private static final VersionNumber IG_SCHEMA_VERSION = new VersionNumber(1, 2, 0);    // IG Schema Current version
         
     private PreparedStatement insertHashSetStmt;
 
@@ -145,6 +145,8 @@ public final class DrawableDB {
     private PreparedStatement hashSetGroupStmt;
 
     private PreparedStatement pathGroupFilterByDataSrcStmt;
+    
+    private PreparedStatement deleteDataSourceStmt;
 
     /**
      * map from {@link DrawableAttribute} to the {@link PreparedStatement} that
@@ -263,6 +265,7 @@ public final class DrawableDB {
             selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
             insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
             removeHashHitStmt = prepareStatement("DELETE FROM hash_set_hits WHERE obj_id = ?"); //NON-NLS
+            deleteDataSourceStmt = prepareStatement("DELETE FROM datasources where ds_obj_id = ?"); //NON-NLS
             return true;
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to prepare all statements", ex); //NON-NLS
@@ -475,7 +478,7 @@ public final class DrawableDB {
                 //allow to query while in transaction - no need read locks
                 statement.execute("PRAGMA read_uncommitted = True;"); //NON-NLS
 
-                //TODO: do we need this?
+                //used for data source deletion
                 statement.execute("PRAGMA foreign_keys = ON"); //NON-NLS
 
                 //TODO: test this
@@ -578,7 +581,8 @@ public final class DrawableDB {
                             + " modified_time integer, " //NON-NLS
                             + " make VARCHAR(255) DEFAULT NULL, " //NON-NLS
                             + " model VARCHAR(255) DEFAULT NULL, " //NON-NLS
-                            + " analyzed integer DEFAULT 0)"; //NON-NLS
+                            + " analyzed integer DEFAULT 0, " //NON-NLS
+                            + " FOREIGN KEY (data_source_obj_id) REFERENCES datasources(ds_obj_id) ON DELETE CASCADE)"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
                     logger.log(Level.SEVERE, "Failed to create drawable_files table", ex); //NON-NLS
@@ -598,8 +602,9 @@ public final class DrawableDB {
                 try {
                     String sql = "CREATE TABLE if not exists hash_set_hits " //NON-NLS
                             + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, " //NON-NLS
-                            + " obj_id BIGINT REFERENCES drawable_files(obj_id) not null, " //NON-NLS
-                            + " PRIMARY KEY (hash_set_id, obj_id))"; //NON-NLS
+                            + " obj_id BIGINT NOT NULL, " //NON-NLS
+                            + " PRIMARY KEY (hash_set_id, obj_id), " //NON-NLS
+                            + " FOREIGN KEY (obj_id) REFERENCES drawable_files(obj_id) ON DELETE CASCADE)"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
                     logger.log(Level.SEVERE, "Failed to create hash_set_hits table", ex); //NON-NLS
@@ -710,7 +715,7 @@ public final class DrawableDB {
                         + " examiner_id integer not null, " //NON-NLS
                         + " seen integer DEFAULT 0, " //NON-NLS
                         + " UNIQUE(group_id, examiner_id),"
-                        + " FOREIGN KEY(group_id) REFERENCES " + GROUPS_TABLENAME + "(group_id),"
+                        + " FOREIGN KEY(group_id) REFERENCES " + GROUPS_TABLENAME + "(group_id) ON DELETE CASCADE,"
                         + " FOREIGN KEY(examiner_id) REFERENCES  tsk_examiners(examiner_id)"
                         + " )"; //NON-NLS
 
@@ -2024,6 +2029,26 @@ public final class DrawableDB {
         } finally {
             dbWriteUnlock();
 
+        }
+    }
+
+    /**
+     * delete the datasource from the database with cascade.
+     *
+     * @param id the obj_id of the row to be deleted
+     */
+    public void deleteDataSource(long dataSourceId) {
+        dbWriteLock();
+        DrawableTransaction trans = null;
+        try {
+            trans = beginTransaction();
+            deleteDataSourceStmt.setLong(1, dataSourceId);
+            deleteDataSourceStmt.executeUpdate();
+            commitTransaction(trans, true);
+        } catch (SQLException | TskCoreException ex) {
+            logger.log(Level.WARNING, "failed to deletesource for obj_id = " + dataSourceId, ex); //NON-NLS
+        } finally {
+            dbWriteUnlock();
         }
     }
 
