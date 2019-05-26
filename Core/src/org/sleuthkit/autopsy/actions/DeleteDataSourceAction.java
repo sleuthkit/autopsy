@@ -33,18 +33,14 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author markm
- */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private final Long selectDataSource;
+    private final Long selectedDataSource;
     
     @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
     public DeleteDataSourceAction(Long selectedDataSource) {
         super(Bundle.DeleteDataSourceAction_name_text());
-        selectDataSource = selectedDataSource;
+        this.selectedDataSource = selectedDataSource;
 
     }
     @NbBundle.Messages({"ErrorDeletingDataSource.name.text=Error Deleting Data Source"})
@@ -52,11 +48,11 @@ public final class DeleteDataSourceAction extends AbstractAction {
     public void actionPerformed(ActionEvent event) {
         try {
             //VersionNumber checkVersionNumber = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaVersion();
-            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectDataSource);
-            deleteDataSource(selectDataSource);
-            Case.getCurrentCaseThrows().notifyDataSourceDeleted();
+            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectedDataSource);
+            deleteDataSource(selectedDataSource);
+            Case.getCurrentCaseThrows().notifyDataSourceDeleted(selectedDataSource);
         } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
-	    String msg = MessageFormat.format(Bundle.ErrorDeletingDataSource_name_text(), selectDataSource);
+	    String msg = MessageFormat.format(Bundle.ErrorDeletingDataSource_name_text(), selectedDataSource);
             logger.log(Level.WARNING, msg, e);
             //throw new TskCoreException(msg, e);
         }
