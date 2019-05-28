@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.contentviewers.imagetagging;
 import java.util.EventObject;
 import javafx.event.Event;
 import javafx.event.EventType;
-import javafx.scene.Node;
 
 /**
  *
@@ -30,9 +29,9 @@ import javafx.scene.Node;
 public final class FocusChangeEvent extends EventObject{
     
     private final EventType<Event> type;
-    private final Node focused;
+    private final StoredTag focused;
     
-    public FocusChangeEvent(Object source, EventType<Event> type, Node focused) {
+    public FocusChangeEvent(Object source, EventType<Event> type, StoredTag focused) {
         super(source);
         this.type = type;
         this.focused = focused;
@@ -42,7 +41,7 @@ public final class FocusChangeEvent extends EventObject{
         return type;
     }
     
-    public Node getNode() {
+    public StoredTag getNode() {
         return focused;
     }
     

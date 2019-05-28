@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.contentviewers.imagetagging;
 
 import com.sun.javafx.event.EventDispatchChainImpl;
@@ -32,6 +31,7 @@ import javafx.scene.input.MouseEvent;
  * Top level group containing Image and all existing tags.
  */
 public final class TopLevelTagsGroup extends Group {
+
     private final EventDispatchChainImpl NO_OP_CHAIN = new EventDispatchChainImpl();
     private final Collection<FocusChangeListener> listeners;
 
@@ -49,50 +49,55 @@ public final class TopLevelTagsGroup extends Group {
                 return;
             }
 
-            Node child = getTopLevelChild(e.getPickResult().getIntersectedNode());
-            if (lastFocus == child) {
-                return;
-            } else if (lastFocus != null && lastFocus != child) {
-                resetFocus(lastFocus);
+            Node topLevelChild = e.getPickResult().getIntersectedNode();
+            while (!this.getChildren().contains(topLevelChild)) {
+                topLevelChild = topLevelChild.getParent();
             }
-            
-            child.getEventDispatcher().dispatchEvent(new Event(ControlType.FOCUSED), NO_OP_CHAIN);
-            listeners.forEach((listener) -> {
-                listener.focusChanged(new FocusChangeEvent(this, ControlType.FOCUSED, child));
-            });
-            
-            if(child != baseImage) {
-                child.toFront();
-            }
-            lastFocus = child;
+
+            requestFocus(topLevelChild);
         });
     }
-    
+
     public void addFocusChangeListener(FocusChangeListener fcl) {
         listeners.add(fcl);
     }
-    
+
     private void resetFocus(Node n) {
         n.getEventDispatcher().dispatchEvent(new Event(ControlType.NOT_FOCUSED), NO_OP_CHAIN);
-        listeners.forEach((listener) -> {
-            listener.focusChanged(new FocusChangeEvent(this, ControlType.NOT_FOCUSED, n));
-        });
-    }
-    
-    public void deleteNode(Node dest) {
-        if(lastFocus == dest) {
-            resetFocus(lastFocus);
-            lastFocus = null;
+        if(n instanceof StoredTag) {
+            listeners.forEach((listener) -> {
+                listener.focusChanged(new FocusChangeEvent(this, ControlType.NOT_FOCUSED, (StoredTag) n));
+            });
         }
-        
-        dest.getEventDispatcher().dispatchEvent(new Event(ControlType.DELETE), NO_OP_CHAIN);
     }
 
-    private Node getTopLevelChild(Node selected) {
-        Node curr = selected;
-        while (!this.getChildren().contains(curr)) {
-            curr = curr.getParent();
+    public void deleteNode(Node n) {
+        if (lastFocus == n) {
+            resetFocus(n);
+            lastFocus = null;
         }
-        return curr;
+        n.getEventDispatcher().dispatchEvent(new Event(ControlType.DELETE), NO_OP_CHAIN);
+        this.getChildren().remove(n);
+    }
+
+    public void requestFocus(Node n) {
+        if (lastFocus == n) {
+            return;
+        } else if (lastFocus != null && lastFocus != n) {
+            resetFocus(lastFocus);
+        }
+
+        n.getEventDispatcher().dispatchEvent(new Event(ControlType.FOCUSED), NO_OP_CHAIN);
+        if(n instanceof StoredTag) {
+            listeners.forEach((listener) -> {
+                listener.focusChanged(new FocusChangeEvent(this, ControlType.FOCUSED, (StoredTag) n));
+            });
+        }
+
+        if (n != baseImage) {
+            n.toFront();
+        }
+
+        lastFocus = n;
     }
 }

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers.imagetagging;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import javafx.event.EventHandler;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -40,6 +41,10 @@ public final class ImageTagCreator extends Rectangle {
     private double lineThicknessAsPercent = 1.5;
     private final double minArea;  
     private final Collection<StoredTagListener> listeners;
+    
+    private final EventHandler<MouseEvent> mousePressed;
+    private final EventHandler<MouseEvent> mouseDragged;
+    private final EventHandler<MouseEvent> mouseReleased;
 
     /**
      * Adds tagging support to an image, where the 'tag' rectangle will be the
@@ -60,11 +65,8 @@ public final class ImageTagCreator extends Rectangle {
         setStrokeWidth(lineThicknessPixels);
         minArea = lineThicknessPixels * lineThicknessPixels;
         setVisible(false);
-
-        this.addEventHandler(ControlType.NOT_FOCUSED, (event) -> defaultSettings());
-
-        //Create a rectangle by left clicking on the image
-        image.setOnMousePressed((MouseEvent event) -> {
+        
+        this.mousePressed = (MouseEvent event) -> {
             if (event.isSecondaryButtonDown()) {
                 return;
             }
@@ -76,10 +78,11 @@ public final class ImageTagCreator extends Rectangle {
 
             setX(rectangleOriginX);
             setY(rectangleOriginY);
-        });
-
-        //Adjust the rectangle by dragging the left mouse button
-        image.setOnMouseDragged((MouseEvent event) -> {
+        };
+        
+        image.addEventHandler(MouseEvent.MOUSE_PRESSED, this.mousePressed);
+        
+        this.mouseDragged = (MouseEvent event) -> {
             if (event.isSecondaryButtonDown()) {
                 return;
             }
@@ -107,16 +110,16 @@ public final class ImageTagCreator extends Rectangle {
                 setY(newY);
             }
             setHeight(Math.abs(offsetY));
-        });
-
-        image.setOnMouseReleased(event -> {
+        };
+        
+        image.addEventHandler(MouseEvent.MOUSE_DRAGGED, this.mouseDragged);
+        
+        this.mouseReleased = event -> {
             if ((this.getWidth() - this.getStrokeWidth()) * 
                     (this.getHeight() - this.getStrokeWidth()) <= minArea) {
                 defaultSettings();
                 return;
-            }
-
-            //TODO - persist tag.            
+            }          
             
             //Notify listeners
             StoredTagEvent newTagEvent = new StoredTagEvent(this, new StoredTag(image, this.getX(), this.getY(),
@@ -127,7 +130,22 @@ public final class ImageTagCreator extends Rectangle {
             });
             
             defaultSettings();
+        };
+        
+        image.addEventHandler(MouseEvent.MOUSE_RELEASED, this.mouseReleased);
+        this.addEventHandler(ControlType.NOT_FOCUSED, (event) -> {
+            defaultSettings();
+            image.removeEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleased);
+            image.removeEventHandler(MouseEvent.MOUSE_DRAGGED, mouseDragged);
+            image.removeEventHandler(MouseEvent.MOUSE_PRESSED, mousePressed);
         });
+        
+        this.addEventHandler(ControlType.DELETE, event -> {
+            defaultSettings();
+            image.removeEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleased);
+            image.removeEventHandler(MouseEvent.MOUSE_DRAGGED, mouseDragged);
+            image.removeEventHandler(MouseEvent.MOUSE_PRESSED, mousePressed);
+        }); 
     }
     
     public void addNewTagListener(StoredTagListener listener) {

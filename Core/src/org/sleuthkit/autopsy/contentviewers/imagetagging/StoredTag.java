@@ -28,6 +28,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
  *
@@ -92,15 +93,32 @@ public final class StoredTag extends Group {
         physicalTag.setY(y);
         physicalTag.setWidth(x1 - x);
         physicalTag.setHeight(y1 - y);
+        
+        this.focusedProperty().addListener((ov, oldV, newV) -> {
+            if(!newV) {
+                System.out.println("NOT FOCUSED");
+            } else {
+                System.out.println("GAINED FOCUS");
+            }
+        });
 
         this.addEventHandler(ControlType.NOT_FOCUSED, event -> ALL_CHILDREN.dispatchEvent(event));
         this.addEventHandler(ControlType.FOCUSED, event -> ALL_CHILDREN.dispatchEvent(event));
         this.addEventHandler(ControlType.DELETE, event -> ALL_CHILDREN.dispatchEvent(event));
     }
+    
+    public void addContentTag(ContentTag t) {
+        physicalTag.linkContentTag(t);
+    }
+    
+    public ContentTag getContentTag() {
+        return physicalTag.getContentTag();
+    }
 
     class PhysicalTag extends Rectangle {
 
         private final ImageView image;
+        private ContentTag tag;
 
         public PhysicalTag(ImageView image) {
             this.setStroke(Color.RED);
@@ -120,9 +138,21 @@ public final class StoredTag extends Group {
         private void save() {
             //TODO - persist tag
         }
+        
+        public void linkContentTag(ContentTag t) {
+            tag = t;
+        }
+        
+        public ContentTag getContentTag() {
+            return tag;
+        }
 
         private ImageView getUnderlyingImage() {
             return image;
+        }
+        
+        private class ImageRegion {
+            
         }
     }
 

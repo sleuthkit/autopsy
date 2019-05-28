@@ -52,15 +52,21 @@ import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.controlsfx.control.MaskerPane;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
+import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
+import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog.TagNameAndComment;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ControlType;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
@@ -77,10 +83,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final boolean fxInited;
 
     private JFXPanel fxPanel;
+    private AbstractFile file;
+    private StoredTag lastFocused;
     private TopLevelTagsGroup imageGroup;
     private ImageTagCreator tagger;
     private ImageView fxImageView;
-    private Node focusedNode;
     private ScrollPane scrollPane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
@@ -127,14 +134,17 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 fxImageView = new ImageView();  // will hold image
                 imageGroup = new TopLevelTagsGroup(fxImageView);
                 deleteTagButton.setEnabled(false);
+                editTagButton.setEnabled(false);
                 imageGroup.addFocusChangeListener((event) -> {
-                    if(event.getType() == ControlType.NOT_FOCUSED || event.getNode() == fxImageView) {
+                    if (event.getType() == ControlType.NOT_FOCUSED || event.getNode().equals(fxImageView)) {
                         deleteTagButton.setEnabled(false);
                         createTagButton.setEnabled(true);
+                        editTagButton.setEnabled(false);
                     } else if (event.getType() == ControlType.FOCUSED) {
                         deleteTagButton.setEnabled(true);
+                        editTagButton.setEnabled(true);
                         createTagButton.setEnabled(false);
-                        focusedNode = event.getNode();
+                        lastFocused = event.getNode();
                     }
                 });
                 scrollPane = new ScrollPane(imageGroup); // scrolls and sizes imageview
@@ -220,16 +230,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     Image fxImage = readImageTask.get();
                     imageGroup.getChildren().clear();
                     imageGroup.getChildren().add(fxImageView);
+                    this.file = file;
                     if (nonNull(fxImage)) {
                         // We have a non-null image, so let's show it.
                         fxImageView.setImage(fxImage);
-                        tagger = new ImageTagCreator(fxImageView);
-                        StoredTagListener newTagListener = (StoredTagEvent evt) -> {
-                            StoredTag tag = evt.getTag();
-                            imageGroup.getChildren().add(tag);
-                        };
-                        tagger.addNewTagListener(newTagListener);
-                        imageGroup.getChildren().add(tagger);
                         resetView();
                         scrollPane.setContent(imageGroup);
                     } else {
@@ -326,8 +330,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         jSeparator2 = new javax.swing.JToolBar.Separator();
         zoomResetButton = new javax.swing.JButton();
         jSeparator3 = new javax.swing.JToolBar.Separator();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0));
         createTagButton = new javax.swing.JButton();
         jSeparator4 = new javax.swing.JToolBar.Separator();
+        editTagButton = new javax.swing.JButton();
+        jSeparator5 = new javax.swing.JToolBar.Separator();
         deleteTagButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jMenu1, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.jMenu1.text")); // NOI18N
@@ -435,9 +442,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         });
         toolbar.add(zoomResetButton);
         toolbar.add(jSeparator3);
+        toolbar.add(filler1);
 
         org.openide.awt.Mnemonics.setLocalizedText(createTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.createTagButton.text")); // NOI18N
         createTagButton.setFocusable(false);
+        createTagButton.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         createTagButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         createTagButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         createTagButton.addActionListener(new java.awt.event.ActionListener() {
@@ -448,8 +457,21 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         toolbar.add(createTagButton);
         toolbar.add(jSeparator4);
 
+        org.openide.awt.Mnemonics.setLocalizedText(editTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.editTagButton.text")); // NOI18N
+        editTagButton.setFocusable(false);
+        editTagButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        editTagButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        editTagButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editTagButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(editTagButton);
+        toolbar.add(jSeparator5);
+
         org.openide.awt.Mnemonics.setLocalizedText(deleteTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.deleteTagButton.text")); // NOI18N
         deleteTagButton.setFocusable(false);
+        deleteTagButton.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         deleteTagButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         deleteTagButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         deleteTagButton.addActionListener(new java.awt.event.ActionListener() {
@@ -503,16 +525,53 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_formComponentResized
 
     private void deleteTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagButtonActionPerformed
-        imageGroup.deleteNode(focusedNode);
+        Platform.runLater(() -> {
+            imageGroup.deleteNode(lastFocused);
+        });
+        try {
+            Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(lastFocused.getContentTag());
+        } catch (TskCoreException ex) {
+
+        }
     }//GEN-LAST:event_deleteTagButtonActionPerformed
 
     private void createTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createTagButtonActionPerformed
+        Platform.runLater(() -> {
+            tagger = new ImageTagCreator(fxImageView);
+            StoredTagListener newTagListener = (StoredTagEvent event) -> {
+                StoredTag tag = event.getTag();
+                imageGroup.getChildren().add(tag);
+                SwingUtilities.invokeLater(() -> {
+                    TagNameAndComment result = GetTagNameAndCommentDialog.doDialog();
+                    if (result != null) {
+                        try {
+                            ContentTag t = Case.getCurrentCase().getServices().getTagsManager().addContentTag(file,
+                                    result.getTagName(), result.getComment());
+                            tag.addContentTag(t);
+                        } catch (TskCoreException ex) {
+                            Platform.runLater(() -> imageGroup.deleteNode(tag));
+                        }
+                    } else {
+                        Platform.runLater(() -> imageGroup.deleteNode(tag));
+                    }
+                });
+                imageGroup.deleteNode(tagger);
 
+            };
+            tagger.addNewTagListener(newTagListener);
+            imageGroup.getChildren().add(tagger);
+        });
     }//GEN-LAST:event_createTagButtonActionPerformed
+
+    private void editTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editTagButtonActionPerformed
+        ContentTag t = lastFocused.getContentTag();
+    }//GEN-LAST:event_editTagButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createTagButton;
     private javax.swing.JButton deleteTagButton;
+    private javax.swing.JButton editTagButton;
+    private javax.swing.Box.Filler filler1;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JPopupMenu jPopupMenu2;
@@ -520,6 +579,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
+    private javax.swing.JToolBar.Separator jSeparator5;
     private javax.swing.JButton rotateLeftButton;
     private javax.swing.JButton rotateRightButton;
     private javax.swing.JTextField rotationTextField;
