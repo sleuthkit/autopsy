@@ -52,4 +52,13 @@ interface FileTypeViewer {
      * fine. Otherwise, it is ambiguous.
      */
     void resetComponent();
+
+    /**
+     * Identify whether the viewer is supported for the given file
+     *
+     * @param file to check support for of the appropriate MIME type
+     *
+     * @return true if supported false otherwise
+     */
+    boolean isSupported(AbstractFile file);
 }
