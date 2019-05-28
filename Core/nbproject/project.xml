@@ -773,6 +773,14 @@
                 <runtime-relative-path>ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</binary-origin>
             </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/okhttp-2.7.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/okhttp-2.7.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/okio-1.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/okio-1.6.0.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>

@@ -1,0 +1,158 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.sleuthkit.autopsy.texttranslation.translators;
+
+import java.io.*;
+import com.google.gson.*;
+import com.squareup.okhttp.*;
+import java.awt.Component;
+import javax.swing.JLabel;
+import org.openide.util.NbBundle.Messages;
+
+/**
+ * Translates text by making HTTP requests to Bing Translator.
+ * This requires a valid subscription key for a Microsoft Azure account.
+ */
+@ServiceProvider(service = TextTranslator.class)
+public class BingTranslator implements TextTranslator{
+    // Insert the subscription key here.
+    private String subscriptionKey = "";
+    
+    //In the String below, "en" is the target language. You can include multiple target
+    //languages separated by commas. A full list of supported languages is here:
+    //https://docs.microsoft.com/en-us/azure/cognitive-services/translator/language-support
+    private static final String URL = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=en";
+
+    // This sends messages to Microsoft.
+    private final OkHttpClient CLIENT = new OkHttpClient();
+    
+    //We might want to make this a configurable setting for anyone who has a 
+    //paid account that's willing to pay for long documents.
+    private final int MAX_STRING_LENGTH = 5000;
+    
+    /**
+     * Converts an input test to the JSON format required by Bing Translator,
+     * posts it to Microsoft, and returns the JSON text response.
+     * 
+     * @param string The input text to be translated.
+     * @return The translation response as a JSON string
+     * @throws IOException if the request could not be executed due to cancellation, a connectivity problem or timeout.
+     */
+    public String postTranslationRequest(String string) throws IOException {
+        MediaType mediaType = MediaType.parse("application/json");
+        
+        JsonArray jsonArray = new JsonArray();
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("Text", string);
+        jsonArray.add(jsonObject);
+        String bodyString = jsonArray.toString();
+        
+        RequestBody body = RequestBody.create(mediaType,
+                                              bodyString);
+        Request request = new Request.Builder()
+            .url(URL).post(body)
+            .addHeader("Ocp-Apim-Subscription-Key", subscriptionKey)
+            .addHeader("Content-type", "application/json").build();
+        Response response = CLIENT.newCall(request).execute();
+        return response.body().string();
+    }
+
+    @Override
+    public String translate(String string) throws TranslationException {
+        if (subscriptionKey == null || subscriptionKey.isEmpty()) {
+            throw new TranslationException("Bing Translator has not been configured, credentials need to be specified");
+        }
+        
+        //Translates some text into English, without specifying the source langauge.
+        
+        // HTML files were producing lots of white space at the end
+        string = string.trim();
+        
+        //Google Translate required us to replace (\r\n|\n) with <br /> 
+        //but Bing Translator doesn not have that requirement.
+
+        //The free account has a maximum file size. If you have a paid account,
+        //you probably still want to limit file size to prevent accidentally
+        //translating very large documents.
+        if (string.length() > MAX_STRING_LENGTH) {
+            string = string.substring(0, MAX_STRING_LENGTH);
+        }
+        
+        try {
+            String response = postTranslationRequest(string);
+            return parseJSONResponse(response);
+        } catch (Throwable e) {
+            throw new TranslationException(e.getMessage()); 
+        }
+    }
+    
+    @Messages({"BingTranslator.name.text=Bing Translator"})
+    @Override
+    public String getName() {
+        return Bundle.BingTranslator_name_text();
+    }
+
+    @Override
+    public Component getComponent() {
+        return new JLabel("There are no settings to configure for Bing Translator");
+    }
+
+    @Override
+    public void saveSettings() {
+        //There are no settings to configure for Bing Translator
+        //Possible settings for the future:
+        //source language, target language, API key, path to JSON file of API key.
+        //We'll need test code to make sure that exceptions are thrown in all of
+        //those scenarios.
+        return;
+    }
+
+    private String parseJSONResponse(String json_text) throws TranslationException {
+        /* Here is an example of the text we get from Bing when input is "gato",
+           the Spanish word for cat:
+            [
+              {
+                "detectedLanguage": {
+                  "language": "es",
+                  "score": 1.0
+                },
+                "translations": [
+                  {
+                    "text": "cat",
+                    "to": "en"
+                  }
+                ]
+              }
+            ]       
+        */
+        JsonParser parser = new JsonParser();
+        try {
+            JsonArray responses = parser.parse(json_text).getAsJsonArray();
+            //As far as I know, there's always exactly one item in the array.
+            JsonObject response0 = responses.get(0).getAsJsonObject();
+            JsonArray translations = response0.getAsJsonArray("translations");
+            JsonObject translation0 = translations.get(0).getAsJsonObject();
+            String text = translation0.get("text").getAsString();
+            return text;
+        } catch (IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException e) {
+            throw new TranslationException("JSON text does not match Bing Translator scheme: " + e);
+        }
+    }
+}
