@@ -42,6 +42,15 @@ public class DataSourceLoader {
 
     private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
 
+    /**
+     * Query case database for a list of all existing logical data sources and
+     * their object IDs. 
+     *
+     * @param tskDb SleuthkitCase database handle
+     * @param dataSourceMap map to which to add data sources
+     * @throws TskCoreException
+     * @throws SQLException
+     */
     private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
         //try block releases resources - exceptions are handled in done()
         try (
@@ -55,6 +64,16 @@ public class DataSourceLoader {
         }
     }
 
+    /**
+     * Query case database for a list of all existing image data sources and
+     * their object IDs. 
+     *
+     * @param tskDb SleuthkitCase database handle
+     * @param dataSourceMap map to which to add data sources
+     * otherwise
+     * @throws SQLException
+     * @throws TskCoreException
+     */
     private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSourceMap) throws SQLException, TskCoreException {
         //try block releases resources - exceptions are handled in done()
         try (
@@ -74,9 +93,10 @@ public class DataSourceLoader {
     }
 
     /**
-     * Get a map of data source Ids to their string names for the current case.
+     * Get a map of data source Ids to their string names (data source file name
+     * only) for the current case.
      *
-     * @return Map of Long (id) to String (name)
+     * @return Map of Long (id) to String (data source file name only)
      *
      * @throws NoCurrentCaseException
      * @throws TskCoreException
