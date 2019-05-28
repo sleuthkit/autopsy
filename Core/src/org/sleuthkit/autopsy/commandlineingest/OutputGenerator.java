@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSource;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -82,7 +83,7 @@ class OutputGenerator {
         }        
     }
     
-    static void saveAddDataSourceOutput(AutoIngestDataSource dataSource, String outputDirPath) {
+    static void saveAddDataSourceOutput(Case caseForJob, AutoIngestDataSource dataSource, String outputDirPath) {
         
         List<Content> contentObjects = dataSource.getContent();
         if (contentObjects == null || contentObjects.isEmpty()) {
@@ -110,8 +111,19 @@ class OutputGenerator {
             
             // save command output
             for (Content content : contentObjects) {
+                AbstractFile file = caseForJob.getSleuthkitCase().getAbstractFileById(content.getId());
+                if (file == null) {
+                    // ELTODO change log text
+                    logger.log(Level.SEVERE, "Failed to create JSON output for 'Add Data Source' command"); //NON-NLS
+                    System.err.println("Failed to create JSON output for 'Add Data Source' command"); //NON-NLS
+                    // ELTODO do we continue or exit??
+                    continue;
+                }
+                
+                // if this is logical data source, then get local path
+                String localPath = file.getLocalAbsPath();
                 jsonGenerator.writeStartObject();
-                jsonGenerator.writeStringField("@dataSourcePath", content.getUniquePath());
+                jsonGenerator.writeStringField("@dataSourcePath", localPath /*content.getUniquePath()*/);
                 jsonGenerator.writeStringField("@dataSourceObjectId", String.valueOf(content.getId()));
                 jsonGenerator.writeEndObject();
             }
@@ -130,6 +142,6 @@ class OutputGenerator {
                     System.err.println("Failed to close JSON output file for 'Add Data Source' command"); //NON-NLS
                 }
             }
-        }        
+        }
     }
 }

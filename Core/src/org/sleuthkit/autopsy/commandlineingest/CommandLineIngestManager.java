@@ -172,7 +172,7 @@ public class CommandLineIngestManager {
                                     runDataSourceProcessor(caseForJob, dataSource);
                                     
                                     String outputDirPath = "C:\\TEST\\DELETE";
-                                    OutputGenerator.saveAddDataSourceOutput(dataSource, outputDirPath);
+                                    OutputGenerator.saveAddDataSourceOutput(caseForJob, dataSource, outputDirPath);
                                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error adding data source " + dataSourcePath, ex);
