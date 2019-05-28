@@ -48,6 +48,8 @@ class EmailMessage {
     private String messageID = "";
     private String inReplyToID = "";
     private List<String> references = null;
+    private String simplifiedSubject = "";
+    private boolean isReplySubject = false;
 
     boolean hasAttachment() {
         return hasAttachment;
@@ -80,7 +82,33 @@ class EmailMessage {
     void setSubject(String subject) {
         if (subject != null) {
             this.subject = subject;
+            if(subject.matches("^[R|r][E|e].*?:.*")) {
+                this.simplifiedSubject = subject.replaceAll("[R|r][E|e].*?:", "").trim();
+                isReplySubject = true;
+            } else {
+                this.simplifiedSubject = subject;
+            }
+        } else {
+            this.simplifiedSubject = null;
         }
+    }
+    
+    /**
+     * Returns the orginal subject with the "RE:" stripped off".
+     * 
+     * @return Message subject with the "RE" stripped off
+     */
+    String getSimplifiedSubject() {
+        return simplifiedSubject;
+    }
+    
+    /**
+     * Returns whether or not the message subject started with "RE:"
+     * 
+     * @return true if the original subject started with RE otherwise false.
+     */
+    boolean isReplySubject() {
+        return isReplySubject;
     }
 
     String getHeaders() {
