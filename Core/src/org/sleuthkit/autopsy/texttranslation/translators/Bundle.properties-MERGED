@@ -1,3 +1,4 @@
+BingTranslator.name.text=Bing Translator
 GoogleTranslator.name.text=Google Translate
 GoogleTranslatorSettingsPanel.browseButton.text=Browse
 GoogleTranslatorSettingsPanel.credentialsLabel.text=Credentials:
@@ -11,3 +12,4 @@ GoogleTranslatorSettingsPanel.fileChooser.confirmButton=Select
 GoogleTranslatorSettingsPanel.json.description=JSON Files
 GoogleTranslatorSettingsPanel.warningLabel.text=
 GoogleTranslatorSettingsPanel.targetLanguageLabel.text=Target Language:
+BingTranslatorSettingsPanel.jButton1.text=Test

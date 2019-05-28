@@ -106,7 +106,7 @@ public final class GoogleTranslator implements TextTranslator {
     }
 
     /**
-     * Load the Google Cloud Translation service give the currently saved
+     * Load the Google Cloud Translation service given the currently saved
      * settings
      */
     private void loadTranslator() {

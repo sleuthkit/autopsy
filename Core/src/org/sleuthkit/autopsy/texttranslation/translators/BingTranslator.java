@@ -19,12 +19,20 @@
 
 package org.sleuthkit.autopsy.texttranslation.translators;
 
-import java.io.*;
-import com.google.gson.*;
-import com.squareup.okhttp.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import java.awt.Component;
-import javax.swing.JLabel;
+import java.io.IOException;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.texttranslation.TextTranslator;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
 /**
  * Translates text by making HTTP requests to Bing Translator.
@@ -32,13 +40,13 @@ import org.openide.util.NbBundle.Messages;
  */
 @ServiceProvider(service = TextTranslator.class)
 public class BingTranslator implements TextTranslator{
-    // Insert the subscription key here.
-    private String subscriptionKey = "";
-    
     //In the String below, "en" is the target language. You can include multiple target
     //languages separated by commas. A full list of supported languages is here:
     //https://docs.microsoft.com/en-us/azure/cognitive-services/translator/language-support
     private static final String URL = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=en";
+    private final BingTranslatorSettingsPanel settingsPanel;
+    private final BingTranslatorSettings settings = new BingTranslatorSettings();
+    
 
     // This sends messages to Microsoft.
     private final OkHttpClient CLIENT = new OkHttpClient();
@@ -46,6 +54,15 @@ public class BingTranslator implements TextTranslator{
     //We might want to make this a configurable setting for anyone who has a 
     //paid account that's willing to pay for long documents.
     private final int MAX_STRING_LENGTH = 5000;
+    
+    
+    public BingTranslator(){
+        settingsPanel = new BingTranslatorSettingsPanel(settings.getCredentials());
+    }
+    
+    static String getMicrosftTranlatorUrl(){
+        return URL;
+    }
     
     /**
      * Converts an input test to the JSON format required by Bing Translator,
@@ -68,7 +85,7 @@ public class BingTranslator implements TextTranslator{
                                               bodyString);
         Request request = new Request.Builder()
             .url(URL).post(body)
-            .addHeader("Ocp-Apim-Subscription-Key", subscriptionKey)
+            .addHeader("Ocp-Apim-Subscription-Key", settings.getCredentials())
             .addHeader("Content-type", "application/json").build();
         Response response = CLIENT.newCall(request).execute();
         return response.body().string();
@@ -76,7 +93,7 @@ public class BingTranslator implements TextTranslator{
 
     @Override
     public String translate(String string) throws TranslationException {
-        if (subscriptionKey == null || subscriptionKey.isEmpty()) {
+        if (settings.getCredentials() == null || settings.getCredentials().isEmpty()) {
             throw new TranslationException("Bing Translator has not been configured, credentials need to be specified");
         }
         
@@ -111,17 +128,12 @@ public class BingTranslator implements TextTranslator{
 
     @Override
     public Component getComponent() {
-        return new JLabel("There are no settings to configure for Bing Translator");
+        return settingsPanel;
     }
 
     @Override
     public void saveSettings() {
-        //There are no settings to configure for Bing Translator
-        //Possible settings for the future:
-        //source language, target language, API key, path to JSON file of API key.
-        //We'll need test code to make sure that exceptions are thrown in all of
-        //those scenarios.
-        return;
+        settings.setCredentials(settingsPanel.getCredentials());
     }
 
     private String parseJSONResponse(String json_text) throws TranslationException {
