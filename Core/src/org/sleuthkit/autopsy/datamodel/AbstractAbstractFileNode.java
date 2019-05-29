@@ -82,7 +82,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
 
-    private static final ExecutorService translationPool;
+    // pool to run long running translation and getSCO tasks in backgound
+    private static final ExecutorService translationSCOPool;
     private static final Integer MAX_POOL_SIZE = 10;
 
     /**
@@ -101,7 +102,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
 
         if (UserPreferences.displayTranslatedFileNames()) {
-            AbstractAbstractFileNode.translationPool.submit(new TranslationTask(
+            AbstractAbstractFileNode.translationSCOPool.submit(new TranslationTask(
                     new WeakReference<>(this), weakPcl));
         }
 
@@ -113,8 +114,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     static {
         //Initialize this pool only once! This will be used by every instance of AAFN
         //to do their heavy duty SCO column and translation updates.
-        translationPool = Executors.newFixedThreadPool(MAX_POOL_SIZE,
-                new ThreadFactoryBuilder().setNameFormat("translation-task-thread-%d").build());
+        translationSCOPool = Executors.newFixedThreadPool(MAX_POOL_SIZE,
+                new ThreadFactoryBuilder().setNameFormat("translation-and-sco-task-thread-%d").build());
     }
 
     /**
@@ -145,6 +146,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     enum NodeSpecificEvents {
         TRANSLATION_AVAILABLE,
+        SCO_AVAILABLE
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -223,6 +225,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             //Set the tooltip
             this.setShortDescription(content.getName());
             updateSheet(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, content.getName()));
+        } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString())) {
+            SCOData scoData = (SCOData)evt.getNewValue();
+            if (scoData.getScoreAndDescription() != null) {
+                updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoData.getScoreAndDescription().getRight(), scoData.getScoreAndDescription().getLeft()));
+            }
+            if (scoData.getComment() != null) {
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, scoData.getComment()));
+            }
+            if (scoData.getCountAndDescription() != null &&
+               !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+               updateSheet(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
+            }
         }
     };
     /**
@@ -368,18 +382,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             properties.add(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, ""));
         }
 
-        //SCO column prereq info..
-        List<ContentTag> tags = getContentTagsFromDatabase();
-        CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-
-        Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
-        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
-        DataResultViewerTable.HasCommentStatus comment = getCommentProperty(tags, attribute);
-        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, comment));
-        if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-            Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute);
-            properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), countAndDescription.getRight(), countAndDescription.getLeft()));
-        }
+        // Create place holders for S C O 
+        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), NO_DESCR, ""));
+        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, ""));
+        properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), NO_DESCR, ""));
+        
+        
+        // Get the SCO columns data in a background task
+        AbstractAbstractFileNode.translationSCOPool.submit(new GetSCOTask(
+                    new WeakReference<>(this), weakPcl));
+        
         properties.add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
         properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
         properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
