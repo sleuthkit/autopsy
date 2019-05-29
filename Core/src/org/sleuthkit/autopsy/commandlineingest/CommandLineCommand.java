@@ -32,7 +32,8 @@ class CommandLineCommand {
     static enum CommandType {        
         CREATE_CASE,
         ADD_DATA_SOURCE,
-        RUN_INGEST;
+        RUN_INGEST,
+        LIST_ALL_DATA_SOURCES;
     }
     
     /**
