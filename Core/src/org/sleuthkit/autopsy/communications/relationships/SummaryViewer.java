@@ -45,7 +45,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_TabTitle=Summary",
         "SummaryViewer_FileRefNameColumn_Title=Path",
         "SummaryViewer_CaseRefNameColumn_Title=Case Name",
-        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Case References>",
+        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other Occurrences>",
         "SummaryViewer_Creation_Date_Title=Creation Date"
     })
 

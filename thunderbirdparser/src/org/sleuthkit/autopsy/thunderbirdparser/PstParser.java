@@ -373,7 +373,7 @@ class PstParser {
 
             if (token.matches("^References:.*")) {
                 buffer = new StringBuilder();
-                buffer.append((token.substring(token.indexOf(":") + 1)).trim());
+                buffer.append((token.substring(token.indexOf(':') + 1)).trim());
             } else if (buffer != null) {
                 if (token.matches("^\\w+:.*$")) {
                     List<String> references = new ArrayList<>();

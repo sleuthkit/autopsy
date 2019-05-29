@@ -215,17 +215,20 @@ final class CustomFileTypesManager {
             signatureList.add(new Signature(byteArray, 522L));
             fileType = new FileType("image/x-pict", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
-            
-            /* NOTE: see JIRA-4269. This MIME type seems to match a lot of random file types,
-            including ZIP archives. As a result those files get assigned this MIME type instead 
-            of having their MIME type detected by Tika.
-            byteArray = DatatypeConverter.parseHexBinary("1100"); //NON-NLS
-            signatureList.clear();
-            signatureList.add(new Signature(byteArray, 522L));
-            fileType = new FileType("image/x-pict", signatureList); //NON-NLS
-            autopsyDefinedFileTypes.add(fileType);*/
 
             /*
+             * NOTE: see JIRA-4269. This MIME type seems to match a lot of
+             * random file types, including ZIP archives. As a result those
+             * files get assigned this MIME type instead of having their MIME
+             * type detected by Tika. byteArray =
+             * DatatypeConverter.parseHexBinary("1100"); //NON-NLS
+             * signatureList.clear(); signatureList.add(new Signature(byteArray,
+             * 522L)); fileType = new FileType("image/x-pict", signatureList);
+             * //NON-NLS
+            autopsyDefinedFileTypes.add(fileType);
+             */
+
+ /*
              * Add type for pam.
              */
             signatureList.clear();
@@ -305,12 +308,23 @@ final class CustomFileTypesManager {
             autopsyDefinedFileTypes.add(fileType);
 
             /*
-             * Add type for .tec files with leading End Of Image marker (JFIF JPEG)
+             * Add type for .tec files with leading End Of Image marker (JFIF
+             * JPEG)
              */
             byteArray = DatatypeConverter.parseHexBinary("FFD9FFD8"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("image/jpeg", signatureList); //NON-NLS
+            autopsyDefinedFileTypes.add(fileType);
+
+            /*
+             * Add type for Windows NT registry files with leading End Of Image marker (JFIF
+             * JPEG)
+             */
+            byteArray = DatatypeConverter.parseHexBinary("72656766"); //NON-NLS
+            signatureList.clear();
+            signatureList.add(new Signature(byteArray, 0L));
+            fileType = new FileType("application/x.windows-registry", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
 
         } catch (IllegalArgumentException ex) {
