@@ -42,7 +42,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             boolean shouldSave = false;
             boolean shouldAlert = true;
             String description = null;
-            Set<String> extensions = new HashSet<>();
+            Set<String> extensions = null;
             Set<String> paths = new HashSet<>();
             Set<String> fullPaths = new HashSet<>();
             Set<String> filenames = new HashSet<>();
@@ -66,7 +66,10 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                         break;
                     case "extensions":
                         JsonArray extensionsArray = entry1.getValue().getAsJsonArray();
-                        extensionsArray.forEach(ext -> {extensions.add(ext.getAsString());});
+                        extensions = new HashSet<>();
+                        for (JsonElement e : extensionsArray) {
+                            extensions.add(e.getAsString());
+                        }
                         break;
                     case "folder-names":
                         JsonArray pathsArray = entry1.getValue().getAsJsonArray();
@@ -109,7 +112,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                                 case "max":
                                     maxDate = entry2.getValue().getAsString();
                                     break;
-                                case "minDays":
+                                case "min-days":
                                     minDays = entry2.getValue().getAsInt();  
                                     break;
                                 default:
@@ -123,8 +126,9 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             }
             
             // A rule with full-paths cannot have other rule definitions
-            if (!fullPaths.isEmpty() && (!extensions.isEmpty() || !paths.isEmpty()
-                    || !filenames.isEmpty())) {
+            if (!fullPaths.isEmpty() && ((extensions != null && !extensions.isEmpty())
+                    || (paths != null && !paths.isEmpty())
+                    || (filenames != null && !filenames.isEmpty()))) {
                 throw new JsonParseException("A rule with full-paths cannot have other rule definitions");
             }
             

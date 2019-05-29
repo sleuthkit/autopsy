@@ -126,16 +126,16 @@ public class LogicalImagerRule {
     public static class Builder {
         private boolean shouldAlert;
         private boolean shouldSave;
-        private String description;
-        private Set<String> extensions = new HashSet<>();        
-        private Set<String> filenames = new HashSet<>();        
-        private Set<String> paths = new HashSet<>();        
-        private Set<String> fullPaths = new HashSet<>();        
-        private int minFileSize = 0;
-        private int maxFileSize = 0;
-        private int minDays = 0;
-        private String minDate;
-        private String maxDate;
+        private String description = null;
+        private Set<String> extensions = null;
+        private Set<String> filenames = null;        
+        private Set<String> paths = null;        
+        private Set<String> fullPaths = null;        
+        private Integer minFileSize = null;
+        private Integer maxFileSize = null;
+        private Integer minDays = null;
+        private String minDate = null;
+        private String maxDate = null;
 
         public Builder() {}
         

@@ -47,6 +47,7 @@ public final class ConfigWizardAction implements ActionListener {
         wiz.setTitle("...dialog title...");
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             // do something
+            System.out.println("Finish pressed");
         }
     }
 

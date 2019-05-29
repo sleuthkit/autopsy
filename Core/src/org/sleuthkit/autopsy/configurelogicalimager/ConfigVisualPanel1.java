@@ -7,22 +7,20 @@ package org.sleuthkit.autopsy.configurelogicalimager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import static javax.swing.JOptionPane.WARNING_MESSAGE;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.openide.util.Exceptions;
 
 public final class ConfigVisualPanel1 extends JPanel implements DocumentListener {
 
@@ -56,8 +54,10 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
         loadRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         configFileTextField = new javax.swing.JTextField();
+        browseButton = new javax.swing.JButton();
 
         buttonGroup1.add(newRadioButton);
+        newRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(newRadioButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.newRadioButton.text_1")); // NOI18N
         newRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -78,6 +78,13 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
         configFileTextField.setEditable(false);
         configFileTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.configFileTextField.text_1")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.browseButton.text")); // NOI18N
+        browseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                browseButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -93,8 +100,10 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
                         .addGap(38, 38, 38)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
-                            .addComponent(configFileTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 328, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(34, Short.MAX_VALUE))
+                            .addComponent(configFileTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(browseButton)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -106,20 +115,24 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
                 .addGap(37, 37, 37)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(configFileTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(144, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(configFileTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(browseButton))
+                .addContainerGap(141, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void newRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRadioButtonActionPerformed
-        newFile = true;
-        configFilename = null;
-        configFileTextField.setText(" ");
+        configFileTextField.setText("");
     }//GEN-LAST:event_newRadioButtonActionPerformed
 
     private void loadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadRadioButtonActionPerformed
-         chooseFile("Select a Logical Imager configuration json file");
+        configFileTextField.setText("");
     }//GEN-LAST:event_loadRadioButtonActionPerformed
+
+    private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
+         chooseFile("Select a Logical Imager configuration json file");
+    }//GEN-LAST:event_browseButtonActionPerformed
 
     private void chooseFile(String title) {
         JFileChooser fileChooser = new JFileChooser();
@@ -129,31 +142,33 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
         FileFilter filter = new FileNameExtensionFilter("configuration json file", new String[] {"json"});
         fileChooser.setFileFilter(filter);
         fileChooser.setMultiSelectionEnabled(false);
-        while (true) {
-            if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                String path = fileChooser.getSelectedFile().getPath();
-                if (new File(path).exists()) {
-                    try {
-                        loadConfigFile(path);
-                        configFilename = path;
-                        configFileTextField.setText(path);
-                        newFile = false;
-                    } catch (IOException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                    break;
-                } else {
-                    JOptionPane.showMessageDialog(fileChooser, 
-                            path + "\nFile not found.\nCheck the filename and try again.", "Open", 
-                            WARNING_MESSAGE);
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String path = fileChooser.getSelectedFile().getPath();
+            if (new File(path).exists()) {
+                try {
+                    loadConfigFile(path);
+                    configFilename = path;
+                    configFileTextField.setText(path);
+                    newFile = false;
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Invalid config json: " + ex.getMessage() , 
+                        "Configuration error", 
+                        JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                break;
+                if (!path.endsWith(".json")) {
+                    path += ".json";
+                }
+                configFilename = path;
+                configFileTextField.setText(path);
+                newFile = true;
             }
         }
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton browseButton;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JTextField configFileTextField;
     private javax.swing.JLabel jLabel1;
@@ -161,19 +176,13 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
     private javax.swing.JRadioButton newRadioButton;
     // End of variables declaration//GEN-END:variables
 
-    private void loadConfigFile(String path) throws FileNotFoundException {
+    private void loadConfigFile(String path) throws FileNotFoundException, JsonIOException, JsonSyntaxException {
         FileInputStream is = new FileInputStream(path);
         InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
         gsonBuilder.registerTypeAdapter(LogicalImagerConfig.class, new LogicalImagerConfigDeserializer());
         Gson gson = gsonBuilder.create();
-        try {
-            config = gson.fromJson(reader, LogicalImagerConfig.class);
-            //System.out.println(gson.toJson(config));
-            //updatePanel(path, config);
-        } catch (JsonParseException e) {
-            System.err.println("Error parsing " + path + ". Reason= " + e.getMessage());
-        }
+        config = gson.fromJson(reader, LogicalImagerConfig.class);
     }
 
     public LogicalImagerConfig getConfig() {

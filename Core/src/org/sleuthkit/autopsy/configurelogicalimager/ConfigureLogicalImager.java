@@ -58,7 +58,7 @@ public final class ConfigureLogicalImager implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        List<WizardDescriptor.Panel<WizardDescriptor>> panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
+        List<WizardDescriptor.Panel<WizardDescriptor>> panels = new ArrayList<>();
         panels.add(new ConfigWizardPanel1());
         panels.add(new ConfigWizardPanel2());
         String[] steps = new String[panels.size()];
@@ -75,12 +75,17 @@ public final class ConfigureLogicalImager implements ActionListener {
                 jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
             }
         }
-        WizardDescriptor wiz = new WizardDescriptor(new WizardDescriptor.ArrayIterator<WizardDescriptor>(panels));
+        WizardDescriptor wiz = new WizardDescriptor(new WizardDescriptor.ArrayIterator<>(panels));
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle("Configure Logical Imager");
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             // do something
+            System.out.println("Finish pressed");
+            if (panels.get(1) instanceof ConfigWizardPanel2) {
+                ConfigWizardPanel2 panel = (ConfigWizardPanel2) panels.get(1);
+                panel.saveConfigFile();
+            }
         }
     }
 }

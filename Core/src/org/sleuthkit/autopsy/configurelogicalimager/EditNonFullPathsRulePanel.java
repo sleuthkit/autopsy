@@ -37,31 +37,15 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
         setExtensions(rule.getExtensions());
         
-        filenamesTextArea = createTextArea();
+        filenamesTextArea = new JTextArea();
         initTextArea(filenamesScrollPane, filenamesTextArea);
         setTextArea(filenamesTextArea, rule.getFilenames());
 
-        folderNamesTextArea = createTextArea();
+        folderNamesTextArea = new JTextArea();
         initTextArea(folderNamesScrollPane, folderNamesTextArea);
         setTextArea(folderNamesTextArea, rule.getPaths());
     }
 
-    private JTextArea createTextArea() {
-        final JTextArea textArea = new JTextArea() {
-            //Override the paste action for this jtext area to always append pasted text with a new line if necessary
-            @Override
-            public void paste() {
-                //if the cursor position is not at the start of a new line add the new line symbol before the pasted text
-                if (!(this.getDocument().getLength()==0) && !this.getText().endsWith("\n")) {
-                    this.append(System.getProperty("line.separator"));
-                }
-                this.setCaretPosition(this.getDocument().getLength());
-                super.paste();           
-            }
-        };
-        return textArea;
-    }
-   
     private void initTextArea(JScrollPane pane, JTextArea textArea) {
         textArea.setColumns(20);
         textArea.setRows(5);
