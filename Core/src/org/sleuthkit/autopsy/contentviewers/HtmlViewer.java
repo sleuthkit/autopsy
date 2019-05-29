@@ -37,29 +37,28 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(HtmlViewer.class.getName());
-    
+
     private static final String[] SUPPORTED_MIMETYPES = new String[]{
-            "text/html",
-            "application/xhtml+xml"
+        "text/html",
+        "application/xhtml+xml"
     };
-    
+
     /**
      * Creates new form HtmlViewerPanel
      */
     HtmlViewer() {
         initComponents();
     }
-    
+
     /**
      * Retrieve the HTML text content from the supplied file.
-     * 
+     *
      * @param abstractFile The file to read.
-     * 
+     *
      * @return The text content of the file.
      */
     @NbBundle.Messages({
-       "HtmlViewer_file_error=This file is missing or unreadable.",
-    })
+        "HtmlViewer_file_error=This file is missing or unreadable.",})
     private String getHtmlText(AbstractFile abstractFile) {
         try {
             int fileSize = (int) abstractFile.getSize();
@@ -127,5 +126,10 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
     @Override
     public void resetComponent() {
         htmlPanel.reset();
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        return true;
     }
 }
