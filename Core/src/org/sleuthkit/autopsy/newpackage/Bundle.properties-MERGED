@@ -4,6 +4,13 @@ CTL_FileSearchTestAction=Test file search
 FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
 # {0} - Data source ID
 FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
+FileSearch.GroupingAttributeType.datasource.displayName=Data source
+FileSearch.GroupingAttributeType.fileType.displayName=File type
+FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences
+FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names
+FileSearch.GroupingAttributeType.none.displayName=None
+FileSearch.GroupingAttributeType.parent.displayName=Parent folder
+FileSearch.GroupingAttributeType.size.displayName=Size
 FileSearch.KeywordListGroupKey.noKeywords=None
 FileSearch.NoGroupingGroupKey.allFiles=All Files
 FileSearchData.FileSize.large.displayName=200MB-1GB
@@ -21,29 +28,58 @@ FileSearchData.Frequency.common.displayName=Common
 FileSearchData.Frequency.rare.displayName=Rare
 FileSearchData.Frequency.unique.displayName=Unique
 FileSearchData.Frequency.unknown.displayName=Unknown
+FileSearchDialog.jLabel1.text=File Type
+FileSearchDialog.dsCheckBox.text=Data source
+FileSearchDialog.cancelButton.text=Cancel
+FileSearchDialog.freqCheckBox.text=CR Frequency
+FileSearchDialog.sizeCheckBox.text=Size
+FileSearchDialog.kwCheckBox.text=Keyword
+FileSearchDialog.addParentButton.text=Add
+FileSearchDialog.deleteParentButton.text=Delete
+FileSearchDialog.parentFullRadioButton.text=Full
+FileSearchDialog.parentSubstringRadioButton.text=Substring
+FileSearchDialog.parentTextField.text=
+FileSearchDialog.jLabel2.text=(All will be used)
+FileSearchDialog.jLabel3.text=Group by attribute:
+FileSearchDialog.jLabel4.text=Order groups by:
+FileSearchDialog.orderAttrRadioButton.text=Attribute
+FileSearchDialog.orderSizeRadioButton.text=Group Size
+FileSearchDialog.jLabel5.text=Order files by: 
+FileSearchDialog.parentCheckBox.text=Parent
+FileSearchDialog.searchButton.text=Search
 # {0} - Data source name
 # {1} - Data source ID
-FileSearchFiltering.DataSourceSubFilter.datasource={0}({1})
+FileSearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
-FileSearchFiltering.DataSourceSubFilter.desc=Files in data source(s): {0}
-FileSearchFiltering.DataSourceSubFilter.or=\ or 
+FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}
+FileSearchFiltering.DataSourceFilter.or=\ or 
 # {0} - filters
-FileSearchFiltering.FileTypeSubFilter.desc=Files with type: {0}
-FileSearchFiltering.FileTypeSubFilter.or=\ or 
+FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
+FileSearchFiltering.FileTypeFilter.or=\ or 
 # {0} - filters
-FileSearchFiltering.FrequencySubFilter.desc=Files with frequency: {0}
-FileSearchFiltering.FrequencySubFilter.or=\ or 
-FileSearchFiltering.KeywordListSubFilter.comma=, 
+FileSearchFiltering.FrequencyFilter.desc=Files with frequency: {0}
+FileSearchFiltering.FrequencyFilter.or=\ or 
+FileSearchFiltering.KeywordListFilter.comma=, 
 # {0} - filters
-FileSearchFiltering.KeywordListSubFilter.desc=Files with keywords in list(s): {0}
+FileSearchFiltering.KeywordListFilter.desc=Files with keywords in list(s): {0}
 # {0} - filters
-FileSearchFiltering.ParentSubFilter.desc=Files with paths matching: {0}
-FileSearchFiltering.ParentSubFilter.exact=(exact match)
-FileSearchFiltering.ParentSubFilter.or=\ or 
-FileSearchFiltering.ParentSubFilter.substring=(substring)
+FileSearchFiltering.ParentFilter.desc=Files with paths matching: {0}
+FileSearchFiltering.ParentFilter.exact=(exact match)
+FileSearchFiltering.ParentFilter.or=\ or 
+FileSearchFiltering.ParentFilter.substring=(substring)
+# {0} - search term
+FileSearchFiltering.ParentSearchTerm.fullString=\ {0} (exact)
+FileSearchFiltering.ParentSearchTerm.subString=\ {0} (substring)
 # {0} - filters
-FileSearchFiltering.SizeSubFilter.desc=Files with size in range(s): {0}
-FileSearchFiltering.SizeSubFilter.or=\ or 
+FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}
+FileSearchFiltering.SizeFilter.or=\ or 
 # {0} - Minimum bytes
 # {1} - Maximum bytes
-FileSearchFiltering.SizeSubFilter.range=({0} to {1})
+FileSearchFiltering.SizeFilter.range=({0} to {1})
+FileSorter.SortingMethod.datasource.displayName=By data source
+FileSorter.SortingMethod.filename.displayName=By file name
+FileSorter.SortingMethod.filesize.displayName=By file size
+FileSorter.SortingMethod.filetype.displayName=By file type
+FileSorter.SortingMethod.frequency.displayName=By central repo frequency
+FileSorter.SortingMethod.keywordlist.displayName=By keyword list names
+FileSorter.SortingMethod.parent.displayName=By parent path

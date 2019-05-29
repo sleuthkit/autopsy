@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.newpackage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
 
@@ -76,6 +78,15 @@ class FileSearchData {
                 return RARE;
             }
             return COMMON;
+        }
+        
+        /**
+         * Get the list of enums that are valid for filtering.
+         * 
+         * @return enums that can be used to filter
+         */
+        static List<Frequency> getOptionsForFiltering() {
+            return Arrays.asList(UNIQUE, RARE, COMMON);
         }
         
         @Override
@@ -207,11 +218,16 @@ class FileSearchData {
         }
         
         /**
-         * Get the display name for this type
+         * Get the MIME types matching this category.
          * 
-         * @return the display name
+         * @return Collection of MIME type strings
          */
-        String getDisplayName() {
+        Collection<String> getMediaTypes() {
+            return mediaTypes;
+        }
+        
+        @Override
+        public String toString() {
             return displayName;
         }
         
@@ -238,6 +254,15 @@ class FileSearchData {
                 }
             }
             return OTHER;
+        }
+        
+        /**
+         * Get the list of enums that are valid for filtering.
+         * 
+         * @return enums that can be used to filter
+         */
+        static List<FileType> getOptionsForFiltering() {
+            return Arrays.asList(IMAGE, AUDIO, VIDEO, EXECUTABLE, DOCUMENTS);
         }
     }
     

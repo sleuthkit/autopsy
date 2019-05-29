@@ -109,6 +109,45 @@ class FileSearch {
     }
     
     /**
+     * Enum for the attribute types that can be used for grouping.
+     */
+    @NbBundle.Messages({
+        "FileSearch.GroupingAttributeType.fileType.displayName=File type",
+        "FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences",
+        "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names",
+        "FileSearch.GroupingAttributeType.size.displayName=Size",
+        "FileSearch.GroupingAttributeType.datasource.displayName=Data source",
+        "FileSearch.GroupingAttributeType.parent.displayName=Parent folder",
+        "FileSearch.GroupingAttributeType.none.displayName=None",
+    }) 
+    enum GroupingAttributeType {
+        FILE_TYPE(new FileTypeAttribute(), Bundle.FileSearch_GroupingAttributeType_fileType_displayName()),
+        FREQUENCY(new FrequencyAttribute(), Bundle.FileSearch_GroupingAttributeType_frequency_displayName()),
+        KEYWORD_LIST_NAME(new KeywordListAttribute(), Bundle.FileSearch_GroupingAttributeType_keywordList_displayName()),
+        FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),
+        DATA_SOURCE(new DataSourceAttribute(), Bundle.FileSearch_GroupingAttributeType_datasource_displayName()),
+        PARENT_PATH(new ParentPathAttribute(), Bundle.FileSearch_GroupingAttributeType_parent_displayName()),
+        NO_GROUPING(new NoGroupingAttribute(), Bundle.FileSearch_GroupingAttributeType_none_displayName());
+        
+        private final AttributeType attributeType;
+        private final String displayName;
+        
+        GroupingAttributeType(AttributeType attributeType, String displayName) {
+            this.attributeType = attributeType;
+            this.displayName = displayName;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+        
+        AttributeType getAttributeType() {
+            return attributeType;
+        }
+    }
+    
+    /**
      * Base class for the grouping attributes.
      */
     abstract static class AttributeType {
@@ -403,7 +442,7 @@ class FileSearch {
         
         @Override
         String getDisplayName() {
-            return fileType.getDisplayName();
+            return fileType.toString();
         }
         
         @Override

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.newpackage;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.openide.util.NbBundle;
 
 /**
  * Class used to sort ResultFiles using the supplied method.
@@ -217,13 +218,32 @@ class FileSorter implements Comparator<ResultFile> {
     /**
      * Enum for selecting the primary method for sorting result files.
      */
+    @NbBundle.Messages({
+        "FileSorter.SortingMethod.datasource.displayName=By data source",
+        "FileSorter.SortingMethod.filename.displayName=By file name",
+        "FileSorter.SortingMethod.filesize.displayName=By file size",
+        "FileSorter.SortingMethod.filetype.displayName=By file type",
+        "FileSorter.SortingMethod.frequency.displayName=By central repo frequency",
+        "FileSorter.SortingMethod.keywordlist.displayName=By keyword list names",
+        "FileSorter.SortingMethod.parent.displayName=By parent path"})
     enum SortingMethod {
-        BY_DATA_SOURCE,  // Sort in increasing order of data source ID
-        BY_FILE_NAME,    // Sort alphabetically by file name
-        BY_FILE_SIZE,    // Sort in decreasing order of size
-        BY_FILE_TYPE,    // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
-        BY_FREQUENCY,    // Sort by decreasing rarity in the central repository
-        BY_KEYWORD_LIST_NAMES,  // Sort alphabetically by list of keyword list names found
-        BY_PARENT_PATH;  // Sort alphabetically by path
+        BY_FILE_NAME(Bundle.FileSorter_SortingMethod_filename_displayName()),     // Sort alphabetically by file name
+        BY_DATA_SOURCE(Bundle.FileSorter_SortingMethod_datasource_displayName()), // Sort in increasing order of data source ID
+        BY_FILE_SIZE(Bundle.FileSorter_SortingMethod_filesize_displayName()),     // Sort in decreasing order of size
+        BY_FILE_TYPE(Bundle.FileSorter_SortingMethod_filetype_displayName()),     // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
+        BY_FREQUENCY(Bundle.FileSorter_SortingMethod_frequency_displayName()),    // Sort by decreasing rarity in the central repository
+        BY_KEYWORD_LIST_NAMES(Bundle.FileSorter_SortingMethod_keywordlist_displayName()),  // Sort alphabetically by list of keyword list names found
+        BY_PARENT_PATH(Bundle.FileSorter_SortingMethod_parent_displayName());     // Sort alphabetically by path
+        
+        private final String displayName;
+        
+        SortingMethod(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
     }
 }

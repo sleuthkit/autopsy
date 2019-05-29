@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.newpackage;
 
 import java.util.*;
+import javax.swing.JDialog;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -48,33 +49,86 @@ public final class FileSearchTestAction extends CallableSystemAction {
     @Override
     @SuppressWarnings("fallthrough")
     public void performAction() {
+        
+        EamDb crDb = null;
+        if (EamDb.isEnabled()) {
+            try {
+                crDb = EamDb.getInstance();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return;
+            }
+        }
+        
+        FileSearchDialog dialog = new FileSearchDialog(null, true);
+        
+        while ( ! dialog.searchCancelled()) {
+            
+            // Display the dialog
+            dialog.setVisible(true);
+
+            // Get the selected filters
+            List<FileSearchFiltering.FileFilter> filters = dialog.getFilters();
+        
+            // Get the grouping attribute and group sorting method
+            FileSearch.AttributeType groupingAttr = dialog.getGroupingAttribute();
+            FileGroup.GroupSortingAlgorithm groupSortAlgorithm = dialog.getGroupSortingMethod();
+            
+            // Get the file sorting method
+            FileSorter.SortingMethod fileSort = dialog.getFileSortingMethod();
+            
+            try {
+            
+                // Make a list of attributes that we want to add values for. Eventually this can be based on user input but
+                // for now just add all of them.
+                List<FileSearch.AttributeType> attributesNeededForSorting = Arrays.asList(new FileSearch.DataSourceAttribute(),
+                        new FileSearch.FileSizeAttribute(), new FileSearch.FileTypeAttribute(), new FileSearch.FrequencyAttribute(),
+                        new FileSearch.KeywordListAttribute(), new FileSearch.ParentPathAttribute());
+
+                FileSearch.runFileSearch(filters, 
+                    groupingAttr, 
+                    groupSortAlgorithm, 
+                    fileSort, 
+                    attributesNeededForSorting,
+                    Case.getCurrentCase().getSleuthkitCase(), crDb);
+
+
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return;
+            }
+            
+        }
+        
+        
         System.out.println("\n#########################\nTesting file search!!!");
         
         // Set up all the test filters
-        FileSearchFiltering.FileFilter size_medSmallXS = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, FileSearchData.FileSize.SMALL, FileSearchData.FileSize.XS));
-        FileSearchFiltering.FileFilter size_XL = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.XL));
-        FileSearchFiltering.FileFilter size_largeXL = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.LARGE, FileSearchData.FileSize.XL));
-        FileSearchFiltering.FileFilter size_medLargeXL = new FileSearchFiltering.SizeSubFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, FileSearchData.FileSize.LARGE, FileSearchData.FileSize.XL));
+        FileSearchFiltering.FileFilter size_medSmallXS = new FileSearchFiltering.SizeFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, FileSearchData.FileSize.SMALL, FileSearchData.FileSize.XS));
+        FileSearchFiltering.FileFilter size_XL = new FileSearchFiltering.SizeFilter(Arrays.asList(FileSearchData.FileSize.XL));
+        FileSearchFiltering.FileFilter size_largeXL = new FileSearchFiltering.SizeFilter(Arrays.asList(FileSearchData.FileSize.LARGE, FileSearchData.FileSize.XL));
+        FileSearchFiltering.FileFilter size_medLargeXL = new FileSearchFiltering.SizeFilter(Arrays.asList(FileSearchData.FileSize.MEDIUM, FileSearchData.FileSize.LARGE, FileSearchData.FileSize.XL));
 
-        FileSearchFiltering.FileFilter kw_alphaBeta = new FileSearchFiltering.KeywordListSubFilter(Arrays.asList("Alpha", "Beta"));
-        FileSearchFiltering.FileFilter kw_alpha = new FileSearchFiltering.KeywordListSubFilter(Arrays.asList("Alpha"));
+        FileSearchFiltering.FileFilter kw_alphaBeta = new FileSearchFiltering.KeywordListFilter(Arrays.asList("Alpha", "Beta"));
+        FileSearchFiltering.FileFilter kw_alpha = new FileSearchFiltering.KeywordListFilter(Arrays.asList("Alpha"));
         
-        FileSearchFiltering.FileFilter freq_uniqueRare = new FileSearchFiltering.FrequencySubFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE));
+        FileSearchFiltering.FileFilter freq_uniqueRare = new FileSearchFiltering.FrequencyFilter(Arrays.asList(FileSearchData.Frequency.UNIQUE, FileSearchData.Frequency.RARE));
         
-        FileSearchFiltering.FileFilter path_II = new FileSearchFiltering.ParentSubFilter(Arrays.asList(new FileSearchFiltering.ParentSearchTerm("II", false)));
-        FileSearchFiltering.FileFilter path_IIfolderA = new FileSearchFiltering.ParentSubFilter(Arrays.asList(new FileSearchFiltering.ParentSearchTerm("II", false), 
+        FileSearchFiltering.FileFilter path_II = new FileSearchFiltering.ParentFilter(Arrays.asList(new FileSearchFiltering.ParentSearchTerm("II", false)));
+        FileSearchFiltering.FileFilter path_IIfolderA = new FileSearchFiltering.ParentFilter(Arrays.asList(new FileSearchFiltering.ParentSearchTerm("II", false), 
                 new FileSearchFiltering.ParentSearchTerm("/Rare in CR/Folder A/", true)));
         
-        FileSearchFiltering.FileFilter type_video = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.VIDEO));
-        FileSearchFiltering.FileFilter type_imageAudio = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.IMAGE, 
-                FileTypeUtils.FileTypeCategory.AUDIO));
-        FileSearchFiltering.FileFilter type_image = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.IMAGE));
-        FileSearchFiltering.FileFilter type_doc = new FileSearchFiltering.FileTypeSubFilter(Arrays.asList(FileTypeUtils.FileTypeCategory.DOCUMENTS));
+        FileSearchFiltering.FileFilter type_video = new FileSearchFiltering.FileTypeFilter(Arrays.asList(FileSearchData.FileType.VIDEO));
+        FileSearchFiltering.FileFilter type_imageAudio = new FileSearchFiltering.FileTypeFilter(Arrays.asList(FileSearchData.FileType.IMAGE, 
+                FileSearchData.FileType.AUDIO));
+        FileSearchFiltering.FileFilter type_image = new FileSearchFiltering.FileTypeFilter(Arrays.asList(FileSearchData.FileType.IMAGE));
+        FileSearchFiltering.FileFilter type_doc = new FileSearchFiltering.FileTypeFilter(Arrays.asList(FileSearchData.FileType.DOCUMENTS));
  
         FileSearchFiltering.FileFilter ds_46 = null;
         try {
             DataSource ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(46);
-            ds_46 = new FileSearchFiltering.DataSourceSubFilter(Arrays.asList(ds));
+            ds_46 = new FileSearchFiltering.DataSourceFilter(Arrays.asList(ds));
         } catch (Exception ex) {
             ex.printStackTrace();
             return;
@@ -88,7 +142,8 @@ public final class FileSearchTestAction extends CallableSystemAction {
         List<FileSearchFiltering.FileFilter> filters = new ArrayList<>();
         filters.add(size_medSmallXS);
         //filters.add(kw_alpha);
-        //filters.add(freq_uniqueRare);
+        filters.add(freq_uniqueRare);
+        //filters.add(path_IIfolderA);
         
         // Choose grouping attribute
         //FileSearch.AttributeType groupingAttr = new FileSearch.FileTypeAttribute();
@@ -105,14 +160,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
         // Choose file sorting method
         FileSorter.SortingMethod fileSort = FileSorter.SortingMethod.BY_FILE_SIZE;
         
-        EamDb crDb = null;
-        if (EamDb.isEnabled()) {
-            try {
-                crDb = EamDb.getInstance();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
+
 
         try {
             
