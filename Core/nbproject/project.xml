@@ -682,8 +682,8 @@
                 <binary-origin>release\modules\ext\dec-0.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
+                <runtime-relative-path>ext/Rejistry-1.1-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/Rejistry-1.1-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dd-plist-1.20.jar</runtime-relative-path>
