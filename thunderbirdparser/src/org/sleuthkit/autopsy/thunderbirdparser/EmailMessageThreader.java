@@ -27,106 +27,108 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Given a list of email messages arranges the message into threads using the message
- * reference lists.
- * 
- * This threader is based heavely off of the algorithum found at <a href="https://www.jwz.org/doc/threading.html">
+ * Given a list of email messages arranges the message into threads using the
+ * message reference lists.
+ *
+ * This threader is based heavely off of the algorithum found at
+ * <a href="https://www.jwz.org/doc/threading.html">
  * "message threading." by Jamie Zawinski</a>
- * 
+ *
  */
 final class EmailMessageThreader {
-    
+
     private int bogus_id_count = 0;
 
     public Set<Container> threadMessages(List<EmailMessage> emailMessages) {
         HashMap<String, Container> id_table = createIDTable(emailMessages);
         Set<Container> rootSet = getRootSet(id_table);
-        
+
         pruneEmptyContainers(rootSet);
-        
+
         Set<Container> finalSet = groupBySubject(rootSet);
 
         printContainerSet(finalSet, "");
-        
+
         return finalSet;
     }
 
     /**
-     * Walks the list of emailMessages creating a Container object for each 
-     * unique message ID found.  Adds the emailMessage to the container where
+     * Walks the list of emailMessages creating a Container object for each
+     * unique message ID found. Adds the emailMessage to the container where
      * possible.
-     * 
+     *
      * @param emailMessages
-     * @return 
+     *
+     * @return
      */
     private HashMap<String, Container> createIDTable(List<EmailMessage> emailMessages) {
         HashMap<String, Container> id_table = new HashMap<>();
-        
-        for(EmailMessage message: emailMessages) {
+
+        for (EmailMessage message : emailMessages) {
             String messageID = message.getMessageID();
-            
+
             // Check the id_table for an existing Container for message-id
             Container container = id_table.get(messageID);
-            
+
             // An existing container for message-id was found
-            if(container != null) {
+            if (container != null) {
                 // If the existing Container has a message already assocated with it
                 // emailMessage maybe a duplicate, so we don't lose the existance of 
                 // the duplicate message assign it a bogus message-id
-                if(container.hasMessage()) {
+                if (container.hasMessage()) {
                     messageID = String.format("<Bogus-id: %d >", bogus_id_count++);
                     container = null;
                 } else {
                     container.setMessage(message);
                 }
-            } 
-            
-            if(container == null) {
+            }
+
+            if (container == null) {
                 container = new Container(message);
                 id_table.put(messageID, container);
             }
-            
+
             processMessageReferences(message, container, id_table);
         }
-        
+
         return id_table;
     }
-    
+
     /**
-     * Loops throught message's list of references, creating objects as needed 
+     * Loops throught message's list of references, creating objects as needed
      * and setting up the parent child relationships amoung the messages.
-     * 
-     * @param message The current email messags
+     *
+     * @param message   The current email messags
      * @param container Container object for message
-     * @param id_table Hashtable of known message-id\container pairs
+     * @param id_table  Hashtable of known message-id\container pairs
      */
     void processMessageReferences(EmailMessage message, Container container, Map<String, Container> id_table) {
         List<String> referenceList = message.getReferences();
-        
+
         // Make sure the inReplyToID is in the list of references
         String inReplyToID = message.getInReplyToID();
-        if(inReplyToID != null && !inReplyToID.isEmpty()) {
-            if(referenceList == null) {
+        if (inReplyToID != null && !inReplyToID.isEmpty()) {
+            if (referenceList == null) {
                 referenceList = new ArrayList<>();
             }
-            
+
             referenceList.add(inReplyToID);
         }
-        
+
         // No references, nothing to do
-        if(referenceList == null) {
+        if (referenceList == null) {
             return;
         }
 
         Container parent_ref = null;
         Container ref;
 
-        for(String refID: referenceList){
+        for (String refID : referenceList) {
             // Check id_table to see if there is already a container for this
             // reference id, if not create a new Container and add to table
             ref = id_table.get(refID);
 
-            if(ref == null ) {
+            if (ref == null) {
                 ref = new Container();
                 id_table.put(refID, ref);
             }
@@ -142,12 +144,12 @@ final class EmailMessageThreader {
 
             parent_ref = ref;
         }
-        
+
         // If the parent_ref and container are already linked, don't change 
         // anything
         if (parent_ref != null
-            && (parent_ref == container
-            || container.isChild(parent_ref))) {
+                && (parent_ref == container
+                || container.isChild(parent_ref))) {
             parent_ref = null;
         }
 
@@ -155,96 +157,113 @@ final class EmailMessageThreader {
         // the list of references from another message.  parent_ref will be
         // the real parent of container so throw away the old parent and set a
         // new one.
-        if(container.hasParent()) {
-           container.getParent().removeChild(container);
-           container.setParent(null);
+        if (container.hasParent()) {
+            container.getParent().removeChild(container);
+            container.setParent(null);
         }
 
-        if(parent_ref != null) {
+        if (parent_ref != null) {
             container.setParent(container);
             parent_ref.addChild(container);
         }
     }
-    
+
     /**
-     * Creates a set of root container messages from the message-ID hashtable. 
-     * A root Container is container that does not have a parent container.
-     * 
+     * Creates a set of root container messages from the message-ID hashtable. A
+     * root Container is container that does not have a parent container.
+     *
      * @param id_table Table of all known Containers
-     * 
+     *
      * @return A set of the root containers.
      */
     Set<Container> getRootSet(HashMap<?, Container> id_table) {
         HashSet<Container> rootSet = new HashSet<>();
-        
-        id_table.values().stream().filter((container) -> 
-                (!container.hasParent())).forEachOrdered((container) -> {
+
+        id_table.values().stream().filter((container)
+                -> (!container.hasParent())).forEachOrdered((container) -> {
             rootSet.add(container);
         });
-        
+
         return rootSet;
     }
-    
+
     /**
      * Remove Containers from containerSet if they do not have a message or
      * children.
-     * 
+     *
      * @param containerSet A set of Container objects
      */
     void pruneEmptyContainers(Set<Container> containerSet) {
+        Set<Container> containersToRemove = new HashSet<>();
         containerSet.forEach((container) -> {
-            if(!container.hasMessage() && !container.hasChildren()) {
-                containerSet.remove(container);
+            if (!container.hasMessage() && !container.hasChildren()) {
+//                containerSet.remove(container);
+                containersToRemove.add(container);
             } else {
                 pruneChildren(container);
             }
         });
+
+        containerSet.removeAll(containersToRemove);
     }
-    
+
     /**
-     * Recursively work through the list of parent's children removing 
-     * empy containers.
-     * 
-     * @param parent 
+     * Recursively work through the list of parent's children removing empy
+     * containers.
+     *
+     * @param parent
      */
-    void pruneChildren(Container parent) {
-        if(parent == null) {
-            return; 
-        }
-        
-        Set<Container> children = parent.getChildren();
-        Container grandParent = parent.getParent();
-        
-        if (children == null) {
-            return;
+    boolean pruneChildren(Container parent) {
+        if (parent == null) {
+            return false;
         }
 
-        children.stream().map((child) -> {
-            // Parent is an empty container.  Reparent the children to their 
-            // grandparent.
-            if (!parent.hasMessage() && grandParent != null) {
-                child.setParent(grandParent);
-                grandParent.addChild(child);
-                grandParent.removeChild(parent);
-                parent.setParent(null);
-                parent.clearChildren();
+        Set<Container> children = parent.getChildren();
+        Container grandParent = parent.getParent();
+
+        if (children == null) {
+            return false;
+        }
+
+        Set<Container> remove = new HashSet<>();
+        Set<Container> add = new HashSet<>();
+        for (Container child : parent.getChildren()) {
+            if (pruneChildren(child)) {
+//                parent.addChildren(child.getChildren());
+//                parent.removeChild(child);
+                remove.add(child);
+                add.addAll(child.getChildren());
+                child.setParent(null);
+                child.clearChildren();
+
             }
-            return child;
-        }).forEachOrdered((child) -> {
-            pruneChildren(child);
-        });
+        }
+
+        parent.addChildren(add);
+        parent.removeChildren(remove);
+
+        if (!parent.hasMessage() && grandParent != null) {
+            for (Container child : children) {
+                child.setParent(grandParent);
+            }
+            return true;
+        }
+
+        return false;
     }
-    
+
     /**
-     * Now that the emails are grouped together by references\message ID take another
-     * pass through and group together messages with the same simplified subject.
-     * 
-     * This may cause "root" messages with identical subjects to get grouped 
-     * together as children of an empty container.  The code that uses the 
-     * thread information can decide what to do in that sisiuation as those message
+     * Now that the emails are grouped together by references\message ID take
+     * another pass through and group together messages with the same simplified
+     * subject.
+     *
+     * This may cause "root" messages with identical subjects to get grouped
+     * together as children of an empty container. The code that uses the thread
+     * information can decide what to do in that sisiuation as those message
      * maybe part of a common thread or maybe their own unique messages.
-     * 
-     * @param rootSet 
+     *
+     * @param rootSet
+     *
      * @return Final set of threaded messages.
      */
     Set<Container> groupBySubject(Set<Container> rootSet) {
@@ -254,65 +273,64 @@ final class EmailMessageThreader {
 
         for (Container rootSetContainer : rootSet) {
             String rootSubject = rootSetContainer.getSimplifiedSubject();
-            
+
             Container tableContainer = subject_table.get(rootSubject);
-            if(tableContainer == null || tableContainer == rootSetContainer) {
+            if (tableContainer == null || tableContainer == rootSetContainer) {
                 finalSet.add(rootSetContainer);
                 continue;
             }
-            
+
             // If both containers are dummy/empty append the children of one to the other
-            if(tableContainer.getMessage() == null && rootSetContainer.getMessage() == null) {
+            if (tableContainer.getMessage() == null && rootSetContainer.getMessage() == null) {
                 tableContainer.addChildren(rootSetContainer.getChildren());
                 rootSetContainer.clearChildren();
                 continue;
             }
-            
+
             // one container is empty, but the other is not, make the non-empty one be a
             // child of the empty
-            if( (tableContainer.getMessage() == null && rootSetContainer.getMessage() != null) || 
-                    (tableContainer.getMessage() != null && rootSetContainer.getMessage() == null)){
-            
-                if(tableContainer.getMessage() == null) {
-                    tableContainer.addChild(rootSetContainer);    
-                    
+            if ((tableContainer.getMessage() == null && rootSetContainer.getMessage() != null)
+                    || (tableContainer.getMessage() != null && rootSetContainer.getMessage() == null)) {
+
+                if (tableContainer.getMessage() == null) {
+                    tableContainer.addChild(rootSetContainer);
+
                 } else {
                     rootSetContainer.addChild(tableContainer);
                     subject_table.remove(rootSubject, tableContainer);
                     subject_table.put(rootSubject, rootSetContainer);
-                    
+
                     finalSet.add(rootSetContainer);
                 }
-                
+
                 continue;
             }
-            
+
             // tableContainer is non-empty and it's message's subject does not begin
             // with 'RE:' but rootSetContainer's message does begin with 'RE:', then
             // make rootSetContainer a child of tableContainer
-            if(tableContainer.getMessage() != null && 
-                    !tableContainer.isReplySubject() &&
-                    rootSetContainer.isReplySubject()) {
+            if (tableContainer.getMessage() != null
+                    && !tableContainer.isReplySubject()
+                    && rootSetContainer.isReplySubject()) {
                 tableContainer.addChild(rootSetContainer);
                 continue;
             }
-            
+
             // If table container is non-empy, and table container's subject does 
             // begin with 'RE:', but rootSetContainer does not start with 'RE:'
             // make tableContainer a child of rootSetContainer
-            if(tableContainer.getMessage() != null && 
-                    tableContainer.isReplySubject() &&
-                    !rootSetContainer.isReplySubject()) {
+            if (tableContainer.getMessage() != null
+                    && tableContainer.isReplySubject()
+                    && !rootSetContainer.isReplySubject()) {
                 rootSetContainer.addChild(tableContainer);
                 subject_table.put(rootSubject, rootSetContainer);
                 finalSet.add(rootSetContainer);
                 continue;
             }
-            
+
             // rootSetContainer and tableContainer either both have 'RE' or
             // don't.  Create a new dummy container with both containers as
             // children.
-
             Container newParent = new Container();
             newParent.addChild(tableContainer);
             newParent.addChild(rootSetContainer);
@@ -323,12 +341,14 @@ final class EmailMessageThreader {
         }
         return finalSet;
     }
-    
+
     /**
-     * Creates a Hashtable of Container and subjects. There will be one Container 
-     * subject pair for each unique subject.
+     * Creates a Hashtable of Container and subjects. There will be one
+     * Container subject pair for each unique subject.
+     *
      * @param rootSet The set of "root" Containers
-     * @return 
+     *
+     * @return
      */
     HashMap<String, Container> createSubjectTable(Set<Container> rootSet) {
         HashMap<String, Container> subject_table = new HashMap<>();
@@ -340,13 +360,13 @@ final class EmailMessageThreader {
             if (rootSetContainer.hasMessage()) {
                 subject = rootSetContainer.getMessage().getSimplifiedSubject();
                 reSubject = rootSetContainer.getMessage().isReplySubject();
-            } else if(rootSetContainer.hasChildren()){
+            } else if (rootSetContainer.hasChildren()) {
                 Iterator<Container> childrenIterator = rootSetContainer.getChildren().iterator();
-                while(childrenIterator.hasNext()) {
+                while (childrenIterator.hasNext()) {
                     EmailMessage childMessage = childrenIterator.next().getMessage();
-                    if(childMessage != null) {
+                    if (childMessage != null) {
                         subject = childMessage.getSimplifiedSubject();
-                        if(!subject.isEmpty()) {
+                        if (!subject.isEmpty()) {
                             reSubject = childMessage.isReplySubject();
                             break;
                         }
@@ -354,251 +374,279 @@ final class EmailMessageThreader {
                 }
             }
 
-            if (subject.isEmpty()) {
+            if (subject == null || subject.isEmpty()) {
                 continue;  // Give up on this container
             }
-            
+
             Container tableContainer = subject_table.get(subject);
-            
-            if(tableContainer == null || // Not in table
-                    (tableContainer.getMessage() != null && rootSetContainer.getMessage() == null) || // One in the table is empty, but current is not
-                    (!reSubject && (tableContainer.getMessage() != null  && tableContainer.getMessage().isReplySubject()))) { //current doesn't have RE in it, use current instead of the one in the table
+
+            if (tableContainer == null
+                    || // Not in table
+                    (tableContainer.getMessage() != null && rootSetContainer.getMessage() == null)
+                    || // One in the table is empty, but current is not
+                    (!reSubject && (tableContainer.getMessage() != null && tableContainer.getMessage().isReplySubject()))) { //current doesn't have RE in it, use current instead of the one in the table
                 subject_table.put(subject, rootSetContainer);
-            } 
+            }
 
         }
-        
+
         return subject_table;
     }
-    
+
     /**
-     * Prints a set of containers and their children. 
-     * 
+     * Prints a set of containers and their children.
+     *
      * @param containerSet Set of containers to print out
-     * @param prefix A prefix for each line to show child depth.
-     */    
+     * @param prefix       A prefix for each line to show child depth.
+     */
     private void printContainerSet(Set<Container> containerSet, String prefix) {
         containerSet.stream().map((container) -> {
-            if(container.getMessage() != null) {
+            if (container.getMessage() != null) {
                 System.out.println(prefix + container.getMessage().getSubject());
             } else {
                 System.out.println("<Empty Container>");
             }
             return container;
         }).filter((container) -> (container.hasChildren())).forEachOrdered((container) -> {
-            printContainerSet(container.getChildren(), prefix+ "\t");
+            printContainerSet(container.getChildren(), prefix + "\t");
         });
     }
-    
+
     /**
      * The container object is used to wrap and email message and track the
      * messages parent and child messages.
      */
-    final class Container{
+    final class Container {
+
         private EmailMessage message;
         private Container parent;
-        private Set<Container> children; 
-        
+        private Set<Container> children;
+
         /**
          * Constructs an empy container.
          */
-        Container() {}
-      
+        Container() {
+        }
+
         /**
-         * 
-         * @param message 
+         *
+         * @param message
          */
         Container(EmailMessage message) {
             this.message = message;
         }
-        
+
         /**
          * Returns the EmailMessage object
-         * 
-         * @return 
+         *
+         * @return
          */
         EmailMessage getMessage() {
             return message;
         }
-        
+
         /**
          * Set the Container EmailMessage object.
-         * 
+         *
          * @param message - The container EmailMessage
          */
         void setMessage(EmailMessage message) {
             this.message = message;
         }
-        
+
         /**
          * Return whether or not this Container has a valid EmailMessage object.
-         * 
+         *
          * @return True if EmailMessage has been set otherwise false
          */
         boolean hasMessage() {
             return message != null;
         }
-        
+
         /**
          * Returns the Simplified Subject (original subject without RE:) of the
-         * EmailMessage or if this is an empty Container with Children, return 
+         * EmailMessage or if this is an empty Container with Children, return
          * the simplified subject of one of the children.
-         * 
+         *
          * @return Simplified subject of this Container
          */
         String getSimplifiedSubject() {
             String subject = "";
-            if(message != null) {
-                subject =  message.getSimplifiedSubject();
-            } else if(children != null) {
-                for(Container child: children) {
-                    if(child.hasMessage()) {
+            if (message != null) {
+                subject = message.getSimplifiedSubject();
+            } else if (children != null) {
+                for (Container child : children) {
+                    if (child.hasMessage()) {
                         subject = child.getSimplifiedSubject();
                     }
-                    
-                    if(subject != null && !subject.isEmpty()) {
+
+                    if (subject != null && !subject.isEmpty()) {
                         break;
                     }
                 }
             }
             return subject;
         }
-        
+
         /**
          * Simialar to getSimplifiedSubject, isReplySubject is a helper function
          * that will return the isReplySubject of the Containers message or if
          * this is an empty container, the state of one of the children.
-         * 
-         * @return 
+         *
+         * @return
          */
         boolean isReplySubject() {
-            if(message != null) {
+            if (message != null) {
                 return message.isReplySubject();
-            } else if(children != null) {
-                 for(Container child: children) {
-                    if(child.hasMessage()) {
+            } else if (children != null) {
+                for (Container child : children) {
+                    if (child.hasMessage()) {
                         boolean isReply = child.isReplySubject();
-                        
-                        if(isReply) {
+
+                        if (isReply) {
                             return isReply;
                         }
                     }
-                 }
+                }
             }
-            
+
             return false;
         }
-        
+
         /**
          * Returns the parent Container of this Container.
-         * 
+         *
          * @return The Container parent or null if one is not set
          */
         Container getParent() {
             return parent;
         }
-        
+
         /**
+         * Sets the given container as the parent of this object.
          * 
-         * @param container 
+         * @param container - the object to set as the parent
          */
         void setParent(Container container) {
             parent = container;
         }
-        
+
         /**
-         * 
-         * @return 
+         *
+         * @return
          */
         boolean hasParent() {
             return parent != null;
         }
- 
+
         /**
-         * 
-         * @param child
-         * @return 
+         * Adds the specified Container to the list of children.
+         *
+         * @param child - the Container to add to the child list
+         *
+         * @return true, if the element was added to the children list
          */
         boolean addChild(Container child) {
-            if(children == null) {
-                children = new HashSet<>(); 
+            if (children == null) {
+                children = new HashSet<>();
             }
-            
+
             return children.add(child);
         }
-        
+
         /**
-         * 
-         * @param children
-         * @return 
+         * Adds to the list of children all of the elements that are contained
+         * in the specified collection.
+         *
+         * @param children - set containing the Containers to be added to the
+         *                 list of children
+         *
+         * @return true if the list of childrent was changed as a result of this
+         *         call
          */
         boolean addChildren(Set<Container> children) {
-            if(children == null || children.isEmpty()) {
+            if (children == null || children.isEmpty()) {
                 return false;
             }
-            
-            if(this.children == null) {
-                this.children = new HashSet<>(); 
+
+            if (this.children == null) {
+                this.children = new HashSet<>();
             }
-            
+
             return this.children.addAll(children);
         }
-        
+
         /**
-         * 
+         * Removes from the children list all of the elements that are contained
+         * in the specified collection.
+         *
+         * @param children - set containing the elements to be removed from the
+         *                 list of children
+         *
+         * @return true if the set was changed as a result of this call
+         */
+        boolean removeChildren(Set<Container> children) {
+            if (children != null) {
+                return this.children.removeAll(children);
+            }
+
+            return false;
+        }
+
+        /**
+         * Clears the Containers list of children.
+         *
          */
         void clearChildren() {
             children.clear();
         }
-        
+
         /**
-         * 
-         * @param child
-         * @return 
+         * Removes the given container from the list of children.
+         *
+         * @param child - the container to remove from the children list
+         *
+         * @return - True if the given container successfully removed from the
+         *         list of childrent
          */
         boolean removeChild(Container child) {
             return children.remove(child);
         }
-        
+
         /**
-         * 
-         * @return 
+         * Returns whether or not this container has children.
+         *
+         * @return True if the child list is not null or empty
          */
         boolean hasChildren() {
             return children != null && !children.isEmpty();
         }
-        
+
         /**
-         * 
-         * @return 
+         * Returns the list of children of this container.
+         *
+         * @return The child list.
          */
         Set<Container> getChildren() {
             return children;
         }
-        
+
         /**
-         * 
-         * @return 
-         */
-//        boolean hasSiblings() {
-//            return children == null ? false : (children.size() > 1);
-//        }
-        
-        /**
-         * 
-         * @param container
-         * @return 
+         * Search all of this containers children to make sure that the given
+         * container is not a related.
+         *
+         * @param container - the container object to search for
+         *
+         * @return True if the given container is in the child tree of this
+         *         container, false otherwise.
          */
         boolean isChild(Container container) {
-            if(children == null || children.isEmpty()) {
+            if (children == null || children.isEmpty()) {
                 return false;
-            } else if(children.contains(container)) {
+            } else if (children.contains(container)) {
                 return true;
             } else {
-                if (children.stream().anyMatch((child) -> (child.isChild(container)))) {
-                    return true;
-                }
-                return false;
+                return children.stream().anyMatch((child) -> (child.isChild(container)));
             }
         }
     }
