@@ -28,7 +28,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,17 +43,17 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(BingTranslatorSettingsPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final String GET_TARGET_LANGUAGES_URL = "https://api.cognitive.microsofttranslator.com/languages?api-version=3.0&scope=translation";
-    private static final String DEFUALT_TEST_STRING = "traducción exitoso";  //spanish which should translate to something along the lines of translation successful
+    private static final String DEFUALT_TEST_STRING = "traducción exitoso";  //spanish which should translate to something along the lines of "successful translation"
     private String targetLanguageCode = "";
 
     /**
      * Creates new form GoogleTranslatorSettingsPanel
      */
-    public BingTranslatorSettingsPanel(String credentials, String code) {
+    public BingTranslatorSettingsPanel(String authenticationKey, String code) {
         initComponents();
-        
-        credentialsField.setText(credentials);
-        credentialsField.getDocument().addDocumentListener(new DocumentListener() {
+
+        authenticationKeyField.setText(authenticationKey);
+        authenticationKeyField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 firePropertyChange("SettingChanged", true, false);
@@ -69,7 +68,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             public void changedUpdate(DocumentEvent e) {
                 firePropertyChange("SettingChanged", true, false);
             }
-            
+
         });
         targetLanguageCode = code;
         populateComboBox();
@@ -87,9 +86,9 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             JsonObject asObject = elementBody.getAsJsonObject();
             JsonElement translationElement = asObject.get("translation");
             JsonObject responses = translationElement.getAsJsonObject();
-            for (Entry<String, JsonElement> entry : responses.entrySet()) {
+            responses.entrySet().forEach((entry) -> {
                 targetLanguageComboBox.addItem(new LanguageWrapper(entry.getKey(), entry.getValue().getAsJsonObject().get("name").getAsString()));
-            }
+            });
         } catch (IOException | IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException ex) {
             logger.log(Level.WARNING, "Unable to get list of target languages or parse the result that was received", ex);
         }
@@ -120,8 +119,8 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        credentialsLabel = new javax.swing.JLabel();
-        credentialsField = new javax.swing.JTextField();
+        authenticationKeyLabel = new javax.swing.JLabel();
+        authenticationKeyField = new javax.swing.JTextField();
         warningLabel = new javax.swing.JLabel();
         testButton = new javax.swing.JButton();
         targetLanguageLabel = new javax.swing.JLabel();
@@ -134,7 +133,9 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         resultLabel = new javax.swing.JLabel();
         testResultValueLabel = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(credentialsLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(authenticationKeyLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsLabel.text")); // NOI18N
+
+        authenticationKeyField.setToolTipText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.authenticationKeyField.toolTipText")); // NOI18N
 
         warningLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(warningLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.warningLabel.text")); // NOI18N
@@ -176,27 +177,31 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(credentialsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(credentialsField, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
-                        .addGap(67, 67, 67))
-                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 551, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(targetLanguageLabel)
+                                .addGap(18, 18, 18)
+                                .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(authenticationKeyLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(authenticationKeyField, javax.swing.GroupLayout.PREFERRED_SIZE, 486, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 20, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(translationSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(testButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGap(25, 25, 25)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(translationSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(unitsLabel))
+                                        .addComponent(unitsLabel)
+                                        .addGap(0, 0, Short.MAX_VALUE))
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(untranslatedLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -205,15 +210,15 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                                         .addComponent(resultLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(testResultValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(credentialsLabel)
-                    .addComponent(credentialsField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(authenticationKeyLabel)
+                    .addComponent(authenticationKeyField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(targetLanguageLabel)
@@ -240,7 +245,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         if (testTranslationSetup()) {
             warningLabel.setText("");
         } else {
-            warningLabel.setText("Invalid translation credentials");
+            warningLabel.setText("Invalid translation authentication key");
         }
     }//GEN-LAST:event_testButtonActionPerformed
 
@@ -253,8 +258,8 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_targetLanguageComboBoxSelected
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField credentialsField;
-    private javax.swing.JLabel credentialsLabel;
+    private javax.swing.JTextField authenticationKeyField;
+    private javax.swing.JLabel authenticationKeyLabel;
     private javax.swing.JLabel resultLabel;
     private javax.swing.JComboBox<LanguageWrapper> targetLanguageComboBox;
     private javax.swing.JLabel targetLanguageLabel;
@@ -290,7 +295,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                 bodyString);
         Request request = new Request.Builder()
                 .url(BingTranslator.getTranlatorUrl(targetLanguageCode)).post(body)
-                .addHeader("Ocp-Apim-Subscription-Key", credentialsField.getText())
+                .addHeader("Ocp-Apim-Subscription-Key", authenticationKeyField.getText())
                 .addHeader("Content-type", "application/json").build();
         try {
             Response response = new OkHttpClient().newCall(request).execute();
@@ -308,12 +313,13 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Get the currently set path to the JSON credentials file
+     * Get the currently set authentication key to be used for the Microsoft
+     * translation service
      *
-     * @return the path to the credentials file specified in the textarea
+     * @return the authentication key specified in the textarea
      */
-    String getCredentials() {
-        return credentialsField.getText();
+    String getAuthenticationKey() {
+        return authenticationKeyField.getText();
     }
 
     /**

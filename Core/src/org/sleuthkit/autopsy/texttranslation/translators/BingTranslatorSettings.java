@@ -26,12 +26,12 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 public final class BingTranslatorSettings {
 
-    private static final String CREDENTIALS_KEY = "Credentials";
+    private static final String AUTHENTICATION_KEY = "Credentials";
     private static final String BING_TRANSLATE_NAME = "BingTranslate";
-    private static final String DEFAULT_CREDENTIALS = "";
+    private static final String DEFAULT_AUTHENTICATION = "";
     private static final String DEFAULT_TARGET_LANGUAGE = "en";
     private static final String TARGET_LANGUAGE_CODE_KEY = "TargetLanguageCode";
-    private String credentials;
+    private String authenticationKey;
     private String targetLanguageCode;
 
     /**
@@ -42,21 +42,23 @@ public final class BingTranslatorSettings {
     }
 
     /**
-     * Get the path to the JSON credentials file
+     * Get the Authentication key to be used for the Microsoft translation
+     * service
      *
-     * @return the path to the credentials file
+     * @return the Authentication key for the service
      */
-    String getCredentials() {
-        return credentials;
+    String getAuthenticationKey() {
+        return authenticationKey;
     }
 
     /**
-     * Set the path to the JSON credentials file
+     * Set the Authentication key to be used for the Microsoft translation
+     * service
      *
-     * @param path the path to the credentials file
+     * @param authKey the Authentication key for the service
      */
-    void setCredentials(String creds) {
-        credentials = creds;
+    void setAuthenticationKey(String authKey) {
+        authenticationKey = authKey;
     }
 
     /**
@@ -66,10 +68,10 @@ public final class BingTranslatorSettings {
         if (!ModuleSettings.configExists(BING_TRANSLATE_NAME)) {
             ModuleSettings.makeConfigFile(BING_TRANSLATE_NAME);
         }
-        if (ModuleSettings.settingExists(BING_TRANSLATE_NAME, CREDENTIALS_KEY)) {
-            credentials = ModuleSettings.getConfigSetting(BING_TRANSLATE_NAME, CREDENTIALS_KEY);
+        if (ModuleSettings.settingExists(BING_TRANSLATE_NAME, AUTHENTICATION_KEY)) {
+            authenticationKey = ModuleSettings.getConfigSetting(BING_TRANSLATE_NAME, AUTHENTICATION_KEY);
         } else {
-            credentials = DEFAULT_CREDENTIALS;
+            authenticationKey = DEFAULT_AUTHENTICATION;
         }
         if (ModuleSettings.settingExists(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY)) {
             targetLanguageCode = ModuleSettings.getConfigSetting(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY);
@@ -105,7 +107,7 @@ public final class BingTranslatorSettings {
      * Save the setting from memory to their location on disk
      */
     void saveSettings() {
-        ModuleSettings.setConfigSetting(BING_TRANSLATE_NAME, CREDENTIALS_KEY, credentials);
+        ModuleSettings.setConfigSetting(BING_TRANSLATE_NAME, AUTHENTICATION_KEY, authenticationKey);
         ModuleSettings.setConfigSetting(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY, targetLanguageCode);
     }
 }

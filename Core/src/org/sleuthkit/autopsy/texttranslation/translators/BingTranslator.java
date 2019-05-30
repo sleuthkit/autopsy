@@ -46,18 +46,15 @@ public class BingTranslator implements TextTranslator{
     private static final String BASE_URL = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=";
     private final BingTranslatorSettingsPanel settingsPanel;
     private final BingTranslatorSettings settings = new BingTranslatorSettings();
-    
-
     // This sends messages to Microsoft.
-    private final OkHttpClient CLIENT = new OkHttpClient();
-    
+    private final OkHttpClient CLIENT = new OkHttpClient();   
     //We might want to make this a configurable setting for anyone who has a 
     //paid account that's willing to pay for long documents.
     private final int MAX_STRING_LENGTH = 5000;
     
     
     public BingTranslator(){
-        settingsPanel = new BingTranslatorSettingsPanel(settings.getCredentials(), settings.getTargetLanguageCode());
+        settingsPanel = new BingTranslatorSettingsPanel(settings.getAuthenticationKey(), settings.getTargetLanguageCode());
     }
     
     static String getTranlatorUrl(String languageCode){
@@ -85,7 +82,7 @@ public class BingTranslator implements TextTranslator{
                                               bodyString);
         Request request = new Request.Builder()
             .url(getTranlatorUrl(settings.getTargetLanguageCode())).post(body)
-            .addHeader("Ocp-Apim-Subscription-Key", settings.getCredentials())
+            .addHeader("Ocp-Apim-Subscription-Key", settings.getAuthenticationKey())
             .addHeader("Content-type", "application/json").build();
         Response response = CLIENT.newCall(request).execute();
         return response.body().string();
@@ -93,8 +90,8 @@ public class BingTranslator implements TextTranslator{
 
     @Override
     public String translate(String string) throws TranslationException {
-        if (settings.getCredentials() == null || settings.getCredentials().isEmpty()) {
-            throw new TranslationException("Bing Translator has not been configured, credentials need to be specified");
+        if (settings.getAuthenticationKey() == null || settings.getAuthenticationKey().isEmpty()) {
+            throw new TranslationException("Bing Translator has not been configured, authentication key needs to be specified");
         }
         String toTranslate = string.trim();
         //Translates some text into English, without specifying the source langauge.
@@ -132,7 +129,7 @@ public class BingTranslator implements TextTranslator{
 
     @Override
     public void saveSettings() {
-        settings.setCredentials(settingsPanel.getCredentials());
+        settings.setAuthenticationKey(settingsPanel.getAuthenticationKey());
         settings.setTargetLanguageCode(settingsPanel.getTargetLanguageCode());
     }
 
