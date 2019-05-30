@@ -621,8 +621,16 @@ public final class ConfigVisualPanel2 extends JPanel {
         updateList(filenamesTable, rule.getFilenames());
         updateList(folderNamesTable, rule.getPaths());
         updateList(fullPathsTable, rule.getFullPaths());
-        fileSizeSpinner1.setValue(rule.getMaxFileSize());
-        daysIncludedTextField.setText(Integer.toString(rule.getMinDays()));
+        if (rule.getMaxFileSize() == null) {
+            fileSizeSpinner1.setValue(0);
+        } else {
+            fileSizeSpinner1.setValue(rule.getMaxFileSize());
+        }
+        if (rule.getMinDays() == null) {
+            daysIncludedTextField.setText(Integer.toString(0));
+        } else {
+            daysIncludedTextField.setText(Integer.toString(rule.getMinDays()));
+        }
     }
 
     private void clearRuleDetails() {
@@ -647,12 +655,16 @@ public final class ConfigVisualPanel2 extends JPanel {
 
     private void updateList(javax.swing.JTable jTable, Set<String> set) {
         SingleColumnTableModel tableModel = new SingleColumnTableModel();
+        jTable.setTableHeader(null);
+        if (set == null) {
+            jTable.setModel(tableModel);
+            return;
+        }
         int row = 0;
         for (String s : set) {
             tableModel.setValueAt(s, row, 0);
             row++;
         }
-        jTable.setTableHeader(null);
         jTable.setModel(tableModel);
     }
 

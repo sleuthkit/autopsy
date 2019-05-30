@@ -27,27 +27,27 @@ import java.util.Set;
  */
 public class LogicalImagerRule {
 
-    private final boolean shouldAlert;
-    private final boolean shouldSave;
+    private final Boolean shouldAlert;
+    private final Boolean shouldSave;
     private final String description;
     private Set<String> extensions = new HashSet<>();
     private Set<String> filenames = new HashSet<>();
     private Set<String> paths = new HashSet<>();
     private Set<String> fullPaths = new HashSet<>();
-    private int minFileSize = 0;
-    private int maxFileSize = 0;
-    private int minDays = 0;
+    private Integer minFileSize = 0;
+    private Integer maxFileSize = 0;
+    private Integer minDays = 0;
     private String minDate;
     private String maxDate;
     
-    LogicalImagerRule(boolean shouldAlert, boolean shouldSave, String description,
+    LogicalImagerRule(Boolean shouldAlert, Boolean shouldSave, String description,
             Set<String> extensions,
             Set<String> filenames,
             Set<String> paths,
             Set<String> fullPaths,
-            int minFileSize,
-            int maxFileSize,
-            int minDays,
+            Integer minFileSize,
+            Integer maxFileSize,
+            Integer minDays,
             String minDate,
             String maxDate
     ) {
@@ -71,11 +71,11 @@ public class LogicalImagerRule {
         this.description = null;
     }
     
-    public boolean isShouldAlert() {
+    public Boolean isShouldAlert() {
         return shouldAlert;
     }
 
-    public boolean isShouldSave() {
+    public Boolean isShouldSave() {
         return shouldSave;
     }
 
@@ -99,15 +99,15 @@ public class LogicalImagerRule {
         return fullPaths;
     }
 
-    public int getMinFileSize() {
+    public Integer getMinFileSize() {
         return minFileSize;
     }
 
-    public int getMaxFileSize() {
+    public Integer getMaxFileSize() {
         return maxFileSize;
     }
 
-    public int getMinDays() {
+    public Integer getMinDays() {
         return minDays;
     }
 
@@ -124,8 +124,8 @@ public class LogicalImagerRule {
     }
 
     public static class Builder {
-        private boolean shouldAlert;
-        private boolean shouldSave;
+        private Boolean shouldAlert = null;
+        private Boolean shouldSave = null;
         private String description = null;
         private Set<String> extensions = null;
         private Set<String> filenames = null;        
@@ -174,17 +174,17 @@ public class LogicalImagerRule {
             return this;
         }
         
-        public Builder minFileSize(int minFileSize) {
+        public Builder minFileSize(Integer minFileSize) {
             this.minFileSize = minFileSize;
             return this;
         }
         
-        public Builder maxFileSize(int maxFileSize) {
+        public Builder maxFileSize(Integer maxFileSize) {
             this.maxFileSize = maxFileSize;
             return this;
         }
         
-        public Builder minDays(int minDays) {
+        public Builder minDays(Integer minDays) {
             this.minDays = minDays;
             return this;
         }

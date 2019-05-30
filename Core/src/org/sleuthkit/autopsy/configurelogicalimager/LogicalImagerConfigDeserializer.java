@@ -39,16 +39,16 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             JsonElement element = entry.getValue();
             Set<Map.Entry<String, JsonElement>> entrySet = element.getAsJsonObject().entrySet();
             String key1;
-            boolean shouldSave = false;
-            boolean shouldAlert = true;
+            Boolean shouldSave = false;
+            Boolean shouldAlert = true;
             String description = null;
             Set<String> extensions = null;
-            Set<String> paths = new HashSet<>();
-            Set<String> fullPaths = new HashSet<>();
-            Set<String> filenames = new HashSet<>();
-            int minFileSize = 0;
-            int maxFileSize = 0;
-            int minDays = 0;
+            Set<String> paths = null;
+            Set<String> fullPaths = null;
+            Set<String> filenames = null;
+            Integer minFileSize = null;
+            Integer maxFileSize = null;
+            Integer minDays = null;
             String minDate = null;
             String maxDate = null;
             
@@ -73,15 +73,24 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                         break;
                     case "folder-names":
                         JsonArray pathsArray = entry1.getValue().getAsJsonArray();
-                        pathsArray.forEach(v -> {paths.add(v.getAsString());});
+                        paths = new HashSet<>();
+                        for (JsonElement e : pathsArray) {
+                            paths.add(e.getAsString());
+                        }
                         break;
                     case "file-names":
                         JsonArray filenamesArray = entry1.getValue().getAsJsonArray();
-                        filenamesArray.forEach(v -> {filenames.add(v.getAsString());});
+                        filenames = new HashSet<>();
+                        for (JsonElement e : filenamesArray) {
+                            filenames.add(e.getAsString());
+                        }
                         break;
                     case "full-paths":
                         JsonArray fullPathsArray = entry1.getValue().getAsJsonArray();
-                        fullPathsArray.forEach(v -> {fullPaths.add(v.getAsString());});
+                        fullPaths = new HashSet<>();
+                        for (JsonElement e : fullPathsArray) {
+                            fullPaths.add(e.getAsString());
+                        }
                         break;
                     case "size-range":
                         JsonObject sizeRangeObject = entry1.getValue().getAsJsonObject();
@@ -126,7 +135,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             }
             
             // A rule with full-paths cannot have other rule definitions
-            if (!fullPaths.isEmpty() && ((extensions != null && !extensions.isEmpty())
+            if ((fullPaths != null && !fullPaths.isEmpty()) && ((extensions != null && !extensions.isEmpty())
                     || (paths != null && !paths.isEmpty())
                     || (filenames != null && !filenames.isEmpty()))) {
                 throw new JsonParseException("A rule with full-paths cannot have other rule definitions");

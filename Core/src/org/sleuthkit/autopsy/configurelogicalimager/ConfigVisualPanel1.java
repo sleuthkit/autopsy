@@ -12,6 +12,7 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import javax.swing.JFileChooser;
@@ -176,13 +177,14 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
     private javax.swing.JRadioButton newRadioButton;
     // End of variables declaration//GEN-END:variables
 
-    private void loadConfigFile(String path) throws FileNotFoundException, JsonIOException, JsonSyntaxException {
-        FileInputStream is = new FileInputStream(path);
-        InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
-        gsonBuilder.registerTypeAdapter(LogicalImagerConfig.class, new LogicalImagerConfigDeserializer());
-        Gson gson = gsonBuilder.create();
-        config = gson.fromJson(reader, LogicalImagerConfig.class);
+    private void loadConfigFile(String path) throws FileNotFoundException, JsonIOException, JsonSyntaxException, IOException {
+        try (FileInputStream is = new FileInputStream(path)) {
+            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+            GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
+            gsonBuilder.registerTypeAdapter(LogicalImagerConfig.class, new LogicalImagerConfigDeserializer());
+            Gson gson = gsonBuilder.create();
+            config = gson.fromJson(reader, LogicalImagerConfig.class);
+        }
     }
 
     public LogicalImagerConfig getConfig() {
