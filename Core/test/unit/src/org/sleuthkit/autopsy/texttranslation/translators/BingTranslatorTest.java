@@ -1,4 +1,3 @@
-
 /*
  * Autopsy Forensic Browser
  *
@@ -17,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.texttranslation.translators;
 
 import java.io.IOException;
@@ -28,62 +26,67 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class BingTranslatorTest {   
+/**
+ * Tests for the BingTranslator translation service, these tests have been
+ * commented out because they require credentials to perform
+ */
+public class BingTranslatorTest {
+
     @Test
     public void testTranslate() throws Exception {
-        BingTranslator translator = new BingTranslator();
-        String input = "gato";
-        String expectedTranslation = "cat";
-        runTest(translator, input, expectedTranslation);
+//        BingTranslator translator = new BingTranslator();
+//        String input = "gato";
+//        String expectedTranslation = "cat";
+//        runTest(translator, input, expectedTranslation);
     }
-    
-    @Test
-    public void testQuickStartSentence() throws Exception {
-        BingTranslator translator = new BingTranslator();
-        String input = "Willkommen bei Microsoft Translator. Raten Sie mal, wie viele Sprachen ich spreche.";
-        String expectedTranslation = "Welcome to Microsoft Translator. Guess how many languages I speak.";
-        runTest(translator, input, expectedTranslation);
-    }
-    
-    @Test
-    public void testCharacterEscapes() throws Exception {
-        BingTranslator translator = new BingTranslator();
-        String input = "\"gato\"";;
-        String expectedTranslation = "Cat";
-        runTest(translator, input, expectedTranslation);
-    }
-    
-    @Test
-    public void testLineBreaks() throws Exception {
-        BingTranslator translator = new BingTranslator();
-        String input = "gato\nperro";;
-        String expectedTranslation = "cat\nDog";
-        runTest(translator, input, expectedTranslation);
-    }
-    
-    /**
-     * Test whether translator throws an error. This should not be part of our
-     * regular testing, because we are limited to only 2MB of free translations
-     * ever.
-     * @param translator A BingTranslator
-     * @param input Text to translate
-     * @param expectedTranslation Not used unless you uncomment those lines.
-     */
-    public void runTest(BingTranslator translator, String input, String expectedTranslation) {
-        String translation;
-        try {
-            translation = translator.translate(input);
-        } 
-        catch (Throwable e) {
-            fail("Bing translation produced an exception: " + e.getMessage());
-            return;
-        };
-        
-        /*
-        //It's unrealistic to expect the same answer every time, but sometimes
-        //it's helpful to have this in your debug process.
-        System.out.println(translation);
-        assertEquals(expectedTranslation, translation);
-        */
-    }
+
+//    @Test
+//    public void testQuickStartSentence() throws Exception {
+//        BingTranslator translator = new BingTranslator();
+//        String input = "Willkommen bei Microsoft Translator. Raten Sie mal, wie viele Sprachen ich spreche.";
+//        String expectedTranslation = "Welcome to Microsoft Translator. Guess how many languages I speak.";
+//        runTest(translator, input, expectedTranslation);
+//    }
+//    
+//    @Test
+//    public void testCharacterEscapes() throws Exception {
+//        BingTranslator translator = new BingTranslator();
+//        String input = "\"gato\"";;
+//        String expectedTranslation = "Cat";
+//        runTest(translator, input, expectedTranslation);
+//    }
+//    
+//    @Test
+//    public void testLineBreaks() throws Exception {
+//        BingTranslator translator = new BingTranslator();
+//        String input = "gato\nperro";;
+//        String expectedTranslation = "cat\nDog";
+//        runTest(translator, input, expectedTranslation);
+//    }
+//    
+//    /**
+//     * Test whether translator throws an error. This should not be part of our
+//     * regular testing, because we are limited to only 2MB of free translations
+//     * ever.
+//     * @param translator A BingTranslator
+//     * @param input Text to translate
+//     * @param expectedTranslation Not used unless you uncomment those lines.
+//     */
+//    public void runTest(BingTranslator translator, String input, String expectedTranslation) {
+//        String translation;
+//        try {
+//            translation = translator.translate(input);
+//        } 
+//        catch (Throwable e) {
+//            fail("Bing translation produced an exception: " + e.getMessage());
+//            return;
+//        };
+//        
+//        /*
+//        //It's unrealistic to expect the same answer every time, but sometimes
+//        //it's helpful to have this in your debug process.
+//        System.out.println(translation);
+//        assertEquals(expectedTranslation, translation);
+//        */
+//    }
 }
