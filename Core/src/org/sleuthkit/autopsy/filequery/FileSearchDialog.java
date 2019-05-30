@@ -1,84 +1,208 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package org.sleuthkit.autopsy.newpackage;
+package org.sleuthkit.autopsy.filequery;
 
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.newpackage.FileSearch.GroupingAttributeType;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.FileType;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.FileSize;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.Frequency;
-import org.sleuthkit.autopsy.newpackage.FileSearchFiltering.ParentSearchTerm;
-import org.sleuthkit.autopsy.newpackage.FileSorter.SortingMethod;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.DataSource;
-
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.filequery.FileSearchFiltering.ParentSearchTerm;
+import org.sleuthkit.autopsy.filequery.FileSorter.SortingMethod;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
- *
+ * Dialog to allow the user to choose filtering and grouping options.
  */
-public class FileSearchDialog extends javax.swing.JDialog {
+public class FileSearchDialog extends javax.swing.JDialog implements ActionListener {
 
+    private final static Logger logger = Logger.getLogger(FileSearchDialog.class.getName());
+    
     private DefaultListModel<ParentSearchTerm> parentListModel;
-    private ButtonPressed buttonPressed = ButtonPressed.SEARCH;
+    private boolean runAnotherSearch = false;
+    private final SleuthkitCase caseDb;
+    private final EamDb centralRepoDb;
     
     /**
      * Creates new form FileSearchDialog
      */
-    public FileSearchDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    @NbBundle.Messages({
+        "FileSearchDialog.dialogTitle.text=Test file search",
+    }) 
+    public FileSearchDialog(java.awt.Frame parent, boolean modal, SleuthkitCase caseDb, EamDb centralRepoDb) {
+        super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.FileSearchDialog_dialogTitle_text(), modal);
+        this.caseDb = caseDb;
+        this.centralRepoDb = centralRepoDb;
         initComponents();
         customizeComponents();
     }
     
+    /**
+     * Show the dialog
+     */
+    void display() {
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        runAnotherSearch = false;
+        setVisible(true);
+    }
+    
+    /**
+     * Set up all the UI components
+     */
     private void customizeComponents() {
         
+        errorLabel.setVisible(false);
+        
+        // Set up the filters
+        setUpFileTypeFilter();
+        setUpDataSourceFilter();
+        setUpFrequencyFilter();
+        setUpSizeFilter();
+        setUpKWFilter();    
+        setUpParentPathFilter();
+        
+        // Set up the grouping attributes
+        for (GroupingAttributeType type : GroupingAttributeType.values()) {
+            groupComboBox.addItem(type);
+        }
+        
+        // Set up the group order buttons
+        orderButtonGroup.add(orderAttrRadioButton);
+        orderButtonGroup.add(orderSizeRadioButton);
+        orderAttrRadioButton.setSelected(true);
+        
+        // Set up the file order list
+        for (SortingMethod method : SortingMethod.values()) {
+            fileOrderComboBox.addItem(method);
+        }
+    }
+    
+    /**
+     * Add listeners to the checkbox/list set. Either can be null.
+     * 
+     * @param checkBox
+     * @param list 
+     */
+    private void addListeners(JCheckBox checkBox, JList<?> list) {
+        if (checkBox != null) {
+            checkBox.addActionListener(this);
+        }
+        if (list != null) {
+            list.addListSelectionListener(new ListSelectionListener() {
+                @Override
+                public void valueChanged(ListSelectionEvent evt) {
+                    validateFields();
+                }
+            });
+        }
+    }
+    
+    /**
+     * Initialize the file type filter
+     */
+    private void setUpFileTypeFilter() {
         int count = 0;
         DefaultListModel<FileType> fileTypeListModel = (DefaultListModel<FileType>)fileTypeList.getModel();
         for (FileType type : FileType.getOptionsForFiltering()) {
             fileTypeListModel.add(count, type);
             count++;
         }
-        
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-        count = 0;
+        addListeners(null, fileTypeList);
+    }
+    
+    /**
+     * Initialize the data source filter
+     */
+    private void setUpDataSourceFilter() {
+        int count = 0;
         try {
             DefaultListModel<DataSourceItem> dsListModel = (DefaultListModel<DataSourceItem>)dsList.getModel();
-            for(DataSource ds : skCase.getDataSources()) {
+            for(DataSource ds : caseDb.getDataSources()) {
                 dsListModel.add(count, new DataSourceItem(ds));
             }
-        } catch (Exception ex) {
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading data sources", ex);
             dsCheckBox.setEnabled(false);
             dsList.setEnabled(false);
         }
-        
-        count = 0;
-        DefaultListModel<Frequency> frequencyListModel = (DefaultListModel<Frequency>)freqList.getModel();
-        for (Frequency freq : Frequency.getOptionsForFiltering()) {
-            frequencyListModel.add(count, freq);
+        addListeners(dsCheckBox, dsList);
+    }
+    
+    /**
+     * Initialize the frequency filter
+     */
+    private void setUpFrequencyFilter() {
+        if (centralRepoDb == null) {
+            freqList.setEnabled(false);
+            freqCheckBox.setEnabled(false);
+        } else {
+            int count = 0;
+            DefaultListModel<Frequency> frequencyListModel = (DefaultListModel<Frequency>)freqList.getModel();
+            for (Frequency freq : Frequency.getOptionsForFiltering()) {
+                frequencyListModel.add(count, freq);
+            }
         }
-        
-        count = 0;
+        addListeners(freqCheckBox, freqList);
+    }
+    
+    /**
+     * Initialize the file size filter
+     */
+    private void setUpSizeFilter() {
+        int count = 0;
         DefaultListModel<FileSize> sizeListModel = (DefaultListModel<FileSize>)sizeList.getModel();
         for (FileSize size : FileSize.values()) {
             sizeListModel.add(count, size);
         }
-        
-        count = 0;
+        addListeners(sizeCheckBox, sizeList);
+    }
+    
+    /**
+     * Initialize the keyword list names filter
+     */
+    private void setUpKWFilter() {
+        int count = 0;
         try {
             DefaultListModel<String> kwListModel = (DefaultListModel<String>)kwList.getModel();
             
-            // TODO - use query
-            List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            // TODO - create case DB query
+            List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             List<String> setNames = new ArrayList<>();
             for (BlackboardArtifact art : arts) {
                 for (BlackboardAttribute attr : art.getAttributes()) {
@@ -94,29 +218,31 @@ public class FileSearchDialog extends javax.swing.JDialog {
             for(String name : setNames) {
                 kwListModel.add(count, name);
             }
-        } catch (Exception ex) {
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading keyword list names", ex);
             kwCheckBox.setEnabled(false);
             kwList.setEnabled(false);
-        }       
-        
+        } 
+        addListeners(kwCheckBox, kwList);
+    }
+    
+    /**
+     * Initialize the parent path filter
+     */
+    private void setUpParentPathFilter() {
         parentButtonGroup.add(parentFullRadioButton);
         parentButtonGroup.add(parentSubstringRadioButton);
         parentFullRadioButton.setSelected(true);
         parentListModel = (DefaultListModel<ParentSearchTerm>)parentList.getModel();
         
-        for (GroupingAttributeType type : GroupingAttributeType.values()) {
-            groupComboBox.addItem(type);
-        }
-        
-        orderButtonGroup.add(orderAttrRadioButton);
-        orderButtonGroup.add(orderSizeRadioButton);
-        orderAttrRadioButton.setSelected(true);
-        
-        for (SortingMethod method : SortingMethod.values()) {
-            fileOrderComboBox.addItem(method);
-        }
+        addListeners(parentCheckBox, parentList);
     }
     
+    /**
+     * Get a list of all filters selected by the user.
+     * 
+     * @return the list of filters
+     */
     List<FileSearchFiltering.FileFilter> getFilters() {
         List<FileSearchFiltering.FileFilter> filters = new ArrayList<>();
         
@@ -124,7 +250,8 @@ public class FileSearchDialog extends javax.swing.JDialog {
         filters.add(new FileSearchFiltering.FileTypeFilter(fileTypeList.getSelectedValuesList()));
         
         if (parentCheckBox.isSelected()) {
-            filters.add(new FileSearchFiltering.ParentFilter(parentList.getSelectedValuesList()));
+            // For the parent paths, everything in the box is used (not just the selected entries)
+            filters.add(new FileSearchFiltering.ParentFilter(getParentPaths()));
         }
         
         if (dsCheckBox.isSelected()) {
@@ -147,11 +274,34 @@ public class FileSearchDialog extends javax.swing.JDialog {
         return filters;
     }
     
+    /**
+     * Utility method to get the parent path objects out of the JList.
+     * 
+     * @return The list of entered ParentSearchTerm objects
+     */
+    private List<ParentSearchTerm> getParentPaths() {
+        List<ParentSearchTerm> results = new ArrayList<>();
+        for (int i = 0;i < parentListModel.getSize();i++) {
+            results.add(parentListModel.get(i));
+        }
+        return results;
+    }
+    
+    /**
+     * Get the attribute to group by
+     * 
+     * @return the grouping attribute
+     */
     FileSearch.AttributeType getGroupingAttribute() {
         GroupingAttributeType groupingAttrType = (GroupingAttributeType)groupComboBox.getSelectedItem();
         return groupingAttrType.getAttributeType();
     }
     
+    /**
+     * Get the sorting method for groups.
+     * 
+     * @return the selected sorting method 
+     */
     FileGroup.GroupSortingAlgorithm getGroupSortingMethod() {
         if (orderAttrRadioButton.isSelected()) {
             return FileGroup.GroupSortingAlgorithm.BY_GROUP_KEY;
@@ -159,11 +309,23 @@ public class FileSearchDialog extends javax.swing.JDialog {
         return FileGroup.GroupSortingAlgorithm.BY_GROUP_SIZE;
     }
     
+    /**
+     * Get the sorting method for files.
+     * 
+     * @return the selected sorting method 
+     */
     SortingMethod getFileSortingMethod() {
         return (SortingMethod)fileOrderComboBox.getSelectedItem();
     }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        validateFields();
+    }
     
-    
+    /**
+     * Utility class to allow us to display the data source ID along with the name
+     */
     private class DataSourceItem {
         private DataSource ds;
         
@@ -177,13 +339,73 @@ public class FileSearchDialog extends javax.swing.JDialog {
         }
     }
     
+    /**
+     * Check whether the user chose to run the search or cancel
+     * 
+     * @return true if the search was cancelled, false otherwise
+     */
     boolean searchCancelled() {
-        return buttonPressed.equals(ButtonPressed.CANCEL);
+        return (! runAnotherSearch);
     }
     
-    private enum ButtonPressed {
-        SEARCH,
-        CANCEL
+    /**
+     * Validate the form.
+     * If we use any of this in the final dialog we should use bundle messages.
+     */
+    private void validateFields() {
+        
+        // There must be at least one file type selected
+        if (fileTypeList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one file type must be selected");
+            return;
+        }
+        
+        // For most enabled filters, there should be something selected
+        if (dsCheckBox.isSelected() && dsList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one data source must be selected");
+            return;
+        }
+        if (freqCheckBox.isSelected() && freqList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one CR frequency must be selected");
+            return;
+        }
+        if (sizeCheckBox.isSelected() && sizeList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one size must be selected");
+            return;
+        }
+        if (kwCheckBox.isSelected() && kwList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one keyword list name must be selected");
+            return;
+        }
+        
+        // Parent uses everything in the box
+        if (parentCheckBox.isSelected() && getParentPaths().isEmpty()) {
+            setInvalid("At least one parent path must be entered");
+            return;
+        }
+        
+        setValid();
+        
+    }
+    
+    /**
+     * The settings are valid so enable the Search button
+     */
+    private void setValid() {
+        errorLabel.setVisible(false);
+        searchButton.setEnabled(true);
+    }
+    
+    /**
+     * The settings are not valid so disable the search button and
+     * display the given error message.
+     * 
+     * @param error 
+     */
+    private void setInvalid(String error) {
+        errorLabel.setText(error);
+        errorLabel.setVisible(true);
+        searchButton.setEnabled(false);
     }
 
     /**
@@ -230,6 +452,9 @@ public class FileSearchDialog extends javax.swing.JDialog {
         jLabel5 = new javax.swing.JLabel();
         fileOrderComboBox = new javax.swing.JComboBox<>();
         searchButton = new javax.swing.JButton();
+        errorLabel = new javax.swing.JLabel();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(8, 7), new java.awt.Dimension(8, 7), new java.awt.Dimension(8, 7));
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(265, 23), new java.awt.Dimension(265, 23), new java.awt.Dimension(265, 23));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -324,6 +549,7 @@ public class FileSearchDialog extends javax.swing.JDialog {
 
         parentTextField.setText(org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.parentTextField.text")); // NOI18N
         parentTextField.setEnabled(false);
+        parentTextField.setMaximumSize(new java.awt.Dimension(6, 20));
 
         org.openide.awt.Mnemonics.setLocalizedText(parentFullRadioButton, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.parentFullRadioButton.text")); // NOI18N
         parentFullRadioButton.setEnabled(false);
@@ -350,6 +576,9 @@ public class FileSearchDialog extends javax.swing.JDialog {
             }
         });
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -357,58 +586,66 @@ public class FileSearchDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addComponent(dsCheckBox)
+                    .addComponent(jLabel1)
+                    .addComponent(freqCheckBox)
+                    .addComponent(sizeCheckBox)
+                    .addComponent(kwCheckBox)
+                    .addComponent(parentCheckBox)
+                    .addComponent(jLabel2))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(parentTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(parentFullRadioButton)
+                                .addGap(18, 18, 18)
+                                .addComponent(parentSubstringRadioButton)
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(deleteParentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(addParentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane5)
+                    .addComponent(jScrollPane6, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
+                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(dsCheckBox)
-                            .addComponent(jLabel1)
-                            .addComponent(freqCheckBox)
-                            .addComponent(sizeCheckBox)
-                            .addComponent(kwCheckBox)
-                            .addComponent(parentCheckBox)
-                            .addComponent(jLabel2))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(parentTextField)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(parentFullRadioButton)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(parentSubstringRadioButton)
-                                        .addGap(0, 0, Short.MAX_VALUE)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel4)
+                                    .addComponent(jLabel5))
+                                .addGap(29, 29, 29)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(deleteParentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(addParentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                            .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane5)
-                            .addComponent(jScrollPane6, javax.swing.GroupLayout.Alignment.LEADING))
-                        .addGap(35, 35, 35)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel5))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(orderAttrRadioButton)
-                            .addComponent(groupComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(orderSizeRadioButton)
-                            .addComponent(fileOrderComboBox, 0, 144, Short.MAX_VALUE))
-                        .addGap(0, 93, Short.MAX_VALUE)))
-                .addContainerGap())
+                                    .addComponent(orderAttrRadioButton)
+                                    .addComponent(groupComboBox, 0, 144, Short.MAX_VALUE)
+                                    .addComponent(orderSizeRadioButton)
+                                    .addComponent(fileOrderComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 25, Short.MAX_VALUE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -443,11 +680,11 @@ public class FileSearchDialog extends javax.swing.JDialog {
                     .addComponent(kwCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(parentCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel2)))
+                        .addComponent(jLabel2))
+                    .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteParentButton)
@@ -456,8 +693,9 @@ public class FileSearchDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addParentButton)
-                    .addComponent(parentTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+                    .addComponent(parentTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(errorLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
                     .addComponent(searchButton))
@@ -470,7 +708,7 @@ public class FileSearchDialog extends javax.swing.JDialog {
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
         setVisible(false);
         dispose();
-        buttonPressed = ButtonPressed.CANCEL;
+        runAnotherSearch = false;
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void dsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dsCheckBoxActionPerformed
@@ -518,56 +756,15 @@ public class FileSearchDialog extends javax.swing.JDialog {
         parentList.setEnabled(parentCheckBox.isSelected());
         parentFullRadioButton.setEnabled(parentCheckBox.isSelected());
         parentSubstringRadioButton.setEnabled(parentCheckBox.isSelected());
+        parentTextField.setEnabled(parentCheckBox.isSelected());
         addParentButton.setEnabled(parentCheckBox.isSelected());
         deleteParentButton.setEnabled(parentCheckBox.isSelected());
     }//GEN-LAST:event_parentCheckBoxActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        buttonPressed = ButtonPressed.SEARCH;
+        runAnotherSearch = true;
         setVisible(false);
     }//GEN-LAST:event_searchButtonActionPerformed
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FileSearchDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FileSearchDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FileSearchDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(FileSearchDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                FileSearchDialog dialog = new FileSearchDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addParentButton;
@@ -575,8 +772,11 @@ public class FileSearchDialog extends javax.swing.JDialog {
     private javax.swing.JButton deleteParentButton;
     private javax.swing.JCheckBox dsCheckBox;
     private javax.swing.JList<DataSourceItem> dsList;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JComboBox<SortingMethod> fileOrderComboBox;
     private javax.swing.JList<FileSearchData.FileType> fileTypeList;
+    private javax.swing.Box.Filler filler1;
+    private javax.swing.Box.Filler filler2;
     private javax.swing.JCheckBox freqCheckBox;
     private javax.swing.JList<Frequency> freqList;
     private javax.swing.JComboBox<GroupingAttributeType> groupComboBox;

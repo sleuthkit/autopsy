@@ -16,9 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.newpackage;
+package org.sleuthkit.autopsy.filequery;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import org.openide.util.NbBundle;
@@ -227,23 +228,36 @@ class FileSorter implements Comparator<ResultFile> {
         "FileSorter.SortingMethod.keywordlist.displayName=By keyword list names",
         "FileSorter.SortingMethod.parent.displayName=By parent path"})
     enum SortingMethod {
-        BY_FILE_NAME(Bundle.FileSorter_SortingMethod_filename_displayName()),     // Sort alphabetically by file name
-        BY_DATA_SOURCE(Bundle.FileSorter_SortingMethod_datasource_displayName()), // Sort in increasing order of data source ID
-        BY_FILE_SIZE(Bundle.FileSorter_SortingMethod_filesize_displayName()),     // Sort in decreasing order of size
-        BY_FILE_TYPE(Bundle.FileSorter_SortingMethod_filetype_displayName()),     // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
-        BY_FREQUENCY(Bundle.FileSorter_SortingMethod_frequency_displayName()),    // Sort by decreasing rarity in the central repository
-        BY_KEYWORD_LIST_NAMES(Bundle.FileSorter_SortingMethod_keywordlist_displayName()),  // Sort alphabetically by list of keyword list names found
-        BY_PARENT_PATH(Bundle.FileSorter_SortingMethod_parent_displayName());     // Sort alphabetically by path
+        BY_FILE_NAME(new ArrayList<>(), 
+            Bundle.FileSorter_SortingMethod_filename_displayName()),     // Sort alphabetically by file name
+        BY_DATA_SOURCE(new ArrayList<>(), 
+            Bundle.FileSorter_SortingMethod_datasource_displayName()),   // Sort in increasing order of data source ID
+        BY_FILE_SIZE(new ArrayList<>(), 
+            Bundle.FileSorter_SortingMethod_filesize_displayName()),     // Sort in decreasing order of size
+        BY_FILE_TYPE(Arrays.asList(new FileSearch.FileTypeAttribute()), 
+            Bundle.FileSorter_SortingMethod_filetype_displayName()),     // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
+        BY_FREQUENCY(Arrays.asList(new FileSearch.FrequencyAttribute()), 
+            Bundle.FileSorter_SortingMethod_frequency_displayName()),    // Sort by decreasing rarity in the central repository
+        BY_KEYWORD_LIST_NAMES(Arrays.asList(new FileSearch.KeywordListAttribute()), 
+            Bundle.FileSorter_SortingMethod_keywordlist_displayName()),  // Sort alphabetically by list of keyword list names found
+        BY_PARENT_PATH(new ArrayList<>(), 
+            Bundle.FileSorter_SortingMethod_parent_displayName());       // Sort alphabetically by path
         
         private final String displayName;
+        private final List<FileSearch.AttributeType> requiredAttributes;
         
-        SortingMethod(String displayName) {
+        SortingMethod(List<FileSearch.AttributeType> attributes, String displayName) {
+            this.requiredAttributes = attributes;
             this.displayName = displayName;
         }
         
         @Override
         public String toString() {
             return displayName;
+        }
+        
+        List<FileSearch.AttributeType> getRequiredAttributes() {
+            return requiredAttributes;
         }
     }
 }

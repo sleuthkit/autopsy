@@ -16,9 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.newpackage;
+package org.sleuthkit.autopsy.filequery;
 
-import org.sleuthkit.autopsy.newpackage.FileSearchData.FileType;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 import java.util.ArrayList;
@@ -35,6 +35,11 @@ class ResultFile {
     private final List<String> keywordListNames;
     private FileType fileType;
     
+    /**
+     * Create a ResultFile from an AbstractFile
+     * 
+     * @param abstractFile 
+     */
     ResultFile (AbstractFile abstractFile) {
         this.abstractFile = abstractFile;
         this.frequency = FileSearchData.Frequency.UNKNOWN;
@@ -110,17 +115,11 @@ class ResultFile {
         return abstractFile;
     }
     
-    /**
-     * For debugging - print out the file name and object ID along with all the fields
-     * we can group and sort on.
-     * 
-     * @param prefix String to print before the file data (for indenting)
-     */
-    void print(String prefix) {
-        System.out.println(prefix + abstractFile.getName() + "(" + abstractFile.getId() + ") - "
+    @Override
+    public String toString() {
+        return abstractFile.getName() + "(" + abstractFile.getId() + ") - "
                 + abstractFile.getSize() + ", " + abstractFile.getParentPath() + ", " 
                 + abstractFile.getDataSourceObjectId() + ", " + frequency.toString() + ", "
-                + String.join(",", keywordListNames) + ", " + abstractFile.getMIMEType());
-        
+                + String.join(",", keywordListNames) + ", " + abstractFile.getMIMEType();
     }
 }

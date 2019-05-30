@@ -16,16 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.newpackage;
+package org.sleuthkit.autopsy.filequery;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.FileSize;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.FileType;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
 
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Run various filters to return a subset of files from the current case.
@@ -68,9 +67,8 @@ class FileSearchFiltering {
         logger.log(Level.INFO, "Running filters:\n{0}", filterStr);
         
         // Combine all the SQL queries from the filters into one query
-        // TODO - maybe exclude directories and other non-file objects?
         String combinedQuery = "";
-        for (FileFilter filter : filters) {
+        for (FileFilter filter : filters) {            
             if ( ! filter.getWhereClause().isEmpty()) {
                 if ( ! combinedQuery.isEmpty()) {
                     combinedQuery += " AND "; // NON-NLS
@@ -123,7 +121,7 @@ class FileSearchFiltering {
     /**
      * Base class for the filters.
      */
-    static abstract class FileFilter {
+    static abstract class FileFilter {      
         /**
          * Returns part of a query on the tsk_files table that can be AND-ed with other pieces
          * @return the SQL query or an empty string if there is no SQL query for this filter.
@@ -241,7 +239,7 @@ class FileSearchFiltering {
          * @return The SQL for a where clause to search for a matching path
          */
         String getSQLForTerm() {
-            // TODO - escape these
+            // TODO - these should really be prepared statements
             if (isFullPath) {
                 return "parent_path=\'" + searchStr + "\'"; // NON-NLS
             } else {
@@ -252,6 +250,7 @@ class FileSearchFiltering {
         @NbBundle.Messages({
             "# {0} - search term",
             "FileSearchFiltering.ParentSearchTerm.fullString= {0} (exact)",
+            "# {0} - search term",
             "FileSearchFiltering.ParentSearchTerm.subString= {0} (substring)",
         })
         @Override
@@ -387,7 +386,7 @@ class FileSearchFiltering {
                 if (! keywordListPart.isEmpty()) {
                     keywordListPart += " OR "; // NON-NLS
                 } 
-                keywordListPart += "value_text = \'" + listName + "\'"; // TODO - escape this part  // NON-NLS
+                keywordListPart += "value_text = \'" + listName + "\'"; // TODO - these should really be prepared statements  // NON-NLS
             }
             
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN " + 
@@ -540,10 +539,9 @@ class FileSearchFiltering {
                 }
                 desc += freq.name();
             }
-            return Bundle.FileSearchFiltering_FrequencyFilter_desc(this);
+            return Bundle.FileSearchFiltering_FrequencyFilter_desc(desc);
         }
     }
-
     
     private FileSearchFiltering() {
         // Class should not be instantiated

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.newpackage;
+package org.sleuthkit.autopsy.filequery;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,9 +33,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.FileSize;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.FileType;
-import org.sleuthkit.autopsy.newpackage.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
 
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -51,6 +51,45 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileSearch {
     
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
+    
+    /**
+     * Run the file search and returns the SearchResults object for debugging.
+     * 
+     * @param filters            The filters to apply
+     * @param groupAttributeType The attribute to use for grouping
+     * @param groupSortingType   The method to use to sort the groups
+     * @param fileSortingMethod  The method to use to sort the files within the groups
+     * @param attributesNeededForGroupingOrSorting  Any attributes that will used for grouping or sorting
+     * @param caseDb             The case database
+     * @param centralRepoDb      The central repository database. Can be null if not needed.
+     * 
+     * @return The raw search results
+     * 
+     * @throws FileSearchException 
+     */
+    static SearchResults runFileSearchDebug(
+            List<FileSearchFiltering.FileFilter> filters, 
+            AttributeType groupAttributeType, 
+            FileGroup.GroupSortingAlgorithm groupSortingType, 
+            FileSorter.SortingMethod fileSortingMethod, 
+            List<AttributeType> attributesNeededForGroupingOrSorting,
+            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        // Run the queries for each filter
+        List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
+
+        // Add the data to resultFiles for any attributes needed for sorting and grouping
+        addAttributes(attributesNeededForGroupingOrSorting, resultFiles, caseDb, centralRepoDb);
+        
+        // Collect everything in the search results
+        SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
+        searchResults.add(resultFiles);
+        
+        // We don't need the linked hash map, but this also does the sorting and grouping
+        searchResults.toLinkedHashMap();
+        
+        return searchResults;
+    }
     
     /**
      * Run the file search.
@@ -511,7 +550,7 @@ class FileSearch {
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
-                throw new FileSearchException("Error looking up keyword list attributes", ex);
+                throw new FileSearchException("Error looking up keyword list attributes", ex); // NON-NLS
             }
         }
         
@@ -521,7 +560,6 @@ class FileSearch {
          */
         private static class SetKeywordListNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-            private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(SetKeywordListNamesCallback.class.getName());
             List<ResultFile> resultFiles;
             
             /**
@@ -642,7 +680,7 @@ class FileSearch {
                 EamDb centralRepoDb) throws FileSearchException {
             
             if (centralRepoDb == null) {
-                return; // TODO - this should be an error once we don't always run this
+                throw new FileSearchException("Central Repository is not enabled - can not add frequency data"); // NON-NLS
             }
             
             // We'll make this more efficient later - for now, add the frequency of each file individually
@@ -656,7 +694,7 @@ class FileSearch {
                         }
                     } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
                         throw new FileSearchException("Error looking up central repository frequency for file with ID " 
-                                + file.getAbstractFile().getId(), ex);
+                                + file.getAbstractFile().getId(), ex); // NON-NLS
                     }
                 }
             }
@@ -675,7 +713,7 @@ class FileSearch {
         
         @Override
         String getDisplayName() {
-            return frequency.name();
+            return frequency.toString();
         }
         
         @Override

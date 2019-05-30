@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.newpackage;
+package org.sleuthkit.autopsy.filequery;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,17 +82,23 @@ class SearchResults {
         // Now put the groups in a list and sortGroupsAndFiles them
         groupList = new ArrayList<>(groupMap.values());
         Collections.sort(groupList);
+    }
+    
+    @Override
+    public String toString() {
+        String result = "";
+        if (groupList == null) {
+            return result;
+        }
         
-        // Debugging - print the results here
-        // This code should remain until we have a working UI.
-        System.out.println("\nSearchResults");
         for (FileGroup group : groupList) {
-            System.out.println("  " + group.getDisplayName());
+            result += group.getDisplayName() + "\n";
             
             for (ResultFile file : group.getResultFiles()) {
-                file.print("    ");
+                result += "    " + file.toString() + "\n";
             }
         }
+        return result;
     }
     
     /**
