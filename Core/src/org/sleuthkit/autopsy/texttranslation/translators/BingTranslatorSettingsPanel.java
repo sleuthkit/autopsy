@@ -28,7 +28,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
@@ -118,7 +117,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        authenticationKeyLabel = new javax.swing.JLabel();
         authenticationKeyField = new javax.swing.JTextField();
         warningLabel = new javax.swing.JLabel();
         testButton = new javax.swing.JButton();
@@ -131,8 +129,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         untranslatedLabel = new javax.swing.JLabel();
         resultLabel = new javax.swing.JLabel();
         testResultValueLabel = new javax.swing.JLabel();
-
-        org.openide.awt.Mnemonics.setLocalizedText(authenticationKeyLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsLabel.text")); // NOI18N
+        authenticationKeyLabel = new javax.swing.JLabel();
 
         authenticationKeyField.setToolTipText(org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.authenticationKeyField.toolTipText")); // NOI18N
 
@@ -167,6 +164,8 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(resultLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.resultLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(testResultValueLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.testResultValueLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(authenticationKeyLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.authenticationKeyLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -216,8 +215,8 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(authenticationKeyLabel)
-                    .addComponent(authenticationKeyField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(authenticationKeyField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(authenticationKeyLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(targetLanguageLabel)
