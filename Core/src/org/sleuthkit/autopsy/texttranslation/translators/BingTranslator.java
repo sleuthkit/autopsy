@@ -43,7 +43,7 @@ public class BingTranslator implements TextTranslator{
     //In the String below, "en" is the target language. You can include multiple target
     //languages separated by commas. A full list of supported languages is here:
     //https://docs.microsoft.com/en-us/azure/cognitive-services/translator/language-support
-    private static final String URL = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=en";
+    private static final String BASE_URL = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=";
     private final BingTranslatorSettingsPanel settingsPanel;
     private final BingTranslatorSettings settings = new BingTranslatorSettings();
     
@@ -57,11 +57,11 @@ public class BingTranslator implements TextTranslator{
     
     
     public BingTranslator(){
-        settingsPanel = new BingTranslatorSettingsPanel(settings.getCredentials());
+        settingsPanel = new BingTranslatorSettingsPanel(settings.getCredentials(), settings.getTargetLanguageCode());
     }
     
-    static String getMicrosftTranlatorUrl(){
-        return URL;
+    private String getTranlatorUrl(){
+        return BASE_URL + settings.getTargetLanguageCode();
     }
     
     /**
@@ -84,7 +84,7 @@ public class BingTranslator implements TextTranslator{
         RequestBody body = RequestBody.create(mediaType,
                                               bodyString);
         Request request = new Request.Builder()
-            .url(URL).post(body)
+            .url(getTranlatorUrl()).post(body)
             .addHeader("Ocp-Apim-Subscription-Key", settings.getCredentials())
             .addHeader("Content-type", "application/json").build();
         Response response = CLIENT.newCall(request).execute();
@@ -96,11 +96,10 @@ public class BingTranslator implements TextTranslator{
         if (settings.getCredentials() == null || settings.getCredentials().isEmpty()) {
             throw new TranslationException("Bing Translator has not been configured, credentials need to be specified");
         }
-        
+        String toTranslate = string.trim();
         //Translates some text into English, without specifying the source langauge.
         
         // HTML files were producing lots of white space at the end
-        string = string.trim();
         
         //Google Translate required us to replace (\r\n|\n) with <br /> 
         //but Bing Translator doesn not have that requirement.
@@ -108,12 +107,12 @@ public class BingTranslator implements TextTranslator{
         //The free account has a maximum file size. If you have a paid account,
         //you probably still want to limit file size to prevent accidentally
         //translating very large documents.
-        if (string.length() > MAX_STRING_LENGTH) {
-            string = string.substring(0, MAX_STRING_LENGTH);
+        if (toTranslate.length() > MAX_STRING_LENGTH) {
+            toTranslate = toTranslate.substring(0, MAX_STRING_LENGTH);
         }
         
         try {
-            String response = postTranslationRequest(string);
+            String response = postTranslationRequest(toTranslate);
             return parseJSONResponse(response);
         } catch (Throwable e) {
             throw new TranslationException(e.getMessage()); 
@@ -134,6 +133,7 @@ public class BingTranslator implements TextTranslator{
     @Override
     public void saveSettings() {
         settings.setCredentials(settingsPanel.getCredentials());
+        settings.setTargetLanguageCode(settingsPanel.getTargetLanguageCode());
     }
 
     private String parseJSONResponse(String json_text) throws TranslationException {

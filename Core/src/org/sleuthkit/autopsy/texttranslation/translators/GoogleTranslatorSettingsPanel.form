@@ -98,7 +98,7 @@
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.texttranslation.translators.GoogleLanguageWrapper&gt;"/>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.texttranslation.translators.LanguageWrapper&gt;"/>
       </AuxValues>
     </Component>
     <Component class="javax.swing.JLabel" name="targetLanguageLabel">

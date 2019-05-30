@@ -118,7 +118,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
                 targetLanguageComboBox.removeAllItems();
                 if (!listSupportedLanguages.isEmpty()) {
                     listSupportedLanguages.forEach((lang) -> {
-                        targetLanguageComboBox.addItem(new GoogleLanguageWrapper(lang));
+                        targetLanguageComboBox.addItem(new LanguageWrapper(lang));
                     });
                     selectLanguageByCode(targetLanguageCode);
                     targetLanguageComboBox.addItemListener(listener);
@@ -145,7 +145,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
      */
     private void selectLanguageByCode(String code) {
         for (int i = 0; i < targetLanguageComboBox.getModel().getSize(); i++) {
-            if (targetLanguageComboBox.getItemAt(i).getLanguage().getCode().equals(code)) {
+            if (targetLanguageComboBox.getItemAt(i).getLanguageCode().equals(code)) {
                 targetLanguageComboBox.setSelectedIndex(i);
                 return;
             }
@@ -253,7 +253,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel credentialsLabel;
     private javax.swing.JTextField credentialsPathField;
-    private javax.swing.JComboBox<org.sleuthkit.autopsy.texttranslation.translators.GoogleLanguageWrapper> targetLanguageComboBox;
+    private javax.swing.JComboBox<org.sleuthkit.autopsy.texttranslation.translators.LanguageWrapper> targetLanguageComboBox;
     private javax.swing.JLabel targetLanguageLabel;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
@@ -284,7 +284,7 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
 
         @Override
         public void itemStateChanged(java.awt.event.ItemEvent evt) {
-            String selectedCode = ((GoogleLanguageWrapper) targetLanguageComboBox.getSelectedItem()).getLanguage().getCode();
+            String selectedCode = ((LanguageWrapper) targetLanguageComboBox.getSelectedItem()).getLanguageCode();
             if (!StringUtils.isBlank(selectedCode) && !selectedCode.equals(targetLanguageCode)) {
                 targetLanguageCode = selectedCode;
                 populateTargetLanguageComboBox();

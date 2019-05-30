@@ -29,7 +29,10 @@ public final class BingTranslatorSettings {
     private static final String CREDENTIALS_KEY = "Credentials";
     private static final String BING_TRANSLATE_NAME = "BingTranslate";
     private static final String DEFAULT_CREDENTIALS = "";
+    private static final String DEFAULT_TARGET_LANGUAGE = "en";
+    private static final String TARGET_LANGUAGE_CODE_KEY = "TargetLanguageCode";
     private String credentials;
+    private String targetLanguageCode;
 
     /**
      * Construct a new GoogleTranslatorSettingsObject
@@ -56,7 +59,6 @@ public final class BingTranslatorSettings {
         credentials = creds;
     }
 
-
     /**
      * Load the settings into memory from their on disk storage
      */
@@ -69,6 +71,34 @@ public final class BingTranslatorSettings {
         } else {
             credentials = DEFAULT_CREDENTIALS;
         }
+        if (ModuleSettings.settingExists(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY)) {
+            targetLanguageCode = ModuleSettings.getConfigSetting(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY);
+        } else {
+            targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
+        }
+    }
+
+    /**
+     * Get the target language code
+     *
+     * @return the code used to identify the target language
+     */
+    String getTargetLanguageCode() {
+        return targetLanguageCode;
+    }
+
+    /**
+     * Set the target language code. If a blank code is specified it sets the
+     * default code instead.
+     *
+     * @param code the target language code to set
+     */
+    void setTargetLanguageCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
+        } else {
+            targetLanguageCode = code;
+        }
     }
 
     /**
@@ -76,5 +106,6 @@ public final class BingTranslatorSettings {
      */
     void saveSettings() {
         ModuleSettings.setConfigSetting(BING_TRANSLATE_NAME, CREDENTIALS_KEY, credentials);
+        ModuleSettings.setConfigSetting(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY, targetLanguageCode);
     }
 }
