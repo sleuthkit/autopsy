@@ -38,6 +38,8 @@ class SearchResults {
     private final Map<FileSearch.GroupKey, FileGroup> groupMap = new HashMap<>();
     private List<FileGroup> groupList = null;
     
+    private final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
+    
     /**
      * Create an empty SearchResults object
      * 
@@ -91,11 +93,17 @@ class SearchResults {
             return result;
         }
         
+        long count = 0;
         for (FileGroup group : groupList) {
             result += group.getDisplayName() + "\n";
             
             for (ResultFile file : group.getResultFiles()) {
                 result += "    " + file.toString() + "\n";
+                count++;
+                if (count > MAX_OUTPUT_FILES) {
+                    result += "(truncated)";
+                    return result;
+                }
             }
         }
         return result;

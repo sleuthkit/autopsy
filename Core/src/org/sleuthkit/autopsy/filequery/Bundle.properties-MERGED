@@ -70,6 +70,7 @@ FileSearchFiltering.ParentFilter.or=\ or
 FileSearchFiltering.ParentFilter.substring=(substring)
 # {0} - search term
 FileSearchFiltering.ParentSearchTerm.fullString=\ {0} (exact)
+# {0} - search term
 FileSearchFiltering.ParentSearchTerm.subString=\ {0} (substring)
 # {0} - filters
 FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}
