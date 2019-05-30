@@ -44,6 +44,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(BingTranslatorSettingsPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final String GET_TARGET_LANGUAGES_URL = "https://api.cognitive.microsofttranslator.com/languages?api-version=3.0&scope=translation";
+    private static final String DEFUALT_TEST_STRING = "traducción exitoso";  //spanish which should translate to something along the lines of translation successful
     private String targetLanguageCode = "";
 
     /**
@@ -51,6 +52,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
      */
     public BingTranslatorSettingsPanel(String credentials, String code) {
         initComponents();
+        
         credentialsField.setText(credentials);
         credentialsField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -122,11 +124,15 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         credentialsField = new javax.swing.JTextField();
         warningLabel = new javax.swing.JLabel();
         testButton = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
+        targetLanguageLabel = new javax.swing.JLabel();
         targetLanguageComboBox = new javax.swing.JComboBox<>();
-        jLabel2 = new javax.swing.JLabel();
-        jSpinner1 = new javax.swing.JSpinner();
-        jLabel3 = new javax.swing.JLabel();
+        translationSizeLabel = new javax.swing.JLabel();
+        translationSizeSpinner = new javax.swing.JSpinner();
+        unitsLabel = new javax.swing.JLabel();
+        testUntranslatedTextField = new javax.swing.JTextField();
+        untranslatedLabel = new javax.swing.JLabel();
+        resultLabel = new javax.swing.JLabel();
+        testResultValueLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(credentialsLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.credentialsLabel.text")); // NOI18N
 
@@ -140,7 +146,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(targetLanguageLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.targetLanguageLabel.text")); // NOI18N
 
         targetLanguageComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -148,11 +154,19 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(translationSizeLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.translationSizeLabel.text")); // NOI18N
 
-        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(5000, 5000, 500000, 5000));
+        translationSizeSpinner.setModel(new javax.swing.SpinnerNumberModel(5000, 5000, 500000, 5000));
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.jLabel3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(unitsLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.unitsLabel.text")); // NOI18N
+
+        testUntranslatedTextField.setText(DEFUALT_TEST_STRING);
+
+        org.openide.awt.Mnemonics.setLocalizedText(untranslatedLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.untranslatedLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(resultLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.resultLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(testResultValueLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.testResultValueLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -165,22 +179,32 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                         .addComponent(credentialsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(credentialsField, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(testButton)
-                        .addGap(8, 8, 8))
+                        .addGap(67, 67, 67))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 551, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel1)
+                                .addComponent(targetLanguageLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(translationSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(testButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel3)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(translationSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(unitsLabel))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(untranslatedLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(testUntranslatedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(resultLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(testResultValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -189,18 +213,24 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(credentialsLabel)
-                    .addComponent(credentialsField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(testButton))
+                    .addComponent(credentialsField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
+                    .addComponent(targetLanguageLabel)
                     .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(translationSizeLabel)
+                    .addComponent(translationSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(unitsLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(testButton)
+                    .addComponent(testUntranslatedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(untranslatedLabel)
+                    .addComponent(resultLabel)
+                    .addComponent(testResultValueLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -225,12 +255,16 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField credentialsField;
     private javax.swing.JLabel credentialsLabel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JSpinner jSpinner1;
+    private javax.swing.JLabel resultLabel;
     private javax.swing.JComboBox<LanguageWrapper> targetLanguageComboBox;
+    private javax.swing.JLabel targetLanguageLabel;
     private javax.swing.JButton testButton;
+    private javax.swing.JLabel testResultValueLabel;
+    private javax.swing.JTextField testUntranslatedTextField;
+    private javax.swing.JLabel translationSizeLabel;
+    private javax.swing.JSpinner translationSizeSpinner;
+    private javax.swing.JLabel unitsLabel;
+    private javax.swing.JLabel untranslatedLabel;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
     /**
@@ -245,7 +279,32 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
      *                     cancellation, a connectivity problem or timeout.
      */
     private boolean testTranslationSetup() {
-       return true;
+        MediaType mediaType = MediaType.parse("application/json");
+        JsonArray jsonArray = new JsonArray();
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("Text", testUntranslatedTextField.getText());
+        jsonArray.add(jsonObject);
+        String bodyString = jsonArray.toString();
+
+        RequestBody body = RequestBody.create(mediaType,
+                bodyString);
+        Request request = new Request.Builder()
+                .url(BingTranslator.getTranlatorUrl(targetLanguageCode)).post(body)
+                .addHeader("Ocp-Apim-Subscription-Key", credentialsField.getText())
+                .addHeader("Content-type", "application/json").build();
+        try {
+            Response response = new OkHttpClient().newCall(request).execute();
+            JsonParser parser = new JsonParser();
+            JsonArray responses = parser.parse(response.body().string()).getAsJsonArray();
+            //As far as I know, there's always exactly one item in the array.
+            JsonObject response0 = responses.get(0).getAsJsonObject();
+            JsonArray translations = response0.getAsJsonArray("translations");
+            JsonObject translation0 = translations.get(0).getAsJsonObject();
+            testResultValueLabel.setText(translation0.get("text").getAsString());
+            return true;
+        } catch (IOException | IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException e) {
+            return false;
+        }
     }
 
     /**

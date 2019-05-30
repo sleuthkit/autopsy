@@ -60,8 +60,8 @@ public class BingTranslator implements TextTranslator{
         settingsPanel = new BingTranslatorSettingsPanel(settings.getCredentials(), settings.getTargetLanguageCode());
     }
     
-    private String getTranlatorUrl(){
-        return BASE_URL + settings.getTargetLanguageCode();
+    static String getTranlatorUrl(String languageCode){
+        return BASE_URL + languageCode;
     }
     
     /**
@@ -84,7 +84,7 @@ public class BingTranslator implements TextTranslator{
         RequestBody body = RequestBody.create(mediaType,
                                               bodyString);
         Request request = new Request.Builder()
-            .url(getTranlatorUrl()).post(body)
+            .url(getTranlatorUrl(settings.getTargetLanguageCode())).post(body)
             .addHeader("Ocp-Apim-Subscription-Key", settings.getCredentials())
             .addHeader("Content-type", "application/json").build();
         Response response = CLIENT.newCall(request).execute();

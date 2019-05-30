@@ -61,7 +61,7 @@ class LanguageWrapper {
 
     @Override
     public String toString() {
-        //toString overridden so that the jComboBox in the GoogleTranslatorSettingsPanel will display the name of the language
+        //toString overridden so that the jComboBox in the TranslatorSettingsPanels will display the name of the language
         return languageDisplayName;
     }
 
