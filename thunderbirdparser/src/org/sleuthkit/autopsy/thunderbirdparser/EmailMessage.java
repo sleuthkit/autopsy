@@ -50,6 +50,7 @@ class EmailMessage {
     private List<String> references = null;
     private String simplifiedSubject = "";
     private boolean isReplySubject = false;
+    private String messageThreadID = "";
 
     boolean hasAttachment() {
         return hasAttachment;
@@ -265,6 +266,24 @@ class EmailMessage {
      */
     void setReferences(List<String> references) {
         this.references = references;
+    }
+    
+    /**
+     * Sets the ThreadID of this message.
+     * 
+     * @param threadID - the thread ID to set
+     */
+    void setMessageThreadID(String threadID) {
+        this.messageThreadID = threadID;
+    }
+    
+    /**
+     * Returns the ThreadID for this message.
+     * 
+     * @return - the message thread ID or "" is non is available
+     */
+    String getMessageThreadID() {
+        return this.messageThreadID;
     }
 
     /**

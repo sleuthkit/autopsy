@@ -39,7 +39,7 @@ final class EmailMessageThreader {
 
     private int bogus_id_count = 0;
 
-    public Set<Container> threadMessages(List<EmailMessage> emailMessages) {
+    public void threadMessages(List<EmailMessage> emailMessages, String threadIDPrefix) {
         HashMap<String, Container> id_table = createIDTable(emailMessages);
         Set<Container> rootSet = getRootSet(id_table);
 
@@ -47,9 +47,7 @@ final class EmailMessageThreader {
 
         Set<Container> finalSet = groupBySubject(rootSet);
 
-        printContainerSet(finalSet, "");
-
-        return finalSet;
+        assignThreadIDs(finalSet, threadIDPrefix);
     }
 
     /**
@@ -59,7 +57,7 @@ final class EmailMessageThreader {
      *
      * @param emailMessages
      *
-     * @return
+     * @return - HashMap of all message where the key is the message-ID of the message
      */
     private HashMap<String, Container> createIDTable(List<EmailMessage> emailMessages) {
         HashMap<String, Container> id_table = new HashMap<>();
@@ -197,7 +195,6 @@ final class EmailMessageThreader {
         Set<Container> containersToRemove = new HashSet<>();
         containerSet.forEach((container) -> {
             if (!container.hasMessage() && !container.hasChildren()) {
-//                containerSet.remove(container);
                 containersToRemove.add(container);
             } else {
                 pruneChildren(container);
@@ -229,8 +226,6 @@ final class EmailMessageThreader {
         Set<Container> add = new HashSet<>();
         for (Container child : parent.getChildren()) {
             if (pruneChildren(child)) {
-//                parent.addChildren(child.getChildren());
-//                parent.removeChild(child);
                 remove.add(child);
                 add.addAll(child.getChildren());
                 child.setParent(null);
@@ -243,9 +238,9 @@ final class EmailMessageThreader {
         parent.removeChildren(remove);
 
         if (!parent.hasMessage() && grandParent != null) {
-            for (Container child : children) {
+            children.forEach((child) -> {
                 child.setParent(grandParent);
-            }
+            });
             return true;
         }
 
@@ -391,6 +386,32 @@ final class EmailMessageThreader {
         }
 
         return subject_table;
+    }
+    
+    private void assignThreadIDs(Set<Container> containerSet, String IDPrefix) {
+        int threadCounter = 0;
+        
+        for(Container container: containerSet) {
+            String threadID = String.format("%s-%d", IDPrefix, threadCounter++);
+            addThreadID(container, threadID);
+        }
+    }
+    
+    private void addThreadID(Container container, String threadID) {
+        if(container == null) {
+            return;
+        }
+        
+        EmailMessage message = container.getMessage();
+        if(message != null) {
+            message.setMessageThreadID(threadID);
+        }
+        
+        if(container.hasChildren()) {
+            for(Container child: container.getChildren()) {
+                addThreadID(child, threadID);
+            }
+        }
     }
 
     /**

@@ -411,7 +411,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         List<AbstractFile> derivedFiles = new ArrayList<>();
         
         EmailMessageThreader threader = new EmailMessageThreader();
-        threader.threadMessages(emails);
+        threader.threadMessages(emails, String.format("%d", abstractFile.getId()));
         
         for (EmailMessage email : emails) {
             BlackboardArtifact msgArtifact = addEmailArtifact(email, abstractFile);
@@ -511,6 +511,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String subject = email.getSubject();
         long id = email.getId();
         String localPath = email.getLocalPath();
+        String threadID = email.getMessageThreadID();
 
         List<String> senderAddressList = new ArrayList<>();
         String senderAddress;
@@ -568,6 +569,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         addArtifactAttribute(cc, ATTRIBUTE_TYPE.TSK_EMAIL_CC, bbattributes);
         addArtifactAttribute(bodyHTML, ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML, bbattributes);
         addArtifactAttribute(rtf, ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF, bbattributes);
+        addArtifactAttribute(threadID, ATTRIBUTE_TYPE.TSK_THREAD_ID, bbattributes);
         
    
         try {
