@@ -1,7 +1,7 @@
 BingTranslator.name.text=Bing Translator
 GoogleTranslator.name.text=Google Translate
 GoogleTranslatorSettingsPanel.browseButton.text=Browse
-GoogleTranslatorSettingsPanel.credentialsLabel.text=Credentials:
+GoogleTranslatorSettingsPanel.credentialsLabel.text=Authentication key:
 GoogleTranslatorSettingsPanel.errorMessage.fileNotFound=Credentials file not found, please set the location to be a valid JSON credentials file.
 GoogleTranslatorSettingsPanel.errorMessage.noFileSelected=A JSON file must be selected to provide your credentials for Google Translate.
 GoogleTranslatorSettingsPanel.errorMessage.unableToMakeCredentials=Unable to construct credentials object from credentials file, please set the location to be a valid JSON credentials file.
@@ -19,3 +19,4 @@ BingTranslatorSettingsPanel.untranslatedLabel.text=Untranslated:
 BingTranslatorSettingsPanel.translationSizeLabel.text=Translation Size:
 BingTranslatorSettingsPanel.targetLanguageLabel.text=Target Language:
 BingTranslatorSettingsPanel.unitsLabel.text=characters
+BingTranslatorSettingsPanel.authenticationKeyField.toolTipText=Enter the hash for the 

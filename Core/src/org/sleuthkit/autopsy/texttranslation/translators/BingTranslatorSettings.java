@@ -70,12 +70,14 @@ public final class BingTranslatorSettings {
         }
         if (ModuleSettings.settingExists(BING_TRANSLATE_NAME, AUTHENTICATION_KEY)) {
             authenticationKey = ModuleSettings.getConfigSetting(BING_TRANSLATE_NAME, AUTHENTICATION_KEY);
-        } else {
+        }
+        if (authenticationKey == null || StringUtils.isBlank(authenticationKey)) {
             authenticationKey = DEFAULT_AUTHENTICATION;
         }
         if (ModuleSettings.settingExists(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY)) {
             targetLanguageCode = ModuleSettings.getConfigSetting(BING_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY);
-        } else {
+        }
+        if (targetLanguageCode == null || StringUtils.isBlank(targetLanguageCode)) {
             targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
         }
     }
