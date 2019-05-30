@@ -47,7 +47,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
     private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
-    private final Option getAllDataSourcesCommandOption = Option.withoutArgument('r', "getAllDataSources");
+    private final Option getAllDataSourcesCommandOption = Option.withoutArgument('g', "getAllDataSources");
+    private final Option configFilePathOption = Option.withoutArgument('p', "configFilePath");
     private boolean runFromCommandLine = false;
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
@@ -64,6 +65,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(caseDirOption);
         set.add(runIngestCommandOption);
         set.add(getAllDataSourcesCommandOption);
+        set.add(configFilePathOption);
         return set;
     }
 
@@ -192,6 +194,31 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 return;
             }
         }
+                
+        String configFilePath = "";
+        if (values.containsKey(configFilePathOption)) {
+
+            argDirs = values.get(configFilePathOption);
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'configFilePath'");
+                System.err.println("Missing argument 'configFilePath'");
+                return;
+            }
+            configFilePath = argDirs[0];
+
+            // verify inputs
+            if (configFilePath == null || configFilePath.isEmpty()) {
+                logger.log(Level.SEVERE, "Missing argument 'configFilePath'");
+                System.err.println("Missing argument 'configFilePath'");
+                return;
+            }
+
+            if (!(new File(configFilePath).exists())) {
+                logger.log(Level.SEVERE, "Configuration file {0} doesn''t exist", configFilePath);
+                System.err.println("Configuration file " + configFilePath + " doesn't exist");
+                return;
+            }
+        }        
 
         // Create commands in order in which they should be executed:
         // First create the "CREATE_CASE" command, if present
@@ -267,10 +294,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 runFromCommandLine = false;
                 return;
             }
-
+            
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);
+            newCommand.addInputValue(CommandLineCommand.InputType.INGEST_CONTEXT_NAME.name(), configFilePath);
             commands.add(newCommand);
             runFromCommandLine = true;
         }
