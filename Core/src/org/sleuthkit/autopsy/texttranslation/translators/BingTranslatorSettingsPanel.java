@@ -51,7 +51,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
      */
     public BingTranslatorSettingsPanel(String authenticationKey, String code) {
         initComponents();
-
         authenticationKeyField.setText(authenticationKey);
         authenticationKeyField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -284,6 +283,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
      *                     cancellation, a connectivity problem or timeout.
      */
     private boolean testTranslationSetup() {
+        testResultValueLabel.setText("");
         MediaType mediaType = MediaType.parse("application/json");
         JsonArray jsonArray = new JsonArray();
         JsonObject jsonObject = new JsonObject();
