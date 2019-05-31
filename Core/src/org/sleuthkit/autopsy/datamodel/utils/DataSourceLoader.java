@@ -44,14 +44,17 @@ public class DataSourceLoader {
 
     /**
      * Query case database for a list of all existing logical data sources and
-     * their object IDs. 
+     * their object IDs.
      *
      * @param tskDb SleuthkitCase database handle
-     * @param dataSourceMap map to which to add data sources
+     *
+     * @return Map of Long (id) to String (data source file name only)
      * @throws TskCoreException
      * @throws SQLException
      */
-    private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
+    public Map<Long, String> getLogicalDataSources(SleuthkitCase tskDb) throws TskCoreException, SQLException {
+
+        Map<Long, String> dataSourceMap = new HashMap<>();
         //try block releases resources - exceptions are handled in done()
         try (
                 SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
@@ -59,22 +62,25 @@ public class DataSourceLoader {
             while (resultSet.next()) {
                 Long objectId = resultSet.getLong(1);
                 String dataSourceName = resultSet.getString(2);
-                dataSouceMap.put(objectId, dataSourceName);
+                dataSourceMap.put(objectId, dataSourceName);
             }
         }
+        return dataSourceMap;
     }
 
     /**
      * Query case database for a list of all existing image data sources and
-     * their object IDs. 
+     * their object IDs.
      *
      * @param tskDb SleuthkitCase database handle
-     * @param dataSourceMap map to which to add data sources
-     * otherwise
+     *
+     * @return Map of Long (id) to String (data source file name only)
      * @throws SQLException
      * @throws TskCoreException
      */
-    private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSourceMap) throws SQLException, TskCoreException {
+    public Map<Long, String> getImageDataSources(SleuthkitCase tskDb) throws SQLException, TskCoreException {
+
+        Map<Long, String> dataSourceMap = new HashMap<>();
         //try block releases resources - exceptions are handled in done()
         try (
                 SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
@@ -90,11 +96,12 @@ public class DataSourceLoader {
                 }
             }
         }
+        return dataSourceMap;
     }
 
     /**
-     * Get a map of data source Ids to their string names (data source file name
-     * only) for the current case.
+     * Get a map of all data source Ids to their string names (data source file
+     * name only) for the current case.
      *
      * @return Map of Long (id) to String (data source file name only)
      *
@@ -103,15 +110,15 @@ public class DataSourceLoader {
      * @throws SQLException
      */
     public Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
-        Map<Long, String> dataSouceMap = new HashMap<>();
+        Map<Long, String> dataSourceMap = new HashMap<>();
 
         Case currentCase = Case.getCurrentCaseThrows();
         SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-        loadLogicalSources(tskDb, dataSouceMap);
+        dataSourceMap.putAll(getLogicalDataSources(tskDb));
 
-        loadImageSources(tskDb, dataSouceMap);
+        dataSourceMap.putAll(getImageDataSources(tskDb));
 
-        return dataSouceMap;
+        return dataSourceMap;
     }
 }
