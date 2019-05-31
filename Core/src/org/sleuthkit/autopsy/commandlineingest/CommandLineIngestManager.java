@@ -142,8 +142,8 @@ public class CommandLineIngestManager {
                         switch (type) {
                             case CREATE_CASE:
                                 try {
-                                    LOGGER.log(Level.INFO, "Processing 'create case' command");
-                                    System.out.println("Processing 'create case' command");
+                                    LOGGER.log(Level.INFO, "Processing 'Create Case' command");
+                                    System.out.println("Processing 'Create Case' command");
                                     openCase(command);
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
@@ -158,8 +158,8 @@ public class CommandLineIngestManager {
                                 break;
                             case ADD_DATA_SOURCE:
                                 try {
-                                    LOGGER.log(Level.INFO, "Processing 'add data source' command");
-                                    System.out.println("Processing 'add data source' command");
+                                    LOGGER.log(Level.INFO, "Processing 'Add Data Source' command");
+                                    System.out.println("Processing 'Add Data Source' command");
                                     Map<String, String> inputs = command.getInputs();
 
                                     // open the case, if it hasn't been already opened by CREATE_CASE command
@@ -184,8 +184,8 @@ public class CommandLineIngestManager {
                                 break;
                             case RUN_INGEST:
                                 try {
-                                    LOGGER.log(Level.INFO, "Processing 'run ingest' command");
-                                    System.out.println("Processing 'run ingest' command");
+                                    LOGGER.log(Level.INFO, "Processing 'Run Ingest' command");
+                                    System.out.println("Processing 'Run Ingest' command");
                                     Map<String, String> inputs = command.getInputs();
 
                                     // open the case, if it hasn't been already opened by CREATE_CASE or ADD_DATA_SOURCE commands

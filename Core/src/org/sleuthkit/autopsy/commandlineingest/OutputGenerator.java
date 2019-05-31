@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSource;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -141,8 +142,11 @@ class OutputGenerator {
                         dataSourceName = content.getName();
                     }
                 } else {
-                    // logical data source
-                    dataSourceName = content.getName();
+                    // logical data source. The only way I found that works for all types of logical 
+                    // data sources is to get AbstractFile from database and use it's name. 
+                    // Content.getName() works for most but not all scenarios.
+                    AbstractFile file = caseForJob.getSleuthkitCase().getAbstractFileById(content.getId());
+                    dataSourceName = file.getName(); 
                 }
 
                 // save the JSON output
