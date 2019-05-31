@@ -484,7 +484,7 @@ public final class ConfigVisualPanel2 extends JPanel {
             editPanel.setEnabled(true);
             editPanel.setVisible(true);
 
-            int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), "Edit rule", 
+            int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), "Edit rule set", 
                         JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
                         null, new Object[]{okButton, cancelButton}, okButton);
             
@@ -496,25 +496,26 @@ public final class ConfigVisualPanel2 extends JPanel {
 
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
         JPanel panel;
-        int option = JOptionPane.showOptionDialog(this, "Creating a full paths rule?", "New rule", 
-                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
-        if (option == JOptionPane.YES_OPTION) {
-            panel = EditRulePanel.NewFullPathsRulePanel(okButton, cancelButton);
-        } else if (option == JOptionPane.NO_OPTION) {
-            panel = EditRulePanel.NewNonFullPathsRulePanel(okButton, cancelButton);
-        } else {
-            return;
-        }
-        
+//        int option = JOptionPane.showOptionDialog(this, "Creating a full paths rule?", "New rule", 
+//                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+//        if (option == JOptionPane.YES_OPTION) {
+//            panel = EditRulePanel.NewFullPathsRulePanel(okButton, cancelButton);
+//        } else if (option == JOptionPane.NO_OPTION) {
+//            panel = EditRulePanel.NewNonFullPathsRulePanel(okButton, cancelButton);
+//        } else {
+//            return;
+//        }
+        panel = new NewRuleSetPanel();
         panel.setEnabled(true);
         panel.setVisible(true);
-        option = JOptionPane.showOptionDialog(this, panel, "Edit rule", 
+        int option = JOptionPane.showOptionDialog(this, panel, "New rule set", 
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
                     null, new Object[]{okButton, cancelButton}, okButton);
 
         System.out.println("option = " + option);
 
         if (option == JOptionPane.OK_OPTION) {
+            // Save the new rule
             ;
         }        
     }//GEN-LAST:event_newRuleButtonActionPerformed

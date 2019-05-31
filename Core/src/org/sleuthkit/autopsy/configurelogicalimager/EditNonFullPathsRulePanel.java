@@ -23,8 +23,8 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;
-    private javax.swing.JTextArea filenamesTextArea;
-    private javax.swing.JTextArea folderNamesTextArea;
+    private final javax.swing.JTextArea filenamesTextArea;
+    private final javax.swing.JTextArea folderNamesTextArea;
 
     /**
      * Creates new form EditRulePanel
@@ -80,8 +80,10 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         
     private void setTextArea(JTextArea textArea, Set<String> set) {
         String text = "";
-        for (String s : set) {
-            text += s + System.getProperty("line.separator");
+        if (set != null) {
+            for (String s : set) {
+                text += s + System.getProperty("line.separator");
+            }
         }
         textArea.setText(text);
     }
@@ -89,10 +91,12 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private void setExtensions(Set<String> extensions) {
         extensionsTextField.setText("");
         String content = "";
-        boolean first = true;
-        for (String ext : extensions) {            
-            content += (first ? "" : ",") + ext;
-            first = false;
+        if (extensions != null) {
+            boolean first = true;
+            for (String ext : extensions) {            
+                content += (first ? "" : ",") + ext;
+                first = false;
+            }
         }
         extensionsTextField.setText(content);
     }
@@ -219,7 +223,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                                 .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 288, Short.MAX_VALUE)))
+                        .addGap(0, 190, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
