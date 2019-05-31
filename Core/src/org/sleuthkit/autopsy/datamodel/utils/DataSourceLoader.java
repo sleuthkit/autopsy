@@ -52,7 +52,7 @@ public class DataSourceLoader {
      * @throws TskCoreException
      * @throws SQLException
      */
-    public Map<Long, String> getLogicalDataSources(SleuthkitCase tskDb) throws TskCoreException, SQLException {
+    public static Map<Long, String> getLogicalDataSources(SleuthkitCase tskDb) throws TskCoreException, SQLException {
 
         Map<Long, String> dataSourceMap = new HashMap<>();
         //try block releases resources - exceptions are handled in done()
@@ -78,7 +78,7 @@ public class DataSourceLoader {
      * @throws SQLException
      * @throws TskCoreException
      */
-    public Map<Long, String> getImageDataSources(SleuthkitCase tskDb) throws SQLException, TskCoreException {
+    public static Map<Long, String> getImageDataSources(SleuthkitCase tskDb) throws SQLException, TskCoreException {
 
         Map<Long, String> dataSourceMap = new HashMap<>();
         //try block releases resources - exceptions are handled in done()
@@ -109,7 +109,7 @@ public class DataSourceLoader {
      * @throws TskCoreException
      * @throws SQLException
      */
-    public Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
+    public static Map<Long, String> getAllDataSources() throws NoCurrentCaseException, TskCoreException, SQLException {
         Map<Long, String> dataSourceMap = new HashMap<>();
 
         Case currentCase = Case.getCurrentCaseThrows();
