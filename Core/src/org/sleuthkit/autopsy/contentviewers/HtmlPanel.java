@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -25,8 +30,9 @@ import javafx.concurrent.Worker;
 import javafx.scene.web.WebView;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Node;
+import net.htmlparser.jericho.Attribute;
+import net.htmlparser.jericho.OutputDocument;
+import net.htmlparser.jericho.Source;
 import org.openide.util.NbBundle.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -38,6 +44,7 @@ import org.w3c.dom.events.EventTarget;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class HtmlPanel extends javax.swing.JPanel {
 
+    private static final Logger logger = Logger.getLogger(HtmlPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final String TEXT_TYPE = "text/plain";
     private final JFXPanel jfxPanel = new JFXPanel();
@@ -99,12 +106,26 @@ final class HtmlPanel extends javax.swing.JPanel {
      * @return The cleansed HTML String
      */
     private String cleanseHTML(String htmlInString) {
-        org.jsoup.nodes.Document doc = Jsoup.parse(htmlInString);
-        // remove all 'img' tags.
-        doc.select("img").stream().forEach(Node::remove);
-        // remove all 'span' tags, these are often images which are ads
-        doc.select("span").stream().forEach(Node::remove);
-        return doc.html();
+        String returnString = "";
+        try {
+            Source source = new Source(new StringReader(htmlInString));
+            OutputDocument document = new OutputDocument(source);
+            //remove background images
+            source.getAllTags().stream().filter((tag) -> (tag.toString().contains("background-image"))).forEachOrdered((tag) -> {
+                document.remove(tag);
+            });
+            //remove images
+            source.getAllElements("img").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove other URI elements such as input boxes
+            List<Attribute> attributesToRemove = source.getURIAttributes();
+            document.remove(attributesToRemove);
+            returnString = document.toString();
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to read html for cleaning out URI elements with Jericho", ex);
+        }
+        return returnString;
     }
 
     /**
