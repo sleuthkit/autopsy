@@ -30,10 +30,12 @@ import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
+import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSource;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -50,6 +52,13 @@ class OutputGenerator {
     private OutputGenerator() {
     }
 
+    /**
+     * Saves output of "Create Case" command to JSON output file.
+     *
+     * @param caseForJob Case object
+     * @param outputDirPath Full path to a directory where JSON output should be
+     * saved
+     */
     static void saveCreateCaseOutput(Case caseForJob, String outputDirPath) {
         JsonFactory jsonGeneratorFactory = new JsonFactory();
         String reportOutputPath = outputDirPath + File.separator + "createCase_" + TimeStampUtils.createTimeStamp() + ".json";
@@ -87,6 +96,14 @@ class OutputGenerator {
         }
     }
 
+    /**
+     * Saves output of "Add data source" command to JSON output file.
+     *
+     * @param caseForJob Case object
+     * @param outputDirPath Full path to a directory where JSON output should be
+     * saved
+     * @param dataSource AutoIngestDataSource object for the data source
+     */
     static void saveAddDataSourceOutput(Case caseForJob, AutoIngestDataSource dataSource, String outputDirPath) {
 
         List<Content> contentObjects = dataSource.getContent();
@@ -120,7 +137,7 @@ class OutputGenerator {
                     // image data source. Need to get display name
                     dataSourceName = getImageDisplayName(caseForJob, content.getId());
                     if (dataSourceName == null) {
-                        // soma data sources do not have "display_name" set, use data source name instead
+                        // some image data sources do not have "display_name" set, use data source name instead
                         dataSourceName = content.getName();
                     }
                 } else {
@@ -129,10 +146,7 @@ class OutputGenerator {
                 }
 
                 // save the JSON output
-                jsonGenerator.writeStartObject();
-                jsonGenerator.writeStringField("@dataSourceName", dataSourceName);
-                jsonGenerator.writeStringField("@dataSourceObjectId", String.valueOf(content.getId()));
-                jsonGenerator.writeEndObject();
+                saveDataSourceInfoToFile(jsonGenerator, dataSourceName, content.getId());
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to create JSON output for 'Add Data Source' command", ex); //NON-NLS
@@ -153,6 +167,88 @@ class OutputGenerator {
                 }
             }
         }
+    }
+
+    /**
+     * Gets the list of all data sources in a case and then saves their info to
+     * JSON output file.
+     *
+     * @param caseForJob Case object
+     * @param outputDirPath Full path to a directory where JSON output should be
+     * saved
+     */
+    static void listAllDataSources(Case caseForJob, String outputDirPath) {
+        JsonFactory jsonGeneratorFactory = new JsonFactory();
+        String reportOutputPath = outputDirPath + File.separator + "listAllDataSources_" + TimeStampUtils.createTimeStamp() + ".json";
+        java.io.File reportFile = Paths.get(reportOutputPath).toFile();
+        try {
+            Files.createDirectories(Paths.get(reportFile.getParent()));
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to create output file " + reportFile.toString() + " for 'List All Data Sources' command", ex); //NON-NLS
+            System.err.println("Unable to create output file " + reportFile.toString() + " for 'List All Data Sources' command"); //NON-NLS
+            return;
+        }
+
+        JsonGenerator jsonGenerator = null;
+        try {
+            jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
+            // instert \n after each field for more readable formatting
+            jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
+
+            // list all image data sources
+            Map<Long, String> imageDataSources = DataSourceLoader.getImageDataSources(caseForJob.getSleuthkitCase());
+            for (Map.Entry<Long, String> entry : imageDataSources.entrySet()) {
+                String dataSourceName;
+                Long dataSourceObjOd = entry.getKey();
+                dataSourceName = getImageDisplayName(caseForJob, dataSourceObjOd);
+                if (dataSourceName == null) {
+                    // some image data sources do not have "display_name" set, use data source name instead
+                    dataSourceName = entry.getValue();
+                }
+                saveDataSourceInfoToFile(jsonGenerator, dataSourceName, dataSourceObjOd);
+            }
+
+            // list all logical data sources
+            Map<Long, String> logicalDataSources = DataSourceLoader.getLogicalDataSources(caseForJob.getSleuthkitCase());
+            for (Map.Entry<Long, String> entry : logicalDataSources.entrySet()) {
+                String dataSourceName = entry.getValue();
+                Long dataSourceObjOd = entry.getKey();
+                saveDataSourceInfoToFile(jsonGenerator, dataSourceName, dataSourceObjOd);
+            }
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to create JSON output for 'List All Data Sources' command", ex); //NON-NLS
+            System.err.println("Failed to create JSON output for 'List All Data Sources' command"); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get data source info for 'List All Data Sources' command output", ex); //NON-NLS
+            System.err.println("Failed to get data source info for 'List All Data Sources' command output"); //NON-NLS
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Failed to get data source display name for 'List All Data Sources' command output", ex); //NON-NLS
+            System.err.println("Failed to get data source display name for 'List All Data Sources' command output"); //NON-NLS
+        } finally {
+            if (jsonGenerator != null) {
+                try {
+                    jsonGenerator.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Failed to close JSON output file for 'List All Data Sources' command", ex); //NON-NLS
+                    System.err.println("Failed to close JSON output file for 'List All Data Sources' command"); //NON-NLS
+                }
+            }
+        }
+    }
+
+    /**
+     * Saves data source info in JSON output file
+     *
+     * @param jsonGenerator Fully initialized JsonGenerator object
+     * @param dataSourceName Name of the data source
+     * @param dataSourceObjId Object Id of the data source
+     * @throws IOException
+     */
+    private static void saveDataSourceInfoToFile(JsonGenerator jsonGenerator, String dataSourceName, long dataSourceObjId) throws IOException {
+        jsonGenerator.writeStartObject();
+        jsonGenerator.writeStringField("@dataSourceName", dataSourceName);
+        jsonGenerator.writeStringField("@dataSourceObjectId", String.valueOf(dataSourceObjId));
+        jsonGenerator.writeEndObject();
     }
 
     /**

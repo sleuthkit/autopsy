@@ -226,12 +226,30 @@ public class CommandLineIngestManager {
                                     
                                     // run ingest
                                     analyze(dataSource);
-                                    
-                                    // ELTODO saveRunIngestOutput();
                                 } catch (InterruptedException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
                                     System.err.println("Error running ingest on data source " + dataSourcePath);
+                                    // Do not process any other commands
+                                    return;
+                                }
+                                break;
+                                
+                            case LIST_ALL_DATA_SOURCES:
+                                try {
+                                    LOGGER.log(Level.INFO, "Processing 'List All Data Sources' command");
+                                    System.out.println("Processing 'List All Data Sources' command");
+                                    Map<String, String> inputs = command.getInputs();
+                                    
+                                    String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                    openCase(caseDirPath);
+                                    
+                                    String outputDirPath = "C:\\TEST\\DELETE";
+                                    OutputGenerator.listAllDataSources(caseForJob, outputDirPath);
+                                } catch (CaseActionException ex) {
+                                    String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                    LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
+                                    System.err.println("Error opening case in case directory: " + caseDirPath);
                                     // Do not process any other commands
                                     return;
                                 }

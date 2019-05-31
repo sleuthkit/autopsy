@@ -47,7 +47,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
     private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
-    private final Option getAllDataSourcesCommandOption = Option.withoutArgument('r', "getAllDataSources");
+    private final Option getAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private boolean runFromCommandLine = false;
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
@@ -74,7 +74,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         runFromCommandLine = false;
 
         // input arguments must contain at least one command
-        if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption) 
+        if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption)
                 || values.containsKey(runIngestCommandOption) || values.containsKey(getAllDataSourcesCommandOption))) {
             // not running from command line
             logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
@@ -274,7 +274,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             commands.add(newCommand);
             runFromCommandLine = true;
         }
-        
+
         // Add "LIST_ALL_DATA_SOURCES" command, if present
         if (values.containsKey(getAllDataSourcesCommandOption)) {
 
@@ -290,7 +290,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             commands.add(newCommand);
             runFromCommandLine = true;
-        }        
+        }
     }
 
     /**
