@@ -47,7 +47,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
     private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
-    private final Option getAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
+    private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private boolean runFromCommandLine = false;
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
@@ -63,7 +63,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(dataSourceObjectIdOption);
         set.add(caseDirOption);
         set.add(runIngestCommandOption);
-        set.add(getAllDataSourcesCommandOption);
+        set.add(listAllDataSourcesCommandOption);
         return set;
     }
 
@@ -75,7 +75,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
         // input arguments must contain at least one command
         if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption)
-                || values.containsKey(runIngestCommandOption) || values.containsKey(getAllDataSourcesCommandOption))) {
+                || values.containsKey(runIngestCommandOption) || values.containsKey(listAllDataSourcesCommandOption))) {
             // not running from command line
             logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
             System.err.println("No command line commands passed in as inputs. Not running from command line.");
@@ -276,10 +276,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         }
 
         // Add "LIST_ALL_DATA_SOURCES" command, if present
-        if (values.containsKey(getAllDataSourcesCommandOption)) {
+        if (values.containsKey(listAllDataSourcesCommandOption)) {
 
-            // 'caseDir' must always be specified for "LIST_ALL_DATA_SOURCES" command
-            if (caseDir.isEmpty()) {
+            // 'caseDir' must only be specified if the case is not being created during the current run
+            if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
+                // new case is not being created during this run, so 'caseDir' should have been specified
                 logger.log(Level.SEVERE, "'caseDir' argument is empty");
                 System.err.println("'caseDir' argument is empty");
                 runFromCommandLine = false;
