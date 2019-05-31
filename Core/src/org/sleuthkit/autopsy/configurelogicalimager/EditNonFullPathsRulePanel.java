@@ -6,7 +6,7 @@
 package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.awt.event.ActionEvent;
-import java.util.Set;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -14,6 +14,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
  *
@@ -78,7 +79,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             );
     }
         
-    private void setTextArea(JTextArea textArea, Set<String> set) {
+    private void setTextArea(JTextArea textArea, List<String> set) {
         String text = "";
         if (set != null) {
             for (String s : set) {
@@ -88,7 +89,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         textArea.setText(text);
     }
 
-    private void setExtensions(Set<String> extensions) {
+    private void setExtensions(List<String> extensions) {
         extensionsTextField.setText("");
         String content = "";
         if (extensions != null) {
@@ -346,5 +347,9 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             pane.setValue(cancelButton);
         });
         this.setOkButton();
+    }
+
+    ImmutablePair<String, LogicalImagerRule> toRule() {
+        return new ImmutablePair<>("nonFullPathRule", new LogicalImagerRule());
     }
 }

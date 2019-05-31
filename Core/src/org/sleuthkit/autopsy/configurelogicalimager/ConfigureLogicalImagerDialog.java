@@ -697,7 +697,7 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
         shouldSaveCheckBox.setSelected(false);
     }
 
-    private void updateExtensions(Set<String> extensions) {
+    private void updateExtensions(List<String> extensions) {
         extensionsTextField.setText("");
         String content = "";
         boolean first = true;
@@ -708,7 +708,7 @@ public class ConfigureLogicalImagerDialog extends javax.swing.JDialog {
         extensionsTextField.setText(content);
     }
 
-    private void updateList(javax.swing.JTable jTable, Set<String> set) {
+    private void updateList(javax.swing.JTable jTable, List<String> set) {
         SingleColumnTableModel tableModel = new SingleColumnTableModel();
         int row = 0;
         for (String s : set) {

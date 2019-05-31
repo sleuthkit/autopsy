@@ -26,7 +26,7 @@
           </Group>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jLayeredPane1" max="32767" attributes="0"/>
+              <Component id="sharedLayeredPane" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -39,7 +39,7 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="chooseComboBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="jLayeredPane1" max="32767" attributes="0"/>
+              <Component id="sharedLayeredPane" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -58,8 +58,8 @@
         <Property name="maximumRowCount" type="int" value="2"/>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
           <StringArray count="2">
-            <StringItem index="0" value="Full Path"/>
-            <StringItem index="1" value="By Attribute"/>
+            <StringItem index="0" value="By Attribute"/>
+            <StringItem index="1" value="Full Path"/>
           </StringArray>
         </Property>
       </Properties>
@@ -70,7 +70,7 @@
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>
     </Component>
-    <Container class="javax.swing.JLayeredPane" name="jLayeredPane1">
+    <Container class="javax.swing.JLayeredPane" name="sharedLayeredPane">
 
       <Layout>
         <DimensionLayout dim="0">

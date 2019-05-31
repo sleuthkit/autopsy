@@ -5,16 +5,17 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import static java.util.Collections.EMPTY_SET;
+import static java.util.Collections.EMPTY_LIST;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
 
 public final class ConfigVisualPanel2 extends JPanel {
@@ -489,34 +490,38 @@ public final class ConfigVisualPanel2 extends JPanel {
                         null, new Object[]{okButton, cancelButton}, okButton);
             
             if (option == JOptionPane.OK_OPTION) {
-                ;
+                System.out.println("option = " + option);
             }
         }   
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
-        JPanel panel;
-//        int option = JOptionPane.showOptionDialog(this, "Creating a full paths rule?", "New rule", 
-//                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
-//        if (option == JOptionPane.YES_OPTION) {
-//            panel = EditRulePanel.NewFullPathsRulePanel(okButton, cancelButton);
-//        } else if (option == JOptionPane.NO_OPTION) {
-//            panel = EditRulePanel.NewNonFullPathsRulePanel(okButton, cancelButton);
-//        } else {
-//            return;
-//        }
-        panel = new NewRuleSetPanel();
+        NewRuleSetPanel panel;
+        panel = new NewRuleSetPanel(okButton, cancelButton);
         panel.setEnabled(true);
         panel.setVisible(true);
-        int option = JOptionPane.showOptionDialog(this, panel, "New rule set", 
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
-                    null, new Object[]{okButton, cancelButton}, okButton);
 
-        System.out.println("option = " + option);
-
-        if (option == JOptionPane.OK_OPTION) {
-            // Save the new rule
-            ;
+        while (true) {
+            int option = JOptionPane.showOptionDialog(this, panel, "New rule set", 
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
+                        null, new Object[]{okButton, cancelButton}, okButton);
+            System.out.println("option = " + option);
+            if (option == JOptionPane.OK_OPTION) {
+                try {
+                    // Save the new rule
+                    ImmutablePair<String, LogicalImagerRule> ruleMap = panel.toRule();
+                    appendRow(ruleMap);
+                    break;
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(this,
+                        ex.getMessage(),
+                        "New rule error",
+                        JOptionPane.ERROR_MESSAGE);
+                    // let user fix the error
+                }
+            } else {
+                break;
+            }
         }        
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
@@ -581,14 +586,18 @@ public final class ConfigVisualPanel2 extends JPanel {
     private javax.swing.JCheckBox shouldSaveCheckBox;
     // End of variables declaration//GEN-END:variables
 
-    private void updatePanel(String configFilePath, LogicalImagerConfig config) {
+    private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
         Map<String, LogicalImagerRule> ruleSet = config.getRuleSet();
         RulesTableModel rulesTableModel = new RulesTableModel();
         int row = 0;
+        int selectThisRow = 0;
         for (Map.Entry<String, LogicalImagerRule> rule : ruleSet.entrySet()) {
             rulesTableModel.setValueAt(rule.getKey(), row, 0);
+            if (rowSelectionkey != null && rule.getKey().equals(rowSelectionkey)) {
+                selectThisRow = row;
+            }
             rulesTableModel.setValueAt(rule.getValue().getDescription(), row, 1);
             rulesTableModel.setValueAt(rule.getValue(), row, 2);
             row++;
@@ -597,9 +606,13 @@ public final class ConfigVisualPanel2 extends JPanel {
         rulesTable.setModel(rulesTableModel);
         // If there are any rules, select the first one
         if (rulesTableModel.getRowCount() > 0) {
-            rulesTable.setRowSelectionInterval(0, 0);
+            rulesTable.setRowSelectionInterval(selectThisRow, selectThisRow);
             rulesTableSelect();
         }
+    }
+    
+    private void updatePanel(String configFilePath, LogicalImagerConfig config) {
+        updatePanel(configFilePath, config, null);
     }
 
     private void rulesTableSelect() {
@@ -640,7 +653,7 @@ public final class ConfigVisualPanel2 extends JPanel {
         shouldSaveCheckBox.setSelected(false);
     }
 
-    private void updateExtensions(Set<String> extensions) {
+    private void updateExtensions(List<String> extensions) {
         extensionsTextField.setText("");
         if (extensions == null) {
             return;
@@ -654,7 +667,7 @@ public final class ConfigVisualPanel2 extends JPanel {
         extensionsTextField.setText(content);
     }
 
-    private void updateList(javax.swing.JTable jTable, Set<String> set) {
+    private void updateList(javax.swing.JTable jTable, List<String> set) {
         SingleColumnTableModel tableModel = new SingleColumnTableModel();
         jTable.setTableHeader(null);
         if (set == null) {
@@ -688,8 +701,8 @@ public final class ConfigVisualPanel2 extends JPanel {
         ruleNameEditTextField.setText("");
         descriptionEditTextField.setText("");
         extensionsTextField.setText("");
-        updateList(filenamesTable, EMPTY_SET);
-        updateList(folderNamesTable, EMPTY_SET);
+        updateList(filenamesTable, EMPTY_LIST);
+        updateList(folderNamesTable, EMPTY_LIST);
         fileSizeSpinner1.setValue(0);
         daysIncludedTextField.setText(Integer.toString(0));
     }
@@ -697,7 +710,12 @@ public final class ConfigVisualPanel2 extends JPanel {
     boolean isPanelValid() {
         return true;
     }
-    
+
+    private void appendRow(ImmutablePair<String, LogicalImagerRule> ruleMap) {
+        config.getRuleSet().put(ruleMap.getKey(), ruleMap.getValue());
+        updatePanel(configFilename, config, ruleMap.getKey());
+    }
+
     private class RulesTableModel extends AbstractTableModel {
 
         private final List<String> ruleName = new ArrayList<>();

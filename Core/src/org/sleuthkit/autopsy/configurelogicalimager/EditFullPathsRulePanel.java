@@ -6,9 +6,9 @@
 package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
  *
@@ -235,11 +236,44 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         shouldSaveCheckBox.setSelected(rule.isShouldSave());
     }
 
-    private void setTextArea(JTextArea textArea, Set<String> set) {
+    private void setTextArea(JTextArea textArea, List<String> set) {
         String text = "";
         for (String s : set) {
             text += s + System.getProperty("line.separator");
         }
         textArea.setText(text);
+    }
+
+    public ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
+        List<String> fullPaths = validateFullPaths(fullPathsTextArea);
+        String ruleName = validRuleName(ruleNameTextField.getText());
+
+        LogicalImagerRule rule;
+        LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
+        builder.shouldAlert(shouldAlertCheckBox.isSelected())
+                .shouldSave(shouldSaveCheckBox.isSelected())
+                .description(descriptionTextField.getText())
+                .fullPaths(fullPaths)
+                ;
+        rule = builder.build();
+        return new ImmutablePair<>(ruleName, rule);
+    }
+
+    private List<String> validateFullPaths(JTextArea textArea) throws IOException {
+        List<String> fullPaths = new ArrayList<>();
+        for (String line : textArea.getText().split("\\n")) {
+            if (line.isEmpty()) {
+                throw new IOException("Full paths cannot have an empty line");
+            }
+            fullPaths.add(line);
+        }
+        return fullPaths;
+    }
+
+    private String validRuleName(String name) throws IOException {
+        if (name.isEmpty()) {
+            throw new IOException("Rule name cannot be empty");
+        }
+        return name;
     }
 }

@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,10 +32,10 @@ public class LogicalImagerRule {
     private final Boolean shouldAlert;
     private final Boolean shouldSave;
     private final String description;
-    private Set<String> extensions = new HashSet<>();
-    private Set<String> filenames = new HashSet<>();
-    private Set<String> paths = new HashSet<>();
-    private Set<String> fullPaths = new HashSet<>();
+    private List<String> extensions = new ArrayList<>();
+    private List<String> filenames = new ArrayList<>();
+    private List<String> paths = new ArrayList<>();
+    private List<String> fullPaths = new ArrayList<>();
     private Integer minFileSize = 0;
     private Integer maxFileSize = 0;
     private Integer minDays = 0;
@@ -41,10 +43,10 @@ public class LogicalImagerRule {
     private String maxDate;
     
     LogicalImagerRule(Boolean shouldAlert, Boolean shouldSave, String description,
-            Set<String> extensions,
-            Set<String> filenames,
-            Set<String> paths,
-            Set<String> fullPaths,
+            List<String> extensions,
+            List<String> filenames,
+            List<String> paths,
+            List<String> fullPaths,
             Integer minFileSize,
             Integer maxFileSize,
             Integer minDays,
@@ -83,19 +85,19 @@ public class LogicalImagerRule {
         return description;
     }
 
-    public Set<String> getExtensions() {
+    public List<String> getExtensions() {
         return extensions;
     }
 
-    public Set<String> getFilenames() {
+    public List<String> getFilenames() {
         return filenames;
     }
 
-    public Set<String> getPaths() {
+    public List<String> getPaths() {
         return paths;
     }
 
-    public Set<String> getFullPaths() {
+    public List<String> getFullPaths() {
         return fullPaths;
     }
 
@@ -127,10 +129,10 @@ public class LogicalImagerRule {
         private Boolean shouldAlert = null;
         private Boolean shouldSave = null;
         private String description = null;
-        private Set<String> extensions = null;
-        private Set<String> filenames = null;        
-        private Set<String> paths = null;        
-        private Set<String> fullPaths = null;        
+        private List<String> extensions = null;
+        private List<String> filenames = null;        
+        private List<String> paths = null;        
+        private List<String> fullPaths = null;        
         private Integer minFileSize = null;
         private Integer maxFileSize = null;
         private Integer minDays = null;
@@ -154,22 +156,22 @@ public class LogicalImagerRule {
             return this;
         }
         
-        public Builder extensions(Set<String> extensions) {
+        public Builder extensions(List<String> extensions) {
             this.extensions = extensions;
             return this;
         }
         
-        public Builder filenames(Set<String> filenames) {
+        public Builder filenames(List<String> filenames) {
             this.filenames = filenames;
             return this;
         }
         
-        public Builder paths(Set<String> paths) {
+        public Builder paths(List<String> paths) {
             this.paths = paths;
             return this;
         }
         
-        public Builder fullPaths(Set<String> fullPaths) {
+        public Builder fullPaths(List<String> fullPaths) {
             this.fullPaths = fullPaths;
             return this;
         }

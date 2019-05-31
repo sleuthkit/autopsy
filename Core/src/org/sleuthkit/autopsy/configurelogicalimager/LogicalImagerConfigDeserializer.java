@@ -12,8 +12,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,10 +44,10 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             Boolean shouldSave = false;
             Boolean shouldAlert = true;
             String description = null;
-            Set<String> extensions = null;
-            Set<String> paths = null;
-            Set<String> fullPaths = null;
-            Set<String> filenames = null;
+            List<String> extensions = null;
+            List<String> paths = null;
+            List<String> fullPaths = null;
+            List<String> filenames = null;
             Integer minFileSize = null;
             Integer maxFileSize = null;
             Integer minDays = null;
@@ -66,28 +68,28 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                         break;
                     case "extensions":
                         JsonArray extensionsArray = entry1.getValue().getAsJsonArray();
-                        extensions = new HashSet<>();
+                        extensions = new ArrayList<>();
                         for (JsonElement e : extensionsArray) {
                             extensions.add(e.getAsString());
                         }
                         break;
                     case "folder-names":
                         JsonArray pathsArray = entry1.getValue().getAsJsonArray();
-                        paths = new HashSet<>();
+                        paths = new ArrayList<>();
                         for (JsonElement e : pathsArray) {
                             paths.add(e.getAsString());
                         }
                         break;
                     case "file-names":
                         JsonArray filenamesArray = entry1.getValue().getAsJsonArray();
-                        filenames = new HashSet<>();
+                        filenames = new ArrayList<>();
                         for (JsonElement e : filenamesArray) {
                             filenames.add(e.getAsString());
                         }
                         break;
                     case "full-paths":
                         JsonArray fullPathsArray = entry1.getValue().getAsJsonArray();
-                        fullPaths = new HashSet<>();
+                        fullPaths = new ArrayList<>();
                         for (JsonElement e : fullPathsArray) {
                             fullPaths.add(e.getAsString());
                         }

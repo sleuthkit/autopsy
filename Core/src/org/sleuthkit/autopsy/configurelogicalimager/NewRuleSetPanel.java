@@ -6,13 +6,10 @@
 package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.event.ActionEvent;
+import java.io.IOException;
 import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
  *
@@ -20,45 +17,37 @@ import javax.swing.JPanel;
  */
 public class NewRuleSetPanel extends javax.swing.JPanel {
 
-    private JPanel jPanel1;
-    private JPanel jPanel2;
-    private JButton okButton = new JButton("OK");
-    private JButton cancelButton = new JButton("Cancel");
+    private final JPanel nonFullPathsJPanel;
+    private final EditNonFullPathsRulePanel editNonFullPathsRulePanel;
+    private final JPanel fullPathsPanel;
+    private final EditFullPathsRulePanel editFullPathsRulePanel;
 
     /**
      * Creates new form NewRuleSetPanel
      */
-    public NewRuleSetPanel() {
+    public NewRuleSetPanel(JButton okButton, JButton cancelButton) {
         initComponents();
-//        jPanel1 = new EditFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule());
-//        jPanel2 = new EditNonFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule());
-        jPanel1 = createPanel(Color.CYAN);
-        //createLabel(jPanel1, "Panel 1");
-        jPanel1.add(new EditFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule()), BorderLayout.NORTH);
-        jPanel2 = createPanel(Color.GREEN);
-        //createLabel(jPanel2, "Panel 2");
-        jPanel2.add(new EditNonFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule()), BorderLayout.NORTH);
-        jLayeredPane1.add(jPanel1, new Integer(0), 0);
-        jLayeredPane1.add(jPanel2, new Integer(0), 1);
-        jPanel1.setVisible(true);
-        jPanel2.setVisible(false);
+        
+        nonFullPathsJPanel = createPanel();
+        editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule());
+        nonFullPathsJPanel.add(editNonFullPathsRulePanel, BorderLayout.NORTH);
+        
+        fullPathsPanel = createPanel();
+        editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule());
+        fullPathsPanel.add(editFullPathsRulePanel, BorderLayout.NORTH);
+
+        sharedLayeredPane.add(nonFullPathsJPanel, new Integer(0));
+        sharedLayeredPane.add(fullPathsPanel, new Integer(1));
+        nonFullPathsJPanel.setVisible(true);
+        fullPathsPanel.setVisible(false);
     }
 
-    private JPanel createPanel(Color color) {
+    private JPanel createPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(color);
         panel.setSize(800, 640);
         return panel;
     }
 
-    private void createLabel(JPanel panel, String text) {
-        JLabel label = new JLabel(text);
-        label.setVerticalAlignment(JLabel.TOP);
-        label.setHorizontalAlignment(JLabel.CENTER);
-        label.setForeground(Color.black);
-        panel.add(label);
-    }
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -70,26 +59,26 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
 
         chooseLabel = new javax.swing.JLabel();
         chooseComboBox = new javax.swing.JComboBox<>();
-        jLayeredPane1 = new javax.swing.JLayeredPane();
+        sharedLayeredPane = new javax.swing.JLayeredPane();
 
         org.openide.awt.Mnemonics.setLocalizedText(chooseLabel, org.openide.util.NbBundle.getMessage(NewRuleSetPanel.class, "NewRuleSetPanel.chooseLabel.text")); // NOI18N
 
         chooseComboBox.setMaximumRowCount(2);
-        chooseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Full Path", "By Attribute" }));
+        chooseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "By Attribute", "Full Path" }));
         chooseComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chooseComboBoxActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout jLayeredPane1Layout = new javax.swing.GroupLayout(jLayeredPane1);
-        jLayeredPane1.setLayout(jLayeredPane1Layout);
-        jLayeredPane1Layout.setHorizontalGroup(
-            jLayeredPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout sharedLayeredPaneLayout = new javax.swing.GroupLayout(sharedLayeredPane);
+        sharedLayeredPane.setLayout(sharedLayeredPaneLayout);
+        sharedLayeredPaneLayout.setHorizontalGroup(
+            sharedLayeredPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 0, Short.MAX_VALUE)
         );
-        jLayeredPane1Layout.setVerticalGroup(
-            jLayeredPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        sharedLayeredPaneLayout.setVerticalGroup(
+            sharedLayeredPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 373, Short.MAX_VALUE)
         );
 
@@ -105,7 +94,7 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
                 .addContainerGap(718, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLayeredPane1)
+                .addComponent(sharedLayeredPane)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -116,7 +105,7 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chooseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLayeredPane1)
+                .addComponent(sharedLayeredPane)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -124,66 +113,30 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
     private void chooseComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chooseComboBoxActionPerformed
         int index = chooseComboBox.getSelectedIndex();
         if (index == 0) {
-            jPanel1.setVisible(true);
-            jPanel2.setVisible(false);
+            nonFullPathsJPanel.setVisible(true);
+            fullPathsPanel.setVisible(false);
         } else {
-            jPanel1.setVisible(false);            
-            jPanel2.setVisible(true);
+            nonFullPathsJPanel.setVisible(false);            
+            fullPathsPanel.setVisible(true);
         }
+        chooseComboBox.setEnabled(false);
     }//GEN-LAST:event_chooseComboBoxActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> chooseComboBox;
     private javax.swing.JLabel chooseLabel;
-    private javax.swing.JLayeredPane jLayeredPane1;
+    private javax.swing.JLayeredPane sharedLayeredPane;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Sets whether or not the OK button should be enabled based upon other UI
-     * elements
-     */
-    private void setOkButton() {
-        if (this.okButton != null) {
-            this.okButton.setEnabled(true);
-        }
-    }
-
-    /**
-     * Gets the JOptionPane that is used to contain this panel if there is one
-     *
-     * @param parent
-     *
-     * @return
-     */
-    private JOptionPane getOptionPane(JComponent parent) {
-        JOptionPane pane;
-        if (!(parent instanceof JOptionPane)) {
-            pane = getOptionPane((JComponent) parent.getParent());
+    ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
+        ImmutablePair<String, LogicalImagerRule> ruleMap;
+        if (chooseComboBox.isEnabled()) {
+            ruleMap = editNonFullPathsRulePanel.toRule();
         } else {
-            pane = (JOptionPane) parent;
-        }
-        return pane;
-    }
-
-    /**
-     * Sets the buttons for ending the panel
-     *
-     * @param ok     The ok button
-     * @param cancel The cancel button
-     */
-    private void setButtons(JButton ok, JButton cancel) {
-        this.okButton = ok;
-        this.cancelButton = cancel;
-        okButton.addActionListener((ActionEvent e) -> {
-            JOptionPane pane = getOptionPane(okButton);
-            pane.setValue(okButton);
-        });
-        cancelButton.addActionListener((ActionEvent e) -> {
-            JOptionPane pane = getOptionPane(cancelButton);
-            pane.setValue(cancelButton);
-        });
-        this.setOkButton();
+            ruleMap = editFullPathsRulePanel.toRule();
+       }
+        return ruleMap;
     }
 
 }
