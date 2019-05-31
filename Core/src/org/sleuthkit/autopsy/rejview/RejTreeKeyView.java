@@ -58,10 +58,10 @@ public final class RejTreeKeyView extends RejTreeNodeView {
     public RejTreeKeyView(RejTreeKeyNode node) {
         super(new BorderLayout());
 
-        /**
-         * @param 1 Name
-         * @param 2 Number of subkeys
-         * @param 3 Number of values
+        /*
+         * param 1 Name
+         * param 2 Number of subkeys
+         * param 3 Number of values
          */
         String metadataTemplate = "<html><i>"
                 + Bundle.RejTreeKeyView_template_name()

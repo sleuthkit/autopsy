@@ -61,7 +61,7 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
 
     /**
      * Sets the value of currentSelection and passes the SelectionInfo onto the
-     * currently selected\visible tab.
+     * currently selected or visible tab.
      *
      * @param info Currently selected account nodes
      */
