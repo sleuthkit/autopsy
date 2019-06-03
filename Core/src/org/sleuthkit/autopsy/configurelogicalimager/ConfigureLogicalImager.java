@@ -32,6 +32,10 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 
+/**
+ * Configuration Logical Imager
+ */
+
 @ActionID(
         category = "Tools",
         id = "org.sleuthkit.autopsy.configurelogicalimager.ConfigureLogicalImager"

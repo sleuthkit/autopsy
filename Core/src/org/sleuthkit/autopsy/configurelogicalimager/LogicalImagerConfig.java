@@ -24,7 +24,6 @@ import java.util.Map;
 /**
  * Logical Imager Configuration file JSON
  */
-
 public class LogicalImagerConfig {
 
     private boolean finalizeImageWriter;

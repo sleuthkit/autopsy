@@ -119,10 +119,6 @@ public class LogicalImagerRule {
         return maxDate;
     }
 
-    public boolean validatePath(String path) {
-        return !path.contains("\\");
-    }
-
     public static class Builder {
         private Boolean shouldAlert = null;
         private Boolean shouldSave = null;
