@@ -18,20 +18,30 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
 
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
@@ -50,6 +60,34 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     T content;
     private static final Logger logger = Logger.getLogger(AbstractContentNode.class.getName());
 
+    /**
+     * A pool of background tasks to run any long computation needed to 
+     * populate this node.
+     */
+    static final ExecutorService backgroundTasksPool;
+    static final Integer MAX_POOL_SIZE = 10;
+    
+    @NbBundle.Messages("AbstractContentNode.nodescription=no description")
+    private static final String NO_DESCR = Bundle.AbstractContentNode_nodescription();
+    
+    
+     /**
+     * Event signals to indicate the background tasks have completed processing.
+     * Currently, we have one property task in the background:
+     *
+     * 1) Retrieving the translation of the file name
+     */
+    enum NodeSpecificEvents {
+        TRANSLATION_AVAILABLE,
+        SCO_AVAILABLE
+    }
+    
+    static {
+        //Initialize this pool only once! This will be used by every instance of AAFN
+        //to do their heavy duty SCO column and translation updates.
+        backgroundTasksPool = Executors.newFixedThreadPool(MAX_POOL_SIZE,
+                new ThreadFactoryBuilder().setNameFormat("content-node-background-task-%d").build());
+    }
     /**
      * Handles aspects that depend on the Content object
      *
@@ -239,5 +277,112 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      */
     public int read(byte[] buf, long offset, long len) throws TskException {
         return content.read(buf, offset, len);
+    }
+    
+    
+    /**
+     * Updates the values of the properties in the current property sheet with
+     * the new properties being passed in. Only if that property exists in the
+     * current sheet will it be applied. That way, we allow for subclasses to
+     * add their own (or omit some!) properties and we will not accidentally
+     * disrupt their UI.
+     *
+     * Race condition if not synchronized. Only one update should be applied at
+     * a time.
+     *
+     * @param newProps New file property instances to be updated in the current
+     *                 sheet.
+     */
+    protected synchronized void updateSheet(NodeProperty<?>... newProps) {
+        //Refresh ONLY those properties in the sheet currently. Subclasses may have 
+        //only added a subset of our properties or their own props.s
+        Sheet visibleSheet = this.getSheet();
+        Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
+        Property<?>[] visibleProps = visibleSheetSet.getProperties();
+        for (NodeProperty<?> newProp : newProps) {
+            for (int i = 0; i < visibleProps.length; i++) {
+                if (visibleProps[i].getName().equals(newProp.getName())) {
+                    visibleProps[i] = newProp;
+                }
+            }
+        }
+        visibleSheetSet.put(visibleProps);
+        visibleSheet.put(visibleSheetSet);
+        //setSheet() will notify Netbeans to update this node in the UI.
+        this.setSheet(visibleSheet);
+    }
+    
+    /**
+     * Reads and returns a list of all tags associated with this content node.
+     * 
+     * This default implementation returns an empty list.  
+     * The derived classes should override with an implementation specific 
+     * to the type of node.
+     * 
+     * @return list of tags associated with the node.
+     */ 
+    protected List<Tag> getAllTagsFromDatabase() {
+        return new ArrayList<>();
+    }
+     /**
+     * Returns correlation attribute instance for the underlying content of the node.
+     * 
+     * This default implementation returns null.  
+     * The derived classes should override with an implementation specific 
+     * to the type of node.
+     * 
+     * @return correlation attribute instance for the underlying content of the node.
+     * 
+     */ 
+    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
+        return null;
+    }
+    
+    /**
+     * Returns Score property for the node.
+     * 
+     * This default implementation returns NO_SCORE.  
+     * The derived classes should override with an implementation specific 
+     * to the type of node.
+     * 
+     * @param tags list of tags.
+     * 
+     * @return Score property for the underlying content of the node.
+     * 
+     */ 
+    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+      
+        return Pair.of(DataResultViewerTable.Score.NO_SCORE, NO_DESCR);
+    }
+    /**
+     * Returns comment property for the node.
+     * 
+     * This default implementation returns NO_COMMENT.  
+     * The derived classes should override with an implementation specific 
+     * to the type of node.
+     * 
+     * @param tags list of tags
+     * @param attribute correlation attribute instance
+     * 
+     * @return Comment property for the underlying content of the node.
+     * 
+     */ 
+    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+    }
+    /**
+     * Returns occurrences/count property for the node.
+     * 
+     * This default implementation returns -1.  
+     * The derived classes should override with an implementation specific 
+     * to the type of node.
+     * 
+     * @param attribute correlation attribute instance
+     * 
+     * @return count property for the underlying content of the node.
+     * 
+     */  
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute) {
+        return Pair.of(-1L, NO_DESCR);
     }
 }

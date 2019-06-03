@@ -25,42 +25,44 @@ import java.util.List;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
-import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Tag;
 
 /**
- * Background task to get Score, Comment and Occurrences values for a Abstract file node.
+ * Background task to get Score, Comment and Occurrences values for an 
+ * Abstract content node.
  * 
  */
 class GetSCOTask implements Runnable {
 
-    private final WeakReference<AbstractAbstractFileNode<?>> weakNodeRef;
+    private final WeakReference<AbstractContentNode<?>> weakNodeRef;
     private final PropertyChangeListener listener;
 
-    public GetSCOTask(WeakReference<AbstractAbstractFileNode<?>> weakContentRef, PropertyChangeListener listener) {
+    public GetSCOTask(WeakReference<AbstractContentNode<?>> weakContentRef, PropertyChangeListener listener) {
         this.weakNodeRef = weakContentRef;
         this.listener = listener;
     }
 
     @Override
     public void run() {
-        AbstractAbstractFileNode<?> fileNode = weakNodeRef.get();
+        AbstractContentNode<?> contentNode = weakNodeRef.get();
         
         //Check for stale reference
-        if (fileNode == null) {
+        if (contentNode == null) {
             return;
         }
 
         // get the SCO  column values
-        List<ContentTag> tags = fileNode.getContentTagsFromDatabase();
-        CorrelationAttributeInstance attribute = fileNode.getCorrelationAttributeInstance();
+        List<Tag> tags = contentNode.getAllTagsFromDatabase();
+        CorrelationAttributeInstance attribute = contentNode.getCorrelationAttributeInstance();
 
         SCOData scoData = new SCOData();
-        scoData.setScoreAndDescription(fileNode.getScorePropertyAndDescription(tags));
-        scoData.setComment(fileNode.getCommentProperty(tags, attribute));
+        scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
+        scoData.setComment(contentNode.getCommentProperty(tags, attribute));
         if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-            scoData.setCountAndDescription(fileNode.getCountPropertyAndDescription(attribute));
+            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(attribute));
         }
         
+        // signal SCO data is available.
         if  (listener != null) {
             listener.propertyChange(new PropertyChangeEvent(
                     AutopsyEvent.SourceType.LOCAL.toString(),

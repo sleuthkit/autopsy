@@ -81,17 +81,6 @@ final class MessageNode extends BlackboardArtifactNode {
 
         sheetSet.put(new NodeProperty<>("Type", Bundle.MessageNode_Node_Property_Type(), "", getDisplayName())); //NON-NLS
 
-        addScoreProperty(sheetSet, tags);
-
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            correlationAttribute = getCorrelationAttributeInstance();
-        }
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-
-        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            addCountProperty(sheetSet, correlationAttribute);
-        }
         final BlackboardArtifact artifact = getArtifact();
 
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());

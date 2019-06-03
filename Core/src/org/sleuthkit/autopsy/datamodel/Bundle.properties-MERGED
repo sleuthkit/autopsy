@@ -37,6 +37,7 @@ AbstractAbstractFileNode.tagsProperty.displayName=Tags
 AbstractAbstractFileNode.typeDirColLbl=Type(Dir)
 AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)
 AbstractAbstractFileNode.useridColLbl=UserID
+AbstractContentNode.nodescription=no description
 AbstractFsContentNode.noDesc.text=no description
 ArtifactStringContent.attrsTableHeader.sources=Source(s)
 ArtifactStringContent.attrsTableHeader.type=Type
