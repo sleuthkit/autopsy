@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.explorer.view.OutlineView;
@@ -62,17 +63,21 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
      * @param message String message to show on the panel.
      */
     public void hideOutlineView(String message) {
-        CardLayout layout = (CardLayout)this.getLayout();
-        layout.show(this, "messageCard"); //NON-NLS
-        messageLabel.setText(message);
+        SwingUtilities.invokeLater(() -> {
+            CardLayout layout = (CardLayout)this.getLayout();
+            layout.show(this, "messageCard"); //NON-NLS
+            messageLabel.setText(message);
+        });
     }
     
     /**
      * Hides the message panel and shows the OutlineView.
      */
     public void showOutlineView() {
-        CardLayout layout = (CardLayout)this.getLayout();
-        layout.show(this, "outlineCard"); //NON-NLS
+        SwingUtilities.invokeLater(() -> {
+            CardLayout layout = (CardLayout)this.getLayout();
+            layout.show(this, "outlineCard"); //NON-NLS
+        });
     }
     
     /**

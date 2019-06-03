@@ -135,7 +135,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     protected Node createNodeForKey(Object key) {
         
         if (key instanceof SleuthkitVisitableItem) {
-            return ((SleuthkitVisitableItem) key).accept(new RootContentChildren.CreateSleuthkitNodeVisitor());
+            return ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
         } else if (key instanceof AutopsyVisitableItem) {
             return ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
         }

@@ -18,7 +18,13 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.UUID;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -26,6 +32,7 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A Logical Imager data source processor that implements the DataSourceProcessor service
@@ -38,7 +45,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 )
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
+    private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
+    private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
     private final LogicalImagerPanel configPanel;
+    private AddLogicalImageTask addLogicalImageTask;
     
     /*
      * Constructs a Logical Imager data source processor that implements the
@@ -114,14 +124,57 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param callback        Callback that will be used by the background task
      *                        to return results.
      */
+    @Messages({
+        "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
+        "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
+        "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
+    })
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        Path dirPath = configPanel.getImageDirPath();
-        System.out.println("Choosen directory " + dirPath.toString());
-        // TODO: process the data source in 5011
-    }
+        
+        Path imageDirPath = configPanel.getImageDirPath();
+        List<String> errorList = new ArrayList<>();
+        List<Content> emptyDataSources = new ArrayList<>();
+        
+        if (!imageDirPath.toFile().exists()) {
+            // This can happen if the USB drive was selected in the panel, but
+            // was ejected before pressing the NEXT button
+            // TODO: Better ways to detect ejected USB drive?
+            String msg = Bundle.LogicalImagerDSProcessor_imageDirPathNotFound(imageDirPath.toString());
+            errorList.add(msg);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
+        
+        // Create the LogicalImager directory under ModuleDirectory
+        String moduleDirectory = Case.getCurrentCase().getModuleDirectory();
+        File logicalImagerDir = Paths.get(moduleDirectory, LOGICAL_IMAGER_DIR).toFile();
+        if (!logicalImagerDir.exists() && !logicalImagerDir.mkdir()) {
+            // create failed
+            String msg = Bundle.LogicalImagerDSProcessor_failToCreateDirectory(logicalImagerDir);
+            errorList.add(msg);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
+        File dest = Paths.get(logicalImagerDir.toString(), imageDirPath.getFileName().toString()).toFile();
+        if (dest.exists()) {
+            // Destination directory already exists
+            String msg = Bundle.LogicalImagerDSProcessor_directoryAlreadyExists(dest.toString());
+            errorList.add(msg);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
+        File src = imageDirPath.toFile();
 
+        String deviceId = UUID.randomUUID().toString();
+        String timeZone = Calendar.getInstance().getTimeZone().getID();
+        boolean ignoreFatOrphanFiles = false;
+        run(deviceId, Paths.get(src.toString(), SPARSE_IMAGE_VHD).toString(), 0, 
+            timeZone, ignoreFatOrphanFiles, null, null, null, src, dest,
+            progressMonitor, callback);
+    }
+    
     /**
      * Adds a "Logical Imager" data source to the case database using a background task in
      * a separate thread and the given settings instead of those provided by the
@@ -133,24 +186,38 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                             associated with the data source that is
      *                             intended to be unique across multiple cases
      *                             (e.g., a UUID).
-     * @param imageFilePath        Path to the image file.
+     * @param imagePath            Path to the image file.
+     * @param sectorSize           The sector size (use '0' for autodetect).
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
      *                             java.util.TimeZone.getID.
-     * @param chunkSize            The maximum size of each chunk of the raw
-     *                             data source as it is divided up into virtual
-     *                             unallocated space files.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param md5                  The MD5 hash of the image, may be null.
+     * @param sha1                 The SHA-1 hash of the image, may be null.
+     * @param sha256               The SHA-256 hash of the image, may be null.
+     * @param src                  The source directory of image.
+     * @param dest                 The destination directory to copy the source.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        AddImageTask addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
-        new Thread(addImageTask).start();
+    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, 
+            boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, 
+            File src, File dest,
+            DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
+    ) {
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePath, sectorSize, 
+                timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, src, dest,
+                progressMonitor, callback);
+        new Thread(addLogicalImageTask).start();
     }
 
     @Override
     public void cancel() {
+        if (addLogicalImageTask != null) {
+            addLogicalImageTask.cancelTask();
+        }
     }
 
     /**
