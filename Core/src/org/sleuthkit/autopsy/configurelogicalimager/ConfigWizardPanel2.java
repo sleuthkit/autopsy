@@ -7,11 +7,22 @@ package org.sleuthkit.autopsy.configurelogicalimager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.logging.Level;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+
+    private static final Logger LOGGER = Logger.getLogger(ConfigWizardPanel2.class.getName());
 
     /**
      * The visual component that displays this panel. If you need to access the
@@ -83,11 +94,45 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         return config;
     }
     
+    private String chooseFile(String title) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle(title);
+        fileChooser.setDragEnabled(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        FileFilter filter = new FileNameExtensionFilter("configuration json file", new String[] {"json"});
+        fileChooser.setFileFilter(filter);
+        fileChooser.setMultiSelectionEnabled(false);
+        if (fileChooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
+            String path = fileChooser.getSelectedFile().getPath();
+            return path;
+        } else {
+            return null;
+        }
+    }
+    
     public void saveConfigFile() {
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
         Gson gson = gsonBuilder.create();
         String toJson = gson.toJson(config);
         System.out.println(toJson);
+        try (FileWriter fileWriter = new FileWriter(configFilename)){
+            gson.toJson(config, fileWriter);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(component, "Failed to save configuration file: " 
+                + configFilename + "\nReason: " + ex.getMessage());
+            String newFilename = chooseFile("Save to another configuration file");
+            if (newFilename != null) {
+                try {                
+                    gson.toJson(config, new FileWriter(newFilename));
+                } catch (IOException ex1) {
+                    LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + newFilename, ex1);
+                }
+            }
+        } catch (JsonIOException jioe) {
+            LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + configFilename, jioe);
+            JOptionPane.showMessageDialog(component, "Failed to save configuration file: " 
+                + configFilename + "\nReason: " + jioe.getMessage());
+        }
     }
 
 }

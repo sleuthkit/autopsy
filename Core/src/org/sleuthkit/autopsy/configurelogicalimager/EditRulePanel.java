@@ -6,10 +6,12 @@
 package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
  *
@@ -19,17 +21,17 @@ public class EditRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;
-    private JPanel panel;
+    private EditFullPathsRulePanel editFullPathsRulePanel = null;
+    private EditNonFullPathsRulePanel editNonFullPathsRulePanel = null;
 
     /**
      * Creates new form EditRulePanel
      */
     public EditRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
-        //initComponents();
         if (rule.getFullPaths() != null && rule.getFullPaths().size() > 0) {
-            panel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
+            editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
         } else {
-            panel = new EditNonFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
+            editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
         }
     }
 
@@ -407,6 +409,20 @@ public class EditRulePanel extends javax.swing.JPanel {
     }
 
     JPanel getPanel() {
-        return panel;
+        if (editFullPathsRulePanel != null) {
+            return editFullPathsRulePanel;
+        } else {
+            return editNonFullPathsRulePanel;
+        }
+    }
+
+    ImmutablePair<String, LogicalImagerRule> toRule() throws IOException, NumberFormatException {
+        ImmutablePair<String, LogicalImagerRule> ruleMap;
+        if (editFullPathsRulePanel != null) {
+            ruleMap = editFullPathsRulePanel.toRule();
+        } else {
+            ruleMap = editNonFullPathsRulePanel.toRule();
+       }
+        return ruleMap;
     }
 }

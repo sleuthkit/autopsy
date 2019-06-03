@@ -6,14 +6,20 @@
 package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.JTextField;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.strip;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
@@ -26,7 +32,8 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private JButton cancelButton;
     private final javax.swing.JTextArea filenamesTextArea;
     private final javax.swing.JTextArea folderNamesTextArea;
-
+    private NumberFormat sizeFormat;
+    
     /**
      * Creates new form EditRulePanel
      */
@@ -45,40 +52,37 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         folderNamesTextArea = new JTextArea();
         initTextArea(folderNamesScrollPane, folderNamesTextArea);
         setTextArea(folderNamesTextArea, rule.getPaths());
+        
+        setMinDays(rule.getMinDays());
+        
+        minSizeTextField.setText(rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString());
+        maxSizeTextField.setText(rule.getMaxFileSize() == null ? "" : rule.getMaxFileSize().toString());
+        ruleNameTextField.requestFocus();
     }
 
     private void initTextArea(JScrollPane pane, JTextArea textArea) {
         textArea.setColumns(20);
         textArea.setRows(5);
-
         pane.setViewportView(textArea);
-
-        textArea.getDocument()
-            .addDocumentListener(new DocumentListener() {
-                @Override
-                public void changedUpdate(DocumentEvent e
-                ) {
-                    fire();
+        textArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_TAB) {
+                    if (e.getModifiers() > 0) {
+                        textArea.transferFocusBackward();
+                    } else {
+                        textArea.transferFocus();
+                    }
+                    e.consume();
                 }
-
-                @Override
-                public void removeUpdate(DocumentEvent e
-                ) {
-                    fire();
-                }
-
-                @Override
-                public void insertUpdate(DocumentEvent e
-                ) {
-                    fire();
-                }
-
-                private void fire() {
-                }
-            }
-            );
+            }            
+        });
     }
         
+    private void setMinDays(Integer minDays) {
+        minDaysTextField.setText(minDays == null ? "" : minDays.toString());
+    }
+
     private void setTextArea(JTextArea textArea, List<String> set) {
         String text = "";
         if (set != null) {
@@ -110,9 +114,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        fileSizeSpinner = new javax.swing.JSpinner();
         modifiedDateLabel = new javax.swing.JLabel();
-        daysIncludedTextField = new javax.swing.JTextField();
         daysIncludedLabel = new javax.swing.JLabel();
         shouldSaveCheckBox = new javax.swing.JCheckBox();
         shouldAlertCheckBox = new javax.swing.JCheckBox();
@@ -121,25 +123,19 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         filenamesLabel = new javax.swing.JLabel();
         folderNamesLabel = new javax.swing.JLabel();
         fileSizeLabel = new javax.swing.JLabel();
-        equalitySignComboBox = new javax.swing.JComboBox<String>();
-        fileSizeUnitComboBox = new javax.swing.JComboBox<String>();
         descriptionTextField = new javax.swing.JTextField();
         descriptionLabel = new javax.swing.JLabel();
         ruleNameLabel = new javax.swing.JLabel();
         ruleNameTextField = new javax.swing.JTextField();
         filenamesScrollPane = new javax.swing.JScrollPane();
         folderNamesScrollPane = new javax.swing.JScrollPane();
-
-        fileSizeSpinner.setEnabled(false);
-        fileSizeSpinner.setMinimumSize(new java.awt.Dimension(2, 20));
+        minSizeLabel = new javax.swing.JLabel();
+        minSizeTextField = new javax.swing.JFormattedTextField();
+        maxSizeLabel = new javax.swing.JLabel();
+        maxSizeTextField = new javax.swing.JFormattedTextField();
+        minDaysTextField = new javax.swing.JFormattedTextField();
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.modifiedDateLabel.text")); // NOI18N
-
-        daysIncludedTextField.setEditable(false);
-        daysIncludedTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
-        daysIncludedTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.daysIncludedTextField.text")); // NOI18N
-        daysIncludedTextField.setMinimumSize(new java.awt.Dimension(60, 20));
-        daysIncludedTextField.setPreferredSize(new java.awt.Dimension(60, 20));
 
         org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.daysIncludedLabel.text")); // NOI18N
         daysIncludedLabel.setEnabled(false);
@@ -161,12 +157,6 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(fileSizeLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.fileSizeLabel.text")); // NOI18N
 
-        equalitySignComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "=", ">", "≥", "<", "≤" }));
-        equalitySignComboBox.setEnabled(false);
-
-        fileSizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.FilesSetDefsPanel_bytes(), Bundle.FilesSetDefsPanel_kiloBytes(), Bundle.FilesSetDefsPanel_megaBytes(), Bundle.FilesSetDefsPanel_gigaBytes() }));
-        fileSizeUnitComboBox.setEnabled(false);
-
         descriptionTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.descriptionTextField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.descriptionLabel.text")); // NOI18N
@@ -179,6 +169,18 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 ruleNameTextFieldActionPerformed(evt);
             }
         });
+
+        org.openide.awt.Mnemonics.setLocalizedText(minSizeLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.minSizeLabel.text")); // NOI18N
+
+        minSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
+        minSizeTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.minSizeTextField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(maxSizeLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.maxSizeLabel.text")); // NOI18N
+
+        maxSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
+        maxSizeTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.maxSizeTextField.text")); // NOI18N
+
+        minDaysTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("####; "))));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -212,19 +214,19 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                                     .addComponent(shouldAlertCheckBox)))
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(108, 108, 108)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(minDaysTextField)
+                                    .addComponent(minSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGap(1, 1, 1)
-                                        .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(daysIncludedLabel))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(179, 179, 179)
-                                .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 190, Short.MAX_VALUE)))
+                                        .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(maxSizeLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(daysIncludedLabel))))
+                        .addGap(0, 236, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -253,14 +255,16 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(fileSizeLabel)
-                    .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(minSizeLabel)
+                    .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                        .addComponent(maxSizeLabel)
+                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(6, 6, 6)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(modifiedDateLabel)
-                    .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(daysIncludedLabel))
+                    .addComponent(daysIncludedLabel)
+                    .addComponent(minDaysTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(14, 14, 14)
                 .addComponent(shouldAlertCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -275,19 +279,20 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel daysIncludedLabel;
-    private javax.swing.JTextField daysIncludedTextField;
     private javax.swing.JLabel descriptionLabel;
     private javax.swing.JTextField descriptionTextField;
-    private javax.swing.JComboBox<String> equalitySignComboBox;
     private javax.swing.JLabel extensionsLabel;
     private javax.swing.JTextField extensionsTextField;
     private javax.swing.JLabel fileSizeLabel;
-    private javax.swing.JSpinner fileSizeSpinner;
-    private javax.swing.JComboBox<String> fileSizeUnitComboBox;
     private javax.swing.JLabel filenamesLabel;
     private javax.swing.JScrollPane filenamesScrollPane;
     private javax.swing.JLabel folderNamesLabel;
     private javax.swing.JScrollPane folderNamesScrollPane;
+    private javax.swing.JLabel maxSizeLabel;
+    private javax.swing.JFormattedTextField maxSizeTextField;
+    private javax.swing.JFormattedTextField minDaysTextField;
+    private javax.swing.JLabel minSizeLabel;
+    private javax.swing.JFormattedTextField minSizeTextField;
     private javax.swing.JLabel modifiedDateLabel;
     private javax.swing.JLabel ruleNameLabel;
     private javax.swing.JTextField ruleNameTextField;
@@ -349,7 +354,115 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         this.setOkButton();
     }
 
-    ImmutablePair<String, LogicalImagerRule> toRule() {
-        return new ImmutablePair<>("nonFullPathRule", new LogicalImagerRule());
+    ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
+        String ruleName = validRuleName(ruleNameTextField.getText());
+        String description = descriptionTextField.getText();
+        List<String> extensions = validateExtensions(extensionsTextField);
+        List<String> filenames = validateTextList(filenamesTextArea, "file-names");
+        List<String> folderNames = validateTextList(folderNamesTextArea, "folder-names");
+        
+        LogicalImagerRule rule;
+        LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
+        builder.description(description)
+                .shouldAlert(shouldAlertCheckBox.isSelected())
+                .shouldSave(shouldSaveCheckBox.isSelected())
+                .description(descriptionTextField.getText())
+                .extensions(extensions)
+                .filenames(filenames)
+                .paths(folderNames);
+        
+        int minDays;
+        if (!isBlank(minDaysTextField.getText())) {
+            try {
+                minDays = ((Number)minDaysTextField.getValue()).intValue();
+                if (minDays < 0) {
+                    throw new IOException("Modified days must be a positive");
+                }
+                builder.minDays(minDays);
+            } catch (NumberFormatException ex) {
+                throw new IOException("Modified days must be a number: " + ex.getMessage());
+            }
+        }
+        
+        int minFileSize = 0;
+        if (!isBlank(minSizeTextField.getText())) {
+            try {
+                minFileSize = ((Number)minSizeTextField.getValue()).intValue();
+                if (minFileSize < 0) {
+                    throw new IOException("Minimum file size must be a positive");
+                }
+            } catch (NumberFormatException ex) {
+                throw new IOException("Minimum file size must be a number: " + ex.getMessage());
+            }
+        }
+        
+        int maxFileSize = 0;
+        if (!isBlank(maxSizeTextField.getText())) {
+            try {
+                maxFileSize = ((Number)maxSizeTextField.getValue()).intValue();
+                if (maxFileSize < 0) {
+                    throw new IOException("Maximum file size must be a positive");
+                }
+            } catch (NumberFormatException ex) {
+                throw new IOException("Maximum file size must be a number: " + ex.getMessage());
+            }
+        }
+        
+        if (maxFileSize != 0 && (maxFileSize < minFileSize)) {
+            throw new IOException("Maximum file size: " + maxFileSize + " must be bigger than minimum file size: " + minFileSize);
+        }
+        if (minFileSize != 0) {
+            builder.minFileSize(minFileSize);
+        }
+        if (maxFileSize != 0) {
+            builder.maxFileSize(maxFileSize);
+        }
+        
+        rule = builder.build();
+        return new ImmutablePair<>(ruleName, rule);
     }
+
+    private String validRuleName(String name) throws IOException {
+        if (name.isEmpty()) {
+            throw new IOException("Rule name cannot be empty");
+        }
+        return name;
+    }
+
+    private List<String> validateExtensions(JTextField textField) throws IOException {
+        List<String> extensions = new ArrayList<>();
+        if (isBlank(textField.getText())) {
+            return null;
+        }
+        for (String extension : textField.getText().split(",")) {
+            extension = strip(extension);
+            if (extension.isEmpty()) {
+                throw new IOException("Extensions cannot have an empty entry");
+            }
+            extensions.add(extension);
+        }
+        if (extensions.isEmpty()) {
+            return null;
+        }
+        return extensions;
+    }
+
+    private List<String> validateTextList(JTextArea textArea, String fieldName) throws IOException {
+        List<String> list = new ArrayList<>();
+        if (isBlank(textArea.getText())) {
+            return null;
+        }
+        for (String line : textArea.getText().split("\\n")) {
+            line = strip(line);
+            if (line.isEmpty()) {
+                throw new IOException(fieldName + " cannot have an empty line");
+            }
+            list.add(line);
+        }
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list;
+    }
+    
 }

@@ -6,6 +6,8 @@
 package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +16,6 @@ import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**
@@ -45,38 +45,26 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         fullPathsTextArea = new JTextArea();
         initTextArea(fullPathsScrollPane, fullPathsTextArea);
         setTextArea(fullPathsTextArea, rule.getFullPaths());
+        ruleNameTextField.requestFocus();
     }
 
     private void initTextArea(JScrollPane pane, JTextArea textArea) {
         textArea.setColumns(20);
         textArea.setRows(5);
-
         pane.setViewportView(textArea);
-
-        textArea.getDocument()
-            .addDocumentListener(new DocumentListener() {
-                @Override
-                public void changedUpdate(DocumentEvent e
-                ) {
-                    fire();
+        textArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_TAB) {
+                    if (e.getModifiers() > 0) {
+                        textArea.transferFocusBackward();
+                    } else {
+                        textArea.transferFocus();
+                    }
+                    e.consume();
                 }
-
-                @Override
-                public void removeUpdate(DocumentEvent e
-                ) {
-                    fire();
-                }
-
-                @Override
-                public void insertUpdate(DocumentEvent e
-                ) {
-                    fire();
-                }
-
-                private void fire() {
-                }
-            }
-            );
+            }            
+        });
     }
 
     /**
@@ -253,8 +241,7 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         builder.shouldAlert(shouldAlertCheckBox.isSelected())
                 .shouldSave(shouldSaveCheckBox.isSelected())
                 .description(descriptionTextField.getText())
-                .fullPaths(fullPaths)
-                ;
+                .fullPaths(fullPaths);
         rule = builder.build();
         return new ImmutablePair<>(ruleName, rule);
     }

@@ -129,7 +129,7 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
     private javax.swing.JLayeredPane sharedLayeredPane;
     // End of variables declaration//GEN-END:variables
 
-    ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
+    ImmutablePair<String, LogicalImagerRule> toRule() throws IOException, NumberFormatException {
         ImmutablePair<String, LogicalImagerRule> ruleMap;
         if (chooseComboBox.isEnabled()) {
             ruleMap = editNonFullPathsRulePanel.toRule();

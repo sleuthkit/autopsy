@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  *
@@ -36,9 +34,9 @@ public class LogicalImagerRule {
     private List<String> filenames = new ArrayList<>();
     private List<String> paths = new ArrayList<>();
     private List<String> fullPaths = new ArrayList<>();
-    private Integer minFileSize = 0;
-    private Integer maxFileSize = 0;
-    private Integer minDays = 0;
+    private Integer minFileSize;
+    private Integer maxFileSize;
+    private Integer minDays;
     private String minDate;
     private String maxDate;
     

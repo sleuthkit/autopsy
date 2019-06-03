@@ -24,9 +24,7 @@ import java.awt.event.ActionListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
@@ -45,17 +43,6 @@ import org.openide.util.NbBundle.Messages;
 @Messages("CTL_ConfigureLogicalImager=Configure Logical Imager")
 public final class ConfigureLogicalImager implements ActionListener {
     
-    private ConfigureLogicalImagerDialog dialog;
-    
-    public void actionPerformedOld(ActionEvent e) {
-        JFrame frame = new javax.swing.JFrame();
-        dialog = new ConfigureLogicalImagerDialog(frame, true);
-        dialog.setLocationRelativeTo(frame);
-        ImageIcon imageIcon = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/icon.png"));
-        dialog.setIconImage(imageIcon.getImage());
-        dialog.setVisible(true);
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         List<WizardDescriptor.Panel<WizardDescriptor>> panels = new ArrayList<>();
@@ -81,7 +68,6 @@ public final class ConfigureLogicalImager implements ActionListener {
         wiz.setTitle("Configure Logical Imager");
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             // do something
-            System.out.println("Finish pressed");
             if (panels.get(1) instanceof ConfigWizardPanel2) {
                 ConfigWizardPanel2 panel = (ConfigWizardPanel2) panels.get(1);
                 panel.saveConfigFile();

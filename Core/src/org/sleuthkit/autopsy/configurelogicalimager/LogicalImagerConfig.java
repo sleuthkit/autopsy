@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -28,6 +29,11 @@ public class LogicalImagerConfig {
 
     private boolean finalizeImageWriter;
     private Map<String, LogicalImagerRule> ruleSet;
+    
+    public LogicalImagerConfig() {
+        this.finalizeImageWriter = false;
+        this.ruleSet = new HashMap<>();
+    }
     
     public LogicalImagerConfig(
             boolean finalizeImageWriter,

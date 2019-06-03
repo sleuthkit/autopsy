@@ -5,7 +5,6 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import static java.util.Collections.EMPTY_LIST;
 import java.util.List;
@@ -53,9 +52,6 @@ public final class ConfigVisualPanel2 extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        equalitySignComboBox = new javax.swing.JComboBox<String>();
-        fileSizeSpinner1 = new javax.swing.JSpinner();
-        fileSizeUnitComboBox1 = new javax.swing.JComboBox<String>();
         modifiedDateLabel = new javax.swing.JLabel();
         daysIncludedTextField = new javax.swing.JTextField();
         daysIncludedLabel = new javax.swing.JLabel();
@@ -87,15 +83,10 @@ public final class ConfigVisualPanel2 extends JPanel {
         folderNamesLabel = new javax.swing.JLabel();
         fileSizeLabel = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
-
-        equalitySignComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "=", ">", "≥", "<", "≤" }));
-        equalitySignComboBox.setEnabled(false);
-
-        fileSizeSpinner1.setEnabled(false);
-        fileSizeSpinner1.setMinimumSize(new java.awt.Dimension(2, 20));
-
-        fileSizeUnitComboBox1.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.FilesSetDefsPanel_bytes(), Bundle.FilesSetDefsPanel_kiloBytes(), Bundle.FilesSetDefsPanel_megaBytes(), Bundle.FilesSetDefsPanel_gigaBytes() }));
-        fileSizeUnitComboBox1.setEnabled(false);
+        minSizeLabel = new javax.swing.JLabel();
+        minSizeTextField = new javax.swing.JFormattedTextField();
+        maxSizeLabel = new javax.swing.JLabel();
+        maxSizeTextField = new javax.swing.JFormattedTextField();
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.modifiedDateLabel.text")); // NOI18N
 
@@ -316,25 +307,25 @@ public final class ConfigVisualPanel2 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(fileSizeLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.fileSizeLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(minSizeLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.minSizeLabel.text")); // NOI18N
+
+        minSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
+        minSizeTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.minSizeTextField.text")); // NOI18N
+        minSizeTextField.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(maxSizeLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.maxSizeLabel.text")); // NOI18N
+
+        maxSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
+        maxSizeTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.maxSizeTextField.text")); // NOI18N
+        maxSizeTextField.setEnabled(false);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(17, 17, 17)
-                .addComponent(ruleSetFileLabel)
-                .addGap(18, 18, 18)
-                .addComponent(configFileTextField)
-                .addGap(10, 10, 10))
-            .addGroup(layout.createSequentialGroup()
                 .addGap(480, 480, 480)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(fileSizeSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(fileSizeUnitComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -348,10 +339,6 @@ public final class ConfigVisualPanel2 extends JPanel {
                             .addComponent(jScrollPane6, javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane7, javax.swing.GroupLayout.Alignment.LEADING))
                         .addContainerGap())))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(397, 397, 397)
-                .addComponent(jSeparator1)
-                .addGap(10, 10, 10))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -384,11 +371,30 @@ public final class ConfigVisualPanel2 extends JPanel {
                             .addComponent(modifiedDateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(fileSizeLabel)
                             .addComponent(fullPathsLabel)
-                            .addComponent(folderNamesLabel)))
+                            .addComponent(folderNamesLabel))
+                        .addGap(4, 4, 4)
+                        .addComponent(minSizeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(maxSizeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(393, 393, 393)
                         .addComponent(shouldAlertCheckBox)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(17, 17, 17)
+                        .addComponent(ruleSetFileLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(configFileTextField))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(397, 397, 397)
+                        .addComponent(jSeparator1)))
+                .addGap(10, 10, 10))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -435,16 +441,17 @@ public final class ConfigVisualPanel2 extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                .addGap(17, 17, 17))
-                            .addGroup(layout.createSequentialGroup()
                                 .addComponent(fullPathsLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                .addGap(11, 11, 11)))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                            .addComponent(fileSizeLabel)
-                            .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(fileSizeSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(fileSizeUnitComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(minSizeLabel)
+                            .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(maxSizeLabel)
+                            .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(fileSizeLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(modifiedDateLabel)
@@ -485,12 +492,25 @@ public final class ConfigVisualPanel2 extends JPanel {
             editPanel.setEnabled(true);
             editPanel.setVisible(true);
 
-            int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), "Edit rule set", 
-                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
-                        null, new Object[]{okButton, cancelButton}, okButton);
-            
-            if (option == JOptionPane.OK_OPTION) {
-                System.out.println("option = " + option);
+            while (true) {
+                int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), "Edit rule set", 
+                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
+                            null, new Object[]{okButton, cancelButton}, okButton);
+                if (option == JOptionPane.OK_OPTION) {
+                    try {
+                        ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
+                        appendRow(ruleMap);
+                        break;
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this,
+                            ex.getMessage(),
+                            "Edit rule error",
+                            JOptionPane.ERROR_MESSAGE);
+                        // let user fix the error
+                    }
+                } else {
+                    break;
+                }
             }
         }   
     }//GEN-LAST:event_editRuleButtonActionPerformed
@@ -505,14 +525,13 @@ public final class ConfigVisualPanel2 extends JPanel {
             int option = JOptionPane.showOptionDialog(this, panel, "New rule set", 
                         JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
                         null, new Object[]{okButton, cancelButton}, okButton);
-            System.out.println("option = " + option);
             if (option == JOptionPane.OK_OPTION) {
                 try {
                     // Save the new rule
                     ImmutablePair<String, LogicalImagerRule> ruleMap = panel.toRule();
                     appendRow(ruleMap);
                     break;
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,
                         ex.getMessage(),
                         "New rule error",
@@ -557,12 +576,9 @@ public final class ConfigVisualPanel2 extends JPanel {
     private javax.swing.JTextField descriptionEditTextField;
     private javax.swing.JLabel descriptionLabel;
     private javax.swing.JButton editRuleButton;
-    private javax.swing.JComboBox<String> equalitySignComboBox;
     private javax.swing.JLabel extensionsLabel;
     private javax.swing.JTextField extensionsTextField;
     private javax.swing.JLabel fileSizeLabel;
-    private javax.swing.JSpinner fileSizeSpinner1;
-    private javax.swing.JComboBox<String> fileSizeUnitComboBox1;
     private javax.swing.JLabel filenamesLabel;
     private javax.swing.JTable filenamesTable;
     private javax.swing.JCheckBox finalizeImageWriter;
@@ -576,6 +592,10 @@ public final class ConfigVisualPanel2 extends JPanel {
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JLabel maxSizeLabel;
+    private javax.swing.JFormattedTextField maxSizeTextField;
+    private javax.swing.JLabel minSizeLabel;
+    private javax.swing.JFormattedTextField minSizeTextField;
     private javax.swing.JLabel modifiedDateLabel;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JTextField ruleNameEditTextField;
@@ -635,13 +655,18 @@ public final class ConfigVisualPanel2 extends JPanel {
         updateList(filenamesTable, rule.getFilenames());
         updateList(folderNamesTable, rule.getPaths());
         updateList(fullPathsTable, rule.getFullPaths());
-        if (rule.getMaxFileSize() == null) {
-            fileSizeSpinner1.setValue(0);
+        if (rule.getMinFileSize() == null) {
+            minSizeTextField.setText("");
         } else {
-            fileSizeSpinner1.setValue(rule.getMaxFileSize());
+            minSizeTextField.setText(rule.getMinFileSize().toString());
+        }
+        if (rule.getMaxFileSize() == null) {
+            maxSizeTextField.setText("");
+        } else {
+            maxSizeTextField.setText(rule.getMaxFileSize().toString());
         }
         if (rule.getMinDays() == null) {
-            daysIncludedTextField.setText(Integer.toString(0));
+            daysIncludedTextField.setText("");
         } else {
             daysIncludedTextField.setText(Integer.toString(rule.getMinDays()));
         }
@@ -703,8 +728,6 @@ public final class ConfigVisualPanel2 extends JPanel {
         extensionsTextField.setText("");
         updateList(filenamesTable, EMPTY_LIST);
         updateList(folderNamesTable, EMPTY_LIST);
-        fileSizeSpinner1.setValue(0);
-        daysIncludedTextField.setText(Integer.toString(0));
     }
 
     boolean isPanelValid() {

@@ -163,6 +163,7 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
                 }
                 configFilename = path;
                 configFileTextField.setText(path);
+                config = new LogicalImagerConfig();
                 newFile = true;
             }
         }
