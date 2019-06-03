@@ -99,7 +99,7 @@ final class HtmlPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Cleans out input HTML string
+     * Cleans out input HTML string so it will not access resources over the internet
      *
      * @param htmlInString The HTML string to cleanse
      *
@@ -116,6 +116,42 @@ final class HtmlPanel extends javax.swing.JPanel {
             });
             //remove images
             source.getAllElements("img").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove frames
+            source.getAllElements("frame").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove iframes
+            source.getAllElements("iframe").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove pictures
+            source.getAllElements("picture").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove svg
+            source.getAllElements("svg").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove audio
+            source.getAllElements("audio").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove video
+            source.getAllElements("video").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove tracks
+            source.getAllElements("track").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove embeded external elements
+            source.getAllElements("embed").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove linked elements
+            source.getAllElements("link").forEach((element) -> {
                 document.remove(element.getAllTags());
             });
             //remove other URI elements such as input boxes
