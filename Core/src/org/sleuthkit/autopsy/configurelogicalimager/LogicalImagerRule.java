@@ -18,8 +18,12 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -27,20 +31,42 @@ import java.util.List;
  */
 public class LogicalImagerRule {
 
+    @Expose(serialize = true) 
     private final Boolean shouldAlert;
+    @Expose(serialize = true) 
     private final Boolean shouldSave;
+    @Expose(serialize = true) 
     private final String description;
+    @Expose(serialize = true) 
     private List<String> extensions = new ArrayList<>();
+    @SerializedName("file-names")
+    @Expose(serialize = true) 
     private List<String> filenames = new ArrayList<>();
+    @SerializedName("folder-names")
+    @Expose(serialize = true) 
     private List<String> paths = new ArrayList<>();
+    @SerializedName("full-paths")
+    @Expose(serialize = true) 
     private List<String> fullPaths = new ArrayList<>();
+    @SerializedName("size-range")    
+    @Expose(serialize = true) 
+    private Map<String, Integer> sizeRange = new HashMap<>();
+    @SerializedName("date-range")    
+    @Expose(serialize = true) 
+    private Map<String, Integer> dateRange = new HashMap<>();
+        
+    @Expose(serialize = false) 
     private Integer minFileSize;
+    @Expose(serialize = false) 
     private Integer maxFileSize;
+    @Expose(serialize = false) 
     private Integer minDays;
-    private String minDate;
-    private String maxDate;
+    @Expose(serialize = false) 
+    private Integer minDate;
+    @Expose(serialize = false) 
+    private Integer maxDate;
     
-    LogicalImagerRule(Boolean shouldAlert, Boolean shouldSave, String description,
+    private LogicalImagerRule(Boolean shouldAlert, Boolean shouldSave, String description,
             List<String> extensions,
             List<String> filenames,
             List<String> paths,
@@ -48,8 +74,8 @@ public class LogicalImagerRule {
             Integer minFileSize,
             Integer maxFileSize,
             Integer minDays,
-            String minDate,
-            String maxDate
+            Integer minDate,
+            Integer maxDate
     ) {
         this.shouldAlert = shouldAlert;
         this.shouldSave = shouldSave;
@@ -58,10 +84,16 @@ public class LogicalImagerRule {
         this.filenames = filenames;
         this.paths = paths;
         this.fullPaths = fullPaths;
+        
+        this.sizeRange.put("min", minFileSize);
         this.minFileSize = minFileSize;
+        this.sizeRange.put("max", maxFileSize);
         this.maxFileSize = maxFileSize;
+        this.dateRange.put("min-days", minDays);
         this.minDays = minDays;
+        this.dateRange.put("min-date", minDate);
         this.minDate = minDate;
+        this.dateRange.put("max-date", maxDate);
         this.maxDate = maxDate;
     }
 
@@ -111,11 +143,11 @@ public class LogicalImagerRule {
         return minDays;
     }
 
-    public String getMinDate() {
+    public Integer getMinDate() {
         return minDate;
     }
 
-    public String getMaxDate() {
+    public Integer getMaxDate() {
         return maxDate;
     }
 
@@ -130,8 +162,8 @@ public class LogicalImagerRule {
         private Integer minFileSize = null;
         private Integer maxFileSize = null;
         private Integer minDays = null;
-        private String minDate = null;
-        private String maxDate = null;
+        private Integer minDate = null;
+        private Integer maxDate = null;
 
         public Builder() {}
         
@@ -185,12 +217,12 @@ public class LogicalImagerRule {
             return this;
         }
         
-        public Builder minDate(String minDate) {
+        public Builder minDate(Integer minDate) {
             this.minDate = minDate;
             return this;
         }
         
-        public Builder maxDate(String maxDate) {
+        public Builder maxDate(Integer maxDate) {
             this.maxDate = maxDate;
             return this;
         }

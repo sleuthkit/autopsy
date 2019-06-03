@@ -127,7 +127,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     }
     
     public void saveConfigFile() {
-        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
+        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation();
         Gson gson = gsonBuilder.create();
         String toJson = gson.toJson(config);
         System.out.println(toJson);

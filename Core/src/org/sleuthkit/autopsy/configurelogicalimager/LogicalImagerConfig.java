@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +28,12 @@ import java.util.Map;
  */
 public class LogicalImagerConfig {
 
+    @SerializedName("finalize-image-writer")
+    @Expose(serialize = true) 
     private boolean finalizeImageWriter;
+
+    @SerializedName("rule-set")
+    @Expose(serialize = true) 
     private Map<String, LogicalImagerRule> ruleSet;
     
     public LogicalImagerConfig() {

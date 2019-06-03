@@ -66,8 +66,8 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             Integer minFileSize = null;
             Integer maxFileSize = null;
             Integer minDays = null;
-            String minDate = null;
-            String maxDate = null;
+            Integer minDate = null;
+            Integer maxDate = null;
             
             for (Map.Entry<String, JsonElement> entry1 : entrySet) {
                 key1 = entry1.getKey();
@@ -133,10 +133,10 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                             String dateKey = entry2.getKey();
                             switch (dateKey) {
                                 case "min":
-                                    minDate = entry2.getValue().getAsString();
+                                    minDate = entry2.getValue().getAsInt();
                                     break;
                                 case "max":
-                                    maxDate = entry2.getValue().getAsString();
+                                    maxDate = entry2.getValue().getAsInt();
                                     break;
                                 case "min-days":
                                     minDays = entry2.getValue().getAsInt();  
