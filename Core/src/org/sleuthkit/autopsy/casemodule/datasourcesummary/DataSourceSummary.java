@@ -20,13 +20,10 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestJobInfo.IngestJobStatusType;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -37,7 +34,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 class DataSourceSummary {
 
     private final DataSource dataSource;
-    private String status = "";
+    private IngestJobStatusType status = null;
+    private Long jobId = null;
     private final String type;
     private final long filesCount;
     private final long resultsCount;
@@ -56,23 +54,29 @@ class DataSourceSummary {
      */
     DataSourceSummary(DataSource dSource, String typeValue, Long numberOfFiles, Long numberOfResults, Long numberOfTags) {
         dataSource = dSource;
-        updateStatus();
+        getStatusFromDatabase();
         type = typeValue == null ? "" : typeValue;
         filesCount = numberOfFiles == null ? 0 : numberOfFiles;
         resultsCount = numberOfResults == null ? 0 : numberOfResults;
         tagsCount = numberOfTags == null ? 0 : numberOfTags;
     }
 
-    void updateStatus() {
+    private void getStatusFromDatabase() {
         try {
             IngestJobQueryCallback callback = new IngestJobQueryCallback();
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select("status_id FROM ingest_jobs WHERE obj_id=" + dataSource.getId(), callback);
+            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select("ingest_job_id, status_id FROM ingest_jobs WHERE obj_id=" + dataSource.getId(), callback);
             status = callback.getStatus();
+            jobId = callback.getJobId();
+            System.out.println("NEW STATUS: " + status);
         } catch (NoCurrentCaseException | TskCoreException ex) {
 
         }
     }
 
+    void setStatus(IngestJobStatusType newStatus){
+        status = newStatus;
+    }
+    
     /**
      * Get the DataSource
      *
@@ -82,6 +86,10 @@ class DataSourceSummary {
         return dataSource;
     }
 
+    Long getJobId() {
+        return jobId;
+    }
+    
     /**
      * Get the type of this DataSource
      *
@@ -109,10 +117,10 @@ class DataSourceSummary {
         return resultsCount;
     }
 
-    String getIngestStatus(){
+    IngestJobStatusType getIngestStatus() {
         return status;
     }
-    
+
     /**
      * Get the number of tagged content objects in this DataSource
      *
@@ -124,16 +132,18 @@ class DataSourceSummary {
 
     class IngestJobQueryCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-        IngestJobStatusType jobStatus = null;
+        private IngestJobStatusType jobStatus = null;
+        private Long ingestJobId = null;
 
         @Override
         public void process(ResultSet rs) {
             try {
                 while (rs.next()) {
                     IngestJobStatusType currentStatus = IngestJobStatusType.fromID(rs.getInt("status_id"));
-                    if (currentStatus == IngestJobStatusType.COMPLETED) {
+                    if (currentStatus == IngestJobStatusType.COMPLETED) {                       
                         jobStatus = currentStatus;
-                    } else if (currentStatus == IngestJobStatusType.STARTED) {
+                    } else if (currentStatus == IngestJobStatusType.STARTED) { 
+                        ingestJobId = rs.getLong("ingest_job_id");
                         jobStatus = currentStatus;
                         return;
                     }
@@ -143,12 +153,12 @@ class DataSourceSummary {
             }
         }
 
-        String getStatus() {
-            if (jobStatus == null) {
-                return "";
-            } else {
-                return jobStatus.getDisplayName();
-            }
+        IngestJobStatusType getStatus() {
+            return jobStatus;
+        }
+
+        Long getJobId() {
+            return ingestJobId;
         }
     }
 }
