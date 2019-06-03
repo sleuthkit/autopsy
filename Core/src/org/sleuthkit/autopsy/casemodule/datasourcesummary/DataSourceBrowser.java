@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryNode.
 import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -50,9 +51,10 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceBrowser.class.getName());
-    private static final int COUNT_COLUMN_WIDTH = 25;
-    private static final int USAGE_COLUMN_WIDTH = 120;
-    private static final int DATA_SOURCE_COLUMN_WIDTH = 325;
+    private static final int COUNT_COLUMN_WIDTH = 20;
+    private static final int INGEST_STATUS_WIDTH = 50;
+    private static final int USAGE_COLUMN_WIDTH = 110;
+    private static final int DATA_SOURCE_COLUMN_WIDTH = 280;
     private final Outline outline;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
@@ -69,6 +71,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         outlineView = new org.openide.explorer.view.OutlineView();
         this.setVisible(true);
         outlineView.setPropertyColumns(
+                Bundle.DataSourceSummaryNode_column_status_header(), Bundle.DataSourceSummaryNode_column_status_header(),
                 Bundle.DataSourceSummaryNode_column_type_header(), Bundle.DataSourceSummaryNode_column_type_header(),
                 Bundle.DataSourceSummaryNode_column_files_header(), Bundle.DataSourceSummaryNode_column_files_header(),
                 Bundle.DataSourceSummaryNode_column_results_header(), Bundle.DataSourceSummaryNode_column_results_header(),
@@ -90,6 +93,8 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                 column.setPreferredWidth(COUNT_COLUMN_WIDTH);
             } else if (column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_type_header())) {
                 column.setPreferredWidth(USAGE_COLUMN_WIDTH);
+            } else if (column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_status_header())) {
+                column.setPreferredWidth(INGEST_STATUS_WIDTH);
             } else {
                 column.setPreferredWidth(DATA_SOURCE_COLUMN_WIDTH);
             }

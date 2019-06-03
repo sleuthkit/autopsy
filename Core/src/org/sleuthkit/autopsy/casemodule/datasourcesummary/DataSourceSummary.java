@@ -18,7 +18,17 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.IngestJobInfo.IngestJobStatusType;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Wrapper object for a DataSource and the information associated with it.
@@ -27,6 +37,7 @@ import org.sleuthkit.datamodel.DataSource;
 class DataSourceSummary {
 
     private final DataSource dataSource;
+    private String status = "";
     private final String type;
     private final long filesCount;
     private final long resultsCount;
@@ -45,10 +56,21 @@ class DataSourceSummary {
      */
     DataSourceSummary(DataSource dSource, String typeValue, Long numberOfFiles, Long numberOfResults, Long numberOfTags) {
         dataSource = dSource;
+        updateStatus();
         type = typeValue == null ? "" : typeValue;
         filesCount = numberOfFiles == null ? 0 : numberOfFiles;
         resultsCount = numberOfResults == null ? 0 : numberOfResults;
         tagsCount = numberOfTags == null ? 0 : numberOfTags;
+    }
+
+    void updateStatus() {
+        try {
+            IngestJobQueryCallback callback = new IngestJobQueryCallback();
+            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select("status_id FROM ingest_jobs WHERE obj_id=" + dataSource.getId(), callback);
+            status = callback.getStatus();
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+
+        }
     }
 
     /**
@@ -87,6 +109,10 @@ class DataSourceSummary {
         return resultsCount;
     }
 
+    String getIngestStatus(){
+        return status;
+    }
+    
     /**
      * Get the number of tagged content objects in this DataSource
      *
@@ -94,5 +120,35 @@ class DataSourceSummary {
      */
     long getTagsCount() {
         return tagsCount;
+    }
+
+    class IngestJobQueryCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+        IngestJobStatusType jobStatus = null;
+
+        @Override
+        public void process(ResultSet rs) {
+            try {
+                while (rs.next()) {
+                    IngestJobStatusType currentStatus = IngestJobStatusType.fromID(rs.getInt("status_id"));
+                    if (currentStatus == IngestJobStatusType.COMPLETED) {
+                        jobStatus = currentStatus;
+                    } else if (currentStatus == IngestJobStatusType.STARTED) {
+                        jobStatus = currentStatus;
+                        return;
+                    }
+                }
+            } catch (SQLException ex) {
+                System.out.println("EEEP");
+            }
+        }
+
+        String getStatus() {
+            if (jobStatus == null) {
+                return "";
+            } else {
+                return jobStatus.getDisplayName();
+            }
+        }
     }
 }

@@ -109,6 +109,7 @@ final class DataSourceSummaryNode extends AbstractNode {
     static final class DataSourceSummaryEntryNode extends AbstractNode {
 
         private final DataSource dataSource;
+        private final String status;
         private final String type;
         private final long filesCount;
         private final long resultsCount;
@@ -124,6 +125,7 @@ final class DataSourceSummaryNode extends AbstractNode {
         DataSourceSummaryEntryNode(DataSourceSummary dataSourceSummary) {
             super(Children.LEAF);
             dataSource = dataSourceSummary.getDataSource();
+            status = dataSourceSummary.getIngestStatus();
             type = dataSourceSummary.getType();
             filesCount = dataSourceSummary.getFilesCount();
             resultsCount = dataSourceSummary.getResultsCount();
@@ -143,6 +145,7 @@ final class DataSourceSummaryNode extends AbstractNode {
         }
 
         @Messages({"DataSourceSummaryNode.column.dataSourceName.header=Data Source Name",
+            "DataSourceSummaryNode.column.status.header=Ingest Status",
             "DataSourceSummaryNode.column.type.header=Type",
             "DataSourceSummaryNode.column.files.header=Files",
             "DataSourceSummaryNode.column.results.header=Results",
@@ -157,6 +160,7 @@ final class DataSourceSummaryNode extends AbstractNode {
             }
             sheetSet.put(new NodeProperty<>(Bundle.DataSourceSummaryNode_column_dataSourceName_header(), Bundle.DataSourceSummaryNode_column_dataSourceName_header(), Bundle.DataSourceSummaryNode_column_dataSourceName_header(),
                     dataSource));
+            sheetSet.put(new NodeProperty<>(Bundle.DataSourceSummaryNode_column_status_header(), Bundle.DataSourceSummaryNode_column_status_header(), Bundle.DataSourceSummaryNode_column_status_header(), status));
             sheetSet.put(new NodeProperty<>(Bundle.DataSourceSummaryNode_column_type_header(), Bundle.DataSourceSummaryNode_column_type_header(), Bundle.DataSourceSummaryNode_column_type_header(),
                     type));
             sheetSet.put(new NodeProperty<>(Bundle.DataSourceSummaryNode_column_files_header(), Bundle.DataSourceSummaryNode_column_files_header(), Bundle.DataSourceSummaryNode_column_files_header(),
