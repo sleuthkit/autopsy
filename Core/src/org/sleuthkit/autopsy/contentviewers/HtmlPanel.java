@@ -168,7 +168,7 @@ final class HtmlPanel extends javax.swing.JPanel {
      * Refresh the panel to reflect the current show/hide images setting.
      */
     @Messages({
-        "HtmlPanel_showImagesToggleButton_show=Show Images",
+        "HtmlPanel_showImagesToggleButton_show=Download Images",
         "HtmlPanel_showImagesToggleButton_hide=Hide Images",
         "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",})
     private void refresh() {
