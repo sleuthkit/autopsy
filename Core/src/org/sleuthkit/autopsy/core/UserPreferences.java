@@ -504,10 +504,10 @@ public final class UserPreferences {
     /**
      * Get the maximum number of results to display in a result table.
      *
-     * @return Saved value or default (0) which indicates no max.
+     * @return Saved value or default (10,000).
      */
     public static int getResultsTablePageSize() {
-        return preferences.getInt(RESULTS_TABLE_PAGE_SIZE, 0);
+        return preferences.getInt(RESULTS_TABLE_PAGE_SIZE, 10_000);
     }
 
     /**
