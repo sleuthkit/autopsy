@@ -41,7 +41,7 @@ import javafx.scene.input.MouseEvent;
 public final class ImageTagsGroup extends Group {
 
     private final EventDispatchChainImpl NO_OP_CHAIN = new EventDispatchChainImpl();
-    private final PropertyChangeSupport pcl = new PropertyChangeSupport(this);
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     private volatile ImageTag currentFocus;
 
@@ -55,7 +55,7 @@ public final class ImageTagsGroup extends Group {
                 currentFocus = null;
             }
 
-            this.pcl.firePropertyChange(new PropertyChangeEvent(this,
+            this.pcs.firePropertyChange(new PropertyChangeEvent(this,
                     ImageTagControls.NOT_FOCUSED.getName(), currentFocus, null));
         });
 
@@ -81,7 +81,7 @@ public final class ImageTagsGroup extends Group {
      * @param fcl PCL to be notified which Image tag has been selected.
      */
     public void addFocusChangeListener(PropertyChangeListener fcl) {
-        this.pcl.addPropertyChangeListener(fcl);
+        this.pcs.addPropertyChangeListener(fcl);
     }
 
     /**
@@ -100,7 +100,7 @@ public final class ImageTagsGroup extends Group {
      */
     private void resetFocus(ImageTag n) {
         n.getEventDispatcher().dispatchEvent(new Event(ImageTagControls.NOT_FOCUSED), NO_OP_CHAIN);
-        this.pcl.firePropertyChange(new PropertyChangeEvent(this, ImageTagControls.NOT_FOCUSED.getName(), n, null));
+        this.pcs.firePropertyChange(new PropertyChangeEvent(this, ImageTagControls.NOT_FOCUSED.getName(), n, null));
     }
 
     /**
@@ -116,7 +116,7 @@ public final class ImageTagsGroup extends Group {
         }
 
         n.getEventDispatcher().dispatchEvent(new Event(ImageTagControls.FOCUSED), NO_OP_CHAIN);
-        this.pcl.firePropertyChange(new PropertyChangeEvent(this, ImageTagControls.FOCUSED.getName(), currentFocus, n));
+        this.pcs.firePropertyChange(new PropertyChangeEvent(this, ImageTagControls.FOCUSED.getName(), currentFocus, n));
 
         currentFocus = n;
         n.toFront();

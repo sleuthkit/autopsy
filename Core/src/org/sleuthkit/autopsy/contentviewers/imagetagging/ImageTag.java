@@ -54,16 +54,16 @@ public final class ImageTag extends Group {
     //The underlying presistent tag details that this image tag originates from
     private final ContentViewerTag<ImageTagRegion> appTag;
 
-    public ImageTag(ContentViewerTag<ImageTagRegion> appTag, ImageView image) {
+    public ImageTag(ContentViewerTag<ImageTagRegion> contentViewerTag, ImageView image) {
         ALL_CHILDREN = new EventDispatchChainImpl();
-        this.appTag = appTag;
+        this.appTag = contentViewerTag;
 
         this.getChildren().addListener((ListChangeListener<Node>) change -> {
             change.next();
             change.getAddedSubList().forEach((node) -> ALL_CHILDREN.append(node.getEventDispatcher()));
         });
 
-        ImageTagRegion details = appTag.getDetails();
+        ImageTagRegion details = contentViewerTag.getDetails();
         PhysicalTag physicalTag = new PhysicalTag(details);
 
         //Defines the max allowable boundary that a user may drag any given handle.
@@ -115,7 +115,7 @@ public final class ImageTag extends Group {
         this.getChildren().addAll(physicalTag, bottomLeft, bottomRight, topLeft,
                 topRight, bottomMiddle, topMiddle, rightMiddle, leftMiddle);
 
-        Tooltip.install(this, new Tooltip(appTag.getContentTag()
+        Tooltip.install(this, new Tooltip(contentViewerTag.getContentTag()
                 .getName().getDisplayName()));
 
         this.addEventHandler(ImageTagControls.NOT_FOCUSED, event -> ALL_CHILDREN.dispatchEvent(event));

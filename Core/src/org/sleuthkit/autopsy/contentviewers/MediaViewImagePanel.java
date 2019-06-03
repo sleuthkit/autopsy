@@ -196,7 +196,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             if (imageTagCreator != null) {
                 imageTagCreator.disconnect();
             }
-            showTagsButton.setText("Hide Tags");
+            showTagsButton.setText(DisplayOptions.HIDE_TAGS.getName());
+            showTagsButton.setEnabled(true);
+            createTagButton.setEnabled(true);
+            deleteTagButton.setEnabled(false);
             scrollPane.setContent(null);
             scrollPane.setContent(masterGroup);
         });
@@ -347,20 +350,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
              * Build the image tag, add an edit event call back to persist all
              * edits made on this image tag instance.
              */
-            ImageTag imageTag = new ImageTag(contentViewerTag, fxImageView);
-            imageTag.subscribeToEditEvents((event) -> {
-                try {
-                    scrollPane.setCursor(Cursor.WAIT);
-                    ImageTagRegion newRegion = (ImageTagRegion) event.getNewValue();
-                    ContentViewerTagManager.updateTag(contentViewerTag, newRegion);
-                    scrollPane.setCursor(Cursor.DEFAULT);
-                } catch (SerializationException | NoCurrentCaseException | TskCoreException ex) {
-                    LOGGER.log(Level.WARNING, "Could not save edit for image tag in case db", ex); //NON-NLS
-                    //TODO - pop dialog
-                }
-            });
-
-            tagsGroup.getChildren().add(imageTag);
+            tagsGroup.getChildren().add(buildImageTag(contentViewerTag));
         });
 
         return tagsGroup;
@@ -407,7 +397,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jMenu1 = new javax.swing.JMenu();
         jPopupMenu1 = new javax.swing.JPopupMenu();
         jPopupMenu2 = new javax.swing.JPopupMenu();
         toolbar = new javax.swing.JToolBar();
@@ -427,8 +416,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         deleteTagButton = new javax.swing.JButton();
         jSeparator3 = new javax.swing.JToolBar.Separator();
         showTagsButton = new javax.swing.JButton();
-
-        org.openide.awt.Mnemonics.setLocalizedText(jMenu1, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.jMenu1.text")); // NOI18N
 
         setBackground(new java.awt.Color(0, 0, 0));
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -661,6 +648,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 //Persist and build image tag
                 Platform.runLater(() -> {
                     try {
+                        scrollPane.setCursor(Cursor.WAIT);
                         ContentViewerTag<ImageTagRegion> contentViewerTag = storeImageTag(tag, result);
                         ImageTag imageTag = buildImageTag(contentViewerTag);
                         tagsGroup.getChildren().add(imageTag);
@@ -668,6 +656,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         LOGGER.log(Level.WARNING, "Could not save new image tag in case db", ex); //NON-NLS
                         //TODO pop dialog
                     }
+                    
+                    scrollPane.setCursor(Cursor.DEFAULT);
                 });
             });
 
@@ -683,7 +673,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_createTagButtonActionPerformed
 
     /**
-     *
+     * Creates an ImageTag instance from the ContentViewerTag.
+     * 
      * @param contentViewerTag
      * @return
      */
@@ -696,11 +687,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 scrollPane.setCursor(Cursor.WAIT);
                 ImageTagRegion newRegion = (ImageTagRegion) edit.getNewValue();
                 ContentViewerTagManager.updateTag(contentViewerTag, newRegion);
-                scrollPane.setCursor(Cursor.DEFAULT);
             } catch (SerializationException | TskCoreException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.WARNING, "Could not save edit for image tag in case db", ex); //NON-NLS
                 //TODO pop dialog
             }
+            scrollPane.setCursor(Cursor.DEFAULT);
         });
         return imageTag;
     }
@@ -773,7 +764,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private javax.swing.JButton deleteTagButton;
     private javax.swing.Box.Filler filler1;
     private javax.swing.Box.Filler filler2;
-    private javax.swing.JMenu jMenu1;
     private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JPopupMenu jPopupMenu2;
     private javax.swing.JToolBar.Separator jSeparator1;

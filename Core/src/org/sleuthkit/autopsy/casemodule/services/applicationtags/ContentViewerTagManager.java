@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ContentViewerTagManager {
 
     //Used to convert Java beans into the physical representation that will be stored
-    //in the database (for now, JSON was chosen).
+    //in the database.
     private static final ObjectMapper SERIALIZER = new ObjectMapper();
 
     public static final String TABLE_NAME = "beta_tag_app_data";
@@ -53,20 +53,19 @@ public class ContentViewerTagManager {
     /**
      * Creates and saves a new ContentViewerTag in the case database. The
      * generic tag data instance T will be automatically serialized into a
-     * storable format and persisted.
+     * storable format.
      *
-     * @param <T> Generic java bean class type that will be serialized into a
-     * storable format for persistence
+     * @param <T> Generic class type that will be serialized into a
+     * storable format for persistence.
      * @param contentTag ContentTag that this ContentViewerTag is associated
-     * with (1:1)
+     * with (1:1).
      * @param tagDataBean Data instance that contains the tag information to be
      * persisted.
      * @return An instance of a ContentViewerTag of type T, which contains all
      * the stored information.
      *
-     * @throws SerializationException Thrown if the tag data bean instance T
-     * could not be serialized into a storable format for persistence in the
-     * case database.
+     * @throws SerializationException Thrown if the tag data instance T
+     * could not be serialized into a storable format.
      * @throws TskCoreException Thrown if this operation did not successfully
      * persist in the case database.
      * @throws NoCurrentCaseException Thrown if invocation of this method occurs
@@ -89,15 +88,14 @@ public class ContentViewerTagManager {
      * Updates the ContentViewerTag instance with the new tag data T and
      * persists the changes to the case database.
      *
-     * @param <T> Generic java bean class type that will be serialized into a
-     * storable format for persistence
+     * @param <T> Generic class type that will be serialized into a
+     * storable format.
      * @param oldTag ContentViewerTag instance to be updated
      * @param tagDataBean Data instance that contains the updated information to
      * be persisted.
      *
-     * @throws SerializationException Thrown if the tag data bean instance T
-     * could not be serialized into a storable format for persistence in the
-     * case database.
+     * @throws SerializationException Thrown if the tag data instance T
+     * could not be serialized into a storable format.
      * @throws TskCoreException Thrown if this operation did not successfully
      * persist in the case database.
      * @throws NoCurrentCaseException Thrown if invocation of this method occurs
@@ -119,15 +117,15 @@ public class ContentViewerTagManager {
 
     /**
      * Retrieves a ContentViewerTag instance that is associated with the
-     * specified ContentTag. The Java bean class that represents the technical
+     * specified ContentTag. The Java class T that represents the technical
      * details of the tag should be passed so that automatic binding can take
      * place.
      *
-     * @param <T> Java bean class type that will be instantiated and filled in
+     * @param <T> Generic class type that will be instantiated and filled in
      * with data.
      * @param contentTag ContentTag that this ContentViewerTag is associated
      * with (1:1)
-     * @param clazz Java bean class that will be instantiated and filled in with
+     * @param clazz Generic class that will be instantiated and filled in with
      * data.
      * @return ContentViewerTag with an instance of T as a member variable or
      * null if the content tag does not have an associated ContentViewerTag of
@@ -187,7 +185,7 @@ public class ContentViewerTagManager {
      * for the tag id, the attached Content tag object, and the Java bean
      * instance that describes the technical details for reconstructing the tag.
      *
-     * @param <T> Java bean class type that will be instantiated and filled in
+     * @param <T> Generic class type that will be instantiated and filled in
      * with data.
      */
     public static class ContentViewerTag<T> {
