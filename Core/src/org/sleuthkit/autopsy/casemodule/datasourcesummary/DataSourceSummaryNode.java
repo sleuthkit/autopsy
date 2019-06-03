@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.Action;
@@ -125,7 +126,7 @@ final class DataSourceSummaryNode extends AbstractNode {
         DataSourceSummaryEntryNode(DataSourceSummary dataSourceSummary) {
             super(Children.LEAF);
             dataSource = dataSourceSummary.getDataSource();
-            status = dataSourceSummary.getIngestStatus();
+            status = dataSourceSummary.getIngestStatus() == null ? "" : dataSourceSummary.getIngestStatus().toString();
             type = dataSourceSummary.getType();
             filesCount = dataSourceSummary.getFilesCount();
             resultsCount = dataSourceSummary.getResultsCount();
@@ -183,7 +184,8 @@ final class DataSourceSummaryNode extends AbstractNode {
         }
 
         @Override
-        public Action[] getActions(boolean context) {
+        public Action[] getActions(boolean context
+        ) {
             List<Action> actions = new ArrayList<>();
             actions.add(new ViewDataSourceInContextAction());
             return actions.toArray(new Action[actions.size()]);

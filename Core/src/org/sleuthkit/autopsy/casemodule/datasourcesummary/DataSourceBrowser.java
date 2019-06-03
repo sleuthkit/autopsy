@@ -37,7 +37,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryNode.DataSourceSummaryEntryNode;
 import static javax.swing.SwingConstants.RIGHT;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -58,7 +61,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final Outline outline;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
-    private final List<DataSourceSummary> dataSourceSummaryList;
+    private List<DataSourceSummary> dataSourceSummaryList;
     private final RightAlignedTableCellRenderer rightAlignedRenderer = new RightAlignedTableCellRenderer();
 
     /**
@@ -185,6 +188,43 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
             return ((DataSourceSummaryEntryNode) selectedNode[0]).getDataSource();
         }
         return null;
+    }
+
+    void refresh(long jobId, IngestJobInfo.IngestJobStatusType newStatus) {
+        Node[] selectedNodes = explorerManager.getSelectedNodes();
+        //attempt to update the status of any datasources that had status which was STARTED
+        for (DataSourceSummary summary : dataSourceSummaryList) {
+            //attempt to update the status of any datasources that had status which was STARTED
+            //the database may not have been updated when this event is received so we need to manually update the UI
+            if (summary.getIngestStatus() == IngestJobInfo.IngestJobStatusType.STARTED && summary.getJobId() == jobId) {
+                System.out.println("UPDATING STATUS");
+                summary.setStatus(newStatus);
+            }
+        }
+        SwingUtilities.invokeLater(() -> {
+            explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
+            List<Node> nodesToSelect = new ArrayList<>();
+            for (Node node : explorerManager.getRootContext().getChildren().getNodes()) {
+                if (node instanceof DataSourceSummaryEntryNode) {
+                    //there should only be one selected node as multi-select is disabled
+                    for (Node selectedNode : selectedNodes) {
+                        if (((DataSourceSummaryEntryNode) node).getDataSource().equals(((DataSourceSummaryEntryNode) selectedNode).getDataSource())) {
+                            System.out.println("NODE TO SELECT ADDED");
+                            nodesToSelect.add(node);
+                        }
+                    }
+                }
+            }
+            //reselect the previously selected Nodes
+            try {
+                explorerManager.setSelectedNodes(nodesToSelect.toArray(new Node[nodesToSelect.size()]));
+            } catch (PropertyVetoException ex) {
+                logger.log(Level.WARNING, "Error selecting previously selected nodes", ex);
+            }
+            revalidate();
+            repaint();
+
+        });
     }
 
     /**

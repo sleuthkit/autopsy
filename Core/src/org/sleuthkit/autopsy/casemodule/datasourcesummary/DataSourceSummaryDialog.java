@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.Frame;
+import java.beans.PropertyChangeEvent;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -26,7 +27,9 @@ import java.util.logging.Logger;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
 
 /**
  * Dialog for displaying the Data Sources Summary information
@@ -71,6 +74,14 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
                 ingestHistoryPanel.setDataSource(selectedDataSource);
                 this.repaint();
+            }
+        });
+        IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString())){
+                 dataSourcesPanel.refresh((long)evt.getOldValue(), null);
+            }
+            else if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())) {
+                dataSourcesPanel.refresh((long)evt.getOldValue(), IngestJobInfo.IngestJobStatusType.COMPLETED);
             }
         });
         this.pack();
