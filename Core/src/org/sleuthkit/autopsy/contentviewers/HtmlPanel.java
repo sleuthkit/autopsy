@@ -221,7 +221,7 @@ final class HtmlPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
-                .addGap(0, 95, Short.MAX_VALUE))
+                .addGap(0, 75, Short.MAX_VALUE))
             .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
