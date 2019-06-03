@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,9 +31,11 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -48,6 +51,27 @@ public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     private final SleuthkitCase caseDb;
+    
+    static {
+        //Create the contentviewer tags table (beta) if the current case does not 
+        //have the table present
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> {
+            if (evt.getNewValue() != null) {
+                Case currentCase = (Case) evt.getNewValue();
+                try {
+                    CaseDbAccessManager caseDb = currentCase.getSleuthkitCase().getCaseDbAccessManager();
+                    //Create our custom application tags table, if need be.
+                    if (!caseDb.tableExists(ContentViewerTagManager.TABLE_NAME)) {
+                        caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA);
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, 
+                            String.format("Unable to create the %s table for image tag storage.", 
+                                    ContentViewerTagManager.TABLE_NAME), ex);
+                }
+            }
+        });
+    }
 
     /**
      * Tests whether or not a given tag display name contains an illegal

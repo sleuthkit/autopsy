@@ -154,7 +154,7 @@ MediaPlayerPanel.infoLabel.text=No Errors
 MediaViewImagePanel.deleteTagButton.text=Delete Tag
 MediaViewImagePanel.createTagButton.text=Create Tag
 MediaViewImagePanel.jMenu1.text=jMenu1
-MediaViewImagePanel.editTagButton.text=Edit Tag Info
+MediaViewImagePanel.showTagsButton.text=Hide Tags
 # {0} - tableName
 SQLiteViewer.readTable.errorText=Error getting rows for table: {0}
 # {0} - tableName

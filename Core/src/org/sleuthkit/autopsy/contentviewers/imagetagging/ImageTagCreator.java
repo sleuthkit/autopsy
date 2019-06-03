@@ -16,11 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.contentviewers.imagetagging;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import javafx.event.EventHandler;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -28,7 +28,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 /**
- * Creates image tags. This tool can be treated like any other JavaFX node.
+ * Creates image tags. This class attaches itself to a source image, waiting
+ * for mouse press, mouse drag, and mouse release events. Upon a mouse release 
+ * event, any listeners are updated with the portable description of the new tag 
+ * boundaries (ImageTagRegion).
  */
 public final class ImageTagCreator extends Rectangle {
 
@@ -39,12 +42,18 @@ public final class ImageTagCreator extends Rectangle {
     //a good balance between visual acuity and loss of selection at the borders
     //of the image.
     private double lineThicknessAsPercent = 1.5;
-    private final double minArea;  
-    private final Collection<StoredTagListener> listeners;
+    private final double minArea;
     
+    //Used to update listeners of the new tag boundaries
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
     private final EventHandler<MouseEvent> mousePressed;
     private final EventHandler<MouseEvent> mouseDragged;
     private final EventHandler<MouseEvent> mouseReleased;
+    
+    //Handles the unregistering this ImageTagCreator from mouse press, mouse drag,
+    //and mouse release events of the source image.
+    private final Runnable disconnect;
 
     /**
      * Adds tagging support to an image, where the 'tag' rectangle will be the
@@ -53,8 +62,6 @@ public final class ImageTagCreator extends Rectangle {
      * @param image Image to tag
      */
     public ImageTagCreator(ImageView image) {
-        listeners = new ArrayList<>();
-
         setStroke(Color.RED);
         setFill(Color.RED.deriveColor(0, 0, 0, 0));
 
@@ -65,7 +72,7 @@ public final class ImageTagCreator extends Rectangle {
         setStrokeWidth(lineThicknessPixels);
         minArea = lineThicknessPixels * lineThicknessPixels;
         setVisible(false);
-        
+
         this.mousePressed = (MouseEvent event) -> {
             if (event.isSecondaryButtonDown()) {
                 return;
@@ -79,9 +86,9 @@ public final class ImageTagCreator extends Rectangle {
             setX(rectangleOriginX);
             setY(rectangleOriginY);
         };
-        
+
         image.addEventHandler(MouseEvent.MOUSE_PRESSED, this.mousePressed);
-        
+
         this.mouseDragged = (MouseEvent event) -> {
             if (event.isSecondaryButtonDown()) {
                 return;
@@ -111,45 +118,55 @@ public final class ImageTagCreator extends Rectangle {
             }
             setHeight(Math.abs(offsetY));
         };
-        
+
         image.addEventHandler(MouseEvent.MOUSE_DRAGGED, this.mouseDragged);
-        
+
         this.mouseReleased = event -> {
-            if ((this.getWidth() - this.getStrokeWidth()) * 
-                    (this.getHeight() - this.getStrokeWidth()) <= minArea) {
+            //Reject any drags that are too small to count as a meaningful tag.
+            //Meaningful is described as having an area that is visible that is 
+            //not consumed by the thickness of the stroke.
+            if ((this.getWidth() - this.getStrokeWidth())
+                    * (this.getHeight() - this.getStrokeWidth()) <= minArea) {
                 defaultSettings();
                 return;
-            }          
-            
-            //Notify listeners
-            StoredTagEvent newTagEvent = new StoredTagEvent(this, new StoredTag(image, this.getX(), this.getY(),
-                    this.getX() + this.getWidth(), this.getY() + this.getHeight()));
-            
-            listeners.forEach((listener) -> {
-                listener.newTagEvent(newTagEvent);
-            });
-            
-            defaultSettings();
+            }
+
+            this.pcs.firePropertyChange(new PropertyChangeEvent(this, "New Tag",
+                    null, new ImageTagRegion()
+                            .setX(this.getX())
+                            .setY(this.getY())
+                            .setWidth(this.getWidth())
+                            .setHeight(this.getHeight())
+                            .setStrokeThickness(lineThicknessPixels)));
         };
-        
+
         image.addEventHandler(MouseEvent.MOUSE_RELEASED, this.mouseReleased);
-        this.addEventHandler(ControlType.NOT_FOCUSED, (event) -> {
+
+        //Used to remove itself from mouse events on the source image
+        disconnect = () -> {
             defaultSettings();
             image.removeEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleased);
             image.removeEventHandler(MouseEvent.MOUSE_DRAGGED, mouseDragged);
             image.removeEventHandler(MouseEvent.MOUSE_PRESSED, mousePressed);
-        });
-        
-        this.addEventHandler(ControlType.DELETE, event -> {
-            defaultSettings();
-            image.removeEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleased);
-            image.removeEventHandler(MouseEvent.MOUSE_DRAGGED, mouseDragged);
-            image.removeEventHandler(MouseEvent.MOUSE_PRESSED, mousePressed);
-        }); 
+        };
     }
-    
-    public void addNewTagListener(StoredTagListener listener) {
-        listeners.add(listener);
+
+    /**
+     * Registers a PCL for new tag events. Listeners are updated with a portable
+     * description (ImageTagRegion) of the new tag, which represent the
+     * rectangle boundaries.
+     *
+     * @param listener
+     */
+    public void addNewTagListener(PropertyChangeListener listener) {
+        this.pcs.addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Removes itself from mouse events on the source image.
+     */
+    public void disconnect() {
+        this.disconnect.run();
     }
 
     /**

@@ -22,11 +22,10 @@ import javafx.event.Event;
 import javafx.event.EventType;
 
 /**
- *
- * @author dsmyda
+ * Focus events for ImageTags to consume. These events trigger selection behavior 
+ * on ImageTags and are originated from the ImageTagsGroup class.
  */
-public class ControlType {
+public class ImageTagControls {
     public static final EventType<Event> NOT_FOCUSED = new EventType<>("NOT_FOCUSED");
     public static final EventType<Event> FOCUSED = new EventType<>("FOCUSED");
-    public static final EventType<Event> DELETE = new EventType<>("DELETE");
 }

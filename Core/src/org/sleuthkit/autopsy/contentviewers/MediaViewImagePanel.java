@@ -18,18 +18,16 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagCreator;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.StoredTag;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.StoredTagListener;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.TopLevelTagsGroup;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.StoredTagEvent;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -37,7 +35,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -54,14 +52,22 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.controlsfx.control.MaskerPane;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog.TagNameAndComment;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.ControlType;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager;
+import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager.ContentViewerTag;
+import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager.SerializationException;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagControls;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagCreator;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTag;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsGroup;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -79,14 +85,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
     private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
+    private final Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
 
     private final boolean fxInited;
 
     private JFXPanel fxPanel;
     private AbstractFile file;
-    private StoredTag lastFocused;
-    private TopLevelTagsGroup imageGroup;
-    private ImageTagCreator tagger;
+    private Group masterGroup;
+    private ImageTagsGroup tagsGroup;
+    private ImageTagCreator imageTagCreator;
     private ImageView fxImageView;
     private ScrollPane scrollPane;
     private final ProgressBar progressBar = new ProgressBar();
@@ -132,22 +139,29 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
-                imageGroup = new TopLevelTagsGroup(fxImageView);
+                masterGroup = new Group(fxImageView);
+                tagsGroup = new ImageTagsGroup(fxImageView);
+                masterGroup.getChildren().add(tagsGroup);
                 deleteTagButton.setEnabled(false);
-                editTagButton.setEnabled(false);
-                imageGroup.addFocusChangeListener((event) -> {
-                    if (event.getType() == ControlType.NOT_FOCUSED || event.getNode().equals(fxImageView)) {
+
+                //Update buttons when users select (or unselect) image tags.
+                tagsGroup.addFocusChangeListener((event) -> {
+                    if (event.getPropertyName().equals(ImageTagControls.NOT_FOCUSED.getName())) {
                         deleteTagButton.setEnabled(false);
-                        createTagButton.setEnabled(true);
-                        editTagButton.setEnabled(false);
-                    } else if (event.getType() == ControlType.FOCUSED) {
+                        if (DisplayOptions.HIDE_TAGS.getName().equals(showTagsButton.getText())) {
+                            createTagButton.setEnabled(true);
+                        }
+                    } else if (event.getPropertyName().equals(ImageTagControls.FOCUSED.getName())) {
                         deleteTagButton.setEnabled(true);
-                        editTagButton.setEnabled(true);
                         createTagButton.setEnabled(false);
-                        lastFocused = event.getNode();
+                        if (masterGroup.getChildren().contains(imageTagCreator)) {
+                            imageTagCreator.disconnect();
+                            masterGroup.getChildren().remove(imageTagCreator);
+                        }
                     }
                 });
-                scrollPane = new ScrollPane(imageGroup); // scrolls and sizes imageview
+
+                scrollPane = new ScrollPane(masterGroup); // scrolls and sizes imageview
                 scrollPane.getStyleClass().add("bg"); //NOI18N
                 scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
                 scrollPane.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
@@ -178,9 +192,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         Platform.runLater(() -> {
             fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
             fxImageView.setImage(null);
-            imageGroup.getChildren().clear();
+            masterGroup.getChildren().clear();
+            if (imageTagCreator != null) {
+                imageTagCreator.disconnect();
+            }
+            showTagsButton.setText("Hide Tags");
             scrollPane.setContent(null);
-            scrollPane.setContent(imageGroup);
+            scrollPane.setContent(masterGroup);
         });
     }
 
@@ -228,14 +246,28 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 try {
                     Image fxImage = readImageTask.get();
-                    imageGroup.getChildren().clear();
-                    imageGroup.getChildren().add(fxImageView);
+                    masterGroup.getChildren().clear();
+                    tagsGroup.getChildren().clear();
                     this.file = file;
                     if (nonNull(fxImage)) {
                         // We have a non-null image, so let's show it.
                         fxImageView.setImage(fxImage);
                         resetView();
-                        scrollPane.setContent(imageGroup);
+                        masterGroup.getChildren().add(fxImageView);
+                        masterGroup.getChildren().add(tagsGroup);
+
+                        try {
+                            List<ContentTag> tags = Case.getCurrentCase().getServices()
+                                    .getTagsManager().getContentTagsByContent(file);
+
+                            List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
+                            //Add all image tags                            
+                            tagsGroup = buildImageTagsGroup(contentViewerTags);
+                        } catch (TskCoreException | NoCurrentCaseException ex) {
+                            LOGGER.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
+                            //TODO - pop dialog
+                        }
+                        scrollPane.setContent(masterGroup);
                     } else {
                         showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                     }
@@ -273,6 +305,65 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             scrollPane.setCursor(Cursor.WAIT);
             new Thread(readImageTask).start();
         });
+    }
+
+    /**
+     * Finds all ContentViewerTags that are of type 'ImageTagRegion' for the
+     * current file.
+     *
+     * @param contentTags
+     * @return
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     */
+    private List<ContentViewerTag<ImageTagRegion>> getContentViewerTags(List<ContentTag> contentTags)
+            throws TskCoreException, NoCurrentCaseException {
+        List<ContentViewerTag<ImageTagRegion>> contentViewerTags = new ArrayList<>();
+        for (ContentTag contentTag : contentTags) {
+            ContentViewerTag<ImageTagRegion> contentViewerTag = ContentViewerTagManager
+                    .getTag(contentTag, ImageTagRegion.class);
+            if (contentViewerTag == null) {
+                continue;
+            }
+
+            contentViewerTags.add(contentViewerTag);
+        }
+        return contentViewerTags;
+    }
+
+    /**
+     * Builds ImageTag instances from stored ContentViewerTags of the
+     * appropriate type.
+     *
+     * @param contentTags
+     * @return
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     */
+    private ImageTagsGroup buildImageTagsGroup(List<ContentViewerTag<ImageTagRegion>> contentViewerTags) {
+
+        contentViewerTags.forEach(contentViewerTag -> {
+            /**
+             * Build the image tag, add an edit event call back to persist all
+             * edits made on this image tag instance.
+             */
+            ImageTag imageTag = new ImageTag(contentViewerTag, fxImageView);
+            imageTag.subscribeToEditEvents((event) -> {
+                try {
+                    scrollPane.setCursor(Cursor.WAIT);
+                    ImageTagRegion newRegion = (ImageTagRegion) event.getNewValue();
+                    ContentViewerTagManager.updateTag(contentViewerTag, newRegion);
+                    scrollPane.setCursor(Cursor.DEFAULT);
+                } catch (SerializationException | NoCurrentCaseException | TskCoreException ex) {
+                    LOGGER.log(Level.WARNING, "Could not save edit for image tag in case db", ex); //NON-NLS
+                    //TODO - pop dialog
+                }
+            });
+
+            tagsGroup.getChildren().add(imageTag);
+        });
+
+        return tagsGroup;
     }
 
     /**
@@ -329,13 +420,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         zoomInButton = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         zoomResetButton = new javax.swing.JButton();
-        jSeparator3 = new javax.swing.JToolBar.Separator();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0));
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         createTagButton = new javax.swing.JButton();
         jSeparator4 = new javax.swing.JToolBar.Separator();
-        editTagButton = new javax.swing.JButton();
-        jSeparator5 = new javax.swing.JToolBar.Separator();
         deleteTagButton = new javax.swing.JButton();
+        jSeparator3 = new javax.swing.JToolBar.Separator();
+        showTagsButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jMenu1, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.jMenu1.text")); // NOI18N
 
@@ -441,8 +532,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             }
         });
         toolbar.add(zoomResetButton);
-        toolbar.add(jSeparator3);
         toolbar.add(filler1);
+        toolbar.add(filler2);
 
         org.openide.awt.Mnemonics.setLocalizedText(createTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.createTagButton.text")); // NOI18N
         createTagButton.setFocusable(false);
@@ -457,18 +548,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         toolbar.add(createTagButton);
         toolbar.add(jSeparator4);
 
-        org.openide.awt.Mnemonics.setLocalizedText(editTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.editTagButton.text")); // NOI18N
-        editTagButton.setFocusable(false);
-        editTagButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        editTagButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        editTagButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                editTagButtonActionPerformed(evt);
-            }
-        });
-        toolbar.add(editTagButton);
-        toolbar.add(jSeparator5);
-
         org.openide.awt.Mnemonics.setLocalizedText(deleteTagButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.deleteTagButton.text")); // NOI18N
         deleteTagButton.setFocusable(false);
         deleteTagButton.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
@@ -480,6 +559,18 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             }
         });
         toolbar.add(deleteTagButton);
+        toolbar.add(jSeparator3);
+
+        org.openide.awt.Mnemonics.setLocalizedText(showTagsButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.showTagsButton.text")); // NOI18N
+        showTagsButton.setFocusable(false);
+        showTagsButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        showTagsButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        showTagsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showTagsButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(showTagsButton);
 
         add(toolbar);
     }// </editor-fold>//GEN-END:initComponents
@@ -526,52 +617,162 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void deleteTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagButtonActionPerformed
         Platform.runLater(() -> {
-            imageGroup.deleteNode(lastFocused);
-        });
-        try {
-            Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(lastFocused.getContentTag());
-        } catch (TskCoreException ex) {
+            ImageTag tagInFocus = tagsGroup.getFocus();
+            //Null should not be expected, but just as a safetly precaution
+            if (tagInFocus == null) {
+                return;
+            }
 
-        }
+            try {
+                ContentViewerTag<ImageTagRegion> contentViewerTag = tagInFocus.getContentViewerTag();
+                scrollPane.setCursor(Cursor.WAIT);
+                ContentViewerTagManager.deleteTag(contentViewerTag);
+                Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(contentViewerTag.getContentTag());
+                tagsGroup.getChildren().remove(tagInFocus);
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                LOGGER.log(Level.WARNING, "Could not delete image tag in case db", ex); //NON-NLS
+                //TODO pop dialog
+            }
+
+            scrollPane.setCursor(Cursor.DEFAULT);
+        });
+
+        deleteTagButton.setEnabled(false);
+        createTagButton.setEnabled(true);
     }//GEN-LAST:event_deleteTagButtonActionPerformed
 
     private void createTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createTagButtonActionPerformed
-        Platform.runLater(() -> {
-            tagger = new ImageTagCreator(fxImageView);
-            StoredTagListener newTagListener = (StoredTagEvent event) -> {
-                StoredTag tag = event.getTag();
-                imageGroup.getChildren().add(tag);
-                SwingUtilities.invokeLater(() -> {
-                    TagNameAndComment result = GetTagNameAndCommentDialog.doDialog();
-                    if (result != null) {
-                        try {
-                            ContentTag t = Case.getCurrentCase().getServices().getTagsManager().addContentTag(file,
-                                    result.getTagName(), result.getComment());
-                            tag.addContentTag(t);
-                        } catch (TskCoreException ex) {
-                            Platform.runLater(() -> imageGroup.deleteNode(tag));
-                        }
-                    } else {
-                        Platform.runLater(() -> imageGroup.deleteNode(tag));
+        createTagButton.setEnabled(false);
+        showTagsButton.setEnabled(false);
+        imageTagCreator = new ImageTagCreator(fxImageView);
+
+        PropertyChangeListener newTagListener = (event) -> {
+
+            SwingUtilities.invokeLater(() -> {
+                ImageTagRegion tag = (ImageTagRegion) event.getNewValue();
+                //Ask the user for tag name and comment
+                TagNameAndComment result = GetTagNameAndCommentDialog.doDialog();
+                if (result == null) {
+                    createTagButton.setEnabled(true);
+                    showTagsButton.setEnabled(true);
+                    return;
+                }
+
+                //Persist and build image tag
+                Platform.runLater(() -> {
+                    try {
+                        ContentViewerTag<ImageTagRegion> contentViewerTag = storeImageTag(tag, result);
+                        ImageTag imageTag = buildImageTag(contentViewerTag);
+                        tagsGroup.getChildren().add(imageTag);
+                    } catch (TskCoreException | SerializationException | NoCurrentCaseException ex) {
+                        LOGGER.log(Level.WARNING, "Could not save new image tag in case db", ex); //NON-NLS
+                        //TODO pop dialog
                     }
                 });
-                imageGroup.deleteNode(tagger);
+            });
 
-            };
-            tagger.addNewTagListener(newTagListener);
-            imageGroup.getChildren().add(tagger);
-        });
+            //Remove image tag creator from panel
+            Platform.runLater(() -> {
+                imageTagCreator.disconnect();
+                masterGroup.getChildren().remove(imageTagCreator);
+            });
+        };
+
+        imageTagCreator.addNewTagListener(newTagListener);
+        Platform.runLater(() -> masterGroup.getChildren().add(imageTagCreator));
     }//GEN-LAST:event_createTagButtonActionPerformed
 
-    private void editTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editTagButtonActionPerformed
-        ContentTag t = lastFocused.getContentTag();
-    }//GEN-LAST:event_editTagButtonActionPerformed
+    /**
+     *
+     * @param contentViewerTag
+     * @return
+     */
+    private ImageTag buildImageTag(ContentViewerTag<ImageTagRegion> contentViewerTag) {
+        ImageTag imageTag = new ImageTag(contentViewerTag, fxImageView);
+
+        //Automatically persist edits made by user
+        imageTag.subscribeToEditEvents((edit) -> {
+            try {
+                scrollPane.setCursor(Cursor.WAIT);
+                ImageTagRegion newRegion = (ImageTagRegion) edit.getNewValue();
+                ContentViewerTagManager.updateTag(contentViewerTag, newRegion);
+                scrollPane.setCursor(Cursor.DEFAULT);
+            } catch (SerializationException | TskCoreException | NoCurrentCaseException ex) {
+                LOGGER.log(Level.WARNING, "Could not save edit for image tag in case db", ex); //NON-NLS
+                //TODO pop dialog
+            }
+        });
+        return imageTag;
+    }
+
+    /**
+     * Stores the image tag by creating a ContentTag instance and associating
+     * the ImageTagRegion data with it in the case database.
+     *
+     * @param data
+     * @param result
+     */
+    private ContentViewerTag<ImageTagRegion> storeImageTag(ImageTagRegion data, TagNameAndComment result)
+            throws TskCoreException, SerializationException, NoCurrentCaseException {
+        try {
+            scrollPane.setCursor(Cursor.WAIT);
+            ContentTag contentTag = Case.getCurrentCaseThrows().getServices().getTagsManager()
+                    .addContentTag(file, result.getTagName(), result.getComment());
+            ContentViewerTag<ImageTagRegion> contentViewerTag = ContentViewerTagManager.saveTag(contentTag, data);
+            return contentViewerTag;
+        } finally {
+            scrollPane.setCursor(Cursor.DEFAULT);
+            createTagButton.setEnabled(true);
+            showTagsButton.setEnabled(true);
+        }
+    }
+
+    private void showTagsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showTagsButtonActionPerformed
+        Platform.runLater(() -> {
+            if (DisplayOptions.HIDE_TAGS.getName().equals(showTagsButton.getText())) {
+                //Temporarily remove the tags group and update buttons
+                masterGroup.getChildren().remove(tagsGroup);
+                showTagsButton.setText(DisplayOptions.SHOW_TAGS.getName());
+                createTagButton.setEnabled(false);
+                deleteTagButton.setEnabled(false);
+            } else {
+                //Add tags group back in and update buttons
+                masterGroup.getChildren().add(tagsGroup);
+                showTagsButton.setText(DisplayOptions.HIDE_TAGS.getName());
+                if (tagsGroup.getFocus() != null) {
+                    createTagButton.setEnabled(false);
+                    deleteTagButton.setEnabled(true);
+                } else {
+                    createTagButton.setEnabled(true);
+                    deleteTagButton.setEnabled(false);
+                }
+            }
+        });
+    }//GEN-LAST:event_showTagsButtonActionPerformed
+
+    /**
+     * Display states for the show/hide tags button.
+     */
+    enum DisplayOptions {
+        HIDE_TAGS("Hide Tags"),
+        SHOW_TAGS("Show Tags");
+
+        private final String name;
+
+        DisplayOptions(String name) {
+            this.name = name;
+        }
+
+        String getName() {
+            return name;
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createTagButton;
     private javax.swing.JButton deleteTagButton;
-    private javax.swing.JButton editTagButton;
     private javax.swing.Box.Filler filler1;
+    private javax.swing.Box.Filler filler2;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JPopupMenu jPopupMenu2;
@@ -579,10 +780,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
-    private javax.swing.JToolBar.Separator jSeparator5;
     private javax.swing.JButton rotateLeftButton;
     private javax.swing.JButton rotateRightButton;
     private javax.swing.JTextField rotationTextField;
+    private javax.swing.JButton showTagsButton;
     private javax.swing.JToolBar toolbar;
     private javax.swing.JButton zoomInButton;
     private javax.swing.JButton zoomOutButton;
@@ -728,8 +929,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         // Add the transforms in reverse order of intended execution.
         // Note: They MUST be added in this order to ensure translate is
         // executed last.
-        imageGroup.getTransforms().clear();
-        imageGroup.getTransforms().addAll(translate, rotate, scale);
+        masterGroup.getTransforms().clear();
+        masterGroup.getTransforms().addAll(translate, rotate, scale);
 
         // Adjust scroll bar positions for view changes.
         if (viewportWidth > fxPanel.getWidth()) {
