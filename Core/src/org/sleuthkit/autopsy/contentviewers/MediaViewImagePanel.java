@@ -268,7 +268,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                             tagsGroup = buildImageTagsGroup(contentViewerTags);
                         } catch (TskCoreException | NoCurrentCaseException ex) {
                             LOGGER.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
-                            //TODO - pop dialog
                         }
                         scrollPane.setContent(masterGroup);
                     } else {
@@ -539,6 +538,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         deleteTagButton.setFocusable(false);
         deleteTagButton.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         deleteTagButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        deleteTagButton.setMaximumSize(new java.awt.Dimension(61, 21));
+        deleteTagButton.setMinimumSize(new java.awt.Dimension(61, 21));
+        deleteTagButton.setPreferredSize(new java.awt.Dimension(61, 21));
+        deleteTagButton.setRequestFocusEnabled(false);
         deleteTagButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         deleteTagButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -551,6 +554,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         org.openide.awt.Mnemonics.setLocalizedText(showTagsButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.showTagsButton.text")); // NOI18N
         showTagsButton.setFocusable(false);
         showTagsButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        showTagsButton.setMaximumSize(new java.awt.Dimension(61, 21));
+        showTagsButton.setMinimumSize(new java.awt.Dimension(61, 21));
+        showTagsButton.setOpaque(false);
+        showTagsButton.setPreferredSize(new java.awt.Dimension(61, 21));
+        showTagsButton.setRolloverEnabled(false);
         showTagsButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         showTagsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -618,7 +626,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 tagsGroup.getChildren().remove(tagInFocus);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.WARNING, "Could not delete image tag in case db", ex); //NON-NLS
-                //TODO pop dialog
             }
 
             scrollPane.setCursor(Cursor.DEFAULT);
@@ -654,7 +661,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         tagsGroup.getChildren().add(imageTag);
                     } catch (TskCoreException | SerializationException | NoCurrentCaseException ex) {
                         LOGGER.log(Level.WARNING, "Could not save new image tag in case db", ex); //NON-NLS
-                        //TODO pop dialog
                     }
                     
                     scrollPane.setCursor(Cursor.DEFAULT);
@@ -689,7 +695,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 ContentViewerTagManager.updateTag(contentViewerTag, newRegion);
             } catch (SerializationException | TskCoreException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.WARNING, "Could not save edit for image tag in case db", ex); //NON-NLS
-                //TODO pop dialog
             }
             scrollPane.setCursor(Cursor.DEFAULT);
         });
