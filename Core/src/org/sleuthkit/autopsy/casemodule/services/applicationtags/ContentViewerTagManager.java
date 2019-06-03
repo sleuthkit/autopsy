@@ -139,7 +139,7 @@ public class ContentViewerTagManager {
     public static <T> ContentViewerTag<T> getTag(ContentTag contentTag, Class<T> clazz) throws TskCoreException, NoCurrentCaseException {
         try {
             String selectTemplateInstance = String.format(SELECT_TAG_DATA, contentTag.getId());
-            final ArrayList<ContentViewerTag> result = new ArrayList<>();
+            final ArrayList<ContentViewerTag<T>> result = new ArrayList<>();
             Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager()
                     .select(selectTemplateInstance, (ResultSet rs) -> {
                         try {
