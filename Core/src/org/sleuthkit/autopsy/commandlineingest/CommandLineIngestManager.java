@@ -242,8 +242,11 @@ public class CommandLineIngestManager {
                                     System.out.println("Processing 'List All Data Sources' command");
                                     Map<String, String> inputs = command.getInputs();
 
-                                    String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                    openCase(caseDirPath);
+                                    // open the case, if it hasn't been already opened by previous command
+                                    if (caseForJob == null) {
+                                        String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                        openCase(caseDirPath);
+                                    }
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
                                     OutputGenerator.listAllDataSources(caseForJob, outputDirPath);
