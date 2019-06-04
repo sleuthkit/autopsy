@@ -190,11 +190,11 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         return null;
     }
 
-    void refresh(content datasource, IngestJobInfo.IngestJobStatusType newStatus) {
+    void refresh(long dataSourceId, IngestJobInfo.IngestJobStatusType newStatus) {
         Node[] selectedNodes = explorerManager.getSelectedNodes();
         //attempt to update the status of any datasources that had status which was STARTED
         for (DataSourceSummary summary : dataSourceSummaryList) {
-            if (summary.getDataSource().equals(datasource)) {
+            if (summary.getDataSource().getId() == dataSourceId) {
                 summary.updateStatusFromDatabase();
             }
         }
