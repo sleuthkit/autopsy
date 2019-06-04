@@ -28,10 +28,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
@@ -56,9 +59,26 @@ public final class GoogleTranslator implements TextTranslator {
         settingsPanel = new GoogleTranslatorSettingsPanel(settings.getCredentialPath(), settings.getTargetLanguageCode());
         loadTranslator();
     }
-
+    
+    private static boolean googleIsReachable() {
+        String host = "www.google.com";
+        InetAddress address;
+        try {
+            address = InetAddress.getByName(host);
+            return address.isReachable(1500);
+        }catch (UnknownHostException ex) {
+            return false;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+    
     @Override
     public String translate(String string) throws TranslationException {
+        if (!googleIsReachable()) {
+            throw new TranslationException("Failure translating using GoogleTranslator: Cannot connect to Google");
+        }
+        
         if (googleTranslate != null) {
             try {
                 // Translates some text into English, without specifying the source language.
@@ -66,10 +86,10 @@ public final class GoogleTranslator implements TextTranslator {
                 // HTML files were producing lots of white space at the end
                 String substring = string.trim();
 
-                // WE can't currently set parameters, so we are using the default behavior of
-                // asuming the input is HTML. We need to replace newlines with <br> for Google to preserve them
+                // We can't currently set parameters, so we are using the default behavior of 
+                // assuming the input is HTML. We need to replace newlines with <br> for Google to preserve them
                 substring = substring.replaceAll("(\r\n|\n)", "<br />");
-
+                
                 // The API complains if the "Payload" is over 204800 bytes. I'm assuming that 
                 // deals with the full request.  At some point, we get different errors about too
                 // much text.  Officially, Google says they will googleTranslate only 5k chars,
@@ -81,9 +101,13 @@ public final class GoogleTranslator implements TextTranslator {
                 Translation translation
                         = googleTranslate.translate(substring);
                 String translatedString = translation.getTranslatedText();
-
+                
                 // put back the newlines
                 translatedString = translatedString.replaceAll("<br />", "\n");
+                
+                // With our current settings, Google Translate outputs HTML
+                // so we need to undo the escape characters.
+                translatedString = EscapeUtil.unEscapeHtml(translatedString);
                 return translatedString;
             } catch (Throwable ex) {  
                 //Catching throwables because some of this Google Translate code throws throwables
@@ -93,7 +117,7 @@ public final class GoogleTranslator implements TextTranslator {
             throw new TranslationException("Google Translator has not been configured, credentials need to be specified");
         }
     }
-
+    
     @Messages({"GoogleTranslator.name.text=Google Translate"})
     @Override
     public String getName() {
