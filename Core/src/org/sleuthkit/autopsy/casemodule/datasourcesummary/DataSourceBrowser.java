@@ -195,7 +195,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         //attempt to update the status of any datasources that had status which was STARTED
         for (DataSourceSummary summary : dataSourceSummaryList) {
             if (summary.getDataSource().getId() == dataSourceId) {
-                summary.updateStatusFromDatabase();
+                summary.setIngestStatus(newStatus);
             }
         }
         SwingUtilities.invokeLater(() -> {

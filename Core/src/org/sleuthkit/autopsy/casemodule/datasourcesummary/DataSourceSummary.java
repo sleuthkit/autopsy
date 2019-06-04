@@ -53,14 +53,14 @@ class DataSourceSummary {
      */
     DataSourceSummary(DataSource dSource, String typeValue, Long numberOfFiles, Long numberOfResults, Long numberOfTags) {
         dataSource = dSource;
-        updateStatusFromDatabase();
+        getStatusFromDatabase();
         type = typeValue == null ? "" : typeValue;
         filesCount = numberOfFiles == null ? 0 : numberOfFiles;
         resultsCount = numberOfResults == null ? 0 : numberOfResults;
         tagsCount = numberOfTags == null ? 0 : numberOfTags;
     }
 
-    final void updateStatusFromDatabase() {
+    private void getStatusFromDatabase() {
         try {
             IngestJobQueryCallback callback = new IngestJobQueryCallback();
             Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select("status_id FROM ingest_jobs WHERE obj_id=" + dataSource.getId(), callback);
@@ -80,6 +80,10 @@ class DataSourceSummary {
         return dataSource;
     }
    
+    void setIngestStatus(IngestJobStatusType ingestStatus){
+        status = ingestStatus;
+    }
+    
     /**
      * Get the type of this DataSource
      *
