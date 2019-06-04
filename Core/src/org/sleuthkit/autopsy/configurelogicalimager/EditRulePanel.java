@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import java.awt.Color;
 import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 
 /**
  * Edit rule panel
@@ -62,5 +65,18 @@ public class EditRulePanel extends JPanel {
             ruleMap = editNonFullPathsRulePanel.toRule();
        }
         return ruleMap;
+    }
+    
+    static void setTextFieldPrompts(JTextComponent textField, String text) {
+        /**
+         * Add text prompt to the text field.
+         */
+        TextPrompt textPrompt = new TextPrompt(text, textField);
+        
+        /**
+         * Sets the foreground color and transparency of the text prompt.
+         */
+        textPrompt.setForeground(Color.LIGHT_GRAY);
+        textPrompt.changeAlpha(0.9f); // Mostly opaque
     }
 }

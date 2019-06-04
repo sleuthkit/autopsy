@@ -39,17 +39,12 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     private JButton okButton;
     private JButton cancelButton;
     List<String> newFullPaths = new ArrayList<>();
-    private JTextArea fullPathsTextArea;
+    private final JTextArea fullPathsTextArea;
 
     /**
-     * Creates new form EditRulePanel
+     * Creates new form EditFullPathsRulePanel
      */
-    public EditFullPathsRulePanel(JButton okButton, JButton cancelButton) {
-        initComponents();
-        this.setButtons(okButton, cancelButton);
-    }
-
-    EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
+    public EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
         initComponents();
         this.setRule(ruleName, rule);
         this.setButtons(okButton, cancelButton);
@@ -57,7 +52,11 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         fullPathsTextArea = new JTextArea();
         initTextArea(fullPathsScrollPane, fullPathsTextArea);
         setTextArea(fullPathsTextArea, rule.getFullPaths());
+        
+        EditRulePanel.setTextFieldPrompts(fullPathsTextArea, "<html>Example:<br>/Program Files/Common Files/system/wab32.dll<br>/Windows/System32/1033/VsGraphicsResources.dll</html>");
         ruleNameTextField.requestFocus();
+        validate();
+        repaint();        
     }
 
     private void initTextArea(JScrollPane pane, JTextArea textArea) {

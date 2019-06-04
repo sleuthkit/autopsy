@@ -71,8 +71,14 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         minSizeTextField.setText(rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString());
         maxSizeTextField.setText(rule.getMaxFileSize() == null ? "" : rule.getMaxFileSize().toString());
         ruleNameTextField.requestFocus();
+        
+        EditRulePanel.setTextFieldPrompts(extensionsTextField, "Example: gif,jpg,png");
+        EditRulePanel.setTextFieldPrompts(filenamesTextArea, "<html>Example:<br>filename.txt<br>readme.txt</html>");
+        EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>Example:<br>[USER_FOLDER]/My Documents/Downloads<br>/Program Files/Common Files</html>");
+        validate();
+        repaint();
     }
-
+    
     private void initTextArea(JScrollPane pane, JTextArea textArea) {
         textArea.setColumns(20);
         textArea.setRows(5);

@@ -54,7 +54,8 @@ public class LogicalImagerRule {
     @SerializedName("date-range")    
     @Expose(serialize = true) 
     private Map<String, Integer> dateRange = new HashMap<>();
-        
+    
+    // The following fields should not be serialized, internal use only
     @Expose(serialize = false) 
     private Integer minFileSize;
     @Expose(serialize = false) 
