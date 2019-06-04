@@ -67,8 +67,11 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     static final ExecutorService backgroundTasksPool;
     static final Integer MAX_POOL_SIZE = 10;
     
+    /**
+     * Default no description string
+     */
     @NbBundle.Messages("AbstractContentNode.nodescription=no description")
-    private static final String NO_DESCR = Bundle.AbstractContentNode_nodescription();
+    protected static final String NO_DESCR = Bundle.AbstractContentNode_nodescription();
     
     
      /**
@@ -315,74 +318,42 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Reads and returns a list of all tags associated with this content node.
      * 
-     * This default implementation returns an empty list.  
-     * The derived classes should override with an implementation specific 
-     * to the type of node.
-     * 
      * @return list of tags associated with the node.
      */ 
-    protected List<Tag> getAllTagsFromDatabase() {
-        return new ArrayList<>();
-    }
+    abstract protected List<Tag> getAllTagsFromDatabase();
+    
      /**
      * Returns correlation attribute instance for the underlying content of the node.
      * 
-     * This default implementation returns null.  
-     * The derived classes should override with an implementation specific 
-     * to the type of node.
-     * 
      * @return correlation attribute instance for the underlying content of the node.
-     * 
      */ 
-    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
-        return null;
-    }
+    abstract protected CorrelationAttributeInstance getCorrelationAttributeInstance();
     
     /**
      * Returns Score property for the node.
      * 
-     * This default implementation returns NO_SCORE.  
-     * The derived classes should override with an implementation specific 
-     * to the type of node.
-     * 
      * @param tags list of tags.
      * 
      * @return Score property for the underlying content of the node.
-     * 
      */ 
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-      
-        return Pair.of(DataResultViewerTable.Score.NO_SCORE, NO_DESCR);
-    }
+    abstract protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags);
+    
     /**
      * Returns comment property for the node.
-     * 
-     * This default implementation returns NO_COMMENT.  
-     * The derived classes should override with an implementation specific 
-     * to the type of node.
      * 
      * @param tags list of tags
      * @param attribute correlation attribute instance
      * 
      * @return Comment property for the underlying content of the node.
-     * 
      */ 
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
-        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-    }
+    abstract protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute);
+    
     /**
      * Returns occurrences/count property for the node.
-     * 
-     * This default implementation returns -1.  
-     * The derived classes should override with an implementation specific 
-     * to the type of node.
      * 
      * @param attribute correlation attribute instance
      * 
      * @return count property for the underlying content of the node.
-     * 
      */  
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute) {
-        return Pair.of(-1L, NO_DESCR);
-    }
+    abstract protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute);
 }
