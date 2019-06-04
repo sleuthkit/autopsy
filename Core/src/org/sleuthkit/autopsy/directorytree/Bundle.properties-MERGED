@@ -1,3 +1,8 @@
+CSVWriter.done.notifyMsg.error=Error exporting to CSV file
+# {0} - Output file
+CSVWriter.done.notifyMsg.success=Wrote to {0}
+CSVWriter.progress.cancelling=Cancelling
+CSVWriter.progress.extracting=Exporting to CSV file
 CTL_DirectoryTreeTopComponent=Directory Tree
 DataResultFilterNode.viewSourceArtifact.text=View Source Result
 # {0} - dataSourceCount
@@ -5,6 +10,10 @@ DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contai
 DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?
 DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.
 DirectoryTreeTopComponent.resultsView.title=Listing
+# {0} - Output file
+ExportCSV.actionPerformed.fileExists=File {0} already exists
+ExportCSV.actionPerformed.noCurrentCase=No open case available
+ExportCSV.title.text=Export to CSV
 ExternalViewerAction.actionPerformed.failure.exe.message=The file is an executable and will not be opened.
 ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.
 ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.
