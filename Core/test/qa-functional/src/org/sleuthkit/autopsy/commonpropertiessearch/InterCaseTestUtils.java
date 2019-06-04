@@ -46,21 +46,13 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import junit.framework.Assert;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeCountSearchResults;
-import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValue;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
@@ -152,8 +144,6 @@ class InterCaseTestUtils {
     private final IngestJobSettings hashAndNoFileType;
     private final IngestJobSettings kitchenShink;
 
-    private final DataSourceLoader dataSourceLoader;
-
     CorrelationAttributeInstance.Type FILE_TYPE;
     CorrelationAttributeInstance.Type DOMAIN_TYPE;
     CorrelationAttributeInstance.Type USB_ID_TYPE;
@@ -229,8 +219,6 @@ class InterCaseTestUtils {
 
         this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
 
-        this.dataSourceLoader = new DataSourceLoader();
-
         try {
             Collection<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
 
@@ -266,10 +254,10 @@ class InterCaseTestUtils {
             }
         }
     }
-
+    
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
-        return this.dataSourceLoader.getDataSourceMap();
-    }
+        return DataSourceLoader.getAllDataSources();
+    }    
 
     Map<String, Integer> getCaseMap() throws EamDbException {
 

@@ -1,0 +1,31 @@
+# {0} - startByteD
+# {1} - endByteD
+# {2} - lengthD
+# {3} - startByteH
+# {4} - endByteH
+# {5} - lengthH
+HexView.statusTemplate.nonZeroLength=Selection: {0} to {1} (len: {2}) [{3} to {4} (len: {5})
+# {0} - startByteDec
+# {1} - startByteHex
+HexView.statusTemplate.zeroLength=Position: {0} [{1}])
+RegeditExeValueFormatter.valueNotSet.text=(value not set)
+RejTreeKeyNode.parseFailed.string=PARSE FAILED.
+RejTreeKeyView.columns.name=Name
+RejTreeKeyView.columns.type=Type
+RejTreeKeyView.columns.value=Value
+RejTreeKeyView.failedToParse.keyName=FAILED TO PARSE KEY NAME
+RejTreeKeyView.metadataBorder.title=Metadata
+RejTreeKeyView.template.name=Name:
+RejTreeKeyView.template.numberOfSubkeys=Number of subkeys:
+RejTreeKeyView.template.numberOfValues=Number of values:
+RejTreeKeyView.valuesBorder.title=Values
+RejTreeValueNode.defaultValueName.text=(Default)
+RejTreeValueNode.failureValueName.text=PARSE FAILED
+RejTreeValueView.failedToDecode.valueName=FAILED TO DECODE VALUE NAME
+RejTreeValueView.failedToDecode.valueType=FAILED TO PARSE VALUE TYPE
+RejTreeValueView.failedToParse.value=FAILED TO PARSE VALUE VALUE
+RejTreeValueView.metadataBorder.title=Metadata
+RejTreeValueView.template.name=Name:
+RejTreeValueView.template.type=Type:
+RejTreeValueView.valueBorder.title=Value
+RejTreeView.failureValueName.text=PARSE FAILED
