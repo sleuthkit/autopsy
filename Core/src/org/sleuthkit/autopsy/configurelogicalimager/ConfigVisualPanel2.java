@@ -644,6 +644,8 @@ public final class ConfigVisualPanel2 extends JPanel {
         if (rulesTableModel.getRowCount() > 0) {
             rulesTable.setRowSelectionInterval(selectThisRow, selectThisRow);
             rulesTableSelect();
+        } else {
+            updateRuleSetButtons(false);
         }
     }
     
@@ -657,6 +659,9 @@ public final class ConfigVisualPanel2 extends JPanel {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
             String description = (String) rulesTable.getModel().getValueAt(index, 1);
             updateRuleDetails(ruleName, description, config);
+            updateRuleSetButtons(true);
+        } else {
+            updateRuleSetButtons(false);            
         }
     }
 
@@ -753,6 +758,12 @@ public final class ConfigVisualPanel2 extends JPanel {
     private void appendRow(ImmutablePair<String, LogicalImagerRule> ruleMap) {
         config.getRuleSet().put(ruleMap.getKey(), ruleMap.getValue());
         updatePanel(configFilename, config, ruleMap.getKey());
+    }
+
+    private void updateRuleSetButtons(boolean isRowSelected) {
+        newRuleButton.setEnabled(true);
+        editRuleButton.setEnabled(isRowSelected);
+        deleteRuleButton.setEnabled(isRowSelected);
     }
 
     private class RulesTableModel extends AbstractTableModel {
