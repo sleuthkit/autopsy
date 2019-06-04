@@ -246,14 +246,12 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     public ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
         List<String> fullPaths = validateFullPaths(fullPathsTextArea);
         String ruleName = validRuleName(ruleNameTextField.getText());
-
-        LogicalImagerRule rule;
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
         builder.shouldAlert(shouldAlertCheckBox.isSelected())
                 .shouldSave(shouldSaveCheckBox.isSelected())
                 .description(descriptionTextField.getText())
                 .fullPaths(fullPaths);
-        rule = builder.build();
+        LogicalImagerRule rule = builder.build();
         return new ImmutablePair<>(ruleName, rule);
     }
 

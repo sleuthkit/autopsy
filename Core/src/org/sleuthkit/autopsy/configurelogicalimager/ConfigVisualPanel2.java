@@ -34,7 +34,6 @@ import org.openide.util.NbBundle;
  */
 public final class ConfigVisualPanel2 extends JPanel {
 
-    private static final String ENCRPYTION_PROGRAMS_RULE_NAME = "Encrpytion Programs";
     private static final List<String> EMPTY_LIST = new ArrayList<>();
     private String configFilename;
     private LogicalImagerConfig config = null;
@@ -589,13 +588,13 @@ public final class ConfigVisualPanel2 extends JPanel {
     private void toggleEncryptionProgramsRule(boolean flagEncryptionPrograms) {
         if (flagEncryptionPrograms) {
             // add the special rule
-            ImmutablePair<String, LogicalImagerRule> ruleMap = createEncrpytionProgramsRule();
+            ImmutablePair<String, LogicalImagerRule> ruleMap = createEncryptionProgramsRule();
             appendRow(ruleMap);            
         } else {
             // remove it
-            int index = ((RulesTableModel) rulesTable.getModel()).findRow(ENCRPYTION_PROGRAMS_RULE_NAME);
+            int index = ((RulesTableModel) rulesTable.getModel()).findRow(EncryptionProgramsRule.getName());
             if (index != -1) {
-                config.getRuleSet().remove(ENCRPYTION_PROGRAMS_RULE_NAME);
+                config.getRuleSet().remove(EncryptionProgramsRule.getName());
                 updatePanel(configFilename, config);
                 if (rulesTable.getRowCount() > 0) {
                     rulesTable.setRowSelectionInterval(0, 0);
@@ -605,19 +604,17 @@ public final class ConfigVisualPanel2 extends JPanel {
         }
     }
     
-    private ImmutablePair<String, LogicalImagerRule> createEncrpytionProgramsRule() {
-        String description = "Find encrpytion programs";
-        List<String> filenames = new ArrayList<>();
-        filenames.add("truecrypt.exe");
-        
+    /*
+     * Create an encryption programs rule
+     */
+    private ImmutablePair<String, LogicalImagerRule> createEncryptionProgramsRule() {
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
-        builder.description(description)
+        builder.description(EncryptionProgramsRule.getDescription())
                 .shouldAlert(true)
                 .shouldSave(true)
-                .description(description)
-                .filenames(filenames);
+                .filenames(EncryptionProgramsRule.getFilenames());
         LogicalImagerRule rule = builder.build();
-        return new ImmutablePair<>(ENCRPYTION_PROGRAMS_RULE_NAME, rule);
+        return new ImmutablePair<>(EncryptionProgramsRule.getName(), rule);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -662,7 +659,7 @@ public final class ConfigVisualPanel2 extends JPanel {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
         Map<String, LogicalImagerRule> ruleSet = config.getRuleSet();
-        flagEncryptionProgramsCheckBox.setSelected(ruleSet.get(ENCRPYTION_PROGRAMS_RULE_NAME) != null);
+        flagEncryptionProgramsCheckBox.setSelected(ruleSet.get(EncryptionProgramsRule.getName()) != null);
         RulesTableModel rulesTableModel = new RulesTableModel();
         int row = 0;
         int selectThisRow = 0;

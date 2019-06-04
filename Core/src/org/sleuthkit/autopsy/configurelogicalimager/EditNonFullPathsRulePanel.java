@@ -375,17 +375,14 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
         String ruleName = validRuleName(ruleNameTextField.getText());
-        String description = descriptionTextField.getText();
         List<String> extensions = validateExtensions(extensionsTextField);
         List<String> filenames = validateTextList(filenamesTextArea, "file-names");
         List<String> folderNames = validateTextList(folderNamesTextArea, "folder-names");
         
-        LogicalImagerRule rule;
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
-        builder.description(description)
+        builder.description(descriptionTextField.getText())
                 .shouldAlert(shouldAlertCheckBox.isSelected())
                 .shouldSave(shouldSaveCheckBox.isSelected())
-                .description(descriptionTextField.getText())
                 .extensions(extensions)
                 .filenames(filenames)
                 .paths(folderNames);
@@ -440,7 +437,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             builder.maxFileSize(maxFileSize);
         }
         
-        rule = builder.build();
+        LogicalImagerRule rule = builder.build();
         return new ImmutablePair<>(ruleName, rule);
     }
 
