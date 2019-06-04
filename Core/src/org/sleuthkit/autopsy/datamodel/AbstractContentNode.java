@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
