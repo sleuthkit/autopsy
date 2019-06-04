@@ -45,7 +45,7 @@ class CommandLineCommand {
         CASE_FOLDER_PATH,
         DATA_SOURCE_PATH,
         DATA_SOURCE_ID,
-        INGEST_CONTEXT_NAME;
+        INGEST_PROFILE_NAME;
     }
     
     private final CommandType type;

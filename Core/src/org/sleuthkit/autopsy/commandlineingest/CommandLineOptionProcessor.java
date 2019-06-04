@@ -47,7 +47,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
     private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
-    private final Option configFilePathOption = Option.withoutArgument('p', "configFilePath");
+    private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
 
     private boolean runFromCommandLine = false;
@@ -65,7 +65,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(dataSourceObjectIdOption);
         set.add(caseDirOption);
         set.add(runIngestCommandOption);
-        set.add(configFilePathOption);
+        set.add(ingestProfileOption);
         set.add(listAllDataSourcesCommandOption);
         return set;
     }
@@ -196,27 +196,21 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
         }
                 
-        String configFilePath = "";
-        if (values.containsKey(configFilePathOption)) {
+        String ingestProfile = "";
+        if (values.containsKey(ingestProfileOption)) {
 
-            argDirs = values.get(configFilePathOption);
+            argDirs = values.get(ingestProfileOption);
             if (argDirs.length < 1) {
-                logger.log(Level.SEVERE, "Missing argument 'configFilePath'");
-                System.err.println("Missing argument 'configFilePath'");
+                logger.log(Level.SEVERE, "Missing argument 'ingestProfile'");
+                System.err.println("Missing argument 'ingestProfile'");
                 return;
             }
-            configFilePath = argDirs[0];
+            ingestProfile = argDirs[0];
 
             // verify inputs
-            if (configFilePath == null || configFilePath.isEmpty()) {
-                logger.log(Level.SEVERE, "Missing argument 'configFilePath'");
-                System.err.println("Missing argument 'configFilePath'");
-                return;
-            }
-
-            if (!(new File(configFilePath).exists())) {
-                logger.log(Level.SEVERE, "Configuration file {0} doesn''t exist", configFilePath);
-                System.err.println("Configuration file " + configFilePath + " doesn't exist");
+            if (ingestProfile == null || ingestProfile.isEmpty()) {
+                logger.log(Level.SEVERE, "Missing argument 'ingestProfile'");
+                System.err.println("Missing argument 'ingestProfile'");
                 return;
             }
         }        
@@ -299,7 +293,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);
-            newCommand.addInputValue(CommandLineCommand.InputType.INGEST_CONTEXT_NAME.name(), configFilePath);
+            newCommand.addInputValue(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name(), ingestProfile);
             commands.add(newCommand);
             runFromCommandLine = true;
         }
