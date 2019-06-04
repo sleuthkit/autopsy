@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 class DataSourceSummary {
-
+    
     private static final Logger logger = Logger.getLogger(DataSourceSummary.class.getName());
     private static final String INGEST_JOB_STATUS_QUERY = "status_id FROM ingest_jobs WHERE obj_id=";
     private final DataSource dataSource;
@@ -73,7 +73,7 @@ class DataSourceSummary {
             Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(INGEST_JOB_STATUS_QUERY + dataSource.getId(), callback);
             status = callback.getStatus();
         } catch (NoCurrentCaseException | TskCoreException ex) {
-
+            logger.log(Level.WARNING, "Error getting status for data source from case database", ex);
         }
     }
 
@@ -147,9 +147,9 @@ class DataSourceSummary {
      * this data source
      */
     class IngestJobQueryCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
-
+        
         private IngestJobStatusType jobStatus = null;
-
+        
         @Override
         public void process(ResultSet rs) {
             try {
@@ -175,6 +175,6 @@ class DataSourceSummary {
         IngestJobStatusType getStatus() {
             return jobStatus;
         }
-
+        
     }
 }

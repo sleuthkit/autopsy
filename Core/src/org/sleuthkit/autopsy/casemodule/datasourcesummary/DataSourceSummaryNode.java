@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.Action;
