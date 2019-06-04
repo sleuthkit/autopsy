@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
@@ -71,7 +73,12 @@ public class EditRulePanel extends JPanel {
         /**
          * Add text prompt to the text field.
          */
-        TextPrompt textPrompt = new TextPrompt(text, textField);
+        TextPrompt textPrompt;
+        if (textField instanceof JTextArea) {
+            textPrompt = new TextPrompt(text, textField, BorderLayout.NORTH);
+        } else {
+            textPrompt = new TextPrompt(text, textField);            
+        }
         
         /**
          * Sets the foreground color and transparency of the text prompt.
