@@ -23,7 +23,6 @@ import java.beans.PropertyChangeEvent;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.logging.Logger;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
@@ -43,7 +42,6 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     private final DataSourceSummaryDetailsPanel detailsPanel;
     private final DataSourceBrowser dataSourcesPanel;
     private final IngestJobInfoPanel ingestHistoryPanel;
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
 
     /**
      * Creates new form DataSourceSummaryDialog for displaying a summary of the
@@ -82,10 +80,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             if (evt instanceof DataSourceAnalysisCompletedEvent) {
                 DataSourceAnalysisCompletedEvent dsEvent = (DataSourceAnalysisCompletedEvent) evt;
                 if (dsEvent.getResult() == Reason.ANALYSIS_COMPLETED) {
-                    System.out.println("DS JOB ID: " + dsEvent.getDataSourceIngestJobId());
-                    System.out.println("JOB ID: " + dsEvent.getIngestJobId());
                     dataSourcesPanel.refresh(dsEvent.getDataSource().getId(), IngestJobInfo.IngestJobStatusType.COMPLETED);
-
                 } else if (dsEvent.getResult() == Reason.ANALYSIS_CANCELLED) {
                     dataSourcesPanel.refresh(dsEvent.getDataSource().getId(), null);
                 }

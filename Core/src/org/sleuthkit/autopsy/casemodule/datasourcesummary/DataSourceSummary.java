@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
@@ -33,6 +35,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class DataSourceSummary {
 
+    private static final Logger logger = Logger.getLogger(DataSourceSummary.class.getName());
+    private static final String INGEST_JOB_STATUS_QUERY = "status_id FROM ingest_jobs WHERE obj_id=";
     private final DataSource dataSource;
     private IngestJobStatusType status = null;
     private final String type;
@@ -60,17 +64,19 @@ class DataSourceSummary {
         tagsCount = numberOfTags == null ? 0 : numberOfTags;
     }
 
+    /**
+     * Get the status of the ingest job from the case database
+     */
     private void getStatusFromDatabase() {
         try {
             IngestJobQueryCallback callback = new IngestJobQueryCallback();
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select("status_id FROM ingest_jobs WHERE obj_id=" + dataSource.getId(), callback);
+            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(INGEST_JOB_STATUS_QUERY + dataSource.getId(), callback);
             status = callback.getStatus();
-            System.out.println("STATUS IN DB: " + status.getDisplayName());
         } catch (NoCurrentCaseException | TskCoreException ex) {
 
         }
     }
-  
+
     /**
      * Get the DataSource
      *
@@ -79,11 +85,17 @@ class DataSourceSummary {
     DataSource getDataSource() {
         return dataSource;
     }
-   
-    void setIngestStatus(IngestJobStatusType ingestStatus){
+
+    /**
+     * Manually set the ingest job status
+     *
+     * @param ingestStatus the status which the ingest job should have
+     *                     currently, null to display empty string
+     */
+    void setIngestStatus(IngestJobStatusType ingestStatus) {
         status = ingestStatus;
     }
-    
+
     /**
      * Get the type of this DataSource
      *
@@ -111,6 +123,12 @@ class DataSourceSummary {
         return resultsCount;
     }
 
+    /**
+     * Get the IngestJobStatusType associated with this data source.
+     *
+     * @return the IngestJobStatusType associated with this data source. Can be
+     *         null if the IngestJobStatusType is not STARTED or COMPLETED.
+     */
     IngestJobStatusType getIngestStatus() {
         return status;
     }
@@ -124,28 +142,37 @@ class DataSourceSummary {
         return tagsCount;
     }
 
+    /**
+     * Callback to parse result set, getting the status to be associated with
+     * this data source
+     */
     class IngestJobQueryCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
         private IngestJobStatusType jobStatus = null;
-        private Long ingestJobId = null;
 
         @Override
         public void process(ResultSet rs) {
             try {
                 while (rs.next()) {
                     IngestJobStatusType currentStatus = IngestJobStatusType.fromID(rs.getInt("status_id"));
-                    if (currentStatus == IngestJobStatusType.COMPLETED) {                       
+                    if (currentStatus == IngestJobStatusType.COMPLETED) {
                         jobStatus = currentStatus;
-                    } else if (currentStatus == IngestJobStatusType.STARTED) { 
+                    } else if (currentStatus == IngestJobStatusType.STARTED) {
                         jobStatus = currentStatus;
                         return;
                     }
                 }
             } catch (SQLException ex) {
-                System.out.println("EEEP");
+                logger.log(Level.WARNING, "Error getting status for ingest job", ex);
             }
         }
 
+        /**
+         * Get the status which was determined for this callback
+         *
+         * @return the status of the data source which was
+         *         queried for
+         */
         IngestJobStatusType getStatus() {
             return jobStatus;
         }

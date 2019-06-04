@@ -39,8 +39,6 @@ import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryNode.
 import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -61,7 +59,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final Outline outline;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
-    private List<DataSourceSummary> dataSourceSummaryList;
+    private final List<DataSourceSummary> dataSourceSummaryList;
     private final RightAlignedTableCellRenderer rightAlignedRenderer = new RightAlignedTableCellRenderer();
 
     /**
@@ -190,6 +188,13 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         return null;
     }
 
+    /**
+     * Update the DataSourceBrowser to display up to date status information for
+     * the data sources.
+     *
+     * @param dataSourceId the ID of the data source which should be updated
+     * @param newStatus    the new status which the data source should have
+     */
     void refresh(long dataSourceId, IngestJobInfo.IngestJobStatusType newStatus) {
         Node[] selectedNodes = explorerManager.getSelectedNodes();
         //attempt to update the status of any datasources that had status which was STARTED
