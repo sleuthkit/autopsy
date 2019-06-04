@@ -34,6 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
@@ -103,6 +104,10 @@ public final class GoogleTranslator implements TextTranslator {
                 
                 // put back the newlines
                 translatedString = translatedString.replaceAll("<br />", "\n");
+                
+                // With our current settings, Google Translate outputs HTML
+                // so we need to undo the escape characters.
+                translatedString = EscapeUtil.unEscapeHtml(translatedString);
                 return translatedString;
             } catch (Throwable ex) {  
                 //Catching throwables because some of this Google Translate code throws throwables
