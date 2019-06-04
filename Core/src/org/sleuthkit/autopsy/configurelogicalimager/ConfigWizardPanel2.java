@@ -120,6 +120,9 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         fileChooser.setMultiSelectionEnabled(false);
         if (fileChooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
+            if (!path.endsWith(".json")) {
+                path += ".json";
+            }
             return path;
         } else {
             return null;
@@ -130,16 +133,15 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation();
         Gson gson = gsonBuilder.create();
         String toJson = gson.toJson(config);
-        System.out.println(toJson);
         try (FileWriter fileWriter = new FileWriter(configFilename)){
-            gson.toJson(config, fileWriter);
+            fileWriter.write(toJson);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(component, "Failed to save configuration file: " 
                 + configFilename + "\nReason: " + ex.getMessage());
             String newFilename = chooseFile("Save to another configuration file");
             if (newFilename != null) {
-                try {                
-                    gson.toJson(config, new FileWriter(newFilename));
+                try (FileWriter fileWriter = new FileWriter(newFilename)) {                
+                    fileWriter.write(toJson);
                 } catch (IOException ex1) {
                     LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + newFilename, ex1);
                 }

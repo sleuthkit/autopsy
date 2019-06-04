@@ -23,6 +23,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
@@ -386,12 +387,13 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         int minDays;
         if (!isBlank(minDaysTextField.getText())) {
             try {
+                minDaysTextField.commitEdit();
                 minDays = ((Number)minDaysTextField.getValue()).intValue();
                 if (minDays < 0) {
                     throw new IOException("Modified days must be a positive");
                 }
                 builder.minDays(minDays);
-            } catch (NumberFormatException ex) {
+            } catch (NumberFormatException | ParseException ex) {
                 throw new IOException("Modified days must be a number: " + ex.getMessage());
             }
         }
@@ -399,11 +401,12 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         int minFileSize = 0;
         if (!isBlank(minSizeTextField.getText())) {
             try {
+                minSizeTextField.commitEdit();
                 minFileSize = ((Number)minSizeTextField.getValue()).intValue();
                 if (minFileSize < 0) {
                     throw new IOException("Minimum file size must be a positive");
                 }
-            } catch (NumberFormatException ex) {
+            } catch (NumberFormatException | ParseException ex) {
                 throw new IOException("Minimum file size must be a number: " + ex.getMessage());
             }
         }
@@ -411,11 +414,12 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         int maxFileSize = 0;
         if (!isBlank(maxSizeTextField.getText())) {
             try {
+                maxSizeTextField.commitEdit();
                 maxFileSize = ((Number)maxSizeTextField.getValue()).intValue();
                 if (maxFileSize < 0) {
                     throw new IOException("Maximum file size must be a positive");
                 }
-            } catch (NumberFormatException ex) {
+            } catch (NumberFormatException | ParseException ex) {
                 throw new IOException("Maximum file size must be a number: " + ex.getMessage());
             }
         }
