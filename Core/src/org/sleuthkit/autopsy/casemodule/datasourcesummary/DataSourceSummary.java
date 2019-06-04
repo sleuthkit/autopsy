@@ -170,8 +170,7 @@ class DataSourceSummary {
         /**
          * Get the status which was determined for this callback
          *
-         * @return the status of the data source which was
-         *         queried for
+         * @return the status of the data source which was queried for
          */
         IngestJobStatusType getStatus() {
             return jobStatus;

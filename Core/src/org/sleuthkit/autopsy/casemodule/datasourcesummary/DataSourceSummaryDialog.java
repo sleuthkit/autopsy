@@ -76,6 +76,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                 this.repaint();
             }
         });
+        //add listener to refresh jobs with Started status when they complete
         IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
             if (evt instanceof DataSourceAnalysisCompletedEvent) {
                 DataSourceAnalysisCompletedEvent dsEvent = (DataSourceAnalysisCompletedEvent) evt;

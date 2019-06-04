@@ -184,8 +184,7 @@ final class DataSourceSummaryNode extends AbstractNode {
         }
 
         @Override
-        public Action[] getActions(boolean context
-        ) {
+        public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             actions.add(new ViewDataSourceInContextAction());
             return actions.toArray(new Action[actions.size()]);

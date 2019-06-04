@@ -196,13 +196,15 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
      * @param newStatus    the new status which the data source should have
      */
     void refresh(long dataSourceId, IngestJobInfo.IngestJobStatusType newStatus) {
-        Node[] selectedNodes = explorerManager.getSelectedNodes();
+
         //attempt to update the status of any datasources that had status which was STARTED
         for (DataSourceSummary summary : dataSourceSummaryList) {
             if (summary.getDataSource().getId() == dataSourceId) {
                 summary.setIngestStatus(newStatus);
             }
         }
+        //figure out which nodes were previously selected
+        Node[] selectedNodes = explorerManager.getSelectedNodes();
         SwingUtilities.invokeLater(() -> {
             explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
             List<Node> nodesToSelect = new ArrayList<>();
