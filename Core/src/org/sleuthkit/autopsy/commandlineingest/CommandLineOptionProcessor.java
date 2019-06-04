@@ -195,7 +195,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 return;
             }
         }
-                
+
         String ingestProfile = "";
         if (values.containsKey(ingestProfileOption)) {
 
@@ -213,7 +213,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 System.err.println("Missing argument 'ingestProfile'");
                 return;
             }
-        }        
+        }
 
         // Create commands in order in which they should be executed:
         // First create the "CREATE_CASE" command, if present
@@ -289,7 +289,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 runFromCommandLine = false;
                 return;
             }
-            
+
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);

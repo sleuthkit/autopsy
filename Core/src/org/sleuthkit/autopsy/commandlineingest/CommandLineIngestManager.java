@@ -147,10 +147,13 @@ public class CommandLineIngestManager {
                                 try {
                                     LOGGER.log(Level.INFO, "Processing 'Create Case' command");
                                     System.out.println("Processing 'Create Case' command");
-                                    openCase(command);
+                                    Map<String, String> inputs = command.getInputs();
+                                    String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
+                                    String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                    openCase(baseCaseName, rootOutputDirectory);
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
-                                    OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath);
+                                    OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath, baseCaseName);
                                 } catch (CaseActionException ex) {
                                     String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
                                     LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
@@ -298,17 +301,14 @@ public class CommandLineIngestManager {
          * Creates a new case using arguments passed in from command line
          * CREATE_CASE command.
          *
-         * @param command command line CREATE_CASE command
+         * @param baseCaseName Case name
+         * @param rootOutputDirectory Full path to directory in which case
+         * output folder will be created
          * @throws CaseActionException
          */
-        private void openCase(CommandLineCommand command) throws CaseActionException {
+        private void openCase(String baseCaseName, String rootOutputDirectory) throws CaseActionException {
 
-            Map<String, String> inputs = command.getInputs();
-
-            String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
-            String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
             LOGGER.log(Level.INFO, "Opening case {0} in directory {1}", new Object[]{baseCaseName, rootOutputDirectory});
-
             Path caseDirectoryPath = findCaseDirectory(Paths.get(rootOutputDirectory), baseCaseName);
             if (null != caseDirectoryPath) {
                 // found an existing case directory for same case name. the input case name must be unique. Exit.
