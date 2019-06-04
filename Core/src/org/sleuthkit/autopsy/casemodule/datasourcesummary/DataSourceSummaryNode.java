@@ -126,7 +126,7 @@ final class DataSourceSummaryNode extends AbstractNode {
         DataSourceSummaryEntryNode(DataSourceSummary dataSourceSummary) {
             super(Children.LEAF);
             dataSource = dataSourceSummary.getDataSource();
-            status = dataSourceSummary.getIngestStatus() == null ? "" : dataSourceSummary.getIngestStatus().toString();
+            status = dataSourceSummary.getIngestStatus() == null ? "" : dataSourceSummary.getIngestStatus().getDisplayName();
             type = dataSourceSummary.getType();
             filesCount = dataSourceSummary.getFilesCount();
             resultsCount = dataSourceSummary.getResultsCount();

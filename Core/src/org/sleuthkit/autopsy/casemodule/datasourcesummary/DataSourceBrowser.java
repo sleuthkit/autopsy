@@ -190,15 +190,12 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         return null;
     }
 
-    void refresh(long jobId, IngestJobInfo.IngestJobStatusType newStatus) {
+    void refresh(content datasource, IngestJobInfo.IngestJobStatusType newStatus) {
         Node[] selectedNodes = explorerManager.getSelectedNodes();
         //attempt to update the status of any datasources that had status which was STARTED
         for (DataSourceSummary summary : dataSourceSummaryList) {
-            //attempt to update the status of any datasources that had status which was STARTED
-            //the database may not have been updated when this event is received so we need to manually update the UI
-            if (summary.getIngestStatus() == IngestJobInfo.IngestJobStatusType.STARTED && summary.getJobId() == jobId) {
-                System.out.println("UPDATING STATUS");
-                summary.setStatus(newStatus);
+            if (summary.getDataSource().equals(datasource)) {
+                summary.updateStatusFromDatabase();
             }
         }
         SwingUtilities.invokeLater(() -> {
@@ -209,7 +206,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                     //there should only be one selected node as multi-select is disabled
                     for (Node selectedNode : selectedNodes) {
                         if (((DataSourceSummaryEntryNode) node).getDataSource().equals(((DataSourceSummaryEntryNode) selectedNode).getDataSource())) {
-                            System.out.println("NODE TO SELECT ADDED");
                             nodesToSelect.add(node);
                         }
                     }
@@ -221,10 +217,9 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
             } catch (PropertyVetoException ex) {
                 logger.log(Level.WARNING, "Error selecting previously selected nodes", ex);
             }
-            revalidate();
-            repaint();
 
         });
+
     }
 
     /**

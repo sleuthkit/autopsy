@@ -35,7 +35,6 @@ class DataSourceSummary {
 
     private final DataSource dataSource;
     private IngestJobStatusType status = null;
-    private Long jobId = null;
     private final String type;
     private final long filesCount;
     private final long resultsCount;
@@ -54,29 +53,24 @@ class DataSourceSummary {
      */
     DataSourceSummary(DataSource dSource, String typeValue, Long numberOfFiles, Long numberOfResults, Long numberOfTags) {
         dataSource = dSource;
-        getStatusFromDatabase();
+        updateStatusFromDatabase();
         type = typeValue == null ? "" : typeValue;
         filesCount = numberOfFiles == null ? 0 : numberOfFiles;
         resultsCount = numberOfResults == null ? 0 : numberOfResults;
         tagsCount = numberOfTags == null ? 0 : numberOfTags;
     }
 
-    private void getStatusFromDatabase() {
+    final void updateStatusFromDatabase() {
         try {
             IngestJobQueryCallback callback = new IngestJobQueryCallback();
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select("ingest_job_id, status_id FROM ingest_jobs WHERE obj_id=" + dataSource.getId(), callback);
+            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select("status_id FROM ingest_jobs WHERE obj_id=" + dataSource.getId(), callback);
             status = callback.getStatus();
-            jobId = callback.getJobId();
-            System.out.println("NEW STATUS: " + status);
+            System.out.println("STATUS IN DB: " + status.getDisplayName());
         } catch (NoCurrentCaseException | TskCoreException ex) {
 
         }
     }
-
-    void setStatus(IngestJobStatusType newStatus){
-        status = newStatus;
-    }
-    
+  
     /**
      * Get the DataSource
      *
@@ -85,11 +79,7 @@ class DataSourceSummary {
     DataSource getDataSource() {
         return dataSource;
     }
-
-    Long getJobId() {
-        return jobId;
-    }
-    
+   
     /**
      * Get the type of this DataSource
      *
@@ -143,7 +133,6 @@ class DataSourceSummary {
                     if (currentStatus == IngestJobStatusType.COMPLETED) {                       
                         jobStatus = currentStatus;
                     } else if (currentStatus == IngestJobStatusType.STARTED) { 
-                        ingestJobId = rs.getLong("ingest_job_id");
                         jobStatus = currentStatus;
                         return;
                     }
@@ -157,8 +146,5 @@ class DataSourceSummary {
             return jobStatus;
         }
 
-        Long getJobId() {
-            return ingestJobId;
-        }
     }
 }

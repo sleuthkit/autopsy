@@ -28,6 +28,8 @@ import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 
@@ -77,11 +79,16 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             }
         });
         IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
-            if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString())){
-                 dataSourcesPanel.refresh((long)evt.getOldValue(), null);
-            }
-            else if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())) {
-                dataSourcesPanel.refresh((long)evt.getOldValue(), IngestJobInfo.IngestJobStatusType.COMPLETED);
+            if (evt instanceof DataSourceAnalysisCompletedEvent) {
+                DataSourceAnalysisCompletedEvent dsEvent = (DataSourceAnalysisCompletedEvent) evt;
+                if (dsEvent.getResult() == Reason.ANALYSIS_COMPLETED) {
+                    System.out.println("DS JOB ID: " + dsEvent.getDataSourceIngestJobId());
+                    System.out.println("JOB ID: " + dsEvent.getIngestJobId());
+                    dataSourcesPanel.refresh(dsEvent.getDataSource().getId(), IngestJobInfo.IngestJobStatusType.COMPLETED);
+
+                } else if (dsEvent.getResult() == Reason.ANALYSIS_CANCELLED) {
+                    dataSourcesPanel.refresh(dsEvent.getDataSource().getId(), null);
+                }
             }
         });
         this.pack();
