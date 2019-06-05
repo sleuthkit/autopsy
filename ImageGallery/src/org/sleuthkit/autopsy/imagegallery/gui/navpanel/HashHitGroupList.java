@@ -78,7 +78,7 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
         setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png")); //NON-NLS
 
         getBorderPane().setCenter(groupList);
-        sorted = getController().getGroupManager().getAnalyzedGroups()
+        sorted = getController().getGroupManager().getAnalyzedGroupsForCurrentGroupBy()
                 .filtered(group -> group.getHashSetHitsCount() > 0)
                 .sorted(getDefaultComparator());
 

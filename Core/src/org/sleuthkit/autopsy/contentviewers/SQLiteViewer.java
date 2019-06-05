@@ -413,8 +413,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 currentTableHeader = new ArrayList<>();
                 viewReader.read(tableName);
                 Map<String, Object> columnRow = new LinkedHashMap<>();
-                for(int i = 0; i< currentTableHeader.size(); i++){
-                  columnRow.put(currentTableHeader.get(i), "");
+                for (int i = 0; i < currentTableHeader.size(); i++) {
+                    columnRow.put(currentTableHeader.get(i), "");
                 }
                 selectedTableView.setupTable(Collections.singletonList(columnRow));
             }
@@ -616,5 +616,10 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 rowIndex = rowIndex % totalColumnCount;
             }
         };
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        return true;
     }
 }

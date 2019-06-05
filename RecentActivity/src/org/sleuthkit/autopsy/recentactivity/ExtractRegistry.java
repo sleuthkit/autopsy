@@ -385,18 +385,18 @@ class ExtractRegistry extends Extract {
             Element oroot = doc.getDocumentElement();
             NodeList children = oroot.getChildNodes();
             int len = children.getLength();
-            // Add all "usb" dataType nodes to collection of BlackboardArtifacts 
+            // Add all "usb" dataType nodes to collection of BlackboardArtifacts
             // that we will submit in a ModuleDataEvent for additional processing.
             Collection<BlackboardArtifact> usbBBartifacts = new ArrayList<>();
-            // Add all "ssid" dataType nodes to collection of BlackboardArtifacts 
+            // Add all "ssid" dataType nodes to collection of BlackboardArtifacts
             // that we will submit in a ModuleDataEvent for additional processing.
             Collection<BlackboardArtifact> wifiBBartifacts = new ArrayList<>();
             for (int i = 0; i < len; i++) {
-                
+
                 if (context.dataSourceIngestIsCancelled()) {
                     return false;
                 }
-                
+
                 Element tempnode = (Element) children.item(i);
 
                 String dataType = tempnode.getNodeName();
@@ -405,13 +405,15 @@ class ExtractRegistry extends Extract {
                 if (timenodes.getLength() > 0) {
                     Element timenode = (Element) timenodes.item(0);
                     String etime = timenode.getTextContent();
-                    try {
-                        Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
-                        mtime = epochtime;
-                        String Tempdate = mtime.toString();
-                        mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
-                    } catch (ParseException ex) {
-                        logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry."); //NON-NLS
+                    //sometimes etime will be an empty string and therefore can not be parsed into a date
+                    if (etime != null && !etime.isEmpty()) {
+                        try {
+                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                            String Tempdate = mtime.toString();
+                            mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
+                        } catch (ParseException ex) {
+                            logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry.", ex); //NON-NLS
+                        }
                     }
                 }
 
@@ -441,8 +443,14 @@ class ExtractRegistry extends Extract {
                             if (artchild.hasAttributes()) {
                                 Element artnode = (Element) artchild;
 
-                                String value = artnode.getTextContent().trim();
+                                String value = artnode.getTextContent();
+                                if (value != null) {
+                                    value = value.trim();
+                                }
                                 String name = artnode.getAttribute("name"); //NON-NLS
+                                if (name == null) {
+                                    continue;
+                                }
                                 switch (name) {
                                     case "ProductName": // NON-NLS
                                         version = value;
@@ -464,13 +472,14 @@ class ExtractRegistry extends Extract {
                                         regOrg = value;
                                         break;
                                     case "InstallDate": //NON-NLS
-                                        try {
-                                            Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
-                                            installtime = epochtime;
-                                            String Tempdate = installtime.toString();
-                                            installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
-                                        } catch (ParseException e) {
-                                            logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                        if (value != null && !value.isEmpty()) {
+                                            try {
+                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                                String Tempdate = installtime.toString();
+                                                installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
+                                            } catch (ParseException e) {
+                                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                            }
                                         }
                                         break;
                                     default:
@@ -650,9 +659,11 @@ class ExtractRegistry extends Extract {
                                     case "uninstall": //NON-NLS
                                         Long itemMtime = null;
                                         try {
-                                            Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime(); //NON-NLS
-                                            itemMtime = epochtime;
-                                            itemMtime = itemMtime / MS_IN_SEC;
+                                            String mTimeAttr = artnode.getAttribute("mtime");
+                                            if (mTimeAttr != null && !mTimeAttr.isEmpty()) {
+                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(mTimeAttr).getTime(); //NON-NLS
+                                                itemMtime /= MS_IN_SEC;
+                                            }
                                         } catch (ParseException e) {
                                             logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
                                         }
@@ -738,7 +749,7 @@ class ExtractRegistry extends Extract {
                                             } else {
                                                 //add attributes to existing artifact
                                                 BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
-                                                
+
                                                 if (bbattr == null) {
                                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                                                             parentModuleName, username));
@@ -855,7 +866,7 @@ class ExtractRegistry extends Extract {
                 if (line.contains(SECTION_DIVIDER) && previousLine != null) {
                     if (previousLine.contains(userInfoSection)) {
                         readUsers(bufferedReader, userSet);
-                    } 
+                    }
                 }
                 previousLine = line;
                 line = bufferedReader.readLine();
@@ -980,7 +991,7 @@ class ExtractRegistry extends Extract {
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
-        
+
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
         analyzeRegistryFiles();
 

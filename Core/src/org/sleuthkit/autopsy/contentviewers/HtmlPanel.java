@@ -18,8 +18,21 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
+import javafx.scene.web.WebView;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import net.htmlparser.jericho.Attribute;
+import net.htmlparser.jericho.OutputDocument;
+import net.htmlparser.jericho.Source;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -28,29 +41,30 @@ import org.openide.util.NbBundle.Messages;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class HtmlPanel extends javax.swing.JPanel {
 
+    private static final Logger logger = Logger.getLogger(HtmlPanel.class.getName());
     private static final long serialVersionUID = 1L;
-    
+
     private String htmlText;
-    
+
     /**
      * Creates new form HtmlViewerPanel
      */
     HtmlPanel() {
         initComponents();
-        
+
         Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
     }
-    
+
     /**
      * Set the text pane's HTML text and refresh the view to display it.
-     * 
+     *
      * @param htmlText The HTML text to be applied to the text pane.
      */
     void setHtmlText(String htmlText) {
         this.htmlText = htmlText;
         refresh();
     }
-    
+
     /**
      * Clear the HTML in the text pane and disable the show/hide button.
      */
@@ -60,38 +74,76 @@ final class HtmlPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Guarantee the HTML text has 'html' and 'body' tags.
-     * 
-     * @param htmlText The HTML text
-     * 
-     * @return The HTML text with the 'html' and 'body' tags applied.
-     */
-    private String wrapInHtmlBody(String htmlText) {
-        return "<html><body>" + htmlText + "</body></html>";
-    }
-
-    /**
-     * Cleans out input HTML string
+     * Cleans out input HTML string so it will not access resources over the internet
      *
      * @param htmlInString The HTML string to cleanse
      *
      * @return The cleansed HTML String
      */
     private String cleanseHTML(String htmlInString) {
-
-        Document doc = Jsoup.parse(htmlInString);
-
-        // Update all 'img' tags.
-        doc.select("img[src]").forEach(img -> img.attr("src", ""));
-
-        return doc.html();
+        String returnString = "";
+        try {
+            Source source = new Source(new StringReader(htmlInString));
+            OutputDocument document = new OutputDocument(source);
+            //remove background images
+            source.getAllTags().stream().filter((tag) -> (tag.toString().contains("background-image"))).forEachOrdered((tag) -> {
+                document.remove(tag);
+            });
+            //remove images
+            source.getAllElements("img").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove frames
+            source.getAllElements("frame").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove iframes
+            source.getAllElements("iframe").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove pictures
+            source.getAllElements("picture").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove svg
+            source.getAllElements("svg").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove audio
+            source.getAllElements("audio").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove video
+            source.getAllElements("video").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove tracks
+            source.getAllElements("track").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove embeded external elements
+            source.getAllElements("embed").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove linked elements
+            source.getAllElements("link").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove other URI elements such as input boxes
+            List<Attribute> attributesToRemove = source.getURIAttributes();
+            document.remove(attributesToRemove);
+            returnString = document.toString();
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to read html for cleaning out URI elements with Jericho", ex);
+        }
+        return returnString;
     }
-    
+
     /**
      * Refresh the panel to reflect the current show/hide images setting.
      */
     @Messages({
-        "HtmlPanel_showImagesToggleButton_show=Show Images",
+        "HtmlPanel_showImagesToggleButton_show=Download Images",
         "HtmlPanel_showImagesToggleButton_hide=Hide Images",
         "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",
     })
@@ -106,7 +158,7 @@ final class HtmlPanel extends javax.swing.JPanel {
                     this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
                 }
                 showImagesToggleButton.setEnabled(true);
-                htmlbodyTextPane.setCaretPosition(0); 
+                htmlbodyTextPane.setCaretPosition(0);
             } catch(Exception ex) {
                 this.htmlbodyTextPane.setText(wrapInHtmlBody(Bundle.Html_text_display_error()));
             }
@@ -145,7 +197,8 @@ final class HtmlPanel extends javax.swing.JPanel {
             .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 75, Short.MAX_VALUE))
+            .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
