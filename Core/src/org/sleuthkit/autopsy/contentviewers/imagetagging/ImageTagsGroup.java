@@ -92,6 +92,16 @@ public final class ImageTagsGroup extends Group {
     public ImageTag getFocus() {
         return currentFocus;
     }
+    
+    /**
+     * Clears the current focus
+     */
+    public void clearFocus() {
+        if(currentFocus != null) {
+            resetFocus(currentFocus);
+            currentFocus = null;
+        }
+    }
 
     /**
      * Notifies the logical image tag that it is no longer in focus.
