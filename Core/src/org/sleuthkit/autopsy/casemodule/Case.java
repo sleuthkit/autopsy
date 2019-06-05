@@ -79,6 +79,7 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
@@ -700,6 +701,75 @@ public class Case {
             closeCurrentCase();
             deleteCase(metadata);
         }
+    }
+
+    /**
+     * Deletes the selected data source.
+     *
+     * @param dataSourceId id of the data source to delete.
+     * @throws CaseActionException If there is a problem deleting the case. The
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
+     */
+    @Messages({
+        "Case.progressIndicatorTitle_deletingDataSource=Deleting Data Source from the case.",
+        "Case.progressIndicatorStatus_closingCase=Closing Case to Deleting Data Source.",
+        "Case.progressIndicatorStatus_openingCase=Opening Case to Deleting Data Source.",
+        "Case.progressIndicatorStatus_deletingDataSource=Deleting Data Source.",        
+    })
+    public static void deleteDataSourceFromCurrentCase(Long dataSourceId) throws CaseActionException {
+        synchronized (caseActionSerializationLock) {
+            if (null == currentCase) {
+                return;
+            }
+            CaseMetadata newMetadata = null;
+            CaseMetadata metadata = currentCase.getMetadata();
+            String caseDir = metadata.getFilePath().toString();
+            try {
+                newMetadata = new CaseMetadata(Paths.get(caseDir));
+            } catch (CaseMetadataException ex) {
+                logger.log(Level.WARNING, String.format("Error Getting Case Dir %s", caseDir), ex);
+            }
+            ProgressIndicator progressIndicator;
+            if (RuntimeProperties.runningWithGUI()) {
+                progressIndicator = new ModalDialogProgressIndicator(mainFrame, Bundle.Case_progressIndicatorTitle_deletingDataSource());
+            } else {
+                progressIndicator = new LoggingProgressIndicator();
+            }
+            progressIndicator.start(Bundle.Case_progressIndicatorStatus_closingCase());
+            closeCurrentCase();
+            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_openingCase());
+            openAsCurrentCase(new Case(newMetadata), false);
+            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_deletingDataSource());
+            deleteDataSource(dataSourceId, progressIndicator);
+            progressIndicator.start(Bundle.Case_progressIndicatorStatus_closingCase());
+            closeCurrentCase();
+            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_openingCase());
+            openAsCurrentCase(new Case(newMetadata), false);
+            progressIndicator.finish();
+        }
+
+    }
+
+    /**
+     * Delete a data source from the current case.
+     * 
+     * @param dataSourceId id of the data source to delete.
+     * @param progressIndicator 
+     */
+    @Messages({
+        "Case.DeletingDataSourceFromCase=Deleting the Data Source from the case.",
+        "Case.ErrorDeletingDataSource.name.text=Error Deleting Data Source"
+    })
+    private static void deleteDataSource(Long dataSourceId, ProgressIndicator progressIndicator) {
+            progressIndicator.progress(Bundle.Case_DeletingDataSourceFromCase());
+            try {
+                Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceId);
+                eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));    
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error Deleting Data Source %s", dataSourceId), ex);                
+            }
     }
 
     /**
