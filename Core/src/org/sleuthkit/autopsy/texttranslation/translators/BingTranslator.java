@@ -121,8 +121,8 @@ public class BingTranslator implements TextTranslator {
         try {
             String response = postTranslationRequest(toTranslate);
             return parseJSONResponse(response);
-        } catch (Throwable e) {
-            throw new TranslationException(e.getMessage());
+        } catch (IOException | TranslationException ex) {
+            throw new TranslationException("Exception while attempting to translate using BingTranslator", ex);
         }
     }
 
@@ -167,8 +167,7 @@ public class BingTranslator implements TextTranslator {
             JsonObject response0 = responses.get(0).getAsJsonObject();
             JsonArray translations = response0.getAsJsonArray("translations");
             JsonObject translation0 = translations.get(0).getAsJsonObject();
-            String text = translation0.get("text").getAsString();
-            return text;
+            return translation0.get("text").getAsString();
         } catch (IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException e) {
             throw new TranslationException("JSON text does not match Bing Translator scheme: " + e);
         }

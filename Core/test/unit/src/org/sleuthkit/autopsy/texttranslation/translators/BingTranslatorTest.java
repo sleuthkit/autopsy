@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.texttranslation.translators;
 
-import java.io.IOException;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+//import java.io.IOException;
+//import org.junit.After;
+//import org.junit.AfterClass;
+//import org.junit.Before;
+//import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
+//import static org.junit.Assert.*;
 
 /**
  * Tests for the BingTranslator translation service, these tests have been
@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 public class BingTranslatorTest {
 
     @Test
-    public void testTranslate() throws Exception {
+    public void testTranslate() {
 //        BingTranslator translator = new BingTranslator();
 //        String input = "gato";
 //        String expectedTranslation = "cat";
