@@ -106,8 +106,10 @@
                   <Component id="fileSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="minSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="minSizeTextField" alignment="2" min="-2" max="-2" attributes="0"/>
-                  <Component id="maxSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
-                  <Component id="maxSizeTextField" alignment="2" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="2" groupAlignment="2" attributes="0">
+                      <Component id="maxSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
+                      <Component id="maxSizeTextField" alignment="2" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="2" attributes="0">

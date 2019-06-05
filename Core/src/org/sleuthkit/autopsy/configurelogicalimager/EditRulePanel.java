@@ -52,6 +52,10 @@ public class EditRulePanel extends JPanel {
         }
     }
 
+    void setRule(LogicalImagerRule rule) {
+        
+    }
+
     JPanel getPanel() {
         if (editFullPathsRulePanel != null) {
             return editFullPathsRulePanel;
@@ -103,10 +107,10 @@ public class EditRulePanel extends JPanel {
         "EditRulePanel.blankLineException={0} cannot have a blank line",
     })
     static public List<String> validateTextList(JTextArea textArea, String fieldName) throws IOException {
+        List<String> list = new ArrayList<>();
         if (isBlank(textArea.getText())) {
             return null;
         }
-        List<String> list = new ArrayList<>();
         for (String line : textArea.getText().split("\\n")) { // NON-NLS
             line = strip(line);
             if (line.isEmpty()) {
