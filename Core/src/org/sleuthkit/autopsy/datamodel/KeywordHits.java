@@ -24,7 +24,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -153,31 +152,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         List<String> getListNames() {
             synchronized (topLevelMap) {
                 List<String> names = new ArrayList<>(topLevelMap.keySet());
-
-                // sort the list names, but ensure that the special lists
-                // stay at the top. 
-                Collections.sort(names, new Comparator<String>() {
-
-                    @Override
-                    public int compare(String o1, String o2) {  
-                        // ideally, they would not be hard coded, but this module
-                        // doesn't know about Keyword Search NBM
-                        if (o1.startsWith("Single Literal Keyword Search")) {
-                            return -1;
-                        }
-                        else if (o2.startsWith("Single Literal Keyword Search")) {
-                            return 1;
-                        }
-                        else if (o1.startsWith("Single Regular Expression Search")) {
-                            return -1;
-                        }
-                        else if (o2.startsWith("Single Regular Expression Search")) {
-                            return 1;
-                        }
-                        return o1.compareTo(o2);
-                    }
-                });
-                
+                // this causes the "Single ..." terms to be in the middle of the results, 
+                // which is wierd.  Make a custom comparator or do something else to maek them on top
+                //Collections.sort(names);
                 return names;
             }
         }

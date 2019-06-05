@@ -39,10 +39,7 @@
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
 		
         <dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.9.7"/>
-
-        <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
-        <dependency conf="core->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
-        
+         
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>     

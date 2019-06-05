@@ -538,10 +538,6 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
 
     }
 
-    @Override
-    public boolean isSupported(AbstractFile file) {
-        return true;
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton exportButton;
     private javax.swing.JPanel hdrPanel;

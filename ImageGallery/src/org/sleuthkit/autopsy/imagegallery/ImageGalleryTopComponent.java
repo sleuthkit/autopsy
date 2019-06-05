@@ -321,8 +321,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                          * property or the group manager's analyzed groups
                          * property changes.
                          */
-                        controller.regroupDisabledProperty().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
-                        controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
+                        controller.regroupDisabledProperty().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroups()));
+                        controller.getGroupManager().getAnalyzedGroups().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroups()));
 
                         /*
                          * Dispatch a later task to call check for groups. Note
@@ -334,7 +334,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                         // executed before the task to actually open the top component window?
                         // It seems like this might be a sort of a hack and I am wondering 
                         // why this can't be done in openWithSelectedDataSources instead.
-                        Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy());
+                        Platform.runLater(() -> checkForAnalyzedGroups());
                     }
 
                     /*
@@ -467,14 +467,14 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryController.noGroupsDlg.msg6=There are no fully analyzed groups to display:"
         + "  the current Group By setting resulted in no groups, "
         + "or no groups are fully analyzed but ingest is not running."})
-    private void checkForAnalyzedGroupsForCurrentGroupBy() {
+    private void checkForAnalyzedGroups() {
         synchronized (controllerLock) {
             GroupManager groupManager = controller.getGroupManager();
 
             // if there are groups to display, then display them
             // @@@ Need to check timing on this and make sure we have only groups for the selected DS.  Seems like rebuild can cause groups to be created for a DS that is not later selected...
             // RJCTODO: Get Brian's TODO resolved.
-            if (isNotEmpty(groupManager.getAnalyzedGroupsForCurrentGroupBy())) {
+            if (isNotEmpty(groupManager.getAnalyzedGroups())) {
                 clearNotification();
                 return;
             }

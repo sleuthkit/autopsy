@@ -373,6 +373,48 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         }
 
+        // Test getting two notable instances
+        try {
+            List<CorrelationAttributeInstance> attrs = EamDb.getInstance().getArtifactInstancesKnownBad(fileType, notableHashInBothCases);
+            assertTrue("getArtifactInstancesKnownBad returned " + attrs.size() + " values - expected 2", attrs.size() == 2);
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
+        // Test getting notable instances where one instance is notable and the other is known
+        try {
+            List<CorrelationAttributeInstance> attrs = EamDb.getInstance().getArtifactInstancesKnownBad(fileType, notableHashInOneCaseKnownOther);
+            assertTrue("getArtifactInstancesKnownBad returned " + attrs.size() + " values - expected 1", attrs.size() == 1);
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
+        // Test getting notable instances with null type
+        try {
+            EamDb.getInstance().getArtifactInstancesKnownBad(null, notableHashInOneCaseKnownOther);
+            fail("getArtifactInstancesKnownBad failed to throw exception for null type");
+        } catch (CorrelationAttributeNormalizationException ex) {
+            // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            fail("should have got CentralRepoValidationException");
+        }
+
+        // Test getting notable instances with null value
+        try {
+            EamDb.getInstance().getArtifactInstancesKnownBad(fileType, null);
+            fail("should get an exception for null inout");
+        } catch (CorrelationAttributeNormalizationException ex) {
+            //this is expecpted
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
         // Test getting count of two notable instances
         try {
             long count = EamDb.getInstance().getCountArtifactInstancesKnownBad(fileType, notableHashInBothCases);
@@ -931,6 +973,40 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get file type attributes with a null value, EamDbException was thrown instead " + ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
+        }
+
+        // Test getting instances with path that should produce results
+        try {
+            List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByPath(fileType, inAllDataSourcesPath);
+            assertEquals("Unexpected number of fileType instances retrieved when getting file type attributes by path that should be in all 3 data sources", 3, instances.size());
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail("Error EamDbException thrown while getting attributes when getting file type attributes by path" + ex.getMessage());
+        }
+
+        // Test getting instances with path that should not produce results
+        try {
+            List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByPath(fileType, "xyz");
+            assertEquals("Unexpected number of fileType instances retrieved when getting file type attributes by path that should not be in any data sources", 0, instances.size());
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail("Error EamDbException thrown while getting attributes when getting file type attributes by path for path that should not exist" + ex.getMessage());
+        }
+
+        // Test getting instances with null type
+        try {
+            EamDb.getInstance().getArtifactInstancesByPath(null, inAllDataSourcesPath);
+            fail("Error EamDbException was expected to be thrown when getting null type attributes by path");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+
+        // Test getting instances with null path
+        try {
+            EamDb.getInstance().getArtifactInstancesByPath(fileType, null);
+            fail("Error EamDbException was expected to be thrown when getting file type attributes with null path");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
         }
 
         // Test getting instance count with path that should produce results

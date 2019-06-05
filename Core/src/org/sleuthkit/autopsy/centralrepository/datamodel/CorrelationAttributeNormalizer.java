@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,12 @@ final public class CorrelationAttributeNormalizer {
     private static final String SEPERATORS_REGEX = "[\\s-:]";
 
     /**
+     * This is a utility class - no need for constructing or subclassing, etc...
+     */
+    private CorrelationAttributeNormalizer() {
+    }
+
+    /**
      * Normalize the data. Converts text to lower case, and ensures that the
      * data is a valid string of the format expected given the attributeType.
      *
@@ -48,7 +54,7 @@ final public class CorrelationAttributeNormalizer {
             throw new CorrelationAttributeNormalizationException("Attribute type was null.");
         }
         if (data == null) {
-            throw new CorrelationAttributeNormalizationException("Correlation value was null.");
+            throw new CorrelationAttributeNormalizationException("Data was null.");
         }
 
         String trimmedData = data.trim();
@@ -303,12 +309,5 @@ final public class CorrelationAttributeNormalizer {
         } else {
             throw new CorrelationAttributeNormalizationException("Data provided was not a valid Imsi. : " + data);
         }
-    }
-
-    /**
-     * This is a utility class - no need for constructing or subclassing, etc...
-     */
-    private CorrelationAttributeNormalizer() {
-        //Empty constructor
     }
 }

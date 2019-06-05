@@ -70,7 +70,7 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
     }
 
     /**
-     * Are devices previously seen in other cases to be flagged?
+     * Are previously seen devices to be flagged?
      *
      * @return True if flagging; otherwise false.
      */

@@ -1,114 +1,81 @@
 /*! \page interesting_files_identifier_page Interesting Files Identifier Module
 
-\section interesting_files_overview Overview
+What Does It Do
+========
 
-The Interesting Files module allows you to automatically flag files and directories that match a set of rules. This can be useful if you always need to check whether files with a given name or path are in the data source, or if you are always interested in files with a certain type.
+The Interesting Files module allows you to search for files or directories in a data source and generate alerts when they are found.  You configure rules for the files that you want to find. 
 
-This module allows you to make sets of rules that will be run against each file as it is processed. If a file matches any of the rules, you will see an entry for it in the \ref tree_viewer_page. You can share your rules with other users, and import sets made by others into your copy of Autopsy.
+Use this to be notified when certain things are found. There are examples below that generate alerts when VMWare images are found or when iPhone backup files are found.  This module is useful for file types that will frequently have a consistent name and that may not be part of the standard checklist that you look for, or if you simply want to automate your checklist. 
 
-\section interesting_files_terminology Terminology
+Configuration
+=======
 
-<ul>
-<li>A <b>rule</b> is a set of conditions that must be true about a file for it to match the rule. All conditions in the rule must be true. For example, if a rule has conditions "file size > 1 MB" and "file extension = .txt", only files that match both conditions will be considered a match.
-<li>A <b>rule set</b> is a collection of rules. If a file matches any rule in the rule set it will be flagged as a match for this rule set. Rule sets can be enabled and disabled at ingest time.
-</ul>
+Add rules using "Tools", "Options", "Interesting Files".
 
-\section interesting_files_config Configuration
+All rules need to be part of a set. Select "New set" on the left side panel to create a new set. Sets need to have the following defined:
 
-To create and edit your rule sets, go to "Tools", "Options" and then select the "Interesting Files" tab. The area on the left side will show you a list of all the rule sets that are currently available. Selecting a rule set will display its description and information about each of its rules on the right side of the panel.
+- Set Name (required)
+- Set Description (optional)
 
-\image html InterestingFiles/main.png
+Sets can be renamed, edited, copied, and imported and exported from the left side panel.
 
-The buttons on the bottom of the left side of the panel control the rule sets.
+Rules specify what to look for in a data source.  Each rule specifies:
+- Type: If the rule should be applied to only files, only directories, or both files and directories. 
+- Name Pattern: String to match the file name against. Note that you can enter multiple extensions in a comma-separated list.
+- Name Pattern Type: Should the pattern be matched against the full file type or just the extension. 
+- Path Pattern: A substring of the parent path that must be matched. This allows you to restrict generic names to a specific structure (such as an application name). A substring match is performed. 
+- Rule Name: Additional details that are displayed in the UI when that rule is matched. This allows you to determine which rule in the set matched.
 
-<ul>
-<li><b>New Set</b> - Allows you to create a new rule set (rules will be added later). You will see a new window asking for the name of the new rule set, an optional description, and whether known files should be ignored (i.e., if a file is in the NSRL, then it won't show up on the list of matches even if it satisfies the conditions of one of the rules in the set).
-\image html InterestingFiles/new_rule_set.png 
-<li><b>Edit Set</b> - Brings up the same window as "New Set" and allows you to change any of the fields.
-<li><b>Delete Set</b> - Removes the selected rule set
-<li><b>Copy Set</b> - Makes a copy of the selected rule set. It will bring up the same window as "New Set". You must change the rule set name in order to save the copy.
-<li><b>Import Set</b> - Imports a previously exported rule set. Once imported, you will not need the original copy.
-<li><b>Export Set</b> - Exports the selected rule set in a format that can be shared with other Autopsy users.
-</ul>
+\image html interesting_files_configuration.PNG
 
-Selecting a rule set will display its description, whether it ignores known files, and the rules contained in the set. Selecting a rule will display the conditions for that rule in the "Rule Details" section.
 
-The buttons under the list of rules allow you to create new rules and edit or delete existing rules. Selecting "New Rule" will bring up a new window to create the rule.
+VMWare Example
+--------
+This set of rules is to detect VMWare Player or vmdk files.  This would help to make sure you look into the virtual machines for additional evidence. 
 
-\image html InterestingFiles/new_rule.png 
+NOTE: This is not extensive and is simply a minimal example:
 
-The top line allows you to choose whether you want to match only files, only directories, or both. If you select directories or both, some of the condition types will be unavailable since they only apply to files.
 
-Each rule must have at least one condition. To create conditions, check the box to the left of the condition you want to enable. The following is a description of each condition, with some full examples after.
+- Set Name: VMWare
+- Rule 1: 
+ - Type: Files
+ - Full Name: vmplayer.exe
+ - Name: Program EXE
+- Rule 2:
+ - Type: Files
+ - Extension: vmdk
+ - Name: VMDK File
 
-<ul>
-<li><b>Name</b> - Enter either the full file name or one or more extensions, and select whether this is an exact match or a substring/regex match. If substring/regex match is enabled, it will automatically add wildcards to the beginning and end of the text. If you're only matching directories, this will match the directory name. If you're using a comma-separated list of extensions, make sure the regex checkbox is disabled - the two features do not work together. The following table shows some examples of what the different combinations can be used for.
+iPhone Backups Example
+-------------
+This set of rules is to detect a folder for iPhone Backups.  These are typically in a folder such as "%AppData%\Roaming\Apple Computer\MobileSync\Backup" on Windows. Here is a rule that you could use for that.
 
-<table>
-<tr><th>Type</th><th>Substring/Regex</th><th>Text</th><th>Description</th><th>Sample match</th></tr>
-<tr><td>Full Name</td><td>false</td><td>\verbatim test.txt \endverbatim</td><td>Will match files named "test.txt"</td><td>text.txt</tr>
-<tr><td>Full Name</td><td>true</td><td>\verbatim bomb \endverbatim</td><td>Will match files with "bomb" anywhere their name</td><td>Pipe bomb.png</td></tr>
-<tr><td>Full Name</td><td>true</td><td>\verbatim virus.*\.exe \endverbatim</td><td>Will match files with "virus" followed by ".exe" anywhere their name</td><td>bad_virus.exe</td></tr>
-<tr><td>Extension Only</td><td>false</td><td>\verbatim zip \endverbatim</td><td>Will match .zip files</td><td>myArchive.zip</td></tr>
-<tr><td>Extension Only</td><td>false</td><td>\verbatim zip,rar,7z \endverbatim</td><td>Will match .zip, .rar, and .7z files</td><td>anotherArchive.rar</td></tr>
-<tr><td>Extension Only</td><td>true</td><td>\verbatim jp \endverbatim</td><td>Will match .jpg, .jpeg files, and any others with "jp" in the extension</td><td>myImage.jpg</td></tr>
-</table>
+- Set Name: iPhone Backups
+- Rule 1:
+ - Type: Directory
+ - Name: Backup
+ - Path: Apple Computer/MobileSync
 
-<li><b>Path Substring</b> - Enter a folder name that must be part of file's path for it to be a match. If you only want to specify that a word appears somewhere in the path, use the regex option.
-<table>
-<tr><th>Regex</th><th>Text</th><th>Description</th><th>Sample match</th></tr>
-<tr><td>false</td><td>\verbatim Documents \endverbatim</td><td>Match any file that has a folder named "Documents" in its path</td><td>/folder1/Documents/fileA.doc</td></tr>
-<tr><td>true</td><td>\verbatim bomb \endverbatim</td><td>Match any file with "bomb" in the path</td><td>/folder1/bomb making/file2.doc</td></tr>
-<tr><td>true</td><td>\verbatim Users/.*/Downloads \endverbatim</td><td>Match any file with "Users" and "Downloads" in the path</td><td>C:/Users/user1/Downloads/myFile.txt</td></tr>
-</table>
 
-<li><b>MIME Type</b> - Use the pull-down list to select a MIME type. Only a single MIME type can be selected.
+Using the Module
+======
 
-<li><b>File Size</b> - Select whether you want to match files equal to, smaller than, or larger than a given size. 
+When you enable the Interesting Files module, you can choose what rule sets to enable.  To add rules, use the "Advanced" button from the ingest module panel. 
 
-<li><b>Modified Within</b> - Select how recently a file must have been modified to match the rule.
-</ul>
+When files are found, they will be in the Interesting Files area of the tree.  You should see the set and rule names with the match.
 
-Finally you can optionally enter a name for the rule. This will be displayed in the UI for each match.
 
-\subsection interesting_files_examples Examples
-Here are a few examples of rules being created.
+Ingest Settings
+------
 
-This is a rule that matches any file with "bomb" in the name that also has an "image/png" MIME type.
+When running the ingest modules, the user can choose which interesting file rules to enable .
+<br>
+\image html interesting_files_ingest_settings.PNG
 
-\image html InterestingFiles/bomb_png.png 
+Seeing Results
+------
+The results show up in the tree under "Results", "Interesting Items".
 
-This is a rule that matches folders named "Private".
-
-\image html InterestingFiles/private_folder.png
- 
-This rule is looking for archives in the user download directory. It requires "Users" and "Downloads" in the file's path, and an extension of .zip, .rar, or .7z.
- 
-\image html InterestingFiles/download_archive.png
-
-This is a rule that matches files with size at least 50MB that have been modified in the last week.
-
-\image html InterestingFiles/new_large_files.png
-
-\section interesting_files_running Running the Module
-
-At runtime, you can select which rule sets you would like to run on your data source.
-
-\image html InterestingFiles/ingest.png
-
-\section interesting_files_results Viewing Results
-
-Files that match any of the rules in the enabled rule sets will be shown in the Results section of the \ref tree_viewer_page under "Interesting Items" and then the name of the rule set that matched. Note that other modules besides Interesting Files put results in this section of the tree, so there may be more than just what matched your rule sets. Selecting the "Interesting Files" node under one of your rule sets will display all matching files in the \ref result_viewer_page.
-
-\image html InterestingFiles/results.png
-
-You can see which rule matched in the "Category" column. You can export some or all of the files for further analysis. To do this, first use the standard Windows file
-selection methods to highlight the files you want to export in the \ref result_viewer_page :
-<ul>
-<li>Hold down Ctrl and click on each file you want to export
-<li>Hold down Shift to select a range of files
-<li>Click on any file in the Result Viewer and then hit Ctrl+A to select all the files
-</ul>
-Once you have your desired files selected, right click and select “Extract Files” to save copies of them.
+\image html interesting_files_results.PNG
 
 */

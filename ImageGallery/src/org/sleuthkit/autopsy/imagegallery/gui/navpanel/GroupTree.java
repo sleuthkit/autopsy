@@ -84,7 +84,7 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         groupTree.setCellFactory(groupCellFactory::getTreeCell);
         groupTree.setShowRoot(false);
 
-        getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+        getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
             GroupViewState oldState = getController().getViewState();
 
             while (change.next()) {
@@ -99,7 +99,7 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
             });
         });
 
-        getGroupManager().getAnalyzedGroupsForCurrentGroupBy().forEach(this::insertGroup);
+        getGroupManager().getAnalyzedGroups().forEach(this::insertGroup);
 
         Platform.runLater(this::sortGroups);
     }

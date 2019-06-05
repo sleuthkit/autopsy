@@ -72,7 +72,7 @@ public class NextUnseenGroup extends Action {
         groupManager = controller.getGroupManager();
         
         // Get reference to the list of unseen groups, that GroupManager will continue to manage
-        unSeenGroups = groupManager.getUnSeenGroupsForCurrentGroupBy();
+        unSeenGroups = groupManager.getUnSeenGroups();
         unSeenGroups.addListener((Observable observable) -> unSeenGroupListener());
         controller.viewStateProperty().addListener((Observable observable) -> updateButton());
 

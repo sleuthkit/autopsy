@@ -45,9 +45,6 @@ class EmailMessage {
     private long sentDate = 0L;
     private List<Attachment> attachments = new ArrayList<>();
     private long id = -1L;
-    private String messageID = "";
-    private String inReplyToID = "";
-    private List<String> references = null;
 
     boolean hasAttachment() {
         return hasAttachment;
@@ -181,62 +178,6 @@ class EmailMessage {
         if (localPath != null) {
             this.localPath = localPath;
         }
-    }
-    
-    /**
-     * Returns the value of the Message-ID header field of this message or 
-     * empty string if it is not present.
-     * 
-     * @return the identifier of this message.
-     */
-    String getMessageID() {
-        return messageID;
-    }
-    
-    /**
-     * Sets the identifier of this message.
-     * 
-     * @param messageID identifer of this message
-     */
-    void setMessageID(String messageID) {
-        this.messageID = messageID;
-    }
-    
-    /**
-     * Returns the messageID of the parent message or empty String if not present.
-     * 
-     * @return the idenifier of the message parent
-     */
-    String getInReplyToID() {
-        return inReplyToID;
-    }
-    
-    /**
-     * Sets the messageID of the parent message.
-     * 
-     * @param inReplyToID messageID of the parent message.
-     */
-    void setInReplyToID(String inReplyToID) {
-        this.inReplyToID = inReplyToID;
-    }
-    
-    /**
-     * Returns a list of Message-IDs listing the parent, grandparent, 
-     * great-grandparent, and so on, of this message.
-     * 
-     * @return reference list or empty string if non is available.
-     */
-    List<String> getReferences() {
-        return references;
-    }
-    
-    /**
-     * Set the list of reference message-IDs.
-     * 
-     * @param references 
-     */
-    void setReferences(List<String> references) {
-        this.references = references;
     }
 
     /**

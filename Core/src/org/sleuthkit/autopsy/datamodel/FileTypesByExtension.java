@@ -389,7 +389,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param skCase
          * @param o      Observable that will notify when there could be new
          *               data to display
-         * @param nodeName
          */
         private FileExtensionNodeChildren(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
             super();

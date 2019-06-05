@@ -12,5 +12,5 @@ CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central
 CentralRepoIngestModuleFactory.ingestmodule.name=Correlation Engine
 IngestSettingsPanel.ingestSettingsLabel.text=Ingest Settings
 IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text=Flag items previously tagged as notable
-IngestSettingsPanel.flagPreviouslySeenDevicesCheckbox.text=Flag devices previously seen in other cases
+IngestSettingsPanel.flagPreviouslySeenDevicesCheckbox.text=Flag previously seen devices
 IngestSettingsPanel.createCorrelationPropertiesCheckbox.text=Save items to the Central Repository

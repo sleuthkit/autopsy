@@ -178,29 +178,6 @@ class MboxParser {
         email.setSubject(msg.getSubject());
         email.setSentDate(msg.getDate());
         email.setLocalPath(localPath);
-        email.setMessageID(msg.getMessageId());
-        
-        Field field = msg.getHeader().getField("in-reply-to"); //NON-NLS
-        String inReplyTo = null;
-
-        if (field != null) {
-            inReplyTo = field.getBody();
-            email.setInReplyToID(inReplyTo);
-        }
-
-        field = msg.getHeader().getField("references");
-        if (field != null) {
-            List<String> references = new ArrayList<>();
-            for (String id : field.getBody().split(">")) {
-                references.add(id.trim() + ">");
-            }
-
-            if (!references.contains(inReplyTo)) {
-                references.add(inReplyTo);
-            }
-
-            email.setReferences(references);
-        }
 
         // Body
         if (msg.isMultipart()) {
@@ -208,7 +185,7 @@ class MboxParser {
         } else {
             handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
         }
-        
+
         return email;
     }
 

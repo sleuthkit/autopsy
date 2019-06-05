@@ -171,8 +171,7 @@ public class IngestEventsListener {
     }
 
     /**
-     * Configure the listener to flag devices previously seen in other cases or
-     * not.
+     * Configure the listener to flag previously seen devices or not.
      *
      * @param value True to flag seen devices; otherwise false.
      */
@@ -319,7 +318,7 @@ public class IngestEventsListener {
                 LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
                 return;
             }
-
+            
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED: {
                     jobProcessingExecutor.submit(new AnalysisCompleteTask(dbManager, evt));
@@ -333,10 +332,10 @@ public class IngestEventsListener {
     }
 
     private final class AnalysisCompleteTask implements Runnable {
-
+        
         private final EamDb dbManager;
         private final PropertyChangeEvent event;
-
+        
         private AnalysisCompleteTask(EamDb db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
@@ -362,15 +361,15 @@ public class IngestEventsListener {
             long dataSourceObjectId = -1;
             try {
                 dataSource = ((DataSourceAnalysisCompletedEvent) event).getDataSource();
-
+                
                 /*
-                 * We only care about Images for the purpose of updating hash
-                 * values.
+                 * We only care about Images for the purpose of
+                 * updating hash values.
                  */
                 if (!(dataSource instanceof Image)) {
                     return;
                 }
-
+                
                 dataSourceName = dataSource.getName();
                 dataSourceObjectId = dataSource.getId();
 
@@ -398,7 +397,7 @@ public class IngestEventsListener {
                         if (StringUtils.equals(imageMd5Hash, crMd5Hash) == false) {
                             correlationDataSource.setMd5(imageMd5Hash);
                         }
-
+                        
                         String imageSha1Hash = image.getSha1();
                         if (imageSha1Hash == null) {
                             imageSha1Hash = "";
@@ -407,7 +406,7 @@ public class IngestEventsListener {
                         if (StringUtils.equals(imageSha1Hash, crSha1Hash) == false) {
                             correlationDataSource.setSha1(imageSha1Hash);
                         }
-
+                        
                         String imageSha256Hash = image.getSha256();
                         if (imageSha256Hash == null) {
                             imageSha256Hash = "";
@@ -490,13 +489,9 @@ public class IngestEventsListener {
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMSI_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.MAC_TYPE_ID)) {
                                 try {
-                                    //only alert to previous instances when they were in another case
-                                    List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-                                    for (CorrelationAttributeInstance instance : previousOccurences) {
-                                        if (!instance.getCorrelationCase().getCaseUUID().equals(eamArtifact.getCorrelationCase().getCaseUUID())) {
-                                            postCorrelatedPreviousArtifactToBlackboard(bbArtifact);
-                                            break;
-                                        }
+                                    Long countPreviousOccurences = dbManager.getCountArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                    if (countPreviousOccurences > 0) {
+                                        postCorrelatedPreviousArtifactToBlackboard(bbArtifact);
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
