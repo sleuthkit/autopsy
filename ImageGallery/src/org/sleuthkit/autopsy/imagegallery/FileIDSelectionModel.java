@@ -79,7 +79,7 @@ public class FileIDSelectionModel {
                 Children.Array children = new Children.Array();
                 children.add(fileNodeArray);
 
-                ImageGalleryTopComponent etc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+                ImageGalleryTopComponent etc = ImageGalleryTopComponent.getTopComponent();
                 etc.getExplorerManager().setRootContext(new AbstractNode(children));
                 try {
                     etc.getExplorerManager().setSelectedNodes(fileNodeArray);

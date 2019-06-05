@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.imagegallery;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.SQLException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +49,10 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Worker;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -54,10 +60,13 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -68,7 +77,12 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -76,49 +90,126 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Connects different parts of ImageGallery together and is hub for flow of
- * control.
+ * This class is responsible for the controller role in an MVC pattern
+ * implementation where the model is the drawables database for the case plus
+ * the image gallery tables in the case database, and the view is the image
+ * gallery top component. There is a per case Singleton instance of this class.
  */
 public final class ImageGalleryController {
 
     private static final Logger logger = Logger.getLogger(ImageGalleryController.class.getName());
 
-    /**
-     * The file limit for Image Gallery. If the selected datasource (or all
-     * datasources if that option is selected) has more than this many files (in
-     * the tsk_files table) we don't allow the user to view it.
+    /*
+     * The file limit for image gallery use. If the selected data source (or all
+     * data sources, if that option is selected) has more than this many files
+     * in the tsk_files table, the user cannot use the image gallery.
      */
     private static final long FILE_LIMIT = 6_000_000;
 
-    /**
-     * true if Image Gallery should listen to ingest events, false if it should
-     * not listen to speed up ingest
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
+            Case.Events.CURRENT_CASE,
+            Case.Events.DATA_SOURCE_ADDED,
+            Case.Events.CONTENT_TAG_ADDED,
+            Case.Events.CONTENT_TAG_DELETED
+    );
+
+    /*
+     * There is Singleton instance of this class per case. It is created during
+     * the opening of case resources and destroyed during the closing of case
+     * resources.
      */
-    private final SimpleBooleanProperty listeningEnabled = new SimpleBooleanProperty(false);
+    private static final Object controllerLock = new Object();
+    @GuardedBy("controllerLock")
+    private static final Map<String, ImageGalleryController> controllersByCase = new HashMap<>();
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ReadOnlyBooleanWrapper isCaseStale = new ReadOnlyBooleanWrapper(false);
+    /**
+     * A flag that controls whether or not the controller is handling various
+     * application events in "real time." Set to true by default. If the flag is
+     * not set then:
+     *
+     * - All ingest module events are ignored.
+     *
+     * - Data source added events are ignored.
+     *
+     * -
+     * RJCTODO: Finish this RJCTODO: Why is this perceived as speeding up
+     * ingest?
+     */
+    private final SimpleBooleanProperty listeningEnabled;
 
-    private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
-    private final SimpleDoubleProperty thumbnailSizeProp = new SimpleDoubleProperty(100);
-    private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
-    private final ReadOnlyIntegerWrapper dbTaskQueueSize = new ReadOnlyIntegerWrapper(0);
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX) // RJCTODO: Why? This does not seem to be enforced.
+    private final ReadOnlyBooleanWrapper isCaseStale;
 
-    private final FileIDSelectionModel selectionModel = new FileIDSelectionModel(this);
-
-    private final History<GroupViewState> historyManager = new History<>();
-    private final UndoRedoManager undoManager = new UndoRedoManager();
-    private final ThumbnailCache thumbnailCache = new ThumbnailCache(this);
-    private final GroupManager groupManager;
-    private final HashSetManager hashSetManager;
-    private final CategoryManager categoryManager;
-    private final DrawableTagsManager tagsManager;
-
-    private final ListeningExecutorService dbExecutor;
-
+    private final ReadOnlyBooleanWrapper metaDataCollapsed;
+    private final SimpleDoubleProperty thumbnailSizeProp;
+    private final ReadOnlyBooleanWrapper regroupDisabled;
+    private final ReadOnlyIntegerWrapper dbTaskQueueSize;
+    private final History<GroupViewState> historyManager;
+    private final UndoRedoManager undoManager;
     private final Case autopsyCase;
     private final SleuthkitCase sleuthKitCase;
-    private final DrawableDB drawableDB;
+    private final ListeningExecutorService dbExecutor;
+    private final CaseEventListener caseEventListener;
+    private final IngestJobEventListener ingestJobEventListener;
+    private final IngestModuleEventListener ingestModuleEventListener;
+    private FileIDSelectionModel selectionModel;
+    private ThumbnailCache thumbnailCache;
+    private DrawableDB drawableDB;
+    private GroupManager groupManager;
+    private HashSetManager hashSetManager;
+    private CategoryManager categoryManager;
+    private DrawableTagsManager tagsManager;
+
+    /**
+     * Creates an image gallery controller for a case. The controller will
+     * create/open the model for the case: a local drawables database and the
+     * image gallery tables in the case database.
+     *
+     * @param theCase The case.
+     *
+     * @throws TskCoreException If there is an issue creating/opening the model
+     *                          for the case.
+     */
+    static void createController(Case theCase) throws TskCoreException {
+        synchronized (controllerLock) {
+            if (!controllersByCase.containsKey(theCase.getName())) {
+                ImageGalleryController controller = new ImageGalleryController(theCase);
+                controller.startUp();
+                controllersByCase.put(theCase.getName(), controller);
+            }
+        }
+    }
+
+    /**
+     * Gets the image gallery controller for a case.
+     *
+     * @param theCase The case.
+     *
+     * @return The image gallery controller or null if it does not exist.
+     */
+    public static ImageGalleryController getController(Case theCase) {
+        synchronized (controllerLock) {
+            return controllersByCase.get(theCase.getName());
+        }
+    }    
+    
+    /**
+     * Shuts down the image gallery controller for a case. The controller will
+     * close the model for the case.
+     *
+     * @param theCase The case.
+     */
+    static void shutDownController(Case theCase) {
+        ImageGalleryController controller = null;
+        synchronized (controllerLock) {
+            if (controllersByCase.containsKey(theCase.getName())) {
+                controller = controllersByCase.remove(theCase.getName());
+            }
+        }
+        if (controller != null) {
+            controller.shutDown();
+        }
+    }
 
     public Case getAutopsyCase() {
         return autopsyCase;
@@ -189,55 +280,96 @@ public final class ImageGalleryController {
     }
 
     ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
-        this.autopsyCase = Objects.requireNonNull(newCase);
-        this.sleuthKitCase = newCase.getSleuthkitCase();
-
+        autopsyCase = Objects.requireNonNull(newCase);
+        sleuthKitCase = newCase.getSleuthkitCase();
+        listeningEnabled = new SimpleBooleanProperty(false);
+        isCaseStale = new ReadOnlyBooleanWrapper(false);
+        metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
+        thumbnailSizeProp = new SimpleDoubleProperty(100);
+        regroupDisabled = new ReadOnlyBooleanWrapper(false);
+        dbTaskQueueSize = new ReadOnlyIntegerWrapper(0);
+        historyManager = new History<>();
+        undoManager = new UndoRedoManager();
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
+        dbExecutor = getNewDBExecutor();
+        caseEventListener = new CaseEventListener();
+        ingestJobEventListener = new IngestJobEventListener();
+        ingestModuleEventListener = new IngestModuleEventListener();
+    }
 
+    void startUp() throws TskCoreException {
+        selectionModel = new FileIDSelectionModel(this);
+        thumbnailCache = new ThumbnailCache(this);
+
+        /*
+         * These two lines need to be executed in this order. RJCTODO: Why?
+         */
         groupManager = new GroupManager(this);
-        this.drawableDB = DrawableDB.getDrawableDB(this);
+        drawableDB = DrawableDB.getDrawableDB(this);
+
         categoryManager = new CategoryManager(this);
         tagsManager = new DrawableTagsManager(this);
         tagsManager.registerListener(groupManager);
         tagsManager.registerListener(categoryManager);
-
         hashSetManager = new HashSetManager(drawableDB);
+
         setCaseStale(isDataSourcesTableStale());
 
-        dbExecutor = getNewDBExecutor();
-
-        // listener for the boolean property about when IG is listening / enabled
+        /*
+         * Add a listener for changes to the Image Gallery enabled property that
+         * is set by a user via the options panel. For single-user cases, the
+         * listener queues drawables database rebuild tasks if the drawables
+         * database for the current case is stale. For multi-user cases, thw
+         * listener does nothing, because rebuilding the drawables database is
+         * deferred until the Image Gallery tool is opened.
+         */
         listeningEnabled.addListener((observable, wasPreviouslyEnabled, isEnabled) -> {
             try {
-                // if we just turned on listening and a single-user case is open and that case is not up to date, then rebuild it
-                // For multiuser cases, we defer DB rebuild till the user actually opens Image Gallery
                 if (isEnabled && !wasPreviouslyEnabled
-                        && isDataSourcesTableStale()
-                        && (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE)) {
-                    //populate the db
-                    this.rebuildDB();
+                        && (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE)
+                        && isDataSourcesTableStale()) {
+                    queueDbRebuildTasks();
                 }
-
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Exception while getting open case.", ex);
             }
         });
 
+        /*
+         * Add a listener for changes to the view state property that clears the
+         * current selection and flush the undo/redo history.
+         */
         viewStateProperty().addListener((Observable observable) -> {
-            //when the viewed group changes, clear the selection and the undo/redo history
             selectionModel.clearSelection();
             undoManager.clear();
         });
 
+        /*
+         * Add a listener for ingest manager ingest module and ingest job events
+         * that enables/disables regrouping based on the drawables database task
+         * queue size and whether or not ingest is running. Note that execution
+         * of this logic needs to be dispatched to the JFX thread since the
+         * listener's event handler will be invoked in the ingest manager's
+         * event publishing thread.
+         */
+        PropertyChangeListener ingestEventHandler = propertyChangeEvent -> Platform.runLater(this::updateRegroupDisabled);
         IngestManager ingestManager = IngestManager.getInstance();
-        PropertyChangeListener ingestEventHandler
-                = propertyChangeEvent -> Platform.runLater(this::updateRegroupDisabled);
-
         ingestManager.addIngestModuleEventListener(ingestEventHandler);
         ingestManager.addIngestJobEventListener(ingestEventHandler);
 
+        /*
+         * Add a listener to the size of the drawables database task queue that
+         * enables/disables regrouping based on the drawables database task
+         * queue size and whether or not ingest is running.
+         */
         dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
 
+        /*
+         * Subscribe to application events.
+         */
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
+        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
+        IngestManager.getInstance().addIngestModuleEventListener(ingestModuleEventListener);
     }
 
     /**
@@ -315,7 +447,7 @@ public final class ImageGalleryController {
      * Rebuilds the DrawableDB database.
      *
      */
-    public void rebuildDB() {
+    public void queueDbRebuildTasks() {
         // queue a rebuild task for each stale data source
         getStaleDataSourceIds().forEach(dataSourceObjId -> queueDBTask(new CopyAnalyzedFiles(dataSourceObjId, this)));
     }
@@ -325,6 +457,9 @@ public final class ImageGalleryController {
      */
     public synchronized void shutDown() {
         logger.log(Level.INFO, String.format("Shutting down image gallery controller for case %s (%s)", autopsyCase.getDisplayName(), autopsyCase.getName()));
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
+        IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventListener);
+        IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleEventListener);
         selectionModel.clearSelection();
         thumbnailCache.clearCache();
         historyManager.clear();
@@ -559,6 +694,230 @@ public final class ImageGalleryController {
 
     public ThumbnailCache getThumbsCache() {
         return thumbnailCache;
+    }
+
+    /**
+     * Indicates whether or not a given file is of interest to the image gallery
+     * module (is "drawable") and is not marked as a "known" file (e.g., is not
+     * a file in the NSRL hash set).
+     *
+     * @param file The file.
+     *
+     * @return True if the file is "drawable" and not "known", false otherwise.
+     *
+     * @throws FileTypeDetectorInitException If there is an error determining
+     *                                       the type of the file.
+     */
+    private static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws FileTypeDetector.FileTypeDetectorInitException {
+        return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
+    }
+
+    /**
+     * A listener for ingest module application events.
+     */
+    private class IngestModuleEventListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            if (isListeningEnabled() == false) {
+                return;
+            }
+
+            /*
+             * Updates when individual files are fully analyzed and artifacts
+             * are added to a case are only done in "real time" on the host that
+             * is running the ingest job. On a remote host, the updates are
+             * deferred until the ingest job is complete.
+             */
+            if (((AutopsyEvent) event).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
+                return;
+            }
+
+            String eventType = event.getPropertyName();
+            switch (IngestManager.IngestModuleEvent.valueOf(eventType)) {
+                case FILE_DONE:
+                    AbstractFile file = (AbstractFile) event.getNewValue();
+                    if (!file.isFile()) {
+                        return;
+                    }
+                    try {
+                        if (isDrawableAndNotKnown(file)) {
+                            queueDBTask(new ImageGalleryController.UpdateFileTask(file, drawableDB));
+                        }
+                    } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                        logger.log(Level.SEVERE, String.format("Failed to determine if file is of interest to the image gallery module, ignoring file (obj_id=%d)", file.getId()), ex); //NON-NLS
+                    }
+                    break;
+                case DATA_ADDED:
+                    ModuleDataEvent artifactAddedEvent = (ModuleDataEvent) event.getOldValue();
+                    if (CollectionUtils.isNotEmpty(artifactAddedEvent.getArtifacts())) {
+                        for (BlackboardArtifact art : artifactAddedEvent.getArtifacts()) {
+                            if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                                drawableDB.addExifCache(art.getObjectID());
+                            } else if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                                drawableDB.addHashSetCache(art.getObjectID());
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    /**
+     * A listener for case application events.
+     */
+    private class CaseEventListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
+            if (eventType == Case.Events.CURRENT_CASE) {
+                if (event.getOldValue() != null) {
+                    /*
+                     * The old value is set, then the CURRENT_CASE event is a
+                     * case closed event.
+                     */
+                    SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
+                }
+            } else {
+                switch (eventType) {
+                    case DATA_SOURCE_ADDED:
+                        if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            Content newDataSource = (Content) event.getNewValue();
+                            if (isListeningEnabled()) {
+                                drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
+                            }
+                        }
+                        break;
+                    case CONTENT_TAG_ADDED:
+                        final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) event;
+                        long objId = tagAddedEvent.getAddedTag().getContent().getId();
+                        drawableDB.addTagCache(objId); // RJCTODO: Why add the tag to the cache before doing the in DB check?
+                        if (drawableDB.isInDB(objId)) {
+                            tagsManager.fireTagAddedEvent(tagAddedEvent);
+                        }
+                        break;
+                    case CONTENT_TAG_DELETED:
+                        final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) event;
+                        if (drawableDB.isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
+                            tagsManager.fireTagDeletedEvent(tagDeletedEvent);
+                        } // RJCTODO: Why not remove the tag from the cache?
+                        break;
+                    default:
+                        logger.log(Level.WARNING, String.format("Received %s event with no subscription", event.getPropertyName())); //NON-NLS
+                        break;
+                }
+            }
+        }
+    }
+
+    /**
+     * A listener for ingest job application events.
+     */
+    private class IngestJobEventListener implements PropertyChangeListener {
+
+        @NbBundle.Messages({
+            "ImageGalleryController.dataSourceAnalyzed.confDlg.msg= A new data source was added and finished ingest.\n"
+            + "The image / video database may be out of date. "
+            + "Do you want to update the database with ingest results?\n",
+            "ImageGalleryController.dataSourceAnalyzed.confDlg.title=Image Gallery"
+        })
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            /*
+             * Only handling data source analysis events.
+             */
+            // RJCTODO: This would be less messy if IngestManager supported 
+            // subscribing for a subset of events the way case does, and it the 
+            // conditional blocks became method calls. 
+            if (!(event instanceof DataSourceAnalysisEvent)) {
+                return;
+            }
+
+            DataSourceAnalysisEvent dataSourceEvent = (DataSourceAnalysisEvent) event;
+            Content dataSource = dataSourceEvent.getDataSource();
+            if (dataSource == null) {
+                logger.log(Level.WARNING, String.format("Failed to handle %s event", event.getPropertyName())); //NON-NLS
+                return;
+            }
+
+            long dataSourceObjId = dataSource.getId();
+            String eventType = dataSourceEvent.getPropertyName();
+            try {
+                switch (IngestManager.IngestJobEvent.valueOf(eventType)) {
+                    case DATA_SOURCE_ANALYSIS_STARTED:
+                        if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            if (isListeningEnabled()) {
+                                // Don't update status if it is is already marked as COMPLETE
+                                if (drawableDB.getDataSourceDbBuildStatus(dataSourceObjId) != DrawableDB.DrawableDbBuildStatusEnum.COMPLETE) {
+                                    drawableDB.insertOrUpdateDataSource(dataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS);
+                                }
+                                drawableDB.buildFileMetaDataCache();
+                            }
+                        }
+                        break;
+                    case DATA_SOURCE_ANALYSIS_COMPLETED:
+                        if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            /*
+                             * This node just completed analysis of a data
+                             * source. Set the state of the local drawables
+                             * database.
+                             */
+                            if (isListeningEnabled()) {
+                                groupManager.resetCurrentPathGroup();
+                                if (drawableDB.getDataSourceDbBuildStatus(dataSourceObjId) == DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS) {
+
+                                    // If at least one file in CaseDB has mime type, then set to COMPLETE
+                                    // Otherwise, back to UNKNOWN since we assume file type module was not run        
+                                    DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus
+                                            = hasFilesWithMimeType(dataSourceObjId)
+                                            ? DrawableDB.DrawableDbBuildStatusEnum.COMPLETE
+                                            : DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN;
+
+                                    drawableDB.insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
+                                }
+                                drawableDB.freeFileMetaDataCache();
+                            }
+                        } else if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
+                            /*
+                             * A remote node just completed analysis of a data
+                             * source. The local drawables database is therefore
+                             * stale. If the image gallery top component is
+                             * open, give the user an opportunity to update the
+                             * drawables database now.
+                             */
+                            setCaseStale(true);
+                            if (isListeningEnabled()) {
+                                SwingUtilities.invokeLater(() -> {
+                                    if (ImageGalleryTopComponent.isImageGalleryOpen()) {
+                                        int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                                                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                                        switch (showAnswer) {
+                                            case JOptionPane.YES_OPTION:
+                                                queueDbRebuildTasks();
+                                                break;
+                                            case JOptionPane.NO_OPTION:
+                                            case JOptionPane.CANCEL_OPTION:
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to handle %s event for %s (objId=%d)", dataSourceEvent.getPropertyName(), dataSource.getName(), dataSourceObjId), ex);
+            }
+        }
     }
 
     /**

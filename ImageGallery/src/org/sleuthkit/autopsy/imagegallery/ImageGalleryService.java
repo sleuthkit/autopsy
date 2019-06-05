@@ -33,13 +33,13 @@ import org.sleuthkit.datamodel.TskCoreException;
     @ServiceProvider(service = AutopsyService.class)
 })
 @NbBundle.Messages({
-    "ImageGalleryDatabaseUpdateService.serviceName=Image Gallery Database Update Service"
+    "ImageGalleryService.serviceName=Image Gallery Update Service"
 })
-public class ImageGalleryDatabaseUpdateService implements AutopsyService {
+public class ImageGalleryService implements AutopsyService {
 
     @Override
     public String getServiceName() {
-        return Bundle.ImageGalleryDatabaseUpdateService_serviceName();
+        return Bundle.ImageGalleryService_serviceName();
     }
 
     /**
@@ -55,21 +55,21 @@ public class ImageGalleryDatabaseUpdateService implements AutopsyService {
      * org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException
      */
     @NbBundle.Messages({
-        "ImageGalleryDatabaseUpdateService.openCaseResources.progressMessage.start=Opening Image Gallery databases...",
-        "ImageGalleryDatabaseUpdateService.openCaseResources.progressMessage.finish=Opened Image Gallery databases.",})
+        "ImageGalleryController.openCaseResources.progressMessage.start=Opening Image Gallery databases...",
+        "ImageGalleryController.openCaseResources.progressMessage.finish=Opened Image Gallery databases.",})
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (context.cancelRequested()) {
             return;
         }
         ProgressIndicator progress = context.getProgressIndicator();
-        progress.progress(Bundle.ImageGalleryDatabaseUpdateService_openCaseResources_progressMessage_start());
+        progress.progress(Bundle.ImageGalleryController_openCaseResources_progressMessage_start());
         try {
-            ImageGalleryModule.createController(context.getCase());
+            ImageGalleryController.createController(context.getCase());
         } catch (TskCoreException ex) {
             throw new AutopsyServiceException("Error opening Image Gallery databases", ex);
         }
-        progress.progress(Bundle.ImageGalleryDatabaseUpdateService_openCaseResources_progressMessage_finish());
+        progress.progress(Bundle.ImageGalleryController_openCaseResources_progressMessage_finish());
     }
 
     /**
@@ -85,7 +85,7 @@ public class ImageGalleryDatabaseUpdateService implements AutopsyService {
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
-        ImageGalleryModule.shutDownController();
+        ImageGalleryController.shutDownController(context.getCase());
     }
 
 }

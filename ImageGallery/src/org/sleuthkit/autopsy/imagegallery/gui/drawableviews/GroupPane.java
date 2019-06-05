@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -864,7 +864,7 @@ public class GroupPane extends BorderPane {
 
             extractMenuItem.setOnAction(actionEvent -> {
                 SwingUtilities.invokeLater(() -> {
-                    TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+                    TopComponent etc = ImageGalleryTopComponent.getTopComponent();
                     ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
                 });
             });

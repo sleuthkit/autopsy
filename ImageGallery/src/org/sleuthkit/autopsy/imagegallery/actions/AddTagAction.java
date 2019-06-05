@@ -202,7 +202,7 @@ public class AddTagAction extends Action {
     }
 
     static private Window getIGWindow() {
-        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+        TopComponent etc = ImageGalleryTopComponent.getTopComponent();
         return SwingUtilities.getWindowAncestor(etc);
     }
 }

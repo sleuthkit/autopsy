@@ -153,12 +153,7 @@ public final class OpenAction extends CallableSystemAction {
         }
         Platform.runLater(() -> {
             ImageGalleryController controller;
-            try {
-                controller = ImageGalleryModule.getController();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get ImageGalleryController", ex);
-                return;
-            }
+            controller = ImageGalleryController.getController(currentCase);
 
             if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
                     && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
@@ -192,7 +187,7 @@ public final class OpenAction extends CallableSystemAction {
                 .submit(controller::getAllDataSourcesDrawableDBStatus);
 
         addFXCallback(dataSourceStatusMapFuture,
-                dataSourceStatusMap -> {                   
+                dataSourceStatusMap -> {
                     int numStale = 0;
                     int numNoAnalysis = 0;
                     // NOTE: There is some overlapping code here with Controller.getStaleDataSourceIds().  We could possibly just use
@@ -204,28 +199,26 @@ public final class OpenAction extends CallableSystemAction {
                                 // likely a data source analyzed on a remote node in multi-user case OR single-user case with listening off
                                 if (controller.hasFilesWithMimeType(entry.getKey())) {
                                     numStale++;
-                                // likely a data source (local or remote) that has no analysis yet (note there is also IN_PROGRESS state)
+                                    // likely a data source (local or remote) that has no analysis yet (note there is also IN_PROGRESS state)
                                 } else {
                                     numNoAnalysis++;
                                 }
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error querying case database", ex);
                             }
-                        } 
-                        // was already rebuilt, but wasn't complete at the end
+                        } // was already rebuilt, but wasn't complete at the end
                         else if (DrawableDbBuildStatusEnum.REBUILT_STALE == status) {
                             numStale++;
                         }
-                    }               
-             
-                    // NOTE: we are running on the fx thread.
+                    }
 
+                    // NOTE: we are running on the fx thread.
                     // If there are any that are STALE, give them a prompt to do so. 
                     if (numStale > 0) {
                         // See if user wants to rebuild, cancel out, or open as is
                         Alert alert = new Alert(Alert.AlertType.WARNING,
-                        Bundle.OpenAction_stale_confDlg_msg(),
-                        ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+                                Bundle.OpenAction_stale_confDlg_msg(),
+                                ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
                         alert.initModality(Modality.APPLICATION_MODAL);
                         alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
                         GuiUtils.setDialogIcons(alert);
@@ -258,13 +251,13 @@ public final class OpenAction extends CallableSystemAction {
                                  * the database only when a user launches Image
                                  * Gallery.
                                  */
-                                controller.rebuildDB();
+                                controller.queueDbRebuildTasks();
                             }
                         }
                         openTopComponent();
                         return;
                     }
-                    
+
                     // if there is no data to display, then let them know
                     if (numNoAnalysis == dataSourceStatusMap.size()) {
                         // give them a dialog to enable modules if no data sources have been analyzed
@@ -274,7 +267,7 @@ public final class OpenAction extends CallableSystemAction {
                         alert.showAndWait();
                         return;
                     }
-                                 
+
                     // otherwise, lets open the UI
                     openTopComponent();
                 },

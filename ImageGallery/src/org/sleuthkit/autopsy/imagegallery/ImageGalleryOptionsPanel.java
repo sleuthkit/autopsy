@@ -189,20 +189,19 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
     void store() {
         ImageGalleryPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
-
         ImageGalleryPreferences.setGroupCategorizationWarningDisabled(groupCategorizationWarningBox.isSelected());
 
         // If a case is open, save the per case setting
         try {
             Case openCase = Case.getCurrentCaseThrows();
-            ImageGalleryModule.getController().setListeningEnabled(enabledForCaseBox.isSelected());
+            ImageGalleryController controller = ImageGalleryController.getController(openCase);
+            if (controller != null) {
+                controller.setListeningEnabled(enabledForCaseBox.isSelected());
+            }
             new PerCaseProperties(openCase).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         } catch (NoCurrentCaseException ex) {
             // It's not an error if there's no case open
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
         }
-
     }
 
     /**

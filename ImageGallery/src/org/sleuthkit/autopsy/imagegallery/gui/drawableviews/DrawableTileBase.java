@@ -202,7 +202,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 final MenuItem extractMenuItem = new MenuItem(Bundle.DrawableTileBase_menuItem_extractFiles());
                 extractMenuItem.setOnAction(actionEvent
                         -> SwingUtilities.invokeLater(() -> {
-                            TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+                            TopComponent etc = ImageGalleryTopComponent.getTopComponent();
                             ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
                         }));
                 menuItems.add(extractMenuItem);

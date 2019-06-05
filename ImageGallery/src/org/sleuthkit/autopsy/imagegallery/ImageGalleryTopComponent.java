@@ -63,6 +63,7 @@ import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
@@ -88,7 +89,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 @TopComponent.Description(
         preferredID = "ImageGalleryTopComponent",
         //iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png", /*use this to put icon in window title area*/
-        persistenceType = TopComponent.PERSISTENCE_NEVER)
+        persistenceType = TopComponent.PERSISTENCE_NEVER
+)
 @RetainLocation("ImageGallery")
 @TopComponent.Registration(mode = "ImageGallery", openAtStartup = false)
 @Messages({
@@ -99,7 +101,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
-    public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS // RJCTODO: This should not be public, clients should call getTopComponent instead
+    private final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
     private static final Logger logger = Logger.getLogger(ImageGalleryTopComponent.class.getName());
 
     private final ExplorerManager em = new ExplorerManager();
@@ -258,7 +260,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.chooseDataSourceDialog.all=All",
         "ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery",})
     private void getCurrentControllerAndOpen() throws TskCoreException {
-        ImageGalleryController currentController = ImageGalleryModule.getController();
+        Case currentCase = Case.getCurrentCase();
+        ImageGalleryController currentController = ImageGalleryController.getController(currentCase);
+
         /*
          * Dispatch a task to run in the JavaFX thread. This task will swap the
          * new controller, if there is one, into this top component and its
@@ -293,22 +297,22 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                         fullUIStack = new StackPane();
                         myScene = new Scene(fullUIStack);
                         jfxPanel.setScene(myScene);
-                        groupPane = new GroupPane(controller);
+                        groupPane = new GroupPane(currentController);
                         centralStack = new StackPane(groupPane);
                         fullUIStack.getChildren().add(borderPane);
                         splitPane = new SplitPane();
                         borderPane.setCenter(splitPane);
-                        Toolbar toolbar = new Toolbar(controller);
+                        Toolbar toolbar = new Toolbar(currentController);
                         borderPane.setTop(toolbar);
-                        borderPane.setBottom(new StatusBar(controller));
-                        metaDataTable = new MetaDataPane(controller);
-                        groupTree = new GroupTree(controller);
-                        hashHitList = new HashHitGroupList(controller);
+                        borderPane.setBottom(new StatusBar(currentController));
+                        metaDataTable = new MetaDataPane(currentController);
+                        groupTree = new GroupTree(currentController);
+                        hashHitList = new HashHitGroupList(currentController);
                         TabPane tabPane = new TabPane(groupTree, hashHitList);
                         tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
                         tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
                         VBox.setVgrow(tabPane, Priority.ALWAYS);
-                        leftPane = new VBox(tabPane, new SummaryTablePane(controller));
+                        leftPane = new VBox(tabPane, new SummaryTablePane(currentController));
                         SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
                         SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
                         SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
@@ -321,8 +325,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                          * property or the group manager's analyzed groups
                          * property changes.
                          */
-                        controller.regroupDisabledProperty().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
-                        controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
+                        currentController.regroupDisabledProperty().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
+                        currentController.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
 
                         /*
                          * Dispatch a later task to call check for groups. Note
@@ -358,19 +362,19 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                                  * select the data sources for which images are
                                  * to be displayed, then open the top component.
                                  */
-                                List<DataSource> dataSources = controller.getSleuthKitCase().getDataSources();
+                                List<DataSource> dataSources = currentController.getSleuthKitCase().getDataSources();
                                 Map<DataSource, Boolean> dataSourcesWithTooManyFiles = new HashMap<>();
                                 // RJCTODO: At least some of this designation of "all data sources" with null seems uneccessary; 
                                 // in any case, the use of nulls and zeros here is 
                                 // very confusing and should be reworked.
                                 if (dataSources.size() <= 1
-                                        || controller.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
-                                    dataSourcesWithTooManyFiles.put(null, controller.hasTooManyFiles(null));
+                                        || currentController.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
+                                    dataSourcesWithTooManyFiles.put(null, currentController.hasTooManyFiles(null));
                                     openWithSelectedDataSources(null, dataSourcesWithTooManyFiles);
                                 } else {
                                     dataSources.add(0, null);
                                     for (DataSource dataSource : dataSources) {
-                                        dataSourcesWithTooManyFiles.put(dataSource, controller.hasTooManyFiles(dataSource));
+                                        dataSourcesWithTooManyFiles.put(dataSource, currentController.hasTooManyFiles(dataSource));
                                     }
                                     Platform.runLater(() -> {
                                         List<Optional<DataSource>> dataSourceOptionals = dataSources.stream().map(Optional::ofNullable).collect(Collectors.toList());
@@ -382,8 +386,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                                         GuiUtils.setDialogIcons(datasourceDialog);
                                         @SuppressWarnings(value = "unchecked")
                                         ComboBox<Optional<DataSource>> comboBox = (ComboBox<Optional<DataSource>>) datasourceDialog.getDialogPane().lookup(".combo-box");
-                                        comboBox.setCellFactory((ListView<Optional<DataSource>> unused) -> new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
-                                        comboBox.setButtonCell(new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
+                                        comboBox.setCellFactory((ListView<Optional<DataSource>> unused) -> new DataSourceCell(dataSourcesWithTooManyFiles, currentController.getAllDataSourcesDrawableDBStatus()));
+                                        comboBox.setButtonCell(new DataSourceCell(dataSourcesWithTooManyFiles, currentController.getAllDataSourcesDrawableDBStatus()));
                                         DataSource dataSource = datasourceDialog.showAndWait().orElse(Optional.empty()).orElse(null);
                                         openWithSelectedDataSources(dataSource, dataSourcesWithTooManyFiles);
                                     });

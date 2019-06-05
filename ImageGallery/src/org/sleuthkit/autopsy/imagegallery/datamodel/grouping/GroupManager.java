@@ -64,7 +64,6 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -766,7 +765,7 @@ public class GroupManager {
                         group.setFiles(fileIDs);
                         group.setSeen(groupSeen);
                     } else {
-                        group = new DrawableGroup(groupKey, fileIDs, groupSeen);
+                        group = new DrawableGroup(groupKey, fileIDs, groupSeen, controller.getDatabase(), controller.getHashSetManager());
                         controller.getCategoryManager().registerListener(group);
                         groupMap.put(groupKey, group);
                     }
