@@ -30,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.openide.util.NbBundle;
 
 /**
  * Edit full paths rule panel
@@ -44,6 +45,9 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     /**
      * Creates new form EditFullPathsRulePanel
      */
+    @NbBundle.Messages({
+        "EditFullPathsRulePanel.example=Example: "
+    })
     public EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
         initComponents();
         this.setRule(ruleName, rule);
@@ -53,7 +57,8 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         initTextArea(fullPathsScrollPane, fullPathsTextArea);
         setTextArea(fullPathsTextArea, rule.getFullPaths());
         
-        EditRulePanel.setTextFieldPrompts(fullPathsTextArea, "<html>Example:<br>/Program Files/Common Files/system/wab32.dll<br>/Windows/System32/1033/VsGraphicsResources.dll</html>");
+        EditRulePanel.setTextFieldPrompts(fullPathsTextArea, 
+                "<html>" + Bundle.EditFullPathsRulePanel_example() + "<br>/Program Files/Common Files/system/wab32.dll<br>/Windows/System32/1033/VsGraphicsResources.dll</html>"); // NON-NLS
         ruleNameTextField.requestFocus();
         validate();
         repaint();        
@@ -238,14 +243,17 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     private void setTextArea(JTextArea textArea, List<String> set) {
         String text = "";
         for (String s : set) {
-            text += s + System.getProperty("line.separator");
+            text += s + System.getProperty("line.separator"); // NON-NLS
         }
         textArea.setText(text);
     }
 
+    @NbBundle.Messages({
+        "EditFullPathsRulePanel.fullPaths=Full paths",
+    })
     public ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
-        List<String> fullPaths = validateFullPaths(fullPathsTextArea);
-        String ruleName = validRuleName(ruleNameTextField.getText());
+        List<String> fullPaths = EditRulePanel.validateTextList(fullPathsTextArea, Bundle.EditFullPathsRulePanel_fullPaths());
+        String ruleName = EditRulePanel.validRuleName(ruleNameTextField.getText());
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
         builder.shouldAlert(shouldAlertCheckBox.isSelected())
                 .shouldSave(shouldSaveCheckBox.isSelected())
@@ -253,23 +261,5 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
                 .fullPaths(fullPaths);
         LogicalImagerRule rule = builder.build();
         return new ImmutablePair<>(ruleName, rule);
-    }
-
-    private List<String> validateFullPaths(JTextArea textArea) throws IOException {
-        List<String> fullPaths = new ArrayList<>();
-        for (String line : textArea.getText().split("\\n")) {
-            if (line.isEmpty()) {
-                throw new IOException("Full paths cannot have an empty line");
-            }
-            fullPaths.add(line);
-        }
-        return fullPaths;
-    }
-
-    private String validRuleName(String name) throws IOException {
-        if (name.isEmpty()) {
-            throw new IOException("Rule name cannot be empty");
-        }
-        return name;
     }
 }

@@ -86,15 +86,15 @@ public class LogicalImagerRule {
         this.paths = paths;
         this.fullPaths = fullPaths;
         
-        this.sizeRange.put("min", minFileSize);
+        this.sizeRange.put("min", minFileSize); // NON-NLS
         this.minFileSize = minFileSize;
-        this.sizeRange.put("max", maxFileSize);
+        this.sizeRange.put("max", maxFileSize); // NON-NLS
         this.maxFileSize = maxFileSize;
-        this.dateRange.put("min-days", minDays);
+        this.dateRange.put("min-days", minDays); // NON-NLS
         this.minDays = minDays;
-        this.dateRange.put("min-date", minDate);
+        this.dateRange.put("min-date", minDate); // NON-NLS
         this.minDate = minDate;
-        this.dateRange.put("max-date", maxDate);
+        this.dateRange.put("max-date", maxDate); // NON-NLS
         this.maxDate = maxDate;
     }
 

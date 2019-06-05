@@ -55,7 +55,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
             component.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals("UPDATE_UI")) {
+                    if (evt.getPropertyName().equals("UPDATE_UI")) { // NON-NLS
                         isValid = component.isPanelValid();
                         fireChangeEvent();
                     }
@@ -127,7 +127,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
     @Override
     public void readSettings(WizardDescriptor wiz) {
         // use wiz.getProperty to retrieve previous panel state
-        component.setConfigFilename((String) wiz.getProperty("configFilename"));
+        component.setConfigFilename((String) wiz.getProperty("configFilename")); // NON-NLS
     }
 
     @Override
@@ -136,9 +136,9 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
         configFilename = component.getConfigFilename();
         config = component.getConfig();
         newFile = component.isNewFile();
-        wiz.putProperty("configFilename", configFilename);
-        wiz.putProperty("config", config);
-        wiz.putProperty("newFile", newFile);
+        wiz.putProperty("configFilename", configFilename); // NON-NLS
+        wiz.putProperty("config", config); // NON-NLS
+        wiz.putProperty("newFile", newFile); // NON-NLS
     }
 
     @Override

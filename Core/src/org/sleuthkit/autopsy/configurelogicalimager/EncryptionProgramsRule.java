@@ -20,19 +20,24 @@ package org.sleuthkit.autopsy.configurelogicalimager;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.openide.util.NbBundle;
 
 /**
  * Encryption programs rule 
  */
+@NbBundle.Messages({
+    "EncryptionProgramsRule.encryptionProgramsRuleName=Encryption Programs",
+    "EncryptionProgramsRule.encryptionProgramsRuleDescription=Find encryption programs"
+})
 public final class EncryptionProgramsRule {
 
-    private static final String ENCRYPTION_PROGRAMS_RULE_NAME = "Encryption Programs";
-    private static final String ENCRYPTION_PROGRAMS_RULE_DESCRIPTION = "Find encryption programs";
+    private static final String ENCRYPTION_PROGRAMS_RULE_NAME = Bundle.EncryptionProgramsRule_encryptionProgramsRuleName();
+    private static final String ENCRYPTION_PROGRAMS_RULE_DESCRIPTION = Bundle.EncryptionProgramsRule_encryptionProgramsRuleDescription();
     private static final List<String> FILENAMES = new ArrayList<>();
     
     // TODO: Add more files here
     static {
-        FILENAMES.add("truecrypt.exe"); 
+        FILENAMES.add("truecrypt.exe"); //NON-NLS
     }
 
     public static String getName() {

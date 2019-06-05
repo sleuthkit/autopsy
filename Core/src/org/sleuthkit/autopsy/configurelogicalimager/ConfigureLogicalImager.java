@@ -30,6 +30,7 @@ import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -47,6 +48,9 @@ import org.openide.util.NbBundle.Messages;
 @Messages("CTL_ConfigureLogicalImager=Configure Logical Imager")
 public final class ConfigureLogicalImager implements ActionListener {
     
+    @NbBundle.Messages({
+        "ConfigureLogicalImager.title=Configure Logical Imager"
+    })
     @Override
     public void actionPerformed(ActionEvent e) {
         List<WizardDescriptor.Panel<WizardDescriptor>> panels = new ArrayList<>();
@@ -68,8 +72,8 @@ public final class ConfigureLogicalImager implements ActionListener {
         }
         WizardDescriptor wiz = new WizardDescriptor(new WizardDescriptor.ArrayIterator<>(panels));
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
-        wiz.setTitleFormat(new MessageFormat("{0}"));
-        wiz.setTitle("Configure Logical Imager");
+        wiz.setTitleFormat(new MessageFormat("{0}")); // NON-NLS
+        wiz.setTitle(Bundle.ConfigureLogicalImager_title());
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             // do something
             if (panels.get(1) instanceof ConfigWizardPanel2) {

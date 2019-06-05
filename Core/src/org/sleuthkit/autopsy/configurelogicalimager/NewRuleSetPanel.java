@@ -134,7 +134,6 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
         chooseComboBox.setEnabled(false);
     }//GEN-LAST:event_chooseComboBoxActionPerformed
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> chooseComboBox;
     private javax.swing.JLabel chooseLabel;

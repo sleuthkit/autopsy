@@ -1,3 +1,4 @@
+ConfigureLogicalImager.title=Configure Logical Imager
 ConfigureLogicalImagerDialog.loadButton.text=Load
 ConfigureLogicalImagerDialog.newButton.text=New
 ConfigureLogicalImagerDialog.title=Configure Logical Imager
@@ -22,9 +23,47 @@ ConfigureLogicalImagerDialog.daysIncludedTextField.text=
 ConfigureLogicalImagerDialog.modifiedDateLabel.text=Modified Within:
 ConfigureLogicalImagerDialog.fullPathsLabel.text=Full paths:
 ConfigureLogicalImagerDialog.flagEncryptionProgramsCheckBox.text=Flag encryption programs
+ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration json file
+ConfigVisualPanel1.configurationError=Configuration error
+ConfigVisualPanel1.fileNameExtensionFilter=configuration json file
+ConfigVisualPanel1.invalidConfigJson=Invalid config json: 
+ConfigVisualPanel1.selectConfigurationFile=Select configuration file
+ConfigVisualPanel2.cancel=Cancel
+ConfigVisualPanel2.deleteRuleSet=Delete rule set 
+ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule set confirmation
+ConfigVisualPanel2.editConfiguration=Edit configuration
+ConfigVisualPanel2.editRuleError=Edit rule error
+ConfigVisualPanel2.editRuleSet=Edit rule set
+ConfigVisualPanel2.ok=OK
 ConfigVisualPanel2.rulesTable.columnModel.title0=Rule set
 ConfigVisualPanel2.rulesTable.columnModel.title1=Description
+ConfigWizardPanel2.chooseFileTitle=Save to another configuration file
+# {0} - configFilename
+ConfigWizardPanel2.failedToSaveMsg=Failed to save configuration file: {0}
+ConfigWizardPanel2.fileNameExtensionFilter=configuration json file
+# {0} - reason
+ConfigWizardPanel2.reason=\nReason: 
 CTL_ConfigureLogicalImager=Configure Logical Imager
+EditFullPathsRulePanel.example=Example: 
+EditFullPathsRulePanel.fullPaths=Full paths
+EditNonFullPathsRulePanel.emptyExtensionException=Extensions cannot have an empty entry
+EditNonFullPathsRulePanel.example=Example: 
+EditNonFullPathsRulePanel.fileNames=File names
+EditNonFullPathsRulePanel.folderNames=Folder names
+# {0} - message
+EditNonFullPathsRulePanel.maxFileSizeMustBeNumberException=Maximum file size must be a number: {0}
+EditNonFullPathsRulePanel.maxFileSizeNotPositiveException=Maximum file size must be a positive
+# {0} - maxFileSize
+# {1} - minFileSize
+EditNonFullPathsRulePanel.maxFileSizeSmallerThanMinException=Maximum file size: {0} must be bigger than minimum file size: {1}
+# {0} - message
+EditNonFullPathsRulePanel.minFileSizeMustBeNumberException=Minimum file size must be a number: {0}
+EditNonFullPathsRulePanel.minFileSizeNotPositiveException=Minimum file size must be a positive
+# {0} - message
+EditNonFullPathsRulePanel.modifiedDaysMustBeNumberException=Modified days must be a number: {0}
+EditNonFullPathsRulePanel.modifiedDaysNotPositiveException=Modified days must be a positive
+# ({0} - fieldName
+EditRulePanel.blankLineException={0} cannot have a blank line
 EditRulePanel.shouldAlertCheckBox.text=Alert in imager console if rule matches
 EditRulePanel.shouldSaveCheckBox.text=Extract file if it matches a rule
 EditRulePanel.fullPathsLabel.text=Full paths:
@@ -117,6 +156,9 @@ ConfigVisualPanel1.browseButton.text=Open
 ConfigVisualPanel2.fullPathsTable.columnModel.title0=
 ConfigVisualPanel2.folderNamesTable.columnModel.title0=
 ConfigVisualPanel2.shouldSaveCheckBox.toolTipText=
+EditRulePanel.validateRuleNameExceptionMsg=Rule name cannot be empty
+EncryptionProgramsRule.encryptionProgramsRuleDescription=Find encryption programs
+EncryptionProgramsRule.encryptionProgramsRuleName=Encryption Programs
 NewRuleSetPanel.chooseLabel.text=Choose type of file rule
 EditNonFullPathsRulePanel.minSizeLabel.text=Minimum:
 EditNonFullPathsRulePanel.maxSizeLabel.text=Maximum:

@@ -32,13 +32,17 @@ import org.openide.util.NbBundle;
 /**
  * Configuration Visual Panel 2
  */
+@NbBundle.Messages({
+    "ConfigVisualPanel2.ok=OK",
+    "ConfigVisualPanel2.cancel=Cancel"
+})
 public final class ConfigVisualPanel2 extends JPanel {
 
     private static final List<String> EMPTY_LIST = new ArrayList<>();
     private String configFilename;
     private LogicalImagerConfig config = null;
-    private final JButton okButton = new JButton("OK");
-    private final JButton cancelButton = new JButton("Cancel");
+    private final JButton okButton = new JButton(Bundle.ConfigVisualPanel2_ok());
+    private final JButton cancelButton = new JButton(Bundle.ConfigVisualPanel2_cancel());
     private boolean flagEncryptionPrograms = false;
 
     /**
@@ -51,9 +55,12 @@ public final class ConfigVisualPanel2 extends JPanel {
         }
     }
 
+    @NbBundle.Messages({
+        "ConfigVisualPanel2.editConfiguration=Edit configuration"
+    })
     @Override
     public String getName() {
-        return "Edit configuration";
+        return Bundle.ConfigVisualPanel2_editConfiguration();
     }
 
     public boolean isFlagEncryptionPrograms() {
@@ -499,6 +506,10 @@ public final class ConfigVisualPanel2 extends JPanel {
         rulesTableSelect();
     }//GEN-LAST:event_rulesTableKeyReleased
 
+    @NbBundle.Messages({
+        "ConfigVisualPanel2.editRuleSet=Edit rule set",
+        "ConfigVisualPanel2.editRuleError=Edit rule error"
+    })
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
         int row = rulesTable.getSelectedRow();
         if (row != -1) {
@@ -509,7 +520,7 @@ public final class ConfigVisualPanel2 extends JPanel {
             editPanel.setVisible(true);
 
             while (true) {
-                int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), "Edit rule set", 
+                int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), Bundle.ConfigVisualPanel2_editRuleSet(), 
                             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
                             null, new Object[]{okButton, cancelButton}, okButton);
                 if (option == JOptionPane.OK_OPTION) {
@@ -520,7 +531,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this,
                             ex.getMessage(),
-                            "Edit rule error",
+                            Bundle.ConfigVisualPanel2_editRuleError(),
                             JOptionPane.ERROR_MESSAGE);
                         // let user fix the error
                     }
@@ -560,12 +571,18 @@ public final class ConfigVisualPanel2 extends JPanel {
         }        
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
+    @NbBundle.Messages({
+        "ConfigVisualPanel2.deleteRuleSet=Delete rule set ",
+        "ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule set confirmation",
+    })
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
         int index = rulesTable.getSelectedRow();
         if (index != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
 
-            int option = JOptionPane.showOptionDialog(this, "Delete rule set " + ruleName, "Delete rule set confirmation", 
+            int option = JOptionPane.showOptionDialog(this, 
+                    Bundle.ConfigVisualPanel2_deleteRuleSet() + ruleName, 
+                    Bundle.ConfigVisualPanel2_deleteRuleSetConfirmation(), 
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
             if (option == JOptionPane.NO_OPTION) {
                 return;
@@ -767,10 +784,8 @@ public final class ConfigVisualPanel2 extends JPanel {
         this.config = config;
         if (newFile) {
             initPanel();
-            configFileTextField.setText(configFilename);
-        } else {
-            updatePanel(configFilename, config);
         }
+        updatePanel(configFilename, config);
     }
 
     private void initPanel() {

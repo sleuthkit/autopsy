@@ -35,6 +35,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.openide.util.NbBundle;
 
 /**
  * Configuration Visual Panel 1
@@ -53,9 +54,12 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
         configFileTextField.getDocument().addDocumentListener(new MyDocumentListener(this));
     }
 
+    @NbBundle.Messages({
+        "ConfigVisualPanel1.selectConfigurationFile=Select configuration file"
+    })
     @Override
     public String getName() {
-        return "Select configuration file";
+        return Bundle.ConfigVisualPanel1_selectConfigurationFile();
     }
 
     /**
@@ -147,16 +151,25 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
         configFileTextField.setText("");
     }//GEN-LAST:event_loadRadioButtonActionPerformed
 
+    @NbBundle.Messages({
+        "ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration json file"
+    })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-         chooseFile("Select a Logical Imager configuration json file");
+         chooseFile(Bundle.ConfigVisualPanel1_chooseFileTitle());
     }//GEN-LAST:event_browseButtonActionPerformed
 
+    @NbBundle.Messages({
+        "ConfigVisualPanel1.fileNameExtensionFilter=configuration json file",
+        "ConfigVisualPanel1.invalidConfigJson=Invalid config json: ",
+        "ConfigVisualPanel1.configurationError=Configuration error",
+    })
     private void chooseFile(String title) {
+        final String jsonExt = ".json"; // NON-NLS
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileFilter filter = new FileNameExtensionFilter("configuration json file", new String[] {"json"});
+        FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigVisualPanel1_fileNameExtensionFilter(), new String[] {"json"}); // NON-NLS
         fileChooser.setFileFilter(filter);
         fileChooser.setMultiSelectionEnabled(false);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -169,13 +182,13 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
                     newFile = false;
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, 
-                        "Invalid config json: " + ex.getMessage() , 
-                        "Configuration error", 
+                        Bundle.ConfigVisualPanel1_invalidConfigJson() + ex.getMessage() , 
+                        Bundle.ConfigVisualPanel1_configurationError(), 
                         JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                if (!path.endsWith(".json")) {
-                    path += ".json";
+                if (!path.endsWith(jsonExt)) {
+                    path += jsonExt;
                 }
                 configFilename = path;
                 configFileTextField.setText(path);
@@ -260,7 +273,7 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
         }
 
         private void fireChange() {
-            panel.firePropertyChange("UPDATE_UI", false, true);
+            panel.firePropertyChange("UPDATE_UI", false, true); // NON-NLS
         }
     }
 

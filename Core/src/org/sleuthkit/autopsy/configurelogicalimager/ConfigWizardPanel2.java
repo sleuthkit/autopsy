@@ -31,6 +31,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -83,9 +84,9 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     @Override
     public void readSettings(WizardDescriptor wiz) {
         // use wiz.getProperty to retrieve previous panel state
-        configFilename = (String) wiz.getProperty("configFilename");
-        config = (LogicalImagerConfig) wiz.getProperty("config");
-        newFile = (boolean) wiz.getProperty("newFile");
+        configFilename = (String) wiz.getProperty("configFilename"); // NON-NLS
+        config = (LogicalImagerConfig) wiz.getProperty("config"); // NON-NLS
+        newFile = (boolean) wiz.getProperty("newFile"); // NON-NLS
         component.setConfiguration(configFilename, config, newFile);
     }
 
@@ -110,18 +111,22 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         return config;
     }
     
+    @NbBundle.Messages({
+        "ConfigWizardPanel2.fileNameExtensionFilter=configuration json file"
+    })
     private String chooseFile(String title) {
+        final String jsonExt = ".json"; // NON-NLS
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileFilter filter = new FileNameExtensionFilter("configuration json file", new String[] {"json"});
+        FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigWizardPanel2_fileNameExtensionFilter(), new String[] {"json"}); // NON-NLS
         fileChooser.setFileFilter(filter);
         fileChooser.setMultiSelectionEnabled(false);
         if (fileChooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
-            if (!path.endsWith(".json")) {
-                path += ".json";
+            if (!path.endsWith(jsonExt)) { 
+                path += jsonExt;
             }
             return path;
         } else {
@@ -129,6 +134,13 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         }
     }
     
+    @NbBundle.Messages({
+        "# {0} - configFilename",
+        "ConfigWizardPanel2.failedToSaveMsg=Failed to save configuration file: {0}",
+        "# {0} - reason",
+        "ConfigWizardPanel2.reason=\nReason: ",       
+        "ConfigWizardPanel2.chooseFileTitle=Save to another configuration file",       
+    })
     public void saveConfigFile() {
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation();
         Gson gson = gsonBuilder.create();
@@ -136,9 +148,9 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         try (FileWriter fileWriter = new FileWriter(configFilename)){
             fileWriter.write(toJson);
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(component, "Failed to save configuration file: " 
-                + configFilename + "\nReason: " + ex.getMessage());
-            String newFilename = chooseFile("Save to another configuration file");
+            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveMsg(configFilename)
+                + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
+            String newFilename = chooseFile(Bundle.ConfigWizardPanel2_chooseFileTitle());
             if (newFilename != null) {
                 try (FileWriter fileWriter = new FileWriter(newFilename)) {                
                     fileWriter.write(toJson);
@@ -148,8 +160,8 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
             }
         } catch (JsonIOException jioe) {
             LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + configFilename, jioe);
-            JOptionPane.showMessageDialog(component, "Failed to save configuration file: " 
-                + configFilename + "\nReason: " + jioe.getMessage());
+            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveMsg(configFilename) 
+                    + Bundle.ConfigWizardPanel2_reason(jioe.getMessage()));
         }
     }
 
