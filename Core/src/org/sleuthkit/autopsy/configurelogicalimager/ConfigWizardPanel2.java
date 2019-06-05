@@ -21,14 +21,19 @@ package org.sleuthkit.autopsy.configurelogicalimager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.apache.commons.io.FileUtils;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
@@ -147,6 +152,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         String toJson = gson.toJson(config);
         try (FileWriter fileWriter = new FileWriter(configFilename)){
             fileWriter.write(toJson);
+            writeTskLogicalImagerExe(Paths.get(configFilename).getParent());
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveMsg(configFilename)
                 + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
@@ -154,6 +160,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
             if (newFilename != null) {
                 try (FileWriter fileWriter = new FileWriter(newFilename)) {                
                     fileWriter.write(toJson);
+                    writeTskLogicalImagerExe(Paths.get(newFilename).getParent());
                 } catch (IOException ex1) {
                     LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + newFilename, ex1);
                 }
@@ -162,6 +169,13 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
             LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + configFilename, jioe);
             JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveMsg(configFilename) 
                     + Bundle.ConfigWizardPanel2_reason(jioe.getMessage()));
+        }
+    }
+
+    private void writeTskLogicalImagerExe(Path destDir) throws IOException {
+        try (InputStream in = getClass().getResourceAsStream("tsk_logical_imager.exe")) { // NON-NLS
+            File destFile = Paths.get(destDir.toString(), "tsk_logical_imager.exe").toFile(); // NON-NLS
+            FileUtils.copyInputStreamToFile(in, destFile);
         }
     }
 
