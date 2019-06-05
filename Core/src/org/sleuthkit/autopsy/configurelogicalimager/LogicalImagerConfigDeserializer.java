@@ -129,7 +129,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                                 default:
                                     throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(sizeKey));
                             }
-                        }
+                        };
                         break;
                     case "date-range": // NON-NLS
                         JsonObject dateRangeObject = entry1.getValue().getAsJsonObject();
