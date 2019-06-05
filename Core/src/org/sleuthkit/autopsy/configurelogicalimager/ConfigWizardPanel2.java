@@ -28,11 +28,8 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ChangeListener;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FileUtils;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
@@ -117,34 +114,11 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     }
     
     @NbBundle.Messages({
-        "ConfigWizardPanel2.fileNameExtensionFilter=configuration json file"
-    })
-    private String chooseFile(String title) {
-        final String jsonExt = ".json"; // NON-NLS
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle(title);
-        fileChooser.setDragEnabled(false);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigWizardPanel2_fileNameExtensionFilter(), new String[] {"json"}); // NON-NLS
-        fileChooser.setFileFilter(filter);
-        fileChooser.setMultiSelectionEnabled(false);
-        if (fileChooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
-            String path = fileChooser.getSelectedFile().getPath();
-            if (!path.endsWith(jsonExt)) { 
-                path += jsonExt;
-            }
-            return path;
-        } else {
-            return null;
-        }
-    }
-    
-    @NbBundle.Messages({
         "# {0} - configFilename",
-        "ConfigWizardPanel2.failedToSaveMsg=Failed to save configuration file: {0}",
+        "ConfigWizardPanel2.failedToSaveConfigMsg=Failed to save configuration file: {0}",
         "# {0} - reason",
         "ConfigWizardPanel2.reason=\nReason: ",       
-        "ConfigWizardPanel2.chooseFileTitle=Save to another configuration file",       
+        "ConfigWizardPanel2.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file",
     })
     public void saveConfigFile() {
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation();
@@ -152,23 +126,20 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         String toJson = gson.toJson(config);
         try (FileWriter fileWriter = new FileWriter(configFilename)){
             fileWriter.write(toJson);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveConfigMsg(configFilename)
+                + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
+        } catch (JsonIOException jioe) {
+            LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + configFilename, jioe); // NON-NLS
+            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveConfigMsg(configFilename) 
+                    + Bundle.ConfigWizardPanel2_reason(jioe.getMessage()));
+        }
+        try {
             writeTskLogicalImagerExe(Paths.get(configFilename).getParent());
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveMsg(configFilename)
-                + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
-            String newFilename = chooseFile(Bundle.ConfigWizardPanel2_chooseFileTitle());
-            if (newFilename != null) {
-                try (FileWriter fileWriter = new FileWriter(newFilename)) {                
-                    fileWriter.write(toJson);
-                    writeTskLogicalImagerExe(Paths.get(newFilename).getParent());
-                } catch (IOException ex1) {
-                    LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + newFilename, ex1);
-                }
-            }
-        } catch (JsonIOException jioe) {
-            LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + configFilename, jioe);
-            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveMsg(configFilename) 
-                    + Bundle.ConfigWizardPanel2_reason(jioe.getMessage()));
+            LOGGER.log(Level.SEVERE, "Failed to save tsk_logical_imager.exe file", ex); // NON-NLS
+            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveExeMsg() 
+                    + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
         }
     }
 
