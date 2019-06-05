@@ -77,7 +77,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager.ContentViewerTag;
 import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager.SerializationException;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtil;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtility;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagControls;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagCreator;
@@ -102,7 +102,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
     private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
-    private final Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
 
     private final boolean fxInited;
 
@@ -117,10 +117,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final MaskerPane maskerPane = new MaskerPane();
 
     private final JPopupMenu popupMenu = new JPopupMenu();
-    private final JMenuItem createTag;
-    private final JMenuItem deleteTag;
-    private final JMenuItem hideTags;
-    private final JMenuItem exportTags;
+    private final JMenuItem createTagMenuItem;
+    private final JMenuItem deleteTagMenuItem;
+    private final JMenuItem hideTagsMenuItem;
+    private final JMenuItem exportTagsMenuItem;
 
     private final JFileChooser exportChooser;
 
@@ -166,27 +166,27 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         exportChooser.setDialogTitle(Bundle.MediaViewImagePanel_fileChooserTitle());
 
         //Build popupMenu when Tags Menu button is pressed.
-        createTag = new JMenuItem("Create");
-        createTag.addActionListener((event) -> createTag());
-        popupMenu.add(createTag);
+        createTagMenuItem = new JMenuItem("Create");
+        createTagMenuItem.addActionListener((event) -> createTag());
+        popupMenu.add(createTagMenuItem);
 
         popupMenu.add(new JSeparator());
 
-        deleteTag = new JMenuItem("Delete");
-        deleteTag.addActionListener((event) -> deleteTag());
-        popupMenu.add(deleteTag);
+        deleteTagMenuItem = new JMenuItem("Delete");
+        deleteTagMenuItem.addActionListener((event) -> deleteTag());
+        popupMenu.add(deleteTagMenuItem);
 
         popupMenu.add(new JSeparator());
 
-        hideTags = new JMenuItem("Hide");
-        hideTags.addActionListener((event) -> showOrHideTags());
-        popupMenu.add(hideTags);
+        hideTagsMenuItem = new JMenuItem("Hide");
+        hideTagsMenuItem.addActionListener((event) -> showOrHideTags());
+        popupMenu.add(hideTagsMenuItem);
 
         popupMenu.add(new JSeparator());
 
-        exportTags = new JMenuItem("Export");
-        exportTags.addActionListener((event) -> exportTags());
-        popupMenu.add(exportTags);
+        exportTagsMenuItem = new JMenuItem("Export");
+        exportTagsMenuItem.addActionListener((event) -> exportTags());
+        popupMenu.add(exportTagsMenuItem);
 
         popupMenu.setPopupSize(300, 150);
 
@@ -211,57 +211,59 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         State currentState = (State) event.getNewValue();
                         switch (currentState) {
                             case CREATE:
-                                createTag.setEnabled(true);
-                                deleteTag.setEnabled(false);
-                                hideTags.setEnabled(true);
-                                exportTags.setEnabled(true);
+                                createTagMenuItem.setEnabled(true);
+                                deleteTagMenuItem.setEnabled(false);
+                                hideTagsMenuItem.setEnabled(true);
+                                exportTagsMenuItem.setEnabled(true);
                                 break;
                             case SELECTED:
                                 if (masterGroup.getChildren().contains(imageTagCreator)) {
                                     imageTagCreator.disconnect();
                                     masterGroup.getChildren().remove(imageTagCreator);
                                 }
-                                createTag.setEnabled(false);
-                                deleteTag.setEnabled(true);
-                                hideTags.setEnabled(true);
-                                exportTags.setEnabled(true);
+                                createTagMenuItem.setEnabled(false);
+                                deleteTagMenuItem.setEnabled(true);
+                                hideTagsMenuItem.setEnabled(true);
+                                exportTagsMenuItem.setEnabled(true);
                                 break;
                             case HIDDEN:
-                                createTag.setEnabled(false);
-                                deleteTag.setEnabled(false);
-                                hideTags.setEnabled(true);
-                                hideTags.setText(DisplayOptions.SHOW_TAGS.getName());
-                                exportTags.setEnabled(false);
+                                createTagMenuItem.setEnabled(false);
+                                deleteTagMenuItem.setEnabled(false);
+                                hideTagsMenuItem.setEnabled(true);
+                                hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
+                                exportTagsMenuItem.setEnabled(false);
                                 break;
                             case VISIBLE:
-                                createTag.setEnabled(true);
-                                deleteTag.setEnabled(false);
-                                hideTags.setEnabled(true);
-                                hideTags.setText(DisplayOptions.HIDE_TAGS.getName());
-                                exportTags.setEnabled(true);
+                                createTagMenuItem.setEnabled(true);
+                                deleteTagMenuItem.setEnabled(false);
+                                hideTagsMenuItem.setEnabled(true);
+                                hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
+                                exportTagsMenuItem.setEnabled(true);
                                 break;
                             case DEFAULT:
                             case EMPTY:
                                 if (masterGroup.getChildren().contains(imageTagCreator)) {
                                     imageTagCreator.disconnect();
                                 }
-                                createTag.setEnabled(true);
-                                deleteTag.setEnabled(false);
-                                hideTags.setEnabled(false);
-                                hideTags.setText(DisplayOptions.HIDE_TAGS.getName());
-                                exportTags.setEnabled(false);
+                                createTagMenuItem.setEnabled(true);
+                                deleteTagMenuItem.setEnabled(false);
+                                hideTagsMenuItem.setEnabled(false);
+                                hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
+                                exportTagsMenuItem.setEnabled(false);
                                 break;
                             case NONEMPTY:
-                                createTag.setEnabled(true);
-                                deleteTag.setEnabled(false);
-                                hideTags.setEnabled(true);
-                                exportTags.setEnabled(true);
+                                createTagMenuItem.setEnabled(true);
+                                deleteTagMenuItem.setEnabled(false);
+                                hideTagsMenuItem.setEnabled(true);
+                                exportTagsMenuItem.setEnabled(true);
                                 break;
                             case DISABLE:
-                                createTag.setEnabled(false);
-                                deleteTag.setEnabled(false);
-                                hideTags.setEnabled(false);
-                                exportTags.setEnabled(false);
+                                createTagMenuItem.setEnabled(false);
+                                deleteTagMenuItem.setEnabled(false);
+                                hideTagsMenuItem.setEnabled(false);
+                                exportTagsMenuItem.setEnabled(false);
+                                break;
+                            default:
                                 break;
                         }
                     });
@@ -811,8 +813,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         try {
             ContentTag contentTag = Case.getCurrentCaseThrows().getServices().getTagsManager()
                     .addContentTag(file, result.getTagName(), result.getComment());
-            ContentViewerTag<ImageTagRegion> contentViewerTag = ContentViewerTagManager.saveTag(contentTag, data);
-            return contentViewerTag;
+            return ContentViewerTagManager.saveTag(contentTag, data);
         } finally {
             scrollPane.setCursor(Cursor.DEFAULT);
         }
@@ -824,17 +825,17 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      */
     private void showOrHideTags() {
         Platform.runLater(() -> {
-            if (DisplayOptions.HIDE_TAGS.getName().equals(hideTags.getText())) {
+            if (DisplayOptions.HIDE_TAGS.getName().equals(hideTagsMenuItem.getText())) {
                 //Temporarily remove the tags group and update buttons
                 masterGroup.getChildren().remove(tagsGroup);
-                hideTags.setText(DisplayOptions.SHOW_TAGS.getName());
+                hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
                 tagsGroup.clearFocus();
                 pcs.firePropertyChange(new PropertyChangeEvent(this,
                         "state", null, State.HIDDEN));
             } else {
                 //Add tags group back in and update buttons
                 masterGroup.getChildren().add(tagsGroup);
-                hideTags.setText(DisplayOptions.HIDE_TAGS.getName());
+                hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
                 pcs.firePropertyChange(new PropertyChangeEvent(this,
                         "state", null, State.VISIBLE));
             }
@@ -845,7 +846,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         "MediaViewImagePanel.exportSaveText=Save",
         "MediaViewImagePanel.successfulExport=Tagged image was successfully saved.",
         "MediaViewImagePanel.unsuccessfulExport=Unable to export tagged image to disk.",
-        "MediaViewImagePanel.fileChooserTitle=Choose a directory to save the image"
+        "MediaViewImagePanel.fileChooserTitle=Choose a save location"
     })
     private void exportTags() {
         tagsGroup.clearFocus();
@@ -855,14 +856,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             exportChooser.setCurrentDirectory(exportChooser.getSelectedFile());
             new SwingWorker<Void, Void>() {
                 @Override
-                protected Void doInBackground() throws Exception {
+                protected Void doInBackground() {
                     try {
                         List<ContentTag> tags = Case.getCurrentCase().getServices()
                                 .getTagsManager().getContentTagsByContent(file);
                         List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
                         Collection<ImageTagRegion> regions = contentViewerTags.stream()
                                 .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
-                        byte[] jpgImage = ImageTagsUtil.exportTags(file, regions, ".jpg");
+                        byte[] jpgImage = ImageTagsUtility.exportTags(file, regions, ".jpg");
                         Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
                                 FilenameUtils.getBaseName(file.getName()) + "-with_tags.jpg"); //NON-NLS
                         Files.write(output, jpgImage);
