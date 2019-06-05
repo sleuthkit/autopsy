@@ -148,7 +148,6 @@ public final class ImageGalleryController {
     private final UndoRedoManager undoManager;
     private final Case autopsyCase;
     private final SleuthkitCase sleuthKitCase;
-    private final ListeningExecutorService dbExecutor;
     private final CaseEventListener caseEventListener;
     private final IngestJobEventListener ingestJobEventListener;
     private final IngestModuleEventListener ingestModuleEventListener;
@@ -159,6 +158,7 @@ public final class ImageGalleryController {
     private HashSetManager hashSetManager;
     private CategoryManager categoryManager;
     private DrawableTagsManager tagsManager;
+    private ListeningExecutorService dbExecutor;
 
     /**
      * Creates an image gallery controller for a case. The controller will
@@ -191,8 +191,8 @@ public final class ImageGalleryController {
         synchronized (controllerLock) {
             return controllersByCase.get(theCase.getName());
         }
-    }    
-    
+    }
+
     /**
      * Shuts down the image gallery controller for a case. The controller will
      * close the model for the case.
@@ -280,8 +280,6 @@ public final class ImageGalleryController {
     }
 
     ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
-        autopsyCase = Objects.requireNonNull(newCase);
-        sleuthKitCase = newCase.getSleuthkitCase();
         listeningEnabled = new SimpleBooleanProperty(false);
         isCaseStale = new ReadOnlyBooleanWrapper(false);
         metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
@@ -290,8 +288,9 @@ public final class ImageGalleryController {
         dbTaskQueueSize = new ReadOnlyIntegerWrapper(0);
         historyManager = new History<>();
         undoManager = new UndoRedoManager();
+        autopsyCase = Objects.requireNonNull(newCase);
+        sleuthKitCase = newCase.getSleuthkitCase();
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
-        dbExecutor = getNewDBExecutor();
         caseEventListener = new CaseEventListener();
         ingestJobEventListener = new IngestJobEventListener();
         ingestModuleEventListener = new IngestModuleEventListener();
@@ -314,6 +313,7 @@ public final class ImageGalleryController {
         hashSetManager = new HashSetManager(drawableDB);
 
         setCaseStale(isDataSourcesTableStale());
+        dbExecutor = getNewDBExecutor();
 
         /*
          * Add a listener for changes to the Image Gallery enabled property that
