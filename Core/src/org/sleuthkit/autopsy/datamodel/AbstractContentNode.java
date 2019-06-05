@@ -64,14 +64,15 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * populate this node.
      */
     static final ExecutorService backgroundTasksPool;
-    static final Integer MAX_POOL_SIZE = 10;
+    private static final Integer MAX_POOL_SIZE = 10;
     
     /**
      * Default no description string
      */
-    @NbBundle.Messages("AbstractContentNode.nodescription=no description")
+    @NbBundle.Messages({"AbstractContentNode.nodescription=no description",
+                        "AbstractContentNode.valueLoading=value loading"})
     protected static final String NO_DESCR = Bundle.AbstractContentNode_nodescription();
-    
+    protected static final String VALUE_LOADING = Bundle.AbstractContentNode_valueLoading();
     
      /**
      * Event signals to indicate the background tasks have completed processing.

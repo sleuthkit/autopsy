@@ -74,8 +74,6 @@ import org.sleuthkit.datamodel.TskData;
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
 
     private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
-    @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
-    private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
@@ -328,9 +326,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
 
         // Create place holders for S C O 
-        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), NO_DESCR, ""));
-        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, ""));
-        properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), NO_DESCR, ""));
+        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
+        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+            properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
+        }
         
         
         // Get the SCO columns data in a background task

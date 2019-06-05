@@ -37,7 +37,7 @@ class GetSCOTask implements Runnable {
     private final WeakReference<AbstractContentNode<?>> weakNodeRef;
     private final PropertyChangeListener listener;
 
-    public GetSCOTask(WeakReference<AbstractContentNode<?>> weakContentRef, PropertyChangeListener listener) {
+    GetSCOTask(WeakReference<AbstractContentNode<?>> weakContentRef, PropertyChangeListener listener) {
         this.weakNodeRef = weakContentRef;
         this.listener = listener;
     }

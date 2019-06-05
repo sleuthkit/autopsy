@@ -99,10 +99,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private Content associated = null;
 
     private List<NodeProperty<? extends Object>> customProperties;
-
-    protected final static String NO_DESCR = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.noDesc.text");
-
-
+    
     /*
      * Artifact types which should have the full unique path of the associated
      * content as a property.
@@ -367,9 +364,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 this.getSourceName()));
 
         // Create place holders for S C O 
-        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), NO_DESCR, ""));
-        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR, ""));
-        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), VALUE_LOADING, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), VALUE_LOADING, ""));        
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+            sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), VALUE_LOADING, ""));
+        }
         
         // Get the SCO columns data in a background task
         backgroundTasksPool.submit(new GetSCOTask(
@@ -596,14 +595,33 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Used by (subclasses of) BlackboardArtifactNode to add the comment
      * property to their sheets.
      *
+     * @param sheetSet  the modifiable Sheet.Set to add the property to
+     * @param tags      the list of tags associated with the file
+     * @param attribute the correlation attribute associated with this
+     *                  artifact's associated file, null if central repo is not
+     *                  enabled
+     * 
+     * @deprecated  Use the GetSCOTask to get this data on a background thread..., 
+     *              and then update the property sheet asynchronously
+     */
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=C",
+        "BlackboardArtifactNode.createSheet.comment.displayName=C"})
+    @Deprecated 
+    protected final void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags, CorrelationAttributeInstance attribute) {
+       HasCommentStatus status = getCommentProperty(tags, attribute );
+       sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
+                status));
+    }
+    
+    /**
+     * Gets the comment property for the node
+     *
      * @param tags      the list of tags associated with the file
      * @param attribute the correlation attribute associated with this
      *                  artifact's associated file, null if central repo is not
      *                  enabled
      * @return comment property
      */
-    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=C",
-        "BlackboardArtifactNode.createSheet.comment.displayName=C"})
     @Override
     protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
 
@@ -627,14 +645,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return status;
     }
-    
     /**
      * Used by (subclasses of) BlackboardArtifactNode to add the Score property
      * to their sheets.
      *
+     * @param sheetSet the modifiable Sheet.Set to add the property to
      * @param tags     the list of tags associated with the file
      * 
-     * @return score property
+     * @deprecated  Use the GetSCOTask to get this data on a background thread..., 
+     *              and then update the property sheet asynchronously
      */
     @NbBundle.Messages({"BlackboardArtifactNode.createSheet.score.name=S",
         "BlackboardArtifactNode.createSheet.score.displayName=S",
@@ -643,7 +662,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
         "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag.",
         "BlackboardArtifactNode.createSheet.noScore.description=No score"})
+    @Deprecated
+    protected final void addScorePropertyAndDescription(Sheet.Set sheetSet, List<Tag> tags) {
+        Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
+    }
     
+    /**
+     * Get the score property for the node.
+     *
+     * @param tags     the list of tags associated with the file
+     * 
+     * @return  score property and description
+     */
     @Override
     protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
        Score score = Score.NO_SCORE;
@@ -693,17 +724,40 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         
         return Pair.of(score, description);
     }
-    
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the Occurrences property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set to add the property to
+     * @param attribute correlation attribute instance
+     * 
+     * @deprecated  Use the GetSCOTask to get this data on a background thread..., 
+     *              and then update the property sheet asynchronously
+     */
     @NbBundle.Messages({"BlackboardArtifactNode.createSheet.count.name=O",
         "BlackboardArtifactNode.createSheet.count.displayName=O",
         "BlackboardArtifactNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
         "BlackboardArtifactNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this artifact's associated file when the column was populated",
         "# {0} - occuranceCount",
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
-
+    @Deprecated
+    protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
+        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute);
+        sheetSet.put(
+                new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), countAndDescription.getRight(), countAndDescription.getLeft()));
+     }
+    
+    /**
+     * Gets the Occurrences property for the node.
+     *
+     * @param attribute correlation attribute instance
+     * 
+     * @return count and description
+     * 
+     */
     @Override
     protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute) {
-        Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
+        Long count = -1L;
         String description = Bundle.BlackboardArtifactNode_createSheet_count_noCentralRepo_description();
         try {
             //don't perform the query if there is no correlation value
