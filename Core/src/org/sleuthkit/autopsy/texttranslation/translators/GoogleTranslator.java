@@ -61,6 +61,11 @@ public final class GoogleTranslator implements TextTranslator {
         loadTranslator();
     }
 
+    /**
+     * Check if google is able to be reached
+     *
+     * @return true if it can be, false otherwise
+     */
     private static boolean googleIsReachable() {
         String host = "www.google.com";
         InetAddress address;
@@ -138,7 +143,7 @@ public final class GoogleTranslator implements TextTranslator {
         InputStream credentialStream = null;
         Credentials creds = null;
         if (StringUtils.isBlank(settings.getCredentialPath())) {
-            logger.log(Level.INFO, "No credentials file has been provided for Google Translator");     
+            logger.log(Level.INFO, "No credentials file has been provided for Google Translator");
         } else {
             try {
                 credentialStream = new FileInputStream(settings.getCredentialPath());

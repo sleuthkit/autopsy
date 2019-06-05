@@ -74,6 +74,9 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         targetLanguageCode = code;
     }
 
+    /**
+     * Populate the target language combo box with available target languages
+     */
     @Messages({"BingTranslatorSettingsPanel.warning.targetLanguageFailure=Unable to get list of target languages or parse the result that was received"})
     private void populateComboBox() {
         Request get_request = new Request.Builder()

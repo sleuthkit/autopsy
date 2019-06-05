@@ -40,22 +40,32 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 @ServiceProvider(service = TextTranslator.class)
 public class BingTranslator implements TextTranslator {
 
-    //In the String below, "en" is the target language. You can include multiple target
+    //The target language follows the to= in the string below. You can include multiple target
     //languages separated by commas. A full list of supported languages is here:
     //https://docs.microsoft.com/en-us/azure/cognitive-services/translator/language-support
     private static final String BASE_URL = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=";
+    private static final int MAX_STRING_LENGTH = 5000;
     private final BingTranslatorSettingsPanel settingsPanel;
     private final BingTranslatorSettings settings = new BingTranslatorSettings();
     // This sends messages to Microsoft.
     private final OkHttpClient CLIENT = new OkHttpClient();
-    //We might want to make this a configurable setting for anyone who has a 
-    //paid account that's willing to pay for long documents.
-    private final int MAX_STRING_LENGTH = 5000;
 
+    /**
+     * Create a Bing Translator
+     */
     public BingTranslator() {
         settingsPanel = new BingTranslatorSettingsPanel(settings.getAuthenticationKey(), settings.getTargetLanguageCode());
     }
 
+    /**
+     * Get the tranlationurl for the specified language code
+     *
+     *
+     *
+     * @param languageCode language code for language to translate to
+     *
+     * @return a string representation of the url to request translation from
+     */
     static String getTranlatorUrl(String languageCode) {
         return BASE_URL + languageCode;
     }
@@ -134,6 +144,16 @@ public class BingTranslator implements TextTranslator {
         settings.saveSettings();
     }
 
+    /**
+     * Parse the response to get the translated text
+     *
+     * @param json_text the json which was received as a response to a
+     *                  translation request
+     *
+     * @return the translated text
+     *
+     * @throws TranslationException
+     */
     private String parseJSONResponse(String json_text) throws TranslationException {
         /*
          * Here is an example of the text we get from Bing when input is "gato",

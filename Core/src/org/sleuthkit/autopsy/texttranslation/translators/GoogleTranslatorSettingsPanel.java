@@ -146,6 +146,12 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Helper method to enable/disable all controls which are dependent on valid
+     * credentials having been provided
+     *
+     * @param enabled true to enable the controls, false to disable them
+     */
     private void enableControls(boolean enabled) {
         targetLanguageComboBox.setEnabled(enabled);
         testButton.setEnabled(enabled);
@@ -307,18 +313,18 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
 
     @Messages({"GoogleTranslatorSettingsPanel.errorMessage.translationFailure=Translation failure with specified credentials"})
     private void testButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButtonActionPerformed
-           testResultValueLabel.setText("");
-           Translate tempTranslate = getTemporaryTranslationService();
-           if (tempTranslate != null) {
-               try {
-                   Translation translation = tempTranslate.translate(testUntranslatedTextField.getText());
-                   testResultValueLabel.setText(translation.getTranslatedText());
-                   warningLabel.setText("");
-               } catch (Exception ex) {
-                   warningLabel.setText(Bundle.GoogleTranslatorSettingsPanel_errorMessage_translationFailure());
-                   logger.log(Level.WARNING, Bundle.GoogleTranslatorSettingsPanel_errorMessage_translationFailure(), ex);
-               }
-           }
+        testResultValueLabel.setText("");
+        Translate tempTranslate = getTemporaryTranslationService();
+        if (tempTranslate != null) {
+            try {
+                Translation translation = tempTranslate.translate(testUntranslatedTextField.getText());
+                testResultValueLabel.setText(translation.getTranslatedText());
+                warningLabel.setText("");
+            } catch (Exception ex) {
+                warningLabel.setText(Bundle.GoogleTranslatorSettingsPanel_errorMessage_translationFailure());
+                logger.log(Level.WARNING, Bundle.GoogleTranslatorSettingsPanel_errorMessage_translationFailure(), ex);
+            }
+        }
     }//GEN-LAST:event_testButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
