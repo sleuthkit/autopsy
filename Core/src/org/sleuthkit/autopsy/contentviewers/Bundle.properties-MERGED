@@ -46,6 +46,7 @@ MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insu
 MediaViewImagePanel.errorLabel.text=Could not load file into Media View.
 MediaViewImagePanel.exportSaveText=Save
 MediaViewImagePanel.externalViewerButton.text=Open in External Viewer  Ctrl+E
+MediaViewImagePanel.fileChooserTitle=Choose a directory to save the image
 MediaViewImagePanel.successfulExport=Tagged image was successfully saved.
 MediaViewImagePanel.unsuccessfulExport=Unable to export tagged image to disk.
 MediaViewVideoPanel.pauseButton.text=\u25ba

@@ -52,11 +52,11 @@ public final class ImageTagsGroup extends Group {
             if (currentFocus != null) {
                 currentFocus.getEventDispatcher().dispatchEvent(
                         new Event(ImageTagControls.NOT_FOCUSED), NO_OP_CHAIN);
-                currentFocus = null;
             }
 
             this.pcs.firePropertyChange(new PropertyChangeEvent(this,
                     ImageTagControls.NOT_FOCUSED.getName(), currentFocus, null));
+            currentFocus = null;
         });
 
         //Set the focus of selected tag

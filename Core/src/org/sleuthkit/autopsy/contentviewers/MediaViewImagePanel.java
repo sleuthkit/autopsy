@@ -65,6 +65,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
@@ -121,6 +122,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final JMenuItem hideTags;
     private final JMenuItem exportTags;
 
+    private final JFileChooser exportChooser;
+
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     private double zoomRatio;
@@ -158,30 +161,31 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     public MediaViewImagePanel() {
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
+
+        exportChooser = new JFileChooser();
+        exportChooser.setDialogTitle(Bundle.MediaViewImagePanel_fileChooserTitle());
+
+        //Build popupMenu when Tags Menu button is pressed.
         createTag = new JMenuItem("Create");
         createTag.addActionListener((event) -> createTag());
-        createTag.setToolTipText("You may drag anywhere on the image after selecting this option.");
         popupMenu.add(createTag);
 
-        popupMenu.add(new JSeparator()); // SEPARATOR
+        popupMenu.add(new JSeparator());
 
         deleteTag = new JMenuItem("Delete");
         deleteTag.addActionListener((event) -> deleteTag());
-        deleteTag.setToolTipText("Delete the selected tag.");
         popupMenu.add(deleteTag);
 
-        popupMenu.add(new JSeparator()); // SEPARATOR
+        popupMenu.add(new JSeparator());
 
         hideTags = new JMenuItem("Hide");
         hideTags.addActionListener((event) -> showOrHideTags());
-        hideTags.setToolTipText("Hide the tags on this image.");
         popupMenu.add(hideTags);
 
-        popupMenu.add(new JSeparator()); // SEPARATOR
+        popupMenu.add(new JSeparator());
 
         exportTags = new JMenuItem("Export");
         exportTags.addActionListener((event) -> exportTags());
-        exportTags.setToolTipText("Save the image with tags applied.");
         popupMenu.add(exportTags);
 
         popupMenu.setPopupSize(300, 150);
@@ -201,6 +205,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         }
                     });
 
+                    //Respond to state events by enabling/disabling the correct
+                    //buttons.
                     pcs.addPropertyChangeListener((event) -> {
                         State currentState = (State) event.getNewValue();
                         switch (currentState) {
@@ -265,8 +271,17 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     //Update buttons when users select (or unselect) image tags.
                     tagsGroup.addFocusChangeListener((event) -> {
                         if (event.getPropertyName().equals(ImageTagControls.NOT_FOCUSED.getName())) {
-                            pcs.firePropertyChange(new PropertyChangeEvent(this,
+                            if (masterGroup.getChildren().contains(imageTagCreator)) {
+                                return;
+                            }
+                            
+                            if(tagsGroup.getChildren().isEmpty()) {
+                                pcs.firePropertyChange(new PropertyChangeEvent(this,
+                                    "state", null, State.EMPTY));
+                            } else {
+                                pcs.firePropertyChange(new PropertyChangeEvent(this,
                                     "state", null, State.CREATE));
+                            }
                         } else if (event.getPropertyName().equals(ImageTagControls.FOCUSED.getName())) {
                             pcs.firePropertyChange(new PropertyChangeEvent(this,
                                     "state", null, State.SELECTED));
@@ -374,9 +389,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                             List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
                             //Add all image tags                            
                             tagsGroup = buildImageTagsGroup(contentViewerTags);
-                            if(!tagsGroup.getChildren().isEmpty()) {
+                            if (!tagsGroup.getChildren().isEmpty()) {
                                 pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.NONEMPTY));
+                                        "state", null, State.NONEMPTY));
                             }
                         } catch (TskCoreException | NoCurrentCaseException ex) {
                             LOGGER.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
@@ -687,7 +702,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_formComponentResized
 
     /**
-     * 
+     * Deletes the selected tag when the Delete button is pressed in the Tag
+     * Menu.
      */
     private void deleteTag() {
         Platform.runLater(() -> {
@@ -715,7 +731,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }
 
     /**
-     * 
+     * Enables create tag logic when the Create button is pressed in the Tags
+     * Menu.
      */
     private void createTag() {
         pcs.firePropertyChange(new PropertyChangeEvent(this,
@@ -791,15 +808,19 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private ContentViewerTag<ImageTagRegion> storeImageTag(ImageTagRegion data, TagNameAndComment result)
             throws TskCoreException, SerializationException, NoCurrentCaseException {
         scrollPane.setCursor(Cursor.WAIT);
-        ContentTag contentTag = Case.getCurrentCaseThrows().getServices().getTagsManager()
-                .addContentTag(file, result.getTagName(), result.getComment());
-        ContentViewerTag<ImageTagRegion> contentViewerTag = ContentViewerTagManager.saveTag(contentTag, data);
-        scrollPane.setCursor(Cursor.DEFAULT);
-        return contentViewerTag;    
+        try {
+            ContentTag contentTag = Case.getCurrentCaseThrows().getServices().getTagsManager()
+                    .addContentTag(file, result.getTagName(), result.getComment());
+            ContentViewerTag<ImageTagRegion> contentViewerTag = ContentViewerTagManager.saveTag(contentTag, data);
+            return contentViewerTag;
+        } finally {
+            scrollPane.setCursor(Cursor.DEFAULT);
+        }
     }
 
     /**
-     * 
+     * Hides or show tags when the Hide or Show button is pressed in the Tags
+     * Menu.
      */
     private void showOrHideTags() {
         Platform.runLater(() -> {
@@ -809,13 +830,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 hideTags.setText(DisplayOptions.SHOW_TAGS.getName());
                 tagsGroup.clearFocus();
                 pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.HIDDEN));
+                        "state", null, State.HIDDEN));
             } else {
                 //Add tags group back in and update buttons
                 masterGroup.getChildren().add(tagsGroup);
                 hideTags.setText(DisplayOptions.HIDE_TAGS.getName());
-                 pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.VISIBLE));
+                pcs.firePropertyChange(new PropertyChangeEvent(this,
+                        "state", null, State.VISIBLE));
             }
         });
     }
@@ -823,31 +844,36 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     @NbBundle.Messages({
         "MediaViewImagePanel.exportSaveText=Save",
         "MediaViewImagePanel.successfulExport=Tagged image was successfully saved.",
-        "MediaViewImagePanel.unsuccessfulExport=Unable to export tagged image to disk."
+        "MediaViewImagePanel.unsuccessfulExport=Unable to export tagged image to disk.",
+        "MediaViewImagePanel.fileChooserTitle=Choose a directory to save the image"
     })
     private void exportTags() {
         tagsGroup.clearFocus();
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int returnVal = fileChooser.showDialog(this, Bundle.MediaViewImagePanel_exportSaveText());
+        exportChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnVal = exportChooser.showDialog(this, Bundle.MediaViewImagePanel_exportSaveText());
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            Platform.runLater(() -> {
-                try {
-                    List<ContentTag> tags = Case.getCurrentCase().getServices()
-                            .getTagsManager().getContentTagsByContent(file);
-                    List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
-                    Collection<ImageTagRegion> regions = contentViewerTags.stream()
-                            .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
-                    byte[] jpgImage = ImageTagsUtil.exportTags(file, regions, ".jpg");
-                    Path output = Paths.get(fileChooser.getSelectedFile().getPath(),
-                            FilenameUtils.getBaseName(file.getName()) + "-with_tags.jpg");
-                    Files.write(output, jpgImage);
-                    JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
-                } catch (TskCoreException | NoCurrentCaseException | IOException ex) {
-                    LOGGER.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_unsuccessfulExport());
+            exportChooser.setCurrentDirectory(exportChooser.getSelectedFile());
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        List<ContentTag> tags = Case.getCurrentCase().getServices()
+                                .getTagsManager().getContentTagsByContent(file);
+                        List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
+                        Collection<ImageTagRegion> regions = contentViewerTags.stream()
+                                .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
+                        byte[] jpgImage = ImageTagsUtil.exportTags(file, regions, ".jpg");
+                        Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
+                                FilenameUtils.getBaseName(file.getName()) + "-with_tags.jpg"); //NON-NLS
+                        Files.write(output, jpgImage);
+                        JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
+                    } catch (TskCoreException | NoCurrentCaseException | IOException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
+                        JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_unsuccessfulExport());
+                    }
+                    return null;
                 }
-            });
+            }.execute();
         }
     }
 
@@ -873,6 +899,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         }
     }
 
+    /**
+     * Different states that the content viewer can be in. These states drive
+     * which buttons are enabled for tagging.
+     */
     enum State {
         HIDDEN,
         VISIBLE,
