@@ -24,6 +24,8 @@ ConfigureLogicalImagerDialog.modifiedDateLabel.text=Modified Within:
 ConfigureLogicalImagerDialog.fullPathsLabel.text=Full paths:
 ConfigureLogicalImagerDialog.flagEncryptionProgramsCheckBox.text=Flag encryption programs
 ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration json file
+# {0} - filename
+ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty
 ConfigVisualPanel1.configurationError=Configuration error
 ConfigVisualPanel1.fileNameExtensionFilter=configuration json file
 ConfigVisualPanel1.invalidConfigJson=Invalid config json: 
@@ -37,10 +39,9 @@ ConfigVisualPanel2.editRuleSet=Edit rule set
 ConfigVisualPanel2.ok=OK
 ConfigVisualPanel2.rulesTable.columnModel.title0=Rule set
 ConfigVisualPanel2.rulesTable.columnModel.title1=Description
-ConfigWizardPanel2.chooseFileTitle=Save to another configuration file
 # {0} - configFilename
-ConfigWizardPanel2.failedToSaveMsg=Failed to save configuration file: {0}
-ConfigWizardPanel2.fileNameExtensionFilter=configuration json file
+ConfigWizardPanel2.failedToSaveConfigMsg=Failed to save configuration file: {0}
+ConfigWizardPanel2.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file
 # {0} - reason
 ConfigWizardPanel2.reason=\nReason: 
 CTL_ConfigureLogicalImager=Configure Logical Imager

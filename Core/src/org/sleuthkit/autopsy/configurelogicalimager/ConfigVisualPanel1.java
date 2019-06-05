@@ -207,6 +207,10 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
     private javax.swing.JRadioButton newRadioButton;
     // End of variables declaration//GEN-END:variables
 
+    @NbBundle.Messages({
+        "# {0} - filename",
+        "ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty",
+    })
     private void loadConfigFile(String path) throws FileNotFoundException, JsonIOException, JsonSyntaxException, IOException {
         try (FileInputStream is = new FileInputStream(path)) {
             InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
@@ -214,6 +218,10 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
             gsonBuilder.registerTypeAdapter(LogicalImagerConfig.class, new LogicalImagerConfigDeserializer());
             Gson gson = gsonBuilder.create();
             config = gson.fromJson(reader, LogicalImagerConfig.class);
+            if (config == null) {
+                // This happens if the file is empty. Gson doesn't call the deserializer and doesn't throw any exception.
+                throw new IOException(Bundle.ConfigVisualPanel1_configFileIsEmpty(path));
+            }
         }
     }
 

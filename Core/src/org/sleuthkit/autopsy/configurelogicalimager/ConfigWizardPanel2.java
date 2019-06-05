@@ -22,11 +22,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.event.ChangeListener;
@@ -121,11 +122,15 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         "ConfigWizardPanel2.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file",
     })
     public void saveConfigFile() {
-        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation();
+        GsonBuilder gsonBuilder = new GsonBuilder()
+                .setPrettyPrinting()
+                .excludeFieldsWithoutExposeAnnotation()
+                .disableHtmlEscaping();
         Gson gson = gsonBuilder.create();
         String toJson = gson.toJson(config);
-        try (FileWriter fileWriter = new FileWriter(configFilename)){
-            fileWriter.write(toJson);
+        try {
+            List<String> lines = Arrays.asList(toJson.split("\\n"));
+            FileUtils.writeLines(new File(configFilename), "UTF-8", lines, System.getProperty("line.separator"));
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveConfigMsg(configFilename)
                 + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
