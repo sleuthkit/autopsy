@@ -159,6 +159,10 @@ ConfigVisualPanel2.shouldSaveCheckBox.toolTipText=
 EditRulePanel.validateRuleNameExceptionMsg=Rule name cannot be empty
 EncryptionProgramsRule.encryptionProgramsRuleDescription=Find encryption programs
 EncryptionProgramsRule.encryptionProgramsRuleName=Encryption Programs
+LogicalImagerConfigDeserializer.fullPathsException=A rule with full-paths cannot have other rule definitions
+LogicalImagerConfigDeserializer.missingRuleSetException=Missing rule-set
+# {0} - key
+LogicalImagerConfigDeserializer.unsupportedKeyException=Unsupported key: {0}
 NewRuleSetPanel.chooseLabel.text=Choose type of file rule
 EditNonFullPathsRulePanel.minSizeLabel.text=Minimum:
 EditNonFullPathsRulePanel.maxSizeLabel.text=Maximum:
