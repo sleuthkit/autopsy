@@ -122,9 +122,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         testButton = new javax.swing.JButton();
         targetLanguageLabel = new javax.swing.JLabel();
         targetLanguageComboBox = new javax.swing.JComboBox<>();
-        translationSizeLabel = new javax.swing.JLabel();
-        translationSizeSpinner = new javax.swing.JSpinner();
-        unitsLabel = new javax.swing.JLabel();
         testUntranslatedTextField = new javax.swing.JTextField();
         untranslatedLabel = new javax.swing.JLabel();
         resultLabel = new javax.swing.JLabel();
@@ -150,12 +147,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                 targetLanguageComboBoxSelected(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(translationSizeLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.translationSizeLabel.text")); // NOI18N
-
-        translationSizeSpinner.setModel(new javax.swing.SpinnerNumberModel(5000, 5000, 500000, 5000));
-
-        org.openide.awt.Mnemonics.setLocalizedText(unitsLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.unitsLabel.text")); // NOI18N
 
         testUntranslatedTextField.setText(DEFUALT_TEST_STRING);
 
@@ -190,24 +181,15 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                                 .addComponent(authenticationKeyField, javax.swing.GroupLayout.PREFERRED_SIZE, 486, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 20, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(translationSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(testButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(testButton, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(25, 25, 25)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(translationSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(unitsLabel)
-                                        .addGap(0, 0, Short.MAX_VALUE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(untranslatedLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(testUntranslatedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(resultLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(testResultValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addComponent(untranslatedLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(testUntranslatedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(resultLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(testResultValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                         .addContainerGap())))
         );
         layout.setVerticalGroup(
@@ -221,11 +203,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(targetLanguageLabel)
                     .addComponent(targetLanguageComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(translationSizeLabel)
-                    .addComponent(translationSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(unitsLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(testButton)
@@ -264,9 +241,6 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton testButton;
     private javax.swing.JLabel testResultValueLabel;
     private javax.swing.JTextField testUntranslatedTextField;
-    private javax.swing.JLabel translationSizeLabel;
-    private javax.swing.JSpinner translationSizeSpinner;
-    private javax.swing.JLabel unitsLabel;
     private javax.swing.JLabel untranslatedLabel;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables

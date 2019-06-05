@@ -130,19 +130,29 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
                     });
                     selectLanguageByCode(targetLanguageCode);
                     targetLanguageComboBox.addItemListener(listener);
-                    targetLanguageComboBox.setEnabled(true);
+                    enableControls(true);
+
                 } else {
-                    targetLanguageComboBox.setEnabled(false);
+                    enableControls(false);
                 }
             } else {
                 warningLabel.setText(Bundle.GoogleTranslatorSettingsPanel_errorMessage_noFileSelected());
-                targetLanguageComboBox.setEnabled(false);
+                enableControls(false);
             }
         } catch (Throwable throwable) {
             warningLabel.setText(Bundle.GoogleTranslatorSettingsPanel_errorMessage_unknownFailurePopulating());
             logger.log(Level.WARNING, "Throwable caught while populating list of supported languages", throwable);
-            targetLanguageComboBox.setEnabled(false);
+            enableControls(false);
         }
+    }
+
+    private void enableControls(boolean enabled) {
+        targetLanguageComboBox.setEnabled(enabled);
+        testButton.setEnabled(enabled);
+        testResultValueLabel.setEnabled(enabled);
+        testUntranslatedTextField.setEnabled(enabled);
+        untranslatedLabel.setEnabled(enabled);
+        resultLabel.setEnabled(enabled);
     }
 
     /**
@@ -202,12 +212,16 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(testResultValueLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.testResultValueLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(resultLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.resultLabel.text")); // NOI18N
+        resultLabel.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(untranslatedLabel, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.untranslatedLabel.text")); // NOI18N
+        untranslatedLabel.setEnabled(false);
 
         testUntranslatedTextField.setText(DEFUALT_TEST_STRING);
+        testUntranslatedTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(testButton, org.openide.util.NbBundle.getMessage(GoogleTranslatorSettingsPanel.class, "GoogleTranslatorSettingsPanel.testButton.text")); // NOI18N
+        testButton.setEnabled(false);
         testButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 testButtonActionPerformed(evt);
