@@ -529,7 +529,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                         ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
                         appendRow(ruleMap);
                         break;
-                    } catch (Exception ex) {
+                    } catch (IOException | NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this,
                             ex.getMessage(),
                             Bundle.ConfigVisualPanel2_editRuleError(),
@@ -929,10 +929,8 @@ public final class ConfigVisualPanel2 extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Object ret = null;
             if (columnIndex == 0) {
-                ret = list.get(rowIndex);
-                return ret;
+                return list.get(rowIndex);
             } else {
                 throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
             }

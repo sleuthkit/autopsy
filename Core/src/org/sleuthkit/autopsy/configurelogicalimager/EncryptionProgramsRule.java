@@ -35,7 +35,7 @@ public final class EncryptionProgramsRule {
     private static final String ENCRYPTION_PROGRAMS_RULE_DESCRIPTION = Bundle.EncryptionProgramsRule_encryptionProgramsRuleDescription();
     private static final List<String> FILENAMES = new ArrayList<>();
     
-    private void EncryptionProgramsRule() {}
+    private EncryptionProgramsRule() {}
     
     // TODO: Add more files here
     static {
