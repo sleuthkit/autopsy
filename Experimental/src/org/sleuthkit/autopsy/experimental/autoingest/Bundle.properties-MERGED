@@ -209,12 +209,15 @@ DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordi
 # {0} - node path
 DeleteOrphanCaseNodesTask.progress.deletingOrphanedCaseNode=Deleting orphaned case znode {0}
 DeleteOrphanCaseNodesTask.progress.gettingCaseNodesListing=Querying coordination service for case znodes
+DeleteOrphanCaseNodesTask.progress.gettingCaseZnodes=Querying the coordination service for case znodes
+DeleteOrphanCaseNodesTask.progress.lookingForOrphanedCaseZnodes=Looking for orphaned case znodes
 DeleteOrphanCaseNodesTask.progress.startMessage=Starting orphaned case znode cleanup
 DeleteOrphanManifestNodesAction.progressDisplayName=Cleanup Manifest File Znodes
 DeleteOrphanManifestNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service
 # {0} - node path
 DeleteOrphanManifestNodesTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file znode {0}
 DeleteOrphanManifestNodesTask.progress.gettingManifestNodes=Querying the coordination service for manifest file znodes
+DeleteOrphanManifestNodesTask.progress.lookingForOrphanedManifestFileZnodes=Looking for orphaned manifest file znodes
 DeleteOrphanManifestNodesTask.progress.startMessage=Starting orphaned manifest file znode cleanup
 HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases
 OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
