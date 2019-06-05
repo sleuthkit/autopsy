@@ -11,9 +11,9 @@ DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data s
 DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.
 DirectoryTreeTopComponent.resultsView.title=Listing
 # {0} - Output file
-ExportCSV.actionPerformed.fileExists=File {0} already exists
-ExportCSV.actionPerformed.noCurrentCase=No open case available
-ExportCSV.title.text=Export to CSV
+ExportCSV.saveNodesToCSV.fileExists=File {0} already exists
+ExportCSV.saveNodesToCSV.noCurrentCase=No open case available
+ExportCSV.title.text=Export selected rows to CSV
 ExternalViewerAction.actionPerformed.failure.exe.message=The file is an executable and will not be opened.
 ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.
 ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.
