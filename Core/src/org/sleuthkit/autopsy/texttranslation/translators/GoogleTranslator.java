@@ -32,6 +32,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -59,26 +60,26 @@ public final class GoogleTranslator implements TextTranslator {
         settingsPanel = new GoogleTranslatorSettingsPanel(settings.getCredentialPath(), settings.getTargetLanguageCode());
         loadTranslator();
     }
-    
+
     private static boolean googleIsReachable() {
         String host = "www.google.com";
         InetAddress address;
         try {
             address = InetAddress.getByName(host);
             return address.isReachable(1500);
-        }catch (UnknownHostException ex) {
+        } catch (UnknownHostException ex) {
             return false;
         } catch (IOException ex) {
             return false;
         }
     }
-    
+
     @Override
     public String translate(String string) throws TranslationException {
         if (!googleIsReachable()) {
             throw new TranslationException("Failure translating using GoogleTranslator: Cannot connect to Google");
         }
-        
+
         if (googleTranslate != null) {
             try {
                 // Translates some text into English, without specifying the source language.
@@ -89,7 +90,7 @@ public final class GoogleTranslator implements TextTranslator {
                 // We can't currently set parameters, so we are using the default behavior of 
                 // assuming the input is HTML. We need to replace newlines with <br> for Google to preserve them
                 substring = substring.replaceAll("(\r\n|\n)", "<br />");
-                
+
                 // The API complains if the "Payload" is over 204800 bytes. I'm assuming that 
                 // deals with the full request.  At some point, we get different errors about too
                 // much text.  Officially, Google says they will googleTranslate only 5k chars,
@@ -101,15 +102,15 @@ public final class GoogleTranslator implements TextTranslator {
                 Translation translation
                         = googleTranslate.translate(substring);
                 String translatedString = translation.getTranslatedText();
-                
+
                 // put back the newlines
                 translatedString = translatedString.replaceAll("<br />", "\n");
-                
+
                 // With our current settings, Google Translate outputs HTML
                 // so we need to undo the escape characters.
                 translatedString = EscapeUtil.unEscapeHtml(translatedString);
                 return translatedString;
-            } catch (Throwable ex) {  
+            } catch (Throwable ex) {
                 //Catching throwables because some of this Google Translate code throws throwables
                 throw new TranslationException("Failure translating using GoogleTranslator", ex);
             }
@@ -117,7 +118,7 @@ public final class GoogleTranslator implements TextTranslator {
             throw new TranslationException("Google Translator has not been configured, credentials need to be specified");
         }
     }
-    
+
     @Messages({"GoogleTranslator.name.text=Google Translate"})
     @Override
     public String getName() {
@@ -136,10 +137,14 @@ public final class GoogleTranslator implements TextTranslator {
     private void loadTranslator() {
         InputStream credentialStream = null;
         Credentials creds = null;
-        try {
-            credentialStream = new FileInputStream(settings.getCredentialPath());
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.WARNING, "JSON file for GoogleTranslator credentials not found", ex);
+        if (StringUtils.isBlank(settings.getCredentialPath())) {
+            logger.log(Level.INFO, "No credentials file has been provided for Google Translator");     
+        } else {
+            try {
+                credentialStream = new FileInputStream(settings.getCredentialPath());
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.WARNING, "JSON file for GoogleTranslator credentials not found", ex);
+            }
         }
         if (credentialStream != null) {
             try {

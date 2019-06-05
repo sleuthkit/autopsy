@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Settings panel for the GoogleTranslator
@@ -68,11 +69,12 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             }
 
         });
-        targetLanguageCode = code;
         populateComboBox();
-        selectLanguageByCode(targetLanguageCode);
+        selectLanguageByCode(code);
+        targetLanguageCode = code;
     }
 
+    @Messages({"BingTranslatorSettingsPanel.warning.targetLanguageFailure=Unable to get list of target languages or parse the result that was received"})
     private void populateComboBox() {
         Request get_request = new Request.Builder()
                 .url(GET_TARGET_LANGUAGES_URL).build();
@@ -87,8 +89,11 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             responses.entrySet().forEach((entry) -> {
                 targetLanguageComboBox.addItem(new LanguageWrapper(entry.getKey(), entry.getValue().getAsJsonObject().get("name").getAsString()));
             });
+            targetLanguageComboBox.setEnabled(true);
         } catch (IOException | IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException ex) {
-            logger.log(Level.WARNING, "Unable to get list of target languages or parse the result that was received", ex);
+            logger.log(Level.SEVERE, Bundle.BingTranslatorSettingsPanel_warning_targetLanguageFailure(), ex);
+            warningLabel.setText(Bundle.BingTranslatorSettingsPanel_warning_targetLanguageFailure());
+            targetLanguageComboBox.setEnabled(false);
         }
 
     }
@@ -142,6 +147,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(targetLanguageLabel, org.openide.util.NbBundle.getMessage(BingTranslatorSettingsPanel.class, "BingTranslatorSettingsPanel.targetLanguageLabel.text")); // NOI18N
 
+        targetLanguageComboBox.setEnabled(false);
         targetLanguageComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 targetLanguageComboBoxSelected(evt);
@@ -216,11 +222,12 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"BingTranslatorSettingsPanel.warning.invalidKey=Invalid translation authentication key"})
     private void testButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButtonActionPerformed
         if (testTranslationSetup()) {
             warningLabel.setText("");
         } else {
-            warningLabel.setText("Invalid translation authentication key");
+            warningLabel.setText(Bundle.BingTranslatorSettingsPanel_warning_invalidKey());
         }
     }//GEN-LAST:event_testButtonActionPerformed
 

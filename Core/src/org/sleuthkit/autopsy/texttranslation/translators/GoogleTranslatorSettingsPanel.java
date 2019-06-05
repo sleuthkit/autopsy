@@ -305,18 +305,20 @@ public class GoogleTranslatorSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
+    @Messages({"GoogleTranslatorSettingsPanel.errorMessage.translationFailure=Translation failure with specified credentials"})
     private void testButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButtonActionPerformed
-        testResultValueLabel.setText("");
-        Translate tempTranslate = getTemporaryTranslationService();
-        if (tempTranslate != null) {
-            try {
-                Translation translation = tempTranslate.translate(testUntranslatedTextField.getText());
-                testResultValueLabel.setText(translation.getTranslatedText());
-                warningLabel.setText("");
-            } catch (Exception ex) {
-                warningLabel.setText("Invalid translation credentials path");
-            }
-        }
+           testResultValueLabel.setText("");
+           Translate tempTranslate = getTemporaryTranslationService();
+           if (tempTranslate != null) {
+               try {
+                   Translation translation = tempTranslate.translate(testUntranslatedTextField.getText());
+                   testResultValueLabel.setText(translation.getTranslatedText());
+                   warningLabel.setText("");
+               } catch (Exception ex) {
+                   warningLabel.setText(Bundle.GoogleTranslatorSettingsPanel_errorMessage_translationFailure());
+                   logger.log(Level.WARNING, Bundle.GoogleTranslatorSettingsPanel_errorMessage_translationFailure(), ex);
+               }
+           }
     }//GEN-LAST:event_testButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
