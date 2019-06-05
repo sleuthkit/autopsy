@@ -46,8 +46,6 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
     @Override
     public LogicalImagerConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
         boolean finalizeImageWriter = false;
-        Map<String, LogicalImagerRule> ruleSet = new HashMap<>();
-
         final JsonObject jsonObject = je.getAsJsonObject();
         final JsonElement jsonFinalizeImageWriter = jsonObject.get("finalize-image-writer"); // NON-NLS
         if (jsonFinalizeImageWriter != null) {
@@ -58,8 +56,8 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
         if (jsonRuleSet == null) {
             throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_missingRuleSetException());
         }
+        Map<String, LogicalImagerRule> ruleSet = new HashMap<>();
         for (Map.Entry<String, JsonElement> entry : jsonRuleSet.entrySet()) {
-            String key = entry.getKey();
             JsonElement element = entry.getValue();
             Set<Map.Entry<String, JsonElement>> entrySet = element.getAsJsonObject().entrySet();
             String key1;
@@ -151,7 +149,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                                 default:
                                     throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(dateKey));
                             }
-                        };
+                        }
                         break;
                     default:
                         throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(key1));
@@ -179,9 +177,9 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                     .minDate(minDate)
                     .maxDate(maxDate)
                     .build();
+            String key = entry.getKey();
             ruleSet.put(key, rule);
         }
-        LogicalImagerConfig config = new LogicalImagerConfig(finalizeImageWriter, ruleSet);
-        return config;
+        return new LogicalImagerConfig(finalizeImageWriter, ruleSet);
     }
 }

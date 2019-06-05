@@ -39,10 +39,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
      * component from this class, just use getComponent().
      */
     private ConfigVisualPanel1 component;
-    private String configFilename = null;
-    private LogicalImagerConfig config = null;
     boolean isValid = false;
-    private boolean newFile = true;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -133,12 +130,9 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
-        configFilename = component.getConfigFilename();
-        config = component.getConfig();
-        newFile = component.isNewFile();
-        wiz.putProperty("configFilename", configFilename); // NON-NLS
-        wiz.putProperty("config", config); // NON-NLS
-        wiz.putProperty("newFile", newFile); // NON-NLS
+        wiz.putProperty("configFilename", component.getConfigFilename()); // NON-NLS
+        wiz.putProperty("config", component.getConfig()); // NON-NLS
+        wiz.putProperty("newFile", component.isNewFile()); // NON-NLS
     }
 
     @Override
