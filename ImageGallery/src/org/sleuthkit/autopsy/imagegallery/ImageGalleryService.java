@@ -55,21 +55,21 @@ public class ImageGalleryService implements AutopsyService {
      * org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException
      */
     @NbBundle.Messages({
-        "ImageGalleryController.openCaseResources.progressMessage.start=Opening Image Gallery databases...",
-        "ImageGalleryController.openCaseResources.progressMessage.finish=Opened Image Gallery databases.",})
+        "ImageGalleryService.openCaseResources.progressMessage.start=Opening Image Gallery databases...",
+        "ImageGalleryService.openCaseResources.progressMessage.finish=Opened Image Gallery databases.",})
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (context.cancelRequested()) {
             return;
         }
         ProgressIndicator progress = context.getProgressIndicator();
-        progress.progress(Bundle.ImageGalleryController_openCaseResources_progressMessage_start());
+        progress.progress(Bundle.ImageGalleryService_openCaseResources_progressMessage_start());
         try {
             ImageGalleryController.createController(context.getCase());
         } catch (TskCoreException ex) {
             throw new AutopsyServiceException("Error opening Image Gallery databases", ex);
         }
-        progress.progress(Bundle.ImageGalleryController_openCaseResources_progressMessage_finish());
+        progress.progress(Bundle.ImageGalleryService_openCaseResources_progressMessage_finish());
     }
 
     /**
