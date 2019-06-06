@@ -20,10 +20,6 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -385,7 +381,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     }
 
     private void imageTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_imageTableMouseClicked
-        imageTableSelect();
+        if (importRadioButton.isSelected()) {
+            imageTableSelect();
+        }
     }//GEN-LAST:event_imageTableMouseClicked
 
     private void driveListSelect() {
@@ -465,51 +463,28 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     }
 
     private void driveListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseClicked
-        driveListSelect();
-        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        if (importRadioButton.isSelected()) {
+            driveListSelect();
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        }
     }//GEN-LAST:event_driveListMouseClicked
 
     private void driveListKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_driveListKeyReleased
-        driveListSelect();
-        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        if (importRadioButton.isSelected()) {
+            driveListSelect();
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        }
     }//GEN-LAST:event_driveListKeyReleased
 
     private void imageTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_imageTableKeyReleased
-        imageTableSelect();
-        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        if (importRadioButton.isSelected()) {
+            imageTableSelect();
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        }
     }//GEN-LAST:event_imageTableKeyReleased
 
-    MouseAdapter mouseAdapter = new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-            System.err.println(e.getPoint().toString());
-            e.consume();
-        }
-    };
-
-    KeyListener keyListener = new KeyListener() {
-        @Override
-        public void keyTyped(KeyEvent e) {
-            System.err.println(e.toString());
-            e.consume();
-        }
-
-        @Override
-        public void keyPressed(KeyEvent e) {
-            System.err.println(e.toString());
-            e.consume();
-        }
-
-        @Override
-        public void keyReleased(KeyEvent e) {
-            System.err.println(e.toString());
-            e.consume();
-        }
-    };
-    
     private void toggleMouseAndKeyListeners(Component component, boolean isEnable) {
         component.setEnabled(isEnable);
-        component.setVisible(isEnable);
     }
     
     private void manualRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manualRadioButtonActionPerformed
