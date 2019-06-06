@@ -36,7 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * Settings panel for the GoogleTranslator
+ * Settings panel for the BingTranslator
  */
 public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
 
@@ -47,7 +47,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     private String targetLanguageCode = "";
 
     /**
-     * Creates new form GoogleTranslatorSettingsPanel
+     * Creates new form BingTranslatorSettingsPanel
      */
     public BingTranslatorSettingsPanel(String authenticationKey, String code) {
         initComponents();
@@ -254,16 +254,13 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel untranslatedLabel;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
+
     /**
-     * Converts an input test to the JSON format required by Bing Translator,
-     * posts it to Microsoft, and returns the JSON text response.
+     * Attempts to translate the text specified in the Untranslated field using
+     * the settings currently specified but not necessarily saved
      *
-     * @param string The input text to be translated.
+     * @return true if the translation was able to be performed, false otherwise
      *
-     * @return The translation response as a JSON string
-     *
-     * @throws IOException if the request could not be executed due to
-     *                     cancellation, a connectivity problem or timeout.
      */
     private boolean testTranslationSetup() {
         testResultValueLabel.setText("");
@@ -291,6 +288,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             testResultValueLabel.setText(translation0.get("text").getAsString());
             return true;
         } catch (IOException | IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException e) {
+            logger.log(Level.WARNING, "Test of Bing Translator failed due to exception", ex);
             return false;
         }
     }

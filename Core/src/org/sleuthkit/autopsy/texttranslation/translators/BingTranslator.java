@@ -71,7 +71,7 @@ public class BingTranslator implements TextTranslator {
     }
 
     /**
-     * Converts an input test to the JSON format required by Bing Translator,
+     * Converts an input text to the JSON format required by Bing Translator,
      * posts it to Microsoft, and returns the JSON text response.
      *
      * @param string The input text to be translated.

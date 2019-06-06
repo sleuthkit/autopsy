@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- * Class to handle the settings associated with the GoogleTranslator
+ * Class to handle the settings associated with the BingTranslator
  */
 public final class BingTranslatorSettings {
 
@@ -35,7 +35,7 @@ public final class BingTranslatorSettings {
     private String targetLanguageCode;
 
     /**
-     * Construct a new GoogleTranslatorSettingsObject
+     * Construct a new BingTranslatorSettings object
      */
     BingTranslatorSettings() {
         loadSettings();

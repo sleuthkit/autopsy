@@ -73,8 +73,10 @@ public final class GoogleTranslator implements TextTranslator {
             address = InetAddress.getByName(host);
             return address.isReachable(1500);
         } catch (UnknownHostException ex) {
+            logger.log(Level.WARNING, "Unable to reach google.com due to unknown host", ex);
             return false;
         } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to reach google.com due IOException", ex);
             return false;
         }
     }
