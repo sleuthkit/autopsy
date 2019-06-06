@@ -26,4 +26,5 @@ GoogleTranslatorSettingsPanel.untranslatedLabel.text=Untranslated:
 GoogleTranslatorSettingsPanel.resultLabel.text=Result:
 GoogleTranslatorSettingsPanel.testResultValueLabel.text=
 BingTranslatorSettingsPanel.authenticationKeyLabel.text=Authentication Key:
-GoogleTranslatorSettingsPanel.jTextArea1.text=You will need a JSON credentials file which contains your service account key for your Google Translate account. Information on how to create a service account key is available here: https://cloud.google.com/iam/docs/creating-managing-service-account-keys 
+BingTranslatorSettingsPanel.instructionsTextArea.text=You will need to provide a Microsoft Translator authentication key for your Microsoft Translator account. Instructions on how to get one are available here: https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-text-how-to-signup
+GoogleTranslatorSettingsPanel.instructionsTextArea.text=You will need a JSON credentials file which contains your service account key for your Google Translate account. Information on how to create a service account key is available here: https://cloud.google.com/iam/docs/creating-managing-service-account-keys 
