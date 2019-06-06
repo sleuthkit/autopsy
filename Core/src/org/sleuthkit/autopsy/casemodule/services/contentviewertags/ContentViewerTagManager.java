@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.services.applicationtags;
+package org.sleuthkit.autopsy.casemodule.services.contentviewertags;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +44,7 @@ public class ContentViewerTagManager {
     public static final String TABLE_SCHEMA_SQLITE = "(app_data_id INTEGER PRIMARY KEY, "
             + "content_tag_id INTEGER NOT NULL, app_data TEXT NOT NULL, "
             + "FOREIGN KEY(content_tag_id) REFERENCES content_tags(tag_id))";
-    public static final String TABLE_SCHEMA_POSTGRES = "(app_data_id BIGSERIAL PRIMARY KEY, "
+    public static final String TABLE_SCHEMA_POSTGRESQL = "(app_data_id BIGSERIAL PRIMARY KEY, "
             + "content_tag_id INTEGER NOT NULL, app_data TEXT NOT NULL, "
             + "FOREIGN KEY(content_tag_id) REFERENCES content_tags(tag_id))";
 

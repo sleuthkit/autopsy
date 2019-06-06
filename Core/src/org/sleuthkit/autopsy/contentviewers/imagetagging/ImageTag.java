@@ -32,7 +32,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager.ContentViewerTag;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.ContentViewerTag;
 
 /**
  * A tagged region displayed over an image. This class contains a "physical tag"

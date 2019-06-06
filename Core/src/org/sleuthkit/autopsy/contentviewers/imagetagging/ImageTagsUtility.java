@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Utility class for handling content viewer tags on images.
  */
-public class ImageTagsUtility {
+public final class ImageTagsUtility {
 
     /**
      * Embeds the tag regions into an image (represented as an AbstractFile).

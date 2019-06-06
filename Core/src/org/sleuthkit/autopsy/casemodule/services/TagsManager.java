@@ -31,7 +31,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.applicationtags.ContentViewerTagManager;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -61,12 +61,14 @@ public class TagsManager implements Closeable {
                 Case currentCase = (Case) evt.getNewValue();
                 try {
                     CaseDbAccessManager caseDb = currentCase.getSleuthkitCase().getCaseDbAccessManager();
-                    if (!caseDb.tableExists(ContentViewerTagManager.TABLE_NAME)) {
-                        if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.SQLITE)) {
-                            caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_SQLITE);
-                        } else if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.POSTGRESQL)) {
-                            caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_POSTGRES);
-                        }
+                    if (caseDb.tableExists(ContentViewerTagManager.TABLE_NAME)) {
+                        return;
+                    }
+                    
+                    if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.SQLITE)) {
+                        caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_SQLITE);
+                    } else if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.POSTGRESQL)) {
+                        caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_POSTGRESQL);
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE,

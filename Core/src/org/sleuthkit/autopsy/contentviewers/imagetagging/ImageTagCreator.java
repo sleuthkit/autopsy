@@ -41,7 +41,7 @@ public final class ImageTagCreator extends Rectangle {
     //Rectangle lines should be 1.5% of the image. This level of thickness has
     //a good balance between visual acuity and loss of selection at the borders
     //of the image.
-    private final double lineThicknessAsPercent = 1.5;
+    private final static double lineThicknessAsPercent = 1.5;
     private final double minArea;
     
     //Used to update listeners of the new tag boundaries
