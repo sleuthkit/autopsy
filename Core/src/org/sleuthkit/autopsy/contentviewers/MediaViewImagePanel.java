@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import com.sun.glass.events.KeyEvent;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -64,6 +65,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
@@ -205,68 +207,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         }
                     });
 
-                    //Respond to state events by enabling/disabling the correct
-                    //buttons.
-                    pcs.addPropertyChangeListener((event) -> {
-                        State currentState = (State) event.getNewValue();
-                        switch (currentState) {
-                            case CREATE:
-                                createTagMenuItem.setEnabled(true);
-                                deleteTagMenuItem.setEnabled(false);
-                                hideTagsMenuItem.setEnabled(true);
-                                exportTagsMenuItem.setEnabled(true);
-                                break;
-                            case SELECTED:
-                                if (masterGroup.getChildren().contains(imageTagCreator)) {
-                                    imageTagCreator.disconnect();
-                                    masterGroup.getChildren().remove(imageTagCreator);
-                                }
-                                createTagMenuItem.setEnabled(false);
-                                deleteTagMenuItem.setEnabled(true);
-                                hideTagsMenuItem.setEnabled(true);
-                                exportTagsMenuItem.setEnabled(true);
-                                break;
-                            case HIDDEN:
-                                createTagMenuItem.setEnabled(false);
-                                deleteTagMenuItem.setEnabled(false);
-                                hideTagsMenuItem.setEnabled(true);
-                                hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
-                                exportTagsMenuItem.setEnabled(false);
-                                break;
-                            case VISIBLE:
-                                createTagMenuItem.setEnabled(true);
-                                deleteTagMenuItem.setEnabled(false);
-                                hideTagsMenuItem.setEnabled(true);
-                                hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
-                                exportTagsMenuItem.setEnabled(true);
-                                break;
-                            case DEFAULT:
-                            case EMPTY:
-                                if (masterGroup.getChildren().contains(imageTagCreator)) {
-                                    imageTagCreator.disconnect();
-                                }
-                                createTagMenuItem.setEnabled(true);
-                                deleteTagMenuItem.setEnabled(false);
-                                hideTagsMenuItem.setEnabled(false);
-                                hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
-                                exportTagsMenuItem.setEnabled(false);
-                                break;
-                            case NONEMPTY:
-                                createTagMenuItem.setEnabled(true);
-                                deleteTagMenuItem.setEnabled(false);
-                                hideTagsMenuItem.setEnabled(true);
-                                exportTagsMenuItem.setEnabled(true);
-                                break;
-                            case DISABLE:
-                                createTagMenuItem.setEnabled(false);
-                                deleteTagMenuItem.setEnabled(false);
-                                hideTagsMenuItem.setEnabled(false);
-                                exportTagsMenuItem.setEnabled(false);
-                                break;
-                            default:
-                                break;
-                        }
-                    });
+                    subscribeTagMenuItemsToStateChanges();
 
                     masterGroup.getChildren().add(tagsGroup);
 
@@ -276,13 +217,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                             if (masterGroup.getChildren().contains(imageTagCreator)) {
                                 return;
                             }
-                            
-                            if(tagsGroup.getChildren().isEmpty()) {
+
+                            if (tagsGroup.getChildren().isEmpty()) {
                                 pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.EMPTY));
+                                        "state", null, State.EMPTY));
                             } else {
                                 pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.CREATE));
+                                        "state", null, State.CREATE));
                             }
                         } else if (event.getPropertyName().equals(ImageTagControls.FOCUSED.getName())) {
                             pcs.firePropertyChange(new PropertyChangeEvent(this,
@@ -309,6 +250,74 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 }
             });
         }
+    }
+
+    /**
+     * Handle tags menu item enabling and disabling given the state of the
+     * content viewer. For example, when the tags group is empty (no tags on image),
+     * disable delete menu item, hide menu item, and export menu item.
+     */
+    private void subscribeTagMenuItemsToStateChanges() {
+        pcs.addPropertyChangeListener((event) -> {
+            State currentState = (State) event.getNewValue();
+            switch (currentState) {
+                case CREATE:
+                    createTagMenuItem.setEnabled(true);
+                    deleteTagMenuItem.setEnabled(false);
+                    hideTagsMenuItem.setEnabled(true);
+                    exportTagsMenuItem.setEnabled(true);
+                    break;
+                case SELECTED:
+                    if (masterGroup.getChildren().contains(imageTagCreator)) {
+                        imageTagCreator.disconnect();
+                        masterGroup.getChildren().remove(imageTagCreator);
+                    }
+                    createTagMenuItem.setEnabled(false);
+                    deleteTagMenuItem.setEnabled(true);
+                    hideTagsMenuItem.setEnabled(true);
+                    exportTagsMenuItem.setEnabled(true);
+                    break;
+                case HIDDEN:
+                    createTagMenuItem.setEnabled(false);
+                    deleteTagMenuItem.setEnabled(false);
+                    hideTagsMenuItem.setEnabled(true);
+                    hideTagsMenuItem.setText(DisplayOptions.SHOW_TAGS.getName());
+                    exportTagsMenuItem.setEnabled(false);
+                    break;
+                case VISIBLE:
+                    createTagMenuItem.setEnabled(true);
+                    deleteTagMenuItem.setEnabled(false);
+                    hideTagsMenuItem.setEnabled(true);
+                    hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
+                    exportTagsMenuItem.setEnabled(true);
+                    break;
+                case DEFAULT:
+                case EMPTY:
+                    if (masterGroup.getChildren().contains(imageTagCreator)) {
+                        imageTagCreator.disconnect();
+                    }
+                    createTagMenuItem.setEnabled(true);
+                    deleteTagMenuItem.setEnabled(false);
+                    hideTagsMenuItem.setEnabled(false);
+                    hideTagsMenuItem.setText(DisplayOptions.HIDE_TAGS.getName());
+                    exportTagsMenuItem.setEnabled(false);
+                    break;
+                case NONEMPTY:
+                    createTagMenuItem.setEnabled(true);
+                    deleteTagMenuItem.setEnabled(false);
+                    hideTagsMenuItem.setEnabled(true);
+                    exportTagsMenuItem.setEnabled(true);
+                    break;
+                case DISABLE:
+                    createTagMenuItem.setEnabled(false);
+                    deleteTagMenuItem.setEnabled(false);
+                    hideTagsMenuItem.setEnabled(false);
+                    exportTagsMenuItem.setEnabled(false);
+                    break;
+                default:
+                    break;
+            }
+        });
     }
 
     public boolean isInited() {
@@ -710,7 +719,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private void deleteTag() {
         Platform.runLater(() -> {
             ImageTag tagInFocus = tagsGroup.getFocus();
-            //Null should not be expected, but just as a safetly precaution
             if (tagInFocus == null) {
                 return;
             }

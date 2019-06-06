@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.ContentTag;
@@ -32,7 +31,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * A per case Autopsy service that manages the addition of content viewer tags
  * to the case database. This manager is also responsible for serializing and
- * deserializing instances of your tag data objects for persistence and retrieval.
+ * deserializing instances of your tag data objects for persistence and
+ * retrieval.
  */
 public class ContentViewerTagManager {
 
@@ -41,7 +41,10 @@ public class ContentViewerTagManager {
     private static final ObjectMapper SERIALIZER = new ObjectMapper();
 
     public static final String TABLE_NAME = "beta_tag_app_data";
-    public static final String TABLE_SCHEMA = "(app_data_id INTEGER PRIMARY KEY, "
+    public static final String TABLE_SCHEMA_SQLITE = "(app_data_id INTEGER PRIMARY KEY, "
+            + "content_tag_id INTEGER NOT NULL, app_data TEXT NOT NULL, "
+            + "FOREIGN KEY(content_tag_id) REFERENCES content_tags(tag_id))";
+    public static final String TABLE_SCHEMA_POSTGRES = "(app_data_id BIGSERIAL PRIMARY KEY, "
             + "content_tag_id INTEGER NOT NULL, app_data TEXT NOT NULL, "
             + "FOREIGN KEY(content_tag_id) REFERENCES content_tags(tag_id))";
 
@@ -55,8 +58,8 @@ public class ContentViewerTagManager {
      * generic tag data instance T will be automatically serialized into a
      * storable format.
      *
-     * @param <T> Generic class type that will be serialized into a
-     * storable format for persistence.
+     * @param <T> Generic class type that will be serialized into a storable
+     * format for persistence.
      * @param contentTag ContentTag that this ContentViewerTag is associated
      * with (1:1).
      * @param tagDataBean Data instance that contains the tag information to be
@@ -64,20 +67,24 @@ public class ContentViewerTagManager {
      * @return An instance of a ContentViewerTag of type T, which contains all
      * the stored information.
      *
-     * @throws SerializationException Thrown if the tag data instance T
-     * could not be serialized into a storable format.
+     * @throws SerializationException Thrown if the tag data instance T could
+     * not be serialized into a storable format.
      * @throws TskCoreException Thrown if this operation did not successfully
      * persist in the case database.
      * @throws NoCurrentCaseException Thrown if invocation of this method occurs
      * when no case is open.
      */
-    public static <T> ContentViewerTag<T> saveTag(ContentTag contentTag, T tagDataBean) throws SerializationException, TskCoreException, NoCurrentCaseException {
+    public static <T> ContentViewerTag<T> saveTag(ContentTag contentTag, T tagDataBean) 
+            throws SerializationException, TskCoreException, NoCurrentCaseException {
         try {
             long contentTagId = contentTag.getId();
             String serialAppData = SERIALIZER.writeValueAsString(tagDataBean);
             String insertTemplateInstance = String.format(INSERT_TAG_DATA,
                     contentTagId, serialAppData);
-            long insertId = Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().insert(TABLE_NAME, insertTemplateInstance);
+            long insertId = Case.getCurrentCaseThrows()
+                    .getSleuthkitCase()
+                    .getCaseDbAccessManager()
+                    .insert(TABLE_NAME, insertTemplateInstance);
             return new ContentViewerTag<>(insertId, contentTag, tagDataBean);
         } catch (JsonProcessingException ex) {
             throw new SerializationException("Unable to convert object instance into a storable format", ex);
@@ -88,14 +95,14 @@ public class ContentViewerTagManager {
      * Updates the ContentViewerTag instance with the new tag data T and
      * persists the changes to the case database.
      *
-     * @param <T> Generic class type that will be serialized into a
-     * storable format.
+     * @param <T> Generic class type that will be serialized into a storable
+     * format.
      * @param oldTag ContentViewerTag instance to be updated
      * @param tagDataBean Data instance that contains the updated information to
      * be persisted.
      *
-     * @throws SerializationException Thrown if the tag data instance T
-     * could not be serialized into a storable format.
+     * @throws SerializationException Thrown if the tag data instance T could
+     * not be serialized into a storable format.
      * @throws TskCoreException Thrown if this operation did not successfully
      * persist in the case database.
      * @throws NoCurrentCaseException Thrown if invocation of this method occurs
@@ -107,7 +114,9 @@ public class ContentViewerTagManager {
             String serialAppData = SERIALIZER.writeValueAsString(tagDataBean);
             String updateTemplateInstance = String.format(UPDATE_TAG_DATA,
                     oldTag.getContentTag().getId(), serialAppData, oldTag.getId());
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager()
+            Case.getCurrentCaseThrows()
+                    .getSleuthkitCase()
+                    .getCaseDbAccessManager()
                     .update(TABLE_NAME, updateTemplateInstance);
             return new ContentViewerTag<>(oldTag.getId(), oldTag.getContentTag(), tagDataBean);
         } catch (JsonProcessingException ex) {
@@ -137,31 +146,66 @@ public class ContentViewerTagManager {
      * when no case is open.
      */
     public static <T> ContentViewerTag<T> getTag(ContentTag contentTag, Class<T> clazz) throws TskCoreException, NoCurrentCaseException {
-        try {
-            String selectTemplateInstance = String.format(SELECT_TAG_DATA, contentTag.getId());
-            final ArrayList<ContentViewerTag<T>> result = new ArrayList<>();
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager()
-                    .select(selectTemplateInstance, (ResultSet rs) -> {
-                        try {
-                            if (rs.next()) {
-                                long tagId = rs.getLong(1);
-                                String appDetails = rs.getString(3);
-                                try {
-                                    T instance = SERIALIZER.readValue(appDetails, clazz);
-                                    result.add(new ContentViewerTag<>(tagId, contentTag, instance));
-                                } catch (IOException ex) {
-                                    //Databind for type T failed. Not a system error 
-                                    //but rather a logic error on the part of the caller.
-                                    result.add(null);
-                                }
+        String selectTemplateInstance = String.format(SELECT_TAG_DATA, contentTag.getId());
+        final ResultWrapper<ContentViewerTag<T>> result = new ResultWrapper<>();
+        Case.getCurrentCaseThrows()
+                .getSleuthkitCase()
+                .getCaseDbAccessManager()
+                .select(selectTemplateInstance, (ResultSet rs) -> {
+                    try {
+                        if (rs.next()) {
+                            long tagId = rs.getLong(1);
+                            String appDetails = rs.getString(3);
+                            try {
+                                T instance = SERIALIZER.readValue(appDetails, clazz);
+                                result.setResult(new ContentViewerTag<>(tagId, contentTag, instance));
+                            } catch (IOException ex) {
+                                //Databind for type T failed. Not a system error
+                                //but rather a logic error on the part of the caller.
+                                result.setResult(null);
                             }
-                        } catch (SQLException ex) {
-                            throw new RuntimeException(ex);
                         }
-                    });
-            return result.get(0);
-        } catch (RuntimeException ex) {
-            throw new TskCoreException("Unable to select tags from db", (Exception) ex.getCause());
+                    } catch (SQLException ex) {
+                        result.setException(ex);
+                    }
+                });
+
+        if (result.hasException()) {
+            throw new TskCoreException("Unable to select tag from case db", result.getException());
+        }
+
+        return result.getResult();
+    }
+
+    /**
+     * Wrapper for holding state in the CaseDbAccessQueryCallback.
+     * CaseDbAccessQueryCallback has no support for exception handling.
+     *
+     * @param <T>
+     */
+    private static class ResultWrapper<T> {
+
+        private T result;
+        private SQLException ex = null;
+
+        public void setResult(T result) {
+            this.result = result;
+        }
+
+        public void setException(SQLException ex) {
+            this.ex = ex;
+        }
+
+        public boolean hasException() {
+            return this.ex != null;
+        }
+
+        public SQLException getException() {
+            return ex;
+        }
+
+        public T getResult() {
+            return result;
         }
     }
 
@@ -176,7 +220,9 @@ public class ContentViewerTagManager {
      */
     public static <T> void deleteTag(ContentViewerTag<T> contentViewerTag) throws TskCoreException, NoCurrentCaseException {
         String deleteTemplateInstance = String.format(DELETE_TAG_DATA, contentViewerTag.getId());
-        Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager()
+        Case.getCurrentCaseThrows()
+                .getSleuthkitCase()
+                .getCaseDbAccessManager()
                 .delete(TABLE_NAME, deleteTemplateInstance);
     }
 

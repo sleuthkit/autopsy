@@ -41,7 +41,7 @@ public final class ImageTagCreator extends Rectangle {
     //Rectangle lines should be 1.5% of the image. This level of thickness has
     //a good balance between visual acuity and loss of selection at the borders
     //of the image.
-    private double lineThicknessAsPercent = 1.5;
+    private final double lineThicknessAsPercent = 1.5;
     private final double minArea;
     
     //Used to update listeners of the new tag boundaries
@@ -53,7 +53,7 @@ public final class ImageTagCreator extends Rectangle {
     
     //Handles the unregistering this ImageTagCreator from mouse press, mouse drag,
     //and mouse release events of the source image.
-    private final Runnable disconnect;
+    private final Runnable disconnectRunnable;
 
     /**
      * Adds tagging support to an image, where the 'tag' rectangle will be the
@@ -143,7 +143,7 @@ public final class ImageTagCreator extends Rectangle {
         image.addEventHandler(MouseEvent.MOUSE_RELEASED, this.mouseReleased);
 
         //Used to remove itself from mouse events on the source image
-        disconnect = () -> {
+        disconnectRunnable = () -> {
             defaultSettings();
             image.removeEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleased);
             image.removeEventHandler(MouseEvent.MOUSE_DRAGGED, mouseDragged);
@@ -166,7 +166,7 @@ public final class ImageTagCreator extends Rectangle {
      * Removes itself from mouse events on the source image.
      */
     public void disconnect() {
-        this.disconnect.run();
+        this.disconnectRunnable.run();
     }
 
     /**

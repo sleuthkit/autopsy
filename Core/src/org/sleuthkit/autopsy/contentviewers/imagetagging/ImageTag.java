@@ -81,35 +81,35 @@ public final class ImageTag extends Group {
 
         EditHandle bottomLeft = new EditHandle(physicalTag)
                 .setPosition(Position.bottom(), Position.left())
-                .setDrag(dragBoundary, Drag.bottom(), Drag.left());
+                .setDrag(dragBoundary, Draggable.bottom(), Draggable.left());
 
         EditHandle bottomRight = new EditHandle(physicalTag)
                 .setPosition(Position.bottom(), Position.right())
-                .setDrag(dragBoundary, Drag.bottom(), Drag.right());
+                .setDrag(dragBoundary, Draggable.bottom(), Draggable.right());
 
         EditHandle topLeft = new EditHandle(physicalTag)
                 .setPosition(Position.top(), Position.left())
-                .setDrag(dragBoundary, Drag.top(), Drag.left());
+                .setDrag(dragBoundary, Draggable.top(), Draggable.left());
 
         EditHandle topRight = new EditHandle(physicalTag)
                 .setPosition(Position.top(), Position.right())
-                .setDrag(dragBoundary, Drag.top(), Drag.right());
+                .setDrag(dragBoundary, Draggable.top(), Draggable.right());
 
         EditHandle bottomMiddle = new EditHandle(physicalTag)
                 .setPosition(Position.bottom(), Position.xMiddle())
-                .setDrag(dragBoundary, Drag.bottom());
+                .setDrag(dragBoundary, Draggable.bottom());
 
         EditHandle topMiddle = new EditHandle(physicalTag)
                 .setPosition(Position.top(), Position.xMiddle())
-                .setDrag(dragBoundary, Drag.top());
+                .setDrag(dragBoundary, Draggable.top());
 
         EditHandle rightMiddle = new EditHandle(physicalTag)
                 .setPosition(Position.right(), Position.yMiddle())
-                .setDrag(dragBoundary, Drag.right());
+                .setDrag(dragBoundary, Draggable.right());
 
         EditHandle leftMiddle = new EditHandle(physicalTag)
                 .setPosition(Position.left(), Position.yMiddle())
-                .setDrag(dragBoundary, Drag.left());
+                .setDrag(dragBoundary, Draggable.left());
 
         //The "logical" tag is the Group
         this.getChildren().addAll(physicalTag, bottomLeft, bottomRight, topLeft,
@@ -133,7 +133,7 @@ public final class ImageTag extends Group {
     }
 
     /**
-     * Get the app tag that this class represents.
+     * Get the content viewer tag that this class represents.
      *
      * @return
      */
@@ -226,9 +226,9 @@ public final class ImageTag extends Group {
          * @param vals
          * @return
          */
-        public EditHandle setDrag(Boundary bounds, Drag... vals) {
+        public EditHandle setDrag(Boundary bounds, Draggable... vals) {
             this.setOnMouseDragged((event) -> {
-                for (Drag drag : vals) {
+                for (Draggable drag : vals) {
                     drag.perform(parent, event, bounds);
                 }
             });
@@ -282,11 +282,11 @@ public final class ImageTag extends Group {
      * Drag strategies for manipulating the physical tag from a given side of
      * the rectangle.
      */
-    static interface Drag {
+    static interface Draggable {
 
         void perform(PhysicalTag parent, MouseEvent event, Boundary b);
 
-        static Drag bottom() {
+        static Draggable bottom() {
             return (parent, event, bounds) -> {
                 if (!bounds.isPointInBounds(event.getX(), event.getY())) {
                     return;
@@ -299,7 +299,7 @@ public final class ImageTag extends Group {
             };
         }
 
-        static Drag top() {
+        static Draggable top() {
             return (parent, event, bounds) -> {
                 if (!bounds.isPointInBounds(event.getX(), event.getY())) {
                     return;
@@ -313,7 +313,7 @@ public final class ImageTag extends Group {
             };
         }
 
-        static Drag left() {
+        static Draggable left() {
             return (parent, event, bounds) -> {
                 if (!bounds.isPointInBounds(event.getX(), event.getY())) {
                     return;
@@ -327,7 +327,7 @@ public final class ImageTag extends Group {
             };
         }
 
-        static Drag right() {
+        static Draggable right() {
             return (parent, event, bounds) -> {
                 if (!bounds.isPointInBounds(event.getX(), event.getY())) {
                     return;

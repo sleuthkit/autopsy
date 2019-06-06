@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * A per case Autopsy service that manages the addition of content and artifact
@@ -60,13 +61,16 @@ public class TagsManager implements Closeable {
                 Case currentCase = (Case) evt.getNewValue();
                 try {
                     CaseDbAccessManager caseDb = currentCase.getSleuthkitCase().getCaseDbAccessManager();
-                    //Create our custom application tags table, if need be.
                     if (!caseDb.tableExists(ContentViewerTagManager.TABLE_NAME)) {
-                        caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA);
+                        if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.SQLITE)) {
+                            caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_SQLITE);
+                        } else if (currentCase.getSleuthkitCase().getDatabaseType().equals(DbType.POSTGRESQL)) {
+                            caseDb.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_POSTGRES);
+                        }
                     }
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, 
-                            String.format("Unable to create the %s table for image tag storage.", 
+                    LOGGER.log(Level.SEVERE,
+                            String.format("Unable to create the %s table for image tag storage.",
                                     ContentViewerTagManager.TABLE_NAME), ex);
                 }
             }

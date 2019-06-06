@@ -28,6 +28,9 @@ import org.opencv.highgui.Highgui;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Utility class for handling content viewer tags on images.
+ */
 public class ImageTagsUtility {
 
     /**
@@ -62,5 +65,8 @@ public class ImageTagsUtility {
         matOfByte.release();
         
         return output;
+    }
+    
+    private ImageTagsUtility(){
     }
 }

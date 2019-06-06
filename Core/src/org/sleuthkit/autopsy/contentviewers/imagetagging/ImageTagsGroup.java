@@ -119,9 +119,9 @@ public final class ImageTagsGroup extends Group {
      * @param n 
      */
     private void requestFocus(ImageTag n) {
-        if (currentFocus == n) {
+        if (n.equals(currentFocus)) {
             return;
-        } else if (currentFocus != null && currentFocus != n) {
+        } else if (currentFocus != null && !currentFocus.equals(n)) {
             resetFocus(currentFocus);
         }
 
