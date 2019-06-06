@@ -10,6 +10,7 @@ DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contai
 DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?
 DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.
 DirectoryTreeTopComponent.resultsView.title=Listing
+ExportCSV.saveNodesToCSV.empty=No data to export
 # {0} - Output file
 ExportCSV.saveNodesToCSV.fileExists=File {0} already exists
 ExportCSV.saveNodesToCSV.noCurrentCase=No open case available

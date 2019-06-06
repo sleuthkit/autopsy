@@ -77,6 +77,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
@@ -176,6 +177,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initComponents();
 
         initializePagingSupport();
+        
+        /*
+         * Disable the CSV export button for the common properties results 
+         */
+        if (this instanceof org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributesSearchResultsViewerTable) {
+            exportCSVButton.setEnabled(false);
+        }
 
         /*
          * Configure the child OutlineView (explorer view) component.
@@ -1352,12 +1360,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 904, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(exportCSVButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addComponent(pageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pageNumLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(14, 14, 14)
                 .addComponent(pagesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1367,7 +1374,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 .addComponent(gotoPageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(gotoPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(exportCSVButton))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {pageNextButton, pagePrevButton});
@@ -1407,8 +1415,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         pagingSupport.gotoPage();
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
 
+    @NbBundle.Messages({"DataResultViewerTable.exportCSVButtonActionPerformed.empty=No data to export"
+        })
     private void exportCSVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCSVButtonActionPerformed
-        org.sleuthkit.autopsy.directorytree.ExportCSVAction.saveNodesToCSV(java.util.Arrays.asList(rootNode.getChildren().getNodes()), this);
+        Node currentRoot = this.getExplorerManager().getRootContext();
+        if (currentRoot != null && currentRoot.getChildren().getNodesCount() > 0) {
+            org.sleuthkit.autopsy.directorytree.ExportCSVAction.saveNodesToCSV(java.util.Arrays.asList(currentRoot.getChildren().getNodes()), this);
+        } else {
+            MessageNotifyUtil.Message.info(Bundle.DataResultViewerTable_exportCSVButtonActionPerformed_empty());
+        }
     }//GEN-LAST:event_exportCSVButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

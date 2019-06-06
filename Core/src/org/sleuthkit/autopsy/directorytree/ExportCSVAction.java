@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -31,10 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -48,14 +45,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
-import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Node.Property;
@@ -76,6 +67,12 @@ public final class ExportCSVAction extends AbstractAction {
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
     private static ExportCSVAction instance;
 
+    /**
+     * Get an instance of the Action. See above for why
+     * the class is a singleton.
+     * 
+     * @return the instance
+     */
     public static synchronized ExportCSVAction getInstance() {
         if (null == instance) {
             instance = new ExportCSVAction();
@@ -104,20 +101,28 @@ public final class ExportCSVAction extends AbstractAction {
         saveNodesToCSV(selectedNodes, (Component)e.getSource());
     }
 
+    /**
+     * Save the selected nodes to a CSV file
+     * 
+     * @param nodesToExport the nodes to save
+     * @param component
+     */
     @NbBundle.Messages({
         "# {0} - Output file",
         "ExportCSV.saveNodesToCSV.fileExists=File {0} already exists",
-        "ExportCSV.saveNodesToCSV.noCurrentCase=No open case available"})
+        "ExportCSV.saveNodesToCSV.noCurrentCase=No open case available",
+        "ExportCSV.saveNodesToCSV.empty=No data to export"})
     public static void saveNodesToCSV(Collection<? extends Node> nodesToExport, Component component) {
 
         if (nodesToExport.isEmpty()) {
+            MessageNotifyUtil.Message.info(Bundle.ExportCSV_saveNodesToCSV_empty());
             return;
         }
         
         try {   
-            
+            // Set up the file chooser with a default name and either the Export
+            // folder or the last used folder.
             String fileName = getDefaultOutputFileName(nodesToExport.iterator().next().getParentNode());
-            
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setCurrentDirectory(new File(getExportDirectory(Case.getCurrentCaseThrows())));
             fileChooser.setSelectedFile(new File(fileName));
@@ -126,15 +131,18 @@ public final class ExportCSVAction extends AbstractAction {
             int returnVal = fileChooser.showSaveDialog(component);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
 
+                // Get the file name, appending .csv if necessary
                 File selectedFile = fileChooser.getSelectedFile();
                 if (!selectedFile.getName().endsWith(".csv")) { // NON-NLS
                     selectedFile = new File(selectedFile.toString() + ".csv"); // NON-NLS
                 }
+                
+                // Save the directory used for next time
                 updateExportDirectory(selectedFile.getParent(), Case.getCurrentCaseThrows());
         
                 if (selectedFile.exists()) {
                     logger.log(Level.SEVERE, "File {0} already exists", selectedFile.getAbsolutePath()); //NON-NLS
-                    MessageNotifyUtil.Message.info(Bundle.ExportCSV_actionPerformed_fileExists(selectedFile));
+                    MessageNotifyUtil.Message.info(Bundle.ExportCSV_saveNodesToCSV_fileExists(selectedFile));
                     return;
                 }
 
@@ -142,7 +150,7 @@ public final class ExportCSVAction extends AbstractAction {
                 writer.execute();
             }
         } catch (NoCurrentCaseException ex) {
-            JOptionPane.showMessageDialog(component, Bundle.ExportCSV_actionPerformed_noCurrentCase());
+            JOptionPane.showMessageDialog(component, Bundle.ExportCSV_saveNodesToCSV_noCurrentCase());
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
         }
     }
@@ -165,13 +173,10 @@ public final class ExportCSVAction extends AbstractAction {
                         String parentName = prop.getValue().toString();
                         
                         // Strip off the count (if present)
-                        System.out.println("parentName (raw) : " + parentName);
                         parentName = parentName.replaceAll("\\([0-9]+\\)$", "");
-                        System.out.println("parentName (after paren regex) : " + parentName);
                         
                         // Strip out any invalid characters
                         parentName = parentName.replaceAll("[\\\\/:*?\"<>|]", "_");
-                        System.out.println("parentName (after char regex) : " + parentName);
                         
                         return parentName + " " + dateStr;
                     } catch (IllegalAccessException | InvocationTargetException ex) {
@@ -190,7 +195,7 @@ public final class ExportCSVAction extends AbstractAction {
      *
      * @return The export directory path.
      */
-    private static String getExportDirectory(Case openCase) { // TODO sync
+    private static String getExportDirectory(Case openCase) {
         String caseExportPath = openCase.getExportDirectory();
 
         if (userDefinedExportPath == null) {
@@ -306,6 +311,13 @@ public final class ExportCSVAction extends AbstractAction {
             return null;
         }
         
+        /**
+         * Convert list of values to a comma separated string.
+         * 
+         * @param values Values to convert
+         * 
+         * @return values as CSV
+         */
         private String listToCSV(List<String> values) {
             return "\"" + String.join("\",\"", values) + "\"\n";
         }

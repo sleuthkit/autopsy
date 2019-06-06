@@ -32,6 +32,7 @@ DataResultViewerTable.commentRenderer.noComment.toolTip=No comments found
 DataResultViewerTable.commentRenderer.tagComment.toolTip=Comment exists on associated tag(s)
 DataResultViewerTable.countRender.name=O
 DataResultViewerTable.countRender.toolTip=O(ccurrences) indicates the number of data sources containing the item in the Central Repository
+DataResultViewerTable.exportCSVButtonActionPerformed.empty=No data to export
 DataResultViewerTable.firstColLbl=Name
 DataResultViewerTable.goToPageTextField.err=Invalid page number
 # {0} - totalPages
