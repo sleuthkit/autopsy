@@ -296,8 +296,8 @@ public final class TranslatedTextViewer implements TextViewer {
 
             //Correct for UTF-8
             byte[] resultInUTF8Bytes = result.getBytes("UTF8");
-            byte[] trimTo1MB = Arrays.copyOfRange(resultInUTF8Bytes, 0, MAX_SIZE_1MB );
-            return new String(trimTo1MB, "UTF-8");
+            byte[] trimToArraySize = Arrays.copyOfRange(resultInUTF8Bytes, 0, Math.min(resultInUTF8Bytes.length, MAX_SIZE_1MB) );
+            return new String(trimToArraySize, "UTF-8");
         }
 
         /**
@@ -343,7 +343,7 @@ public final class TranslatedTextViewer implements TextViewer {
             }
 
             // The trim is on here because HTML files were observed with nearly 1MB of white space at the end
-            return textBuilder.toString().trim();
+            return textBuilder.toString();
         }
 
         /**
