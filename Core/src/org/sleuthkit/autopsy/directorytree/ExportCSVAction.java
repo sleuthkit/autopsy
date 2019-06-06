@@ -60,7 +60,7 @@ public final class ExportCSVAction extends AbstractAction {
     private final static String DEFAULT_FILENAME = "Results";
     private final static List<String> columnsToSkip = Arrays.asList("S", "C", "O");
 
-    private static volatile String userDefinedExportPath; // TODO make volatile or whatever
+    private static String userDefinedExportPath;
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
@@ -219,7 +219,7 @@ public final class ExportCSVAction extends AbstractAction {
      * @param exportPath The export path.
      * @param openCase   The current case.
      */
-    private static void updateExportDirectory(String exportPath, Case openCase) { // TODO sync
+    private static void updateExportDirectory(String exportPath, Case openCase) {
         if (exportPath.equalsIgnoreCase(openCase.getExportDirectory())) {
             userDefinedExportPath = null;
         } else {
