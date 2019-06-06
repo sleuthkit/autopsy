@@ -288,7 +288,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             testResultValueLabel.setText(translation0.get("text").getAsString());
             return true;
         } catch (IOException | IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException e) {
-            logger.log(Level.WARNING, "Test of Bing Translator failed due to exception", ex);
+            logger.log(Level.WARNING, "Test of Bing Translator failed due to exception", e);
             return false;
         }
     }
