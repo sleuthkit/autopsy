@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import com.sun.glass.events.KeyEvent;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -65,7 +64,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
