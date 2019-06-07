@@ -48,18 +48,18 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.ContentViewerTag;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtility;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -731,6 +731,29 @@ class ReportHTML implements TableReportModule {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex); //NON-NLS
         }
     }
+    
+    /**
+     * Finds all associated image tags.
+     * 
+     * @param contentTags
+     * @return 
+     */
+    private List<ImageTagRegion> getTaggedRegions(List<ContentTag> contentTags) {
+        ArrayList<ImageTagRegion> tagRegions = new ArrayList<>();
+        contentTags.forEach((contentTag) -> {
+            try {
+                ContentViewerTag<ImageTagRegion> contentViewerTag = ContentViewerTagManager
+                        .getTag(contentTag, ImageTagRegion.class);
+                if (contentViewerTag != null) {
+                    tagRegions.add(contentViewerTag.getDetails());
+                }
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Could not get content viewer tag "
+                        + "from case db for content_tag with id %d", contentTag.getId());
+            }
+        });
+        return tagRegions;
+    }
 
     /**
      * Add the body of the thumbnails table.
@@ -770,13 +793,54 @@ class ReportHTML implements TableReportModule {
             }
 
             AbstractFile file = (AbstractFile) content;
+            List<ContentTag> contentTags = new ArrayList<>();
+            
+            String thumbnailPath = null;
+            String imageWithTagsFullPath = null;
+            try {
+                //Get content tags and all image tags
+                contentTags = Case.getCurrentCase().getServices()
+                        .getTagsManager().getContentTagsByContent(file);
+                List<ImageTagRegion> imageTags = getTaggedRegions(contentTags);
+                
+                if(!imageTags.isEmpty()) {
+                    //Write the tags to the fullsize and thumbnail images
+                    BufferedImage fullImageWithTags = ImageTagsUtility.writeTags(file, imageTags, "png");
+                    
+                    BufferedImage thumbnailImageWithTags = ImageTagsUtility.makeThumbnail(file, 
+                            imageTags, ImageTagsUtility.IconSize.MEDIUM, "png");
+                    
+                    String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(file.getName());
+                    
+                    //Create paths in report to write tagged images
+                    File thumbnailImageWithTagsFile = Paths.get(thumbsPath, FilenameUtils.removeExtension(fileName) + ".png").toFile();
+                    String fullImageWithTagsPath = makeCustomUniqueFilePath(file, "thumbs_fullsize");
+                    fullImageWithTagsPath = FilenameUtils.removeExtension(fullImageWithTagsPath) + ".png";
+                    File fullImageWithTagsFile = Paths.get(fullImageWithTagsPath).toFile();
+                    
+                    //Save images
+                    ImageIO.write(thumbnailImageWithTags, "png", thumbnailImageWithTagsFile);
+                    ImageIO.write(fullImageWithTags, "png", fullImageWithTagsFile);
+                    
+                    thumbnailPath = THUMBS_REL_PATH + thumbnailImageWithTagsFile.getName();
+                    //Relative path
+                    imageWithTagsFullPath = fullImageWithTagsPath.substring(subPath.length());
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Could not get tags for file.", ex); //NON-NLS
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could make marked up thumbnail.", ex); //NON-NLS
+            }
 
             // save copies of the orginal image and thumbnail image
-            String thumbnailPath = prepareThumbnail(file);
+            if(thumbnailPath == null) {
+                thumbnailPath = prepareThumbnail(file);
+            }
+            
             if (thumbnailPath == null) {
                 continue;
             }
-            String contentPath = saveContent(file, "thumbs_fullsize"); //NON-NLS
+            String contentPath = saveContent(file, "original"); //NON-NLS
             String nameInImage;
             try {
                 nameInImage = file.getUniquePath();
@@ -787,30 +851,27 @@ class ReportHTML implements TableReportModule {
             StringBuilder linkToThumbnail = new StringBuilder();
             linkToThumbnail.append("<div id='thumbnail_link'>");
             linkToThumbnail.append("<a href=\""); //NON-NLS
-            linkToThumbnail.append(contentPath);
+            linkToThumbnail.append((imageWithTagsFullPath != null) ? imageWithTagsFullPath : contentPath);
             linkToThumbnail.append("\" target=\"_top\">");
             linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>"); //NON-NLS
             linkToThumbnail.append("</a><br>"); //NON-NLS
             linkToThumbnail.append(file.getName()).append("<br>"); //NON-NLS
-
-            Services services = currentCase.getServices();
-            TagsManager tagsManager = services.getTagsManager();
-            try {
-                List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
-                if (tags.size() > 0) {
-                    linkToThumbnail.append(NbBundle.getMessage(this.getClass(), "ReportHTML.thumbLink.tags"));
-                }
-                for (int i = 0; i < tags.size(); i++) {
-                    ContentTag tag = tags.get(i);
-                    String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                    linkToThumbnail.append(tag.getName().getDisplayName()).append(notableString);
-                    if (i != tags.size() - 1) {
-                        linkToThumbnail.append(", ");
-                    }
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Could not find get tags for file.", ex); //NON-NLS
+            if(imageWithTagsFullPath != null) {
+                linkToThumbnail.append("<a href=\"").append(contentPath).append("\" target=\"_top\">View Original</a><br>");
             }
+
+            if (contentTags.size() > 0) {
+                linkToThumbnail.append(NbBundle.getMessage(this.getClass(), "ReportHTML.thumbLink.tags"));
+            }
+            for (int i = 0; i < contentTags.size(); i++) {
+                ContentTag tag = contentTags.get(i);
+                String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                linkToThumbnail.append(tag.getName().getDisplayName()).append(notableString);
+                if (i != contentTags.size() - 1) {
+                    linkToThumbnail.append(", ");
+                }
+            }
+                
             linkToThumbnail.append("</div>");
             currentRow.add(linkToThumbnail.toString());
 
@@ -839,17 +900,8 @@ class ReportHTML implements TableReportModule {
                 || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
                 || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS;
     }
-
-    /**
-     * Save a local copy of the given file in the reports folder.
-     *
-     * @param file    File to save
-     * @param dirName Custom top-level folder to use to store the files in (tag
-     *                name, etc.)
-     *
-     * @return Path to where file was stored (relative to root of HTML folder)
-     */
-    public String saveContent(AbstractFile file, String dirName) {
+    
+    private String makeCustomUniqueFilePath(AbstractFile file, String dirName) {
         // clean up the dir name passed in
         String dirName2 = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dirName);
 
@@ -883,16 +935,32 @@ class ReportHTML implements TableReportModule {
         }
         localFilePath.append(File.separator);
         localFilePath.append(fileName);
+        
+        return localFilePath.toString();
+    }
+
+    /**
+     * Save a local copy of the given file in the reports folder.
+     *
+     * @param file    File to save
+     * @param dirName Custom top-level folder to use to store the files in (tag
+     *                name, etc.)
+     *
+     * @return Path to where file was stored (relative to root of HTML folder)
+     */
+    public String saveContent(AbstractFile file, String dirName) {
+        
+        String localFilePath = makeCustomUniqueFilePath(file, dirName);
 
         // If the local file doesn't already exist, create it now.
         // The existence check is necessary because it is possible to apply multiple tags with the same tagName to a file.
-        File localFile = new File(localFilePath.toString());
+        File localFile = new File(localFilePath);
         if (!localFile.exists()) {
             ExtractFscContentVisitor.extract(file, localFile, null, null);
         }
 
         // get the relative path
-        return localFilePath.toString().substring(subPath.length());
+        return localFilePath.substring(subPath.length());
     }
 
     /**

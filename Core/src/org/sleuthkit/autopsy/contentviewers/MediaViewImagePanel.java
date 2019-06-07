@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -864,15 +865,21 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 @Override
                 protected Void doInBackground() {
                     try {
+                        //Retrieve content viewer tags
                         List<ContentTag> tags = Case.getCurrentCase().getServices()
                                 .getTagsManager().getContentTagsByContent(file);
                         List<ContentViewerTag<ImageTagRegion>> contentViewerTags = getContentViewerTags(tags);
+                        
+                        //Pull out image tag regions
                         Collection<ImageTagRegion> regions = contentViewerTags.stream()
                                 .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
-                        byte[] jpgImage = ImageTagsUtility.exportTags(file, regions, ".jpg");
+                        
+                        //Apply tags to image and write to file
+                        BufferedImage pngImage = ImageTagsUtility.writeTags(file, regions, "png");
                         Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
-                                FilenameUtils.getBaseName(file.getName()) + "-with_tags.jpg"); //NON-NLS
-                        Files.write(output, jpgImage);
+                                FilenameUtils.getBaseName(file.getName()) + "-with_tags.png"); //NON-NLS
+                        ImageIO.write(pngImage, "png", output.toFile());
+                        
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
                     } catch (TskCoreException | NoCurrentCaseException | IOException ex) {
                         LOGGER.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
