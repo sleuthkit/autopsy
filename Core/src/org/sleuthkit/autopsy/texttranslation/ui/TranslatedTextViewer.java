@@ -67,7 +67,7 @@ public final class TranslatedTextViewer implements TextViewer {
 
     private static final boolean OCR_ENABLED = true;
     private static final boolean OCR_DISABLED = false;
-    private static final int MAX_EXTRACT_SIZE_BYTES = 51200;
+    private static final int MAX_EXTRACT_SIZE_BYTES = 25600;
     private static final List<String> INSTALLED_LANGUAGE_PACKS = PlatformUtil.getOcrLanguagePacks();
     private final TranslationContentPanel panel = new TranslationContentPanel();
 
