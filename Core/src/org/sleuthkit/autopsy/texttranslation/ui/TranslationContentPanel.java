@@ -250,7 +250,7 @@ public class TranslationContentPanel extends javax.swing.JPanel {
     /**
      * Selection choices to be displayed in the combobox dropdown.
      */
-    @Messages({"TranslatedContentPanel.comboBoxOption.originalText=Original Text (First 25KB)",
+    @Messages({"TranslatedContentPanel.comboBoxOption.originalText=Original Text (Up to 25KB)",
         "TranslatedContentPanel.comboBoxOption.translatedText=Translated Text"})
     static enum DisplayDropdownOptions {
         ORIGINAL_TEXT(Bundle.TranslatedContentPanel_comboBoxOption_originalText()),

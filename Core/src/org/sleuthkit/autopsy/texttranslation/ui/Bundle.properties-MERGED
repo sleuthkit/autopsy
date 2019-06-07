@@ -1,6 +1,6 @@
 OptionsCategory_Name_Machine_Translation=Machine Translation
 OptionsCategory_Keywords_Machine_Translation_Settings=Machine Translation Settings
-TranslatedContentPanel.comboBoxOption.originalText=Original Text (First 50KB)
+TranslatedContentPanel.comboBoxOption.originalText=Original Text (Up to 25KB)
 TranslatedContentPanel.comboBoxOption.translatedText=Translated Text
 TranslatedContentViewer.emptyTranslation=The resulting translation was empty.
 TranslatedContentViewer.errorExtractingText=Could not extract text from file.
