@@ -99,7 +99,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private Content associated = null;
 
     private List<NodeProperty<? extends Object>> customProperties;
-    
+
     /*
      * Artifact types which should have the full unique path of the associated
      * content as a property.
@@ -151,18 +151,17 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     removeListeners();
                     contentCache.invalidateAll();
                 }
-            }
-            else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString())) {
-                SCOData scoData = (SCOData)evt.getNewValue();
+            } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString())) {
+                SCOData scoData = (SCOData) evt.getNewValue();
                 if (scoData.getScoreAndDescription() != null) {
                     updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoData.getScoreAndDescription().getRight(), scoData.getScoreAndDescription().getLeft()));
                 }
                 if (scoData.getComment() != null) {
                     updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR, scoData.getComment()));
                 }
-                if (scoData.getCountAndDescription() != null &&
-                   !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-                   updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
+                if (scoData.getCountAndDescription() != null
+                        && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+                    updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
                 }
             }
         }
@@ -333,7 +332,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return srcName;
     }
-    
+
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
         "BlackboardArtifactNode.createSheet.artifactType.name=Result Type",
@@ -365,15 +364,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         // Create place holders for S C O 
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), VALUE_LOADING, ""));
-        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), VALUE_LOADING, ""));        
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), VALUE_LOADING, ""));
         if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), VALUE_LOADING, ""));
         }
-        
+
         // Get the SCO columns data in a background task
         backgroundTasksPool.submit(new GetSCOTask(
-                    new WeakReference<>(this), weakPcl));
-                
+                new WeakReference<>(this), weakPcl));
+
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -582,6 +581,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
     }
 
+    /**
+     * Gets the correlation attribute for the associated file
+     *
+     * @return the correlation attribute for the file associated with this
+     *         BlackboardArtifactNode
+     */
     @Override
     protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance correlationAttribute = null;
@@ -600,19 +605,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param attribute the correlation attribute associated with this
      *                  artifact's associated file, null if central repo is not
      *                  enabled
-     * 
-     * @deprecated  Use the GetSCOTask to get this data on a background thread..., 
-     *              and then update the property sheet asynchronously
+     *
+     * @deprecated Use the GetSCOTask to get this data on a background
+     * thread..., and then update the property sheet asynchronously
      */
     @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=C",
         "BlackboardArtifactNode.createSheet.comment.displayName=C"})
-    @Deprecated 
+    @Deprecated
     protected final void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags, CorrelationAttributeInstance attribute) {
-       HasCommentStatus status = getCommentProperty(tags, attribute );
-       sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
+        HasCommentStatus status = getCommentProperty(tags, attribute);
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
                 status));
     }
-    
+
     /**
      * Gets the comment property for the node
      *
@@ -620,6 +625,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param attribute the correlation attribute associated with this
      *                  artifact's associated file, null if central repo is not
      *                  enabled
+     *
      * @return comment property
      */
     @Override
@@ -645,15 +651,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return status;
     }
+
     /**
      * Used by (subclasses of) BlackboardArtifactNode to add the Score property
      * to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set to add the property to
      * @param tags     the list of tags associated with the file
-     * 
-     * @deprecated  Use the GetSCOTask to get this data on a background thread..., 
-     *              and then update the property sheet asynchronously
+     *
+     * @deprecated Use the GetSCOTask to get this data on a background
+     * thread..., and then update the property sheet asynchronously
      */
     @NbBundle.Messages({"BlackboardArtifactNode.createSheet.score.name=S",
         "BlackboardArtifactNode.createSheet.score.displayName=S",
@@ -667,17 +674,17 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
     }
-    
+
     /**
      * Get the score property for the node.
      *
-     * @param tags     the list of tags associated with the file
-     * 
-     * @return  score property and description
+     * @param tags the list of tags associated with the file
+     *
+     * @return score property and description
      */
     @Override
     protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-       Score score = Score.NO_SCORE;
+        Score score = Score.NO_SCORE;
         String description = Bundle.BlackboardArtifactNode_createSheet_noScore_description();
         if (associated instanceof AbstractFile) {
             if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
@@ -721,44 +728,46 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 }
             }
         }
-        
+
         return Pair.of(score, description);
     }
+
     /**
-     * Used by (subclasses of) BlackboardArtifactNode to add the Occurrences property
-     * to their sheets.
+     * Used by (subclasses of) BlackboardArtifactNode to add the Occurrences
+     * property to their sheets.
      *
-     * @param sheetSet the modifiable Sheet.Set to add the property to
+     * @param sheetSet  the modifiable Sheet.Set to add the property to
      * @param attribute correlation attribute instance
-     * 
-     * @deprecated  Use the GetSCOTask to get this data on a background thread..., 
-     *              and then update the property sheet asynchronously
+     *
+     * @deprecated Use the GetSCOTask to get this data on a background
+     * thread..., and then update the property sheet asynchronously
      */
     @NbBundle.Messages({"BlackboardArtifactNode.createSheet.count.name=O",
         "BlackboardArtifactNode.createSheet.count.displayName=O",
-        "BlackboardArtifactNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
+        "BlackboardArtifactNode.createSheet.count.noCentralRepo.description=No correlation attributes found",
         "BlackboardArtifactNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this artifact's associated file when the column was populated",
         "# {0} - occuranceCount",
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
     @Deprecated
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
-        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute);
+        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute, Bundle.BlackboardArtifactNode_createSheet_count_noCentralRepo_description());
         sheetSet.put(
                 new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), countAndDescription.getRight(), countAndDescription.getLeft()));
-     }
-    
+    }
+
     /**
      * Gets the Occurrences property for the node.
      *
-     * @param attribute correlation attribute instance
-     * 
+     * @param attribute       correlation attribute instance
+     * @param baseDescription
+     *
      * @return count and description
-     * 
+     *
      */
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String baseDescription) {
         Long count = -1L;
-        String description = Bundle.BlackboardArtifactNode_createSheet_count_noCentralRepo_description();
+        String description = baseDescription;
         try {
             //don't perform the query if there is no correlation value
             if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
@@ -772,13 +781,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
+        System.out.println("DESCRIPTION OF ARTIFACT: " + description);
         return Pair.of(count, description);
-     }
-    
+    }
+
     private void updateSheet() {
         this.setSheet(createSheet());
     }
-    
+
     private String getRootParentName() {
         String parentName = associated.getName();
         Content parent = associated;

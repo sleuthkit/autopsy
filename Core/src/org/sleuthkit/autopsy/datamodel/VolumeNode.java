@@ -277,7 +277,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      * @return count property for the underlying content of the node.
      */  
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String baseDescription) {
         return Pair.of(-1L, NO_DESCR);
     }
 }

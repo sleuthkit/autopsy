@@ -355,5 +355,5 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * 
      * @return count property for the underlying content of the node.
      */  
-    abstract protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute);
+    abstract protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String baseDescription);
 }
