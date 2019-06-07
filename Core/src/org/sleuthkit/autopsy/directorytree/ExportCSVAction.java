@@ -57,7 +57,7 @@ import org.openide.nodes.Node.Property;
  */
 public final class ExportCSVAction extends AbstractAction {
 
-    private static Logger logger = Logger.getLogger(ExportCSVAction.class.getName());
+    private static final Logger logger = Logger.getLogger(ExportCSVAction.class.getName());
     private final static String DEFAULT_FILENAME = "Results";
     private final static List<String> columnsToSkip = Arrays.asList(AbstractFilePropertyType.SCORE.toString(),
             AbstractFilePropertyType.COMMENT.toString(), AbstractFilePropertyType.OCCURRENCES.toString());
@@ -235,7 +235,7 @@ public final class ExportCSVAction extends AbstractAction {
      */
     private static class CSVWriter extends SwingWorker<Object, Void> {
 
-        private final Logger logger = Logger.getLogger(CSVWriter.class.getName());
+        private static final Logger logger = Logger.getLogger(CSVWriter.class.getName());
         private ProgressHandle progress;
         
         private final Collection<? extends Node> nodesToExport;
@@ -321,8 +321,7 @@ public final class ExportCSVAction extends AbstractAction {
          * @return the string with quotes escaped
          */
         private String escapeQuotes(String original) {
-            String result = original.replaceAll("\"", "\\\\\"");
-            return result;
+            return original.replaceAll("\"", "\\\\\"");
         }
         
         /**
