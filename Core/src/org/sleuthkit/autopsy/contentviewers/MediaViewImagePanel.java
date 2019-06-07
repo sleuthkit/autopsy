@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,6 +68,7 @@ import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
@@ -85,6 +87,7 @@ import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTag;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsGroup;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -857,9 +860,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private void exportTags() {
         tagsGroup.clearFocus();
         exportChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        //Always base chooser location to export folder
+        exportChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         int returnVal = exportChooser.showDialog(this, Bundle.MediaViewImagePanel_exportSaveText());
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            exportChooser.setCurrentDirectory(exportChooser.getSelectedFile());
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() {
