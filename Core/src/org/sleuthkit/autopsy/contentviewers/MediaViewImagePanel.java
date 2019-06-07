@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -857,9 +858,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private void exportTags() {
         tagsGroup.clearFocus();
         exportChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        //Always base chooser location to export folder
+        exportChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         int returnVal = exportChooser.showDialog(this, Bundle.MediaViewImagePanel_exportSaveText());
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            exportChooser.setCurrentDirectory(exportChooser.getSelectedFile());
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() {
