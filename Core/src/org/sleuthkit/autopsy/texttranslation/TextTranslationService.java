@@ -120,4 +120,12 @@ public final class TextTranslationService {
     public boolean hasProvider() {
         return selectedTranslator.isPresent();
     }
+    
+    /**
+     * 
+     * @return 
+     */
+    public int getMaxPayloadSize() {
+        return selectedTranslator.get().getMaxPayloadSize();
+    }
 }

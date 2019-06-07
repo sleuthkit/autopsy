@@ -77,6 +77,9 @@ public final class TranslatedTextViewer implements TextViewer {
             = new ThreadFactoryBuilder().setNameFormat("translation-content-viewer-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(translationThreadFactory);
 
+    @NbBundle.Messages({
+        "TranslatedTextViewer.maxPayloadSize=Up to the first %dKB of text will be translated"
+    })
     @Override
     public void setNode(final Node node) {
         this.node = node;
@@ -92,6 +95,9 @@ public final class TranslatedTextViewer implements TextViewer {
                 panel.addLanguagePackNames(INSTALLED_LANGUAGE_PACKS);
             }
         }
+        
+        int payloadMaxInKB = TextTranslationService.getInstance().getMaxPayloadSize() / 1000;
+        panel.setWarningLabelMsg(String.format(Bundle.TranslatedTextViewer_maxPayloadSize(), payloadMaxInKB));
 
         //Force a background task.
         displayDropDownListener.actionPerformed(null);
