@@ -102,7 +102,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         // or when tags are added.
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
-    
+
     /**
      * The finalizer removes event listeners as the BlackboardArtifactNode is
      * being garbage collected. Yes, we know that finalizers are considered to
@@ -123,7 +123,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
 
-   
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 
@@ -201,16 +200,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             this.setShortDescription(content.getName());
             updateSheet(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, content.getName()));
         } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString())) {
-            SCOData scoData = (SCOData)evt.getNewValue();
+            SCOData scoData = (SCOData) evt.getNewValue();
             if (scoData.getScoreAndDescription() != null) {
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoData.getScoreAndDescription().getRight(), scoData.getScoreAndDescription().getLeft()));
             }
             if (scoData.getComment() != null) {
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, scoData.getComment()));
             }
-            if (scoData.getCountAndDescription() != null &&
-               !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-               updateSheet(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
+            if (scoData.getCountAndDescription() != null
+                    && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+                updateSheet(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
             }
         }
     };
@@ -331,12 +330,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
         }
-        
-        
+
         // Get the SCO columns data in a background task
         backgroundTasksPool.submit(new GetSCOTask(
-                    new WeakReference<>(this), weakPcl));
-        
+                new WeakReference<>(this), weakPcl));
+
         properties.add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
         properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
         properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
@@ -394,19 +392,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.count.displayName=O",
-        "AbstractAbstractFileNode.createSheet.count.noCentralRepo.description=No correlation attributes found",
         "AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
-        "# {0} - occuranceCount",
-        "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
+        "# {0} - occurenceCount",
+        "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurences of the MD5 correlation value"})
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String baseDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
-        String description = baseDescription;
+        String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
             if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
                 count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
-                description = baseDescription + count;
+                description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
             } else if (attribute != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
@@ -415,7 +412,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
-        System.out.println("DESCRIPTION OF FILE: " + description);
         return Pair.of(count, description);
     }
 
@@ -535,7 +531,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     protected List<Tag> getAllTagsFromDatabase() {
         return new ArrayList<>(getContentTagsFromDatabase());
     }
-    
+
     @Override
     protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;

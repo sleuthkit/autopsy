@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -44,6 +45,8 @@ class GetSCOTask implements Runnable {
         this.listener = listener;
     }
 
+    @Messages({"GetSCOTask.occurrences.defaultDescription=No correlation properties found",
+        "GetSCOTask.occurrences.multipleProperties=Multiple different correlation properties exist for this result"})
     @Override
     public void run() {
         AbstractContentNode<?> contentNode = weakNodeRef.get();
@@ -62,28 +65,23 @@ class GetSCOTask implements Runnable {
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
         if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
             CorrelationAttributeInstance occurrencesAttribute = null;
-            String description = "";
+            String description = Bundle.GetSCOTask_occurrences_defaultDescription();
             if (contentNode instanceof BlackboardArtifactNode) {
                 BlackboardArtifact bbArtifact = ((BlackboardArtifactNode) contentNode).getArtifact();
                 if (bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
-                    description = "for file";
                     occurrencesAttribute = fileAttribute;
                 } else {
                     List<CorrelationAttributeInstance> listOfPossibleAttributes = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
-                    if (listOfPossibleAttributes.isEmpty()) {
-                        description = "No correlation attributes";
-                    } else if (listOfPossibleAttributes.size() > 1) {
-                        description = "Multiple different correlation properties exist for this result";
-                    } else {
-                        description = "for correlation property of type ______";
+                    if (listOfPossibleAttributes.size() > 1) {
+                        description = Bundle.GetSCOTask_occurrences_multipleProperties();
+                    } else if (!listOfPossibleAttributes.isEmpty()) {
                         occurrencesAttribute = listOfPossibleAttributes.get(0);
                     }
                 }
             } else {
-                description = "file";
                 occurrencesAttribute = fileAttribute;
             }
             scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(occurrencesAttribute, description));

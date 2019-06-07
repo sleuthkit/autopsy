@@ -744,13 +744,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     @NbBundle.Messages({"BlackboardArtifactNode.createSheet.count.name=O",
         "BlackboardArtifactNode.createSheet.count.displayName=O",
-        "BlackboardArtifactNode.createSheet.count.noCentralRepo.description=No correlation attributes found",
-        "BlackboardArtifactNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this artifact's associated file when the column was populated",
-        "# {0} - occuranceCount",
-        "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
+        "BlackboardArtifactNode.createSheet.count.noCorrelationAttributes.description=No correlation properties found",
+        "BlackboardArtifactNode.createSheet.count.noCorrelationValues.description=Unable to find other occurrences because no value exists for the available correlation property",
+        "# {0} - occurenceCount",
+        "# {1} - attributeType",
+        "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}"})
     @Deprecated
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
-        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute, Bundle.BlackboardArtifactNode_createSheet_count_noCentralRepo_description());
+        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute, Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
         sheetSet.put(
                 new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), countAndDescription.getRight(), countAndDescription.getLeft()));
     }
@@ -759,29 +760,28 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Gets the Occurrences property for the node.
      *
      * @param attribute       correlation attribute instance
-     * @param baseDescription
+     * @param defaultDescription
      *
      * @return count and description
      *
      */
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String baseDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
         Long count = -1L;
-        String description = baseDescription;
+        String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
             if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
                 count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
-                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count);
+                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, attribute.getCorrelationType().getDisplayName());
             } else if (attribute != null) {
-                description = Bundle.BlackboardArtifactNode_createSheet_count_hashLookupNotRun_description();
+                description = Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationValues_description();
             }
         } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
-        System.out.println("DESCRIPTION OF ARTIFACT: " + description);
         return Pair.of(count, description);
     }
 
