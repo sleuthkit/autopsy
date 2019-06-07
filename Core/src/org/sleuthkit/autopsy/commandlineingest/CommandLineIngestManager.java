@@ -57,6 +57,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.autopsy.ingest.IngestProfiles;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -144,10 +147,13 @@ public class CommandLineIngestManager {
                                 try {
                                     LOGGER.log(Level.INFO, "Processing 'Create Case' command");
                                     System.out.println("Processing 'Create Case' command");
-                                    openCase(command);
+                                    Map<String, String> inputs = command.getInputs();
+                                    String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
+                                    String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                    openCase(baseCaseName, rootOutputDirectory);
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
-                                    OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath);
+                                    OutputGenerator.saveCreateCaseOutput(caseForJob, outputDirPath, baseCaseName);
                                 } catch (CaseActionException ex) {
                                     String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
                                     LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
@@ -226,7 +232,8 @@ public class CommandLineIngestManager {
                                     }
 
                                     // run ingest
-                                    analyze(dataSource);
+                                    String ingestProfile = inputs.get(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name());
+                                    analyze(dataSource, ingestProfile);
                                 } catch (InterruptedException | CaseActionException ex) {
                                     String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
@@ -294,17 +301,14 @@ public class CommandLineIngestManager {
          * Creates a new case using arguments passed in from command line
          * CREATE_CASE command.
          *
-         * @param command command line CREATE_CASE command
+         * @param baseCaseName Case name
+         * @param rootOutputDirectory Full path to directory in which case
+         * output folder will be created
          * @throws CaseActionException
          */
-        private void openCase(CommandLineCommand command) throws CaseActionException {
+        private void openCase(String baseCaseName, String rootOutputDirectory) throws CaseActionException {
 
-            Map<String, String> inputs = command.getInputs();
-
-            String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
-            String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
             LOGGER.log(Level.INFO, "Opening case {0} in directory {1}", new Object[]{baseCaseName, rootOutputDirectory});
-
             Path caseDirectoryPath = findCaseDirectory(Paths.get(rootOutputDirectory), baseCaseName);
             if (null != caseDirectoryPath) {
                 // found an existing case directory for same case name. the input case name must be unique. Exit.
@@ -482,9 +486,12 @@ public class CommandLineIngestManager {
         /**
          * Analyzes the data source content returned by the data source
          * processor using the configured set of data source level and file
-         * level analysis modules.
+         * level analysis modules. If an ingest profile is specified, load that
+         * profile (profile = ingest context + ingest filter) for ingest.
+         * Otherwise use baseline configuration.
          *
          * @param dataSource The data source to analyze.
+         * @param ingestProfileName Name of ingest profile to use (optional)
          *
          * @throws AnalysisStartupException if there is an error analyzing the
          * data source.
@@ -492,14 +499,46 @@ public class CommandLineIngestManager {
          * task is interrupted while blocked, i.e., if auto ingest is shutting
          * down.
          */
-        private void analyze(AutoIngestDataSource dataSource) throws AnalysisStartupException, InterruptedException {
+        private void analyze(AutoIngestDataSource dataSource, String ingestProfileName) throws AnalysisStartupException, InterruptedException {
 
             LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", dataSource.getPath());
+
+            // configure ingest profile and file filter
+            IngestProfiles.IngestProfile selectedProfile = null;
+            FilesSet selectedFileSet = null;
+            if (!ingestProfileName.isEmpty()) {
+                selectedProfile = getSelectedProfile(ingestProfileName);
+                if (selectedProfile == null) {
+                    // unable to find the user specified profile
+                    LOGGER.log(Level.SEVERE, "Unable to find ingest profile: {0}. Ingest cancelled!", ingestProfileName);
+                    System.err.println("Unable to find ingest profile: " + ingestProfileName + ". Ingest cancelled!");
+                    return;
+                }
+
+                // get FileSet filter associated with this profile
+                selectedFileSet = getSelectedFilter(selectedProfile.getFileIngestFilter());
+                if (selectedFileSet == null) {
+                    // unable to find the user specified profile
+                    LOGGER.log(Level.SEVERE, "Unable to find file filter {0} for ingest profile: {1}. Ingest cancelled!", new Object[]{selectedProfile.getFileIngestFilter(), ingestProfileName});
+                    System.err.println("Unable to find file filter " + selectedProfile.getFileIngestFilter() + " for ingest profile: " + ingestProfileName + ". Ingest cancelled!");
+                    return;
+                }
+            }
+
             IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
             IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
-                    IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getCommandLineModeIngestModuleContextString());
+                    IngestJobSettings ingestJobSettings;
+                    if (selectedProfile == null || selectedFileSet == null) {
+                        // use baseline configuration
+                        ingestJobSettings = new IngestJobSettings(UserPreferences.getCommandLineModeIngestModuleContextString());
+                    } else {
+                        // load the custom ingest 
+                        ingestJobSettings = new IngestJobSettings(selectedProfile.toString());
+                        ingestJobSettings.setFileFilter(selectedFileSet);
+                    }
+
                     List<String> settingsWarnings = ingestJobSettings.getWarnings();
                     if (settingsWarnings.isEmpty()) {
                         IngestJobStartResult ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
@@ -551,6 +590,48 @@ public class CommandLineIngestManager {
                 }
             } finally {
                 IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventListener);
+            }
+        }
+
+        /**
+         * Gets the specified ingest profile from the list of all existing
+         * ingest profiles.
+         *
+         * @param ingestProfileName Ingest profile name
+         * @return IngestProfile object, or NULL if the profile doesn't exist
+         */
+        private IngestProfiles.IngestProfile getSelectedProfile(String ingestProfileName) {
+
+            IngestProfiles.IngestProfile selectedProfile = null;
+            // lookup the profile by name
+            for (IngestProfiles.IngestProfile profile : IngestProfiles.getIngestProfiles()) {
+                if (profile.toString().equalsIgnoreCase(ingestProfileName)) {
+                    // found the profile
+                    selectedProfile = profile;
+                    break;
+                }
+            }
+            return selectedProfile;
+        }
+
+        /**
+         * Gets the specified file filter from the list of all existing file
+         * filters (custom and standard).
+         *
+         * @param filterName Name of the file filter
+         * @return FilesSet object, or NULL if the filter doesn't exist
+         */
+        private FilesSet getSelectedFilter(String filterName) {
+            try {
+                Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance()
+                        .getCustomFileIngestFilters();
+                for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
+                    fileIngestFilters.put(fSet.getName(), fSet);
+                }
+                return fileIngestFilters.get(filterName);
+            } catch (FilesSetsManager.FilesSetsManagerException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get file ingest filter: " + filterName, ex); //NON-NLS
+                return null;
             }
         }
 

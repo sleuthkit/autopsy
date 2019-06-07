@@ -59,8 +59,9 @@ class OutputGenerator {
      * @param caseForJob Case object
      * @param outputDirPath Full path to a directory where JSON output should be
      * saved
+     * @param baseCaseName Case name
      */
-    static void saveCreateCaseOutput(Case caseForJob, String outputDirPath) {
+    static void saveCreateCaseOutput(Case caseForJob, String outputDirPath, String baseCaseName) {
         JsonFactory jsonGeneratorFactory = new JsonFactory();
         String reportOutputPath = outputDirPath + File.separator + "createCase_" + TimeStampUtils.createTimeStamp() + ".json";
         java.io.File reportFile = Paths.get(reportOutputPath).toFile();
@@ -80,6 +81,7 @@ class OutputGenerator {
 
             // save command output
             jsonGenerator.writeStartObject();
+            jsonGenerator.writeStringField("@caseName", baseCaseName);
             jsonGenerator.writeStringField("@caseDir", caseForJob.getCaseDirectory());
             jsonGenerator.writeEndObject();
         } catch (IOException ex) {
@@ -146,7 +148,7 @@ class OutputGenerator {
                     // data sources is to get AbstractFile from database and use it's name. 
                     // Content.getName() works for most but not all scenarios.
                     AbstractFile file = caseForJob.getSleuthkitCase().getAbstractFileById(content.getId());
-                    dataSourceName = file.getName(); 
+                    dataSourceName = file.getName();
                 }
 
                 // save the JSON output

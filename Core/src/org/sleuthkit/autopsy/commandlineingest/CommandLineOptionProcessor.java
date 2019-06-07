@@ -47,7 +47,9 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
     private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
     private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
+    private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
+
     private boolean runFromCommandLine = false;
 
     private final List<CommandLineCommand> commands = new ArrayList<>();
@@ -63,6 +65,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(dataSourceObjectIdOption);
         set.add(caseDirOption);
         set.add(runIngestCommandOption);
+        set.add(ingestProfileOption);
         set.add(listAllDataSourcesCommandOption);
         return set;
     }
@@ -193,6 +196,25 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
         }
 
+        String ingestProfile = "";
+        if (values.containsKey(ingestProfileOption)) {
+
+            argDirs = values.get(ingestProfileOption);
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'ingestProfile'");
+                System.err.println("Missing argument 'ingestProfile'");
+                return;
+            }
+            ingestProfile = argDirs[0];
+
+            // verify inputs
+            if (ingestProfile == null || ingestProfile.isEmpty()) {
+                logger.log(Level.SEVERE, "Missing argument 'ingestProfile'");
+                System.err.println("Missing argument 'ingestProfile'");
+                return;
+            }
+        }
+
         // Create commands in order in which they should be executed:
         // First create the "CREATE_CASE" command, if present
         if (values.containsKey(createCaseCommandOption)) {
@@ -271,6 +293,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);
+            newCommand.addInputValue(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name(), ingestProfile);
             commands.add(newCommand);
             runFromCommandLine = true;
         }
