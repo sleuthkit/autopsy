@@ -23,7 +23,6 @@ import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -67,6 +66,9 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
      */
     public MessagesViewer() {
         initComponents();
+        
+        splitPane.setResizeWeight(0.5);
+//        splitPane.setDividerLocation(0.25);
         
         outlineViewPanel.hideOutlineView(Bundle.MessageViewer_no_messages());
         

@@ -65,6 +65,11 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
      * Creates new form ThumbnailViewer
      */
     public MediaViewer() {
+        initComponents();
+        
+        splitPane.setResizeWeight(0.5);
+        splitPane.setDividerLocation(0.5);
+        
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
@@ -86,8 +91,6 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 }
             }
         };
-
-        initComponents();
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
@@ -192,20 +195,20 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        splitpane = new javax.swing.JSplitPane();
+        splitPane = new javax.swing.JSplitPane();
         thumbnailViewer = new org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail(tableEM);
         contentViewer = new MessageDataContent();
 
         setLayout(new java.awt.GridBagLayout());
 
-        splitpane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
         thumbnailViewer.setMinimumSize(new java.awt.Dimension(350, 102));
         thumbnailViewer.setPreferredSize(new java.awt.Dimension(450, 400));
-        splitpane.setLeftComponent(thumbnailViewer);
+        splitPane.setLeftComponent(thumbnailViewer);
 
         contentViewer.setPreferredSize(new java.awt.Dimension(450, 400));
-        splitpane.setRightComponent(contentViewer);
+        splitPane.setRightComponent(contentViewer);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -214,13 +217,13 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        add(splitpane, gridBagConstraints);
+        add(splitPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.contentviewers.MessageContentViewer contentViewer;
-    private javax.swing.JSplitPane splitpane;
+    private javax.swing.JSplitPane splitPane;
     private org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail thumbnailViewer;
     // End of variables declaration//GEN-END:variables
 

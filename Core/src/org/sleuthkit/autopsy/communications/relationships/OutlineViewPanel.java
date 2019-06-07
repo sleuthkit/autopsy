@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.Outline;

@@ -54,9 +54,7 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
-        tabPane.add(mediaViewer.getDisplayName(), mediaViewer);
-        
-        
+        tabPane.add(mediaViewer.getDisplayName(), mediaViewer);        
     }
 
     /**
