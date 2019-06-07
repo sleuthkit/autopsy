@@ -32,6 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
@@ -163,6 +164,7 @@ class AdHocSearchFilterNode extends FilterNode {
             actionsList.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
             actionsList.add(null);
             actionsList.add(ExtractAction.getInstance());
+            actionsList.add(ExportCSVAction.getInstance());
             actionsList.add(null); // creates a menu separator
             actionsList.add(AddContentTagAction.getInstance());
 
