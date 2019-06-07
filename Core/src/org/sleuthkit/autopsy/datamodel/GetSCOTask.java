@@ -68,6 +68,7 @@ class GetSCOTask implements Runnable {
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();
             if (contentNode instanceof BlackboardArtifactNode) {
                 BlackboardArtifact bbArtifact = ((BlackboardArtifactNode) contentNode).getArtifact();
+                //for specific artifact types we still want to display information for the file instance correlation attribute
                 if (bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
@@ -76,12 +77,15 @@ class GetSCOTask implements Runnable {
                 } else {
                     List<CorrelationAttributeInstance> listOfPossibleAttributes = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
                     if (listOfPossibleAttributes.size() > 1) {
+                        //Don't display anything if there is more than 1 correlation property for an artifact but let the user know
                         description = Bundle.GetSCOTask_occurrences_multipleProperties();
                     } else if (!listOfPossibleAttributes.isEmpty()) {
+                        //there should only be one item in the list
                         occurrencesAttribute = listOfPossibleAttributes.get(0);
                     }
                 }
             } else {
+                //use the file instance correlation attribute if the node is not a BlackboardArtifactNode
                 occurrencesAttribute = fileAttribute;
             }
             scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(occurrencesAttribute, description));
