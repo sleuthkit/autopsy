@@ -278,6 +278,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             //enable the new button
             FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
             FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
+            
             // Get the selected interesting files set and populate the set
             // components.
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
@@ -302,6 +303,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 if (!FilesSetDefsPanel.this.rulesListModel.isEmpty()) {
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
                 }
+            } else {
+                // Disable the edit, delete, copy, and export buttons
+                FilesSetDefsPanel.this.editSetButton.setEnabled(false);
+                FilesSetDefsPanel.this.deleteSetButton.setEnabled(false);
+                FilesSetDefsPanel.this.copySetButton.setEnabled(false);
+                FilesSetDefsPanel.this.exportSetButton.setEnabled(false);
             }
         }
 
