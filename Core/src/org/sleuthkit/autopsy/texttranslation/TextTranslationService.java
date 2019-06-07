@@ -122,6 +122,7 @@ public final class TextTranslationService {
     }
     
     /**
+     * Returns the hard limit for translation request sizes.
      * 
      * @return 
      */
