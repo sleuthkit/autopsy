@@ -31,7 +31,7 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
 
     private SelectionInfo currentSelection;
     
-    private final MessagesViewer messagesViewer;
+    private final MessageViewer messagesViewer;
     private final ContactsViewer contactsViewer;
     private final SummaryViewer summaryViewer;
     private final MediaViewer mediaViewer;
@@ -42,21 +42,18 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
      * Creates new form RelationshipBrowser
      */
     public RelationshipBrowser() {
-        messagesViewer = new MessagesViewer();
+        initComponents();
+        messagesViewer = new MessageViewer();
         contactsViewer = new ContactsViewer();
         summaryViewer = new SummaryViewer();
         mediaViewer = new MediaViewer();
         
         proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
-        
-         initComponents();
-        
+ 
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
         tabPane.add(mediaViewer.getDisplayName(), mediaViewer);
-        
-        
     }
 
     /**

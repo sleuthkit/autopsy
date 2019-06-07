@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications.relationships;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -48,16 +49,26 @@ import org.sleuthkit.autopsy.communications.Utils;
 /**
  * Wraps a BlackboardArtifact as an AbstractNode for use in an OutlookView
  */
-final class MessageNode extends BlackboardArtifactNode {
+class MessageNode extends BlackboardArtifactNode {
 
+    public static final String UNTHREADED_ID = "<UNTHREADED>";
+    
     private static final Logger logger = Logger.getLogger(MessageNode.class.getName());
+    
+    private final String threadID;
+    
+    private final Action preferredAction;
 
-    MessageNode(BlackboardArtifact artifact) {
+    MessageNode(BlackboardArtifact artifact, String threadID,  Action preferredAction) {
         super(artifact);
+        
+        this.preferredAction = preferredAction;
 
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s"); // NON-NLS
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message"); // NON-NLS
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
+        
+        this.threadID = threadID;
     }
 
     @Messages({
@@ -112,6 +123,8 @@ final class MessageNode extends BlackboardArtifactNode {
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex); //NON-NLS
                     }
+                    
+                    sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? "" : threadID)); //NON-NLS
 
                     break;
                 case TSK_MESSAGE:
@@ -182,5 +195,14 @@ final class MessageNode extends BlackboardArtifactNode {
     @Override
     public String getSourceName() {
         return getDisplayName();
+    }
+    
+    String getThreadID() {
+        return threadID;
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        return preferredAction;
     }
 }

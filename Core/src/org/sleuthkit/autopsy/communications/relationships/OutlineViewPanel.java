@@ -113,8 +113,6 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         messageLabel = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout(5, 5));
-
-        outlineView.setPreferredSize(new java.awt.Dimension(300, 400));
         add(outlineView, "outlineCard");
 
         messagePanel.setLayout(new java.awt.BorderLayout());

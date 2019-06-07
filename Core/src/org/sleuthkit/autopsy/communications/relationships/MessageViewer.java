@@ -1,0 +1,481 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.communications.relationships;
+
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import static javax.swing.SwingUtilities.isDescendingFrom;
+import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.netbeans.swing.outline.Outline;
+import org.openide.explorer.ExplorerManager;
+import static org.openide.explorer.ExplorerUtils.createLookup;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.nodes.Node;
+import org.openide.nodes.Node.Property;
+import org.openide.nodes.Node.PropertySet;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+
+
+/**
+ *
+ *
+ */
+public class MessageViewer extends JPanel implements RelationshipsViewer{
+
+    private static final Logger logger = Logger.getLogger(MessageViewer.class.getName());
+
+    private final ModifiableProxyLookup proxyLookup;
+    private final PropertyChangeListener focusPropertyListener;
+    private final ThreadChildNodeFactory rootMessageFactory;
+    private final MessagesChildNodeFactory threadMessageNodeFactory;
+
+    private SelectionInfo currentSelectionInfo = null;
+
+    OutlineViewPanel currentPanel;
+    
+    @Messages({
+        "MessageViewer_tabTitle=Messages",
+        "MessageViewer_columnHeader_From=From",
+        "MessageViewer_columnHeader_To=To",
+        "MessageViewer_columnHeader_Date=Date",
+        "MessageViewer_columnHeader_Subject=Subject",
+        "MessageViewer_columnHeader_Attms=Attachments",
+        "MessageViewer_no_messages=<No messages found for selected account>",
+        "MessageViewer_viewMessage_all=All",
+        "MessageViewer_viewMessage_selected=Selected",
+        "MessageViewer_viewMessage_unthreaded=Unthreaded",
+    })
+    
+    
+
+    /**
+     * Creates new form MessageViewer2
+     */
+    public MessageViewer() {
+       
+        initComponents();
+        currentPanel = rootTablePane;
+        proxyLookup = new ModifiableProxyLookup(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
+        rootMessageFactory = new ThreadChildNodeFactory(new ShowThreadMessagesAction());
+        threadMessageNodeFactory = new MessagesChildNodeFactory();
+
+        // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
+        // explaination of focusPropertyListener
+        focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
+            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                final Component newFocusOwner = (Component) focusEvent.getNewValue();
+
+                if (newFocusOwner == null) {
+                    return;
+                }
+                if (isDescendingFrom(newFocusOwner, rootTablePane)) {
+                    proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
+                } else if (isDescendingFrom(newFocusOwner, MessageViewer.this)) {
+                    proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
+                }
+            }
+        };
+
+
+        rootTablePane.getExplorerManager().setRootContext(
+                new TableFilterNode(
+                        new DataResultFilterNode(
+                                new AbstractNode(
+                                        Children.create(rootMessageFactory, true)),
+                                rootTablePane.getExplorerManager()),
+                        true));
+
+        Outline outline = rootTablePane.getOutlineView().getOutline();
+        rootTablePane.getOutlineView().setPropertyColumns(
+                "From", Bundle.MessageViewer_columnHeader_From(),
+                "To", Bundle.MessageViewer_columnHeader_To(),
+                "Date", Bundle.MessageViewer_columnHeader_Date(),
+                "Subject", Bundle.MessageViewer_columnHeader_Subject(),
+                "Attms", Bundle.MessageViewer_columnHeader_Attms()
+        );
+        outline.setRootVisible(false);
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Type");
+
+
+        rootTablePane.getExplorerManager().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                final Node[] nodes = rootTablePane.getExplorerManager().getSelectedNodes();
+                
+                 switch((VIEW_MESSAGE_TYPE)viewMessageComboBox.getSelectedItem()) {
+                     case ALL:
+                         showMessagesButton.setEnabled((nodes != null && nodes.length > 0));
+                         break;
+                     case SELECTED:
+                         showMessagesButton.setEnabled((nodes != null && nodes.length == 1));
+                         break;
+                 }
+            }
+        });
+        
+        threadMessagesPanel.setChildFactory(threadMessageNodeFactory);
+        
+        this.viewMessageComboBox.addItem(VIEW_MESSAGE_TYPE.SELECTED);
+        this.viewMessageComboBox.addItem(VIEW_MESSAGE_TYPE.ALL);
+    }
+
+    @Override
+    public String getDisplayName() {
+       return Bundle.MessageViewer_tabTitle();
+    }
+
+    @Override
+    public JPanel getPanel() {
+        return this;
+    }
+
+    @Override
+    public void setSelectionInfo(SelectionInfo info) {
+        currentSelectionInfo = info;
+
+        currentPanel = rootTablePane;
+
+        CardLayout layout = (CardLayout) this.getLayout();
+        layout.show(this, "threads");
+
+        rootMessageFactory.refresh(info);
+    }
+
+    @Override
+    public Lookup getLookup() {
+        return proxyLookup;
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        //add listener that maintains correct selection in the Global Actions Context
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addPropertyChangeListener("focusOwner", focusPropertyListener);
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .removePropertyChangeListener("focusOwner", focusPropertyListener);
+    }
+    
+    private void showMessages() {
+        VIEW_MESSAGE_TYPE viewType = (VIEW_MESSAGE_TYPE)viewMessageComboBox.getSelectedItem();
+        switch((VIEW_MESSAGE_TYPE)viewMessageComboBox.getSelectedItem()){
+            case ALL:
+                threadMessageNodeFactory.refresh(currentSelectionInfo, null);
+                threadNameLabel.setText("All Messages");
+                
+                ((CardLayout)getLayout()).show(this, "messages");
+                break;
+            case SELECTED:
+                showSelectedThread();
+                break;
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    private void showSelectedThread() {
+        final Node[] nodes = rootTablePane.getExplorerManager().getSelectedNodes();
+
+        if(nodes == null) {
+            return;
+        }
+
+        if(nodes.length == 0 || nodes.length > 1) {
+            return;
+        }
+
+        ArrayList<String> threadIDList = new ArrayList<>();
+        String subject = "";
+
+        PropertySet[] propertySets = nodes[0].getPropertySets();
+        for(PropertySet pset: propertySets) {
+            Property[] properties = pset.getProperties();
+            for(Property prop: properties) {
+                if(prop.getName().equalsIgnoreCase("threadid")){
+                    try {
+                        String threadID = prop.getValue().toString();
+                        if(!threadIDList.contains(threadID)){
+                            threadIDList.add(threadID);
+                        }
+                    } catch (IllegalAccessException | InvocationTargetException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to get threadid for node: %s", nodes[0].getDisplayName()), ex);
+                    }
+                } else if(prop.getName().equalsIgnoreCase("subject")) {
+                    try {
+                        subject = prop.getValue().toString();
+                    } catch (IllegalAccessException | InvocationTargetException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to get subject for node: %s", nodes[0].getDisplayName()), ex);
+                        subject = "<unavailable>";
+                    }
+                }
+            }
+
+        }
+
+        if(!threadIDList.isEmpty()) {
+            threadMessageNodeFactory.refresh(currentSelectionInfo, threadIDList);
+            
+            if(!subject.isEmpty()){
+                threadNameLabel.setText(subject);
+            }
+             // Come back and put involk later for safety.
+            CardLayout layout = (CardLayout)getLayout();
+            layout.show(this, "messages");
+        }
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.'
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
+
+        rootMessagesPane = new javax.swing.JPanel();
+        rootTablePane = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
+        threadsLabel = new javax.swing.JLabel();
+        viewMessageComboBox = new javax.swing.JComboBox<>();
+        viewMessageLabel = new javax.swing.JLabel();
+        showMessagesButton = new javax.swing.JButton();
+        messagePanel = new javax.swing.JPanel();
+        threadMessagesPanel = new MessagesPanel();
+        backButton = new javax.swing.JButton();
+        messagesLabel = new javax.swing.JLabel();
+        showingMessagesLabel = new javax.swing.JLabel();
+        threadNameLabel = new javax.swing.JLabel();
+
+        setLayout(new java.awt.CardLayout());
+
+        rootMessagesPane.setOpaque(false);
+        rootMessagesPane.setLayout(new java.awt.GridBagLayout());
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 15, 15, 15);
+        rootMessagesPane.add(rootTablePane, gridBagConstraints);
+
+        threadsLabel.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(threadsLabel, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.threadsLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 15, 0, 0);
+        rootMessagesPane.add(threadsLabel, gridBagConstraints);
+
+        viewMessageComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewMessageComboBoxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        rootMessagesPane.add(viewMessageComboBox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(viewMessageLabel, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.viewMessageLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 5);
+        rootMessagesPane.add(viewMessageLabel, gridBagConstraints);
+
+        showMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/timeline/images/btn_step_forward.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(showMessagesButton, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.showMessagesButton.text")); // NOI18N
+        showMessagesButton.setBorder(null);
+        showMessagesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showMessagesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(15, 5, 0, 15);
+        rootMessagesPane.add(showMessagesButton, gridBagConstraints);
+
+        add(rootMessagesPane, "threads");
+
+        messagePanel.setLayout(new java.awt.GridBagLayout());
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
+        messagePanel.add(threadMessagesPanel, gridBagConstraints);
+
+        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/timeline/images/btn_step_back.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(backButton, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.backButton.text")); // NOI18N
+        backButton.setBorder(null);
+        backButton.setBorderPainted(false);
+        backButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                backButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(16, 15, 0, 0);
+        messagePanel.add(backButton, gridBagConstraints);
+        backButton.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.backButton.AccessibleContext.accessibleDescription")); // NOI18N
+
+        messagesLabel.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(messagesLabel, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.messagesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 15, 0, 0);
+        messagePanel.add(messagesLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(showingMessagesLabel, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.showingMessagesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 15, 5, 0);
+        messagePanel.add(showingMessagesLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(threadNameLabel, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.threadNameLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 15);
+        messagePanel.add(threadNameLabel, gridBagConstraints);
+
+        add(messagePanel, "messages");
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
+        CardLayout layout = (CardLayout) this.getLayout();
+        layout.show(this, "threads");
+    }//GEN-LAST:event_backButtonActionPerformed
+
+    private void showMessagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showMessagesButtonActionPerformed
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                showMessages();
+            }
+        });
+    }//GEN-LAST:event_showMessagesButtonActionPerformed
+
+    private void viewMessageComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewMessageComboBoxActionPerformed
+         boolean accountSelected = (currentSelectionInfo != null && currentSelectionInfo.getAccounts() != null && !currentSelectionInfo.getAccounts().isEmpty());
+         switch((VIEW_MESSAGE_TYPE)viewMessageComboBox.getSelectedItem()) {
+             case ALL:
+                showMessagesButton.setEnabled(accountSelected);
+                break;
+             case SELECTED:
+                 Node[] selected = rootTablePane.getExplorerManager().getSelectedNodes();
+                 showMessagesButton.setEnabled(selected != null && selected.length == 1);
+                 break;
+         }
+    }//GEN-LAST:event_viewMessageComboBoxActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton backButton;
+    private javax.swing.JPanel messagePanel;
+    private javax.swing.JLabel messagesLabel;
+    private javax.swing.JPanel rootMessagesPane;
+    private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel rootTablePane;
+    private javax.swing.JButton showMessagesButton;
+    private javax.swing.JLabel showingMessagesLabel;
+    private org.sleuthkit.autopsy.communications.relationships.MessagesPanel threadMessagesPanel;
+    private javax.swing.JLabel threadNameLabel;
+    private javax.swing.JLabel threadsLabel;
+    private javax.swing.JComboBox<VIEW_MESSAGE_TYPE> viewMessageComboBox;
+    private javax.swing.JLabel viewMessageLabel;
+    // End of variables declaration//GEN-END:variables
+
+    class ShowThreadMessagesAction extends AbstractAction {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    showSelectedThread();
+                }
+            });
+        }
+    }
+    
+    private enum VIEW_MESSAGE_TYPE{
+        ALL(Bundle.MessageViewer_viewMessage_all()),
+        SELECTED(Bundle.MessageViewer_viewMessage_selected());
+        
+        private final String displayLabel;
+        VIEW_MESSAGE_TYPE(String label) {
+            displayLabel = label;
+        }
+        
+        @Override
+        public String toString() {
+            return displayLabel;
+        }
+    }
+}
