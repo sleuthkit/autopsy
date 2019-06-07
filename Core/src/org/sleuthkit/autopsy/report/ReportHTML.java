@@ -849,12 +849,10 @@ class ReportHTML implements TableReportModule {
             }
 
             StringBuilder linkToThumbnail = new StringBuilder();
-            linkToThumbnail.append("<div id='thumbnail_link'>")
-                    .append("<a href=\"") //NON-NLS
+            linkToThumbnail.append("<div id='thumbnail_link'><a href=\"")
                     .append((imageWithTagsFullPath != null) ? imageWithTagsFullPath : contentPath)
-                    .append("\" target=\"_top\">")
-                    .append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>") //NON-NLS
-                    .append("</a><br>") //NON-NLS
+                    .append("\" target=\"_top\"><img src=\"")
+                    .append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/></a><br>") //NON-NLS
                     .append(file.getName()).append("<br>"); //NON-NLS
             if(imageWithTagsFullPath != null) {
                 linkToThumbnail.append("<a href=\"").append(contentPath).append("\" target=\"_top\">View Original</a><br>");
