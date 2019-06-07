@@ -341,8 +341,7 @@ public final class TranslatedTextViewer implements TextViewer {
                 textBuilder.append(cbuf, 0, read);
                 bytesRead += read;
             }
-
-            // The trim is on here because HTML files were observed with nearly 1MB of white space at the end
+            
             return textBuilder.toString();
         }
 
