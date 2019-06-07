@@ -67,7 +67,7 @@ public final class TranslatedTextViewer implements TextViewer {
 
     private static final boolean OCR_ENABLED = true;
     private static final boolean OCR_DISABLED = false;
-    private static final int MAX_SIZE_1MB = 1024000;
+    private static final int MAX_EXTRACT_SIZE_BYTES = 51200;
     private static final List<String> INSTALLED_LANGUAGE_PACKS = PlatformUtil.getOcrLanguagePacks();
     private final TranslationContentPanel panel = new TranslationContentPanel();
 
@@ -296,7 +296,8 @@ public final class TranslatedTextViewer implements TextViewer {
 
             //Correct for UTF-8
             byte[] resultInUTF8Bytes = result.getBytes("UTF8");
-            byte[] trimToArraySize = Arrays.copyOfRange(resultInUTF8Bytes, 0, Math.min(resultInUTF8Bytes.length, MAX_SIZE_1MB) );
+            byte[] trimToArraySize = Arrays.copyOfRange(resultInUTF8Bytes, 0, 
+                    Math.min(resultInUTF8Bytes.length, MAX_EXTRACT_SIZE_BYTES) );
             return new String(trimToArraySize, "UTF-8");
         }
 
@@ -331,7 +332,7 @@ public final class TranslatedTextViewer implements TextViewer {
 
                 //Short-circuit the read if its greater than our max
                 //translatable size
-                int bytesLeft = MAX_SIZE_1MB - bytesRead;
+                int bytesLeft = MAX_EXTRACT_SIZE_BYTES - bytesRead;
 
                 if (bytesLeft < read) {
                     textBuilder.append(cbuf, 0, bytesLeft);

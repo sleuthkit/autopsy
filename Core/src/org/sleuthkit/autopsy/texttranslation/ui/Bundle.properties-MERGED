@@ -1,6 +1,6 @@
 OptionsCategory_Name_Machine_Translation=Machine Translation
 OptionsCategory_Keywords_Machine_Translation_Settings=Machine Translation Settings
-TranslatedContentPanel.comboBoxOption.originalText=Original Text
+TranslatedContentPanel.comboBoxOption.originalText=Original Text (First 50KB)
 TranslatedContentPanel.comboBoxOption.translatedText=Translated Text
 TranslatedContentViewer.emptyTranslation=The resulting translation was empty.
 TranslatedContentViewer.errorExtractingText=Could not extract text from file.
@@ -16,7 +16,6 @@ TranslatedTextViewer.title=Translation
 TranslatedTextViewer.toolTip=Displays translated file text.
 TranslationContentPanel.autoDetectOCR=Autodetect language
 TranslationContentPanel.ShowLabel.text=Show:
-TranslationContentPanel.warningLabel2MB.text=Only the first 1MB of text will be displayed
 TranslationContentPanel.ocrLabel.text=OCR:
 TranslationOptionsPanel.noTextTranslators.text=No text translators exist, translation is disabled.
 TranslationOptionsPanel.noTextTranslatorSelected.text=No text translator selected, translation is disabled.
