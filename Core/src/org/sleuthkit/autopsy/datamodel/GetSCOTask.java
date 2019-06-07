@@ -72,7 +72,8 @@ class GetSCOTask implements Runnable {
                 if (bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
-                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                     occurrencesAttribute = fileAttribute;
                 } else {
                     List<CorrelationAttributeInstance> listOfPossibleAttributes = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
