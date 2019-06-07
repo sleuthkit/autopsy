@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Node.Property;
@@ -58,7 +59,8 @@ public final class ExportCSVAction extends AbstractAction {
 
     private static Logger logger = Logger.getLogger(ExportCSVAction.class.getName());
     private final static String DEFAULT_FILENAME = "Results";
-    private final static List<String> columnsToSkip = Arrays.asList("S", "C", "O");
+    private final static List<String> columnsToSkip = Arrays.asList(AbstractFilePropertyType.SCORE.toString(),
+            AbstractFilePropertyType.COMMENT.toString(), AbstractFilePropertyType.OCCURRENCES.toString());
 
     private static String userDefinedExportPath;
 
@@ -300,7 +302,7 @@ public final class ExportCSVAction extends AbstractAction {
                     for(PropertySet set : sets) {
                         for (Property<?> prop : set.getProperties()) {
                             if ( ! columnsToSkip.contains(prop.getDisplayName())) {
-                                values.add(prop.getValue().toString());
+                                values.add(escapeQuotes(prop.getValue().toString()));
                             }
                         }
                     }
@@ -309,6 +311,18 @@ public final class ExportCSVAction extends AbstractAction {
             }
 
             return null;
+        }
+        
+        /**
+         * Escape any quotes in the string
+         * 
+         * @param original
+         * 
+         * @return the string with quotes escaped
+         */
+        private String escapeQuotes(String original) {
+            String result = original.replaceAll("\"", "\\\\\"");
+            return result;
         }
         
         /**
