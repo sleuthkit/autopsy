@@ -183,7 +183,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Component class="org.sleuthkit.autopsy.communications.OutlineViewPanel" name="fileReferencesPanel">
+    <Component class="org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel" name="fileReferencesPanel">
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
@@ -197,7 +197,7 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="org.sleuthkit.autopsy.communications.OutlineViewPanel" name="caseReferencesPanel">
+    <Component class="org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel" name="caseReferencesPanel">
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
