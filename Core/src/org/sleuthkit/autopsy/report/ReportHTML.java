@@ -849,18 +849,18 @@ class ReportHTML implements TableReportModule {
             }
 
             StringBuilder linkToThumbnail = new StringBuilder();
-            linkToThumbnail.append("<div id='thumbnail_link'>");
-            linkToThumbnail.append("<a href=\""); //NON-NLS
-            linkToThumbnail.append((imageWithTagsFullPath != null) ? imageWithTagsFullPath : contentPath);
-            linkToThumbnail.append("\" target=\"_top\">");
-            linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>"); //NON-NLS
-            linkToThumbnail.append("</a><br>"); //NON-NLS
-            linkToThumbnail.append(file.getName()).append("<br>"); //NON-NLS
+            linkToThumbnail.append("<div id='thumbnail_link'>")
+                    .append("<a href=\"") //NON-NLS
+                    .append((imageWithTagsFullPath != null) ? imageWithTagsFullPath : contentPath)
+                    .append("\" target=\"_top\">")
+                    .append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>") //NON-NLS
+                    .append("</a><br>") //NON-NLS
+                    .append(file.getName()).append("<br>"); //NON-NLS
             if(imageWithTagsFullPath != null) {
                 linkToThumbnail.append("<a href=\"").append(contentPath).append("\" target=\"_top\">View Original</a><br>");
             }
 
-            if (contentTags.size() > 0) {
+            if (!contentTags.isEmpty()) {
                 linkToThumbnail.append(NbBundle.getMessage(this.getClass(), "ReportHTML.thumbLink.tags"));
             }
             for (int i = 0; i < contentTags.size(); i++) {
