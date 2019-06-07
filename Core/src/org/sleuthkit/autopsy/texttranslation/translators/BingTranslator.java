@@ -108,7 +108,6 @@ public class BingTranslator implements TextTranslator {
         String toTranslate = string.trim();
         //Translates some text into English, without specifying the source langauge.
 
-        // HTML files were producing lots of white space at the end
         //Google Translate required us to replace (\r\n|\n) with <br /> 
         //but Bing Translator doesn not have that requirement.
         //The free account has a maximum file size. If you have a paid account,
@@ -171,5 +170,10 @@ public class BingTranslator implements TextTranslator {
         } catch (IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException e) {
             throw new TranslationException("JSON text does not match Bing Translator scheme: " + e);
         }
+    }
+
+    @Override
+    public int getMaxPayloadSize() {
+        return MAX_STRING_LENGTH;
     }
 }
