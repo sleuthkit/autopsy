@@ -101,7 +101,7 @@ public final class GoogleTranslator implements TextTranslator {
                 //their service is optimized for 2K code points and recommends keeping the requests that size. 
                 //There is a hard limit of 30K code points per request. There is also a time-based quota that 
                 //we are not enforcing, which may lead to 403 errors. We are currently configured for a max of 5K 
-                //in each request, for two reasons. 1) Is to be more in line with Google's recommendation. 2) Is to 
+                //in each request, for two reasons. 1) To be more in line with Google's recommendation. 2) To 
                 //minimize accidental exceedence of time based quotas.
                 if (substring.length() > MAX_PAYLOAD_SIZE) {
                     substring = substring.substring(0, MAX_PAYLOAD_SIZE);
