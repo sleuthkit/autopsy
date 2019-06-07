@@ -130,7 +130,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         "ImageNode.createSheet.type.text=Image",
         "ImageNode.createSheet.sectorSize.name=Sector Size (Bytes)",
         "ImageNode.createSheet.sectorSize.displayName=Sector Size (Bytes)",
-        "ImageNode.createSheet.sectorSize.desc=Sector size of the image in bytes.",      
+        "ImageNode.createSheet.sectorSize.desc=Sector size of the image in bytes.",
         "ImageNode.createSheet.timezone.name=Timezone",
         "ImageNode.createSheet.timezone.displayName=Timezone",
         "ImageNode.createSheet.timezone.desc=Timezone of the image",
@@ -257,64 +257,69 @@ public class ImageNode extends AbstractContentNode<Image> {
     /**
      * Reads and returns a list of all tags associated with this content node.
      *
-     * Null implementation of an abstract method. 
-     * 
+     * Null implementation of an abstract method.
+     *
      * @return list of tags associated with the node.
-     */ 
+     */
     @Override
     protected List<Tag> getAllTagsFromDatabase() {
         return new ArrayList<>();
     }
+
     /**
-     * Returns correlation attribute instance for the underlying content of the node.
-     * 
-     * Null implementation of an abstract method. 
-     * 
-     * @return correlation attribute instance for the underlying content of the node.
-     */ 
+     * Returns correlation attribute instance for the underlying content of the
+     * node.
+     *
+     * Null implementation of an abstract method.
+     *
+     * @return correlation attribute instance for the underlying content of the
+     *         node.
+     */
     @Override
     protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         return null;
     }
-    
+
     /**
      * Returns Score property for the node.
-     * 
-     * Null implementation of an abstract method. 
-     * 
+     *
+     * Null implementation of an abstract method.
+     *
      * @param tags list of tags.
-     * 
+     *
      * @return Score property for the underlying content of the node.
-     */ 
+     */
     @Override
     protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
         return Pair.of(DataResultViewerTable.Score.NO_SCORE, NO_DESCR);
     }
+
     /**
      * Returns comment property for the node.
-     * 
-     * Null implementation of an abstract method. 
-     * 
-     * @param tags list of tags
+     *
+     * Null implementation of an abstract method.
+     *
+     * @param tags      list of tags
      * @param attribute correlation attribute instance
-     * 
+     *
      * @return Comment property for the underlying content of the node.
-     */ 
+     */
     @Override
     protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
         return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
     }
+
     /**
      * Returns occurrences/count property for the node.
      *
-     * Null implementation of an abstract method. 
-     * 
-     * @param attribute correlation attribute instance
+     * Null implementation of an abstract method.
+     *
+     * @param attribute          correlation attribute instance
      * @param defaultDescription a description to use when none is determined by
      *                           the getCountPropertyAndDescription method
-     * 
+     *
      * @return count property for the underlying content of the node.
-     */  
+     */
     @Override
     protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
         return Pair.of(-1L, NO_DESCR);

@@ -759,7 +759,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     /**
      * Gets the Occurrences property for the node.
      *
-     * @param attribute       correlation attribute instance
+     * @param attribute          correlation attribute instance
      * @param defaultDescription
      *
      * @return count and description
