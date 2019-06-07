@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
+import java.awt.Component;
 import javax.swing.SwingUtilities;
+import javax.swing.table.TableCellRenderer;
+import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.explorer.view.OutlineView;
@@ -98,7 +101,7 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         super.setEnabled(enabled);
         outlineView.setEnabled(enabled);
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -112,8 +115,10 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         messagePanel = new javax.swing.JPanel();
         messageLabel = new javax.swing.JLabel();
 
+        setEnabled(false);
         setLayout(new java.awt.CardLayout(5, 5));
 
+        outlineView.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         outlineView.setPreferredSize(new java.awt.Dimension(300, 400));
         add(outlineView, "outlineCard");
 

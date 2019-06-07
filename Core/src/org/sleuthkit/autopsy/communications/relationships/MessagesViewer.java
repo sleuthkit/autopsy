@@ -194,15 +194,15 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        jSplitPane1 = new javax.swing.JSplitPane();
+        splitPane = new javax.swing.JSplitPane();
         contentViewer = new MessageDataContent();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
         setLayout(new java.awt.GridBagLayout());
 
-        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        jSplitPane1.setBottomComponent(contentViewer);
-        jSplitPane1.setLeftComponent(outlineViewPanel);
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setBottomComponent(contentViewer);
+        splitPane.setLeftComponent(outlineViewPanel);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -211,13 +211,13 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        add(jSplitPane1, gridBagConstraints);
+        add(splitPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.contentviewers.MessageContentViewer contentViewer;
-    private javax.swing.JSplitPane jSplitPane1;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
+    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 }
