@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
+import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.table.TableColumn;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.explorer.view.OutlineView;
@@ -97,6 +99,19 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         outlineView.setEnabled(enabled);
+    }
+    
+    public void setTableColumnsWidth(double... percentages) {
+        JTable table = outlineView.getOutline();
+        double total = 0;
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            total += percentages[i];
+        }
+
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            TableColumn column = table.getColumnModel().getColumn(i);
+            column.setPreferredWidth((int) (table.getPreferredSize().width * (percentages[i] / total)));
+        }
     }
     
     /**

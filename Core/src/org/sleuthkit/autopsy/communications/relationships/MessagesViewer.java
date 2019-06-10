@@ -68,7 +68,6 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
         initComponents();
         
         splitPane.setResizeWeight(0.5);
-//        splitPane.setDividerLocation(0.25);
         
         outlineViewPanel.hideOutlineView(Bundle.MessageViewer_no_messages());
         
@@ -140,6 +139,8 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
                 updateOutlineViewPanel();
             }
         });
+        
+        outlineViewPanel.setTableColumnsWidth(10,10,10,15,50,5);
     }
 
     @Override
