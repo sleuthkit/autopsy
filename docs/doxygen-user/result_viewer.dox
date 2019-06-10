@@ -1,11 +1,19 @@
 /*! \page result_viewer_page Result Viewer
 
-The Result Viewer is located on the top right of the Autopsy screen. It shows lists of files and their corresponding attributes such as time, path, size, checksum, etc.
+The Result Viewer is located on the top right of the Autopsy screen and shows the the contents of what was selected in the \ref tree_viewer_page. 
 
-<br>
+\section result_viewer_table Table Viewers
+
+Table Results Viewer (Directory Listing) displays the data catalog as a table with some details (properties) of each file. For files, the properties that it shows are: name, time (modified, changed, accessed, and created), size, flags (directory and meta), mode, user ID, group ID, metadata address, attribute address, and type (directory and meta). For other data types the columns will be different. Click the "Table" tab to select this view.
+
+The following shows the result viewer when a folder is selected from the data source section of the tree.
 \image html result-viewer-example-1.PNG
-<br>
 
+As mentioned above, the Result Viewer is context-aware which means it will show applicable columns for the data type selected. The following shows the data in the "Web Bookmarks" node in the \ref tree_viewer_page.
+
+\image html result-viewer-example-3.PNG
+
+\subsection result_viewer_sco SCO Columns
 By default, the first three columns after the file name in the results viewer are named "S", "C" and "O". 
 
 \image html view_options_sco.png
@@ -23,15 +31,31 @@ These columns display the following:
 
 To display more information about why an icon has appeared, you can hover over it. The Comment and Other occurrences columns query the Central Repository. If this seems to be having a performance impact, it can be disabled through the \ref view_options_page. This will remove the Other occurrences column entirely and the Comment column will be based only on tags.
 
-You can also switch it to Thumbnail view to see thumbnails of the content in the selected folder.
+\subsection export_csv Exporting to CSV
 
-<br>
-\image html result-viewer-example-2.PNG
-<br>
+You can export the contents of the Result Viewer to a CSV file in two ways. The "Save table as CSV" button in the upper left will save the entire contents of the Result Viewer to a CSV file. You can also select files in the Result Viewer and then right-click and select "Export select rows to CSV" to write only a subset of the rows.
 
-The Result Viewer is context-aware, meaning it will show applicable columns for the data type selected.
-<br>
-\image html result-viewer-example-3.PNG
-<br>
+\image html result_viewer_csv.PNG
+
+\subsection right_click_functions Right Click Functions
+Viewers in Result Viewers have certain right-click functions built-in into them that can be accessed when a node a certain type is selected (a file, directory or a result).
+Here are some examples that you may see:
+\li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS or through the External Viewer tab on the Options menu. For example, HTML files may be opened by IE or Firefox, depending on what the local system is configured to use.
+\li View in New Window: Opens the content in a new internal Content Viewer (instead of in the default location in the lower right).
+\li Extract: Make a local copy of the file or directory for further analysis.
+
+
+\section thumbnail_result_viewer Thumbnail Result Viewers
+Thumbnail Results Viewer displays the data catalog as a table of thumbnail images in adjustable sizes. This viewer only supports picture files (Currently, only supports JPG, GIF, and PNG formats). Click the Thumbnail tab to select this view. Note that for a large number of images in a directory selected in the Data Explorer, or for a View selected that contains a large number of images, it might take a while to populate this view for the first time before the images are cached.
+
+\image html thumbnail-result-viewer-tab.PNG
+
+\section result_viewer_paging Paging
+
+The Result Viewer can have problems displaying large numbers of rows. To address this, when there are over a certain numer of rows (10,000 by default), the results will be split into pages. The controls at the top right will allow you to browse the different pages.
+
+\image html result_viewer_paging.PNG
+
+You can adust the page sizes through \ref view_options_page or turn it off entirely.
 
 */
