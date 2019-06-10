@@ -70,7 +70,11 @@ This module creates an JSON output file in <a href="https://github.com/ucoProjec
 
 \subsection report_files Files - Text
 
-This report module allows you create a tab delimited text file from all files in the current case. You can select which fields should be exported.
+This report module allows you create a tab or comma delimited text file from all files in the current case. Start by selecting which delimiter you would like to use.
+
+\image html reports_files_delimiter.png
+
+You can then select which fields should be exported.
 
 \image html reports_files_config.png
 <br>
