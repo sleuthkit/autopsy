@@ -286,7 +286,12 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
              * If pageSize is set split keys into pages, otherwise create a
              * single page containing all keys.
              */
-            pages = Lists.partition(keys, pageSize > 0 ? pageSize : keys.size());
+            if (keys.isEmpty()) {
+                pages.clear();
+            } else {
+                pages = Lists.partition(keys, pageSize > 0 ? pageSize : keys.size());
+            }
+
             if (pages.size() != oldPageCount) {
                 try {
                     // Number of pages has changed so we need to send out a notification.

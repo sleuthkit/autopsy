@@ -77,6 +77,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
@@ -176,6 +177,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initComponents();
 
         initializePagingSupport();
+        
+        /*
+         * Disable the CSV export button for the common properties results 
+         */
+        if (this instanceof org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributesSearchResultsViewerTable) {
+            exportCSVButton.setEnabled(false);
+        }
 
         /*
          * Configure the child OutlineView (explorer view) component.
@@ -1291,6 +1299,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outlineView = new OutlineView(DataResultViewerTable.FIRST_COLUMN_LABEL);
         gotoPageLabel = new javax.swing.JLabel();
         gotoPageTextField = new javax.swing.JTextField();
+        exportCSVButton = new javax.swing.JButton();
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.pageLabel.text")); // NOI18N
 
@@ -1338,17 +1347,24 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
         });
 
+        exportCSVButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.exportCSVButton.text")); // NOI18N
+        exportCSVButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportCSVButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(608, Short.MAX_VALUE)
+            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 904, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(pageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pageNumLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(14, 14, 14)
                 .addComponent(pagesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1358,7 +1374,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 .addComponent(gotoPageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(gotoPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(exportCSVButton))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {pageNextButton, pagePrevButton});
@@ -1366,7 +1383,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(3, 3, 3)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(pageLabel)
                     .addComponent(pageNumLabel)
@@ -1374,9 +1391,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(gotoPageLabel)
-                    .addComponent(gotoPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
+                    .addComponent(gotoPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(exportCSVButton))
+                .addGap(3, 3, 3)
+                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1397,7 +1415,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         pagingSupport.gotoPage();
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
 
+    @NbBundle.Messages({"DataResultViewerTable.exportCSVButtonActionPerformed.empty=No data to export"
+        })
+    private void exportCSVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCSVButtonActionPerformed
+        Node currentRoot = this.getExplorerManager().getRootContext();
+        if (currentRoot != null && currentRoot.getChildren().getNodesCount() > 0) {
+            org.sleuthkit.autopsy.directorytree.ExportCSVAction.saveNodesToCSV(java.util.Arrays.asList(currentRoot.getChildren().getNodes()), this);
+        } else {
+            MessageNotifyUtil.Message.info(Bundle.DataResultViewerTable_exportCSVButtonActionPerformed_empty());
+        }
+    }//GEN-LAST:event_exportCSVButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton exportCSVButton;
     private javax.swing.JLabel gotoPageLabel;
     private javax.swing.JTextField gotoPageTextField;
     private org.openide.explorer.view.OutlineView outlineView;
