@@ -37,7 +37,7 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(HtmlViewer.class.getName());
-
+    private org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel;
     private static final String[] SUPPORTED_MIMETYPES = new String[]{
         "text/html",
         "application/xhtml+xml"
@@ -47,6 +47,7 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
      * Creates new form HtmlViewerPanel
      */
     HtmlViewer() {
+        htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
         initComponents();
     }
 
@@ -81,31 +82,12 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(htmlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(htmlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel;
     // End of variables declaration//GEN-END:variables
-
     @Override
     public List<String> getSupportedMIMETypes() {
         return Arrays.asList(SUPPORTED_MIMETYPES);
