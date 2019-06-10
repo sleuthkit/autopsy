@@ -251,10 +251,10 @@ final class HexView extends JPanel {
             this.setHighlight(startByte, endByte);
 
             if (startByte != endByte) {
-                /**
-                 * @param 1 Start
-                 * @param 2 End
-                 * @param 3 Len
+                /*
+                 * param 1 Start
+                 * param 2 End
+                 * param 3 Len
                  */
                 int length = endByte - startByte;
                 String text = Bundle.HexView_statusTemplate_nonZeroLength(
@@ -266,8 +266,8 @@ final class HexView extends JPanel {
                         String.format("0x%1$x", length));
                 statusLabel.setText(text);
             } else {
-                /**
-                 * @param 1 Start
+                /*
+                 * param 1 Start
                  */
                 String text = Bundle.HexView_statusTemplate_zeroLength(startByte, String.format("0x%1$x", startByte));
                 statusLabel.setText(text);
