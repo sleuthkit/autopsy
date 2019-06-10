@@ -19,9 +19,14 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -32,8 +37,10 @@ import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SortOrder;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
@@ -122,6 +129,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         currentPage = -1;
         totalPages = 0;
         currentPageImages = 0;
+        
+        buttonBarPanel.setLayout(new WrapLayout(java.awt.FlowLayout.LEFT));
     }
 
     /**
@@ -132,33 +141,84 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
+        buttonBarPanel = new javax.swing.JPanel();
+        pagesPanel = new javax.swing.JPanel();
+        pageNumberPane = new javax.swing.JPanel();
         pageLabel = new javax.swing.JLabel();
+        pageNumLabel = new javax.swing.JLabel();
+        pageButtonPanel = new javax.swing.JPanel();
         pagesLabel = new javax.swing.JLabel();
         pagePrevButton = new javax.swing.JButton();
         pageNextButton = new javax.swing.JButton();
-        imagesLabel = new javax.swing.JLabel();
-        imagesRangeLabel = new javax.swing.JLabel();
-        pageNumLabel = new javax.swing.JLabel();
-        filePathLabel = new javax.swing.JLabel();
+        pageGotoPane = new javax.swing.JPanel();
         goToPageLabel = new javax.swing.JLabel();
         goToPageField = new javax.swing.JTextField();
+        imagePane = new javax.swing.JPanel();
+        imagesLabel = new javax.swing.JLabel();
+        imagesRangeLabel = new javax.swing.JLabel();
         thumbnailSizeComboBox = new javax.swing.JComboBox<>();
-        iconView = new org.openide.explorer.view.IconView();
-        sortButton = new javax.swing.JButton();
+        sortPane = new javax.swing.JPanel();
         sortLabel = new javax.swing.JLabel();
+        sortButton = new javax.swing.JButton();
+        filePathLabel = new javax.swing.JLabel();
+        iconView = new org.openide.explorer.view.IconView();
+
+        setLayout(new java.awt.BorderLayout());
+
+        buttonBarPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+
+        pagesPanel.setLayout(new java.awt.GridBagLayout());
+
+        pageNumberPane.setLayout(new java.awt.GridBagLayout());
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
+        pageNumberPane.add(pageLabel, gridBagConstraints);
+
+        pageNumLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageNumLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
+        pageNumberPane.add(pageNumLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        pagesPanel.add(pageNumberPane, gridBagConstraints);
+
+        buttonBarPanel.add(pagesPanel);
+
+        pageButtonPanel.setLayout(new java.awt.GridBagLayout());
 
         pagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
+        pageButtonPanel.add(pagesLabel, gridBagConstraints);
 
         pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
         pagePrevButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagePrevButton.text")); // NOI18N
+        pagePrevButton.setBorder(null);
         pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
         pagePrevButton.setFocusable(false);
         pagePrevButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        pagePrevButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        pagePrevButton.setPreferredSize(new java.awt.Dimension(55, 23));
+        pagePrevButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
         pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
         pagePrevButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         pagePrevButton.addActionListener(new java.awt.event.ActionListener() {
@@ -166,13 +226,20 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 pagePrevButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        pageButtonPanel.add(pagePrevButton, gridBagConstraints);
 
         pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
         pageNextButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageNextButton.text")); // NOI18N
+        pageNextButton.setBorder(null);
         pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
         pageNextButton.setFocusable(false);
         pageNextButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        pageNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
         pageNextButton.setMaximumSize(new java.awt.Dimension(27, 23));
         pageNextButton.setMinimumSize(new java.awt.Dimension(27, 23));
         pageNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
@@ -182,16 +249,27 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 pageNextButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
+        pageButtonPanel.add(pageNextButton, gridBagConstraints);
 
-        imagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesLabel.text")); // NOI18N
+        buttonBarPanel.add(pageButtonPanel);
 
-        imagesRangeLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesRangeLabel.text")); // NOI18N
-
-        pageNumLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageNumLabel.text")); // NOI18N
-
-        filePathLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.filePathLabel.text")); // NOI18N
+        pageGotoPane.setLayout(new java.awt.GridBagLayout());
 
         goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.goToPageLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
+        pageGotoPane.add(goToPageLabel, gridBagConstraints);
 
         goToPageField.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.goToPageField.text")); // NOI18N
         goToPageField.addActionListener(new java.awt.event.ActionListener() {
@@ -199,12 +277,49 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 goToPageFieldActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 75;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
+        pageGotoPane.add(goToPageField, gridBagConstraints);
+
+        buttonBarPanel.add(pageGotoPane);
+
+        imagePane.setLayout(new java.awt.GridBagLayout());
+
+        imagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
+        imagePane.add(imagesLabel, gridBagConstraints);
+
+        imagesRangeLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesRangeLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
+        imagePane.add(imagesRangeLabel, gridBagConstraints);
+
+        buttonBarPanel.add(imagePane);
 
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 thumbnailSizeComboBoxActionPerformed(evt);
             }
         });
+        buttonBarPanel.add(thumbnailSizeComboBox);
+
+        sortPane.setLayout(new java.awt.GridBagLayout());
+
+        sortLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weighty = 1.0;
+        sortPane.add(sortLabel, gridBagConstraints);
 
         sortButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortButton.text")); // NOI18N
         sortButton.addActionListener(new java.awt.event.ActionListener() {
@@ -212,65 +327,20 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 sortButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 9);
+        sortPane.add(sortButton, gridBagConstraints);
 
-        sortLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text")); // NOI18N
+        buttonBarPanel.add(sortPane);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(pageLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pageNumLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(pagesLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(goToPageLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(12, 12, 12)
-                        .addComponent(imagesLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(30, 30, 30)
-                        .addComponent(sortButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(sortLabel))
-                    .addComponent(filePathLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(pageLabel)
-                    .addComponent(pageNumLabel)
-                    .addComponent(pagesLabel)
-                    .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(goToPageLabel)
-                    .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(imagesLabel)
-                    .addComponent(imagesRangeLabel)
-                    .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sortButton)
-                    .addComponent(sortLabel))
-                .addGap(13, 13, 13)
-                .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filePathLabel))
-        );
+        add(buttonBarPanel, java.awt.BorderLayout.NORTH);
+
+        filePathLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.filePathLabel.text")); // NOI18N
+        add(filePathLabel, java.awt.BorderLayout.SOUTH);
+        add(iconView, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
@@ -355,19 +425,26 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel buttonBarPanel;
     private javax.swing.JLabel filePathLabel;
     private javax.swing.JTextField goToPageField;
     private javax.swing.JLabel goToPageLabel;
     private org.openide.explorer.view.IconView iconView;
+    private javax.swing.JPanel imagePane;
     private javax.swing.JLabel imagesLabel;
     private javax.swing.JLabel imagesRangeLabel;
+    private javax.swing.JPanel pageButtonPanel;
+    private javax.swing.JPanel pageGotoPane;
     private javax.swing.JLabel pageLabel;
     private javax.swing.JButton pageNextButton;
     private javax.swing.JLabel pageNumLabel;
+    private javax.swing.JPanel pageNumberPane;
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
+    private javax.swing.JPanel pagesPanel;
     private javax.swing.JButton sortButton;
     private javax.swing.JLabel sortLabel;
+    private javax.swing.JPanel sortPane;
     private javax.swing.JComboBox<String> thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
 
@@ -678,6 +755,178 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     setCursor(null);
                 }
             }
+        }
+    }
+    
+    private class WrapLayout extends FlowLayout {
+
+        private Dimension preferredLayoutSize;
+
+        /**
+         * Constructs a new <code>WrapLayout</code> with a left alignment and a
+         * default 5-unit horizontal and vertical gap.
+         */
+        public WrapLayout() {
+            super();
+        }
+
+        /**
+         * Constructs a new <code>FlowLayout</code> with the specified alignment
+         * and a default 5-unit horizontal and vertical gap. The value of the
+         * alignment argument must be one of <code>WrapLayout</code>,
+         * <code>WrapLayout</code>, or <code>WrapLayout</code>.
+         *
+         * @param align the alignment value
+         */
+        public WrapLayout(int align) {
+            super(align);
+        }
+
+        /**
+         * Creates a new flow layout manager with the indicated alignment and
+         * the indicated horizontal and vertical gaps.
+         * <p>
+         * The value of the alignment argument must be one of
+         * <code>WrapLayout</code>, <code>WrapLayout</code>, or
+         * <code>WrapLayout</code>.
+         *
+         * @param align the alignment value
+         * @param hgap  the horizontal gap between components
+         * @param vgap  the vertical gap between components
+         */
+        public WrapLayout(int align, int hgap, int vgap) {
+            super(align, hgap, vgap);
+        }
+
+        /**
+         * Returns the preferred dimensions for this layout given the
+         * <i>visible</i> components in the specified target container.
+         *
+         * @param target the component which needs to be laid out
+         *
+         * @return the preferred dimensions to lay out the subcomponents of the
+         *         specified container
+         */
+        @Override
+        public Dimension preferredLayoutSize(Container target) {
+            return layoutSize(target, true);
+        }
+
+        /**
+         * Returns the minimum dimensions needed to layout the <i>visible</i>
+         * components contained in the specified target container.
+         *
+         * @param target the component which needs to be laid out
+         *
+         * @return the minimum dimensions to lay out the subcomponents of the
+         *         specified container
+         */
+        @Override
+        public Dimension minimumLayoutSize(Container target) {
+            Dimension minimum = layoutSize(target, false);
+            minimum.width -= (getHgap() + 1);
+            return minimum;
+        }
+
+        /**
+         * Returns the minimum or preferred dimension needed to layout the
+         * target container.
+         *
+         * @param target    target to get layout size for
+         * @param preferred should preferred size be calculated
+         *
+         * @return the dimension to layout the target container
+         */
+        private Dimension layoutSize(Container target, boolean preferred) {
+            synchronized (target.getTreeLock()) {
+                //  Each row must fit with the width allocated to the containter.
+                //  When the container width = 0, the preferred width of the container
+                //  has not yet been calculated so lets ask for the maximum.
+
+                int targetWidth = target.getSize().width;
+                Container container = target;
+
+                while (container.getSize().width == 0 && container.getParent() != null) {
+                    container = container.getParent();
+                }
+
+                targetWidth = container.getSize().width;
+
+                if (targetWidth == 0) {
+                    targetWidth = Integer.MAX_VALUE;
+                }
+
+                int hgap = getHgap();
+                int vgap = getVgap();
+                Insets insets = target.getInsets();
+                int horizontalInsetsAndGap = insets.left + insets.right + (hgap * 2);
+                int maxWidth = targetWidth - horizontalInsetsAndGap;
+
+                //  Fit components into the allowed width
+                Dimension dim = new Dimension(0, 0);
+                int rowWidth = 0;
+                int rowHeight = 0;
+
+                int nmembers = target.getComponentCount();
+
+                for (int i = 0; i < nmembers; i++) {
+                    Component m = target.getComponent(i);
+
+                    if (m.isVisible()) {
+                        Dimension d = preferred ? m.getPreferredSize() : m.getMinimumSize();
+
+                        //  Can't add the component to current row. Start a new row.
+                        if (rowWidth + d.width > maxWidth) {
+                            addRow(dim, rowWidth, rowHeight);
+                            rowWidth = 0;
+                            rowHeight = 0;
+                        }
+
+                        //  Add a horizontal gap for all components after the first
+                        if (rowWidth != 0) {
+                            rowWidth += hgap;
+                        }
+
+                        rowWidth += d.width;
+                        rowHeight = Math.max(rowHeight, d.height);
+                    }
+                }
+
+                addRow(dim, rowWidth, rowHeight);
+
+                dim.width += horizontalInsetsAndGap;
+                dim.height += insets.top + insets.bottom + vgap * 2;
+
+                //	When using a scroll pane or the DecoratedLookAndFeel we need to
+                //  make sure the preferred size is less than the size of the
+                //  target containter so shrinking the container size works
+                //  correctly. Removing the horizontal gap is an easy way to do this.
+                Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
+
+                if (scrollPane != null && target.isValid()) {
+                    dim.width -= (hgap + 1);
+                }
+
+                return dim;
+            }
+        }
+
+        /*
+         * A new row has been completed. Use the dimensions of this row to
+         * update the preferred size for the container.
+         *
+         * @param dim update the width and height when appropriate @param
+         * rowWidth the width of the row to add @param rowHeight the height of
+         * the row to add
+         */
+        private void addRow(Dimension dim, int rowWidth, int rowHeight) {
+            dim.width = Math.max(dim.width, rowWidth);
+
+            if (dim.height > 0) {
+                dim.height += getVgap();
+            }
+
+            dim.height += rowHeight;
         }
     }
 }
