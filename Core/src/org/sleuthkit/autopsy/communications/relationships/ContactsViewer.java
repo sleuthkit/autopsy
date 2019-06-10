@@ -125,6 +125,9 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
                 updateOutlineViewPanel();
             }       
         });
+        
+        splitPane.setResizeWeight(0.5);
+        splitPane.setDividerLocation(0.5);
     }
 
     @Override
@@ -184,32 +187,30 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        splitPane = new javax.swing.JSplitPane();
         contactPane = new org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
         setLayout(new java.awt.GridBagLayout());
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 0.25;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
-        add(contactPane, gridBagConstraints);
+
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setRightComponent(contactPane);
+        splitPane.setLeftComponent(outlineViewPanel);
+
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 0.75;
-        add(outlineViewPanel, gridBagConstraints);
+        gridBagConstraints.weighty = 1.0;
+        add(splitPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane contactPane;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
+    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 }

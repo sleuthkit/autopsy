@@ -140,7 +140,7 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
             }
         });
         
-        outlineViewPanel.setTableColumnsWidth(10,10,10,15,50,5);
+        outlineViewPanel.setTableColumnsWidth(5,10,10,15,50,10);
     }
 
     @Override
