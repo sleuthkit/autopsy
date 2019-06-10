@@ -28,6 +28,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -89,6 +90,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(ViewFileInTimelineAction.createViewFileAction(content));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
+        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(new RunIngestModulesAction(content));
         actionsList.add(null); // creates a menu separator

@@ -47,7 +47,8 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 public final class GoogleTranslator implements TextTranslator {
 
     private static final Logger logger = Logger.getLogger(GoogleTranslator.class.getName());
-    private static final int MAX_STRING_LENGTH = 15000;
+    //See translate method for justification of this limit.
+    private static final int MAX_PAYLOAD_SIZE = 5000;
     private final GoogleTranslatorSettingsPanel settingsPanel;
     private final GoogleTranslatorSettings settings = new GoogleTranslatorSettings();
     private Translate googleTranslate;
@@ -90,21 +91,20 @@ public final class GoogleTranslator implements TextTranslator {
         if (googleTranslate != null) {
             try {
                 // Translates some text into English, without specifying the source language.
-
-                // HTML files were producing lots of white space at the end
                 String substring = string.trim();
 
                 // We can't currently set parameters, so we are using the default behavior of 
                 // assuming the input is HTML. We need to replace newlines with <br> for Google to preserve them
                 substring = substring.replaceAll("(\r\n|\n)", "<br />");
 
-                // The API complains if the "Payload" is over 204800 bytes. I'm assuming that 
-                // deals with the full request.  At some point, we get different errors about too
-                // much text.  Officially, Google says they will googleTranslate only 5k chars,
-                // but we have seen more than that working.
-                // there could be a value betwen 15k and 25k that works.  I (BC) didn't test further
-                if (substring.length() > MAX_STRING_LENGTH) {
-                    substring = substring.substring(0, MAX_STRING_LENGTH);
+                // The API complains if the "Payload" is over 204800 bytes. Google references that
+                //their service is optimized for 2K code points and recommends keeping the requests that size. 
+                //There is a hard limit of 30K code points per request. There is also a time-based quota that 
+                //we are not enforcing, which may lead to 403 errors. We are currently configured for a max of 5K 
+                //in each request, for two reasons. 1) To be more in line with Google's recommendation. 2) To 
+                //minimize accidental exceedence of time based quotas.
+                if (substring.length() > MAX_PAYLOAD_SIZE) {
+                    substring = substring.substring(0, MAX_PAYLOAD_SIZE);
                 }
                 Translation translation
                         = googleTranslate.translate(substring);
@@ -177,5 +177,10 @@ public final class GoogleTranslator implements TextTranslator {
         settings.setCredentialPath(settingsPanel.getCredentialsPath());
         settings.saveSettings();
         loadTranslator();
+    }
+
+    @Override
+    public int getMaxPayloadSize() {
+        return MAX_PAYLOAD_SIZE;
     }
 }
