@@ -88,6 +88,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private void customizeComponents() {
         
         errorLabel.setVisible(false);
+        searchButton.setEnabled(false);
         
         // Set up the filters
         setUpFileTypeFilter();

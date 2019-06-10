@@ -282,7 +282,7 @@ class FileSearch {
         
         @Override
         String getDisplayName() {
-            return fileSize.name();
+            return fileSize.toString();
         }
         
         @Override
