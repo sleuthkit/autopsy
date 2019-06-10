@@ -344,7 +344,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             String queryStr = KEYWORD_HIT_ATTRIBUTES_QUERY;
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            if (datasourceObjId > 0) {
                 queryStr += "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
             }
 

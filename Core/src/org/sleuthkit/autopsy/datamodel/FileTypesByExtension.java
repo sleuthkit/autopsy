@@ -366,7 +366,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 + (UserPreferences.hideKnownFilesInViewsTree()
                 ? " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")"
                 : " ")
-                + (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
+                + (filteringDataSourceObjId() > 0
                 ? " AND data_source_obj_id = " + filteringDataSourceObjId()
                 : " ")
                 + " AND (extension IN (" + filter.getFilter().stream()

@@ -439,7 +439,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 }
 
-                if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                if (filteringDSObjId > 0) {
                     query += " AND data_source_obj_id = " + filteringDSObjId;
                 }
                 return query;

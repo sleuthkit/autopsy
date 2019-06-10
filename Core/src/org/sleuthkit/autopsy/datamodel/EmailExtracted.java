@@ -162,7 +162,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     + "attribute_type_id=" + pathAttrId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            if (datasourceObjId > 0) {
                 query +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
             }
 

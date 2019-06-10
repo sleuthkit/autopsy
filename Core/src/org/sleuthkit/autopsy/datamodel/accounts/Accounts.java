@@ -153,7 +153,7 @@ final public class Accounts implements AutopsyVisitableItem {
      *         based on the CasePreferences groupItemsInTreeByDataSource setting 
      */
     private String getFilterByDataSourceClause() {
-        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+        if (datasourceObjId > 0) {
             return "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " ";
         }
         

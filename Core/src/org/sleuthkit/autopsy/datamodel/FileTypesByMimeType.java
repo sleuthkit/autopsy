@@ -103,7 +103,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
                 + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal())) 
                 + "))"
-                + ( Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
+                + ( (filteringDataSourceObjId() > 0) ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
     }
 

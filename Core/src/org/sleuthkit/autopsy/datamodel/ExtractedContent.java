@@ -307,7 +307,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifact.Type> list) {
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact.Type> types = Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ? 
+                    List<BlackboardArtifact.Type> types = (datasourceObjId > 0) ? 
                             blackboard.getArtifactTypesInUse(datasourceObjId) :
                             skCase.getArtifactTypesInUse() ;
                     
@@ -372,7 +372,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
             try {
-                this.childCount = Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ? 
+                this.childCount = (datasourceObjId > 0) ? 
                         blackboard.getArtifactsCount(type.getTypeID(), datasourceObjId) :
                         skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
             } catch (TskException ex) {
@@ -501,7 +501,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected List<BlackboardArtifact> makeKeys() {
             if (skCase != null) {
                 try {
-                    return Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
+                    return (datasourceObjId > 0)
                             ? blackboard.getArtifacts(type.getTypeID(), datasourceObjId)
                             : skCase.getBlackboardArtifacts(type.getTypeID());
                 } catch (TskException ex) {
