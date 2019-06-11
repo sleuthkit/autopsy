@@ -75,6 +75,10 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
     public AccountsBrowser() {
         initComponents();
+        
+        jSplitPane1.setResizeWeight(0.5);
+        jSplitPane1.setDividerLocation(0.75);
+        
         outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
                 "device", Bundle.AccountNode_device(),
