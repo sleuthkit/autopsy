@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,9 +36,11 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -56,6 +60,10 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public class ImageNode extends AbstractContentNode<Image> {
 
     private static final Logger logger = Logger.getLogger(ImageNode.class.getName());
+    private final static String ADMIN_ACCESS_FILE_NAME = "admin"; // NON-NLS
+    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String ADMIN_EXT_ACCESS_FILE_NAME = "adminext"; // NON-NLS
+    private final static String ADMIN_EXT_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_EXT_ACCESS_FILE_NAME).toString();
 
     /**
      * Helper so that the display name and the name used in building the path
@@ -114,7 +122,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-        if (checkSchemaVersion()) {
+        if (checkSchemaVersion() && checkMuAdmin()) {
             actionsList.add(new DeleteDataSourceAction(content.getId()));
         }
         return actionsList.toArray(new Action[0]);
@@ -223,6 +231,17 @@ public class ImageNode extends AbstractContentNode<Image> {
         }
         
         return false;
+    }
+    
+    private Boolean checkMuAdmin() {
+       try {
+           if (Case.CaseType.MULTI_USER_CASE == Case.getCurrentCaseThrows().getCaseType()) {
+               return new File(ADMIN_ACCESS_FILE_PATH).exists() || new File(ADMIN_EXT_ACCESS_FILE_PATH).exists();
+           }
+       } catch (NoCurrentCaseException ex) {
+           logger.log(Level.SEVERE, "Failed to get the Create Major and Minor Schema Versions", ex);
+        }
+       return true;
     }
      
     /*
