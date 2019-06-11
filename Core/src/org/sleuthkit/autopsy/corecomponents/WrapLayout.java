@@ -32,7 +32,7 @@ import javax.swing.SwingUtilities;
 *  Originally written by Rob Camick
 *  https://tips4java.wordpress.com/2008/11/06/wrap-layout/
 */
-public class WrapLayout extends FlowLayout {
+class WrapLayout extends FlowLayout {
 
         private Dimension preferredLayoutSize;
 
