@@ -569,14 +569,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             } else {
                 String path = this.pathTextField.getText();
                 if (FilesSetRulePanel.containsOnlyLegalChars(path, FilesSetRulePanel.ILLEGAL_FILE_PATH_CHARS)) {
-                    // Add a leading path separator if omitted.
-                    if (!path.startsWith(FilesSetRulePanel.SLEUTHKIT_PATH_SEPARATOR)) {
-                        path = FilesSetRulePanel.SLEUTHKIT_PATH_SEPARATOR + path;
-                    }
-                    // Add a trailing path separator if omitted.
-                    if (!path.endsWith(FilesSetRulePanel.SLEUTHKIT_PATH_SEPARATOR)) {
-                        path += FilesSetRulePanel.SLEUTHKIT_PATH_SEPARATOR;
-                    }
                     condition = new FilesSet.Rule.ParentPathCondition(path);
                 } else {
                     logger.log(Level.SEVERE, "Attempt to get path condition with illegal chars"); // NON-NLS
