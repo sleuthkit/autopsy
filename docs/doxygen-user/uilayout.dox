@@ -5,19 +5,16 @@
 \section ui_overview Overview
 
 The major areas in the Autopsy User Interface (UI) are:
-- \ref ui_tree, shown outlined in green below
-- \ref ui_results, shown outlined in blue below
-- \ref ui_content, shown outlined in red below
-- \ref ui_keyword, shown outlined in yellow below
-- \ref ui_status, shown in solid purple below
+- \ref ui_tree, shown in green on the left side
+- \ref ui_results, shown in blue on the upper right side
+- \ref ui_content, shown in red on the lower right side
+- \ref ui_keyword, shown in magenta in the upper right corner
+- \ref ui_status, shown in purple in the lower right corner
 
 You can customize how data is shown in the UI through the \ref view_options_page panel.
 
 \image html ui-layout-1.PNG
 
-<br>
-<br>
-<br>
 \section ui_tree Tree Viewer
 
 The Tree Viewer on the left-hand side is the top level of the UI. Selecting folders in the Tree Viewer will cause their contents to be displayed in the Result Viewer to the right. You can browse the files in the image, find saved results from automated procedures (ingest), and see the results from \ref tagging_page and \ref reporting_page. See the \subpage tree_viewer_page page for additional information.
@@ -33,10 +30,10 @@ The Content Viewer area is in the lower right area of the interface. This area i
 The Content Viewer area is part of a plug-in framework. You can install modules that will add more viewer types. For additional information on the built-in content viewers, see the \ref content_viewer_page page.
 
 \section ui_keyword Keyword Search
-Keyword Search allows the user to search for keywords in the data source. It is covered in more detail here: \subpage keyword_search_page
+Keyword Search allows the user to search for keywords in the data source. It is covered in more detail here: \ref keyword_search_page
 
 \section ui_status Status Area
-The Status area will show progress bars while ingest is occuring. This visually indicates to the user what portion of the processing is already complete. The user can click on the progress bars to see further detail or to cancel ingest jobs.
+The Status area will show progress bars while ingest is occurring. This visually indicates to the user what portion of the processing is already complete. The user can click on the progress bars to see further detail or to cancel ingest jobs.
 <br>
 
 */

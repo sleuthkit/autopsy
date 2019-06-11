@@ -1,6 +1,6 @@
 /*! \page content_viewer_page Content Viewer
 
-The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is enabled when you select an entry in the \ref ui_results.
+The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is populated when you select an entry in the \ref ui_results.
 
 The Content Viewer is context-aware, meaning different tabs will be enabled depending on the type of content selected and which ingest modules have been run. It will default to what it considers the "most specific" tab. For example, selecting a JPG will cause the Content Viewer to automatically select the "Application" tab and will display the image there. If you instead would like the Content Viewer to stay on the previously selected tab when you change to a different content object, go to the \ref view_options_page panel through Tools->Options->Application Tab and select the "Stay on the same file viewer" option.
 
@@ -22,11 +22,29 @@ Note that this process saves the file to disk before launching the hex editor. A
 
 \image html content_viewer_hxd_progress.png
 
-\section cv_strings Strings
+\section cv_text Text
 
-The Strings tab shows all text strings found in the file. Different scripts can be chosen from the drop-down menu to display results for non-Latin alphabets. 
+The Text tab has three subtabs for displaying the text contained in the selected item.
+
+\subsection cv_strings Strings
+
+The Strings tab shows all text strings found in the file for the given script selected in the upper right. By default Latin text is used.
+
+\image html content_viewer_strings_latin.png
+
+Different scripts can be chosen from the drop-down menu to display results for non-Latin alphabets. 
 
 \image html content_viewer_strings_cyrillic.png
+
+\subsection cv_indexed_text Indexed Text
+
+The Indexed Text tab shows the text that has been indexed by the \ref keyword_search_page. You can switch the "Text Source" field to "Result Text" to see which text has been indexed for associated results.
+
+\image html content_viewer_indexed_text.png
+
+\subsection cv_translation Translation
+
+If you have a translation service enabled, the Translation tab allows you to translate the text. See the \ref machine_translation_page page for more information.
 
 \section cv_app Application
 
@@ -47,12 +65,6 @@ And plist file data will be shown and can be exported:
 HTML files can be displayed closer to their original form:
 
 \image html content_viewer_html.png
-
-\section cv_indexed_text Indexed Text
-
-The Indexed Text tab shows the text that has been indexed by the Keyword Search module. You can switch the "Text Source" Field to "Result Text" to see which text has been indexed for associated results.
-
-\image html content_viewer_indexed_text.png
 
 \section cv_message Message
 
