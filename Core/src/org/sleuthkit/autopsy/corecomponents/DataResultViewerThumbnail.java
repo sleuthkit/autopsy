@@ -33,6 +33,7 @@ import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SortOrder;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
@@ -122,6 +123,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         totalPages = 0;
         currentPageImages = 0;
         
+        // The GUI builder is using FlowLayout therefore this change so have no
+        // impact on the initally designed layout.  This change will just effect
+        // how the components are laid out as size of the window changes.
         buttonBarPanel.setLayout(new WrapLayout(java.awt.FlowLayout.LEFT));
     }
 
