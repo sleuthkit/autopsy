@@ -26,7 +26,6 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -35,7 +34,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -64,7 +62,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     private SleuthkitCase skCase;   // set to null after case has been closed
     private Blackboard blackboard;
     public static final String NAME = NbBundle.getMessage(RootNode.class, "ExtractedContentNode.name.text");
-    private final long datasourceObjId;
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
     /**
      * Constructs extracted content object 
@@ -83,7 +81,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
      */
     public ExtractedContent(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.datasourceObjId = objId;
+        this.filteringDSObjId = objId;
         this.blackboard = skCase.getBlackboard();
     }
     
@@ -307,8 +305,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifact.Type> list) {
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact.Type> types = (datasourceObjId > 0) ? 
-                            blackboard.getArtifactTypesInUse(datasourceObjId) :
+                    List<BlackboardArtifact.Type> types = (filteringDSObjId > 0) ? 
+                            blackboard.getArtifactTypesInUse(filteringDSObjId) :
                             skCase.getArtifactTypesInUse() ;
                     
                     types.removeAll(doNotShow);
@@ -372,8 +370,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
             try {
-                this.childCount = (datasourceObjId > 0) ? 
-                        blackboard.getArtifactsCount(type.getTypeID(), datasourceObjId) :
+                this.childCount = (filteringDSObjId > 0) ? 
+                        blackboard.getArtifactsCount(type.getTypeID(), filteringDSObjId) :
                         skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
             } catch (TskException ex) {
                 Logger.getLogger(TypeNode.class.getName())
@@ -501,8 +499,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected List<BlackboardArtifact> makeKeys() {
             if (skCase != null) {
                 try {
-                    return (datasourceObjId > 0)
-                            ? blackboard.getArtifacts(type.getTypeID(), datasourceObjId)
+                    return (filteringDSObjId > 0)
+                            ? blackboard.getArtifacts(type.getTypeID(), filteringDSObjId)
                             : skCase.getBlackboardArtifacts(type.getTypeID());
                 } catch (TskException ex) {
                     Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS

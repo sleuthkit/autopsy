@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -45,7 +44,6 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -76,7 +74,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
-    private final long datasourceObjId;
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
     /**
      * String used in the instance MAP so that exact matches and substring can
@@ -123,7 +121,7 @@ public class KeywordHits implements AutopsyVisitableItem {
      */
     public KeywordHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.datasourceObjId = objId;
+        this.filteringDSObjId = objId;
         keywordResults = new KeywordResults();
     }
 
@@ -344,8 +342,8 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             String queryStr = KEYWORD_HIT_ATTRIBUTES_QUERY;
-            if (datasourceObjId > 0) {
-                queryStr += "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            if (filteringDSObjId > 0) {
+                queryStr += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(queryStr)) {

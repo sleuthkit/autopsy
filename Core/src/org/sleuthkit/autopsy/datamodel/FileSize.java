@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -37,9 +36,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -63,7 +60,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public class FileSize implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
-    private final long datasourceObjId;
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
     public enum FileSizeFilter implements AutopsyVisitableItem {
 
@@ -105,7 +102,7 @@ public class FileSize implements AutopsyVisitableItem {
 
     public FileSize(SleuthkitCase skCase, long dsObjId) {
         this.skCase = skCase;
-        this.datasourceObjId = dsObjId;
+        this.filteringDSObjId = dsObjId;
     }
     
     @Override
@@ -118,7 +115,7 @@ public class FileSize implements AutopsyVisitableItem {
     }
 
     long filteringDataSourceObjId() {
-        return this.datasourceObjId;
+        return this.filteringDSObjId;
     }
     /*
      * Root node. Children are nodes for specific sizes.
