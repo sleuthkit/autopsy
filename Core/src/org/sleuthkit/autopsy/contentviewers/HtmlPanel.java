@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -25,8 +30,9 @@ import javafx.concurrent.Worker;
 import javafx.scene.web.WebView;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Node;
+import net.htmlparser.jericho.Attribute;
+import net.htmlparser.jericho.OutputDocument;
+import net.htmlparser.jericho.Source;
 import org.openide.util.NbBundle.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -38,6 +44,7 @@ import org.w3c.dom.events.EventTarget;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class HtmlPanel extends javax.swing.JPanel {
 
+    private static final Logger logger = Logger.getLogger(HtmlPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final String TEXT_TYPE = "text/plain";
     private final JFXPanel jfxPanel = new JFXPanel();
@@ -92,26 +99,76 @@ final class HtmlPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Cleans out input HTML string
+     * Cleans out input HTML string so it will not access resources over the internet
      *
      * @param htmlInString The HTML string to cleanse
      *
      * @return The cleansed HTML String
      */
     private String cleanseHTML(String htmlInString) {
-        org.jsoup.nodes.Document doc = Jsoup.parse(htmlInString);
-        // remove all 'img' tags.
-        doc.select("img").stream().forEach(Node::remove);
-        // remove all 'span' tags, these are often images which are ads
-        doc.select("span").stream().forEach(Node::remove);
-        return doc.html();
+        String returnString = "";
+        try {
+            Source source = new Source(new StringReader(htmlInString));
+            OutputDocument document = new OutputDocument(source);
+            //remove background images
+            source.getAllTags().stream().filter((tag) -> (tag.toString().contains("background-image"))).forEachOrdered((tag) -> {
+                document.remove(tag);
+            });
+            //remove images
+            source.getAllElements("img").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove frames
+            source.getAllElements("frame").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove iframes
+            source.getAllElements("iframe").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove pictures
+            source.getAllElements("picture").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove svg
+            source.getAllElements("svg").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove audio
+            source.getAllElements("audio").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove video
+            source.getAllElements("video").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove tracks
+            source.getAllElements("track").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove embeded external elements
+            source.getAllElements("embed").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove linked elements
+            source.getAllElements("link").forEach((element) -> {
+                document.remove(element.getAllTags());
+            });
+            //remove other URI elements such as input boxes
+            List<Attribute> attributesToRemove = source.getURIAttributes();
+            document.remove(attributesToRemove);
+            returnString = document.toString();
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to read html for cleaning out URI elements with Jericho", ex);
+        }
+        return returnString;
     }
 
     /**
      * Refresh the panel to reflect the current show/hide images setting.
      */
     @Messages({
-        "HtmlPanel_showImagesToggleButton_show=Show Images",
+        "HtmlPanel_showImagesToggleButton_show=Download Images",
         "HtmlPanel_showImagesToggleButton_hide=Hide Images",
         "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",})
     private void refresh() {
@@ -164,7 +221,7 @@ final class HtmlPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
-                .addGap(0, 95, Short.MAX_VALUE))
+                .addGap(0, 75, Short.MAX_VALUE))
             .addComponent(htmlJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(

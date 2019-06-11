@@ -272,9 +272,11 @@ final public class FiltersPanel extends JPanel {
             }
         });
     }
-
+    
     /**
      * Populate the devices filter widgets
+     * 
+     * @param initialState 
      */
     private void updateDeviceFilter(boolean initialState) {
         try {
@@ -301,7 +303,7 @@ final public class FiltersPanel extends JPanel {
      * Given a list of subFilters, set the states of the panel controls 
      * accordingly.
      * 
-     * @param subFilters A list of subFilters
+     * @param commFilter Contains a list of subFilters
      */
     public void setFilters(CommunicationsFilter commFilter) {
         List<CommunicationsFilter.SubFilter> subFilters = commFilter.getAndFilters();

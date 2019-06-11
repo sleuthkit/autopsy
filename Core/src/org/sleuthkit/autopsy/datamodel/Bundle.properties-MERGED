@@ -1,5 +1,4 @@
 AbstractAbstractFileNode.accessTimeColLbl=Access Time
-AbstractAbstractFileNode.addFileProperty.desc=no description
 AbstractAbstractFileNode.attrAddrColLbl=Attr. Addr.
 AbstractAbstractFileNode.changeTimeColLbl=Change Time
 AbstractAbstractFileNode.createdTimeColLbl=Created Time
@@ -37,6 +36,8 @@ AbstractAbstractFileNode.tagsProperty.displayName=Tags
 AbstractAbstractFileNode.typeDirColLbl=Type(Dir)
 AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)
 AbstractAbstractFileNode.useridColLbl=UserID
+AbstractContentNode.nodescription=no description
+AbstractContentNode.valueLoading=value loading
 AbstractFsContentNode.noDesc.text=no description
 ArtifactStringContent.attrsTableHeader.sources=Source(s)
 ArtifactStringContent.attrsTableHeader.type=Type
