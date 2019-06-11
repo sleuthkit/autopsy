@@ -396,15 +396,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "# {0} - occurenceCount",
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurences of the MD5 correlation value"})
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
-            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
-                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
+            if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
+                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
-            } else if (attribute != null) {
+            } else if (attributeType != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
         } catch (EamDbException ex) {

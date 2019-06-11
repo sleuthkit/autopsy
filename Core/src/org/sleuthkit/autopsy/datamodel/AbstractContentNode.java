@@ -35,6 +35,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -353,11 +354,12 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Returns occurrences/count property for the node.
      *
-     * @param attribute          correlation attribute instance
+     * @param attributeType      the type of the attribute to count
+     * @param attributeValue     the value of the attribute to count
      * @param defaultDescription a description to use when none is determined by
      *                           the getCountPropertyAndDescription method
      *
      * @return count property for the underlying content of the node.
      */
-    abstract protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription);
+    abstract protected Pair<Long, String> getCountPropertyAndDescription(Type attributeType, String attributeValue, String defaultDescription);
 }

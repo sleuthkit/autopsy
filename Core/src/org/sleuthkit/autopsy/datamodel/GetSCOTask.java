@@ -24,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -63,8 +64,10 @@ class GetSCOTask implements Runnable {
         SCOData scoData = new SCOData();
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
+
         if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-            CorrelationAttributeInstance occurrencesAttribute = null;
+            Type type = null;
+            String value = null;
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();
             if (contentNode instanceof BlackboardArtifactNode) {
                 BlackboardArtifact bbArtifact = ((BlackboardArtifactNode) contentNode).getArtifact();
@@ -77,7 +80,8 @@ class GetSCOTask implements Runnable {
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    occurrencesAttribute = fileAttribute;
+                    type = fileAttribute.getCorrelationType();
+                    value = fileAttribute.getCorrelationValue();
                 } else {
                     List<CorrelationAttributeInstance> listOfPossibleAttributes = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
                     if (listOfPossibleAttributes.size() > 1) {
@@ -85,14 +89,16 @@ class GetSCOTask implements Runnable {
                         description = Bundle.GetSCOTask_occurrences_multipleProperties();
                     } else if (!listOfPossibleAttributes.isEmpty()) {
                         //there should only be one item in the list
-                        occurrencesAttribute = listOfPossibleAttributes.get(0);
+                        type = listOfPossibleAttributes.get(0).getCorrelationType();
+                        value = listOfPossibleAttributes.get(0).getCorrelationValue();
                     }
                 }
             } else {
                 //use the file instance correlation attribute if the node is not a BlackboardArtifactNode
-                occurrencesAttribute = fileAttribute;
+                type = fileAttribute.getCorrelationType();
+                value = fileAttribute.getCorrelationValue();
             }
-            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(occurrencesAttribute, description));
+            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(type, value, description));
         }
 
         // signal SCO data is available.
