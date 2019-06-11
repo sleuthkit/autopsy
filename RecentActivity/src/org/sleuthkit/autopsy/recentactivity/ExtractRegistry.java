@@ -410,12 +410,15 @@ class ExtractRegistry extends Extract {
                 if (timenodes.getLength() > 0) {
                     Element timenode = (Element) timenodes.item(0);
                     String etime = timenode.getTextContent();
-                    try {
-                        mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
-                        String Tempdate = mtime.toString();
-                        mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
-                    } catch (ParseException ex) {
-                        logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry.", ex); //NON-NLS
+                    //sometimes etime will be an empty string and therefore can not be parsed into a date
+                    if (etime != null && !etime.isEmpty()) {
+                        try {
+                            mtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                            String Tempdate = mtime.toString();
+                            mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
+                        } catch (ParseException ex) {
+                            logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry.", ex); //NON-NLS
+                        }
                     }
                 }
 
@@ -444,8 +447,14 @@ class ExtractRegistry extends Extract {
                             if (artchild.hasAttributes()) {
                                 Element artnode = (Element) artchild;
 
-                                String value = artnode.getTextContent().trim();
+                                String value = artnode.getTextContent();
+                                if (value != null) {
+                                    value = value.trim();
+                                }
                                 String name = artnode.getAttribute("name"); //NON-NLS
+                                if (name == null) {
+                                    continue;
+                                }
                                 switch (name) {
                                     case "ProductName": // NON-NLS
                                         version = value;
@@ -467,13 +476,14 @@ class ExtractRegistry extends Extract {
                                         regOrg = value;
                                         break;
                                     case "InstallDate": //NON-NLS
-                                        try {
-                                            Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
-                                            installtime = epochtime;
-                                            String Tempdate = installtime.toString();
-                                            installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
-                                        } catch (ParseException e) {
-                                            logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                        if (value != null && !value.isEmpty()) {
+                                            try {
+                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                                String Tempdate = installtime.toString();
+                                                installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
+                                            } catch (ParseException e) {
+                                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                            }
                                         }
                                         break;
                                     default:
@@ -651,9 +661,11 @@ class ExtractRegistry extends Extract {
                                     case "uninstall": //NON-NLS
                                         Long itemMtime = null;
                                         try {
-                                            Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime(); //NON-NLS
-                                            itemMtime = epochtime;
-                                            itemMtime /= MS_IN_SEC;
+                                            String mTimeAttr = artnode.getAttribute("mtime");
+                                            if (mTimeAttr != null && !mTimeAttr.isEmpty()) {
+                                                itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(mTimeAttr).getTime(); //NON-NLS
+                                                itemMtime /= MS_IN_SEC;
+                                            }
                                         } catch (ParseException e) {
                                             logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
                                         }

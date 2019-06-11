@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.table.TableColumn;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.explorer.view.OutlineView;
@@ -62,17 +65,21 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
      * @param message String message to show on the panel.
      */
     public void hideOutlineView(String message) {
-        CardLayout layout = (CardLayout)this.getLayout();
-        layout.show(this, "messageCard"); //NON-NLS
-        messageLabel.setText(message);
+        SwingUtilities.invokeLater(() -> {
+            CardLayout layout = (CardLayout)this.getLayout();
+            layout.show(this, "messageCard"); //NON-NLS
+            messageLabel.setText(message);
+        });
     }
     
     /**
      * Hides the message panel and shows the OutlineView.
      */
     public void showOutlineView() {
-        CardLayout layout = (CardLayout)this.getLayout();
-        layout.show(this, "outlineCard"); //NON-NLS
+        SwingUtilities.invokeLater(() -> {
+            CardLayout layout = (CardLayout)this.getLayout();
+            layout.show(this, "outlineCard"); //NON-NLS
+        });
     }
     
     /**
@@ -93,7 +100,20 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         super.setEnabled(enabled);
         outlineView.setEnabled(enabled);
     }
+    
+    public void setTableColumnsWidth(double... percentages) {
+        JTable table = outlineView.getOutline();
+        double total = 0;
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            total += percentages[i];
+        }
 
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            TableColumn column = table.getColumnModel().getColumn(i);
+            column.setPreferredWidth((int) (table.getPreferredSize().width * (percentages[i] / total)));
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -107,8 +127,10 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         messagePanel = new javax.swing.JPanel();
         messageLabel = new javax.swing.JLabel();
 
+        setEnabled(false);
         setLayout(new java.awt.CardLayout(5, 5));
 
+        outlineView.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         outlineView.setPreferredSize(new java.awt.Dimension(300, 400));
         add(outlineView, "outlineCard");
 

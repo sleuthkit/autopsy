@@ -23,7 +23,6 @@ import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JPanel;
-import javax.swing.ListSelectionModel;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -32,6 +31,8 @@ import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeAdapter;
+import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -45,9 +46,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  *
  */
 @ServiceProvider(service = RelationshipsViewer.class)
-public final class ContactsViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
+public final class ContactsViewer extends JPanel implements RelationshipsViewer{
 
-    private final ExplorerManager tableEM;
+//    private final ExplorerManager tableEM;
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
     private final PropertyChangeListener focusPropertyListener;
@@ -57,14 +58,19 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
         "ContactsViewer_tabTitle=Contacts",
         "ContactsViewer_columnHeader_Name=Name",
         "ContactsViewer_columnHeader_Phone=Phone",
-        "ContactsViewer_columnHeader_Email=Email",})
+        "ContactsViewer_columnHeader_Email=Email",
+        "ContactsViewer_noContacts_message=<No contacts found for selected account>"
+    })
 
     /**
      * Visualization for contact nodes.
      */
     public ContactsViewer() {
-        tableEM = new ExplorerManager();
-        proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
+        initComponents();
+        
+        outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
+
+        proxyLookup = new ModifiableProxyLookup(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
         nodeFactory = new ContactsChildNodeFactory(null);
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
@@ -81,30 +87,47 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
                     proxyLookup.setNewLookups(createLookup(contactPane.getExplorerManager(), getActionMap()));
                 } else if (isDescendingFrom(newFocusOwner, ContactsViewer.this)) {
                     //... or if it is within the Results table.
-                    proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
+                    proxyLookup.setNewLookups(createLookup(outlineViewPanel.getExplorerManager(), getActionMap()));
 
                 }
             }
         };
 
-        initComponents();
-
-        outline = outlineView.getOutline();
-        outlineView.setPropertyColumns(
+        outline = outlineViewPanel.getOutlineView().getOutline();
+        outlineViewPanel.getOutlineView().setPropertyColumns(
                 "TSK_EMAIL", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getDisplayName(),
                 "TSK_PHONE_NUMBER", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName()
         );
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.ContactsViewer_columnHeader_Name());
+        
+        outlineViewPanel.hideOutlineView("<No contacts for selected account>");
 
-        tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+        outlineViewPanel.getExplorerManager().addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] nodes = tableEM.getSelectedNodes();
+                final Node[] nodes = outlineViewPanel.getExplorerManager().getSelectedNodes();
                 contactPane.setNode(nodes);
             }
         });
 
-        tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), getExplorerManager()), true));
+        outlineViewPanel.getExplorerManager().setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), outlineViewPanel.getExplorerManager()), true));
+        
+        // When a new set of nodes are added to the OutlineView the childrenAdded
+        // seems to be fired before the childrenRemoved. 
+        outlineViewPanel.getExplorerManager().getRootContext().addNodeListener(new NodeAdapter(){
+            @Override
+            public void childrenAdded(NodeMemberEvent nme) {
+                updateOutlineViewPanel();
+            }
+
+            @Override
+            public void childrenRemoved(NodeMemberEvent nme) {
+                updateOutlineViewPanel();
+            }       
+        });
+        
+        splitPane.setResizeWeight(0.5);
+        splitPane.setDividerLocation(0.5);
     }
 
     @Override
@@ -124,12 +147,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
 
         nodeFactory.refresh(info);
     }
-
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return tableEM;
-    }
-
+    
     @Override
     public Lookup getLookup() {
         return proxyLookup;
@@ -140,14 +158,23 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
         super.addNotify();
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .addPropertyChangeListener("focusOwner", focusPropertyListener);
+                .addPropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
     }
 
     @Override
     public void removeNotify() {
         super.removeNotify();
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .removePropertyChangeListener("focusOwner", focusPropertyListener);
+                .removePropertyChangeListener("focusOwner", focusPropertyListener); //NON-NLS
+    }
+    
+    private void updateOutlineViewPanel() {
+        int nodeCount = outlineViewPanel.getExplorerManager().getRootContext().getChildren().getNodesCount();
+        if(nodeCount == 0) {
+            outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
+        } else {
+            outlineViewPanel.showOutlineView();
+        }
     }
 
     /**
@@ -158,29 +185,32 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        outlineView = new org.openide.explorer.view.OutlineView();
+        splitPane = new javax.swing.JSplitPane();
         contactPane = new org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane();
+        outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(contactPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
-                .addGap(1, 1, 1)
-                .addComponent(contactPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE))
-        );
+        setLayout(new java.awt.GridBagLayout());
+
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setRightComponent(contactPane);
+        splitPane.setLeftComponent(outlineViewPanel);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(splitPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane contactPane;
-    private org.openide.explorer.view.OutlineView outlineView;
+    private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
+    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 }
