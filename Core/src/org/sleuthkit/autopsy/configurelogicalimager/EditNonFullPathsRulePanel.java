@@ -82,8 +82,12 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         ruleNameTextField.requestFocus();
         
         EditRulePanel.setTextFieldPrompts(extensionsTextField, Bundle.EditNonFullPathsRulePanel_example() + "gif,jpg,png"); // NON-NLS
-        EditRulePanel.setTextFieldPrompts(filenamesTextArea, "<html>" + Bundle.EditNonFullPathsRulePanel_example() + "<br>filename.txt<br>readme.txt</html>"); // NON-NLS
-        EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>" + Bundle.EditNonFullPathsRulePanel_example() + "<br>[USER_FOLDER]/My Documents/Downloads<br>/Program Files/Common Files</html>"); // NON-NLS
+        EditRulePanel.setTextFieldPrompts(filenamesTextArea, "<html>" 
+                + Bundle.EditNonFullPathsRulePanel_example() 
+                + "<br>filename.txt<br>readme.txt</html>"); // NON-NLS
+        EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>" 
+                + Bundle.EditNonFullPathsRulePanel_example() 
+                + "<br>[USER_FOLDER]/My Documents/Downloads<br>/Program Files/Common Files</html>"); // NON-NLS
         validate();
         repaint();
     }
