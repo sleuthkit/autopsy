@@ -301,20 +301,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            /*
-             * If the given node is not null and has children, set it as the
-             * root context of the child OutlineView, otherwise make an
-             * "empty"node the root context.
-             *
-             * IMPORTANT NOTE: This is the first of many times where a
-             * getChildren call on the current root node causes all of the
-             * children of the root node to be created and defeats lazy child
-             * node creation, if it is enabled. It also likely leads to many
-             * case database round trips.
-             */
-            if (rootNode != null && rootNode.getChildren().getNodesCount() > 0) {
-                this.rootNode = rootNode;
-
+            if (rootNode != null) {
                 /**
                  * Check to see if we have previously created a paging support
                  * class for this node.
@@ -363,6 +350,21 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         // No-op
                     }
                 });
+            }
+
+            /*
+             * If the given node is not null and has children, set it as the
+             * root context of the child OutlineView, otherwise make an
+             * "empty"node the root context.
+             *
+             * IMPORTANT NOTE: This is the first of many times where a
+             * getChildren call on the current root node causes all of the
+             * children of the root node to be created and defeats lazy child
+             * node creation, if it is enabled. It also likely leads to many
+             * case database round trips.
+             */
+            if (rootNode != null && rootNode.getChildren().getNodesCount() > 0) {
+                this.rootNode = rootNode;
 
                 this.getExplorerManager().setRootContext(this.rootNode);
                 setupTable();
