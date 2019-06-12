@@ -22,15 +22,18 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Tag;
 
 /**
- * Background task to get Score, Comment and Occurrences values for an 
- * Abstract content node.
- * 
+ * Background task to get Score, Comment and Occurrences values for an Abstract
+ * content node.
+ *
  */
 class GetSCOTask implements Runnable {
 
@@ -42,10 +45,12 @@ class GetSCOTask implements Runnable {
         this.listener = listener;
     }
 
+    @Messages({"GetSCOTask.occurrences.defaultDescription=No correlation properties found",
+        "GetSCOTask.occurrences.multipleProperties=Multiple different correlation properties exist for this result"})
     @Override
     public void run() {
         AbstractContentNode<?> contentNode = weakNodeRef.get();
-        
+
         //Check for stale reference
         if (contentNode == null) {
             return;
@@ -53,17 +58,45 @@ class GetSCOTask implements Runnable {
 
         // get the SCO  column values
         List<Tag> tags = contentNode.getAllTagsFromDatabase();
-        CorrelationAttributeInstance attribute = contentNode.getCorrelationAttributeInstance();
+        CorrelationAttributeInstance fileAttribute = contentNode.getCorrelationAttributeInstance();
 
         SCOData scoData = new SCOData();
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
-        scoData.setComment(contentNode.getCommentProperty(tags, attribute));
+        scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
         if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(attribute));
+            CorrelationAttributeInstance occurrencesAttribute = null;
+            String description = Bundle.GetSCOTask_occurrences_defaultDescription();
+            if (contentNode instanceof BlackboardArtifactNode) {
+                BlackboardArtifact bbArtifact = ((BlackboardArtifactNode) contentNode).getArtifact();
+                //for specific artifact types we still want to display information for the file instance correlation attribute
+                if (bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()
+                        || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                    occurrencesAttribute = fileAttribute;
+                } else {
+                    List<CorrelationAttributeInstance> listOfPossibleAttributes = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
+                    if (listOfPossibleAttributes.size() > 1) {
+                        //Don't display anything if there is more than 1 correlation property for an artifact but let the user know
+                        description = Bundle.GetSCOTask_occurrences_multipleProperties();
+                    } else if (!listOfPossibleAttributes.isEmpty()) {
+                        //there should only be one item in the list
+                        occurrencesAttribute = listOfPossibleAttributes.get(0);
+                    }
+                }
+            } else {
+                //use the file instance correlation attribute if the node is not a BlackboardArtifactNode
+                occurrencesAttribute = fileAttribute;
+            }
+            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(occurrencesAttribute, description));
         }
-        
+
         // signal SCO data is available.
-        if  (listener != null) {
+        if (listener != null) {
             listener.propertyChange(new PropertyChangeEvent(
                     AutopsyEvent.SourceType.LOCAL.toString(),
                     AbstractAbstractFileNode.NodeSpecificEvents.SCO_AVAILABLE.toString(),
