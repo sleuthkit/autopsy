@@ -1,5 +1,19 @@
 AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
+# {0} - file
+AddLogicalImageTask.addingToReport=Adding {0} to report
+# {0} - src
+# {1} - dest
+AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
+# {0} - file
+AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
+AddLogicalImageTask.doneCopying=Done copying
+# {0} - file
+# {1} - exception message
+AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
+# {0} - src
+# {1} - dest
+AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory
@@ -167,6 +181,27 @@ LogicalEvidenceFilePanel.pathValidation.getOpenCase.Error=Warning: Exception whi
 LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here.
 LogicalFilesDspPanel.subTypeComboBox.l01FileOption.text=Logical evidence file (L01)
 LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders
+LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
+# {0} - directory
+LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
+# {0} - directory
+LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
+# {0} - imageDirPath
+LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
+LogicalImagerPanel.imageTable.columnModel.title0=Hostname
+LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
+LogicalImagerPanel.messageLabel.clickScanOrBrowse=Click SCAN or BROWSE button to find images
+# {0} - sparseImageDirectory
+# {1} - image
+LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}
+# {0} - invalidFormatDirectory
+LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
+LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
+LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found
+LogicalImagerPanel.messageLabel.noImageSelected=No image selected
+LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...
+LogicalImagerPanel.messageLabel.selectedImage=Selected folder
+LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive
 Menu/Case/OpenRecentCase=Open Recent Case
 CTL_CaseDeleteAction=Delete Case
 OpenIDE-Module-Name=Case
@@ -328,6 +363,20 @@ RecentCases.getName.text=Clear Recent Cases
 RecentItems.openRecentCase.msgDlg.text=Case {0} no longer exists.
 SelectDataSourceProcessorPanel.name.text=Select Type of Data Source To Add
 StartupWindow.title.text=Welcome
+UnpackagePortableCaseDialog.title.text=Unpackage Portable Case
+UnpackagePortableCaseDialog.UnpackagePortableCaseDialog.extensions=Portable case package (.zip, .zip.001)
+UnpackagePortableCaseDialog.validatePaths.badExtension=File extension must be .zip or .zip.001
+# {0} - case folder
+UnpackagePortableCaseDialog.validatePaths.caseFolderExists=Folder {0} already exists
+UnpackagePortableCaseDialog.validatePaths.caseIsNotFile=Selected path is not a file
+UnpackagePortableCaseDialog.validatePaths.caseNotFound=File does not exist
+UnpackagePortableCaseDialog.validatePaths.folderNotFound=Folder does not exist
+UnpackagePortableCaseDialog.validatePaths.notAFolder=Output location is not a directory
+UnpackagePortableCaseProgressDialog.propertyChange.success=Successfully unpacked case
+UnpackagePortableCaseProgressDialog.title.text=Unpackage Portable Case Progress
+UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user
+UnpackageWorker.doInBackground.errorCompressingCase=Error unpackaging case
+UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executable
 UpdateRecentCases.menuItem.clearRecentCases.text=Clear Recent Cases
 UpdateRecentCases.menuItem.empty=-Empty-
 AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text=Cancel
@@ -339,9 +388,9 @@ CollaborationMonitor.analyzingDataSourceStatus.msg={0} analyzing {1}
 MissingImageDialog.lbWarning.text=
 MissingImageDialog.lbWarning.toolTipText=
 NewCaseVisualPanel1.caseParentDirWarningLabel.text=
-NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user		
+NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user
 NewCaseVisualPanel1.singleUserCaseRadioButton.text=Single-user
-NewCaseVisualPanel1.caseTypeLabel.text=Case Type: 
+NewCaseVisualPanel1.caseTypeLabel.text=Case Type:
 SingleUserCaseConverter.BadDatabaseFileName=Database file does not exist!
 SingleUserCaseConverter.AlreadyMultiUser=Case is already multi-user!
 SingleUserCaseConverter.NonUniqueDatabaseName=Database name not unique.
