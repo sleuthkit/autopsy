@@ -46,9 +46,9 @@ public class EditRulePanel extends JPanel {
      */
     public EditRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
         if (rule.getFullPaths() != null && rule.getFullPaths().size() > 0) {
-            editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
+            editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule, true);
         } else {
-            editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
+            editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, ruleName, rule, true);
         }
     }
 
@@ -103,10 +103,10 @@ public class EditRulePanel extends JPanel {
         "EditRulePanel.blankLineException={0} cannot have a blank line",
     })
     static public List<String> validateTextList(JTextArea textArea, String fieldName) throws IOException {
+        List<String> list = new ArrayList<>();
         if (isBlank(textArea.getText())) {
             return null;
         }
-        List<String> list = new ArrayList<>();
         for (String line : textArea.getText().split("\\n")) { // NON-NLS
             line = strip(line);
             if (line.isEmpty()) {

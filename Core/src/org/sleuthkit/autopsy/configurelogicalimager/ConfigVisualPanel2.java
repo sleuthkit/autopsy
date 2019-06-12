@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -45,7 +45,7 @@ public final class ConfigVisualPanel2 extends JPanel {
     private final JButton okButton = new JButton(Bundle.ConfigVisualPanel2_ok());
     private final JButton cancelButton = new JButton(Bundle.ConfigVisualPanel2_cancel());
     private boolean flagEncryptionPrograms = false;
-
+    
     /**
      * Creates new form ConfigVisualPanel2
      */
@@ -288,7 +288,7 @@ public final class ConfigVisualPanel2 extends JPanel {
 
             },
             new String [] {
-                "Rule Set", "Description"
+                "Rule Name", "Description"
             }
         ) {
             Class[] types = new Class [] {
@@ -312,8 +312,8 @@ public final class ConfigVisualPanel2 extends JPanel {
         rulesTable.setShowVerticalLines(false);
         rulesTable.getTableHeader().setReorderingAllowed(false);
         rulesTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                rulesTableMouseClicked(evt);
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                rulesTableMouseReleased(evt);
             }
         });
         rulesTable.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -371,9 +371,9 @@ public final class ConfigVisualPanel2 extends JPanel {
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 377, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(newRuleButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(editRuleButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(editRuleButton)
+                                .addGap(37, 37, 37)
                                 .addComponent(deleteRuleButton)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -499,23 +499,19 @@ public final class ConfigVisualPanel2 extends JPanel {
         config.setFinalizeImageWriter(finalizeImageWriter.isSelected());
     }//GEN-LAST:event_finalizeImageWriterActionPerformed
 
-    private void rulesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rulesTableMouseClicked
-        rulesTableSelect();
-    }//GEN-LAST:event_rulesTableMouseClicked
-
     private void rulesTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_rulesTableKeyReleased
         rulesTableSelect();
     }//GEN-LAST:event_rulesTableKeyReleased
 
     @NbBundle.Messages({
-        "ConfigVisualPanel2.editRuleSet=Edit rule set",
+        "ConfigVisualPanel2.editRuleSet=Edit rule",
         "ConfigVisualPanel2.editRuleError=Edit rule error"
     })
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
         int row = rulesTable.getSelectedRow();
         if (row != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(row, 0);
-            LogicalImagerRule rule = config.getRuleSet().get(ruleName);
+            LogicalImagerRule rule = getFirstRuleSet().getRules().get(row);
             EditRulePanel editPanel = new EditRulePanel(okButton, cancelButton, ruleName, rule);
             editPanel.setEnabled(true);
             editPanel.setVisible(true);
@@ -529,7 +525,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                         ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
                         appendRow(ruleMap);
                         break;
-                    } catch (IOException | NumberFormatException ex) {
+                    } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this,
                             ex.getMessage(),
                             Bundle.ConfigVisualPanel2_editRuleError(),
@@ -550,7 +546,7 @@ public final class ConfigVisualPanel2 extends JPanel {
         panel.setVisible(true);
 
         while (true) {
-            int option = JOptionPane.showOptionDialog(this, panel, "New rule set", 
+            int option = JOptionPane.showOptionDialog(this, panel, "New rule", 
                         JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
                         null, new Object[]{okButton, cancelButton}, okButton);
             if (option == JOptionPane.OK_OPTION) {
@@ -559,7 +555,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                     ImmutablePair<String, LogicalImagerRule> ruleMap = panel.toRule();
                     appendRow(ruleMap);
                     break;
-                } catch (IOException | NumberFormatException ex) {
+                } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,
                         ex.getMessage(),
                         "New rule error",
@@ -573,8 +569,8 @@ public final class ConfigVisualPanel2 extends JPanel {
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     @NbBundle.Messages({
-        "ConfigVisualPanel2.deleteRuleSet=Delete rule set ",
-        "ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule set confirmation",
+        "ConfigVisualPanel2.deleteRuleSet=Delete rule ",
+        "ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule confirmation",
     })
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
         int index = rulesTable.getSelectedRow();
@@ -589,7 +585,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                 return;
             }
 
-            config.getRuleSet().remove(ruleName);
+            getFirstRuleSet().getRules().remove(index);
             updatePanel(configFilename, config);
             if (rulesTable.getRowCount() > 0) {
                 rulesTable.setRowSelectionInterval(0, 0);
@@ -603,6 +599,10 @@ public final class ConfigVisualPanel2 extends JPanel {
         toggleEncryptionProgramsRule(flagEncryptionPrograms);
     }//GEN-LAST:event_flagEncryptionProgramsCheckBoxActionPerformed
 
+    private void rulesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rulesTableMouseReleased
+        rulesTableSelect();
+    }//GEN-LAST:event_rulesTableMouseReleased
+
     private void toggleEncryptionProgramsRule(boolean flagEncryptionPrograms) {
         if (flagEncryptionPrograms) {
             // add the special rule
@@ -612,7 +612,7 @@ public final class ConfigVisualPanel2 extends JPanel {
             // remove it
             int index = ((RulesTableModel) rulesTable.getModel()).findRow(EncryptionProgramsRule.getName());
             if (index != -1) {
-                config.getRuleSet().remove(EncryptionProgramsRule.getName());
+                getFirstRuleSet().getRules().remove(index);
                 updatePanel(configFilename, config);
                 if (rulesTable.getRowCount() > 0) {
                     rulesTable.setRowSelectionInterval(0, 0);
@@ -627,7 +627,8 @@ public final class ConfigVisualPanel2 extends JPanel {
      */
     private ImmutablePair<String, LogicalImagerRule> createEncryptionProgramsRule() {
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
-        builder.description(EncryptionProgramsRule.getDescription())
+        builder.name(EncryptionProgramsRule.getName())
+                .description(EncryptionProgramsRule.getDescription())
                 .shouldAlert(true)
                 .shouldSave(true)
                 .filenames(EncryptionProgramsRule.getFilenames());
@@ -673,21 +674,33 @@ public final class ConfigVisualPanel2 extends JPanel {
     private javax.swing.JCheckBox shouldSaveCheckBox;
     // End of variables declaration//GEN-END:variables
 
+    private LogicalImagerRuleSet getFirstRuleSet() {
+        if (config.getRuleSets().isEmpty()) {
+            List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
+            ruleSets.add(new LogicalImagerRuleSet("no-set-name", new ArrayList<>())); // NON-NLS
+            config.setRuleSet(ruleSets);
+        }
+        return config.getRuleSets().get(0);
+    }
+    
     private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
-        Map<String, LogicalImagerRule> ruleSet = config.getRuleSet();
-        flagEncryptionProgramsCheckBox.setSelected(ruleSet.get(EncryptionProgramsRule.getName()) != null);
+        LogicalImagerRuleSet ruleSet = getFirstRuleSet();
+        flagEncryptionProgramsCheckBox.setSelected(ruleSet.find(EncryptionProgramsRule.getName()) != null);
         RulesTableModel rulesTableModel = new RulesTableModel();
         int row = 0;
         int selectThisRow = 0;
-        for (Map.Entry<String, LogicalImagerRule> rule : ruleSet.entrySet()) {
-            rulesTableModel.setValueAt(rule.getKey(), row, 0);
-            if (rowSelectionkey != null && rowSelectionkey.equals(rule.getKey())) {
+
+        Collections.sort(ruleSet.getRules(), new SortRuleByName());
+        
+        for (LogicalImagerRule rule : ruleSet.getRules()) {
+            rulesTableModel.setValueAt(rule.getName(), row, 0);
+            if (rowSelectionkey != null && rule.getName().equals(rowSelectionkey)) {
                 selectThisRow = row;
             }
-            rulesTableModel.setValueAt(rule.getValue().getDescription(), row, 1);
-            rulesTableModel.setValueAt(rule.getValue(), row, 2);
+            rulesTableModel.setValueAt(rule.getDescription(), row, 1);
+            rulesTableModel.setValueAt(rule, row, 2);
             row++;
         }
         rulesTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -711,7 +724,7 @@ public final class ConfigVisualPanel2 extends JPanel {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
             String description = (String) rulesTable.getModel().getValueAt(index, 1);
             updateRuleDetails(ruleName, description, config);
-            updateRuleSetButtons(true);
+            updateRuleSetButtons(ruleName.equals(EncryptionProgramsRule.getName()) ? false : true);
         } else {
             updateRuleSetButtons(false);            
         }
@@ -719,7 +732,7 @@ public final class ConfigVisualPanel2 extends JPanel {
 
     private void updateRuleDetails(String ruleName, String description, LogicalImagerConfig config) {
         clearRuleDetails();
-        LogicalImagerRule rule = config.getRuleSet().get(ruleName);
+        LogicalImagerRule rule = getFirstRuleSet().find(ruleName);
         shouldAlertCheckBox.setSelected(rule.isShouldAlert());
         shouldSaveCheckBox.setSelected(rule.isShouldSave());
         ruleNameEditTextField.setText(ruleName);
@@ -748,7 +761,7 @@ public final class ConfigVisualPanel2 extends JPanel {
     private void clearRuleDetails() {
         extensionsTextField.setText("");
         shouldAlertCheckBox.setSelected(false);
-        shouldSaveCheckBox.setSelected(false);
+        shouldSaveCheckBox.setSelected(true);
     }
 
     private void updateExtensions(List<String> extensions) {
@@ -792,8 +805,8 @@ public final class ConfigVisualPanel2 extends JPanel {
     private void initPanel() {
         configFileTextField.setText("");
         rulesTable.setModel(new RulesTableModel());
-        shouldAlertCheckBox.setSelected(true);
-        shouldSaveCheckBox.setSelected(false);
+        shouldAlertCheckBox.setSelected(false);
+        shouldSaveCheckBox.setSelected(true);
         ruleNameEditTextField.setText("");
         descriptionEditTextField.setText("");
         extensionsTextField.setText("");
@@ -806,7 +819,7 @@ public final class ConfigVisualPanel2 extends JPanel {
     }
 
     private void appendRow(ImmutablePair<String, LogicalImagerRule> ruleMap) {
-        config.getRuleSet().put(ruleMap.getKey(), ruleMap.getValue());
+        getFirstRuleSet().getRules().add(ruleMap.getValue());
         updatePanel(configFilename, config, ruleMap.getKey());
     }
 
@@ -817,8 +830,15 @@ public final class ConfigVisualPanel2 extends JPanel {
     }
 
     /**
-     * RulesTableModel for rulesTable
+     * Sort rule by name
      */
+    private class SortRuleByName implements Comparator<LogicalImagerRule> {
+
+        public int compare(LogicalImagerRule a, LogicalImagerRule b) {
+            return a.getName().compareToIgnoreCase(b.getName());
+        }
+    }
+
     private class RulesTableModel extends AbstractTableModel {
 
         private final List<String> ruleName = new ArrayList<>();
@@ -840,7 +860,7 @@ public final class ConfigVisualPanel2 extends JPanel {
         }
 
         @NbBundle.Messages({
-            "ConfigVisualPanel2.rulesTable.columnModel.title0=Rule set",
+            "ConfigVisualPanel2.rulesTable.columnModel.title0=Rule Name",
             "ConfigVisualPanel2.rulesTable.columnModel.title1=Description"
         })
         @Override
@@ -905,9 +925,6 @@ public final class ConfigVisualPanel2 extends JPanel {
         }
     }
 
-    /**
-     * SingleColumnTableModel for JTable
-     */
     private class SingleColumnTableModel extends AbstractTableModel {
 
         private final List<String> list = new ArrayList<>();
@@ -929,11 +946,15 @@ public final class ConfigVisualPanel2 extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if (columnIndex == 0) {
-                return list.get(rowIndex);
-            } else {
-                throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
+            Object ret = null;
+            switch (columnIndex) {
+                case 0:
+                    ret = list.get(rowIndex);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
             }
+            return ret;
         }
 
         @Override
@@ -943,10 +964,12 @@ public final class ConfigVisualPanel2 extends JPanel {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if (columnIndex == 0) {
-                list.add((String) aValue);
-            } else {
-                throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
+            switch (columnIndex) {
+                case 0:
+                    list.add((String) aValue);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
             }
         }
     }

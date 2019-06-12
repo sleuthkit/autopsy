@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -45,16 +46,23 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private JButton cancelButton;
     private final javax.swing.JTextArea filenamesTextArea;
     private final javax.swing.JTextArea folderNamesTextArea;
+    private boolean editing = true;
     
     /**
      * Creates new form EditRulePanel
      */
     @NbBundle.Messages({
-        "EditNonFullPathsRulePanel.example=Example: "
+        "EditNonFullPathsRulePanel.example=Example: ",
+        "EditNonFullPathsRulePanel.note=NOTE: A special [USER_FOLDER] token at the the start of a folder name to allow matches of all user folders in the file system."
     })
-    EditNonFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
+    EditNonFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
-       
+
+        this.editing = editing;
+        if (editing) {
+            ruleNameTextField.setEnabled(!editing);
+        }
+
         this.setRule(ruleName, rule);
         this.setButtons(okButton, cancelButton);
 
@@ -75,8 +83,16 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         ruleNameTextField.requestFocus();
         
         EditRulePanel.setTextFieldPrompts(extensionsTextField, Bundle.EditNonFullPathsRulePanel_example() + "gif,jpg,png"); // NON-NLS
-        EditRulePanel.setTextFieldPrompts(filenamesTextArea, "<html>" + Bundle.EditNonFullPathsRulePanel_example() + "<br>filename.txt<br>readme.txt</html>"); // NON-NLS
-        EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>" + Bundle.EditNonFullPathsRulePanel_example() + "<br>[USER_FOLDER]/My Documents/Downloads<br>/Program Files/Common Files</html>"); // NON-NLS
+        EditRulePanel.setTextFieldPrompts(filenamesTextArea, "<html>" 
+                + Bundle.EditNonFullPathsRulePanel_example() 
+                + "<br>filename.txt<br>readme.txt</html>"); // NON-NLS
+        EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>" 
+                + Bundle.EditNonFullPathsRulePanel_example() 
+                + "<br>[USER_FOLDER]/My Documents/Downloads"
+                + "<br>/Program Files/Common Files"
+                + "<br>"
+                + Bundle.EditNonFullPathsRulePanel_note()
+                + "</html>"); // NON-NLS
         validate();
         repaint();
     }
@@ -135,6 +151,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup = new javax.swing.ButtonGroup();
         modifiedDateLabel = new javax.swing.JLabel();
         daysIncludedLabel = new javax.swing.JLabel();
         shouldSaveCheckBox = new javax.swing.JCheckBox();
@@ -155,16 +172,16 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         maxSizeLabel = new javax.swing.JLabel();
         maxSizeTextField = new javax.swing.JFormattedTextField();
         minDaysTextField = new javax.swing.JFormattedTextField();
+        extensionsRadioButton = new javax.swing.JRadioButton();
+        filenamesRadioButton = new javax.swing.JRadioButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.modifiedDateLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.daysIncludedLabel.text")); // NOI18N
-        daysIncludedLabel.setEnabled(false);
 
         shouldSaveCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldSaveCheckBox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.shouldSaveCheckBox.text")); // NOI18N
 
-        shouldAlertCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldAlertCheckBox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.shouldAlertCheckBox.text")); // NOI18N
         shouldAlertCheckBox.setActionCommand(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.shouldAlertCheckBox.actionCommand")); // NOI18N
 
@@ -185,11 +202,6 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.ruleNameLabel.text")); // NOI18N
 
         ruleNameTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.ruleNameTextField.text")); // NOI18N
-        ruleNameTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ruleNameTextFieldActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(minSizeLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.minSizeLabel.text")); // NOI18N
 
@@ -203,6 +215,25 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
         minDaysTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("####; "))));
 
+        buttonGroup.add(extensionsRadioButton);
+        extensionsRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(extensionsRadioButton, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.extensionsRadioButton.text")); // NOI18N
+        extensionsRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.extensionsRadioButton.toolTipText")); // NOI18N
+        extensionsRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                extensionsRadioButtonActionPerformed(evt);
+            }
+        });
+
+        buttonGroup.add(filenamesRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(filenamesRadioButton, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.filenamesRadioButton.text")); // NOI18N
+        filenamesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.filenamesRadioButton.toolTipText")); // NOI18N
+        filenamesRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filenamesRadioButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -210,7 +241,11 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(extensionsRadioButton)
+                            .addComponent(filenamesRadioButton))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(ruleNameLabel)
                             .addComponent(descriptionLabel)
@@ -263,12 +298,17 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(extensionsTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(extensionsLabel)
-                    .addComponent(extensionsTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(extensionsRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(filenamesLabel)
-                    .addComponent(filenamesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE))
+                    .addComponent(filenamesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                            .addComponent(filenamesLabel)
+                            .addComponent(filenamesRadioButton))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(folderNamesLabel)
@@ -278,9 +318,8 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     .addComponent(fileSizeLabel)
                     .addComponent(minSizeLabel)
                     .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(maxSizeLabel)
-                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(maxSizeLabel)
+                    .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(6, 6, 6)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(modifiedDateLabel)
@@ -294,18 +333,31 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void ruleNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleNameTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ruleNameTextFieldActionPerformed
+    private void extensionsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_extensionsRadioButtonActionPerformed
+        filenamesTextArea.setEnabled(false);
+        filenamesTextArea.setForeground(Color.LIGHT_GRAY);
+        extensionsTextField.setEnabled(true);
+        extensionsTextField.setForeground(Color.BLACK);
+    }//GEN-LAST:event_extensionsRadioButtonActionPerformed
+
+    private void filenamesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filenamesRadioButtonActionPerformed
+        filenamesTextArea.setEnabled(true);
+        filenamesTextArea.setForeground(Color.BLACK);
+        extensionsTextField.setEnabled(false);
+        extensionsTextField.setForeground(Color.LIGHT_GRAY);
+    }//GEN-LAST:event_filenamesRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup buttonGroup;
     private javax.swing.JLabel daysIncludedLabel;
     private javax.swing.JLabel descriptionLabel;
     private javax.swing.JTextField descriptionTextField;
     private javax.swing.JLabel extensionsLabel;
+    private javax.swing.JRadioButton extensionsRadioButton;
     private javax.swing.JTextField extensionsTextField;
     private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JLabel filenamesLabel;
+    private javax.swing.JRadioButton filenamesRadioButton;
     private javax.swing.JScrollPane filenamesScrollPane;
     private javax.swing.JLabel folderNamesLabel;
     private javax.swing.JScrollPane folderNamesScrollPane;
@@ -392,17 +444,23 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         "EditNonFullPathsRulePanel.folderNames=Folder names",
     })
     ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
+        String ruleName = EditRulePanel.validRuleName(ruleNameTextField.getText());
         List<String> extensions = validateExtensions(extensionsTextField);
         List<String> filenames = EditRulePanel.validateTextList(filenamesTextArea, Bundle.EditNonFullPathsRulePanel_fileNames());
         List<String> folderNames = EditRulePanel.validateTextList(folderNamesTextArea, Bundle.EditNonFullPathsRulePanel_folderNames());
         
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
-        builder.description(descriptionTextField.getText())
+        builder.name(ruleName)
+                .description(descriptionTextField.getText())
                 .shouldAlert(shouldAlertCheckBox.isSelected())
                 .shouldSave(shouldSaveCheckBox.isSelected())
-                .extensions(extensions)
-                .filenames(filenames)
                 .paths(folderNames);
+        
+        if (extensionsRadioButton.isSelected()) {
+            builder.extensions(extensions);
+        } else {
+            builder.filenames(filenames);
+        }
         
         int minDays;
         if (!isBlank(minDaysTextField.getText())) {
@@ -414,7 +472,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 }
                 builder.minDays(minDays);
             } catch (NumberFormatException | ParseException ex) {
-                throw new IOException(Bundle.EditNonFullPathsRulePanel_modifiedDaysMustBeNumberException(ex.getMessage()), ex);
+                throw new IOException(Bundle.EditNonFullPathsRulePanel_modifiedDaysMustBeNumberException(ex.getMessage()));
             }
         }
         
@@ -427,7 +485,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeNotPositiveException());
                 }
             } catch (NumberFormatException | ParseException ex) {
-                throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeMustBeNumberException(ex.getMessage()), ex);
+                throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeMustBeNumberException(ex.getMessage()));
             }
         }
         
@@ -440,7 +498,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeNotPositiveException());
                 }
             } catch (NumberFormatException | ParseException ex) {
-                throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeMustBeNumberException(ex.getMessage()), ex);
+                throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeMustBeNumberException(ex.getMessage()));
             }
         }
         
@@ -455,7 +513,6 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         }
         
         LogicalImagerRule rule = builder.build();
-        String ruleName = EditRulePanel.validRuleName(ruleNameTextField.getText());
         return new ImmutablePair<>(ruleName, rule);
     }
 
@@ -463,10 +520,10 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         "EditNonFullPathsRulePanel.emptyExtensionException=Extensions cannot have an empty entry",
     })
     private List<String> validateExtensions(JTextField textField) throws IOException {
+        List<String> extensions = new ArrayList<>();
         if (isBlank(textField.getText())) {
             return null;
         }
-        List<String> extensions = new ArrayList<>();
         for (String extension : textField.getText().split(",")) {
             extension = strip(extension);
             if (extension.isEmpty()) {

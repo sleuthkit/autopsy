@@ -41,6 +41,8 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     private JButton cancelButton;
     List<String> newFullPaths = new ArrayList<>();
     private final JTextArea fullPathsTextArea;
+    private boolean editing = false;
+    
 
     /**
      * Creates new form EditFullPathsRulePanel
@@ -48,8 +50,14 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     @NbBundle.Messages({
         "EditFullPathsRulePanel.example=Example: "
     })
-    public EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
+    public EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
+        
+        this.editing = editing;
+        if (editing) {
+            ruleNameTextField.setEnabled(!editing);
+        }
+        
         this.setRule(ruleName, rule);
         this.setButtons(okButton, cancelButton);
 
@@ -104,7 +112,6 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         shouldSaveCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldSaveCheckBox, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.shouldSaveCheckBox.text")); // NOI18N
 
-        shouldAlertCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldAlertCheckBox, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.shouldAlertCheckBox.text")); // NOI18N
         shouldAlertCheckBox.setActionCommand(org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.shouldAlertCheckBox.actionCommand")); // NOI18N
 
@@ -257,6 +264,7 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
         builder.shouldAlert(shouldAlertCheckBox.isSelected())
                 .shouldSave(shouldSaveCheckBox.isSelected())
+                .name(ruleName)
                 .description(descriptionTextField.getText())
                 .fullPaths(fullPaths);
         LogicalImagerRule rule = builder.build();

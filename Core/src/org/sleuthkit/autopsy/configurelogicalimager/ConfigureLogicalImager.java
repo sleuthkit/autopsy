@@ -44,7 +44,7 @@ import org.openide.util.NbBundle.Messages;
 @ActionRegistration(
         displayName = "#CTL_ConfigureLogicalImager"
 )
-@ActionReference(path = "Menu/Tools", position = 2000, separatorAfter = 2050)
+@ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
 @Messages("CTL_ConfigureLogicalImager=Configure Logical Imager")
 public final class ConfigureLogicalImager implements ActionListener {
     
@@ -74,10 +74,12 @@ public final class ConfigureLogicalImager implements ActionListener {
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}")); // NON-NLS
         wiz.setTitle(Bundle.ConfigureLogicalImager_title());
-        if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION
-            && (panels.get(1) instanceof ConfigWizardPanel2)) {
+        if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
+            // do something
+            if (panels.get(1) instanceof ConfigWizardPanel2) {
                 ConfigWizardPanel2 panel = (ConfigWizardPanel2) panels.get(1);
                 panel.saveConfigFile();
+            }
         }
     }
 }

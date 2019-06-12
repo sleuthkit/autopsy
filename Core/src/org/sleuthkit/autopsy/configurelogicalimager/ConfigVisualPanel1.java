@@ -40,7 +40,7 @@ import org.openide.util.NbBundle;
 /**
  * Configuration Visual Panel 1
  */
-public final class ConfigVisualPanel1 extends JPanel {
+public final class ConfigVisualPanel1 extends JPanel implements DocumentListener {
 
     private LogicalImagerConfig config;
     private String configFilename;
@@ -71,28 +71,9 @@ public final class ConfigVisualPanel1 extends JPanel {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
-        newRadioButton = new javax.swing.JRadioButton();
-        loadRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         configFileTextField = new javax.swing.JTextField();
         browseButton = new javax.swing.JButton();
-
-        buttonGroup1.add(newRadioButton);
-        newRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(newRadioButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.newRadioButton.text_1")); // NOI18N
-        newRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newRadioButtonActionPerformed(evt);
-            }
-        });
-
-        buttonGroup1.add(loadRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(loadRadioButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.loadRadioButton.text_1")); // NOI18N
-        loadRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loadRadioButtonActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.jLabel1.text_1")); // NOI18N
 
@@ -100,6 +81,7 @@ public final class ConfigVisualPanel1 extends JPanel {
         configFileTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.configFileTextField.text_1")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.browseButton.text")); // NOI18N
+        browseButton.setToolTipText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.browseButton.toolTipText")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
@@ -111,17 +93,10 @@ public final class ConfigVisualPanel1 extends JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(38, 38, 38)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(30, 30, 30)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(loadRadioButton)
-                            .addComponent(newRadioButton)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(38, 38, 38)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(configFileTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE))))
+                    .addComponent(jLabel1)
+                    .addComponent(configFileTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(browseButton)
                 .addContainerGap())
@@ -129,11 +104,7 @@ public final class ConfigVisualPanel1 extends JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(30, 30, 30)
-                .addComponent(newRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(loadRadioButton)
-                .addGap(37, 37, 37)
+                .addGap(116, 116, 116)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -143,24 +114,16 @@ public final class ConfigVisualPanel1 extends JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void newRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRadioButtonActionPerformed
-        configFileTextField.setText("");
-    }//GEN-LAST:event_newRadioButtonActionPerformed
-
-    private void loadRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadRadioButtonActionPerformed
-        configFileTextField.setText("");
-    }//GEN-LAST:event_loadRadioButtonActionPerformed
-
     @NbBundle.Messages({
-        "ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration json file"
+        "ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration"
     })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
          chooseFile(Bundle.ConfigVisualPanel1_chooseFileTitle());
     }//GEN-LAST:event_browseButtonActionPerformed
 
     @NbBundle.Messages({
-        "ConfigVisualPanel1.fileNameExtensionFilter=configuration json file",
-        "ConfigVisualPanel1.invalidConfigJson=Invalid config json: ",
+        "ConfigVisualPanel1.fileNameExtensionFilter=Configuration JSON File",
+        "ConfigVisualPanel1.invalidConfigJson=Invalid config JSON: ",
         "ConfigVisualPanel1.configurationError=Configuration error",
     })
     private void chooseFile(String title) {
@@ -171,6 +134,7 @@ public final class ConfigVisualPanel1 extends JPanel {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigVisualPanel1_fileNameExtensionFilter(), new String[] {"json"}); // NON-NLS
         fileChooser.setFileFilter(filter);
+        fileChooser.setSelectedFile(new File("config.json")); // default
         fileChooser.setMultiSelectionEnabled(false);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
@@ -180,7 +144,7 @@ public final class ConfigVisualPanel1 extends JPanel {
                     configFilename = path;
                     configFileTextField.setText(path);
                     newFile = false;
-                } catch (JsonIOException | JsonSyntaxException | IOException ex) {
+                } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, 
                         Bundle.ConfigVisualPanel1_invalidConfigJson() + ex.getMessage() , 
                         Bundle.ConfigVisualPanel1_configurationError(), 
@@ -203,8 +167,6 @@ public final class ConfigVisualPanel1 extends JPanel {
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JTextField configFileTextField;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JRadioButton loadRadioButton;
-    private javax.swing.JRadioButton newRadioButton;
     // End of variables declaration//GEN-END:variables
 
     @NbBundle.Messages({
@@ -241,13 +203,22 @@ public final class ConfigVisualPanel1 extends JPanel {
         configFileTextField.setText(filename);
     }
 
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+    }
+
     public boolean isPanelValid() {
         return (newFile || !configFileTextField.getText().isEmpty());
     }
 
-    /**
-     *  DocumentListener for the configFileTextField
-     */
     private static class MyDocumentListener implements DocumentListener {
 
         private final ConfigVisualPanel1 panel;

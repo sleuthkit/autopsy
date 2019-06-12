@@ -39,7 +39,10 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
      * component from this class, just use getComponent().
      */
     private ConfigVisualPanel1 component;
-    boolean isPanelValid = false;
+    private String configFilename = null;
+    private LogicalImagerConfig config = null;
+    boolean isValid = false;
+    private boolean newFile = true;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -53,7 +56,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     if (evt.getPropertyName().equals("UPDATE_UI")) { // NON-NLS
-                        isPanelValid = component.isPanelValid();
+                        isValid = component.isPanelValid();
                         fireChangeEvent();
                     }
                 }
@@ -73,7 +76,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
 
     @Override
     public boolean isValid() {
-        return isPanelValid;
+        return isValid;
         // If it depends on some condition (form filled out...) and
         // this condition changes (last form field filled in...) then
         // use ChangeSupport to implement add/removeChangeListener below.
@@ -130,14 +133,17 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
-        wiz.putProperty("configFilename", component.getConfigFilename()); // NON-NLS
-        wiz.putProperty("config", component.getConfig()); // NON-NLS
-        wiz.putProperty("newFile", component.isNewFile()); // NON-NLS
+        configFilename = component.getConfigFilename();
+        config = component.getConfig();
+        newFile = component.isNewFile();
+        wiz.putProperty("configFilename", configFilename); // NON-NLS
+        wiz.putProperty("config", config); // NON-NLS
+        wiz.putProperty("newFile", newFile); // NON-NLS
     }
 
     @Override
     public void validate() throws WizardValidationException {
-        isPanelValid = component.isPanelValid();
+        isValid = component.isPanelValid();
     }
 
 }

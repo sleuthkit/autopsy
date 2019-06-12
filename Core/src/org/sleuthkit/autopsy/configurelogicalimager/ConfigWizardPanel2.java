@@ -51,6 +51,8 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     private ConfigVisualPanel2 component;
     private String configFilename;
     private LogicalImagerConfig config;
+    private boolean newFile;
+    boolean isValid = false;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -87,7 +89,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         // use wiz.getProperty to retrieve previous panel state
         configFilename = (String) wiz.getProperty("configFilename"); // NON-NLS
         config = (LogicalImagerConfig) wiz.getProperty("config"); // NON-NLS
-        boolean newFile = (boolean) wiz.getProperty("newFile"); // NON-NLS
+        newFile = (boolean) wiz.getProperty("newFile"); // NON-NLS
         component.setConfiguration(configFilename, config, newFile);
     }
 
@@ -98,12 +100,10 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
 
     @Override
     public void addChangeListener(ChangeListener cl) {
-        // No change listener
     }
 
     @Override
     public void removeChangeListener(ChangeListener cl) {
-        // No change listener
     }
 
     public String getConfigFilename() {
@@ -130,7 +130,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         String toJson = gson.toJson(config);
         try {
             List<String> lines = Arrays.asList(toJson.split("\\n"));
-            FileUtils.writeLines(new File(configFilename), "UTF-8", lines, System.getProperty("line.separator"));
+            FileUtils.writeLines(new File(configFilename), "UTF-8", lines, System.getProperty("line.separator")); // NON-NLS
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveConfigMsg(configFilename)
                 + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
