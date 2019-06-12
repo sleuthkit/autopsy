@@ -22,6 +22,8 @@ import java.awt.EventQueue;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -278,6 +280,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             //enable the new button
             FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
             FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
+            
             // Get the selected interesting files set and populate the set
             // components.
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
@@ -294,14 +297,26 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSetDefsPanel.this.copySetButton.setEnabled(canBeEnabled);
                 FilesSetDefsPanel.this.exportSetButton.setEnabled(true);
                 // Populate the rule definitions list, sorted by name.
-                TreeMap<String, FilesSet.Rule> rules = new TreeMap<>(selectedSet.getRules());
-                rules.values().forEach((rule) -> {
+                List<FilesSet.Rule> rules = new ArrayList<>(selectedSet.getRules().values());
+                Collections.sort(rules, new Comparator<FilesSet.Rule>() {
+                    @Override
+                    public int compare(FilesSet.Rule rule1, FilesSet.Rule rule2) {
+                        return rule1.toString().compareTo(rule2.toString());
+                    }
+                });
+                rules.forEach((rule) -> {
                     FilesSetDefsPanel.this.rulesListModel.addElement(rule);
                 });
                 // Select the first rule by default.
                 if (!FilesSetDefsPanel.this.rulesListModel.isEmpty()) {
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
                 }
+            } else {
+                // Disable the edit, delete, copy, and export buttons
+                FilesSetDefsPanel.this.editSetButton.setEnabled(false);
+                FilesSetDefsPanel.this.deleteSetButton.setEnabled(false);
+                FilesSetDefsPanel.this.copySetButton.setEnabled(false);
+                FilesSetDefsPanel.this.exportSetButton.setEnabled(false);
             }
         }
 

@@ -372,6 +372,7 @@ public class DataResultFilterNode extends FilterNode {
                 }
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(ExtractAction.getInstance());
+                actionsList.add(ExportCSVAction.getInstance());
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(AddContentTagAction.getInstance());
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());

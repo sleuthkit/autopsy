@@ -66,6 +66,7 @@ DataSourceSummaryDialog.window.title=Data Sources Summary
 DataSourceSummaryNode.column.dataSourceName.header=Data Source Name
 DataSourceSummaryNode.column.files.header=Files
 DataSourceSummaryNode.column.results.header=Results
+DataSourceSummaryNode.column.status.header=Ingest Status
 DataSourceSummaryNode.column.tags.header=Tags
 DataSourceSummaryNode.column.type.header=Type
 DataSourceSummaryNode.viewDataSourceAction.text=Go to Data Source
