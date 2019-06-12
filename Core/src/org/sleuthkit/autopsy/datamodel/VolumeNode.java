@@ -279,14 +279,15 @@ public class VolumeNode extends AbstractContentNode<Volume> {
      *
      * Null implementation of an abstract method.
      *
-     * @param attribute          correlation attribute instance
+     * @param attributeType      the type of the attribute to count
+     * @param attributeValue     the value of the attribute to coun
      * @param defaultDescription a description to use when none is determined by
      *                           the getCountPropertyAndDescription method
      *
      * @return count property for the underlying content of the node.
      */
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
         return Pair.of(-1L, NO_DESCR);
     }
 }

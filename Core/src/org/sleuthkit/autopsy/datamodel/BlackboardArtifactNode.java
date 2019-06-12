@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -751,7 +752,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}"})
     @Deprecated
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
-        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute, Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
+        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute.getCorrelationType(), attribute.getCorrelationValue(), Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
         sheetSet.put(
                 new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), countAndDescription.getRight(), countAndDescription.getLeft()));
     }
@@ -759,22 +760,24 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     /**
      * Gets the Occurrences property for the node.
      *
-     * @param attribute          correlation attribute instance
-     * @param defaultDescription
+     * @param attributeType      the type of the attribute to count
+     * @param attributeValue     the value of the attribute to count
+     * @param defaultDescription a description to use when none is determined by
+     *                           the getCountPropertyAndDescription method
      *
      * @return count and description
      *
      */
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(Type attributeType, String attributeValue, String defaultDescription) {
         Long count = -1L;
         String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
-            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
-                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
-                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, attribute.getCorrelationType().getDisplayName());
-            } else if (attribute != null) {
+            if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
+                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
+                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, attributeType.getDisplayName());
+            } else if (attributeType != null) {
                 description = Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationValues_description();
             }
         } catch (EamDbException ex) {
