@@ -52,10 +52,10 @@ public class LogicalImagerRule {
     private List<String> fullPaths = new ArrayList<>();
     @SerializedName("size-range")    
     @Expose(serialize = true) 
-    private Map<String, Integer> sizeRange = new HashMap<>();
+    final private Map<String, Integer> sizeRange = new HashMap<>();
     @SerializedName("date-range")    
     @Expose(serialize = true) 
-    private Map<String, Integer> dateRange = new HashMap<>();
+    final private Map<String, Integer> dateRange = new HashMap<>();
     
     // The following fields should not be serialized, internal use only
     @Expose(serialize = false) 
@@ -160,6 +160,9 @@ public class LogicalImagerRule {
         return maxDate;
     }
 
+    /**
+     * Builder class
+     */
     public static class Builder {
         private Boolean shouldAlert = null;
         private Boolean shouldSave = null;
@@ -174,8 +177,6 @@ public class LogicalImagerRule {
         private Integer minDays = null;
         private Integer minDate = null;
         private Integer maxDate = null;
-
-        public Builder() {}
         
         public Builder shouldAlert(boolean shouldAlert) {
             this.shouldAlert = shouldAlert;

@@ -41,9 +41,7 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     private JButton cancelButton;
     List<String> newFullPaths = new ArrayList<>();
     private final JTextArea fullPathsTextArea;
-    private boolean editing = false;
     
-
     /**
      * Creates new form EditFullPathsRulePanel
      */
@@ -53,7 +51,6 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     public EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
         
-        this.editing = editing;
         if (editing) {
             ruleNameTextField.setEnabled(!editing);
         }

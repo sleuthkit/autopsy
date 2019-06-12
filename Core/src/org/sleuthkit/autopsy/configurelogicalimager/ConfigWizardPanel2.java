@@ -51,8 +51,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     private ConfigVisualPanel2 component;
     private String configFilename;
     private LogicalImagerConfig config;
-    private boolean newFile;
-    boolean isValid = false;
+    boolean valid = false;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -89,21 +88,12 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         // use wiz.getProperty to retrieve previous panel state
         configFilename = (String) wiz.getProperty("configFilename"); // NON-NLS
         config = (LogicalImagerConfig) wiz.getProperty("config"); // NON-NLS
-        newFile = (boolean) wiz.getProperty("newFile"); // NON-NLS
-        component.setConfiguration(configFilename, config, newFile);
+        component.setConfiguration(configFilename, config, (boolean) wiz.getProperty("newFile"));
     }
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
-    }
-
-    @Override
-    public void addChangeListener(ChangeListener cl) {
-    }
-
-    @Override
-    public void removeChangeListener(ChangeListener cl) {
     }
 
     public String getConfigFilename() {
@@ -153,6 +143,16 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
             File destFile = Paths.get(destDir.toString(), "tsk_logical_imager.exe").toFile(); // NON-NLS
             FileUtils.copyInputStreamToFile(in, destFile);
         }
+    }
+
+    @Override
+    public void addChangeListener(ChangeListener cl) {
+        // Not used
+    }
+
+    @Override
+    public void removeChangeListener(ChangeListener cl) {
+        // Not used
     }
 
 }

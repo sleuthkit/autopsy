@@ -46,7 +46,6 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private JButton cancelButton;
     private final javax.swing.JTextArea filenamesTextArea;
     private final javax.swing.JTextArea folderNamesTextArea;
-    private boolean editing = true;
     
     /**
      * Creates new form EditRulePanel
@@ -58,7 +57,6 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     EditNonFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
 
-        this.editing = editing;
         if (editing) {
             ruleNameTextField.setEnabled(!editing);
         }
@@ -472,7 +470,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 }
                 builder.minDays(minDays);
             } catch (NumberFormatException | ParseException ex) {
-                throw new IOException(Bundle.EditNonFullPathsRulePanel_modifiedDaysMustBeNumberException(ex.getMessage()));
+                throw new IOException(Bundle.EditNonFullPathsRulePanel_modifiedDaysMustBeNumberException(ex.getMessage()), ex);
             }
         }
         
@@ -485,7 +483,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeNotPositiveException());
                 }
             } catch (NumberFormatException | ParseException ex) {
-                throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeMustBeNumberException(ex.getMessage()));
+                throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeMustBeNumberException(ex.getMessage()), ex);
             }
         }
         
@@ -498,7 +496,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeNotPositiveException());
                 }
             } catch (NumberFormatException | ParseException ex) {
-                throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeMustBeNumberException(ex.getMessage()));
+                throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeMustBeNumberException(ex.getMessage()), ex);
             }
         }
         
@@ -520,10 +518,10 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         "EditNonFullPathsRulePanel.emptyExtensionException=Extensions cannot have an empty entry",
     })
     private List<String> validateExtensions(JTextField textField) throws IOException {
-        List<String> extensions = new ArrayList<>();
         if (isBlank(textField.getText())) {
             return null;
         }
+        List<String> extensions = new ArrayList<>();
         for (String extension : textField.getText().split(",")) {
             extension = strip(extension);
             if (extension.isEmpty()) {

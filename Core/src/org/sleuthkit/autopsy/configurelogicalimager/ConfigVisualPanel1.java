@@ -40,7 +40,7 @@ import org.openide.util.NbBundle;
 /**
  * Configuration Visual Panel 1
  */
-public final class ConfigVisualPanel1 extends JPanel implements DocumentListener {
+public final class ConfigVisualPanel1 extends JPanel {
 
     private LogicalImagerConfig config;
     private String configFilename;
@@ -144,7 +144,7 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
                     configFilename = path;
                     configFileTextField.setText(path);
                     newFile = false;
-                } catch (Exception ex) {
+                } catch (JsonIOException | JsonSyntaxException | IOException ex) {
                     JOptionPane.showMessageDialog(this, 
                         Bundle.ConfigVisualPanel1_invalidConfigJson() + ex.getMessage() , 
                         Bundle.ConfigVisualPanel1_configurationError(), 
@@ -203,22 +203,13 @@ public final class ConfigVisualPanel1 extends JPanel implements DocumentListener
         configFileTextField.setText(filename);
     }
 
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-    }
-
-    @Override
-    public void changedUpdate(DocumentEvent e) {
-    }
-
     public boolean isPanelValid() {
         return (newFile || !configFileTextField.getText().isEmpty());
     }
 
+    /**
+     * Document Listener for textfield
+     */
     private static class MyDocumentListener implements DocumentListener {
 
         private final ConfigVisualPanel1 panel;

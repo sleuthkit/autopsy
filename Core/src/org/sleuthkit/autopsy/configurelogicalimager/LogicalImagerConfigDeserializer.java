@@ -45,7 +45,6 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
     @Override
     public LogicalImagerConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
         boolean finalizeImageWriter = false;
-        List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
 
         final JsonObject jsonObject = je.getAsJsonObject();
         final JsonElement jsonFinalizeImageWriter = jsonObject.get("finalize-image-writer"); // NON-NLS
@@ -57,6 +56,8 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
         if (asJsonArray == null) {
             throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_missingRuleSetException());
         }
+
+        List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
         for (JsonElement element: asJsonArray) {
             String setName = null;
             List<LogicalImagerRule> rules = null;
@@ -149,7 +150,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                                 default:
                                     throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(sizeKey));
                             }
-                        };
+                        }
                         break;
                     case "date-range": // NON-NLS
                         JsonObject dateRangeObject = entry1.getValue().getAsJsonObject();
@@ -169,7 +170,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                                 default:
                                     throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(dateKey));
                             }
-                        };
+                        }
                         break;
                     default:
                         throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(key1));

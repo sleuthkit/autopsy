@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.configurelogicalimager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -555,7 +556,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                     ImmutablePair<String, LogicalImagerRule> ruleMap = panel.toRule();
                     appendRow(ruleMap);
                     break;
-                } catch (Exception ex) {
+                } catch (IOException | NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this,
                         ex.getMessage(),
                         "New rule error",
@@ -696,7 +697,7 @@ public final class ConfigVisualPanel2 extends JPanel {
         
         for (LogicalImagerRule rule : ruleSet.getRules()) {
             rulesTableModel.setValueAt(rule.getName(), row, 0);
-            if (rowSelectionkey != null && rule.getName().equals(rowSelectionkey)) {
+            if (rowSelectionkey != null && rowSelectionkey.equals(rule.getName())) {
                 selectThisRow = row;
             }
             rulesTableModel.setValueAt(rule.getDescription(), row, 1);
@@ -839,6 +840,9 @@ public final class ConfigVisualPanel2 extends JPanel {
         }
     }
 
+    /**
+     * RulesTableModel for rules table
+     */
     private class RulesTableModel extends AbstractTableModel {
 
         private final List<String> ruleName = new ArrayList<>();
@@ -925,6 +929,9 @@ public final class ConfigVisualPanel2 extends JPanel {
         }
     }
 
+    /**
+     * Table model for single column list table.
+     */
     private class SingleColumnTableModel extends AbstractTableModel {
 
         private final List<String> list = new ArrayList<>();
@@ -947,12 +954,10 @@ public final class ConfigVisualPanel2 extends JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
-            switch (columnIndex) {
-                case 0:
-                    ret = list.get(rowIndex);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
+            if (columnIndex == 0) {
+                ret = list.get(rowIndex);
+            } else {
+                throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
             }
             return ret;
         }
@@ -964,12 +969,10 @@ public final class ConfigVisualPanel2 extends JPanel {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    list.add((String) aValue);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
+            if (columnIndex == 0) {
+                list.add((String) aValue);
+            } else {
+                throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
             }
         }
     }

@@ -29,11 +29,11 @@ public class LogicalImagerRuleSet {
 
     @SerializedName("set-name")
     @Expose(serialize = true) 
-    private String setName;
+    final private String setName;
 
     @SerializedName("rules")
     @Expose(serialize = true) 
-    private List<LogicalImagerRule> rules;
+    private final List<LogicalImagerRule> rules;
 
     public LogicalImagerRuleSet(String setName, List<LogicalImagerRule> rules) {
         this.setName = setName;

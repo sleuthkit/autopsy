@@ -48,8 +48,8 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
         editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule(), false);
         fullPathsPanel.add(editFullPathsRulePanel, BorderLayout.NORTH);
 
-        sharedLayeredPane.add(nonFullPathsJPanel, new Integer(0));
-        sharedLayeredPane.add(fullPathsPanel, new Integer(1));
+        sharedLayeredPane.add(nonFullPathsJPanel, Integer.valueOf(0));
+        sharedLayeredPane.add(fullPathsPanel, Integer.valueOf(1));
         nonFullPathsJPanel.setVisible(true);
         fullPathsPanel.setVisible(false);
     }

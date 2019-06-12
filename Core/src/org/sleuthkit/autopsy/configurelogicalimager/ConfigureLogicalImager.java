@@ -74,12 +74,10 @@ public final class ConfigureLogicalImager implements ActionListener {
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}")); // NON-NLS
         wiz.setTitle(Bundle.ConfigureLogicalImager_title());
-        if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
-            // do something
-            if (panels.get(1) instanceof ConfigWizardPanel2) {
+        if ((DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) &&
+            (panels.get(1) instanceof ConfigWizardPanel2)) {
                 ConfigWizardPanel2 panel = (ConfigWizardPanel2) panels.get(1);
                 panel.saveConfigFile();
-            }
         }
     }
 }
