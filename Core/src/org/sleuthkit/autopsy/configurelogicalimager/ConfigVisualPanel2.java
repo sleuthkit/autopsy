@@ -677,7 +677,7 @@ public final class ConfigVisualPanel2 extends JPanel {
     private LogicalImagerRuleSet getFirstRuleSet() {
         if (config.getRuleSets().isEmpty()) {
             List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
-            ruleSets.add(new LogicalImagerRuleSet("no-set-name", new ArrayList<>()));
+            ruleSets.add(new LogicalImagerRuleSet("no-set-name", new ArrayList<>())); // NON-NLS
             config.setRuleSet(ruleSets);
         }
         return config.getRuleSets().get(0);

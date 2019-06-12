@@ -52,7 +52,8 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
      * Creates new form EditRulePanel
      */
     @NbBundle.Messages({
-        "EditNonFullPathsRulePanel.example=Example: "
+        "EditNonFullPathsRulePanel.example=Example: ",
+        "EditNonFullPathsRulePanel.note=NOTE: A special [USER_FOLDER] token at the the start of a folder name to allow matches of all user folders in the file system."
     })
     EditNonFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
@@ -87,7 +88,11 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 + "<br>filename.txt<br>readme.txt</html>"); // NON-NLS
         EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>" 
                 + Bundle.EditNonFullPathsRulePanel_example() 
-                + "<br>[USER_FOLDER]/My Documents/Downloads<br>/Program Files/Common Files</html>"); // NON-NLS
+                + "<br>[USER_FOLDER]/My Documents/Downloads"
+                + "<br>/Program Files/Common Files"
+                + "<br>"
+                + Bundle.EditNonFullPathsRulePanel_note()
+                + "</html>"); // NON-NLS
         validate();
         repaint();
     }
@@ -173,7 +178,6 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.modifiedDateLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.daysIncludedLabel.text")); // NOI18N
-        daysIncludedLabel.setEnabled(false);
 
         shouldSaveCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldSaveCheckBox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.shouldSaveCheckBox.text")); // NOI18N

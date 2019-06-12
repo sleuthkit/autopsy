@@ -130,7 +130,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         String toJson = gson.toJson(config);
         try {
             List<String> lines = Arrays.asList(toJson.split("\\n"));
-            FileUtils.writeLines(new File(configFilename), "UTF-8", lines, System.getProperty("line.separator"));
+            FileUtils.writeLines(new File(configFilename), "UTF-8", lines, System.getProperty("line.separator")); // NON-NLS
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveConfigMsg(configFilename)
                 + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
