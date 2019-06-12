@@ -36,6 +36,8 @@ public class LogicalImagerRule {
     @Expose(serialize = true) 
     private final Boolean shouldSave;
     @Expose(serialize = true) 
+    private final String name;
+    @Expose(serialize = true) 
     private final String description;
     @Expose(serialize = true) 
     private List<String> extensions = new ArrayList<>();
@@ -67,7 +69,7 @@ public class LogicalImagerRule {
     @Expose(serialize = false) 
     private Integer maxDate;
     
-    private LogicalImagerRule(Boolean shouldAlert, Boolean shouldSave, String description,
+    private LogicalImagerRule(Boolean shouldAlert, Boolean shouldSave, String name, String description,
             List<String> extensions,
             List<String> filenames,
             List<String> paths,
@@ -80,6 +82,7 @@ public class LogicalImagerRule {
     ) {
         this.shouldAlert = shouldAlert;
         this.shouldSave = shouldSave;
+        this.name = name;
         this.description = description;
         this.extensions = extensions;
         this.filenames = filenames;
@@ -99,9 +102,10 @@ public class LogicalImagerRule {
     }
 
     public LogicalImagerRule() {
-        this.shouldAlert = true;
-        this.shouldSave = false;
+        this.shouldAlert = false; // default
+        this.shouldSave = true; // default
         this.description = null;
+        this.name = null;
     }
     
     public Boolean isShouldAlert() {
@@ -110,6 +114,10 @@ public class LogicalImagerRule {
 
     public Boolean isShouldSave() {
         return shouldSave;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getDescription() {
@@ -155,6 +163,7 @@ public class LogicalImagerRule {
     public static class Builder {
         private Boolean shouldAlert = null;
         private Boolean shouldSave = null;
+        private String name = null;
         private String description = null;
         private List<String> extensions = null;
         private List<String> filenames = null;        
@@ -175,6 +184,11 @@ public class LogicalImagerRule {
         
         public Builder shouldSave(boolean shouldSave) {
             this.shouldSave = shouldSave;
+            return this;
+        }
+        
+        public Builder name(String name) {
+            this.name = name;
             return this;
         }
         
@@ -229,7 +243,7 @@ public class LogicalImagerRule {
         }
         
         public LogicalImagerRule build() {
-            return new LogicalImagerRule(shouldAlert, shouldSave, description, 
+            return new LogicalImagerRule(shouldAlert, shouldSave, name, description, 
                     extensions, filenames, paths, fullPaths,
                     minFileSize, maxFileSize,
                     minDays, minDate, maxDate

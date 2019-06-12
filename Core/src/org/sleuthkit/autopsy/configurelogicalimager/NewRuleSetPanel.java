@@ -41,11 +41,11 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
         initComponents();
         
         nonFullPathsJPanel = createPanel();
-        editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule());
+        editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule(), false);
         nonFullPathsJPanel.add(editNonFullPathsRulePanel, BorderLayout.NORTH);
         
         fullPathsPanel = createPanel();
-        editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule());
+        editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, "", new LogicalImagerRule(), false);
         fullPathsPanel.add(editFullPathsRulePanel, BorderLayout.NORTH);
 
         sharedLayeredPane.add(nonFullPathsJPanel, new Integer(0));
@@ -76,7 +76,7 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(chooseLabel, org.openide.util.NbBundle.getMessage(NewRuleSetPanel.class, "NewRuleSetPanel.chooseLabel.text")); // NOI18N
 
         chooseComboBox.setMaximumRowCount(2);
-        chooseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "By Attribute", "Full Path" }));
+        chooseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "By Attribute", "By Full Path" }));
         chooseComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chooseComboBoxActionPerformed(evt);
@@ -103,7 +103,7 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(chooseLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(chooseComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(718, Short.MAX_VALUE))
+                .addContainerGap(716, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(sharedLayeredPane)
@@ -131,7 +131,6 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
             nonFullPathsJPanel.setVisible(false);            
             fullPathsPanel.setVisible(true);
         }
-        chooseComboBox.setEnabled(false);
     }//GEN-LAST:event_chooseComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -142,7 +141,7 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
 
     ImmutablePair<String, LogicalImagerRule> toRule() throws IOException, NumberFormatException {
         ImmutablePair<String, LogicalImagerRule> ruleMap;
-        if (chooseComboBox.isEnabled()) {
+        if (chooseComboBox.getSelectedIndex() == 0) {
             ruleMap = editNonFullPathsRulePanel.toRule();
         } else {
             ruleMap = editFullPathsRulePanel.toRule();

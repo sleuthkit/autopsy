@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.configurelogicalimager;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Logical Imager Configuration file JSON
@@ -32,21 +32,21 @@ public class LogicalImagerConfig {
     @Expose(serialize = true) 
     private boolean finalizeImageWriter;
 
-    @SerializedName("rule-set")
+    @SerializedName("rule-sets")
     @Expose(serialize = true) 
-    private Map<String, LogicalImagerRule> ruleSet;
+    private List<LogicalImagerRuleSet> ruleSets;
     
     public LogicalImagerConfig() {
         this.finalizeImageWriter = false;
-        this.ruleSet = new HashMap<>();
+        this.ruleSets = new ArrayList<>();
     }
     
     public LogicalImagerConfig(
             boolean finalizeImageWriter,
-            Map<String, LogicalImagerRule> ruleSet
+            List<LogicalImagerRuleSet> ruleSets
     ) {
         this.finalizeImageWriter = finalizeImageWriter;
-        this.ruleSet = ruleSet;
+        this.ruleSets = ruleSets;
     }
 
     public boolean isFinalizeImageWriter() {
@@ -57,11 +57,11 @@ public class LogicalImagerConfig {
         this.finalizeImageWriter = finalizeImageWriter;
     }
 
-    public Map<String, LogicalImagerRule> getRuleSet() {
-        return ruleSet;
+    public List<LogicalImagerRuleSet> getRuleSets() {
+        return ruleSets;
     }
 
-    public void setRuleSet(Map<String, LogicalImagerRule> ruleSet) {
-        this.ruleSet = ruleSet;
+    public void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
+        this.ruleSets = ruleSets;
     }    
 }

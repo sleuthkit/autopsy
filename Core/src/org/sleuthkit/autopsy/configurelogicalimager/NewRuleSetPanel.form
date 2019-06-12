@@ -22,7 +22,7 @@
                   <Component id="chooseLabel" max="32767" attributes="0"/>
                   <Component id="chooseComboBox" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace pref="718" max="32767" attributes="0"/>
+              <EmptySpace pref="716" max="32767" attributes="0"/>
           </Group>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
@@ -59,7 +59,7 @@
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
           <StringArray count="2">
             <StringItem index="0" value="By Attribute"/>
-            <StringItem index="1" value="Full Path"/>
+            <StringItem index="1" value="By Full Path"/>
           </StringArray>
         </Property>
       </Properties>

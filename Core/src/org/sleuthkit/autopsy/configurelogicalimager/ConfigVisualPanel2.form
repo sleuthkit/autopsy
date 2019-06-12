@@ -45,9 +45,9 @@
                           <Component id="jScrollPane1" min="-2" pref="377" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="newRuleButton" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="editRuleButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
+                              <Component id="editRuleButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="37" max="-2" attributes="0"/>
                               <Component id="deleteRuleButton" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -521,7 +521,7 @@
           <Properties>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
               <Table columnCount="2" rowCount="0">
-                <Column editable="false" title="Rule Set" type="java.lang.String"/>
+                <Column editable="false" title="Rule Name" type="java.lang.String"/>
                 <Column editable="false" title="Description" type="java.lang.String"/>
               </Table>
             </Property>
@@ -554,7 +554,7 @@
             </Property>
           </Properties>
           <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="rulesTableMouseClicked"/>
+            <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="rulesTableMouseReleased"/>
             <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="rulesTableKeyReleased"/>
           </Events>
         </Component>

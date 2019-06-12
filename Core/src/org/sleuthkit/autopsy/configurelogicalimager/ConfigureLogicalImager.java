@@ -44,7 +44,7 @@ import org.openide.util.NbBundle.Messages;
 @ActionRegistration(
         displayName = "#CTL_ConfigureLogicalImager"
 )
-@ActionReference(path = "Menu/Tools", position = 2000, separatorAfter = 2050)
+@ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
 @Messages("CTL_ConfigureLogicalImager=Configure Logical Imager")
 public final class ConfigureLogicalImager implements ActionListener {
     

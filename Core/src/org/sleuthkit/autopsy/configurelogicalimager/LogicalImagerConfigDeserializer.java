@@ -26,7 +26,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +45,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
     @Override
     public LogicalImagerConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
         boolean finalizeImageWriter = false;
-        Map<String, LogicalImagerRule> ruleSet = new HashMap<>();
+        List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
 
         final JsonObject jsonObject = je.getAsJsonObject();
         final JsonElement jsonFinalizeImageWriter = jsonObject.get("finalize-image-writer"); // NON-NLS
@@ -54,28 +53,44 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             finalizeImageWriter = jsonFinalizeImageWriter.getAsBoolean();
         }
 
-        final JsonObject jsonRuleSet = jsonObject.get("rule-set").getAsJsonObject(); // NON-NLS
-        if (jsonRuleSet == null) {
+        JsonArray asJsonArray = jsonObject.get("rule-sets").getAsJsonArray(); // NON-NLS
+        if (asJsonArray == null) {
             throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_missingRuleSetException());
         }
-        for (Map.Entry<String, JsonElement> entry : jsonRuleSet.entrySet()) {
-            String key = entry.getKey();
-            JsonElement element = entry.getValue();
+        for (JsonElement element: asJsonArray) {
+            String setName = null;
+            List<LogicalImagerRule> rules = null;
+            JsonObject asJsonObject = element.getAsJsonObject();
+            JsonElement setNameElement = asJsonObject.get("set-name");
+            setName = setNameElement.getAsString();
+            JsonElement rulesElement = asJsonObject.get("rules");
+            rules = parseRules(rulesElement.getAsJsonArray());
+            LogicalImagerRuleSet ruleSet = new LogicalImagerRuleSet(setName, rules);
+            ruleSets.add(ruleSet);
+        }
+        return new LogicalImagerConfig(finalizeImageWriter, ruleSets);
+    }
+    
+    private List<LogicalImagerRule> parseRules(JsonArray asJsonArray) {
+        List<LogicalImagerRule> rules = new ArrayList<>();
+        String key1;
+        Boolean shouldSave = false;
+        Boolean shouldAlert = true;
+        String name = null;
+        String description = null;
+        List<String> extensions = null;
+        List<String> paths = null;
+        List<String> fullPaths = null;
+        List<String> filenames = null;
+        Integer minFileSize = null;
+        Integer maxFileSize = null;
+        Integer minDays = null;
+        Integer minDate = null;
+        Integer maxDate = null;
+
+        for (JsonElement element: asJsonArray) {
             Set<Map.Entry<String, JsonElement>> entrySet = element.getAsJsonObject().entrySet();
-            String key1;
-            Boolean shouldSave = false;
-            Boolean shouldAlert = true;
-            String description = null;
-            List<String> extensions = null;
-            List<String> paths = null;
-            List<String> fullPaths = null;
-            List<String> filenames = null;
-            Integer minFileSize = null;
-            Integer maxFileSize = null;
-            Integer minDays = null;
-            Integer minDate = null;
-            Integer maxDate = null;
-            
+
             for (Map.Entry<String, JsonElement> entry1 : entrySet) {
                 key1 = entry1.getKey();
                 switch (key1) {
@@ -84,6 +99,9 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                         break;
                     case "shouldSave": // NON-NLS
                         shouldSave = entry1.getValue().getAsBoolean();
+                        break;
+                    case "name": // NON-NLS
+                        name = entry1.getValue().getAsString();
                         break;
                     case "description": // NON-NLS
                         description = entry1.getValue().getAsString();
@@ -157,7 +175,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                         throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(key1));
                 }
             }
-            
+
             // A rule with full-paths cannot have other rule definitions
             if ((fullPaths != null && !fullPaths.isEmpty()) && ((extensions != null && !extensions.isEmpty())
                     || (paths != null && !paths.isEmpty())
@@ -168,6 +186,7 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             LogicalImagerRule rule = new LogicalImagerRule.Builder()
                     .shouldAlert(shouldAlert)
                     .shouldSave(shouldSave)
+                    .name(name)
                     .description(description)
                     .extensions(extensions)
                     .paths(paths)
@@ -179,9 +198,13 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
                     .minDate(minDate)
                     .maxDate(maxDate)
                     .build();
-            ruleSet.put(key, rule);
-        }
-        LogicalImagerConfig config = new LogicalImagerConfig(finalizeImageWriter, ruleSet);
-        return config;
+            rules.add(rule);
+        } // for
+            
+        return rules;
     }
 }
+
+
+
+    

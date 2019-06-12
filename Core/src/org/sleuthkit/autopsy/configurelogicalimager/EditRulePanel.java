@@ -46,14 +46,10 @@ public class EditRulePanel extends JPanel {
      */
     public EditRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
         if (rule.getFullPaths() != null && rule.getFullPaths().size() > 0) {
-            editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
+            editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule, true);
         } else {
-            editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, ruleName, rule);
+            editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, ruleName, rule, true);
         }
-    }
-
-    void setRule(LogicalImagerRule rule) {
-        
     }
 
     JPanel getPanel() {
