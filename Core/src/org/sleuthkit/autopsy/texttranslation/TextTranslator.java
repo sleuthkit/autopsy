@@ -25,5 +25,31 @@ package org.sleuthkit.autopsy.texttranslation;
 public interface TextTranslator {
 
     String translate(String input) throws TranslationException;
-    
+
+    /**
+     * Get the name of the TextTranslator implementation
+     *
+     * @return the name of the TextTranslator
+     */
+    String getName();
+
+    /**
+     * Get the component to display on the settings options panel when this
+     * TextTranslator is selected
+     *
+     * @return the component which displays the settings options
+     */
+    Component getComponent();
+
+    /**
+     * Save the settings as they have been modified in the component.
+     */
+    void saveSettings();
+
+    /**
+     * Returns the hard limit for translation request sizes.
+     *
+     * @return
+     */
+    int getMaxPayloadSize();
 }

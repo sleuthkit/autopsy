@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,11 +56,11 @@ public class DataSourcesNode extends DisplayableItemNode {
     }
 
     public DataSourcesNode(long dsObjId) {
-        super(new DataSourcesNodeChildren(dsObjId), Lookups.singleton(NAME));
+        super(Children.create(new DataSourcesNodeChildren(dsObjId), false), Lookups.singleton(NAME));
         displayName = (dsObjId > 0) ?  NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.group_by_datasource.name") : NAME;
         init();
     }
-    
+
     private void init() {
         setName(NAME);
         setDisplayName(displayName);
@@ -79,7 +79,7 @@ public class DataSourcesNode extends DisplayableItemNode {
 
         private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
         private final long datasourceObjId;
- 
+
         List<Content> currentKeys;
 
         public DataSourcesNodeChildren() {
@@ -91,7 +91,7 @@ public class DataSourcesNode extends DisplayableItemNode {
             this.currentKeys = new ArrayList<>();
             this.datasourceObjId = dsObjId;
         }
-        
+
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -124,7 +124,7 @@ public class DataSourcesNode extends DisplayableItemNode {
                     Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(datasourceObjId);
                     currentKeys = new ArrayList<>(Arrays.asList(content));
                 }
-                
+
                 Collections.sort(currentKeys, new Comparator<Content>() {
                     @Override
                     public int compare(Content content1, Content content2) {
@@ -134,7 +134,7 @@ public class DataSourcesNode extends DisplayableItemNode {
                     }
 
                 });
-                
+
                 setKeys(currentKeys);
             } catch (TskCoreException | NoCurrentCaseException | TskDataException ex) {
                 logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS

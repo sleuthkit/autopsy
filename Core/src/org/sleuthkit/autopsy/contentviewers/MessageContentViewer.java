@@ -87,7 +87,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static final int ATTM_TAB_INDEX = 4;
 
     private final List<JTextComponent> textAreas;
-
+    private final org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
     /**
      * Artifact currently being displayed
      */
@@ -101,6 +101,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     @NbBundle.Messages("MessageContentViewer.AtrachmentsPanel.title=Attachments")
     public MessageContentViewer() {
         initComponents();
+        htmlPane.add(htmlPanel);
         envelopePanel.setBackground(new Color(0, 0, 0, 38));
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
@@ -153,7 +154,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         textbodyScrollPane = new javax.swing.JScrollPane();
         textbodyTextArea = new javax.swing.JTextArea();
         htmlPane = new javax.swing.JPanel();
-        htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
         rtfbodyScrollPane = new javax.swing.JScrollPane();
         rtfbodyTextPane = new javax.swing.JTextPane();
         attachmentsPanel = new javax.swing.JPanel();
@@ -266,17 +266,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"), textbodyScrollPane); // NOI18N
 
-        javax.swing.GroupLayout htmlPaneLayout = new javax.swing.GroupLayout(htmlPane);
-        htmlPane.setLayout(htmlPaneLayout);
-        htmlPaneLayout.setHorizontalGroup(
-            htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(htmlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE)
-        );
-        htmlPaneLayout.setVerticalGroup(
-            htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(htmlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
-        );
-
+        htmlPane.setLayout(new java.awt.BorderLayout());
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
 
         rtfbodyScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -357,7 +347,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JScrollPane headersScrollPane;
     private javax.swing.JTextArea headersTextArea;
     private javax.swing.JPanel htmlPane;
-    private org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel;
     private javax.swing.JTabbedPane msgbodyTabbedPane;
     private javax.swing.JScrollPane rtfbodyScrollPane;
     private javax.swing.JTextPane rtfbodyTextPane;
@@ -533,7 +522,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 textComponent.setCaretPosition(0); //make sure we start at the top
             }
         }
-        
+
         final boolean hasText = attributeText.length() > 0;
 
         msgbodyTabbedPane.setEnabledAt(index, hasText);
@@ -679,18 +668,18 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         protected Sheet createSheet() {
             Sheet sheet = super.createSheet();
             Set<String> keepProps = new HashSet<>(Arrays.asList(
-                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.nameColLbl"),
-                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"), 
-                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"), 
-                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"), 
-                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.sizeColLbl"),
-                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.mimeType"),
-                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.knownColLbl")));
-            
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"),
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"),
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"),
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"),
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.sizeColLbl"),
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.mimeType"),
+                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.knownColLbl")));
+
             //Remove all other props except for the  ones above
             Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            for(Property<?> p : sheetSet.getProperties()) {
-                if(!keepProps.contains(p.getName())){
+            for (Property<?> p : sheetSet.getProperties()) {
+                if (!keepProps.contains(p.getName())) {
                     sheetSet.remove(p.getName());
                 }
             }

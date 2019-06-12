@@ -24,10 +24,15 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import javax.swing.Action;
-import org.openide.nodes.Children;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -37,12 +42,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
+import org.sleuthkit.datamodel.Tag;
 
 /**
  * This class is used to represent the "Node" for the volume. Its child is the
  * root directory of a file system
  */
 public class VolumeNode extends AbstractContentNode<Volume> {
+
+    private static final Logger logger = Logger.getLogger(VolumeNode.class.getName());
 
     /**
      * Helper so that the display name and the name used in building the path
@@ -203,5 +211,77 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     @Override
     public String getItemType() {
         return DisplayableItemNode.FILE_PARENT_NODE_KEY;
+    }
+
+    /**
+     * Reads and returns a list of all tags associated with this content node.
+     *
+     * Null implementation of an abstract method.
+     *
+     * @return list of tags associated with the node.
+     */
+    @Override
+    protected List<Tag> getAllTagsFromDatabase() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * Returns correlation attribute instance for the underlying content of the
+     * node.
+     *
+     * Null implementation of an abstract method.
+     *
+     * @return correlation attribute instance for the underlying content of the
+     *         node.
+     */
+    @Override
+    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
+        return null;
+    }
+
+    /**
+     * Returns Score property for the node.
+     *
+     * Null implementation of an abstract method.
+     *
+     * @param tags list of tags.
+     *
+     * @return Score property for the underlying content of the node.
+     */
+    @Override
+    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+        return Pair.of(DataResultViewerTable.Score.NO_SCORE, NO_DESCR);
+    }
+
+    /**
+     * Returns comment property for the node.
+     *
+     * Null implementation of an abstract method.
+     *
+     * @param tags      list of tags
+     * @param attribute correlation attribute instance
+     *
+     * @return Comment property for the underlying content of the node.
+     */
+    @Override
+    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+    }
+
+    /**
+     * Returns occurrences/count property for the node.
+     *
+     * Null implementation of an abstract method.
+     *
+     * @param attributeType      the type of the attribute to count
+     * @param attributeValue     the value of the attribute to coun
+     * @param defaultDescription a description to use when none is determined by
+     *                           the getCountPropertyAndDescription method
+     *
+     * @return count property for the underlying content of the node.
+     */
+    @Override
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
+        return Pair.of(-1L, NO_DESCR);
     }
 }

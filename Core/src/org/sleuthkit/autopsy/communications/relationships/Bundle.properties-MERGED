@@ -30,3 +30,4 @@ SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other O
 SummaryViewer_Creation_Date_Title=Creation Date
 SummaryViewer_FileRefNameColumn_Title=Path
 SummaryViewer_TabTitle=Summary
+SummeryViewer_FileRef_Message=<Select one Accout to see File References>

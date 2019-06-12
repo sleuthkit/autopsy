@@ -44,7 +44,11 @@ MediaPlayerPanel.timeFormat=%02d:%02d:%02d
 MediaPlayerPanel.unknownTime=Unknown
 MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory.
 MediaViewImagePanel.errorLabel.text=Could not load file into Media View.
+MediaViewImagePanel.exportSaveText=Save
 MediaViewImagePanel.externalViewerButton.text=Open in External Viewer  Ctrl+E
+MediaViewImagePanel.fileChooserTitle=Choose a save location
+MediaViewImagePanel.successfulExport=Tagged image was successfully saved.
+MediaViewImagePanel.unsuccessfulExport=Unable to export tagged image to disk.
 MediaViewVideoPanel.pauseButton.text=\u25ba
 MediaViewVideoPanel.progressLabel.text=00:00
 MediaViewVideoPanel.infoLabel.text=info
@@ -151,6 +155,7 @@ MediaPlayerPanel.VolumeIcon.text=\ \ \ \ \ Volume
 MediaPlayerPanel.progressLabel.text=00:00:00/00:00:00
 MediaPlayerPanel.playButton.text=\u25ba
 MediaPlayerPanel.infoLabel.text=No Errors
+MediaViewImagePanel.tagsMenu.text_1=Tags Menu
 # {0} - tableName
 SQLiteViewer.readTable.errorText=Error getting rows for table: {0}
 # {0} - tableName

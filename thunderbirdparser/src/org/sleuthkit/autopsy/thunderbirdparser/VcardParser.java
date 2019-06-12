@@ -143,8 +143,9 @@ final class VcardParser {
      * @throws NoCurrentCaseException If there is no open case.
      */
     void parse(File vcardFile, AbstractFile abstractFile) throws IOException, NoCurrentCaseException {
-        VCard vcard = Ezvcard.parse(vcardFile).first();
-        addContactArtifact(vcard, abstractFile);
+        for (VCard vcard: Ezvcard.parse(vcardFile).all()) {
+            addContactArtifact(vcard, abstractFile);
+        }
     }
     
     

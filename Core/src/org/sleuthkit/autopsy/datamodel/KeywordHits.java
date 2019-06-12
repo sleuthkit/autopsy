@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -44,7 +43,6 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -76,7 +74,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
-    private final long datasourceObjId;
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
     /**
      * String used in the instance MAP so that exact matches and substring can
@@ -85,7 +83,7 @@ public class KeywordHits implements AutopsyVisitableItem {
      */
     private static final String DEFAULT_INSTANCE_NAME = "DEFAULT_INSTANCE_NAME";
 
-    
+
     /**
      * query attributes table for the ones that we need for the tree
      */
@@ -108,23 +106,23 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     /**
      * Constructor
-     * 
+     *
      * @param skCase  Case DB
-     */ 
+     */
     KeywordHits(SleuthkitCase skCase) {
         this(skCase, 0);
     }
-    
+
     /**
      * Constructor
-     * 
+     *
      * @param skCase  Case DB
-     * @param objId  Object id of the data source 
-     * 
-     */ 
+     * @param objId  Object id of the data source
+     *
+     */
     public KeywordHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.datasourceObjId = objId;
+        this.filteringDSObjId = objId;
         keywordResults = new KeywordResults();
     }
 
@@ -152,7 +150,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         List<String> getListNames() {
             synchronized (topLevelMap) {
                 List<String> names = new ArrayList<>(topLevelMap.keySet());
-                // this causes the "Single ..." terms to be in the middle of the results, 
+                // this causes the "Single ..." terms to be in the middle of the results,
                 // which is wierd.  Make a custom comparator or do something else to maek them on top
                 //Collections.sort(names);
                 return names;
@@ -323,10 +321,10 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             String queryStr = KEYWORD_HIT_ATTRIBUTES_QUERY;
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                queryStr +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            if (filteringDSObjId > 0) {
+                queryStr += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
-            
+
             try (CaseDbQuery dbQuery = skCase.executeQuery(queryStr)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
@@ -747,8 +745,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         protected boolean createKeys(List<RegExpInstanceKey> list) {
             List<String> instances = keywordResults.getKeywordInstances(setName, keyword);
             // The keys are different depending on what we are displaying.
-            // regexp get another layer to show instances.  
-            // Exact/substring matches don't. 
+            // regexp get another layer to show instances.
+            // Exact/substring matches don't.
             if (isOnlyDefaultInstance(instances)) {
                 list.addAll(keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME).stream()
                         .map(RegExpInstanceKey::new)
