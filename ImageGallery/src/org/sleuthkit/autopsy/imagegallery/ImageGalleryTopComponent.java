@@ -25,7 +25,9 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
-import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.concurrent.Task;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
@@ -49,7 +51,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
-import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
@@ -68,6 +69,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.gui.DataSourceCell;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
@@ -101,13 +103,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
-    private final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
+    private static final String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
     private static final Logger logger = Logger.getLogger(ImageGalleryTopComponent.class.getName());
 
     private final ExplorerManager em = new ExplorerManager();
     private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
 
     private volatile ImageGalleryController controller;
+    private volatile ControllerListener controllerListener;
+    private volatile GroupManagerListener groupManagerListener;
 
     private SplitPane splitPane;
     private StackPane centralStack;
@@ -157,7 +161,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         if (topComponent.isOpened()) {
             showTopComponent();
         } else {
-            topComponent.getCurrentControllerAndOpen();
+            topComponent.openForCurrentCase();
         }
     }
 
@@ -220,8 +224,10 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      */
     public static void closeTopComponent() {
         // RJCTODO: Could add the flag that used to be used for the busy wait on 
-        // the initial JavaFX thread task to avoid superfluous construction here. 
-        getTopComponent().close();
+        // the initial JavaFX thread task to avoid superfluous construction here.
+        ImageGalleryTopComponent topComponent = getTopComponent();
+        topComponent.closeForCurrentCase();
+        topComponent.close();
     }
 
     /**
@@ -236,9 +242,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     /**
-     * Gets the current controller, allows the user to select the data sources
-     * for which images are to be displayed and opens the top component's
-     * window.
+     * Gets the controller for the current case, allows the user to select the
+     * data sources for which images are to be displayed and opens the top
+     * component's window.
      *
      * @throws TskCoreException If there is an error getting the current
      *                          controller.
@@ -248,7 +254,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.chooseDataSourceDialog.contentText=Data source:",
         "ImageGalleryTopComponent.chooseDataSourceDialog.all=All",
         "ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery",})
-    private void getCurrentControllerAndOpen() throws TskCoreException {
+    private void openForCurrentCase() throws TskCoreException {
         Case currentCase = Case.getCurrentCase();
         ImageGalleryController currentController = ImageGalleryController.getController(currentCase);
 
@@ -308,12 +314,15 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                     splitPane.setDividerPositions(0.1, 1.0);
 
                     /*
-                     * Set up for a call to checkForGroups to happen whenever
-                     * the controller's regrouping disabled property or the
-                     * group manager's analyzed groups property changes.
+                     * Set up listeners to update the UI when the controller's
+                     * grouping enabled/disabled property changes or the
+                     * contents of the group managers list of drawable groups
+                     * changes.
                      */
-                    controller.regroupDisabledProperty().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
-                    controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy()));
+                    controllerListener = new ControllerListener();
+                    controller.regroupDisabledProperty().addListener(controllerListener);
+                    groupManagerListener = new GroupManagerListener();
+                    controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener(groupManagerListener);
 
                     /*
                      * Dispatch a later task to call check for groups. Note that
@@ -383,6 +392,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         });
     }
 
+     void closeForCurrentCase() {
+        controller.regroupDisabledProperty().removeListener(controllerListener);
+        controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().removeListener(groupManagerListener);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -440,6 +454,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      * manager and removes the blocking progress spinner if there are analyzed
      * groups; otherwise adds a blocking progress spinner with an appropriate
      * message.
+     *
+     * RJCTODO: Is this an accurate method description?
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
@@ -538,4 +554,37 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             setOpacity(.4);
         }
     }
+
+    /**
+     * Instances of this class are used to listen for changes to the
+     * controller's grouping enabled property. If the value of the property
+     * changes, a call to the top component's
+     * checkForAnalyzedGroupsForCurrentGroupBy method is queued for the JavaFX
+     * thread.
+     */
+    private class ControllerListener implements ChangeListener<Boolean> {
+
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+            Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy());
+        }
+
+    }
+
+    /**
+     * Instances of this class are used to listen for changes to the group
+     * manager's list of drawable groups for the user's currently selected
+     * "group by" choice. If the contents of the list change, a call to the top
+     * component's checkForAnalyzedGroupsForCurrentGroupBy method is queued for
+     * the JavaFX thread.
+     */
+    private class GroupManagerListener implements ListChangeListener<DrawableGroup> {
+
+        @Override
+        public void onChanged(Change<? extends DrawableGroup> c) {
+            Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy());
+        }
+
+    }
+
 }

@@ -90,10 +90,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * This class is responsible for the controller role in an MVC pattern
- * implementation where the model is the drawables database for the case plus
- * the image gallery tables in the case database, and the view is the image
- * gallery top component. There is a per case Singleton instance of this class.
+ * Instances of this class are responsible for fulfilling the controller role in
+ * an MVC pattern implementation where the model is the drawables database for a
+ * case plus the image gallery tables in the case database, and the view is the
+ * image gallery top component. The controller, the model, and the child
+ * components of the view change every time a new case is opened.
  */
 public final class ImageGalleryController {
 
@@ -114,26 +115,17 @@ public final class ImageGalleryController {
     );
 
     /*
-     * There is Singleton instance of this class per case. It is created during
-     * the opening of case resources and destroyed during the closing of case
+     * There is an instance of this class per case. It is created during the
+     * opening of case resources and destroyed during the closing of case
      * resources.
      */
-    private static final Object controllerLock = new Object();
-    @GuardedBy("controllerLock")
+    private static final Object controllersByCaseLock = new Object();
+    @GuardedBy("controllersByCaseLock")
     private static final Map<String, ImageGalleryController> controllersByCase = new HashMap<>();
 
     /**
-     * A flag that controls whether or not the controller is handling various
-     * application events in "real time." Set to true by default. If the flag is
-     * not set then:
-     *
-     * - All ingest module events are ignored.
-     *
-     * - Data source added events are ignored.
-     *
-     * -
-     * RJCTODO: Finish this RJCTODO: Why is this perceived as speeding up
-     * ingest?
+     * A flag that controls whether or not the image gallery controller is
+     * handling various application events. Set to true by default.
      */
     private final SimpleBooleanProperty listeningEnabled;
 
@@ -167,11 +159,12 @@ public final class ImageGalleryController {
      *
      * @param theCase The case.
      *
-     * @throws TskCoreException If there is an issue creating/opening the model
-     *                          for the case.
+     * @throws TskCoreException If there is an issue creating/opening a local
+     *                          drawables database for the case or the image
+     *                          gallery tables in the case database.
      */
     static void createController(Case theCase) throws TskCoreException {
-        synchronized (controllerLock) {
+        synchronized (controllersByCaseLock) {
             if (!controllersByCase.containsKey(theCase.getName())) {
                 ImageGalleryController controller = new ImageGalleryController(theCase);
                 controller.startUp();
@@ -185,29 +178,30 @@ public final class ImageGalleryController {
      *
      * @param theCase The case.
      *
-     * @return The image gallery controller or null if it does not exist.
+     * @return The controller or null if it does not exist.
      */
     public static ImageGalleryController getController(Case theCase) {
-        synchronized (controllerLock) {
+        synchronized (controllersByCaseLock) {
             return controllersByCase.get(theCase.getName());
         }
     }
 
     /**
-     * Shuts down the image gallery controller for a case. The controller will
-     * close the model for the case.
+     * Shuts down the image gallery controller for a case. The controller closes
+     * the model for the case: a local drawables database and the image gallery
+     * tables in the case database.
      *
      * @param theCase The case.
      */
     static void shutDownController(Case theCase) {
         ImageGalleryController controller = null;
-        synchronized (controllerLock) {
+        synchronized (controllersByCaseLock) {
             if (controllersByCase.containsKey(theCase.getName())) {
                 controller = controllersByCase.remove(theCase.getName());
             }
-        }
-        if (controller != null) {
-            controller.shutDown();
+            if (controller != null) {
+                controller.shutDown();
+            }
         }
     }
 
@@ -256,30 +250,59 @@ public final class ImageGalleryController {
     }
 
     /**
+     * Sets a flag indicating whether the model is "stale" for any data source
+     * in the current case. The model is a local drawables database and the
+     * image gallery tables in the case database.
      *
-     * @param b True if any data source in the case is stale
+     * @param isStale True if the model is "stale" for any data source in the
+     *                current case.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    void setCaseStale(Boolean b) {
+    void setCaseStale(Boolean isStale) {
         Platform.runLater(() -> {
-            isCaseStale.set(b);
+            isCaseStale.set(isStale);
         });
     }
 
+    /**
+     * Gets the boolean property that is set to true if the model is "stale" for
+     * any data source in the current case. The model is a local drawables
+     * database and the image gallery tables in the case database.
+     *
+     * @return The property that is set to true if the model is "stale" for any
+     *         data source in the current case.
+     */
     public ReadOnlyBooleanProperty staleProperty() {
         return isCaseStale.getReadOnlyProperty();
     }
 
     /**
+     * Gets the state of the flag that is set if the Model is "stale" for any
+     * data source in the case. The model is a local drawables database and the
+     * image gallery tables in the case database.
      *
-     * @return true if any data source in the case is stale
+     * @return True if the model is "stale" for any data source in the current
+     *         case.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean isCaseStale() {
         return isCaseStale.get();
     }
 
-    ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
+    /**
+     * Constructs an object that is responsible for fulfilling the controller
+     * role in an MVC pattern implementation where the model is the drawables
+     * database for a case plus the image gallery tables in the case database,
+     * and the view is the image gallery top component. The controller, the
+     * model, and the child components of the view change every time a new case
+     * is opened.
+     *
+     * @param theCase The case.
+     *
+     * @throws TskCoreException If there is an error constructing the
+     *                          controller.
+     */
+    ImageGalleryController(@Nonnull Case theCase) throws TskCoreException {
         listeningEnabled = new SimpleBooleanProperty(false);
         isCaseStale = new ReadOnlyBooleanWrapper(false);
         metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
@@ -288,9 +311,9 @@ public final class ImageGalleryController {
         dbTaskQueueSize = new ReadOnlyIntegerWrapper(0);
         historyManager = new History<>();
         undoManager = new UndoRedoManager();
-        autopsyCase = Objects.requireNonNull(newCase);
-        sleuthKitCase = newCase.getSleuthkitCase();
-        setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
+        autopsyCase = Objects.requireNonNull(theCase);
+        sleuthKitCase = theCase.getSleuthkitCase();
+        setListeningEnabled(ImageGalleryModule.isEnabledforCase(theCase));
         caseEventListener = new CaseEventListener();
         ingestJobEventListener = new IngestJobEventListener();
         ingestModuleEventListener = new IngestModuleEventListener();
@@ -301,7 +324,9 @@ public final class ImageGalleryController {
         thumbnailCache = new ThumbnailCache(this);
 
         /*
-         * These two lines need to be executed in this order. RJCTODO: Why?
+         * The next two lines need to be executed in this order.
+         *
+         * RJCTODO: Why?
          */
         groupManager = new GroupManager(this);
         drawableDB = DrawableDB.getDrawableDB(this);
@@ -316,12 +341,13 @@ public final class ImageGalleryController {
         dbExecutor = getNewDBExecutor();
 
         /*
-         * Add a listener for changes to the Image Gallery enabled property that
-         * is set by a user via the options panel. For single-user cases, the
-         * listener queues drawables database rebuild tasks if the drawables
-         * database for the current case is stale. For multi-user cases, thw
-         * listener does nothing, because rebuilding the drawables database is
-         * deferred until the Image Gallery tool is opened.
+         * Add a listener for changes to the flag property for listening to
+         * application events. The property is set by the user via the options
+         * panel. For single-user cases, the listener queues drawables database
+         * rebuild tasks if the drawables database for the current case is
+         * stale. For multi-user cases, the listener does nothing, because
+         * rebuilding the drawables database is deferred until the Image Gallery
+         * tool is opened.
          */
         listeningEnabled.addListener((observable, wasPreviouslyEnabled, isEnabled) -> {
             try {
@@ -337,7 +363,7 @@ public final class ImageGalleryController {
 
         /*
          * Add a listener for changes to the view state property that clears the
-         * current selection and flush the undo/redo history.
+         * current selection and flushes the undo/redo history.
          */
         viewStateProperty().addListener((Observable observable) -> {
             selectionModel.clearSelection();
@@ -345,22 +371,14 @@ public final class ImageGalleryController {
         });
 
         /*
-         * Add a listener for ingest manager ingest module and ingest job events
-         * that enables/disables regrouping based on the drawables database task
-         * queue size and whether or not ingest is running. Note that execution
-         * of this logic needs to be dispatched to the JFX thread since the
-         * listener's event handler will be invoked in the ingest manager's
-         * event publishing thread.
-         */
-        PropertyChangeListener ingestEventHandler = propertyChangeEvent -> Platform.runLater(this::updateRegroupDisabled);
-        IngestManager ingestManager = IngestManager.getInstance();
-        ingestManager.addIngestModuleEventListener(ingestEventHandler);
-        ingestManager.addIngestJobEventListener(ingestEventHandler);
-
-        /*
          * Add a listener to the size of the drawables database task queue that
          * enables/disables regrouping based on the drawables database task
          * queue size and whether or not ingest is running.
+         *
+         * RJCTODO: Why do we need to call updateRegroupDisabled both if the
+         * drawables database task queue size changes and if an ingest job or
+         * ingest module application event is published? Look at the two ingest
+         * event listeners to see the other places we call this method.
          */
         dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
 
@@ -719,6 +737,19 @@ public final class ImageGalleryController {
 
         @Override
         public void propertyChange(PropertyChangeEvent event) {
+            /*
+             * For all ingest module events, call a method that enables/disables
+             * regrouping based on the drawables database task queue size and
+             * whether or not ingest is running.
+             *
+             * RJCTODO: Why do we need to call updateRegroupDisabled both if the
+             * drawables database task queue size changes and if an ingest job
+             * or ingest module application event is published? Look at the
+             * IngestJobEventListener and look at the the startUp method to see
+             * where we add a listener to the drawables database task queue.
+             */
+            Platform.runLater(ImageGalleryController.this::updateRegroupDisabled);
+
             if (isListeningEnabled() == false) {
                 return;
             }
@@ -775,11 +806,7 @@ public final class ImageGalleryController {
         public void propertyChange(PropertyChangeEvent event) {
             Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
             if (eventType == Case.Events.CURRENT_CASE) {
-                if (event.getOldValue() != null) {
-                    /*
-                     * The old value is set, then the CURRENT_CASE event is a
-                     * case closed event.
-                     */
+                if (event.getOldValue() != null) { // Case closed event
                     SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                 }
             } else {
@@ -827,6 +854,19 @@ public final class ImageGalleryController {
         })
         @Override
         public void propertyChange(PropertyChangeEvent event) {
+            /*
+             * For all ingest job events, call a method that enables/disables
+             * regrouping based on the drawables database task queue size and
+             * whether or not ingest is running.
+             *
+             * RJCTODO: Why do we need to call updateRegroupDisabled both if the
+             * drawables database task queue size changes and if an ingest job
+             * or ingest module application event is published? Look at the
+             * IngestModuleEventListener and look at the the startUp method to
+             * see where we add a listener to the drawables database task queue.
+             */
+            Platform.runLater(ImageGalleryController.this::updateRegroupDisabled);
+
             /*
              * Only handling data source analysis events.
              */
