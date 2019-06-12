@@ -98,6 +98,9 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
             }
         });
         
+        splitPane.setResizeWeight(0.5);
+        splitPane.setDividerLocation(0.5);
+        
     }
     
     public MessagesPanel(ChildFactory<?> nodeFactory) {
@@ -143,23 +146,23 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSplitPane1 = new javax.swing.JSplitPane();
+        splitPane = new javax.swing.JSplitPane();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
         messageContentViewer = new MessageDataContent();
 
         setLayout(new java.awt.BorderLayout());
 
-        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        jSplitPane1.setLeftComponent(outlineViewPanel);
-        jSplitPane1.setRightComponent(messageContentViewer);
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setLeftComponent(outlineViewPanel);
+        splitPane.setRightComponent(messageContentViewer);
 
-        add(jSplitPane1, java.awt.BorderLayout.CENTER);
+        add(splitPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JSplitPane jSplitPane1;
     private org.sleuthkit.autopsy.contentviewers.MessageContentViewer messageContentViewer;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
+    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 }
