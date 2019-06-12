@@ -1,25 +1,35 @@
 AddBlackboardArtifactTagAction.pluralTagResult=Add Result Tags
 AddBlackboardArtifactTagAction.singularTagResult=Add Result Tag
 AddBlackboardArtifactTagAction.taggingErr=Tagging Error
+# {0} - artifactName
 AddBlackboardArtifactTagAction.unableToTag.msg=Unable to tag {0}.
 AddContentTagAction.cannotApplyTagErr=Cannot Apply Tag
 AddContentTagAction.pluralTagFile=Add File Tags
 AddContentTagAction.singularTagFile=Add File Tag
+# {0} - fileName
+# {1} - tagName
 AddContentTagAction.tagExists={0} has been tagged as {1}. Cannot reapply the same tag.
 AddContentTagAction.taggingErr=Tagging Error
+# {0} - fileName
 AddContentTagAction.unableToTag.msg=Unable to tag {0}, not a regular file.
+# {0} - fileName
 AddContentTagAction.unableToTag.msg2=Unable to tag {0}.
 CTL_ShowIngestProgressSnapshotAction=Ingest Status Details
 DeleteBlackboardArtifactTagAction.deleteTag=Remove Selected Tag(s)
 DeleteBlackboardArtifactTagAction.tagDelErr=Tag Deletion Error
+# {0} - tagName
 DeleteBlackboardArtifactTagAction.unableToDelTag.msg=Unable to delete tag {0}.
 DeleteContentTagAction.deleteTag=Remove Selected Tag(s)
 DeleteContentTagAction.tagDelErr=Tag Deletion Error
+# {0} - tagName
 DeleteContentTagAction.unableToDelTag.msg=Unable to delete tag {0}.
 DeleteFileBlackboardArtifactTagAction.deleteTag=Remove Result Tag
+# {0} - artifactID
 DeleteFileBlackboardArtifactTagAction.deleteTag.alert=Unable to untag artifact {0}.
+# {0} - artifactID
 DeleteFileBlackboardArtifactTagAction.deleteTags.alert=Unable to untag artifact {0}.
 DeleteFileContentTagAction.deleteTag=Remove File Tag
+# {0} - fileID
 DeleteFileContentTagAction.deleteTag.alert=Unable to untag file {0}.
 ExitAction.confirmationDialog.message=Ingest is running, are you sure you want to exit?
 ExitAction.confirmationDialog.title=Ingest is Running
@@ -73,7 +83,11 @@ CTL_OpenOutputFolder=Open Output Folder
 OpenOutputFolder.error1=Output Folder Not Found: {0}
 OpenOutputFolder.noCaseOpen=No open case, therefore no current output folder available.
 OpenOutputFolder.CouldNotOpenOutputFolder=Could not open output folder 
+# {0} - old tag name
+# {1} - artifactID
 ReplaceBlackboardArtifactTagAction.replaceTag.alert=Unable to replace tag {0} for artifact {1}.
+# {0} - old tag name
+# {1} - content obj id
 ReplaceContentTagAction.replaceTag.alert=Unable to replace tag {0} for {1}.
 ReplaceTagAction.replaceTag=Replace Selected Tag(s) With
 ShowIngestProgressSnapshotAction.actionName.text=Get Ingest Progress Snapshot
