@@ -1,13 +1,8 @@
 AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories
 AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.doc=Documents
 AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.media=Media
-# {0} - threshold percent
 AbstractCommonFilesMetadataBuilder.getPercentFilter.thresholdPercent=, Threshold {0}%
-# {0} - attr type
-# {1} - threshold string
 AllInterCaseCommonAttributeSearcher.buildTabTitle.titleInterAll=Common Properties (All Central Repository Cases, {0}{1})
-# {0} - build category
-# {1} - threshold string
 AllIntraCaseCommonAttributeSearcher.buildTabTitle.titleIntraAll=Common Properties (All Data Sources, {0}{1})
 # {0} - number of datasources
 CommonAttributePanel.dataSourcesLabel.text=The current Central Repository contains {0} data source(s).
@@ -103,13 +98,7 @@ CommonAttributePanel.organizeByCountRadio.text=Number of occurrences
 CommonAttributePanel.caseResultsRadioButton.text=Case
 CommonAttributePanel.countResultsRadioButton.text=Number of data sources
 CommonAttributePanel.displayResultsLabel.text_2=Display results organized by:
-# {0} - case name
-# {1} - attr type
-# {2} - threshold string
 SingleInterCaseCommonAttributeSearcher.buildTabTitle.titleInterSingle=Common Properties (Central Repository Case: {0}, {1}{2})
-# {0} - data source name
-# {1} - build category
-# {2} - threshold string
 SingleIntraCaseCommonAttributeSearcher.buildTabTitle.titleIntraSingle=Common Properties (Data Source: {0}, {1}{2})
 UserInputErrorManager.categories=No file categories are included in the search.
 UserInputErrorManager.frequency=Invalid Frequency Percentage: 0 < % < 100.
