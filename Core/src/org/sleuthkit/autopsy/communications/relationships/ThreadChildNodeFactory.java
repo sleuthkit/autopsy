@@ -113,9 +113,9 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
      * messages (messages that do not have a threadID) one representitive artifact
      * will be added to the list and dealt with a node creation time.
      * 
-     * @param list
-     * @param relationshipSources
-     * @return
+     * @param list List to populate with BlackboardArtifact keys
+     * @param relationshipSources Set of Content objects
+     * @return True on success
      * @throws TskCoreException 
      */
     private boolean createRootMessageKeys(List<BlackboardArtifact> list, Set<Content> relationshipSources) throws TskCoreException{
@@ -129,6 +129,9 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                         || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
                         || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
 
+                    // We want all artifacts that do not have "threadIDs" to appear as one thread in the UI
+                    // To achive this assign any artifact that does not have a threadID
+                    // the "UNTHREADED_ID"
                     String threadID = MessageNode.UNTHREADED_ID;
                     BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
@@ -143,7 +146,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                         BlackboardAttribute tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
                         attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
 
-                        if(tableAttribute.getValueLong() > attribute.getValueLong()) {
+                        if(tableAttribute != null && attribute != null && tableAttribute.getValueLong() > attribute.getValueLong()) {
                             rootMessageMap.put(threadID, bba);
                         }
                     }
@@ -163,24 +166,28 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
         BlackboardAttribute attribute = null;
         try {
             attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID)); 
-        } catch (TskCoreException tskCoreException) {
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Unable to get threadID for artifact: %s", bba.getName()), ex);
         } 
         
         if (attribute != null) {
             return new MessageNode(bba, attribute.getValueString(), preferredAction);
         } else {
             // Only one of these should occur.
-            return new UnthreadedNode(preferredAction);
+            return new UnthreadedNode();
         }         
     }
     
+    /**
+     * An this node represents the "unthreaded" thread.
+     */
     final class UnthreadedNode extends AbstractNode {
-        private final  Action preferredAction;
-       
-        UnthreadedNode(Action preferredAction) {
+        /**
+         * Construct an instance of UnthreadNode.
+         */
+        UnthreadedNode() {
             super(Children.LEAF);
             setDisplayName("Unthreaded");
-            this.preferredAction = preferredAction;
         }
         
          @Override
@@ -192,6 +199,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                 sheet.put(sheetSet);
             }
             
+            // Give this node a threadID of "UNTHEADED_ID"
             sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",MessageNode.UNTHREADED_ID));
             
             return sheet;

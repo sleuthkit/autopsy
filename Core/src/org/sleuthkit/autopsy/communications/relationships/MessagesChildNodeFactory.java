@@ -57,17 +57,9 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
      * Updates the current instance of selectionInfo and calls the refresh method.
      * 
      * @param selectionInfo New instance of the currently selected accounts
+     * @param threadIDs A list of threadIDs to filter the keys by, null will 
+     *                  return all keys for the selected accounts.
      */
-    public void refresh(SelectionInfo selectionInfo) {
-        this.selectionInfo = selectionInfo;
-        refresh(true);
-    }
-    
-    public void refresh(List<String> threadIDs) {
-        this.threadIDs = threadIDs;
-        refresh(true);
-    }
-    
     public void refresh(SelectionInfo selectionInfo, List<String> threadIDs) {
         this.threadIDs = threadIDs;
         this.selectionInfo = selectionInfo;        
@@ -109,6 +101,9 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                     continue;
                 }
 
+                // We want all artifacts that do not have "threadIDs" to appear as one thread in the UI
+                // To achive this assign any artifact that does not have a threadID
+                // the "UNTHREADED_ID"
                 String artifactThreadID = MessageNode.UNTHREADED_ID;
                 BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
