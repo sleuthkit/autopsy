@@ -329,7 +329,6 @@ public class TranslationContentPanel extends javax.swing.JPanel {
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
         jPanel1.add(ocrDropdown, gridBagConstraints);
-        ocrDropdown.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.ocrDropdown.AccessibleContext.accessibleDescription")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(ocrLabel, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.ocrLabel.text")); // NOI18N
         ocrLabel.setEnabled(false);
