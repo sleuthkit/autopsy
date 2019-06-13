@@ -115,7 +115,7 @@ public final class ImageGalleryController {
     );
 
     /*
-     * There is an instance of this class per case. It is created during the
+     * There is an image gallery controller per case. It is created during the
      * opening of case resources and destroyed during the closing of case
      * resources.
      */
@@ -143,6 +143,7 @@ public final class ImageGalleryController {
     private final CaseEventListener caseEventListener;
     private final IngestJobEventListener ingestJobEventListener;
     private final IngestModuleEventListener ingestModuleEventListener;
+    private volatile ImageGalleryTopComponent topComponent;
     private FileIDSelectionModel selectionModel;
     private ThumbnailCache thumbnailCache;
     private DrawableDB drawableDB;
@@ -388,6 +389,10 @@ public final class ImageGalleryController {
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
         IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
         IngestManager.getInstance().addIngestModuleEventListener(ingestModuleEventListener);
+
+        SwingUtilities.invokeLater(() -> {
+            topComponent = ImageGalleryTopComponent.getTopComponent();
+        });
     }
 
     /**
@@ -807,6 +812,9 @@ public final class ImageGalleryController {
             Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
             if (eventType == Case.Events.CURRENT_CASE) {
                 if (event.getOldValue() != null) { // Case closed event
+                    if (topComponent != null) {
+                        topComponent.closeForCurrentCase();
+                    }
                     SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                 }
             } else {

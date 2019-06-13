@@ -218,13 +218,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     /*
-     * Closes the singleton Image Gallery top component. Note that calling this
-     * method will cause the top component to be constructed if it does not
-     * already exist.
+     * Closes the singleton Image Gallery top component. 
      */
     public static void closeTopComponent() {
-        // RJCTODO: Could add the flag that used to be used for the busy wait on 
-        // the initial JavaFX thread task to avoid superfluous construction here.
         ImageGalleryTopComponent topComponent = getTopComponent();
         topComponent.closeForCurrentCase();
         topComponent.close();
@@ -392,9 +388,15 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         });
     }
 
-     void closeForCurrentCase() {
-        controller.regroupDisabledProperty().removeListener(controllerListener);
-        controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().removeListener(groupManagerListener);
+    void closeForCurrentCase() {
+        if (controller != null) {
+            if (controllerListener != null) {
+                controller.regroupDisabledProperty().removeListener(controllerListener);
+            }
+            if (groupManagerListener != null) {
+                controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().removeListener(groupManagerListener);
+            }
+        }
     }
 
     /**
@@ -470,6 +472,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         + "  the current Group By setting resulted in no groups, "
         + "or no groups are fully analyzed but ingest is not running."})
     private void checkForAnalyzedGroupsForCurrentGroupBy() {
+
         GroupManager groupManager = controller.getGroupManager();
 
         // if there are groups to display, then display them
