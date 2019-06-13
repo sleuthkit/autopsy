@@ -22,13 +22,19 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Background task to get Score, Comment and Occurrences values for an Abstract
@@ -39,6 +45,7 @@ class GetSCOTask implements Runnable {
 
     private final WeakReference<AbstractContentNode<?>> weakNodeRef;
     private final PropertyChangeListener listener;
+    private static final Logger logger = Logger.getLogger(GetSCOTask.class.getName());
 
     GetSCOTask(WeakReference<AbstractContentNode<?>> weakContentRef, PropertyChangeListener listener) {
         this.weakNodeRef = weakContentRef;
@@ -63,8 +70,10 @@ class GetSCOTask implements Runnable {
         SCOData scoData = new SCOData();
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
+
         if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-            CorrelationAttributeInstance occurrencesAttribute = null;
+            Type type = null;
+            String value = null;
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();
             if (contentNode instanceof BlackboardArtifactNode) {
                 BlackboardArtifact bbArtifact = ((BlackboardArtifactNode) contentNode).getArtifact();
@@ -77,7 +86,14 @@ class GetSCOTask implements Runnable {
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()
                         || bbArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    occurrencesAttribute = fileAttribute;
+                    try {
+                        if (bbArtifact.getParent() instanceof AbstractFile) {
+                            type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
+                            value = ((AbstractFile) bbArtifact.getParent()).getMd5Hash();
+                        }
+                    } catch (TskCoreException | EamDbException ex) {
+                        logger.log(Level.WARNING, "Unable to get correlation type or value to determine value for O column for artifact", ex);
+                    }
                 } else {
                     List<CorrelationAttributeInstance> listOfPossibleAttributes = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false);
                     if (listOfPossibleAttributes.size() > 1) {
@@ -85,18 +101,25 @@ class GetSCOTask implements Runnable {
                         description = Bundle.GetSCOTask_occurrences_multipleProperties();
                     } else if (!listOfPossibleAttributes.isEmpty()) {
                         //there should only be one item in the list
-                        occurrencesAttribute = listOfPossibleAttributes.get(0);
+                        type = listOfPossibleAttributes.get(0).getCorrelationType();
+                        value = listOfPossibleAttributes.get(0).getCorrelationValue();
                     }
                 }
-            } else {
-                //use the file instance correlation attribute if the node is not a BlackboardArtifactNode
-                occurrencesAttribute = fileAttribute;
+            } else if (contentNode.getContent() instanceof AbstractFile) {
+                //use the file instance correlation attribute if the node is not a BlackboardArtifactNode    
+                try {
+                    type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
+                    value = ((AbstractFile) contentNode.getContent()).getMd5Hash();
+                } catch (EamDbException ex) {
+                    logger.log(Level.WARNING, "Unable to get correlation type to determine value for O column for file", ex);
+                }
             }
-            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(occurrencesAttribute, description));
+            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(type, value, description));
         }
 
         // signal SCO data is available.
-        if (listener != null) {
+        if (listener
+                != null) {
             listener.propertyChange(new PropertyChangeEvent(
                     AutopsyEvent.SourceType.LOCAL.toString(),
                     AbstractAbstractFileNode.NodeSpecificEvents.SCO_AVAILABLE.toString(),
