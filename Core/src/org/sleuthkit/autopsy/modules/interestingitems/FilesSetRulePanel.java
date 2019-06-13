@@ -132,6 +132,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.setButtons(okButton, cancelButton);
         
         updateNameTextFieldPrompt();
+        setComponentsForSearchType();
     }
     
     /**
