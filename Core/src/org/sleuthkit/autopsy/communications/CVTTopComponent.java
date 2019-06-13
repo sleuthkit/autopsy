@@ -112,18 +112,18 @@ public final class CVTTopComponent extends TopComponent {
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weightx = 0.75;
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new Insets(15, 0, 15, 15);
         add(browseVisualizeTabPane, gridBagConstraints);
         browseVisualizeTabPane.getAccessibleContext().setAccessibleName(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
 
-        filtersPane.setMinimumSize(new Dimension(256, 495));
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 0.25;
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new Insets(15, 15, 15, 5);
         add(filtersPane, gridBagConstraints);
