@@ -497,4 +497,4 @@ LogicalImagerPanel.selectFolderLabel.text=Selected Folder:
 LogicalImagerPanel.refreshButton.text=Refresh
 LogicalImagerPanel.selectFromDriveLabel.text=Select Acquisition From Drive
 LogicalImagerPanel.selectDriveLabel.text=Select Drive
-LogicalImagerPanel.messageTextArea.text=test
+LogicalImagerPanel.messageTextArea.text=
