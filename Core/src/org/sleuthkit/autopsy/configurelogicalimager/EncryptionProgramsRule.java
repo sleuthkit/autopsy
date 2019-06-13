@@ -40,6 +40,11 @@ public final class EncryptionProgramsRule {
     // TODO: Add more files here
     static {
         FILENAMES.add("truecrypt.exe"); //NON-NLS
+        FILENAMES.add("AxCrypt.exe"); // NON-NLS
+        FILENAMES.add("VeraCrypt.exe"); // NON-NLS
+        FILENAMES.add("VeraCrypt Format.exe"); // NON-NLS
+        FILENAMES.add("VeraCrypt Setup.exe"); // NON-NLS
+        FILENAMES.add("VeraCryptExpander.exe"); // NON-NLS
     }
 
     public static String getName() {
