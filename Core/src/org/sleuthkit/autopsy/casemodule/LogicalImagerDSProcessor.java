@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -46,7 +47,6 @@ import org.sleuthkit.datamodel.Content;
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
-    private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
     private final LogicalImagerPanel configPanel;
     private AddLogicalImageTask addLogicalImageTask;
     
@@ -128,6 +128,8 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
+        "# {0} - file", "LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}",
+        "LogicalImagerDSProcessor.noCurrentCase=No current case",
     })
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
@@ -170,9 +172,31 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
         String deviceId = UUID.randomUUID().toString();
         String timeZone = Calendar.getInstance().getTimeZone().getID();
         boolean ignoreFatOrphanFiles = false;
-        run(deviceId, Paths.get(src.toString(), SPARSE_IMAGE_VHD).toString(), 0, 
-            timeZone, ignoreFatOrphanFiles, null, null, null, src, dest,
-            progressMonitor, callback);
+        
+        // Get all VHD files in the src directory
+        List<String> imagePaths = new ArrayList<>();
+        for (File f : src.listFiles()) {
+            if (f.getName().endsWith(".vhd")) {
+                try {
+                    imagePaths.add(f.getCanonicalPath());
+                } catch (IOException ex) {
+                    String msg = Bundle.LogicalImagerDSProcessor_failToGetCanonicalPath(f.getName());
+                    errorList.add(msg);
+                    callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                    return;
+                }
+            }
+        }
+        try {
+            run(deviceId, imagePaths, 0,
+                timeZone, ignoreFatOrphanFiles, null, null, null, src, dest,
+                progressMonitor, callback);
+        } catch (NoCurrentCaseException ex) {
+            String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
+            errorList.add(msg);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
     }
     
     /**
@@ -186,7 +210,7 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                             associated with the data source that is
      *                             intended to be unique across multiple cases
      *                             (e.g., a UUID).
-     * @param imagePath            Path to the image file.
+     * @param imagePaths           Paths to the image files.
      * @param sectorSize           The sector size (use '0' for autodetect).
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
@@ -202,12 +226,12 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, 
+    private void run(String deviceId, List<String> imagePaths, int sectorSize, String timeZone, 
             boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, 
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
-    ) {
-        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePath, sectorSize, 
+    ) throws NoCurrentCaseException {
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePaths, sectorSize, 
                 timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, src, dest,
                 progressMonitor, callback);
         new Thread(addLogicalImageTask).start();

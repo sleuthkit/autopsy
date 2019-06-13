@@ -187,8 +187,11 @@ LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
 # {0} - directory
 LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
+# {0} - file
+LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}
 # {0} - imageDirPath
 LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
+LogicalImagerDSProcessor.noCurrentCase=No current case
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
 LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
 # {0} - sparseImageDirectory
@@ -497,4 +500,4 @@ LogicalImagerPanel.selectFolderLabel.text=Selected Folder:
 LogicalImagerPanel.refreshButton.text=Refresh
 LogicalImagerPanel.selectFromDriveLabel.text=Select Acquisition From Drive
 LogicalImagerPanel.selectDriveLabel.text=Select Drive
-LogicalImagerPanel.messageTextArea.text=test
+LogicalImagerPanel.messageTextArea.text=
