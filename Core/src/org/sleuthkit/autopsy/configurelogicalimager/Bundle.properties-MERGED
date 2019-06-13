@@ -64,7 +64,7 @@ EditNonFullPathsRulePanel.minFileSizeNotPositiveException=Minimum file size must
 EditNonFullPathsRulePanel.modifiedDaysMustBeNumberException=Modified days must be a number: {0}
 EditNonFullPathsRulePanel.modifiedDaysNotPositiveException=Modified days must be a positive
 EditNonFullPathsRulePanel.note=NOTE: A special [USER_FOLDER] token at the the start of a folder name to allow matches of all user folders in the file system.
-# ({0} - fieldName
+# {0} - fieldName
 EditRulePanel.blankLineException={0} cannot have a blank line
 EditRulePanel.shouldAlertCheckBox.text=Alert in imager console if rule matches
 EditRulePanel.shouldSaveCheckBox.text=Extract file if it matches a rule

@@ -169,22 +169,6 @@ public final class ConfigVisualPanel2 extends JPanel {
             }
         });
 
-        fullPathsTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                ""
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
         fullPathsTable.setColumnSelectionAllowed(true);
         fullPathsTable.setEnabled(false);
         fullPathsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -197,29 +181,6 @@ public final class ConfigVisualPanel2 extends JPanel {
             fullPathsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.fullPathsTable.columnModel.title0")); // NOI18N
         }
 
-        filenamesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                ""
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
         filenamesTable.setEnabled(false);
         filenamesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         filenamesTable.setShowHorizontalLines(false);
@@ -239,22 +200,6 @@ public final class ConfigVisualPanel2 extends JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(shouldAlertCheckBox, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.shouldAlertCheckBox.text")); // NOI18N
         shouldAlertCheckBox.setEnabled(false);
 
-        folderNamesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                ""
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
         folderNamesTable.setEnabled(false);
         folderNamesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         folderNamesTable.setShowHorizontalLines(false);
@@ -285,29 +230,6 @@ public final class ConfigVisualPanel2 extends JPanel {
             }
         });
 
-        rulesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Rule Name", "Description"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
         rulesTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         rulesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         rulesTable.setShowHorizontalLines(false);
@@ -525,7 +447,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                 if (option == JOptionPane.OK_OPTION) {
                     try {
                         ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
-                        appendRow(ruleMap);
+                        updateRow(row, ruleMap);
                         break;
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this,
@@ -818,6 +740,12 @@ public final class ConfigVisualPanel2 extends JPanel {
 
     boolean isPanelValid() {
         return true;
+    }
+
+    private void updateRow(int index, ImmutablePair<String, LogicalImagerRule> ruleMap) {
+        getFirstRuleSet().getRules().remove(index);
+        getFirstRuleSet().getRules().add(ruleMap.getValue());
+        updatePanel(configFilename, config, ruleMap.getKey());
     }
 
     private void appendRow(ImmutablePair<String, LogicalImagerRule> ruleMap) {

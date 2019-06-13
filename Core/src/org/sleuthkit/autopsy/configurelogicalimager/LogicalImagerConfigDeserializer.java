@@ -74,22 +74,23 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
     
     private List<LogicalImagerRule> parseRules(JsonArray asJsonArray) {
         List<LogicalImagerRule> rules = new ArrayList<>();
-        String key1;
-        Boolean shouldSave = false;
-        Boolean shouldAlert = true;
-        String name = null;
-        String description = null;
-        List<String> extensions = null;
-        List<String> paths = null;
-        List<String> fullPaths = null;
-        List<String> filenames = null;
-        Integer minFileSize = null;
-        Integer maxFileSize = null;
-        Integer minDays = null;
-        Integer minDate = null;
-        Integer maxDate = null;
 
         for (JsonElement element: asJsonArray) {
+            String key1;
+            Boolean shouldSave = false;
+            Boolean shouldAlert = true;
+            String name = null;
+            String description = null;
+            List<String> extensions = null;
+            List<String> paths = null;
+            List<String> fullPaths = null;
+            List<String> filenames = null;
+            Integer minFileSize = null;
+            Integer maxFileSize = null;
+            Integer minDays = null;
+            Integer minDate = null;
+            Integer maxDate = null;
+            
             Set<Map.Entry<String, JsonElement>> entrySet = element.getAsJsonObject().entrySet();
 
             for (Map.Entry<String, JsonElement> entry1 : entrySet) {
