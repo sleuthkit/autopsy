@@ -14,6 +14,26 @@ AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
 # {0} - src
 # {1} - dest
 AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
+# {0} - imageFilePath
+AddMultipleImageTask.adding=Adding: {0}
+# {0} - file
+AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as logical file
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}
+# {0} - deviceId
+# {1} - exceptionMessage
+AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device %s: %s
+AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory
