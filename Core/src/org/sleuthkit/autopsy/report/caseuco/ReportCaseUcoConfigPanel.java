@@ -39,15 +39,13 @@ final class ReportCaseUcoConfigPanel extends javax.swing.JPanel {
     static final long NO_DATA_SOURCE_SELECTED = -1;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private final Map<Long, String> dataSourceMap;
-    private final DataSourceLoader dataSourceLoader;
 
     /**
      * Creates new form ReportCaseUcoConfigPanel
      */
     ReportCaseUcoConfigPanel() throws NoCurrentCaseException, TskCoreException, SQLException {
         initComponents();
-        this.dataSourceLoader = new DataSourceLoader();
-        this.dataSourceMap = dataSourceLoader.getDataSourceMap();
+        this.dataSourceMap = DataSourceLoader.getAllDataSources();
         
         String[] dataSourcesNames = new String[dataSourceMap.size()];
         if (dataSourcesNames.length > 0) {

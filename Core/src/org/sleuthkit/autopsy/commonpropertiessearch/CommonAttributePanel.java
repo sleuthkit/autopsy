@@ -491,8 +491,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
             @Override
             protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
-                DataSourceLoader loader = new DataSourceLoader();
-                return loader.getDataSourceMap();
+                return DataSourceLoader.getAllDataSources();
             }
 
             @Override
