@@ -20,13 +20,11 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
 import java.util.EnumSet;
-import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * The Image/Video Gallery panel in the NetBeans provided Options Dialogs
@@ -189,6 +187,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
     void store() {
         ImageGalleryPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
+
         ImageGalleryPreferences.setGroupCategorizationWarningDisabled(groupCategorizationWarningBox.isSelected());
 
         // If a case is open, save the per case setting
@@ -202,6 +201,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         } catch (NoCurrentCaseException ex) {
             // It's not an error if there's no case open
         }
+
     }
 
     /**
