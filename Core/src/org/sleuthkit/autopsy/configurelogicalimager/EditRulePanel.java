@@ -99,7 +99,7 @@ public class EditRulePanel extends JPanel {
     }
     
     @NbBundle.Messages({
-        "# ({0} - fieldName",
+        "# {0} - fieldName",
         "EditRulePanel.blankLineException={0} cannot have a blank line",
     })
     static public List<String> validateTextList(JTextArea textArea, String fieldName) throws IOException {

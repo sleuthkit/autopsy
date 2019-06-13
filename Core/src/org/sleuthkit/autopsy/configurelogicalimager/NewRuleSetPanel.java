@@ -27,6 +27,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 /**
  * New rule set panel
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class NewRuleSetPanel extends javax.swing.JPanel {
 
     private final JPanel nonFullPathsJPanel;

@@ -40,6 +40,7 @@ import org.openide.util.NbBundle;
 /**
  * Configuration Visual Panel 1
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class ConfigVisualPanel1 extends JPanel {
 
     private LogicalImagerConfig config;
