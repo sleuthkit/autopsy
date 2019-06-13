@@ -171,7 +171,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
         } 
         
         if (attribute != null) {
-            return new MessageNode(bba, attribute.getValueString(), preferredAction);
+            return new ThreadNode(bba, attribute.getValueString());
         } else {
             // Only one of these should occur.
             return new UnthreadedNode();

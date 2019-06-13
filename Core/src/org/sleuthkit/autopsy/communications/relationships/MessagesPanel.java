@@ -100,7 +100,7 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
         
         splitPane.setResizeWeight(0.5);
         splitPane.setDividerLocation(0.5);
-        
+        outlineViewPanel.setTableColumnsWidth(5,10,10,15,50,10);
     }
     
     public MessagesPanel(ChildFactory<?> nodeFactory) {

@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -41,6 +40,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBU
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.communications.Utils;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 
 /**
  * Wraps a BlackboardArtifact as an AbstractNode for use in an OutlookView
@@ -86,8 +86,8 @@ class MessageNode extends BlackboardArtifactNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", Bundle.MessageNode_Node_Property_Type(), "", getDisplayName())); //NON-NLS
-
-        final BlackboardArtifact artifact = getArtifact();
+        
+        BlackboardArtifact artifact = this.getArtifact();
 
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != fromID) {
