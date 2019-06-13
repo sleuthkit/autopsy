@@ -141,7 +141,10 @@ public final class OpenAction extends CallableSystemAction {
         "OpenAction.multiUserDialog.ContentText=The Image Gallery updates itself differently for multi-user cases than single user cases. Notably:\n\n"
         + "If your computer is analyzing a data source, then you will get real-time Image Gallery updates as files are analyzed (hashed, EXIF, etc.). This is the same behavior as a single-user case.\n\n"
         + "If another computer in your multi-user cluster is analyzing a data source, you will get updates about files on that data source only when you launch Image Gallery, which will cause the local database to be rebuilt based on results from other nodes.",
-        "OpenAction.multiUserDialog.checkBox.text=Don't show this message again."})
+        "OpenAction.multiUserDialog.checkBox.text=Don't show this message again.",
+        "OpenAction.noControllerDialog.header=Cannot open Image Gallery",        
+        "OpenAction.noControllerDialog.text=An initialization error ocurred.\nPlease see the log for details.",
+    })
     public void performAction() {
         //check case
         final Case currentCase;
@@ -154,6 +157,21 @@ public final class OpenAction extends CallableSystemAction {
         Platform.runLater(() -> {
             ImageGalleryController controller;
             controller = ImageGalleryController.getController(currentCase);
+            if (controller == null) {
+                Alert errorDIalog = new Alert(Alert.AlertType.ERROR);
+                errorDIalog.initModality(Modality.APPLICATION_MODAL);
+                errorDIalog.setResizable(true);
+                errorDIalog.setTitle(Bundle.OpenAction_dialogTitle());
+                errorDIalog.setHeaderText(Bundle.OpenAction_noControllerDialog_header());
+                Label errorLabel = new Label(Bundle.OpenAction_noControllerDialog_text());
+                errorLabel.setMaxWidth(450);
+                errorLabel.setWrapText(true);
+                errorDIalog.getDialogPane().setContent(new VBox(10, errorLabel));
+                GuiUtils.setDialogIcons(errorDIalog);
+                errorDIalog.showAndWait();
+                logger.log(Level.SEVERE, "No Image Gallery controller for the current case");  
+                return;
+            }
 
             if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
                     && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
