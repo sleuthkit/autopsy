@@ -57,7 +57,7 @@ public class DataSourcesNode extends DisplayableItemNode {
     }
 
     public DataSourcesNode(long dsObjId) {
-        super(Children.create(new DataSourcesNodeChildren(dsObjId), true), Lookups.singleton(NAME));
+        super(Children.create(new DataSourcesNodeChildren(dsObjId), false), Lookups.singleton(NAME));
         displayName = (dsObjId > 0) ?  NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.group_by_datasource.name") : NAME;
         init();
     }

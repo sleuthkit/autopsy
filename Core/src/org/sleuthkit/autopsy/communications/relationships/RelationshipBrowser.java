@@ -54,14 +54,12 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
-        tabPane.add(mediaViewer.getDisplayName(), mediaViewer);
-        
-        
+        tabPane.add(mediaViewer.getDisplayName(), mediaViewer);        
     }
 
     /**
      * Sets the value of currentSelection and passes the SelectionInfo onto the
-     * currently selected\visible tab.
+     * currently selected or visible tab.
      *
      * @param info Currently selected account nodes
      */
@@ -78,33 +76,26 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        scrollPane = new javax.swing.JScrollPane();
         tabPane = new javax.swing.JTabbedPane();
 
-        scrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        setLayout(new java.awt.GridBagLayout());
 
         tabPane.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 tabPaneStateChanged(evt);
             }
         });
-        scrollPane.setViewportView(tabPane);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(scrollPane, javax.swing.GroupLayout.Alignment.TRAILING))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(scrollPane))
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(1, 1, 1, 1);
+        add(tabPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     private void tabPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneStateChanged
@@ -121,7 +112,6 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane scrollPane;
     private javax.swing.JTabbedPane tabPane;
     // End of variables declaration//GEN-END:variables
 

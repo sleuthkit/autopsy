@@ -186,13 +186,16 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                             associated with the data source that is
      *                             intended to be unique across multiple cases
      *                             (e.g., a UUID).
-     * @param imageFilePath        Path to the image file.
+     * @param imagePath            Path to the image file.
+     * @param sectorSize           The sector size (use '0' for autodetect).
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
      *                             java.util.TimeZone.getID.
-     * @param chunkSize            The maximum size of each chunk of the raw
-     *                             data source as it is divided up into virtual
-     *                             unallocated space files.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param md5                  The MD5 hash of the image, may be null.
+     * @param sha1                 The SHA-1 hash of the image, may be null.
+     * @param sha256               The SHA-256 hash of the image, may be null.
      * @param src                  The source directory of image.
      * @param dest                 The destination directory to copy the source.
      * @param progressMonitor      Progress monitor for reporting progress

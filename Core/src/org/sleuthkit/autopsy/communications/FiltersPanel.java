@@ -34,10 +34,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -55,6 +62,7 @@ import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
+import org.sleuthkit.datamodel.CommunicationsFilter.MostRecentFilter;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
 import static org.sleuthkit.datamodel.Relationship.Type.CONTACT;
@@ -109,6 +117,8 @@ final public class FiltersPanel extends JPanel {
      * initially.
      */
     private boolean deviceAccountTypeEnabled;
+    
+    private Case openCase = null;
 
     @NbBundle.Messages({"refreshText=Refresh Results", "applyText=Apply"})
     public FiltersPanel() {
@@ -157,28 +167,6 @@ final public class FiltersPanel extends JPanel {
         applyFiltersButton.addActionListener(e -> applyFilters());
         refreshButton.addActionListener(e -> applyFilters());
         
-        try {
-            String queryString = "max(date_time) as max,  min(date_time) as min from account_relationships"; // NON-NLS
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
-                @Override
-                public void process(ResultSet rs) {
-                    try {
-                        if (rs.next()) {
-                            int startDate = rs.getInt("min"); // NON-NLS
-                            int endData = rs.getInt("max"); // NON-NLS
-
-                            startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(startDate), Utils.getUserPreferredZoneId()).toLocalDate());
-                            endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(endData), Utils.getUserPreferredZoneId()).toLocalDate());
-                        }
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Unable to set filter date pickers due to SQL exception", ex); //NON-NLS
-                    }
-                }
-
-            });
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Unable to set filter date pickers due to exception", ex); //NON-NLS
-        }
     }
 
     /**
@@ -190,13 +178,29 @@ final public class FiltersPanel extends JPanel {
     private void validateFilters() {
         boolean someDevice = devicesMap.values().stream().anyMatch(JCheckBox::isSelected);
         boolean someAccountType = accountTypeMap.values().stream().anyMatch(JCheckBox::isSelected);
+        boolean validLimit = validateLimitValue();
 
         deviceRequiredLabel.setVisible(someDevice == false);
         accountTypeRequiredLabel.setVisible(someAccountType == false);
+        limitErrorMsgLabel.setVisible(!validLimit);
 
-        applyFiltersButton.setEnabled(someDevice && someAccountType);
-        refreshButton.setEnabled(someDevice && someAccountType && needsRefresh);
+        applyFiltersButton.setEnabled(someDevice && someAccountType && validLimit);
+        refreshButton.setEnabled(someDevice && someAccountType && needsRefresh && validLimit);
         needsRefreshLabel.setVisible(needsRefresh);
+    }
+    
+    private boolean validateLimitValue() {
+        String selectedValue = (String)limitComboBox.getSelectedItem();
+        if(selectedValue.trim().equalsIgnoreCase("all")) {
+            return true;
+        } else {
+            try{
+                int value = Integer.parseInt(selectedValue);
+                return value > 0;
+            } catch( NumberFormatException ex) {
+                return false;
+            }
+        }
     }
 
     /**
@@ -205,6 +209,7 @@ final public class FiltersPanel extends JPanel {
     void updateAndApplyFilters(boolean initialState) {
         updateFilters(initialState);
         applyFilters();
+        initalizeDateTimeFilters();
     }
 
     private void updateTimeZone() {
@@ -226,7 +231,7 @@ final public class FiltersPanel extends JPanel {
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             //clear the device filter widget when the case changes.
             devicesMap.clear();
-            devicesPane.removeAll();
+            devicesListPane.removeAll();
         });
     }
 
@@ -251,26 +256,27 @@ final public class FiltersPanel extends JPanel {
                 //don't show a check box for credit cards
             } else {
                 accountTypeMap.computeIfAbsent(type, t -> {
-                    final JCheckBox jCheckBox = new JCheckBox(
-                            "<html><table cellpadding=0><tr><td><img src=\""
-                            + FiltersPanel.class.getResource(Utils.getIconFilePath(type))
-                            + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                            true
-                    );
-                    jCheckBox.addItemListener(validationListener);
-                    accountTypePane.add(jCheckBox);
+
+                    CheckBoxIconPanel panel = new CheckBoxIconPanel(
+                            type.getDisplayName(), 
+                            new ImageIcon(FiltersPanel.class.getResource(Utils.getIconFilePath(type))));
+                    panel.setSelected(true);
+                    panel.addItemListener(validationListener);
+                    accountTypeListPane.add(panel);
                     if (t.equals(Account.Type.DEVICE)) {
                         //Deveice type filter is enabled based on whether we are in table or graph view.
-                        jCheckBox.setEnabled(deviceAccountTypeEnabled);
+                        panel.setEnabled(deviceAccountTypeEnabled);
                     }
-                    return jCheckBox;
+                    return panel.getCheckBox();
                 });
             }
         });
     }
-
+    
     /**
      * Populate the devices filter widgets
+     * 
+     * @param initialState 
      */
     private void updateDeviceFilter(boolean initialState) {
         try {
@@ -282,7 +288,7 @@ final public class FiltersPanel extends JPanel {
                 devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
                     final JCheckBox jCheckBox = new JCheckBox(dsName, initialState);
                     jCheckBox.addItemListener(validationListener);
-                    devicesPane.add(jCheckBox);
+                    devicesListPane.add(jCheckBox);
                     return jCheckBox;
                 });
             }
@@ -297,7 +303,7 @@ final public class FiltersPanel extends JPanel {
      * Given a list of subFilters, set the states of the panel controls 
      * accordingly.
      * 
-     * @param subFilters A list of subFilters
+     * @param commFilter Contains a list of subFilters
      */
     public void setFilters(CommunicationsFilter commFilter) {
         List<CommunicationsFilter.SubFilter> subFilters = commFilter.getAndFilters();
@@ -306,6 +312,8 @@ final public class FiltersPanel extends JPanel {
                 setDeviceFilter((DeviceFilter)subFilter);
             } else if( subFilter instanceof AccountTypeFilter) {
                 setAccountTypeFilter((AccountTypeFilter) subFilter);
+            } else if (subFilter instanceof MostRecentFilter ) {
+                setMostRecentFilter((MostRecentFilter)subFilter);
             }
         });
     }
@@ -358,6 +366,15 @@ final public class FiltersPanel extends JPanel {
         endDatePicker.setEnabled(state.isEnabled());
     }
     
+    private void setMostRecentFilter(MostRecentFilter filter) {
+        int limit = filter.getLimit();
+        if(limit > 0) {
+            limitComboBox.setSelectedItem(filter.getLimit());
+        } else {
+            limitComboBox.setSelectedItem("All");
+        }
+    }
+    
     @Subscribe
     void filtersBack(CVTEvents.StateChangeEvent event) {
         if(event.getCommunicationsState().getCommunicationsFilter() != null){
@@ -377,135 +394,123 @@ final public class FiltersPanel extends JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/tick.png"))); // NOI18N
-        applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
-        applyFiltersButton.setPreferredSize(null);
+        setLayout(new java.awt.GridBagLayout());
+
+        topPane.setLayout(new java.awt.GridBagLayout());
 
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
         filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        topPane.add(filtersTitleLabel, gridBagConstraints);
 
-        unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
-        unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
+        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
+        refreshButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.refreshButton.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        topPane.add(refreshButton, gridBagConstraints);
+
+        applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/tick.png"))); // NOI18N
+        applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        topPane.add(applyFiltersButton, gridBagConstraints);
+
+        needsRefreshLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.needsRefreshLabel.text")); // NOI18N
+        needsRefreshLabel.setForeground(new java.awt.Color(255, 0, 0));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        topPane.add(needsRefreshLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
+        gridBagConstraints.weightx = 1.0;
+        add(topPane, gridBagConstraints);
+
+        scrollPane.setBorder(null);
+
+        mainPanel.setLayout(new java.awt.GridBagLayout());
+
+        limitPane.setLayout(new java.awt.GridBagLayout());
+
+        mostRecentLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.mostRecentLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 9);
+        limitPane.add(mostRecentLabel, gridBagConstraints);
+
+        limitComboBox.setEditable(true);
+        limitComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "10000", "5000", "1000", "500", "100" }));
+        limitComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                unCheckAllAccountTypesButtonActionPerformed(evt);
+                limitComboBoxActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        limitPane.add(limitComboBox, gridBagConstraints);
 
-        accountTypesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/accounts.png"))); // NOI18N
-        accountTypesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypesLabel.text")); // NOI18N
+        limitTitlePanel.setLayout(new java.awt.GridBagLayout());
 
-        checkAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllAccountTypesButton.text")); // NOI18N
-        checkAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkAllAccountTypesButtonActionPerformed(evt);
-            }
-        });
+        limitHeaderLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.limitHeaderLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        limitTitlePanel.add(limitHeaderLabel, gridBagConstraints);
 
-        accountTypePane.setLayout(new javax.swing.BoxLayout(accountTypePane, javax.swing.BoxLayout.Y_AXIS));
-        jScrollPane3.setViewportView(accountTypePane);
+        limitErrorMsgLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        limitErrorMsgLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.limitErrorMsgLabel.text")); // NOI18N
+        limitErrorMsgLabel.setForeground(new java.awt.Color(255, 0, 0));
+        limitErrorMsgLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        limitTitlePanel.add(limitErrorMsgLabel, gridBagConstraints);
 
-        accountTypeRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
-        accountTypeRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypeRequiredLabel.text")); // NOI18N
-        accountTypeRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
-        accountTypeRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
+        limitPane.add(limitTitlePanel, gridBagConstraints);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(accountTypesLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(accountTypeRequiredLabel))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jScrollPane3)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(unCheckAllAccountTypesButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(checkAllAccountTypesButton)))))
-                .addGap(0, 0, 0))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(accountTypesLabel)
-                    .addComponent(accountTypeRequiredLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(checkAllAccountTypesButton)
-                    .addComponent(unCheckAllAccountTypesButton)))
-        );
-
-        unCheckAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllDevicesButton.text")); // NOI18N
-        unCheckAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                unCheckAllDevicesButtonActionPerformed(evt);
-            }
-        });
-
-        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png"))); // NOI18N
-        devicesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.devicesLabel.text")); // NOI18N
-
-        checkAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllDevicesButton.text")); // NOI18N
-        checkAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkAllDevicesButtonActionPerformed(evt);
-            }
-        });
-
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane2.setMinimumSize(new java.awt.Dimension(27, 75));
-
-        devicesPane.setMinimumSize(new java.awt.Dimension(4, 100));
-        devicesPane.setLayout(new javax.swing.BoxLayout(devicesPane, javax.swing.BoxLayout.Y_AXIS));
-        jScrollPane2.setViewportView(devicesPane);
-
-        deviceRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
-        deviceRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.deviceRequiredLabel.text")); // NOI18N
-        deviceRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
-        deviceRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(devicesLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(deviceRequiredLabel))
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(unCheckAllDevicesButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(checkAllDevicesButton))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(devicesLabel)
-                    .addComponent(deviceRequiredLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(checkAllDevicesButton)
-                    .addComponent(unCheckAllDevicesButton))
-                .addGap(5, 5, 5))
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 0);
+        mainPanel.add(limitPane, gridBagConstraints);
 
         startDatePicker.setEnabled(false);
 
@@ -528,83 +533,214 @@ final public class FiltersPanel extends JPanel {
 
         endDatePicker.setEnabled(false);
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addComponent(dateRangeLabel)
+        javax.swing.GroupLayout dateRangePaneLayout = new javax.swing.GroupLayout(dateRangePane);
+        dateRangePane.setLayout(dateRangePaneLayout);
+        dateRangePaneLayout.setHorizontalGroup(
+            dateRangePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(dateRangePaneLayout.createSequentialGroup()
+                .addGroup(dateRangePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(dateRangeLabel)
+                    .addGroup(dateRangePaneLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(dateRangePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, dateRangePaneLayout.createSequentialGroup()
+                                .addComponent(endCheckBox)
+                                .addGap(12, 12, 12)
+                                .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(dateRangePaneLayout.createSequentialGroup()
+                                .addComponent(startCheckBox)
+                                .addGap(12, 12, 12)
+                                .addComponent(startDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                 .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                        .addComponent(endCheckBox)
-                        .addGap(12, 12, 12)
-                        .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(startCheckBox)
-                        .addGap(12, 12, 12)
-                        .addComponent(startDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
 
-        jPanel4Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {endCheckBox, startCheckBox});
+        dateRangePaneLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {endCheckBox, startCheckBox});
 
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
+        dateRangePaneLayout.setVerticalGroup(
+            dateRangePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(dateRangePaneLayout.createSequentialGroup()
                 .addComponent(dateRangeLabel)
                 .addGap(6, 6, 6)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(dateRangePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(startDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(startCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(dateRangePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(endCheckBox)))
         );
 
-        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
-        refreshButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.refreshButton.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        mainPanel.add(dateRangePane, gridBagConstraints);
 
-        needsRefreshLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.needsRefreshLabel.text")); // NOI18N
-        needsRefreshLabel.setForeground(new java.awt.Color(255, 0, 0));
+        devicesPane.setLayout(new java.awt.GridBagLayout());
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(filtersTitleLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(refreshButton))
-            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(needsRefreshLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(filtersTitleLabel)
-                    .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(refreshButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(needsRefreshLabel)
-                .addGap(4, 4, 4)
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(19, Short.MAX_VALUE))
-        );
+        unCheckAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllDevicesButton.text")); // NOI18N
+        unCheckAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unCheckAllDevicesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 9);
+        devicesPane.add(unCheckAllDevicesButton, gridBagConstraints);
+
+        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png"))); // NOI18N
+        devicesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.devicesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
+        devicesPane.add(devicesLabel, gridBagConstraints);
+
+        checkAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllDevicesButton.text")); // NOI18N
+        checkAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkAllDevicesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        devicesPane.add(checkAllDevicesButton, gridBagConstraints);
+
+        devicesScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 75));
+
+        devicesListPane.setMinimumSize(new java.awt.Dimension(4, 100));
+        devicesListPane.setLayout(new javax.swing.BoxLayout(devicesListPane, javax.swing.BoxLayout.Y_AXIS));
+        devicesScrollPane.setViewportView(devicesListPane);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        devicesPane.add(devicesScrollPane, gridBagConstraints);
+
+        deviceRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        deviceRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.deviceRequiredLabel.text")); // NOI18N
+        deviceRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
+        deviceRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
+        devicesPane.add(deviceRequiredLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.ipady = 100;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        mainPanel.add(devicesPane, gridBagConstraints);
+
+        accountTypesPane.setLayout(new java.awt.GridBagLayout());
+
+        unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
+        unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unCheckAllAccountTypesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 9);
+        accountTypesPane.add(unCheckAllAccountTypesButton, gridBagConstraints);
+
+        accountTypesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/accounts.png"))); // NOI18N
+        accountTypesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        accountTypesPane.add(accountTypesLabel, gridBagConstraints);
+
+        checkAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllAccountTypesButton.text")); // NOI18N
+        checkAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkAllAccountTypesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        accountTypesPane.add(checkAllAccountTypesButton, gridBagConstraints);
+
+        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
+
+        accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.Y_AXIS));
+        accountTypesScrollPane.setViewportView(accountTypeListPane);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        accountTypesPane.add(accountTypesScrollPane, gridBagConstraints);
+
+        accountTypeRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        accountTypeRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypeRequiredLabel.text")); // NOI18N
+        accountTypeRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
+        accountTypeRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        accountTypesPane.add(accountTypeRequiredLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        mainPanel.add(accountTypesPane, gridBagConstraints);
+
+        scrollPane.setViewportView(mainPanel);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(scrollPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -628,6 +764,7 @@ final public class FiltersPanel extends JPanel {
         commsFilter.addAndFilter(getDateRangeFilter());
         commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
                 ImmutableSet.of(CALL_LOG, MESSAGE, CONTACT)));
+        commsFilter.addAndFilter(getMostRecentFilter());
         return commsFilter;
     }
 
@@ -669,6 +806,20 @@ final public class FiltersPanel extends JPanel {
         
         return new DateRangeFilter( startCheckBox.isSelected() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0, 
                                     endCheckBox.isSelected() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0);
+    }
+    
+    private MostRecentFilter getMostRecentFilter() {
+        String value = (String)limitComboBox.getSelectedItem();
+        if(value.trim().equalsIgnoreCase("all")){
+            return new MostRecentFilter(-1);
+        } else{
+            try {
+                int count = Integer.parseInt(value);
+                return new MostRecentFilter(count);
+            } catch(NumberFormatException ex) {
+                return null;
+            }
+        }
     }
     
     private DateControlState getStartControlState() {
@@ -725,6 +876,36 @@ final public class FiltersPanel extends JPanel {
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
     }
+    
+    /**
+     * initalize the DateTimePickers by grabbing the earliest and latest time
+     * from the autopsy db.
+     */
+    private void initalizeDateTimeFilters() {
+        Case currentCase = null;
+        try{
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) { 
+           logger.log(Level.INFO, "Tried to intialize communication filters date range filters without an open case, using default values");
+        }
+        
+        if(currentCase == null) {
+            setDateTimeFiltersToDefault();
+            openCase = null;
+            return;
+        }
+                      
+        if(!currentCase.equals(openCase)) {
+            setDateTimeFiltersToDefault();
+            openCase = currentCase;
+            (new DatePickerWorker()).execute();
+        }
+    }
+    
+    private void setDateTimeFiltersToDefault() {
+        startDatePicker.setDate(LocalDate.now().minusWeeks(3));
+        endDatePicker.setDate(LocalDate.now());
+    }
 
     private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
         setAllAccountTypesSelected(false);
@@ -744,11 +925,17 @@ final public class FiltersPanel extends JPanel {
 
     private void startCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startCheckBoxStateChanged
         startDatePicker.setEnabled(startCheckBox.isSelected());
+        validateFilters();
     }//GEN-LAST:event_startCheckBoxStateChanged
 
     private void endCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_endCheckBoxStateChanged
         endDatePicker.setEnabled(endCheckBox.isSelected());
+        validateFilters();
     }//GEN-LAST:event_endCheckBoxStateChanged
+
+    private void limitComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_limitComboBoxActionPerformed
+        validateFilters();
+    }//GEN-LAST:event_limitComboBoxActionPerformed
 
     /**
      * A class to wrap the state of the date controls that consist of a date picker
@@ -792,31 +979,100 @@ final public class FiltersPanel extends JPanel {
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private final javax.swing.JPanel accountTypePane = new javax.swing.JPanel();
+    private final javax.swing.JPanel accountTypeListPane = new javax.swing.JPanel();
     private final javax.swing.JLabel accountTypeRequiredLabel = new javax.swing.JLabel();
     private final javax.swing.JLabel accountTypesLabel = new javax.swing.JLabel();
+    private final javax.swing.JPanel accountTypesPane = new javax.swing.JPanel();
+    private final javax.swing.JScrollPane accountTypesScrollPane = new javax.swing.JScrollPane();
     private final javax.swing.JButton applyFiltersButton = new javax.swing.JButton();
     private final javax.swing.JButton checkAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton checkAllDevicesButton = new javax.swing.JButton();
     private final javax.swing.JLabel dateRangeLabel = new javax.swing.JLabel();
+    private final javax.swing.JPanel dateRangePane = new javax.swing.JPanel();
     private final javax.swing.JLabel deviceRequiredLabel = new javax.swing.JLabel();
     private final javax.swing.JLabel devicesLabel = new javax.swing.JLabel();
+    private final javax.swing.JPanel devicesListPane = new javax.swing.JPanel();
     private final javax.swing.JPanel devicesPane = new javax.swing.JPanel();
+    private final javax.swing.JScrollPane devicesScrollPane = new javax.swing.JScrollPane();
     private final javax.swing.JCheckBox endCheckBox = new javax.swing.JCheckBox();
     private final com.github.lgooddatepicker.components.DatePicker endDatePicker = new com.github.lgooddatepicker.components.DatePicker();
     private final javax.swing.JLabel filtersTitleLabel = new javax.swing.JLabel();
-    private final javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
-    private final javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
-    private final javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
-    private final javax.swing.JScrollPane jScrollPane2 = new javax.swing.JScrollPane();
-    private final javax.swing.JScrollPane jScrollPane3 = new javax.swing.JScrollPane();
+    private final javax.swing.JComboBox<String> limitComboBox = new javax.swing.JComboBox<>();
+    private final javax.swing.JLabel limitErrorMsgLabel = new javax.swing.JLabel();
+    private final javax.swing.JLabel limitHeaderLabel = new javax.swing.JLabel();
+    private final javax.swing.JPanel limitPane = new javax.swing.JPanel();
+    private final javax.swing.JPanel limitTitlePanel = new javax.swing.JPanel();
+    private final javax.swing.JPanel mainPanel = new javax.swing.JPanel();
+    private final javax.swing.JLabel mostRecentLabel = new javax.swing.JLabel();
     private final javax.swing.JLabel needsRefreshLabel = new javax.swing.JLabel();
     private final javax.swing.JButton refreshButton = new javax.swing.JButton();
+    private final javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane();
     private final javax.swing.JCheckBox startCheckBox = new javax.swing.JCheckBox();
     private final com.github.lgooddatepicker.components.DatePicker startDatePicker = new com.github.lgooddatepicker.components.DatePicker();
+    private final javax.swing.JPanel topPane = new javax.swing.JPanel();
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
+
+    
+    /**
+     * This class is a small panel that appears to just be a checkbox but 
+     * adds the functionality of being able to show an icon between the checkbox
+     * and label.
+     */
+    final class CheckBoxIconPanel extends JPanel{
+        private final JCheckBox checkbox;
+        private final JLabel label;
+        
+        /**
+         * Creates a JPanel instance with the specified label and image.
+         * 
+         * @param labelText The text to be displayed by the checkbox label.
+         * @param image The image to be dispayed by the label.
+         */
+        private CheckBoxIconPanel(String labelText, Icon image) {
+            checkbox = new JCheckBox();
+            label = new JLabel(labelText);
+            label.setIcon(image);
+            setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+            
+            add(checkbox);
+            add(label);
+            add(Box.createHorizontalGlue());
+        }
+        
+        /**
+         * Sets the state of the checkbox.
+         * 
+         * @param selected true if the button is selected, otherwise false
+         */
+        void setSelected(boolean selected) {
+            checkbox.setSelected(selected);
+        }
+        
+        @Override
+        public void setEnabled(boolean enabled) {
+            checkbox.setEnabled(enabled);
+        }
+        
+        /**
+         * Returns the instance of the JCheckBox.
+         * 
+         * @return JCheckbox instance
+         */
+        JCheckBox getCheckBox() {
+            return checkbox;
+        }
+        
+        /**
+         * Adds an ItemListener to the checkbox.
+         * 
+         * @param l the ItemListener to be added.
+         */
+        void addItemListener(ItemListener l) {
+            checkbox.addItemListener(l);
+        }
+    }
 
     /**
      * A simple class that implements CaseDbAccessQueryCallback. Can be used
@@ -827,6 +1083,60 @@ final public class FiltersPanel extends JPanel {
         @Override
         public void process(ResultSet rs) {
             // Subclasses can implement their own process function.
+        }
+    }
+    
+    final class DatePickerWorker extends SwingWorker<Map<String, Integer>, Void> {
+
+        @Override
+        protected Map<String, Integer> doInBackground() throws Exception {
+            if (openCase == null) {
+                return null;
+            }
+
+            Map<String, Integer> resultMap = new HashMap<>();
+            String queryString = "max(date_time) as end,  min(date_time) as start from account_relationships"; // NON-NLS
+
+            openCase.getSleuthkitCase().getCaseDbAccessManager().select(queryString, new FilterPanelQueryCallback() {
+                @Override
+                public void process(ResultSet rs) {
+                    try {
+                        if (rs.next()) {
+                            int startDate = rs.getInt("start"); // NON-NLS
+                            int endDate = rs.getInt("end"); // NON-NLS
+
+                            resultMap.put("start", startDate); // NON-NLS
+                            resultMap.put("end", endDate); // NON-NLS
+                        }
+                    } catch (SQLException ex) {
+                        // Not the end of the world if this fails.
+                        logger.log(Level.WARNING, String.format("SQL Exception thrown from Query: %s", queryString), ex);
+                    }
+                }
+            });
+
+            return resultMap;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                Map<String, Integer> resultMap = get();
+                if (resultMap != null) {
+                    Integer start = resultMap.get("start");
+                    Integer end = resultMap.get("end");
+
+                    if (start != null && start != 0) {
+                        startDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(start), Utils.getUserPreferredZoneId()).toLocalDate());
+                    }
+
+                    if (end != null && end != 0) {
+                        endDatePicker.setDate(LocalDateTime.ofInstant(Instant.ofEpochSecond(end), Utils.getUserPreferredZoneId()).toLocalDate());
+                    }
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Exception occured after date time sql query", ex);
+            }
         }
     }
 

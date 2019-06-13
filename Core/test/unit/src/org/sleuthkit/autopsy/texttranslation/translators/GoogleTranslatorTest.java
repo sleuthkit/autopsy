@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.texttranslation.translators;
 import org.junit.Test;
 
 /**
- * Tests for the GoogleTranslator
+ * Tests for the GoogleTranslator, tests have been commented out due to necessary credentials file for tests to succeed 
  */
 public class GoogleTranslatorTest {
 
@@ -30,18 +30,17 @@ public class GoogleTranslatorTest {
      */
     @Test
     public void testTranslate() throws Exception {
-        String string = "traducar";
-        GoogleTranslator instance = new GoogleTranslator();
-        String result = instance.translate(string);
-
-        //It's unrealistic to expect the same answer every time, but sometimes
-        //it's helpful to have this in your debug process.
-        /*
-         * String expResult = "translate"; assertEquals(expResult, result);
-         * System.out.println(result);
-         */
+//        String string = "traducar";
+//        GoogleTranslator instance = new GoogleTranslator();
+//        String result = instance.translate(string);
+//
+//        //It's unrealistic to expect the same answer every time, but sometimes
+//        //it's helpful to have this in your debug process.
+//        
+//          String expResult = "translate"; assertEquals(expResult, result);
+//          System.out.println(result);
+         
     }
-
 //Commented out because using TranslateOption with the current version of Guava is not supported JIRA-5063
 //    @Test
 //    public void testQuickStartInstructions() throws Exception {
@@ -63,10 +62,8 @@ public class GoogleTranslatorTest {
 //        
 //        //It's unrealistic to expect the same answer every time, but sometimes
 //        //it's helpful to have this in your debug process.
-//        /*
 //        String expResult = "¡Hola Mundo!";
 //        assertEquals(expResult, result);
 //        System.out.println(result);
-//        */
 //    }
 }

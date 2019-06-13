@@ -191,4 +191,9 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
         boolean isSupported(AbstractFile file);
     }
+
+    @Override
+    public boolean isSupported(AbstractFile file){
+        return true;
+    }
 }
