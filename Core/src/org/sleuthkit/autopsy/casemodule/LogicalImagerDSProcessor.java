@@ -188,8 +188,8 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
             }
         }
         try {
-            run(deviceId, imagePaths, 0,
-                timeZone, ignoreFatOrphanFiles, null, null, null, src, dest,
+            run(deviceId, imagePaths,
+                timeZone, src, dest,
                 progressMonitor, callback);
         } catch (NoCurrentCaseException ex) {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
@@ -211,28 +211,20 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                             intended to be unique across multiple cases
      *                             (e.g., a UUID).
      * @param imagePaths           Paths to the image files.
-     * @param sectorSize           The sector size (use '0' for autodetect).
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
      *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     * @param md5                  The MD5 hash of the image, may be null.
-     * @param sha1                 The SHA-1 hash of the image, may be null.
-     * @param sha256               The SHA-256 hash of the image, may be null.
      * @param src                  The source directory of image.
      * @param dest                 The destination directory to copy the source.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, List<String> imagePaths, int sectorSize, String timeZone, 
-            boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, 
+    private void run(String deviceId, List<String> imagePaths, String timeZone,  
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
-        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePaths, sectorSize, 
-                timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, src, dest,
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePaths, timeZone, src, dest,
                 progressMonitor, callback);
         new Thread(addLogicalImageTask).start();
     }

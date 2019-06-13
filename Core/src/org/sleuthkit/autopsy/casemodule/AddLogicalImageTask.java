@@ -30,7 +30,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -50,10 +49,9 @@ public class AddLogicalImageTask extends AddMultipleImageTask {
     private final DataSourceProcessorCallback callback;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     
-    public AddLogicalImageTask(String deviceId, List<String> imagePaths, int sectorSize, 
-            String timeZone, boolean ignoreFatOrphanFiles, 
-            String md5, String sha1, String sha256, 
-            ImageWriterSettings imageWriterSettings, 
+    public AddLogicalImageTask(String deviceId, 
+            List<String> imagePaths, 
+            String timeZone, 
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, 
             DataSourceProcessorCallback callback
