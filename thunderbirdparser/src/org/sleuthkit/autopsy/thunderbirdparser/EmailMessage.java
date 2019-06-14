@@ -47,7 +47,7 @@ class EmailMessage {
     private long id = -1L;
     private String messageID = "";
     private String inReplyToID = "";
-    private List<String> references = null;
+    private List<String> references = new ArrayList();
     private String simplifiedSubject = "";
     private boolean isReplySubject = false;
     private String messageThreadID = "";
@@ -90,7 +90,7 @@ class EmailMessage {
                 this.simplifiedSubject = subject;
             }
         } else {
-            this.simplifiedSubject = null;
+            this.simplifiedSubject = "";
         }
     }
     
@@ -251,16 +251,16 @@ class EmailMessage {
     
     /**
      * Returns a list of Message-IDs listing the parent, grandparent, 
-     * great-grandparent, and so on, of this message.
+     * great-grandparent, and so on, of this message. 
      * 
-     * @return reference list or empty string if non is available.
+     * @return The reference list or empty string if none is available.
      */
     List<String> getReferences() {
         return references;
     }
     
     /**
-     * Set the list of reference message-IDs.
+     * Set the list of reference message-IDs from the email message header.
      * 
      * @param references 
      */
