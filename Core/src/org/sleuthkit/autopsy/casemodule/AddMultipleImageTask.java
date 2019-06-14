@@ -37,6 +37,11 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
+/**
+ * 
+ * A runnable that adds multiple images to the case database
+ * 
+ */
 @Messages({
     "AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type"
 })
@@ -111,7 +116,7 @@ class AddMultipleImageTask implements Runnable {
          * single local/logical files set with the device id as the root virtual
          * directory name.
          */
-        if (!cancelled && localFileDataSourcePaths.size() > 0) {
+        if (!cancelled && !localFileDataSourcePaths.isEmpty()) {
             FileManager fileManager = currentCase.getServices().getFileManager();
             FileManager.FileAddProgressUpdater progressUpdater = (final AbstractFile newFile) -> {
                 progressMonitor.setProgressText(Bundle.AddMultipleImageTask_addingFileAsLogicalFile(Paths.get(newFile.getParentPath(), newFile.getName())));
@@ -186,9 +191,7 @@ class AddMultipleImageTask implements Runnable {
         progressMonitor.setProgressText(Bundle.AddMultipleImageTask_adding(imageFilePath));
         SleuthkitCase caseDatabase = currentCase.getSleuthkitCase();
         SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess = caseDatabase.makeAddImageProcess(timeZone, false, false, "");
-//        Thread progressReporterThread = new Thread(new AddImageProgressReportingTask(progressMonitor, addImageProcess));
         try {
-//            progressReporterThread.start();
             addImageProcess.run(deviceId, new String[]{imageFilePath});
         } catch (TskCoreException ex) {
             if (ex.getMessage().contains(TSK_FS_TYPE_UNKNOWN_ERR_MSG)) {
@@ -215,8 +218,6 @@ class AddMultipleImageTask implements Runnable {
             return;
         } catch (TskDataException ex) {
             errorMessages.add(Bundle.AddMultipleImageTask_nonCriticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
-        } finally {
-//            progressReporterThread.interrupt();
         }
 
         /*
