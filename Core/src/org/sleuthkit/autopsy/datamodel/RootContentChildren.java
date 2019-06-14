@@ -25,7 +25,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
  * Children implementation for the root node of a ContentNode tree. Accepts a
@@ -35,7 +34,6 @@ public class RootContentChildren extends Children.Keys<Object> {
 
     private final Collection<? extends Object> contentKeys;
     private final CreateAutopsyNodeVisitor createAutopsyNodeVisitor = new CreateAutopsyNodeVisitor();
-    private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
 
     /**
      * @param contentKeys root Content objects for the Node tree
@@ -70,7 +68,7 @@ public class RootContentChildren extends Children.Keys<Object> {
         if (key instanceof AutopsyVisitableItem) {
             return new Node[] {((AutopsyVisitableItem)key).accept(createAutopsyNodeVisitor)};
         } else {
-            return new Node[] {((SleuthkitVisitableItem)key).accept(createSleuthkitNodeVisitor)};
+            return null;
         }
     }
     

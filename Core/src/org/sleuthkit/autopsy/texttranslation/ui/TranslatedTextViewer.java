@@ -67,7 +67,7 @@ public final class TranslatedTextViewer implements TextViewer {
 
     private static final boolean OCR_ENABLED = true;
     private static final boolean OCR_DISABLED = false;
-    private static final int MAX_EXTRACT_SIZE_BYTES = 25600;
+    private static final int MAX_SIZE_1MB = 1024000;
     private static final List<String> INSTALLED_LANGUAGE_PACKS = PlatformUtil.getOcrLanguagePacks();
     private final TranslationContentPanel panel = new TranslationContentPanel();
 
@@ -77,9 +77,6 @@ public final class TranslatedTextViewer implements TextViewer {
             = new ThreadFactoryBuilder().setNameFormat("translation-content-viewer-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(translationThreadFactory);
 
-    @NbBundle.Messages({
-        "TranslatedTextViewer.maxPayloadSize=Up to the first %dKB of text will be translated"
-    })
     @Override
     public void setNode(final Node node) {
         this.node = node;
@@ -95,9 +92,6 @@ public final class TranslatedTextViewer implements TextViewer {
                 panel.addLanguagePackNames(INSTALLED_LANGUAGE_PACKS);
             }
         }
-        
-        int payloadMaxInKB = TextTranslationService.getInstance().getMaxPayloadSize() / 1000;
-        panel.setWarningLabelMsg(String.format(Bundle.TranslatedTextViewer_maxPayloadSize(), payloadMaxInKB));
 
         //Force a background task.
         displayDropDownListener.actionPerformed(null);
@@ -302,9 +296,8 @@ public final class TranslatedTextViewer implements TextViewer {
 
             //Correct for UTF-8
             byte[] resultInUTF8Bytes = result.getBytes("UTF8");
-            byte[] trimToArraySize = Arrays.copyOfRange(resultInUTF8Bytes, 0, 
-                    Math.min(resultInUTF8Bytes.length, MAX_EXTRACT_SIZE_BYTES) );
-            return new String(trimToArraySize, "UTF-8");
+            byte[] trimTo1MB = Arrays.copyOfRange(resultInUTF8Bytes, 0, MAX_SIZE_1MB );
+            return new String(trimTo1MB, "UTF-8");
         }
 
         /**
@@ -338,7 +331,7 @@ public final class TranslatedTextViewer implements TextViewer {
 
                 //Short-circuit the read if its greater than our max
                 //translatable size
-                int bytesLeft = MAX_EXTRACT_SIZE_BYTES - bytesRead;
+                int bytesLeft = MAX_SIZE_1MB - bytesRead;
 
                 if (bytesLeft < read) {
                     textBuilder.append(cbuf, 0, bytesLeft);
@@ -348,8 +341,9 @@ public final class TranslatedTextViewer implements TextViewer {
                 textBuilder.append(cbuf, 0, read);
                 bytesRead += read;
             }
-            
-            return textBuilder.toString();
+
+            // The trim is on here because HTML files were observed with nearly 1MB of white space at the end
+            return textBuilder.toString().trim();
         }
 
         /**

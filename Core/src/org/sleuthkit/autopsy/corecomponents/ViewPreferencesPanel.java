@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.TimeZone;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
@@ -56,9 +55,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             groupByDataSourceCheckbox.setEnabled(evt.getNewValue() != null);
         });
         this.timeZoneList.setListData(TimeZoneUtils.createTimeZoneList().stream().toArray(String[]::new));
-
-        // Disable manual editing of max results spinner
-        ((JSpinner.DefaultEditor)maxResultsSpinner.getEditor()).getTextField().setEditable(false);
     }
 
     @Override

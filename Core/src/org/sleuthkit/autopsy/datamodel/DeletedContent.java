@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -36,6 +37,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -57,7 +59,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public class DeletedContent implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
-    private final long filteringDSObjId;    // 0 if not filtering/grouping by data source
+    private final long datasourceObjId;
 
     @NbBundle.Messages({"DeletedContent.fsDelFilter.text=File System",
         "DeletedContent.allDelFilter.text=All"})
@@ -103,11 +105,11 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public DeletedContent(SleuthkitCase skCase, long dsObjId) {
         this.skCase = skCase;
-        this.filteringDSObjId = dsObjId;
+        this.datasourceObjId = dsObjId;
     }
 
     long filteringDataSourceObjId() {
-        return this.filteringDSObjId;
+        return this.datasourceObjId;
     }
 
     @Override
@@ -437,7 +439,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 }
 
-                if (filteringDSObjId > 0) {
+                if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     query += " AND data_source_obj_id = " + filteringDSObjId;
                 }
                 return query;

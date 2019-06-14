@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.actions.ReplaceBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
-import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -93,7 +92,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -121,7 +119,6 @@ public class DataModelActionsFactory {
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, slackFileNode));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -158,7 +155,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());//
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -193,7 +189,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -228,7 +223,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -263,7 +257,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -298,7 +291,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -333,7 +325,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -388,7 +379,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -425,7 +415,6 @@ public class DataModelActionsFactory {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {

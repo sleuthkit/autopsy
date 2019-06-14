@@ -120,13 +120,4 @@ public final class TextTranslationService {
     public boolean hasProvider() {
         return selectedTranslator.isPresent();
     }
-    
-    /**
-     * Returns the hard limit for translation request sizes.
-     * 
-     * @return 
-     */
-    public int getMaxPayloadSize() {
-        return selectedTranslator.get().getMaxPayloadSize();
-    }
 }

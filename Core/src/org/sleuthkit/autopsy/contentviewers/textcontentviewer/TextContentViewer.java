@@ -23,7 +23,6 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * A DataContentViewer that displays text with the TextViewers available.
@@ -91,17 +90,6 @@ public class TextContentViewer implements DataContentViewer {
         if (node == null) {
             return false;
         }
-        // get the node's File, if it has one
-        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return false;
-        }
-        
-        // disable the text content viewer for directories and empty files
-        if (file.isDir() || file.getSize() == 0) {
-            return false;
-        }
-        
         return panel.isSupported(node);
     }
 

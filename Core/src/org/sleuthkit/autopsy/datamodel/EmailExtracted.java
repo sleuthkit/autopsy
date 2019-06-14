@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -39,6 +40,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -86,7 +88,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
     private SleuthkitCase skCase;
     private final EmailResults emailResults;
-    private final long filteringDSObjId;    // 0 if not filtering/grouping by data source
+    private final long datasourceObjId;
 
 
 
@@ -108,7 +110,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
      */ 
     public EmailExtracted(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.filteringDSObjId = objId;
+        this.datasourceObjId = objId;
         emailResults = new EmailResults();
     }
 
@@ -160,8 +162,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     + "attribute_type_id=" + pathAttrId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-            if (filteringDSObjId > 0) {
-                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
             }
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {

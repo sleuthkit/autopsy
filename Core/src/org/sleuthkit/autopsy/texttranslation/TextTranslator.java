@@ -56,11 +56,4 @@ public interface TextTranslator {
      * Save the settings as they have been modified in the component.
      */
     void saveSettings();
-
-    /**
-     * Returns the hard limit for translation request sizes.
-     *
-     * @return
-     */
-    int getMaxPayloadSize();
 }

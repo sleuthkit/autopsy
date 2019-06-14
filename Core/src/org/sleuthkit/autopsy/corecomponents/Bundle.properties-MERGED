@@ -32,7 +32,6 @@ DataResultViewerTable.commentRenderer.noComment.toolTip=No comments found
 DataResultViewerTable.commentRenderer.tagComment.toolTip=Comment exists on associated tag(s)
 DataResultViewerTable.countRender.name=O
 DataResultViewerTable.countRender.toolTip=O(ccurrences) indicates the number of data sources containing the item in the Central Repository
-DataResultViewerTable.exportCSVButtonActionPerformed.empty=No data to export
 DataResultViewerTable.firstColLbl=Name
 DataResultViewerTable.goToPageTextField.err=Invalid page number
 # {0} - totalPages
@@ -271,4 +270,3 @@ DataResultViewerTable.pageNumLabel.text=
 DataResultViewerTable.pageLabel.text=Page:
 ViewPreferencesPanel.maxResultsLabel.text=Maximum number of Results to show in table:
 ViewPreferencesPanel.maxResultsLabel.toolTipText=<html>\nSetting this value to 0 will display all results in the results table.\n<br>Note that setting this value to 0 may result in poor UI responsiveness when there are large numbers of results.\n</html>
-DataResultViewerTable.exportCSVButton.text=Save table as CSV

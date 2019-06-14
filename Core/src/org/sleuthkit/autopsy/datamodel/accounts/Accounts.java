@@ -57,7 +57,9 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
@@ -94,7 +96,7 @@ final public class Accounts implements AutopsyVisitableItem {
     final public static String NAME = Bundle.AccountsRootNode_name();
 
     private SleuthkitCase skCase;
-    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
+    private final long datasourceObjId;
     
     private final EventBus reviewStatusBus = new EventBus("ReviewStatusBus");
 
@@ -121,7 +123,7 @@ final public class Accounts implements AutopsyVisitableItem {
      */
     public Accounts(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.filteringDSObjId = objId;
+        this.datasourceObjId = objId;
 
         this.rejectActionInstance = new RejectAccounts();
         this.approveActionInstance = new ApproveAccounts();
@@ -151,8 +153,8 @@ final public class Accounts implements AutopsyVisitableItem {
      *         based on the CasePreferences groupItemsInTreeByDataSource setting 
      */
     private String getFilterByDataSourceClause() {
-        if (filteringDSObjId > 0) {
-            return "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId + " ";
+        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            return "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " ";
         }
         
         return " ";

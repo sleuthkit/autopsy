@@ -21,33 +21,19 @@ package org.sleuthkit.autopsy.texttranslation.translators;
 import com.google.cloud.translate.Language;
 
 /**
- * Wrapper for Language definitions used by translators
+ * Wrapper for the Language class
  */
-class LanguageWrapper {
+class GoogleLanguageWrapper {
 
-    private final String languageCode;
-    private final String languageDisplayName;
+    private final Language language;
 
     /**
-     * Create a new LanguageWrapper to wrap the google language object
+     * Create a new GoogleLanguageWrapper
      *
      * @param lang the Language object to wrap
      */
-    LanguageWrapper(Language language) {
-        languageCode = language.getCode();
-        languageDisplayName = language.getName();
-    }
-
-    /**
-     * Create a new LanguageWrapper to wrap json elements that identify a
-     * language for microsofts translation service
-     *
-     * @param code the code which uniquely identifies a language
-     * @param name the name of the language
-     */
-    LanguageWrapper(String code, String name) {
-        languageCode = code;
-        languageDisplayName = name;
+    GoogleLanguageWrapper(Language lang) {
+        language = lang;
     }
 
     /**
@@ -55,14 +41,14 @@ class LanguageWrapper {
      *
      * @return the wrapped Language
      */
-    String getLanguageCode() {
-        return languageCode;
+    Language getLanguage() {
+        return language;
     }
 
     @Override
     public String toString() {
-        //toString overridden so that the jComboBox in the TranslatorSettingsPanels will display the name of the language
-        return languageDisplayName;
+        //toString overridden so that the jComboBox in the GoogleTranslatorSettingsPanel will display the name of the language
+        return language.getName();
     }
 
 }

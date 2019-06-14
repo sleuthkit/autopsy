@@ -125,7 +125,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             }
         }
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -143,7 +142,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             }
         }
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -152,7 +150,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final DerivedFile d) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(AddContentTagAction.getInstance());
         
         final Collection<AbstractFile> selectedFilesList =
@@ -169,7 +166,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final LocalFile d) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(AddContentTagAction.getInstance());
         
         final Collection<AbstractFile> selectedFilesList =
@@ -186,7 +182,6 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final org.sleuthkit.datamodel.File d) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(AddContentTagAction.getInstance());
         
         final Collection<AbstractFile> selectedFilesList =

@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -38,6 +39,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -364,7 +366,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 + (UserPreferences.hideKnownFilesInViewsTree()
                 ? " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")"
                 : " ")
-                + (filteringDataSourceObjId() > 0
+                + (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
                 ? " AND data_source_obj_id = " + filteringDataSourceObjId()
                 : " ")
                 + " AND (extension IN (" + filter.getFilter().stream()

@@ -92,14 +92,12 @@ public final class GoogleTranslatorSettings {
         }
         if (ModuleSettings.settingExists(GOOGLE_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY)) {
             targetLanguageCode = ModuleSettings.getConfigSetting(GOOGLE_TRANSLATE_NAME, TARGET_LANGUAGE_CODE_KEY);
-        }
-        if (targetLanguageCode == null || StringUtils.isBlank(targetLanguageCode)) {
+        } else {
             targetLanguageCode = DEFAULT_TARGET_LANGUAGE;
         }
         if (ModuleSettings.settingExists(GOOGLE_TRANSLATE_NAME, CREDENTIAL_PATH_KEY)) {
             credentialPath = ModuleSettings.getConfigSetting(GOOGLE_TRANSLATE_NAME, CREDENTIAL_PATH_KEY);
-        }
-        if (credentialPath == null) {
+        } else {
             credentialPath = DEFAULT_CREDENTIAL_PATH;
         }
     }

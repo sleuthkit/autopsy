@@ -65,11 +65,6 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
      * Creates new form ThumbnailViewer
      */
     public MediaViewer() {
-        initComponents();
-        
-        splitPane.setResizeWeight(0.5);
-        splitPane.setDividerLocation(0.5);
-        
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
@@ -91,6 +86,8 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 }
             }
         };
+
+        initComponents();
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
@@ -193,37 +190,43 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
-        splitPane = new javax.swing.JSplitPane();
         thumbnailViewer = new org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail(tableEM);
         contentViewer = new MessageDataContent();
-
-        setLayout(new java.awt.GridBagLayout());
-
-        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        separator = new javax.swing.JSeparator();
 
         thumbnailViewer.setMinimumSize(new java.awt.Dimension(350, 102));
         thumbnailViewer.setPreferredSize(new java.awt.Dimension(450, 400));
-        splitPane.setLeftComponent(thumbnailViewer);
 
         contentViewer.setPreferredSize(new java.awt.Dimension(450, 400));
-        splitPane.setRightComponent(contentViewer);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        add(splitPane, gridBagConstraints);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(thumbnailViewer, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(contentViewer, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(separator)
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(thumbnailViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(contentViewer, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(3, 3, 3))
+        );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.contentviewers.MessageContentViewer contentViewer;
-    private javax.swing.JSplitPane splitPane;
+    private javax.swing.JSeparator separator;
     private org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail thumbnailViewer;
     // End of variables declaration//GEN-END:variables
 

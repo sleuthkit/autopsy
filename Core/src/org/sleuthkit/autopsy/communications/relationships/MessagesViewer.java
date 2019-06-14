@@ -23,6 +23,7 @@ import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -66,8 +67,6 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
      */
     public MessagesViewer() {
         initComponents();
-        
-        splitPane.setResizeWeight(0.5);
         
         outlineViewPanel.hideOutlineView(Bundle.MessageViewer_no_messages());
         
@@ -139,8 +138,6 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
                 updateOutlineViewPanel();
             }
         });
-        
-        outlineViewPanel.setTableColumnsWidth(5,10,10,15,50,10);
     }
 
     @Override
@@ -195,32 +192,29 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
-        splitPane = new javax.swing.JSplitPane();
         contentViewer = new MessageDataContent();
         outlineViewPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
-        setLayout(new java.awt.GridBagLayout());
-
-        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitPane.setBottomComponent(contentViewer);
-        splitPane.setLeftComponent(outlineViewPanel);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        add(splitPane, gridBagConstraints);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(contentViewer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(outlineViewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(outlineViewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(contentViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 390, Short.MAX_VALUE))
+        );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.contentviewers.MessageContentViewer contentViewer;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
-    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 }

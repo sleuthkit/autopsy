@@ -37,10 +37,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryNode.DataSourceSummaryEntryNode;
 import static javax.swing.SwingConstants.RIGHT;
-import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -52,10 +50,9 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceBrowser.class.getName());
-    private static final int COUNT_COLUMN_WIDTH = 20;
-    private static final int INGEST_STATUS_WIDTH = 50;
-    private static final int USAGE_COLUMN_WIDTH = 110;
-    private static final int DATA_SOURCE_COLUMN_WIDTH = 280;
+    private static final int COUNT_COLUMN_WIDTH = 25;
+    private static final int USAGE_COLUMN_WIDTH = 120;
+    private static final int DATA_SOURCE_COLUMN_WIDTH = 325;
     private final Outline outline;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
@@ -72,7 +69,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         outlineView = new org.openide.explorer.view.OutlineView();
         this.setVisible(true);
         outlineView.setPropertyColumns(
-                Bundle.DataSourceSummaryNode_column_status_header(), Bundle.DataSourceSummaryNode_column_status_header(),
                 Bundle.DataSourceSummaryNode_column_type_header(), Bundle.DataSourceSummaryNode_column_type_header(),
                 Bundle.DataSourceSummaryNode_column_files_header(), Bundle.DataSourceSummaryNode_column_files_header(),
                 Bundle.DataSourceSummaryNode_column_results_header(), Bundle.DataSourceSummaryNode_column_results_header(),
@@ -94,8 +90,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                 column.setPreferredWidth(COUNT_COLUMN_WIDTH);
             } else if (column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_type_header())) {
                 column.setPreferredWidth(USAGE_COLUMN_WIDTH);
-            } else if (column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_status_header())) {
-                column.setPreferredWidth(INGEST_STATUS_WIDTH);
             } else {
                 column.setPreferredWidth(DATA_SOURCE_COLUMN_WIDTH);
             }
@@ -186,47 +180,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
             return ((DataSourceSummaryEntryNode) selectedNode[0]).getDataSource();
         }
         return null;
-    }
-
-    /**
-     * Update the DataSourceBrowser to display up to date status information for
-     * the data sources.
-     *
-     * @param dataSourceId the ID of the data source which should be updated
-     * @param newStatus    the new status which the data source should have
-     */
-    void refresh(long dataSourceId, IngestJobInfo.IngestJobStatusType newStatus) {
-
-        //attempt to update the status of any datasources that had status which was STARTED
-        for (DataSourceSummary summary : dataSourceSummaryList) {
-            if (summary.getDataSource().getId() == dataSourceId) {
-                summary.setIngestStatus(newStatus);
-            }
-        }
-        //figure out which nodes were previously selected
-        Node[] selectedNodes = explorerManager.getSelectedNodes();
-        SwingUtilities.invokeLater(() -> {
-            explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
-            List<Node> nodesToSelect = new ArrayList<>();
-            for (Node node : explorerManager.getRootContext().getChildren().getNodes()) {
-                if (node instanceof DataSourceSummaryEntryNode) {
-                    //there should only be one selected node as multi-select is disabled
-                    for (Node selectedNode : selectedNodes) {
-                        if (((DataSourceSummaryEntryNode) node).getDataSource().equals(((DataSourceSummaryEntryNode) selectedNode).getDataSource())) {
-                            nodesToSelect.add(node);
-                        }
-                    }
-                }
-            }
-            //reselect the previously selected Nodes
-            try {
-                explorerManager.setSelectedNodes(nodesToSelect.toArray(new Node[nodesToSelect.size()]));
-            } catch (PropertyVetoException ex) {
-                logger.log(Level.WARNING, "Error selecting previously selected nodes", ex);
-            }
-
-        });
-
     }
 
     /**
