@@ -39,12 +39,30 @@ public final class EncryptionProgramsRule {
     
     // TODO: Add more files here
     static {
+        // Truecrypt
         FILENAMES.add("truecrypt.exe"); //NON-NLS
+        
+        // AxCrypt
         FILENAMES.add("AxCrypt.exe"); // NON-NLS
+
+        // VeraCrypt
         FILENAMES.add("VeraCrypt.exe"); // NON-NLS
         FILENAMES.add("VeraCrypt Format.exe"); // NON-NLS
         FILENAMES.add("VeraCrypt Setup.exe"); // NON-NLS
         FILENAMES.add("VeraCryptExpander.exe"); // NON-NLS
+
+        // GnuPG
+        FILENAMES.add("gpg-agent.exe"); // NON-NLS
+        FILENAMES.add("gpg-connect-agent.exe"); // NON-NLS
+        FILENAMES.add("gpg-preset-passphrase.exe"); // NON-NLS
+        FILENAMES.add("gpg-wks-client.exe"); // NON-NLS
+        FILENAMES.add("gpg.exe"); // NON-NLS
+        FILENAMES.add("gpgconf.exe"); // NON-NLS
+        FILENAMES.add("gpgme-w32spawn.exe"); // NON-NLS
+        FILENAMES.add("gpgsm.exe"); // NON-NLS
+        FILENAMES.add("gpgtar.exe"); // NON-NLS
+        FILENAMES.add("gpgv.exe"); // NON-NLS
+
     }
 
     public static String getName() {
