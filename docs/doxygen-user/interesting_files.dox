@@ -42,7 +42,7 @@ The top line allows you to choose whether you want to match only files, only dir
 Each rule must have at least one condition. To create conditions, check the box to the left of the condition you want to enable. The following is a description of each condition, with some full examples after.
 
 <ul>
-<li><b>Name</b> - Enter either the full file name or one or more extensions, and select whether this is an exact match or a substring/regex match. If substring/regex match is enabled, it will automatically add wildcards to the beginning and end of the text. If you're only matching directories, this will match the directory name. If you're using a comma-separated list of extensions, make sure the regex checkbox is disabled - the two features do not work together. The following table shows some examples of what the different combinations can be used for.
+<li><b>Name</b> - Enter either the full file name or one or more extensions, and select whether this is an exact match or a substring/regex match. If substring/regex match is enabled, it will automatically add wildcards to the beginning and end of the text. If you're only matching directories, this will match the directory name. If you're using a comma-separated list of extensions, make sure the regex checkbox is disabled - the entire contents will be interpreted as one regex when the checkbox is selected. The following table shows some examples of what the different combinations can be used for.
 
 <table>
 <tr><th>Type</th><th>Substring/Regex</th><th>Text</th><th>Description</th><th>Sample match</th></tr>
