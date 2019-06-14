@@ -128,8 +128,8 @@ SQLiteViewer.errorMessage.interrupted=The processing of the file was interrupted
 SQLiteViewer.errorMessage.noCurrentCase=The case has been closed.
 # {0} - exception message
 SQLiteViewer.errorMessage.unexpectedError=An unexpected error occurred:\n{0).
-SQLiteViewer.exportTableToCsv.FileName=File name: 
-SQLiteViewer.exportTableToCsv.TableName=Table name: 
+SQLiteViewer.exportTableToCsv.FileName=File name:
+SQLiteViewer.exportTableToCsv.TableName=Table name:
 SQLiteViewer.exportTableToCsv.write.errText=Failed to export table content to csv file.
 SQLiteViewer.nextPageButton.text=
 SQLiteViewer.prevPageButton.text=
