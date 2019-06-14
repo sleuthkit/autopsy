@@ -140,7 +140,7 @@ IngestJob.cancelReason.outOfDiskSpace.text=Out of disk space
 IngestJob.cancelReason.servicesDown.text=Services Down
 IngestJob.cancelReason.caseClosed.text=Case closed
 IngestJobSettingsPanel.globalSettingsButton.text=Global Settings
-gest
+gest=
 IngestJobSettingsPanel.globalSettingsButton.actionCommand=Advanced
 IngestJobSettingsPanel.globalSettingsButton.text=Global Settings
 IngestJobSettingsPanel.pastJobsButton.text=History
