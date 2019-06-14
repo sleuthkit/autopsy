@@ -58,6 +58,8 @@ public class ContentViewerTagManager {
      * generic tag data instance T will be automatically serialized into a
      * storable format.
      *
+     * @param <T> Generic class type that will be serialized into a storable
+     * format for persistence.
      * @param contentTag ContentTag that this ContentViewerTag is associated
      * with (1:1).
      * @param tagDataBean Data instance that contains the tag information to be
@@ -72,7 +74,7 @@ public class ContentViewerTagManager {
      * @throws NoCurrentCaseException Thrown if invocation of this method occurs
      * when no case is open.
      */
-    public static <T> ContentViewerTag<T> saveTag(ContentTag contentTag, T tagDataBean) 
+    public static <T> ContentViewerTag<T> saveTag(ContentTag contentTag, T tagDataBean)
             throws SerializationException, TskCoreException, NoCurrentCaseException {
         try {
             long contentTagId = contentTag.getId();
@@ -93,6 +95,8 @@ public class ContentViewerTagManager {
      * Updates the ContentViewerTag instance with the new tag data T and
      * persists the changes to the case database.
      *
+     * @param <T> Generic class type that will be serialized into a storable
+     * format.
      * @param oldTag ContentViewerTag instance to be updated
      * @param tagDataBean Data instance that contains the updated information to
      * be persisted.
@@ -126,6 +130,8 @@ public class ContentViewerTagManager {
      * details of the tag should be passed so that automatic binding can take
      * place.
      *
+     * @param <T> Generic class type that will be instantiated and filled in
+     * with data.
      * @param contentTag ContentTag that this ContentViewerTag is associated
      * with (1:1)
      * @param clazz Generic class that will be instantiated and filled in with

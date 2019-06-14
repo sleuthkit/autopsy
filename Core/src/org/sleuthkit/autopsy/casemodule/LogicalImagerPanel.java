@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -46,7 +47,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * select a file.
  */
 @Messages({
-    "LogicalImagerPanel.messageLabel.selectedImage=Selected folder",
     "LogicalImagerPanel.messageLabel.noImageSelected=No image selected",
     "LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images",
     "LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive",})
@@ -55,7 +55,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private static final long serialVersionUID = 1L;
     private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
-    private static final String SELECTED_IMAGE = Bundle.LogicalImagerPanel_messageLabel_selectedImage();
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
     private static final String DRIVE_HAS_NO_IMAGES = Bundle.LogicalImagerPanel_messageLabel_driveHasNoImages();
     private static final String[] EMPTY_LIST_DATA = {};
@@ -75,6 +74,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     private LogicalImagerPanel(String context) {
         this.contextName = context;
         initComponents();
+        jScrollPane1.setBorder(null);
         clearImageTable();
     }
 
@@ -86,13 +86,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
      *
      * @return instance of the LogicalImagerPanel
      */
-    @Messages({
-        "LogicalImagerPanel.messageLabel.clickScanOrBrowse=Click SCAN or BROWSE button to find images"
-    })
     public static synchronized LogicalImagerPanel createInstance(String context) {
         LogicalImagerPanel instance = new LogicalImagerPanel(context);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
-        instance.messageLabel.setText(Bundle.LogicalImagerPanel_messageLabel_clickScanOrBrowse());
         instance.imageTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         return instance;
     }
@@ -104,43 +100,68 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
-        topLabel = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        scanButton = new javax.swing.JButton();
-        messageLabel = new javax.swing.JLabel();
+        buttonGroup1 = new javax.swing.ButtonGroup();
+        browseButton = new javax.swing.JButton();
+        importRadioButton = new javax.swing.JRadioButton();
+        manualRadioButton = new javax.swing.JRadioButton();
+        pathTextField = new javax.swing.JTextField();
+        selectFolderLabel = new javax.swing.JLabel();
         selectDriveLabel = new javax.swing.JLabel();
+        selectFromDriveLabel = new javax.swing.JLabel();
         driveListScrollPane = new javax.swing.JScrollPane();
         driveList = new javax.swing.JList<>();
-        selectAcquisitionFromDriveLabel = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        browseButton = new javax.swing.JButton();
+        refreshButton = new javax.swing.JButton();
         imageScrollPane = new javax.swing.JScrollPane();
         imageTable = new javax.swing.JTable();
-        jSeparator1 = new javax.swing.JSeparator();
+        jSeparator2 = new javax.swing.JSeparator();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        messageTextArea = new javax.swing.JTextArea();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
 
-        org.openide.awt.Mnemonics.setLocalizedText(topLabel, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.topLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.jLabel1.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(scanButton, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.scanButton.text")); // NOI18N
-        scanButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.browseButton.text")); // NOI18N
+        browseButton.setEnabled(false);
+        browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                scanButtonActionPerformed(evt);
+                browseButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(messageLabel, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.messageLabel.text")); // NOI18N
+        buttonGroup1.add(importRadioButton);
+        importRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(importRadioButton, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.importRadioButton.text")); // NOI18N
+        importRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.importRadioButton.toolTipText")); // NOI18N
+        importRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                importRadioButtonActionPerformed(evt);
+            }
+        });
+
+        buttonGroup1.add(manualRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(manualRadioButton, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.manualRadioButton.text")); // NOI18N
+        manualRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                manualRadioButtonActionPerformed(evt);
+            }
+        });
+
+        pathTextField.setText(org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.pathTextField.text")); // NOI18N
+        pathTextField.setDisabledTextColor(java.awt.Color.black);
+        pathTextField.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(selectFolderLabel, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.selectFolderLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(selectDriveLabel, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.selectDriveLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(selectFromDriveLabel, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.selectFromDriveLabel.text")); // NOI18N
+
         driveList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         driveList.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                driveListMouseClicked(evt);
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                driveListMouseReleased(evt);
             }
         });
         driveList.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -150,14 +171,10 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         });
         driveListScrollPane.setViewportView(driveList);
 
-        org.openide.awt.Mnemonics.setLocalizedText(selectAcquisitionFromDriveLabel, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.selectAcquisitionFromDriveLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.jLabel6.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.browseButton.text")); // NOI18N
-        browseButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.refreshButton.text")); // NOI18N
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                browseButtonActionPerformed(evt);
+                refreshButtonActionPerformed(evt);
             }
         });
 
@@ -178,8 +195,8 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         imageTable.getTableHeader().setReorderingAllowed(false);
         imageTable.setUpdateSelectionOnSort(false);
         imageTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                imageTableMouseClicked(evt);
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                imageTableMouseReleased(evt);
             }
         });
         imageTable.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -190,72 +207,94 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         imageScrollPane.setViewportView(imageTable);
         imageTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
+        jScrollPane1.setBorder(null);
+
+        messageTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        messageTextArea.setColumns(20);
+        messageTextArea.setForeground(java.awt.Color.red);
+        messageTextArea.setLineWrap(true);
+        messageTextArea.setRows(3);
+        messageTextArea.setText(org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.messageTextArea.text")); // NOI18N
+        messageTextArea.setBorder(null);
+        messageTextArea.setDisabledTextColor(java.awt.Color.red);
+        messageTextArea.setEnabled(false);
+        messageTextArea.setMargin(new java.awt.Insets(0, 0, 0, 0));
+
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, messageTextArea, org.jdesktop.beansbinding.ELProperty.create("false"), messageTextArea, org.jdesktop.beansbinding.BeanProperty.create("editable"));
+        bindingGroup.addBinding(binding);
+
+        jScrollPane1.setViewportView(messageTextArea);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(238, 238, 238)
-                .addComponent(topLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(28, 28, 28)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(messageLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(selectDriveLabel)
-                                            .addGap(289, 289, 289))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                            .addComponent(scanButton)
-                                            .addGap(126, 126, 126)))
-                                    .addGap(36, 36, 36)
-                                    .addComponent(browseButton))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(28, 28, 28)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(selectAcquisitionFromDriveLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addGap(346, 346, 346)
-                                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addGap(144, 144, 144)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap(48, Short.MAX_VALUE))))
+                        .addGap(10, 10, 10)
+                        .addComponent(selectFolderLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(13, 13, 13)
+                        .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 474, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(41, 41, 41)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(refreshButton))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 377, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(20, 20, 20)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(manualRadioButton)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(browseButton))
+                                    .addComponent(importRadioButton)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(21, 21, 21)
+                                        .addComponent(selectDriveLabel)
+                                        .addGap(113, 113, 113)
+                                        .addComponent(selectFromDriveLabel))))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 568, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(topLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(scanButton)
-                    .addComponent(browseButton))
+                .addGap(16, 16, 16)
+                .addComponent(importRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(selectDriveLabel)
-                    .addComponent(selectAcquisitionFromDriveLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(selectFromDriveLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE))
-                .addGap(26, 26, 26)
-                .addComponent(messageLabel)
-                .addGap(154, 154, 154))
+                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 186, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(refreshButton)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(browseButton)
+                    .addComponent(manualRadioButton))
+                .addGap(18, 18, 18)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(selectFolderLabel)
+                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(6, 6, 6))
         );
+
+        bindingGroup.bind();
     }// </editor-fold>//GEN-END:initComponents
 
     public static String humanReadableByteCount(long bytes, boolean si) {
@@ -267,47 +306,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); //NON-NLS
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //NON-NLS
     }
-
-    @Messages({
-        "LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...",
-        "LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found"
-    })
-    private void scanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scanButtonActionPerformed
-        // Scan external drives for sparse_image.vhd
-        clearImageTable();
-        setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_scanningExternalDrives());
-        List<String> listData = new ArrayList<>();
-        File[] roots = File.listRoots();
-        int firstRemovableDrive = -1;
-        int i = 0;
-        for (File root : roots) {
-            String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
-            long spaceInBytes = root.getTotalSpace();
-            String sizeWithUnit = humanReadableByteCount(spaceInBytes, false);
-            listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
-            if (firstRemovableDrive == -1) {
-                try {
-                    FileStore fileStore = Files.getFileStore(root.toPath());
-                    if ((boolean) fileStore.getAttribute("volume:isRemovable")) { //NON-NLS
-                        firstRemovableDrive = i;
-                    }
-                } catch (IOException ex) {
-                    ; // skip
-                }
-            }
-            i++;
-        }
-        driveList.setListData(listData.toArray(new String[0]));
-        if (!listData.isEmpty()) {
-            // auto-select the first external drive, if any
-            driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
-            driveListMouseClicked(null);
-            driveList.requestFocusInWindow();
-        } else {
-            setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_noExternalDriveFound());
-        }
-        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
-    }//GEN-LAST:event_scanButtonActionPerformed
 
     @Messages({
         "# {0} - sparseImageDirectory",
@@ -333,7 +331,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                     return;
                 }
                 choosenImageDirPath = Paths.get(path);
-                setNormalMessage(SELECTED_IMAGE + " " + path);
+                setNormalMessage(path);
                 firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             } else {
                 setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryFormatInvalid(path));
@@ -348,7 +346,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         int index = imageTable.getSelectedRow();
         if (index != -1) {
             choosenImageDirPath = Paths.get((String) imageTableModel.getValueAt(index, 2));
-            setNormalMessage(SELECTED_IMAGE + " " + choosenImageDirPath.toString());
+            setNormalMessage(choosenImageDirPath.toString());
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } else {
             choosenImageDirPath = null;
@@ -356,10 +354,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
         }
     }
-
-    private void imageTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_imageTableMouseClicked
-        imageTableSelect();
-    }//GEN-LAST:event_imageTableMouseClicked
 
     private void driveListSelect() {
         String selectedStr = driveList.getSelectedValue();
@@ -398,7 +392,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                     }
                 }
             }
-            selectAcquisitionFromDriveLabel.setText(Bundle.LogicalImagerPanel_selectAcquisitionFromDriveLabel_text()
+            selectFromDriveLabel.setText(Bundle.LogicalImagerPanel_selectAcquisitionFromDriveLabel_text()
                     + " " + driveLetter);
             imageTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
             imageTable.setModel(imageTableModel);
@@ -411,6 +405,10 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                 choosenImageDirPath = null;
                 setErrorMessage(DRIVE_HAS_NO_IMAGES);
             }
+        } else {
+            clearImageTable();
+            choosenImageDirPath = null;
+            setErrorMessage(DRIVE_HAS_NO_IMAGES);
         }
     }
 
@@ -421,13 +419,14 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     }
 
     private void setErrorMessage(String msg) {
-        messageLabel.setForeground(Color.red);
-        messageLabel.setText(msg);
+        messageTextArea.setForeground(Color.red);
+        messageTextArea.setText(msg);
+        pathTextField.setText("");
     }
 
     private void setNormalMessage(String msg) {
-        messageLabel.setForeground(Color.black);
-        messageLabel.setText(msg);
+        pathTextField.setText(msg);
+        messageTextArea.setText("");
     }
 
     private void clearImageTable() {
@@ -436,43 +435,138 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         fixImageTableColumnWidth();
     }
 
-    private void driveListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseClicked
-        driveListSelect();
+    private void toggleMouseAndKeyListeners(Component component, boolean isEnable) {
+        component.setEnabled(isEnable);
+    }
+    
+    private void manualRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manualRadioButtonActionPerformed
+        browseButton.setEnabled(true);
+
+        // disable import panel
+        toggleMouseAndKeyListeners(driveList, false);
+        toggleMouseAndKeyListeners(driveListScrollPane, false);
+        toggleMouseAndKeyListeners(imageScrollPane, false);
+        toggleMouseAndKeyListeners(imageTable, false);
+
+        refreshButton.setEnabled(false);
+        
+        choosenImageDirPath = null;
+        setNormalMessage("");
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
-    }//GEN-LAST:event_driveListMouseClicked
+    }//GEN-LAST:event_manualRadioButtonActionPerformed
+
+    private void importRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importRadioButtonActionPerformed
+        browseButton.setEnabled(false);
+        
+        toggleMouseAndKeyListeners(driveList, true);
+        toggleMouseAndKeyListeners(driveListScrollPane, true);
+        toggleMouseAndKeyListeners(imageScrollPane, true);
+        toggleMouseAndKeyListeners(imageTable, true);
+
+        refreshButton.setEnabled(true);
+        
+        choosenImageDirPath = null;
+        setNormalMessage("");
+        refreshButton.doClick();
+    }//GEN-LAST:event_importRadioButtonActionPerformed
+
+    @Messages({
+        "LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...",
+        "LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found"
+    })
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
+        // Scan external drives for sparse_image.vhd
+        clearImageTable();
+        setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_scanningExternalDrives());
+        List<String> listData = new ArrayList<>();
+        File[] roots = File.listRoots();
+        int firstRemovableDrive = -1;
+        int i = 0;
+        for (File root : roots) {
+            String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
+            long spaceInBytes = root.getTotalSpace();
+            String sizeWithUnit = humanReadableByteCount(spaceInBytes, false);
+            listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
+            if (firstRemovableDrive == -1) {
+                try {
+                    FileStore fileStore = Files.getFileStore(root.toPath());
+                    if ((boolean) fileStore.getAttribute("volume:isRemovable")) { //NON-NLS
+                        firstRemovableDrive = i;
+                    }
+                } catch (IOException ex) {
+                    ; // skip
+                }
+            }
+            i++;
+        }
+        driveList.setListData(listData.toArray(new String[0]));
+        if (!listData.isEmpty()) {
+            // auto-select the first external drive, if any
+            driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
+            driveListMouseReleased(null);
+            driveList.requestFocusInWindow();
+        } else {
+            setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_noExternalDriveFound());
+        }
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+    }//GEN-LAST:event_refreshButtonActionPerformed
 
     private void driveListKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_driveListKeyReleased
-        driveListSelect();
-        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        if (importRadioButton.isSelected()) {
+            driveListSelect();
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        }
     }//GEN-LAST:event_driveListKeyReleased
 
     private void imageTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_imageTableKeyReleased
-        imageTableSelect();
-        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        if (importRadioButton.isSelected()) {
+            imageTableSelect();
+        }
     }//GEN-LAST:event_imageTableKeyReleased
 
+    private void imageTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_imageTableMouseReleased
+        if (importRadioButton.isSelected()) {
+            imageTableSelect();
+        }
+    }//GEN-LAST:event_imageTableMouseReleased
+
+    private void driveListMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseReleased
+        if (importRadioButton.isSelected()) {
+            driveListSelect();
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+        }
+    }//GEN-LAST:event_driveListMouseReleased
+
+   
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JList<String> driveList;
     private javax.swing.JScrollPane driveListScrollPane;
     private javax.swing.JScrollPane imageScrollPane;
     private javax.swing.JTable imageTable;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JLabel messageLabel;
-    private javax.swing.JButton scanButton;
-    private javax.swing.JLabel selectAcquisitionFromDriveLabel;
+    private javax.swing.JRadioButton importRadioButton;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JRadioButton manualRadioButton;
+    private javax.swing.JTextArea messageTextArea;
+    private javax.swing.JTextField pathTextField;
+    private javax.swing.JButton refreshButton;
     private javax.swing.JLabel selectDriveLabel;
-    private javax.swing.JLabel topLabel;
+    private javax.swing.JLabel selectFolderLabel;
+    private javax.swing.JLabel selectFromDriveLabel;
+    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 
     public void reset() {
         //reset the UI elements to default
         choosenImageDirPath = null;
+        setNormalMessage("");
         driveList.setListData(EMPTY_LIST_DATA);
         clearImageTable();
-        setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_clickScanOrBrowse());
+        if (importRadioButton.isSelected()) {
+            refreshButton.doClick();
+        }
     }
 
     /**
@@ -488,10 +582,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         return choosenImageDirPath;
     }
     
-    public void setMessageLabel(String message) {
-        messageLabel.setText(message);
-    }
-
     @Override
     public void insertUpdate(DocumentEvent e) {
     }
