@@ -188,6 +188,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
         UnthreadedNode() {
             super(Children.LEAF);
             setDisplayName("Unthreaded");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/unthreaded.png" );
         }
         
          @Override
