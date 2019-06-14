@@ -40,7 +40,7 @@ public final class EncryptionProgramsRule {
     // TODO: Add more files here
     static {
         // Truecrypt
-        FILENAMES.add("truecrypt.exe"); //NON-NLS
+        FILENAMES.add("truecrypt.exe"); // NON-NLS
         
         // AxCrypt
         FILENAMES.add("AxCrypt.exe"); // NON-NLS
@@ -62,6 +62,21 @@ public final class EncryptionProgramsRule {
         FILENAMES.add("gpgsm.exe"); // NON-NLS
         FILENAMES.add("gpgtar.exe"); // NON-NLS
         FILENAMES.add("gpgv.exe"); // NON-NLS
+        
+        // Symantec Encryption Desktop aka PGP
+        FILENAMES.add("PGP Viewer.exe"); // NON-NLS
+        FILENAMES.add("PGPcbt64.exe"); // NON-NLS
+        FILENAMES.add("PGPdesk.exe"); // NON-NLS
+        FILENAMES.add("PGPfsd.exe"); // NON-NLS
+        FILENAMES.add("PGPmnApp.exe"); // NON-NLS
+        FILENAMES.add("pgpnetshare.exe"); // NON-NLS
+        FILENAMES.add("pgpp.exe"); // NON-NLS
+        FILENAMES.add("PGPpdCreate.exe"); // NON-NLS
+        FILENAMES.add("pgppe.exe"); // NON-NLS
+        FILENAMES.add("pgpstart.exe"); // NON-NLS
+        FILENAMES.add("PGPtray.exe"); // NON-NLS
+        FILENAMES.add("PGPwde.exe"); // NON-NLS
+        FILENAMES.add("PGP Portable.exe"); // NON-NLS
 
     }
 
