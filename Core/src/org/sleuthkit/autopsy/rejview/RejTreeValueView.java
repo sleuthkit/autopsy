@@ -51,9 +51,9 @@ public final class RejTreeValueView extends RejTreeNodeView {
         "RejTreeValueView.valueBorder.title=Value",})
     public RejTreeValueView(RejTreeValueNode node) {
         super(new BorderLayout());
-        /**
-         * @param 1 Name
-         * @param 2 Type
+        /*
+         * param 1 Name
+         * param 2 Type
          */
         String metadataTemplate = "<html><i>"
                 + Bundle.RejTreeValueView_template_name()
@@ -63,8 +63,8 @@ public final class RejTreeValueView extends RejTreeNodeView {
         String valueName;
         String valueType;
 
-        /**
-         * @param 1 Value
+        /*
+         * param 1 Value
          */
         String valueTemplate = "<html>%1$s</html>";
         try {

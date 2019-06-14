@@ -29,6 +29,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
@@ -105,6 +106,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
+        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
 
