@@ -449,7 +449,7 @@ public final class ConfigVisualPanel2 extends JPanel {
                         ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
                         updateRow(row, ruleMap);
                         break;
-                    } catch (Exception ex) {
+                    } catch (IOException | NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this,
                             ex.getMessage(),
                             Bundle.ConfigVisualPanel2_editRuleError(),
