@@ -70,7 +70,7 @@ public class FileIDSelectionModel {
                 ArrayList<FileNode> fileNodes = new ArrayList<>();
                 for (Long id : fileIDs) {
                     try {
-                        fileNodes.add(new FileNode(controller.getSleuthKitCase().getAbstractFileById(id)));
+                        fileNodes.add(new FileNode(controller.getCaseDatabase().getAbstractFileById(id)));
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to get abstract file by its ID", ex); //NON-NLS
                     }

@@ -218,7 +218,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     /*
-     * Closes the singleton Image Gallery top component. 
+     * Closes the singleton Image Gallery top component.
      */
     public static void closeTopComponent() {
         ImageGalleryTopComponent topComponent = getTopComponent();
@@ -252,7 +252,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery",})
     private void openForCurrentCase() throws TskCoreException {
         Case currentCase = Case.getCurrentCase();
-        ImageGalleryController currentController = ImageGalleryController.getController(currentCase);
+        ImageGalleryController controllerForCase = ImageGalleryController.getController(currentCase);
 
         /*
          * Dispatch a task to run in the JavaFX thread. This task will swap the
@@ -270,20 +270,16 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                if (notEqual(controller, currentController)) {
-                    controller = currentController;
+                if (notEqual(controller, controllerForCase)) {
+                    controller = controllerForCase;
                     /*
                      * Create or re-create the top component's child UI
                      * components. This is currently done every time a new
-                     * controller is created (i.e., a new case is opened). It
-                     * could be done by resetting the controller in the child UI
-                     * components instead.
+                     * controller is created (i.e., a new case is opened).
+                     *
+                     * RJCTODO: Is it possible to just pass a new controller to
+                     * the child UI components instead of remaking them?
                      */
-                    // RJCTODO: Construction of these components can perhaps 
-                    // be separated from opening the window again so that
-                    // a setController implementation could be called from
-                    // the case opened event handler in the ImageGalleryModule
-                    // object.
                     fullUIStack = new StackPane();
                     myScene = new Scene(fullUIStack);
                     jfxPanel.setScene(myScene);
@@ -321,25 +317,12 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                     controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener(groupManagerListener);
 
                     /*
-                     * Dispatch a later task to call check for groups. Note that
-                     * this method displays one or more spinner(s) that take the
-                     * place of a wait cursor if there are no analyzed groups
-                     * yet, ingest is running, etc.
+                     * RJCTODO: Should this be done in
+                     * openWithSelectedDataSources instead?
                      */
-                    // RJCTODO: Is there a race condition here, since this task could be 
-                    // executed before the task to actually open the top component window?
-                    // It seems like this might be a sort of a hack and I am wondering 
-                    // why this can't be done in openWithSelectedDataSources instead.
                     Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy());
                 }
 
-                /*
-                 * Kick off a background task to query the case database for
-                 * data sources. This task may queue another task for the JavaFX
-                 * thread to allow the user to select which data sources for
-                 * which to display images. Ultimately, a task will be queued
-                 * for the AWT EDT that will show the top component window.
-                 */
                 new Thread(new Task<Void>() {
                     @Override
                     protected Void call() throws Exception {
@@ -351,7 +334,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                          * to select the data sources for which images are to be
                          * displayed, then open the top component.
                          */
-                        List<DataSource> dataSources = controller.getSleuthKitCase().getDataSources();
+                        List<DataSource> dataSources = controller.getCaseDatabase().getDataSources();
                         Map<DataSource, Boolean> dataSourcesWithTooManyFiles = new HashMap<>();
                         // RJCTODO: At least some of this designation of "all data sources" with null seems uneccessary; 
                         // in any case, the use of nulls and zeros here is 
@@ -506,7 +489,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
         // are there are files in the DB?
         try {
-            if (controller.getDatabase().countAllFiles() <= 0) {
+            if (controller.getDrawablesDatabase().countAllFiles() <= 0) {
                 // there are no files in db
                 if (controller.isListeningEnabled()) {
                     replaceNotification(fullUIStack,

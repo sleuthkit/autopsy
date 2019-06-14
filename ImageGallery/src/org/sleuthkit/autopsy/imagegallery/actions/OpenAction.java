@@ -249,7 +249,7 @@ public final class OpenAction extends CallableSystemAction {
                             // They don't want to rebuild. Just open the UI as is.
                             // NOTE: There could be no data....
                         } else if (answer == ButtonType.YES) {
-                            if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                            if (controller.getCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
                                 /*
                                  * For a single-user case, we favor user
                                  * experience, and rebuild the database as soon
@@ -269,7 +269,7 @@ public final class OpenAction extends CallableSystemAction {
                                  * the database only when a user launches Image
                                  * Gallery.
                                  */
-                                controller.queueDbRebuildTasks();
+                                controller.rebuildDrawablesDb();
                             }
                         }
                         openTopComponent();
