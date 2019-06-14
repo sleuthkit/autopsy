@@ -811,6 +811,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.jLabel7.text")); // NOI18N
 
         mimeTypeComboBox.setBackground(new java.awt.Color(240, 240, 240));
+        mimeTypeComboBox.setEditable(true);
         mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {""}));
         mimeTypeComboBox.setEnabled(false);
         mimeTypeComboBox.setMinimumSize(new java.awt.Dimension(0, 20));

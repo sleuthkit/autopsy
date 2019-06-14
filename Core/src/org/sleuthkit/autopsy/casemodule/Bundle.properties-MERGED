@@ -1,10 +1,18 @@
 AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
+# {0} - file
 AddLogicalImageTask.addingToReport=Adding {0} to report
+# {0} - src
+# {1} - dest
 AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
+# {0} - file
 AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
 AddLogicalImageTask.doneCopying=Done copying
+# {0} - file
+# {1} - exception message
 AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
+# {0} - src
+# {1} - dest
 AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
@@ -12,6 +20,7 @@ Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directo
 Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources
 Case.deleteCaseConfirmationDialog.message=Are you sure you want to close and delete the current case?
 Case.deleteCaseConfirmationDialog.title=Delete Current Case?
+# {0} - exception message
 Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}
 Case.deleteCaseFailureMessageBox.title=Failed to Delete Case
 Case.exceptionMessage.cancelledByUser=Cancelled by user.
@@ -174,19 +183,23 @@ LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01
 LogicalFilesDspPanel.subTypeComboBox.l01FileOption.text=Logical evidence file (L01)
 LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders
 LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
+# {0} - directory
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
+# {0} - directory
 LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
+# {0} - imageDirPath
 LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
 LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
-LogicalImagerPanel.messageLabel.clickScanOrBrowse=Click SCAN or BROWSE button to find images
+# {0} - sparseImageDirectory
+# {1} - image
 LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}
+# {0} - invalidFormatDirectory
 LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
 LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
 LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found
 LogicalImagerPanel.messageLabel.noImageSelected=No image selected
 LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...
-LogicalImagerPanel.messageLabel.selectedImage=Selected folder
 LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive
 Menu/Case/OpenRecentCase=Open Recent Case
 CTL_CaseDeleteAction=Delete Case
@@ -251,10 +264,15 @@ AddImageWizardIngestConfigPanel.dsProcDone.errs.text=*Errors encountered in addi
 AddImageWizardIngestConfigVisual.getName.text=Configure Ingest Modules
 AddImageWizardIterator.stepXofN=Step {0} of {1}
 AddLocalFilesTask.localFileAdd.progress.text=Adding: {0}/{1}
-Case.getCurCase.exception.noneOpen=Cannot get the current case; there is no case open!
+Case.getCurCase.exception.noneOpen=Cannot get the current case; there is no case open\!
 Case.open.msgDlg.updated.msg=Updated case database schema.\nA backup copy of the database with the following path has been made:\n {0}
 Case.open.msgDlg.updated.title=Case Database Schema Update
-Case.checkImgExist.confDlg.doesntExist.msg=One of the images associated with \nthis case are missing. Would you like to search for them now?\nPreviously, the image was located at:\n{0}\nPlease note that you will still be able to browse directories and generate reports\nif you choose No, but you will not be able to view file content or run the ingest process.
+Case.checkImgExist.confDlg.doesntExist.msg=One of the images associated with \n\
+this case are missing. Would you like to search for them now?\n\
+Previously, the image was located at:\n\
+{0}\n\
+Please note that you will still be able to browse directories and generate reports\n\
+if you choose No, but you will not be able to view file content or run the ingest process.
 Case.checkImgExist.confDlg.doesntExist.title=Missing Image
 Case.addImg.exception.msg=Error adding image to the case
 Case.updateCaseName.exception.msg=Error while trying to update the case name.
@@ -273,9 +291,12 @@ Case.GetCaseTypeGivenPath.Failure=Unable to get case type
 Case.metaDataFileCorrupt.exception.msg=The case metadata file (.aut) is corrupted.
 Case.deleteReports.deleteFromDiskException.log.msg=Unable to delete the report from the disk.
 Case.deleteReports.deleteFromDiskException.msg=Unable to delete the report {0} from the disk.\nYou may manually delete it from {1}
-CaseDeleteAction.closeConfMsg.text=Are you sure want to close and delete this case? \nCase Name: {0}\nCase Directory: {1}
+CaseDeleteAction.closeConfMsg.text=Are you sure want to close and delete this case? \n\
+     Case Name: {0}\n\
+     Case Directory: {1}
 CaseDeleteAction.closeConfMsg.title=Warning: Closing the Current Case
-CaseDeleteAction.msgDlg.fileInUse.msg=The delete action cannot be fully completed because the folder or file in it is open by another program.\n\nClose the folder and file and try again or you can delete the case manually.
+CaseDeleteAction.msgDlg.fileInUse.msg=The delete action cannot be fully completed because the folder or file in it is open by another program.\n\n\
+Close the folder and file and try again or you can delete the case manually.
 CaseDeleteAction.msgDlg.fileInUse.title=Error: Folder In Use
 CaseDeleteAction.msgDlg.caseDelete.msg=Case {0} has been deleted.
 CaseOpenAction.autFilter.title={0} Case File ( {1})
@@ -307,7 +328,8 @@ NewCaseWizardAction.databaseProblem1.text=Cannot open database. Cancelling case 
 NewCaseWizardAction.databaseProblem2.text=Error
 NewCaseWizardPanel1.validate.errMsg.invalidSymbols=The Case Name cannot contain any of the following symbols: \\ / : * ? " &lt; > |
 NewCaseWizardPanel1.validate.errMsg.dirExists=Case directory ''{0}'' already exists.
-NewCaseWizardPanel1.validate.confMsg.createDir.msg=The base directory "{0}" does not exist. \n\nDo you want to create that directory?
+NewCaseWizardPanel1.validate.confMsg.createDir.msg=The base directory "{0}" does not exist. \n\n\
+ Do you want to create that directory?
 NewCaseWizardPanel1.validate.confMsg.createDir.title=Create directory
 NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg=Error: Could not create case parent directory {0}
 NewCaseWizardPanel1.validate.errMsg.prevCreateBaseDir.msg=Prevented from creating base directory {0}
@@ -336,12 +358,14 @@ OptionalCasePropertiesPanel.lbPointOfContactPhoneLabel.text=Phone:
 OptionalCasePropertiesPanel.orgainizationPanel.border.title=Organization
 RecentCases.exception.caseIdxOutOfRange.msg=Recent case index {0} is out of range.
 RecentCases.getName.text=Clear Recent Cases
+# {0} - case name
 RecentItems.openRecentCase.msgDlg.text=Case {0} no longer exists.
 SelectDataSourceProcessorPanel.name.text=Select Type of Data Source To Add
 StartupWindow.title.text=Welcome
 UnpackagePortableCaseDialog.title.text=Unpackage Portable Case
 UnpackagePortableCaseDialog.UnpackagePortableCaseDialog.extensions=Portable case package (.zip, .zip.001)
 UnpackagePortableCaseDialog.validatePaths.badExtension=File extension must be .zip or .zip.001
+# {0} - case folder
 UnpackagePortableCaseDialog.validatePaths.caseFolderExists=Folder {0} already exists
 UnpackagePortableCaseDialog.validatePaths.caseIsNotFile=Selected path is not a file
 UnpackagePortableCaseDialog.validatePaths.caseNotFound=File does not exist
@@ -355,15 +379,15 @@ UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executabl
 UpdateRecentCases.menuItem.clearRecentCases.text=Clear Recent Cases
 UpdateRecentCases.menuItem.empty=-Empty-
 AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text=Cancel
-NewCaseVisualPanel1.CaseFolderOnCDriveError.text=Warning: Path to multi-user case folder is on "C:" drive
-NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text=Warning: Path to case folder is on "C:" drive. Case folder is created on the target system
+NewCaseVisualPanel1.CaseFolderOnCDriveError.text=Warning: Path to multi-user case folder is on \"C:\" drive
+NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text=Warning: Path to case folder is on \"C:\" drive. Case folder is created on the target system
 NewCaseVisualPanel1.CaseFolderOnInternalDriveLinuxError.text=Warning: Path to case folder is on the target system. Create case folder in mounted drive.
 CollaborationMonitor.addingDataSourceStatus.msg={0} adding data source
 CollaborationMonitor.analyzingDataSourceStatus.msg={0} analyzing {1}
 MissingImageDialog.lbWarning.text=
 MissingImageDialog.lbWarning.toolTipText=
 NewCaseVisualPanel1.caseParentDirWarningLabel.text=
-NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user\t\t
+NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user		
 NewCaseVisualPanel1.singleUserCaseRadioButton.text=Single-user
 NewCaseVisualPanel1.caseTypeLabel.text=Case Type: 
 SingleUserCaseConverter.BadDatabaseFileName=Database file does not exist!
@@ -449,13 +473,7 @@ OpenMultiUserCasePanel.cancelButton.text=Cancel
 OpenMultiUserCasePanel.openSingleUserCaseButton.text=Open Single-User Case...
 OpenMultiUserCasePanel.openSelectedCaseButton.text=Open Selected Case
 OpenMultiUserCasePanel.searchLabel.text=Select any case and start typing to search by case name
-LogicalImagerPanel.jLabel1.text=Insert external drive
-LogicalImagerPanel.scanButton.text=Scan
-LogicalImagerPanel.jLabel6.text=Or, pick a Logical Imager folder
 LogicalImagerPanel.browseButton.text=Browse
-LogicalImagerPanel.topLabel.text=Import Autopsy Imager Results
-LogicalImagerPanel.selectDriveLabel.text=Select Drive
-LogicalImagerPanel.messageLabel.text=Error/Status message
 UnpackagePortableCaseDialog.desc2Label.text=Portable Case Report Module.
 UnpackagePortableCaseDialog.desc1Label.text=Unpackage a portable case so it can be opened in Autopsy. Portable cases are created through the
 UnpackagePortableCaseDialog.exitButton.text=Exit
@@ -471,3 +489,12 @@ UnpackagePortableCaseProgressDialog.okButton.text=OK
 UnpackagePortableCaseProgressDialog.resultLabel.text=resultLabel
 UnpackagePortableCaseDialog.extractLabel.text=Folder to extract to:
 UnpackagePortableCaseDialog.caseLabel.text=Portable Case:
+LogicalImagerPanel.importRadioButton.text=Import From External Drive
+LogicalImagerPanel.manualRadioButton.text=Manually Choose Folder
+LogicalImagerPanel.importRadioButton.toolTipText=
+LogicalImagerPanel.pathTextField.text=
+LogicalImagerPanel.selectFolderLabel.text=Selected Folder:
+LogicalImagerPanel.refreshButton.text=Refresh
+LogicalImagerPanel.selectFromDriveLabel.text=Select Acquisition From Drive
+LogicalImagerPanel.selectDriveLabel.text=Select Drive
+LogicalImagerPanel.messageTextArea.text=
