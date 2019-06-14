@@ -89,7 +89,7 @@ public final class FileTypeUtils {
                             "application/json", //NON-NLS
                             "application/javascript", //NON-NLS
                             "application/xml", //NON-NLS
-                            "application/xhtml+xml",
+                            "application/xhtml+xml", //NON-NLS
                             "application/x-msoffice", //NON-NLS
                             "application/x-ooxml", //NON-NLS
                             "application/msword", //NON-NLS
