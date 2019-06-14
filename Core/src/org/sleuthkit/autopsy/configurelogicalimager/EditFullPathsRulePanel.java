@@ -260,11 +260,11 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         List<String> fullPaths = EditRulePanel.validateTextList(fullPathsTextArea, Bundle.EditFullPathsRulePanel_fullPaths());
         String ruleName = EditRulePanel.validRuleName(ruleNameTextField.getText());
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
-        builder.shouldAlert(shouldAlertCheckBox.isSelected())
-                .shouldSave(shouldSaveCheckBox.isSelected())
-                .name(ruleName)
-                .description(descriptionTextField.getText())
-                .fullPaths(fullPaths);
+        builder.getShouldAlert(shouldAlertCheckBox.isSelected())
+                .getShouldSave(shouldSaveCheckBox.isSelected())
+                .getName(ruleName)
+                .getDescription(descriptionTextField.getText())
+                .getFullPaths(fullPaths);
         LogicalImagerRule rule = builder.build();
         return new ImmutablePair<>(ruleName, rule);
     }

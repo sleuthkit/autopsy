@@ -449,16 +449,16 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         List<String> folderNames = EditRulePanel.validateTextList(folderNamesTextArea, Bundle.EditNonFullPathsRulePanel_folderNames());
         
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
-        builder.name(ruleName)
-                .description(descriptionTextField.getText())
-                .shouldAlert(shouldAlertCheckBox.isSelected())
-                .shouldSave(shouldSaveCheckBox.isSelected())
-                .paths(folderNames);
+        builder.getName(ruleName)
+                .getDescription(descriptionTextField.getText())
+                .getShouldAlert(shouldAlertCheckBox.isSelected())
+                .getShouldSave(shouldSaveCheckBox.isSelected())
+                .getPaths(folderNames);
         
         if (extensionsRadioButton.isSelected()) {
-            builder.extensions(extensions);
+            builder.getExtensions(extensions);
         } else {
-            builder.filenames(filenames);
+            builder.getFilenames(filenames);
         }
         
         int minDays;
@@ -469,7 +469,7 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 if (minDays < 0) {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_modifiedDaysNotPositiveException());
                 }
-                builder.minDays(minDays);
+                builder.getMinDays(minDays);
             } catch (NumberFormatException | ParseException ex) {
                 throw new IOException(Bundle.EditNonFullPathsRulePanel_modifiedDaysMustBeNumberException(ex.getMessage()), ex);
             }
@@ -505,10 +505,10 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeSmallerThanMinException(maxFileSize, minFileSize));
         }
         if (minFileSize != 0) {
-            builder.minFileSize(minFileSize);
+            builder.getMinFileSize(minFileSize);
         }
         if (maxFileSize != 0) {
-            builder.maxFileSize(maxFileSize);
+            builder.getMaxFileSize(maxFileSize);
         }
         
         LogicalImagerRule rule = builder.build();

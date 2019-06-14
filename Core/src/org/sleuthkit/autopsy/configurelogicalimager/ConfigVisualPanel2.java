@@ -551,11 +551,11 @@ public final class ConfigVisualPanel2 extends JPanel {
      */
     private ImmutablePair<String, LogicalImagerRule> createEncryptionProgramsRule() {
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
-        builder.name(EncryptionProgramsRule.getName())
-                .description(EncryptionProgramsRule.getDescription())
-                .shouldAlert(true)
-                .shouldSave(true)
-                .filenames(EncryptionProgramsRule.getFilenames());
+        builder.getName(EncryptionProgramsRule.getName())
+                .getDescription(EncryptionProgramsRule.getDescription())
+                .getShouldAlert(true)
+                .getShouldSave(true)
+                .getFilenames(EncryptionProgramsRule.getFilenames());
         LogicalImagerRule rule = builder.build();
         return new ImmutablePair<>(EncryptionProgramsRule.getName(), rule);
     }

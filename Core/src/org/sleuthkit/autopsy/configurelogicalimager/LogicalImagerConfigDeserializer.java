@@ -186,19 +186,19 @@ public class LogicalImagerConfigDeserializer implements JsonDeserializer<Logical
             }
             
             LogicalImagerRule rule = new LogicalImagerRule.Builder()
-                    .shouldAlert(shouldAlert)
-                    .shouldSave(shouldSave)
-                    .name(name)
-                    .description(description)
-                    .extensions(extensions)
-                    .paths(paths)
-                    .fullPaths(fullPaths)
-                    .filenames(filenames)
-                    .minFileSize(minFileSize)
-                    .maxFileSize(maxFileSize)
-                    .minDays(minDays)
-                    .minDate(minDate)
-                    .maxDate(maxDate)
+                    .getShouldAlert(shouldAlert)
+                    .getShouldSave(shouldSave)
+                    .getName(name)
+                    .getDescription(description)
+                    .getExtensions(extensions)
+                    .getPaths(paths)
+                    .getFullPaths(fullPaths)
+                    .getFilenames(filenames)
+                    .getMinFileSize(minFileSize)
+                    .getMaxFileSize(maxFileSize)
+                    .getMinDays(minDays)
+                    .getMinDate(minDate)
+                    .getMaxDate(maxDate)
                     .build();
             rules.add(rule);
         } // for
