@@ -9,7 +9,7 @@ The general use case is as follows:
 <ol>
 <li>Alice is analyzing one or more data sources using Autopsy. She tags files and results that are of particular interest.
 <li>Alice wants to share her findings with Bob but is unable to send him the original data sources because he shouldn't see them or the originals are too big.
-<li>Alice creates a portable case which will contain only her tagged files and results, plus any files associated with those results, and sends it to Bob.
+<li>Alice creates a portable case which will contain only her tagged files and results, plus any files associated with those results, and sends it to Bob. She could also choose to include \ref interesting_files_identifier_page "interesting files" or results.
 <li>Bob can open the portable case in Autopsy and view all files and results Alice tagged, and run any of the normal Autopsy features.
 </ol>
 
@@ -21,24 +21,37 @@ The portable version could like this:
 
 \image html portable_case_portable_version.png
 
-Alice only tagged eight files and results, so most of the original content is no longer in the case. Some of the data sources had no tagged items so they're not included at all. The file structure of any tagged files is preserved - you can see that the tagged image in the screenshot is still in the same location, but the non-tagged files are gone. Note that although the original images (such as "image1.vhd") appear in the tree, their contents are not included in the portable case.
+Alice only tagged eight files and results and her case had no interesting items, so most of the original content is no longer in the case. Some of the data sources had no tagged items so they're not included at all. The file structure of any tagged files is preserved - you can see that the tagged image in the screenshot is still in the same location, but the non-tagged files are gone. Note that although the original images (such as "image1.vhd") appear in the tree, their contents are not included in the portable case.
 
 \section portable_case_creation Creating a Portable Case
 
-First you'll want to make sure that all the files and results you want included in the portable case are tagged - see the \ref tagging_page page for more details. 
-You can see what tags you've added in the \ref tree_viewer_page.
+A portable case can contain tagged files and results and data from the Interesting Items section of the \ref result_viewer_page. You'll be able to choose which of the Interesting Item sets you want to include in the portable case.
+
+\image html portable_case_interesting_items.png
+
+You can tag any additional files you want to include in the portable case. See the \ref tagging_page page for details on how to create tags. You can see what tags you've added in the \ref tree_viewer_page.
 
 \image html portable_case_tags.png
 
-Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags that are in use in the current case and you can choose which ones you would like to include. At the bottom you can select the output folder for the new case. By default it will be placed in the "Reports" folder in the current case.
+Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpackage Portable Case" option before loading it. This will be discussed in the next section. 
+
+The portable case will be placed in the "Reports" folder in the current case.
 
 \image html portable_case_report_panel.png
 
-Here you can see the new portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. The portable case folder can be zipped and sent to a different user.
+Here you can see an unpackaged portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. 
 
 \image html portable_case_folder.png
 
+If you packaged the portable case but did not choose to split it into chunks, you'll have a single .zip file. If you chose to split the packaged case, you'll have one or more files starting with extension .zip.001.
+
+\image html portable_case_chunks.png
+
 \section portable_case_usage Using a Portable Case
+
+If your portable case was packaged, you'll first need to unpackage it. Open the "Case" menu and then select "Unpackage Portable Case". This will bring up a dialog where you can browse to your packaged case and select where to extract it to. Once unpackaged you can open it normally.
+
+\image html portable_case_unpackage.png
 
 Portable cases generally behave like any other Autopsy case. You can run ingest, do keyword searches, use the timeline viewer, etc. One point to note is that while the original data source names appear in the case, the data sources themselves were not copied into the portable case.
 
