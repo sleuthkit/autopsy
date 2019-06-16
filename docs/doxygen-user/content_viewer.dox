@@ -66,6 +66,10 @@ HTML files can be displayed closer to their original form:
 
 \image html content_viewer_html.png
 
+Registry hive files can be viewed in a format similar to a registry editor.
+
+\image html content_viewer_registry.png
+
 \section cv_message Message
 
 The Message tab shows details of emails and SMS messages. 
