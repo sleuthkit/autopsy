@@ -29,7 +29,7 @@ import java.util.List;
 import javax.swing.JComboBox;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.contentviewers.textcontentviewer.AutoWrappingJTextPane;
+import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 
 /**
  * A JPanel used by TranslatedContentViewer to display machine translation of
