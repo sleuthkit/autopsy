@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -69,6 +68,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingPathText");
     private static final String ERROR_GETTING_INDEX_STATUS_TEXT = NbBundle
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
+    private static final Logger logger = Logger.getLogger(HashLookupSettingsPanel.class.getName());
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
     private final List<Integer> newReferenceSetIDs = new ArrayList<>();
@@ -395,10 +395,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
     @NbBundle.Messages({"# {0} - nsrlUrlAddress",
-        "# {1} - nsrlHashSets",
-        "HashLookupSettingsPanel.removeUnindexedNsrl.text=instead of indexing the NSRL please download an already indexed version available here: {0}\n\nHash set(s):{1}",
-        "HashLookupSettingsPanel.unindexedNsrl.base=The following hash set appears to be an unindexed version of the NSRL it will be removed, ",
-        "HashLookupSettingsPanel.unindexedNsrls.base=The following hash sets appear to be unindexed versions of the NSRL they will be removed, ",
+        "HashLookupSettingsPanel.removeUnindexedNsrl.text=Instead of indexing the NSRL, please download an already indexed version available here:\n{0}",
+        "# {0} - nsrlHashSet",
+        "HashLookupSettingsPanel.unindexedNsrl.base=The following hash set appears to be an unindexed version of the NSRL, it will be removed from the list.\nHash set:{0}\n",
+        "# {0} - nsrlHashSets",
+        "HashLookupSettingsPanel.unindexedNsrls.base=The following hash sets appear to be unindexed versions of the NSRL, they will be removed from the list.\nHash sets:{0}\n",
         "HashLookupSettingsPanel.removeUnindexedNsrl.title=Unindexed NSRL(s) will be removed"})
     private void showInvalidIndex(List<SleuthkitHashSet> unindexed) {
         String total = "";
@@ -417,9 +418,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         if (!nsrlHashsets.isEmpty()) {
             String message;
             if (nsrlHashsets.size() > 1) {
-                message = Bundle.HashLookupSettingsPanel_unindexedNsrls_base() + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL, nsrlTotal);
+                message = Bundle.HashLookupSettingsPanel_unindexedNsrls_base(nsrlTotal) + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL);
             } else {
-                message = Bundle.HashLookupSettingsPanel_unindexedNsrl_base() + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL, nsrlTotal);
+                message = Bundle.HashLookupSettingsPanel_unindexedNsrl_base(nsrlTotal) + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL);
             }
             JOptionPane.showMessageDialog(this, message, Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_title(), JOptionPane.INFORMATION_MESSAGE);
             for (SleuthkitHashSet hdb : nsrlHashsets) {
@@ -975,8 +976,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
-    @NbBundle.Messages({"# {0} - nsrlUrl",
-        "HashLookupSettingsPanel.indexNsrl.text=This hash set appears to be the NSRL, instead of indexing the NSRL please download an already indexed version available here: {0}",
+
+    @NbBundle.Messages({"HashLookupSettingsPanel.indexNsrl.text=This hash set appears to be the NSRL, it will be removed from the list.\n",
         "HashLookupSettingsPanel.indexNsrl.title=NSRL will not be indexed"})
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
         final HashDb hashDatabase = ((HashSetTable) hashSetTable).getSelection();
@@ -987,7 +988,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         // the UI.
         SleuthkitHashSet hashDb = (SleuthkitHashSet) hashDatabase;
         if (hashDb.getHashSetName().toLowerCase().contains(NSRL_NAME_STRING)) {
-            JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_indexNsrl_text(NSRL_URL), Bundle.HashLookupSettingsPanel_indexNsrl_title(), JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_indexNsrl_text() + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL), Bundle.HashLookupSettingsPanel_indexNsrl_title(), JOptionPane.INFORMATION_MESSAGE);
+            try {
+                hashSetManager.removeHashDatabaseNoSave(hashDatabase);
+                hashSetTableModel.refreshModel();
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            } catch (HashDbManager.HashDbManagerException ex) {
+                logger.log(Level.WARNING, "Unable to remove unindexed NSRL from hash set list", ex);
+            }
         } else {
             hashDb.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
