@@ -100,7 +100,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         buttonGroup1 = new javax.swing.ButtonGroup();
         browseButton = new javax.swing.JButton();
@@ -219,10 +218,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         messageTextArea.setDisabledTextColor(java.awt.Color.red);
         messageTextArea.setEnabled(false);
         messageTextArea.setMargin(new java.awt.Insets(0, 0, 0, 0));
-
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, messageTextArea, org.jdesktop.beansbinding.ELProperty.create("false"), messageTextArea, org.jdesktop.beansbinding.BeanProperty.create("editable"));
-        bindingGroup.addBinding(binding);
-
         jScrollPane1.setViewportView(messageTextArea);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -262,7 +257,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 568, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addContainerGap(338, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -276,7 +271,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 186, Short.MAX_VALUE))
+                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 461, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(refreshButton)
                 .addGap(18, 18, 18)
@@ -293,8 +288,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(6, 6, 6))
         );
-
-        bindingGroup.bind();
     }// </editor-fold>//GEN-END:initComponents
 
     public static String humanReadableByteCount(long bytes, boolean si) {
@@ -555,7 +548,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     private javax.swing.JLabel selectDriveLabel;
     private javax.swing.JLabel selectFolderLabel;
     private javax.swing.JLabel selectFromDriveLabel;
-    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 
     public void reset() {
