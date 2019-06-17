@@ -41,7 +41,7 @@ public final class ImageTagCreator extends Rectangle {
     //Rectangle lines should be 1.5% of the image. This level of thickness has
     //a good balance between visual acuity and loss of selection at the borders
     //of the image.
-    private final static double lineThicknessAsPercent = 1.5;
+    private final static double LINE_THICKNESS_PERCENT = 1.5;
     private final double minArea;
     
     //Used to update listeners of the new tag boundaries
@@ -68,11 +68,11 @@ public final class ImageTagCreator extends Rectangle {
         //Calculate how many pixels the stroke width should be to guarentee
         //a consistent % of image consumed by the rectangle border.
         double min = Math.min(image.getImage().getWidth(), image.getImage().getHeight());
-        double lineThicknessPixels = min * lineThicknessAsPercent / 100.0;
+        double lineThicknessPixels = min * LINE_THICKNESS_PERCENT / 100.0;
         setStrokeWidth(lineThicknessPixels);
         minArea = lineThicknessPixels * lineThicknessPixels;
         setVisible(false);
-
+        
         this.mousePressed = (MouseEvent event) -> {
             if (event.isSecondaryButtonDown()) {
                 return;

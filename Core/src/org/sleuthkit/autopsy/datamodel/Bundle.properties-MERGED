@@ -4,12 +4,11 @@ AbstractAbstractFileNode.changeTimeColLbl=Change Time
 AbstractAbstractFileNode.createdTimeColLbl=Created Time
 AbstractAbstractFileNode.createSheet.comment.displayName=C
 AbstractAbstractFileNode.createSheet.comment.name=C
-# {0} - occuranceCount
-AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value
+# {0} - occurenceCount
+AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurences of the MD5 correlation value
 AbstractAbstractFileNode.createSheet.count.displayName=O
 AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated
 AbstractAbstractFileNode.createSheet.count.name=O
-AbstractAbstractFileNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated
 AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.
 AbstractAbstractFileNode.createSheet.noScore.description=No score
 AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.
@@ -54,12 +53,13 @@ BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type
 BlackboardArtifactNode.createSheet.artifactType.name=Result Type
 BlackboardArtifactNode.createSheet.comment.displayName=C
 BlackboardArtifactNode.createSheet.comment.name=C
-# {0} - occuranceCount
-BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value
+# {0} - occurenceCount
+# {1} - attributeType
+BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}
 BlackboardArtifactNode.createSheet.count.displayName=O
-BlackboardArtifactNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this artifact's associated file when the column was populated
 BlackboardArtifactNode.createSheet.count.name=O
-BlackboardArtifactNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated
+BlackboardArtifactNode.createSheet.count.noCorrelationAttributes.description=No correlation properties found
+BlackboardArtifactNode.createSheet.count.noCorrelationValues.description=Unable to find other occurrences because no value exists for the available correlation property
 BlackboardArtifactNode.createSheet.fileSize.displayName=Size
 BlackboardArtifactNode.createSheet.fileSize.name=Size
 BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.
@@ -115,6 +115,8 @@ FileTypesByMimeTypeNode.createSheet.mediaSubtype.name=Subtype
 FileTypesByMimeTypeNode.createSheet.mediaType.desc=no description
 FileTypesByMimeTypeNode.createSheet.mediaType.displayName=Type
 FileTypesByMimeTypeNode.createSheet.mediaType.name=Type
+GetSCOTask.occurrences.defaultDescription=No correlation properties found
+GetSCOTask.occurrences.multipleProperties=Multiple different correlation properties exist for this result
 ImageNode.action.runIngestMods.text=Run Ingest Modules
 ImageNode.createSheet.deviceId.desc=Device ID of the image
 ImageNode.createSheet.deviceId.displayName=Device ID
