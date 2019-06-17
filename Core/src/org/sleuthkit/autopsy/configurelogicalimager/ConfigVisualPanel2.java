@@ -66,10 +66,6 @@ public final class ConfigVisualPanel2 extends JPanel {
         return Bundle.ConfigVisualPanel2_editConfiguration();
     }
 
-    public boolean isFlagEncryptionPrograms() {
-        return flagEncryptionPrograms;
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -736,10 +732,6 @@ public final class ConfigVisualPanel2 extends JPanel {
         extensionsTextField.setText("");
         updateList(filenamesTable, EMPTY_LIST);
         updateList(folderNamesTable, EMPTY_LIST);
-    }
-
-    boolean isPanelValid() {
-        return true;
     }
 
     private void updateRow(int index, ImmutablePair<String, LogicalImagerRule> ruleMap) {

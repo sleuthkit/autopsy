@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -40,7 +39,6 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;
-    List<String> newFullPaths = new ArrayList<>();
     private final JTextArea fullPathsTextArea;
     
     /**
@@ -123,11 +121,6 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.ruleNameLabel.text")); // NOI18N
 
         ruleNameTextField.setText(org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.ruleNameTextField.text")); // NOI18N
-        ruleNameTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ruleNameTextFieldActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -174,10 +167,6 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void ruleNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleNameTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ruleNameTextFieldActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

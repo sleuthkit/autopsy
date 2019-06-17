@@ -51,7 +51,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     private ConfigVisualPanel2 component;
     private String configFilename;
     private LogicalImagerConfig config;
-    boolean valid = false;
+    private boolean valid = false;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -94,14 +94,6 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
-    }
-
-    public String getConfigFilename() {
-        return configFilename;
-    }
-
-    public LogicalImagerConfig getConfig() {
-        return config;
     }
     
     @NbBundle.Messages({

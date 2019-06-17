@@ -39,7 +39,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
      * component from this class, just use getComponent().
      */
     private ConfigVisualPanel1 component;
-    boolean valid = false;
+    private boolean valid = false;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created

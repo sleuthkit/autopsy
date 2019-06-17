@@ -71,6 +71,14 @@ public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         initTextArea(filenamesScrollPane, filenamesTextArea);
         setTextArea(filenamesTextArea, rule.getFilenames());
 
+        if (rule.getExtensions() == null) {
+            extensionsRadioButton.setSelected(false);
+            filenamesRadioButton.setSelected(true);
+        } else {
+            extensionsRadioButton.setSelected(true);
+            filenamesRadioButton.setSelected(false);
+        }
+        
         folderNamesTextArea = new JTextArea();
         initTextArea(folderNamesScrollPane, folderNamesTextArea);
         setTextArea(folderNamesTextArea, rule.getPaths());
