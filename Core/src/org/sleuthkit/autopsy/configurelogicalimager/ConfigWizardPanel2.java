@@ -51,7 +51,6 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
     private ConfigVisualPanel2 component;
     private String configFilename;
     private LogicalImagerConfig config;
-    private boolean valid = false;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
