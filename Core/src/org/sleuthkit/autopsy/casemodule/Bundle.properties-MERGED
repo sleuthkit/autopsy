@@ -215,8 +215,7 @@ LogicalImagerDSProcessor.noCurrentCase=No current case
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
 LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
 # {0} - sparseImageDirectory
-# {1} - image
-LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}
+LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
 # {0} - invalidFormatDirectory
 LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
 LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
