@@ -360,7 +360,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                 return name.endsWith(".vhd");
             }
         });
-        return fList.length != 0;
+        return (fList != null && fList.length != 0);
     }
     
     private void driveListSelect() {
