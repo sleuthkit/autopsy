@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
@@ -41,6 +44,12 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.autopsy.ingest.IngestJob;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestModuleError;
 
 /**
  * Test tool that creates a multi user case, database, KWS index, runs ingest,
@@ -117,7 +126,17 @@ class MultiUserTestTool {
                 return "Unable to add test file as data source to case";
             }
 
-            // 5 (NTH) Runs ingest on that data source and reports errors if the modules could not start.
+            try {
+                // 5 (NTH) Runs ingest on that data source and reports errors if the modules could not start.
+                String error = analyze(dataSource);
+                if (!error.isEmpty()) {
+                    LOGGER.log(Level.SEVERE, error);
+                    return error;
+                }
+            } catch (InterruptedException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to run ingest on test data source", ex);
+                return "Unable to run ingest on test data source";
+            }
             //} catch (Throwable ex) {
         } finally {
             // 6 (MH) Close and delete the case.
@@ -152,8 +171,9 @@ class MultiUserTestTool {
      *
      * @param caseForJob The case
      * @param dataSource The data source.
-     * 
-     * @return Error String if there was an error, empty string if the data source was added successfully
+     *
+     * @return Error String if there was an error, empty string if the data
+     * source was added successfully
      *
      * @throws InterruptedException if the thread running the job processing
      * task is interrupted while blocked, i.e., if ingest is shutting down.
@@ -185,6 +205,82 @@ class MultiUserTestTool {
 
             return "";
         }
+    }
+
+    /**
+     * Analyzes the data source content returned by the data source processor
+     * using the configured set of data source level and file level analysis
+     * modules.
+     *
+     * @param dataSource The data source to analyze.
+     *
+     * @return Error String if there was an error, empty string if the data
+     * source was analyzed successfully
+     *
+     * @throws InterruptedException if the thread running the job processing
+     * task is interrupted while blocked, i.e., if auto ingest is shutting down.
+     */
+    private static String analyze(AutoIngestDataSource dataSource) throws InterruptedException {
+
+        LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", dataSource.getPath());
+        IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
+        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
+        try {
+            synchronized (INGEST_LOCK) {
+                IngestJobSettings ingestJobSettings = new IngestJobSettings("DummyExecutionContext");
+                List<String> settingsWarnings = ingestJobSettings.getWarnings();
+                if (settingsWarnings.isEmpty()) {
+                    IngestJobStartResult ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
+                    IngestJob ingestJob = ingestJobStartResult.getJob();
+                    if (null != ingestJob) {
+                        /*
+                             * Block until notified by the ingest job event
+                             * listener or until interrupted because auto ingest
+                             * is shutting down.
+                         */
+                        INGEST_LOCK.wait();
+                        LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", dataSource.getPath());
+                        IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
+                        for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
+                            if (!snapshot.isCancelled()) {
+                                List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
+                                if (!cancelledModules.isEmpty()) {
+                                    LOGGER.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", dataSource.getPath()));
+                                    for (String module : snapshot.getCancelledDataSourceIngestModules()) {
+                                        LOGGER.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, dataSource.getPath()));
+                                    }
+                                }
+                                LOGGER.log(Level.INFO, "Analysis of data source completed");
+                            } else {
+                                LOGGER.log(Level.WARNING, "Analysis of data source cancelled");
+                                IngestJob.CancellationReason cancellationReason = snapshot.getCancellationReason();
+                                if (IngestJob.CancellationReason.NOT_CANCELLED != cancellationReason && IngestJob.CancellationReason.USER_CANCELLED != cancellationReason) {
+                                    return "Ingest cancelled due to " + cancellationReason.getDisplayName();
+                                }
+                            }
+                        }
+                    } else if (!ingestJobStartResult.getModuleErrors().isEmpty()) {
+                        for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
+                            LOGGER.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), dataSource.getPath()), error.getThrowable());
+                        }
+                        LOGGER.log(Level.SEVERE, "Failed to analyze data source due to ingest job startup error");
+                        return "Failed to analyze data source due to ingest job startup error";
+                    } else {
+                        LOGGER.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", dataSource.getPath()), ingestJobStartResult.getStartupException());
+                        return "Ingest manager error while starting ingest job";
+                    }
+                } else {
+                    for (String warning : settingsWarnings) {
+                        LOGGER.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{dataSource.getPath(), warning});
+                    }
+                    return "Failed to analyze data source due to ingest settings errors";
+                }
+            }
+        } finally {
+            IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventListener);
+        }
+        // ingest completed successfully
+        return "";
     }
 
     /**
@@ -221,4 +317,35 @@ class MultiUserTestTool {
         public void setProgressText(final String text) {
         }
     }
+
+    /**
+     * An ingest job event listener that allows the job processing task to block
+     * until the analysis of a data source by the data source level and file
+     * level ingest modules is completed.
+     * <p>
+     * Note that the ingest job can spawn "child" ingest jobs (e.g., if an
+     * embedded virtual machine is found), so the job processing task must
+     * remain blocked until ingest is no longer running.
+     */
+    private static class IngestJobEventListener implements PropertyChangeListener {
+
+        /**
+         * Listens for local ingest job completed or cancelled events and
+         * notifies the job processing thread when such an event occurs and
+         * there are no "child" ingest jobs running.
+         *
+         * @param event
+         */
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            if (AutopsyEvent.SourceType.LOCAL == ((AutopsyEvent) event).getSourceType()) {
+                String eventType = event.getPropertyName();
+                if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                    synchronized (INGEST_LOCK) {
+                        INGEST_LOCK.notify();
+                    }
+                }
+            }
+        }
+    };
 }
