@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -302,8 +303,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     @Messages({
         "# {0} - sparseImageDirectory",
-        "# {1} - image",
-        "LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}",
+        "LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images",
         "# {0} - invalidFormatDirectory",
         "LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS"
     })
@@ -317,9 +317,15 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             String path = fileChooser.getSelectedFile().getPath();
             Matcher m = regex.matcher(path);
             if (m.find()) {
-                Path vhdPath = Paths.get(path, SPARSE_IMAGE_VHD);
-                if (!vhdPath.toFile().exists()) {
-                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path, SPARSE_IMAGE_VHD));
+                File dir = Paths.get(path).toFile();
+                String[] vhdFiles = dir.list(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        return name.endsWith(".vhd");
+                    }
+                });
+                if (vhdFiles.length == 0) {
+                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
                     firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
                     return;
                 }
