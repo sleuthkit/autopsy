@@ -55,7 +55,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private static final long serialVersionUID = 1L;
-    private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
     private static final String DRIVE_HAS_NO_IMAGES = Bundle.LogicalImagerPanel_messageLabel_driveHasNoImages();
     private static final String[] EMPTY_LIST_DATA = {};
@@ -354,6 +353,16 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         }
     }
 
+    private boolean dirHasVhdFiles(File dir) {
+        File[] fList = dir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".vhd");
+            }
+        });
+        return fList.length != 0;
+    }
+    
     private void driveListSelect() {
         String selectedStr = driveList.getSelectedValue();
         if (selectedStr == null) {
@@ -367,10 +376,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             imageTableModel = new ImageTableModel();
             int row = 0;
             // Find all directories with name like Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
-            // and has a sparse_image.vhd file in it
+            // and has vhd files in it
             for (File file : fList) {
-                if (file.isDirectory()
-                        && Paths.get(driveLetter, file.getName(), SPARSE_IMAGE_VHD).toFile().exists()) {
+                if (file.isDirectory() && dirHasVhdFiles(file)) {
                     String dir = file.getName();
                     Matcher m = regex.matcher(dir);
                     if (m.find()) {
@@ -470,11 +478,11 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     }//GEN-LAST:event_importRadioButtonActionPerformed
 
     @Messages({
-        "LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...",
+        "LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for images ...",
         "LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found"
     })
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
-        // Scan external drives for sparse_image.vhd
+        // Scan external drives for vhd images
         clearImageTable();
         setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_scanningExternalDrives());
         List<String> listData = new ArrayList<>();
