@@ -272,7 +272,7 @@ final class EmailMessageThreader {
      * @return Final set of threaded messages.
      */
     Set<EmailContainer> groupBySubject(Set<EmailContainer> rootSet) {
-        HashMap<String, EmailContainer> subject_table = createSubjectTable(rootSet);
+        Map<String, EmailContainer> subject_table = createSubjectTable(rootSet);
 
         Set<EmailContainer> finalSet = new HashSet<>();
 
@@ -355,7 +355,7 @@ final class EmailMessageThreader {
      *
      * @return The subject hashtable
      */
-    HashMap<String, EmailContainer> createSubjectTable(Set<EmailContainer> rootSet) {
+    Map<String, EmailContainer> createSubjectTable(Set<EmailContainer> rootSet) {
         HashMap<String, EmailContainer> subject_table = new HashMap<>();
 
         for (EmailContainer rootSetContainer : rootSet) {
