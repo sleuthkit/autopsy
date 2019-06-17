@@ -257,7 +257,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 568, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addContainerGap(338, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -271,7 +271,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 129, Short.MAX_VALUE))
+                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 461, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(refreshButton)
                 .addGap(18, 18, 18)
@@ -362,7 +362,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         });
         return (fList != null && fList.length != 0);
     }
-    
+
     private void driveListSelect() {
         String selectedStr = driveList.getSelectedValue();
         if (selectedStr == null) {
@@ -445,7 +445,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     private void toggleMouseAndKeyListeners(Component component, boolean isEnable) {
         component.setEnabled(isEnable);
     }
-    
+
     private void manualRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manualRadioButtonActionPerformed
         browseButton.setEnabled(true);
 
@@ -456,7 +456,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         toggleMouseAndKeyListeners(imageTable, false);
 
         refreshButton.setEnabled(false);
-        
+
         choosenImageDirPath = null;
         setNormalMessage("");
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
@@ -464,14 +464,14 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private void importRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importRadioButtonActionPerformed
         browseButton.setEnabled(false);
-        
+
         toggleMouseAndKeyListeners(driveList, true);
         toggleMouseAndKeyListeners(driveListScrollPane, true);
         toggleMouseAndKeyListeners(imageScrollPane, true);
         toggleMouseAndKeyListeners(imageTable, true);
 
         refreshButton.setEnabled(true);
-        
+
         choosenImageDirPath = null;
         setNormalMessage("");
         refreshButton.doClick();
@@ -544,7 +544,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         }
     }//GEN-LAST:event_driveListMouseReleased
 
-   
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.ButtonGroup buttonGroup1;
@@ -587,7 +587,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     Path getImageDirPath() {
         return choosenImageDirPath;
     }
-    
+
     @Override
     public void insertUpdate(DocumentEvent e) {
     }
