@@ -322,7 +322,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 @Override
                 public void run() {
                     //If unindexed ones are found, show a popup box that will either index them, or remove them.
-                    if (unindexed.size() >= 1) {
+                    if (!unindexed.isEmpty()) {
                         showInvalidIndex(unindexed);
                     }
                 }
