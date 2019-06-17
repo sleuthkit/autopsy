@@ -32,12 +32,15 @@ import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -472,44 +475,38 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnTestMultiUserLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                        .addComponent(lbTestMultiUserText)
-                        .addGap(176, 176, 176))
+                        .addComponent(lbTestResultText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
                     .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                        .addComponent(lbTestResultText)
-                        .addGap(336, 336, 336)))
-                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(browseOutputFolderButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(bnTestMultiUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(31, Short.MAX_VALUE))
-            .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(139, Short.MAX_VALUE)))
+                        .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 284, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbTestMultiUserText, javax.swing.GroupLayout.Alignment.LEADING))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(browseOutputFolderButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(bnTestMultiUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(35, 35, 35))))
         );
         pnTestMultiUserLayout.setVerticalGroup(
             pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnTestMultiUserLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbTestMultiUserText)
-                    .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(bnTestMultiUser)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(browseOutputFolderButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 22, Short.MAX_VALUE)
+                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(bnTestMultiUser)
+                        .addComponent(lbTestMultiUserText)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(browseOutputFolderButton)
+                    .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
                 .addComponent(lbTestResultText, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-            .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                    .addGap(56, 56, 56)
-                    .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(56, Short.MAX_VALUE)))
+                .addGap(0, 12, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout pnOverallPanelLayout = new javax.swing.GroupLayout(pnOverallPanel);
@@ -528,7 +525,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                     .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(765, Short.MAX_VALUE))
+                .addContainerGap(822, Short.MAX_VALUE))
         );
         pnOverallPanelLayout.setVerticalGroup(
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -538,11 +535,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                     .addComponent(cbEnableMultiUser))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnOverallPanelLayout.createSequentialGroup()
-                        .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(206, Short.MAX_VALUE))
@@ -677,21 +673,53 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void bnTestMultiUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMultiUserActionPerformed
         
+        // ELTODO 
+        // should we run tests for all services?
+        
+        String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());        
+        if (resultsFolderPath.isEmpty()) {
+            lbMultiUserResult.setIcon(badIcon);
+            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.outputPathNotSpecified"));
+            lbTestResultText.setForeground(Color.RED);
+            return;            
+        }
+        
+        if (!isFolderPathValid(resultsFolderPath)) {
+            lbMultiUserResult.setIcon(badIcon);
+            lbTestResultText.setForeground(Color.RED);
+            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.PathInvalid"));
+            return;
+        }
+
+        if (false == permissionsAppropriate(resultsFolderPath)) {
+            lbMultiUserResult.setIcon(badIcon);
+            lbTestResultText.setForeground(Color.RED);
+            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.CannotAccess")
+                    + " " + resultsFolderPath + "   "
+                    + NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.CheckPermissions"));
+            return;
+        }        
+        
         // save the configuration that user has entered in other fields (i.e. Solr, Postgres, ActiveMQ).
         // we need it stored in the settings file in order to create a case and connect to database/kws.
         store();
         
-        String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         String testResult = MultiUserTestTool.runTest(resultsFolderPath);
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         if (testResult.equals(MultiUserTestTool.RESULT_SUCCESS)) {
             // test successful
             lbMultiUserResult.setIcon(goodIcon);
             lbTestResultText.setText(testResult);
+            lbTestResultText.setForeground(Color.BLACK);
         } else {
             // test failed
             lbMultiUserResult.setIcon(badIcon);
             lbTestResultText.setText(testResult);
+            lbTestResultText.setForeground(Color.RED);
         }
+        
+        // ELTODO investigate ingest module startup popup when KWS wasn't able to load core (e.g. empty outputPathTextField)
     }//GEN-LAST:event_bnTestMultiUserActionPerformed
 
         /**
@@ -747,8 +775,46 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             valid();
             controller.changed();
         }
+        
+        // ELTODO 
+        // save output directory to storage and reload it next time
     }//GEN-LAST:event_browseOutputFolderButtonActionPerformed
 
+    /**
+     * Validates that a path is valid and points to a folder.
+     *
+     * @param path A path to be validated
+     *
+     * @return boolean returns true if valid and points to a folder, false
+     *         otherwise
+     */
+    boolean isFolderPathValid(String path) {
+        try {
+            File file = new File(normalizePath(path));
+
+            // check if it's a symbolic link
+            if (Files.isSymbolicLink(file.toPath())) {
+                return true;
+            }
+
+            // local folder
+            if (file.exists() && file.isDirectory()) {
+                return true;
+            }
+        } catch (Exception ex) {
+            // Files.isSymbolicLink (and other "files" methods) throw exceptions on seemingly innocent inputs.
+            // For example, it will throw an exception when either " " is last character in path or
+            // a path starting with ":". 
+            // We can just ignore these exceptions as they occur in process of user typing in the path.
+            return false;
+        }
+        return false;
+    }
+    
+    boolean permissionsAppropriate(String path) {
+        return FileUtil.hasReadWriteAccess(Paths.get(path));
+    }    
+    
     void load() {
         lbTestDatabase.setIcon(null);
         lbTestSolr.setIcon(null);

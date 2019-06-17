@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
@@ -44,12 +45,15 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Test tool that creates a multi user case, database, KWS index, runs ingest,
@@ -60,14 +64,14 @@ class MultiUserTestTool {
 
     private static final String CASE_NAME = "Test_MU_Settings";
     private static final Logger LOGGER = Logger.getLogger(MultiUserTestTool.class.getName());
+    private static final String TEST_FILE_NAME = "Test.txt";
+    private static final Object INGEST_LOCK = new Object();
 
     static final String RESULT_SUCCESS = "Success";
 
-    private static final Object INGEST_LOCK = new Object();
-
     static String runTest(String rootOutputDirectory) {
 
-        // 1 (MH) Creates a case in the output folder. Could be hard coded name/time stamp thing.
+        // Create a case in the output folder.
         Case caseForJob;
         try {
             caseForJob = createCase(CASE_NAME, rootOutputDirectory);
@@ -82,15 +86,7 @@ class MultiUserTestTool {
         }
 
         try {
-            // 2 (MH) Verifies that Solr was able to create the core. If any of those steps fail, it gives an error message.
-            /*KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, "Fake Keyword Search", "Fake Keyword Preview Text"));
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, "Output Path", rootOutputDirectory));
-            BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            bba.addAttributes(attributes);*/
-
-            // Verifies that DB was created. etc
+            // Verify that DB was created. etc
             String getDatabaseInfoQuery = "select * from tsk_db_info";
             try (SleuthkitCase.CaseDbQuery queryResult = caseForJob.getSleuthkitCase().executeQuery(getDatabaseInfoQuery)) {
                 ResultSet resultSet = queryResult.getResultSet();
@@ -104,8 +100,8 @@ class MultiUserTestTool {
                 return "Unable to read from case database";
             }
 
-            // 3 (NTH) Makes a text file in a temp folder with just the text "Test" in it. 
-            String tempFilePath = caseForJob.getTempDirectory() + File.separator + "Test.txt";
+            // Make a text file in a temp folder with just the text "Test" in it. 
+            String tempFilePath = caseForJob.getTempDirectory() + File.separator + TEST_FILE_NAME;
             try {
                 FileUtils.writeStringToFile(new File(tempFilePath), "Test", Charset.forName("UTF-8"));
             } catch (IOException ex) {
@@ -113,7 +109,7 @@ class MultiUserTestTool {
                 return "Unable to create a file in case output directory";
             }
 
-            // 4 (NTH) Adds it as a logical file set data source.
+            //  Add it as a logical file set data source.
             AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(tempFilePath));
             try {
                 String error = runLogicalFilesDSP(caseForJob, dataSource);
@@ -121,13 +117,43 @@ class MultiUserTestTool {
                     LOGGER.log(Level.SEVERE, error);
                     return error;
                 }
+                
+                // ELTODO  DELETE
+                dataSource = new AutoIngestDataSource("", Paths.get("C:\\TEST\\Inputs\\Test archivedsp\\Test 6.zip"));
+                error = runLogicalFilesDSP(caseForJob, dataSource);
             } catch (InterruptedException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to add test file as data source to case", ex);
                 return "Unable to add test file as data source to case";
             }
 
+            // Verify that Solr was able to create the core and is able to write to it
+            FileManager fileManager = caseForJob.getServices().getFileManager();
+            AbstractFile file = null;
+            List<AbstractFile> listOfFiles = null;
             try {
-                // 5 (NTH) Runs ingest on that data source and reports errors if the modules could not start.
+                listOfFiles = fileManager.findFiles(TEST_FILE_NAME);
+                if (listOfFiles == null || listOfFiles.isEmpty()) {
+                    LOGGER.log(Level.SEVERE, "Unable to read test file info from case database");
+                    return "Unable to read test file info from case database";
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to read test file info from case database", ex);
+                return "Unable to read test file info from case database";
+            }
+
+            file = listOfFiles.get(0);
+
+            // write to KWS index
+            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+            try {
+                kwsService.index(file);
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to write to Keword Search index", ex);
+                return "Unable to write to Keword Search index";
+            }
+
+            // Run ingest on that data source and report errors if the modules could not start.           
+            try {
                 String error = analyze(dataSource);
                 if (!error.isEmpty()) {
                     LOGGER.log(Level.SEVERE, error);
@@ -139,13 +165,13 @@ class MultiUserTestTool {
             }
             //} catch (Throwable ex) {
         } finally {
-            // 6 (MH) Close and delete the case.
-            try {
+            // Close and delete the case.
+            /* ELTODO try {
                 Case.deleteCurrentCase();
             } catch (CaseActionException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to delete test case", ex);
                 return "Unable to delete test case";
-            }
+            } */
         }
 
         return RESULT_SUCCESS;

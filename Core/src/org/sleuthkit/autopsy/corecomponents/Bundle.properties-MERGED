@@ -180,6 +180,7 @@ MultiUserSettingsPanel.lbTestResultText.text=
 MultiUserSettingsPanel.outputPathTextField.toolTipText=The location where case folder will be created for the test case.
 MultiUserSettingsPanel.outputPathTextField.text=
 MultiUserSettingsPanel.browseOutputFolderButton.text=Browse
+MultiUserSettingsPanel.validationErrMsg.outputPathNotSpecified=Output directory not specified
 AutopsyOptionsPanel.agencyLogoImageLabel.toolTipText=
 AutopsyOptionsPanel.agencyLogoPathField.text=
 SortChooserDialog.label=remove
