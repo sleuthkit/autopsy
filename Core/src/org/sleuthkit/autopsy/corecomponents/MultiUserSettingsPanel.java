@@ -676,6 +676,11 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnTestSolrActionPerformed
 
     private void bnTestMultiUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMultiUserActionPerformed
+        
+        // save the configuration that user has entered in other fields (i.e. Solr, Postgres, ActiveMQ).
+        // we need it stored in the settings file in order to create a case and connect to database/kws.
+        store();
+        
         String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
         String testResult = MultiUserTestTool.runTest(resultsFolderPath);
         if (testResult.equals(MultiUserTestTool.RESULT_SUCCESS)) {
