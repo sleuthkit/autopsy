@@ -19,9 +19,9 @@ final class ThreadNode extends AbstractNode{
     
     final private MessageNode messageNode;
     
-    ThreadNode(BlackboardArtifact artifact, String threadID) {
+    ThreadNode(BlackboardArtifact artifact, String threadID, Action preferredAction) {
         super(Children.LEAF);
-        messageNode = new MessageNode(artifact, threadID, null);
+            messageNode = new MessageNode(artifact, threadID, preferredAction);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/threaded.png" );
     }
     

@@ -223,6 +223,8 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
 
             if (!subject.isEmpty()) {
                 threadNameLabel.setText(subject);
+            } else {
+                threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
             }
             
            showMessagesPane();

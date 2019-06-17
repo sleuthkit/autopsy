@@ -143,9 +143,11 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                     if(tableArtifact == null) {
                         rootMessageMap.put(threadID, bba);          
                     } else {
+                        // Get the date of the message
                         BlackboardAttribute tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
                         attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
 
+                        // put the earliest message into the table
                         if(tableAttribute != null && attribute != null && tableAttribute.getValueLong() > attribute.getValueLong()) {
                             rootMessageMap.put(threadID, bba);
                         }
@@ -171,7 +173,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
         } 
         
         if (attribute != null) {
-            return new ThreadNode(bba, attribute.getValueString());
+            return new ThreadNode(bba, attribute.getValueString(), preferredAction);
         } else {
             // Only one of these should occur.
             return new UnthreadedNode();
