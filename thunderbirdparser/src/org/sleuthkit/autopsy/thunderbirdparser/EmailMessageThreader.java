@@ -44,7 +44,7 @@ final class EmailMessageThreader {
     public static void threadMessages(List<EmailMessage> emailMessages, String threadIDPrefix) {
         EmailMessageThreader instance = new EmailMessageThreader();
         
-        HashMap<String, EmailContainer> id_table = instance.createIDTable(emailMessages);
+        Map<String, EmailContainer> id_table = instance.createIDTable(emailMessages);
         Set<EmailContainer> rootSet = instance.getRootSet(id_table);
 
         instance.pruneEmptyContainers(rootSet);
@@ -63,7 +63,7 @@ final class EmailMessageThreader {
      *
      * @return - HashMap of all message where the key is the message-ID of the message
      */
-    private HashMap<String, EmailContainer> createIDTable(List<EmailMessage> emailMessages) {
+    private Map<String, EmailContainer> createIDTable(List<EmailMessage> emailMessages) {
         HashMap<String, EmailContainer> id_table = new HashMap<>();
 
         for (EmailMessage message : emailMessages) {
@@ -138,7 +138,7 @@ final class EmailMessageThreader {
             // Set the parent\child relationship between parent_ref and ref
             if (parent_ref != null
                     && !ref.hasParent()
-                    && parent_ref != ref
+                    && !parent_ref.equals(ref)
                     && !parent_ref.isChild(ref)) {
                 ref.setParent(parent_ref);
                 parent_ref.addChild(ref);
@@ -150,7 +150,7 @@ final class EmailMessageThreader {
         // If the parent_ref and container are already linked, don't change 
         // anything
         if (parent_ref != null
-                && (parent_ref == container
+                && (parent_ref.equals(container)
                 || container.isChild(parent_ref))) {
             parent_ref = null;
         }
@@ -178,7 +178,7 @@ final class EmailMessageThreader {
      *
      * @return A set of the root containers.
      */
-    Set<EmailContainer> getRootSet(HashMap<?, EmailContainer> id_table) {
+    Set<EmailContainer> getRootSet(Map<?, EmailContainer> id_table) {
         HashSet<EmailContainer> rootSet = new HashSet<>();
 
         id_table.values().stream().filter((container)
@@ -222,12 +222,12 @@ final class EmailMessageThreader {
         }
 
         Set<EmailContainer> children = parent.getChildren();
-        EmailContainer grandParent = parent.getParent();
-
+        
         if (children == null) {
             return false;
         }
 
+        EmailContainer grandParent = parent.getParent();
         Set<EmailContainer> remove = new HashSet<>();
         Set<EmailContainer> add = new HashSet<>();
         for (EmailContainer child : parent.getChildren()) {
@@ -264,7 +264,7 @@ final class EmailMessageThreader {
      *
      * This may cause "root" messages with identical subjects to get grouped
      * together as children of an empty container. The code that uses the thread
-     * information can decide what to do in that sisiuation as those message
+     * information can decide what to do in that situation as those message
      * maybe part of a common thread or maybe their own unique messages.
      *
      * @param rootSet
@@ -280,7 +280,7 @@ final class EmailMessageThreader {
             String rootSubject = rootSetContainer.getSimplifiedSubject();
 
             EmailContainer tableContainer = subject_table.get(rootSubject);
-            if (tableContainer == null || tableContainer == rootSetContainer) {
+            if (tableContainer == null || tableContainer.equals(rootSetContainer)) {
                 finalSet.add(rootSetContainer);
                 continue;
             }
@@ -450,25 +450,6 @@ final class EmailMessageThreader {
     }
 
     /**
-     * Prints a set of containers and their children.
-     *
-     * @param containerSet Set of containers to print out
-     * @param prefix       A prefix for each line to show child depth.
-     */
-    private void printContainerSet(Set<EmailContainer> containerSet, String prefix) {
-        containerSet.stream().map((container) -> {
-            if (container.getMessage() != null) {
-                System.out.println(prefix + container.getMessage().getSubject());
-            } else {
-                System.out.println("<Empty Container>");
-            }
-            return container;
-        }).filter((container) -> (container.hasChildren())).forEachOrdered((container) -> {
-            printContainerSet(container.getChildren(), prefix + "\t");
-        });
-    }
-
-    /**
      * The container object is used to wrap and email message and track the
      * messages parent and child messages.
      */
@@ -482,6 +463,8 @@ final class EmailMessageThreader {
          * Constructs an empty container.
          */
         EmailContainer() {
+            // This constructor is intentially empty to allow for the creation of 
+            // an EmailContainer without a message
         }
 
         /**
