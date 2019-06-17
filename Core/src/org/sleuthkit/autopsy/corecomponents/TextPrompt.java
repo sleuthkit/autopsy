@@ -35,14 +35,10 @@ public final class TextPrompt extends JLabel
     private int focusLost;
 
     public TextPrompt(String text, JTextComponent component) {
-        this(text, component, Show.ALWAYS, null);
+        this(text, component, Show.ALWAYS);
     }
 
-    public TextPrompt(String text, JTextComponent component, String layoutConstraint) {
-        this(text, component, Show.ALWAYS, layoutConstraint);
-    }
-
-    public TextPrompt(String text, JTextComponent component, Show show, String layoutConstraint) {
+    public TextPrompt(String text, JTextComponent component, Show show) {
         this.component = component;
         component.removeAll();
         setShow(show);
@@ -53,16 +49,12 @@ public final class TextPrompt extends JLabel
         setForeground(component.getForeground());
         setBorder(new EmptyBorder(component.getInsets()));
         setHorizontalAlignment(JLabel.LEADING);
-        
+
         component.addFocusListener(this);
         document.addDocumentListener(this);
 
         component.setLayout(new BorderLayout());
-        if (layoutConstraint == null) {
-            component.add(this);
-        } else {
-            component.add(this, layoutConstraint);
-        }
+        component.add(this);
         checkForPrompt();
     }
 
