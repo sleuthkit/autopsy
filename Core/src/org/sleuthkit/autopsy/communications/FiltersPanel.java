@@ -45,6 +45,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -63,6 +64,7 @@ import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.MostRecentFilter;
+import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
 import static org.sleuthkit.datamodel.Relationship.Type.CONTACT;
@@ -248,29 +250,60 @@ final public class FiltersPanel extends JPanel {
 
         //TODO: something like this commented code could be used to show only
         //the account types that are found:
-        //final CommunicationsManager communicationsManager = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager();
+//        final CommunicationsManager communicationsManager = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager();
         //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
         //accountTypesInUSe.forEach(...)
-        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
-            if (type.equals(Account.Type.CREDIT_CARD)) {
-                //don't show a check box for credit cards
-            } else {
-                accountTypeMap.computeIfAbsent(type, t -> {
-
+        
+        
+        
+        
+        List<Account.Type> accountTypesInUse = null;
+        
+        try {
+            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            accountTypesInUse = communicationsManager.getAccountTypesInUse();
+            
+            for(Account.Type type: accountTypesInUse) {
+                if(!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)){
                     CheckBoxIconPanel panel = new CheckBoxIconPanel(
                             type.getDisplayName(), 
                             new ImageIcon(FiltersPanel.class.getResource(Utils.getIconFilePath(type))));
+                    
                     panel.setSelected(true);
                     panel.addItemListener(validationListener);
                     accountTypeListPane.add(panel);
-                    if (t.equals(Account.Type.DEVICE)) {
+                    if (type.equals(Account.Type.DEVICE)) {
                         //Deveice type filter is enabled based on whether we are in table or graph view.
                         panel.setEnabled(deviceAccountTypeEnabled);
                     }
-                    return panel.getCheckBox();
-                });
+                    
+                    accountTypeMap.put(type, panel.getCheckBox());
+                }
             }
-        });
+            
+//        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
+//            if (type.equals(Account.Type.CREDIT_CARD)) {
+//                //don't show a check box for credit cards
+//            } else {
+//                accountTypeMap.computeIfAbsent(type, t -> {
+//
+//                    CheckBoxIconPanel panel = new CheckBoxIconPanel(
+//                            type.getDisplayName(), 
+//                            new ImageIcon(FiltersPanel.class.getResource(Utils.getIconFilePath(type))));
+//                    panel.setSelected(true);
+//                    panel.addItemListener(validationListener);
+//                    accountTypeListPane.add(panel);
+//                    if (t.equals(Account.Type.DEVICE)) {
+//                        //Deveice type filter is enabled based on whether we are in table or graph view.
+//                        panel.setEnabled(deviceAccountTypeEnabled);
+//                    }
+//                    return panel.getCheckBox();
+//                });
+//            }
+//        });
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
     
     /**
