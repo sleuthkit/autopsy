@@ -26,15 +26,24 @@ HashDbSearchAction.noOpenCase.errMsg=No open case available.
 HashDbSearchPanel.noOpenCase.errMsg=No open case available.
 HashLookupSettingsPanel.centralRepo=Central Repository
 HashLookupSettingsPanel.editable=Editable
+# {0} - nsrlUrl
+HashLookupSettingsPanel.indexNsrl.text=This hash set appears to be the NSRL, instead of indexing the NSRL please download an already indexed version available here: {0}
+HashLookupSettingsPanel.indexNsrl.title=NSRL will not be indexed
 HashLookupSettingsPanel.notApplicable=N/A
 HashLookupSettingsPanel.promptMessage.deleteHashDb=This will make the hash database unavailable for lookup. Do you want to proceed?\n\nNote: The hash database can still be re-imported later.
 HashLookupSettingsPanel.promptTitle.deleteHashDb=Delete Hash Database from Configuration
 HashLookupSettingsPanel.readOnly=Read only
 # {0} - hash lookup name
 HashLookupSettingsPanel.removeDatabaseFailure.message=Failed to remove hash lookup: {0}
+# {0} - nsrlUrlAddress
+# {1} - nsrlHashSets
+HashLookupSettingsPanel.removeUnindexedNsrl.text=instead of indexing the NSRL please download an already indexed version available here: {0}\n\nHash set(s):{1}
+HashLookupSettingsPanel.removeUnindexedNsrl.title=Unindexed NSRL(s) will be removed
 HashLookupSettingsPanel.saveFail.message=Couldn't save hash set settings.
 HashLookupSettingsPanel.saveFail.title=Save Fail
 HashLookupSettingsPanel.Title=Global Hash Lookup Settings
+HashLookupSettingsPanel.unindexedNsrl.base=The following hash set appears to be an unindexed version of the NSRL it will be removed, 
+HashLookupSettingsPanel.unindexedNsrls.base=The following hash sets appear to be unindexed versions of the NSRL they will be removed, 
 HashLookupSettingsPanel.updateStatusError=Error reading status
 ImportCentralRepoDbProgressDialog.errorParsingFile.message=Error parsing hash set file
 ImportCentralRepoDbProgressDialog.linesProcessed.message=\ hashes processed
