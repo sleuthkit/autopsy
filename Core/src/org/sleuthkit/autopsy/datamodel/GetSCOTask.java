@@ -27,6 +27,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -71,7 +72,7 @@ class GetSCOTask implements Runnable {
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
 
-        if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+        if (EamDb.isEnabled() && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
             Type type = null;
             String value = null;
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();
