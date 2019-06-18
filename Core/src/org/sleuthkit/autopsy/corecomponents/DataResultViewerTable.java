@@ -882,7 +882,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     togglePageControls(true);
                 }
 
-                updateControls();
+                // Only update UI controls if this event is for the node currently being viewed.
+                if (nodeName.equals(rootNode.getName())) {
+                    updateControls();
+                }
             }
         }
 
