@@ -50,7 +50,7 @@ final class ConfigVisualPanel1 extends JPanel {
     /**
      * Creates new form ConfigVisualPanel1
      */
-    public ConfigVisualPanel1() {
+    ConfigVisualPanel1() {
         initComponents();
         configFileTextField.getDocument().addDocumentListener(new MyDocumentListener(this));
     }
@@ -188,15 +188,15 @@ final class ConfigVisualPanel1 extends JPanel {
         }
     }
 
-    public LogicalImagerConfig getConfig() {
+    LogicalImagerConfig getConfig() {
         return config;
     }
 
-    public String getConfigFilename() {
+    String getConfigFilename() {
         return configFilename;
     }
 
-    public boolean isNewFile() {
+    boolean isNewFile() {
         return newFile;
     }
 
@@ -204,7 +204,7 @@ final class ConfigVisualPanel1 extends JPanel {
         configFileTextField.setText(filename);
     }
 
-    public boolean isPanelValid() {
+    boolean isPanelValid() {
         return (newFile || !configFileTextField.getText().isEmpty());
     }
 

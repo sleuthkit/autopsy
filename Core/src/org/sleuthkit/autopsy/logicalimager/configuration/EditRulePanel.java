@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 /**
  * Edit rule panel
  */
-class EditRulePanel extends JPanel {
+final class EditRulePanel extends JPanel {
 
     private EditFullPathsRulePanel editFullPathsRulePanel = null;
     private EditNonFullPathsRulePanel editNonFullPathsRulePanel = null;
@@ -44,7 +44,7 @@ class EditRulePanel extends JPanel {
     /**
      * Creates new form EditRulePanel
      */
-    public EditRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
+     EditRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
         if (rule.getFullPaths() != null && rule.getFullPaths().size() > 0) {
             editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule, true);
         } else {
@@ -91,7 +91,7 @@ class EditRulePanel extends JPanel {
     @NbBundle.Messages({
         "EditRulePanel.validateRuleNameExceptionMsg=Rule name cannot be empty"
     })
-    static public String validRuleName(String name) throws IOException {
+    static String validRuleName(String name) throws IOException {
         if (name.isEmpty()) {
             throw new IOException(Bundle.EditRulePanel_validateRuleNameExceptionMsg());
         }
@@ -102,7 +102,7 @@ class EditRulePanel extends JPanel {
         "# {0} - fieldName",
         "EditRulePanel.blankLineException={0} cannot have a blank line",
     })
-    static public List<String> validateTextList(JTextArea textArea, String fieldName) throws IOException {
+    static List<String> validateTextList(JTextArea textArea, String fieldName) throws IOException {
         if (isBlank(textArea.getText())) {
             return null;
         }

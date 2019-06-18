@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Configuration Wizard Panel 2
  */
-class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+final class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger LOGGER = Logger.getLogger(ConfigWizardPanel2.class.getName());
 
@@ -102,7 +102,7 @@ class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         "ConfigWizardPanel2.reason=\nReason: ",       
         "ConfigWizardPanel2.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file",
     })
-    public void saveConfigFile() {
+    void saveConfigFile() {
         GsonBuilder gsonBuilder = new GsonBuilder()
                 .setPrettyPrinting()
                 .excludeFieldsWithoutExposeAnnotation()

@@ -51,7 +51,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
     private final DataSourceProcessorCallback callback;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     
-    public AddLogicalImageTask(String deviceId, 
+    AddLogicalImageTask(String deviceId, 
             List<String> imagePaths, 
             String timeZone, 
             File src, File dest,

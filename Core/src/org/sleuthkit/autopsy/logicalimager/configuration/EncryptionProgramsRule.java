@@ -80,15 +80,15 @@ final class EncryptionProgramsRule {
 
     }
 
-    public static String getName() {
+    static String getName() {
         return ENCRYPTION_PROGRAMS_RULE_NAME;
     }
 
-    public static String getDescription() {
+    static String getDescription() {
         return ENCRYPTION_PROGRAMS_RULE_DESCRIPTION;
     }
     
-    public static List<String> getFilenames() {
+    static List<String> getFilenames() {
         return FILENAMES;
     }
 }

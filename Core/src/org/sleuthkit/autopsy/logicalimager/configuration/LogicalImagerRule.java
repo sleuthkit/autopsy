@@ -101,69 +101,69 @@ class LogicalImagerRule {
         this.maxDate = maxDate;
     }
 
-    public LogicalImagerRule() {
+    LogicalImagerRule() {
         this.shouldAlert = false; // default
         this.shouldSave = true; // default
         this.description = null;
         this.name = null;
     }
     
-    public Boolean isShouldAlert() {
+    Boolean isShouldAlert() {
         return shouldAlert;
     }
 
-    public Boolean isShouldSave() {
+    Boolean isShouldSave() {
         return shouldSave;
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
-    public String getDescription() {
+    String getDescription() {
         return description;
     }
 
-    public List<String> getExtensions() {
+    List<String> getExtensions() {
         return extensions;
     }
 
-    public List<String> getFilenames() {
+    List<String> getFilenames() {
         return filenames;
     }
 
-    public List<String> getPaths() {
+    List<String> getPaths() {
         return paths;
     }
 
-    public List<String> getFullPaths() {
+    List<String> getFullPaths() {
         return fullPaths;
     }
 
-    public Integer getMinFileSize() {
+    Integer getMinFileSize() {
         return minFileSize;
     }
 
-    public Integer getMaxFileSize() {
+    Integer getMaxFileSize() {
         return maxFileSize;
     }
 
-    public Integer getMinDays() {
+    Integer getMinDays() {
         return minDays;
     }
 
-    public Integer getMinDate() {
+    Integer getMinDate() {
         return minDate;
     }
 
-    public Integer getMaxDate() {
+    Integer getMaxDate() {
         return maxDate;
     }
 
     /**
      * Builder class
      */
-    public static class Builder {
+    static class Builder {
         private Boolean shouldAlert = null;
         private Boolean shouldSave = null;
         private String name = null;
@@ -178,72 +178,72 @@ class LogicalImagerRule {
         private Integer minDate = null;
         private Integer maxDate = null;
         
-        public Builder getShouldAlert(boolean shouldAlert) {
+        Builder getShouldAlert(boolean shouldAlert) {
             this.shouldAlert = shouldAlert;
             return this;
         }
         
-        public Builder getShouldSave(boolean shouldSave) {
+        Builder getShouldSave(boolean shouldSave) {
             this.shouldSave = shouldSave;
             return this;
         }
         
-        public Builder getName(String name) {
+        Builder getName(String name) {
             this.name = name;
             return this;
         }
         
-        public Builder getDescription(String description) {
+        Builder getDescription(String description) {
             this.description = description;
             return this;
         }
         
-        public Builder getExtensions(List<String> extensions) {
+        Builder getExtensions(List<String> extensions) {
             this.extensions = extensions;
             return this;
         }
         
-        public Builder getFilenames(List<String> filenames) {
+        Builder getFilenames(List<String> filenames) {
             this.filenames = filenames;
             return this;
         }
         
-        public Builder getPaths(List<String> paths) {
+        Builder getPaths(List<String> paths) {
             this.paths = paths;
             return this;
         }
         
-        public Builder getFullPaths(List<String> fullPaths) {
+        Builder getFullPaths(List<String> fullPaths) {
             this.fullPaths = fullPaths;
             return this;
         }
         
-        public Builder getMinFileSize(Integer minFileSize) {
+        Builder getMinFileSize(Integer minFileSize) {
             this.minFileSize = minFileSize;
             return this;
         }
         
-        public Builder getMaxFileSize(Integer maxFileSize) {
+        Builder getMaxFileSize(Integer maxFileSize) {
             this.maxFileSize = maxFileSize;
             return this;
         }
         
-        public Builder getMinDays(Integer minDays) {
+        Builder getMinDays(Integer minDays) {
             this.minDays = minDays;
             return this;
         }
         
-        public Builder getMinDate(Integer minDate) {
+        Builder getMinDate(Integer minDate) {
             this.minDate = minDate;
             return this;
         }
         
-        public Builder getMaxDate(Integer maxDate) {
+        Builder getMaxDate(Integer maxDate) {
             this.maxDate = maxDate;
             return this;
         }
         
-        public LogicalImagerRule build() {
+        LogicalImagerRule build() {
             return new LogicalImagerRule(shouldAlert, shouldSave, name, description, 
                     extensions, filenames, paths, fullPaths,
                     minFileSize, maxFileSize,

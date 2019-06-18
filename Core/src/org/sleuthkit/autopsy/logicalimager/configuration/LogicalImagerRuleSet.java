@@ -35,16 +35,16 @@ class LogicalImagerRuleSet {
     @Expose(serialize = true) 
     private final List<LogicalImagerRule> rules;
 
-    public LogicalImagerRuleSet(String setName, List<LogicalImagerRule> rules) {
+    LogicalImagerRuleSet(String setName, List<LogicalImagerRule> rules) {
         this.setName = setName;
         this.rules = rules;
     }
 
-    public String getSetName() {
+    String getSetName() {
         return setName;
     }
 
-    public List<LogicalImagerRule> getRules() {
+    List<LogicalImagerRule> getRules() {
         return rules;
     }
 

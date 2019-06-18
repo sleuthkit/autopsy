@@ -86,7 +86,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      *
      * @return instance of the LogicalImagerPanel
      */
-    public static synchronized LogicalImagerPanel createInstance(String context) {
+    static synchronized LogicalImagerPanel createInstance(String context) {
         LogicalImagerPanel instance = new LogicalImagerPanel(context);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
         instance.imageTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -290,7 +290,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public static String humanReadableByteCount(long bytes, boolean si) {
+    private static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) {
             return bytes + " B"; //NON-NLS
@@ -564,7 +564,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private javax.swing.JLabel selectFromDriveLabel;
     // End of variables declaration//GEN-END:variables
 
-    public void reset() {
+    void reset() {
         //reset the UI elements to default
         choosenImageDirPath = null;
         setNormalMessage("");
@@ -580,7 +580,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
-    public boolean validatePanel() {
+    boolean validatePanel() {
         return choosenImageDirPath != null && choosenImageDirPath.toFile().exists();
     }
 

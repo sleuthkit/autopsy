@@ -32,7 +32,7 @@ import org.openide.util.HelpCtx;
 /**
  * Configuration Wizard Panel 1
  */
-class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
+final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
     /**
      * The visual component that displays this panel. If you need to access the
@@ -110,7 +110,7 @@ class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescr
      * This method is auto-generated. It seems that this method is used to
      * listen to any change in this wizard panel.
      */
-    protected final void fireChangeEvent() {
+    final void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
             it = new HashSet<>(listeners).iterator();

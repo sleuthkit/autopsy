@@ -38,7 +38,7 @@ class NewRuleSetPanel extends javax.swing.JPanel {
     /**
      * Creates new form NewRuleSetPanel
      */
-    public NewRuleSetPanel(JButton okButton, JButton cancelButton) {
+    NewRuleSetPanel(JButton okButton, JButton cancelButton) {
         initComponents();
         
         nonFullPathsJPanel = createPanel();

@@ -51,7 +51,7 @@ final class ConfigVisualPanel2 extends JPanel {
     /**
      * Creates new form ConfigVisualPanel2
      */
-    public ConfigVisualPanel2() {
+    ConfigVisualPanel2() {
         initComponents();
         if (config != null) {
             updatePanel(configFilename, config);

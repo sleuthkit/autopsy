@@ -41,7 +41,7 @@ import org.openide.util.NbBundle;
  * Edit non-full paths rule panel
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class EditNonFullPathsRulePanel extends javax.swing.JPanel {
+final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;

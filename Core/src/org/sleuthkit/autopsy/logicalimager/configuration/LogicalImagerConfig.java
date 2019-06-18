@@ -36,12 +36,12 @@ class LogicalImagerConfig {
     @Expose(serialize = true) 
     private List<LogicalImagerRuleSet> ruleSets;
     
-    public LogicalImagerConfig() {
+    LogicalImagerConfig() {
         this.finalizeImageWriter = false;
         this.ruleSets = new ArrayList<>();
     }
     
-    public LogicalImagerConfig(
+    LogicalImagerConfig(
             boolean finalizeImageWriter,
             List<LogicalImagerRuleSet> ruleSets
     ) {
@@ -49,19 +49,19 @@ class LogicalImagerConfig {
         this.ruleSets = ruleSets;
     }
 
-    public boolean isFinalizeImageWriter() {
+    boolean isFinalizeImageWriter() {
         return finalizeImageWriter;
     }
 
-    public void setFinalizeImageWriter(boolean finalizeImageWriter) {
+    void setFinalizeImageWriter(boolean finalizeImageWriter) {
         this.finalizeImageWriter = finalizeImageWriter;
     }
 
-    public List<LogicalImagerRuleSet> getRuleSets() {
+    List<LogicalImagerRuleSet> getRuleSets() {
         return ruleSets;
     }
 
-    public void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
+    void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
         this.ruleSets = ruleSets;
     }    
 }
