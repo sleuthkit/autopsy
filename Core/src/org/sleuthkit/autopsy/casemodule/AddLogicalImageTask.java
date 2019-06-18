@@ -30,7 +30,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -40,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *   - add alert.txt and users.txt files to report
  *   - add an image data source to the case database.
  */
-public class AddLogicalImageTask extends AddImageTask {
+public class AddLogicalImageTask extends AddMultipleImageTask {
 
     private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());   
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS
@@ -50,16 +49,14 @@ public class AddLogicalImageTask extends AddImageTask {
     private final DataSourceProcessorCallback callback;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     
-    public AddLogicalImageTask(String deviceId, String imagePath, int sectorSize, 
-            String timeZone, boolean ignoreFatOrphanFiles, 
-            String md5, String sha1, String sha256, 
-            ImageWriterSettings imageWriterSettings, 
+    public AddLogicalImageTask(String deviceId, 
+            List<String> imagePaths, 
+            String timeZone, 
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, 
             DataSourceProcessorCallback callback
-    ) {
-        super(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, 
-                md5, sha1, sha256, imageWriterSettings, progressMonitor, callback);
+    ) throws NoCurrentCaseException {
+        super(deviceId, imagePaths, timeZone, progressMonitor, callback);
         this.src = src;
         this.dest = dest;
         this.progressMonitor = progressMonitor;

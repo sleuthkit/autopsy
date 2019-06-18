@@ -122,7 +122,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
         final int rows = Math.min(100, outline.getRowCount());
 
-        for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
+        for (int column = 0; column < outline.getColumnCount(); column++) {
             int columnWidthLimit = 500;
             int columnWidth = 0;
 

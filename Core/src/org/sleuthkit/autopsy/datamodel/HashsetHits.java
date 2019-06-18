@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -42,7 +41,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -65,7 +63,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
     private SleuthkitCase skCase;
     private final HashsetResults hashsetResults;
-    private final long datasourceObjId;
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
     
     
     /**
@@ -87,7 +85,7 @@ public class HashsetHits implements AutopsyVisitableItem {
      */ 
     public HashsetHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.datasourceObjId = objId;
+        this.filteringDSObjId = objId;
         hashsetResults = new HashsetResults();
     }
 
@@ -142,8 +140,8 @@ public class HashsetHits implements AutopsyVisitableItem {
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            if (filteringDSObjId > 0) {
+                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
             
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
