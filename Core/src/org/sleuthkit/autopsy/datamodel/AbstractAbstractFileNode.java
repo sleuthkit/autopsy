@@ -44,7 +44,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
@@ -328,7 +327,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         // Create place holders for S C O 
         properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
         properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
-        if (EamDbUtil.allowUseOfCentralRepository() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+        if (EamDb.isEnabled() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
         }
 
