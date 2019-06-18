@@ -55,11 +55,9 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="flagEncryptionProgramsCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="finalizeImageWriter" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="shouldSaveCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
                       </Group>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="393" pref="393" max="-2" attributes="0"/>
-                      <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="397" pref="397" max="-2" attributes="0"/>
@@ -87,12 +85,8 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="maxSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="393" pref="393" max="-2" attributes="0"/>
-                      <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
-                  </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="107" max="-2" attributes="0"/>
           </Group>
           <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
@@ -189,11 +183,11 @@
                           <Component id="daysIncludedTextField" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="daysIncludedLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-                      <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="17" max="-2" attributes="0"/>
                       <Component id="jSeparator1" min="-2" pref="2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="flagEncryptionProgramsCheckBox" min="-2" max="-2" attributes="0"/>
@@ -396,7 +390,6 @@
     </Container>
     <Component class="javax.swing.JCheckBox" name="shouldSaveCheckBox">
       <Properties>
-        <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="ConfigVisualPanel2.shouldSaveCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
@@ -408,7 +401,6 @@
     </Component>
     <Component class="javax.swing.JCheckBox" name="shouldAlertCheckBox">
       <Properties>
-        <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="ConfigVisualPanel2.shouldAlertCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>

@@ -20,15 +20,15 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="extensionsRadioButton" min="-2" max="-2" attributes="0"/>
+                  <Component id="filenamesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="extensionsRadioButton" min="-2" max="-2" attributes="0"/>
-                          <Component id="filenamesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="ruleNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="descriptionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -49,15 +49,9 @@
                   </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="23" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="shouldSaveCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="108" pref="108" max="-2" attributes="0"/>
+                          <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="81" pref="81" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="minDaysTextField" max="32767" attributes="0"/>
                                   <Component id="minSizeLabel" max="32767" attributes="0"/>
@@ -74,6 +68,7 @@
                                   <Component id="daysIncludedLabel" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
+                          <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="236" max="32767" attributes="0"/>
                   </Group>
@@ -131,11 +126,11 @@
                   <Component id="daysIncludedLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="minDaysTextField" alignment="2" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
-              <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

@@ -187,12 +187,10 @@ final class ConfigVisualPanel2 extends JPanel {
             filenamesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.filenamesTable.columnModel.title0")); // NOI18N
         }
 
-        shouldSaveCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldSaveCheckBox, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.shouldSaveCheckBox.text")); // NOI18N
         shouldSaveCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.shouldSaveCheckBox.toolTipText")); // NOI18N
         shouldSaveCheckBox.setEnabled(false);
 
-        shouldAlertCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldAlertCheckBox, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.shouldAlertCheckBox.text")); // NOI18N
         shouldAlertCheckBox.setEnabled(false);
 
@@ -298,10 +296,9 @@ final class ConfigVisualPanel2 extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(flagEncryptionProgramsCheckBox)
-                            .addComponent(finalizeImageWriter)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(393, 393, 393)
-                        .addComponent(shouldSaveCheckBox))
+                            .addComponent(finalizeImageWriter)
+                            .addComponent(shouldSaveCheckBox)
+                            .addComponent(shouldAlertCheckBox)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(397, 397, 397)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -323,11 +320,8 @@ final class ConfigVisualPanel2 extends JPanel {
                         .addGap(18, 18, 18)
                         .addComponent(maxSizeLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(393, 393, 393)
-                        .addComponent(shouldAlertCheckBox)))
-                .addContainerGap())
+                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(107, 107, 107))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -401,11 +395,11 @@ final class ConfigVisualPanel2 extends JPanel {
                             .addComponent(modifiedDateLabel)
                             .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(daysIncludedLabel))
-                        .addGap(3, 3, 3)
-                        .addComponent(shouldAlertCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(shouldSaveCheckBox)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(shouldAlertCheckBox)
+                        .addGap(17, 17, 17)
                         .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(flagEncryptionProgramsCheckBox)

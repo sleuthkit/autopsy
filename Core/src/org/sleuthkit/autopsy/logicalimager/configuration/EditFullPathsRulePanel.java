@@ -129,8 +129,6 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(shouldSaveCheckBox)
-                    .addComponent(shouldAlertCheckBox)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(ruleNameLabel)
@@ -140,7 +138,12 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(ruleNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE)
                             .addComponent(descriptionTextField)
-                            .addComponent(fullPathsScrollPane))))
+                            .addComponent(fullPathsScrollPane)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(shouldSaveCheckBox)
+                            .addComponent(shouldAlertCheckBox))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -161,9 +164,9 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
                         .addGap(0, 167, Short.MAX_VALUE))
                     .addComponent(fullPathsScrollPane))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(shouldAlertCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(shouldSaveCheckBox)
+                .addGap(3, 3, 3)
+                .addComponent(shouldAlertCheckBox)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
