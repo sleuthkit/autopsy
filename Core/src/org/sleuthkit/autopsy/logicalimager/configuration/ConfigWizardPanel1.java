@@ -88,7 +88,7 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
      * @param l the change listener to add
      */
     @Override
-    public final void addChangeListener(ChangeListener l) {
+    public void addChangeListener(ChangeListener l) {
         synchronized (listeners) {
             listeners.add(l);
         }
@@ -100,7 +100,7 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
      * @param l the change listener to move
      */
     @Override
-    public final void removeChangeListener(ChangeListener l) {
+    public void removeChangeListener(ChangeListener l) {
         synchronized (listeners) {
             listeners.remove(l);
         }
@@ -110,7 +110,7 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
      * This method is auto-generated. It seems that this method is used to
      * listen to any change in this wizard panel.
      */
-    final void fireChangeEvent() {
+    void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
             it = new HashSet<>(listeners).iterator();

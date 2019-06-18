@@ -61,7 +61,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final Pattern regex = Pattern.compile("Logical_Imager_(.+)_(\\d{4})(\\d{2})(\\d{2})_(\\d{2})_(\\d{2})_(\\d{2})");
-    private final String contextName;
     private Path choosenImageDirPath;
     private TableModel imageTableModel;
 
@@ -72,7 +71,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      *                settings.
      */
     private LogicalImagerPanel(String context) {
-        this.contextName = context;
         initComponents();
         jScrollPane1.setBorder(null);
         clearImageTable();
@@ -501,12 +499,13 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                         firstRemovableDrive = i;
                     }
                 } catch (IOException ex) {
-                    ; // skip
+                    i++;
+                    continue;
                 }
             }
             i++;
         }
-        driveList.setListData(listData.toArray(new String[0]));
+        driveList.setListData(listData.toArray(new String[listData.size()]));
         if (!listData.isEmpty()) {
             // auto-select the first external drive, if any
             driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
@@ -603,6 +602,9 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     void storeSettings() {
     }
 
+    /**
+     * Image Table Model
+     */
     private class ImageTableModel extends AbstractTableModel {
 
         private final List<String> hostnames = new ArrayList<>();

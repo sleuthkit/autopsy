@@ -170,10 +170,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             return;
         }
         File src = imageDirPath.toFile();
-
-        String deviceId = UUID.randomUUID().toString();
-        String timeZone = Calendar.getInstance().getTimeZone().getID();
-        boolean ignoreFatOrphanFiles = false;
         
         // Get all VHD files in the src directory
         List<String> imagePaths = new ArrayList<>();
@@ -190,6 +186,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             }
         }
         try {
+            String deviceId = UUID.randomUUID().toString();
+            String timeZone = Calendar.getInstance().getTimeZone().getID();
             run(deviceId, imagePaths,
                 timeZone, src, dest,
                 progressMonitor, callback);
