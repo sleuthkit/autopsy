@@ -33,8 +33,13 @@ import org.sleuthkit.datamodel.TskData;
  */
 class AddDrawableFilesTask extends BulkDrawableFilesTask {
 
+    private final ImageGalleryController controller;
+    private final DrawableDB taskDB;
+
     AddDrawableFilesTask(long dataSourceObjId, ImageGalleryController controller) {
         super(dataSourceObjId, controller);
+        this.controller = controller;
+        this.taskDB = controller.getDrawablesDatabase();
         taskDB.buildFileMetaDataCache();
     }
 

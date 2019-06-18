@@ -28,10 +28,10 @@ import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 
 /**
- * Abstract base class for task to be done on
+ * An abstract base class for drawables database tasks.
  */
 @NbBundle.Messages({
-    "DrawableDbTask.InnerTask.progress.name=progress", 
+    "DrawableDbTask.InnerTask.progress.name=progress",
     "DrawableDbTask.InnerTask.message.name=status"
 })
 public abstract class DrawableDbTask implements Runnable, Cancellable {
@@ -39,9 +39,6 @@ public abstract class DrawableDbTask implements Runnable, Cancellable {
     private final SimpleObjectProperty<Worker.State> state = new SimpleObjectProperty<>(Worker.State.READY);
     private final SimpleDoubleProperty progress = new SimpleDoubleProperty(this, Bundle.DrawableDbTask_InnerTask_progress_name());
     private final SimpleStringProperty message = new SimpleStringProperty(this, Bundle.DrawableDbTask_InnerTask_message_name());
-
-    protected DrawableDbTask() {
-    }
 
     public double getProgress() {
         return progress.get();
@@ -89,4 +86,3 @@ public abstract class DrawableDbTask implements Runnable, Cancellable {
         return getState() == Worker.State.CANCELLED;
     }
 }
-

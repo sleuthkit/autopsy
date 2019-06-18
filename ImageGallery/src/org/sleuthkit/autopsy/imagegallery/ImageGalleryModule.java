@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * gallery.
  */
 @NbBundle.Messages({"ImageGalleryModule.moduleName=Image Gallery"})
-public class ImageGalleryModule {
+public final class ImageGalleryModule {
 
     private static final String MODULE_NAME = Bundle.ImageGalleryModule_moduleName();
 

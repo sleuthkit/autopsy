@@ -251,8 +251,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.chooseDataSourceDialog.all=All",
         "ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery",})
     private void openForCurrentCase() throws TskCoreException {
-        Case currentCase = Case.getCurrentCase();
-        ImageGalleryController controllerForCase = ImageGalleryController.getController(currentCase);
         Platform.runLater(new Runnable() {
             @Override
             public void run() {

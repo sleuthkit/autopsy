@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * An action that associates a drawable file with a Project Vic category.
  */
 @NbBundle.Messages({"CategorizeAction.displayName=Categorize"})
 public class CategorizeAction extends Action {
@@ -111,6 +111,9 @@ public class CategorizeAction extends Action {
         }
     }
 
+    /**
+     * A task that associates a drawable file with a Project Vic category.
+     */
     @NbBundle.Messages({
         "# {0} - fileID number",
         "CategorizeDrawableFileTask.errorUnable.msg=Unable to categorize {0}.",

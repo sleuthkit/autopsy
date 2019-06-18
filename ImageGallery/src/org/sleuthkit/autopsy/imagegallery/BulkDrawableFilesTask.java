@@ -46,14 +46,11 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
     private static final String MIMETYPE_CLAUSE = "(mime_type LIKE '" //NON-NLS
             + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
             + "') ";
-    private final String DRAWABLE_QUERY;
-    private final String DATASOURCE_CLAUSE;
-    protected final ImageGalleryController controller;
-    protected final DrawableDB taskDB;
-    protected final SleuthkitCase tskCase;
-    protected final long dataSourceObjId;
-    private ProgressHandle progressHandle;
-    private boolean taskCompletionStatus;
+    private final String drawableQuery;
+    private final ImageGalleryController controller;
+    private final DrawableDB taskDB;
+    private final SleuthkitCase tskCase;
+    private final long dataSourceObjId;
 
     //NON-NLS
     BulkDrawableFilesTask(long dataSourceObjId, ImageGalleryController controller) {
@@ -61,8 +58,8 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
         this.taskDB = controller.getDrawablesDatabase();
         this.tskCase = controller.getCaseDatabase();
         this.dataSourceObjId = dataSourceObjId;
-        DATASOURCE_CLAUSE = " (data_source_obj_id = " + dataSourceObjId + ") ";
-        DRAWABLE_QUERY = DATASOURCE_CLAUSE + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")" + " AND ( " + MIMETYPE_CLAUSE //NON-NLS
+        drawableQuery = " (data_source_obj_id = " + dataSourceObjId + ") " 
+                + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")" + " AND ( " + MIMETYPE_CLAUSE //NON-NLS
                 + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )" //NON-NLS
                 + " ORDER BY parent_path ";
     }
@@ -82,7 +79,7 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
      * @throws TskCoreException
      */
     List<AbstractFile> getFiles() throws TskCoreException {
-        return tskCase.findAllFilesWhere(DRAWABLE_QUERY);
+        return tskCase.findAllFilesWhere(drawableQuery);
     }
 
     @Override
@@ -90,7 +87,7 @@ abstract class BulkDrawableFilesTask extends DrawableDbTask {
         "BulkDrawableFilesTask.populatingDb.status=populating analyzed image/video database"
     })
     public void run() {
-        progressHandle = getInitialProgressHandle();
+        ProgressHandle progressHandle = getInitialProgressHandle();
         progressHandle.start();
         updateMessage(Bundle.BulkDrawableFilesTask_populatingDb_status() + " (Data Source " + dataSourceObjId + ")");
         DrawableDB.DrawableTransaction drawableDbTransaction = null;
