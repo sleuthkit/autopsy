@@ -56,9 +56,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
- *
+ * The main panel for the messages tab of the RelationshipViewer
  *
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MessageViewer extends JPanel implements RelationshipsViewer {
 
     private static final Logger logger = Logger.getLogger(MessageViewer.class.getName());
@@ -86,7 +87,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         "MessageViewer_viewMessage_unthreaded=Unthreaded",})
 
     /**
-     * Creates new form MessageViewer2
+     * Creates new form MessageViewer
      */
     public MessageViewer() {
 
