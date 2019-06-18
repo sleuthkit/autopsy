@@ -45,7 +45,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -54,6 +53,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.COMPLETED;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Account;
@@ -98,6 +98,7 @@ final public class FiltersPanel extends JPanel {
      * Listens to ingest events to enable refresh button
      */
     private final PropertyChangeListener ingestListener;
+    private final PropertyChangeListener ingestJobListener;
 
     /**
      * Flag that indicates the UI is not up-sto-date with respect to the case DB
@@ -125,6 +126,11 @@ final public class FiltersPanel extends JPanel {
     @NbBundle.Messages({"refreshText=Refresh Results", "applyText=Apply"})
     public FiltersPanel() {
         initComponents();
+        
+        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
+        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
+        accountTypeListPane.add(panel);
+        
         deviceRequiredLabel.setVisible(false);
         accountTypeRequiredLabel.setVisible(false);
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
@@ -158,17 +164,27 @@ final public class FiltersPanel extends JPanel {
                 ModuleDataEvent eventData = (ModuleDataEvent) pce.getOldValue();
                 if (null != eventData
                         && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    updateFilters(false);
+                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                        && updateFilters(true)) {
+
+                        needsRefresh = true;
+                        validateFilters();
+                }
+            }
+        };
+        
+        this.ingestJobListener = pce -> {
+            String eventType = pce.getPropertyName();
+            if (eventType.equals(COMPLETED.toString()) &&
+                    updateFilters(true)) {
+               
                     needsRefresh = true;
                     validateFilters();
-                }
             }
         };
 
         applyFiltersButton.addActionListener(e -> applyFilters());
         refreshButton.addActionListener(e -> applyFilters());
-        
     }
 
     /**
@@ -221,19 +237,26 @@ final public class FiltersPanel extends JPanel {
     /**
      * Updates the filter widgets to reflect he data sources/types in the case.
      */
-    private void updateFilters(boolean initialState) {
-        updateAccountTypeFilter();
-        updateDeviceFilter(initialState);
+    private boolean updateFilters(boolean initialState) {
+        boolean newAccountType = updateAccountTypeFilter(initialState);
+        boolean newDeviceFilter = updateDeviceFilter(initialState);
+        
+        // both or either are true, return true;
+        return newAccountType || newDeviceFilter;
     }
 
     @Override
     public void addNotify() {
         super.addNotify();
         IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
+        IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesListPane.removeAll();
+            
+            accountTypeMap.clear();
+            accountTypeListPane.removeAll();
         });
     }
 
@@ -241,95 +264,107 @@ final public class FiltersPanel extends JPanel {
     public void removeNotify() {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
+        IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
     }
 
     /**
      * Populate the Account Types filter widgets
+     * 
+     * @param selected the initial value for the account type checkbox
+     * 
+     * @return True, if a new accountType was found
      */
-    private void updateAccountTypeFilter() {
-
-        //TODO: something like this commented code could be used to show only
-        //the account types that are found:
-//        final CommunicationsManager communicationsManager = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager();
-        //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
-        //accountTypesInUSe.forEach(...)
-        
-        
-        
-        
-        List<Account.Type> accountTypesInUse = null;
-        
+    private boolean updateAccountTypeFilter(boolean selected) {
+        boolean newOneFound = false;
         try {
-            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            accountTypesInUse = communicationsManager.getAccountTypesInUse();
+            final CommunicationsManager communicationsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+            List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
             
-            for(Account.Type type: accountTypesInUse) {
-                if(!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)){
-                    CheckBoxIconPanel panel = new CheckBoxIconPanel(
-                            type.getDisplayName(), 
-                            new ImageIcon(FiltersPanel.class.getResource(Utils.getIconFilePath(type))));
-                    
-                    panel.setSelected(true);
-                    panel.addItemListener(validationListener);
-                    accountTypeListPane.add(panel);
-                    if (type.equals(Account.Type.DEVICE)) {
-                        //Deveice type filter is enabled based on whether we are in table or graph view.
-                        panel.setEnabled(deviceAccountTypeEnabled);
-                    }
-                    
+            for (Account.Type type : accountTypesInUse) {
+               
+                if (!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)) {
+                    CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(type, selected);
                     accountTypeMap.put(type, panel.getCheckBox());
+                    accountTypeListPane.add(panel);
+
+                    newOneFound = true;
                 }
             }
-            
-//        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
-//            if (type.equals(Account.Type.CREDIT_CARD)) {
-//                //don't show a check box for credit cards
-//            } else {
-//                accountTypeMap.computeIfAbsent(type, t -> {
-//
-//                    CheckBoxIconPanel panel = new CheckBoxIconPanel(
-//                            type.getDisplayName(), 
-//                            new ImageIcon(FiltersPanel.class.getResource(Utils.getIconFilePath(type))));
-//                    panel.setSelected(true);
-//                    panel.addItemListener(validationListener);
-//                    accountTypeListPane.add(panel);
-//                    if (t.equals(Account.Type.DEVICE)) {
-//                        //Deveice type filter is enabled based on whether we are in table or graph view.
-//                        panel.setEnabled(deviceAccountTypeEnabled);
-//                    }
-//                    return panel.getCheckBox();
-//                });
-//            }
-//        });
+
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Unable to update to update Account Types Filter", ex);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "A case is required to update the account types filter.", ex);
         }
+
+        if (newOneFound) {
+            accountTypeListPane.revalidate();
+        }
+
+        return newOneFound;
+    }
+    
+    /**
+     * Helper function to create a new instance of the CheckBoxIconPanel base on
+     * the Account.Type and initalState (check box state).
+     * 
+     * @param type Account.Type to display on the panel
+     * @param initalState initial check box state
+     * 
+     * @return instance of the CheckBoxIconPanel
+     */
+    private CheckBoxIconPanel createAccoutTypeCheckBoxPanel(Account.Type type, boolean initalState) {
+        CheckBoxIconPanel panel = new CheckBoxIconPanel(
+                type.getDisplayName(),
+                new ImageIcon(FiltersPanel.class.getResource(Utils.getIconFilePath(type))));
+
+        panel.setSelected(initalState);
+        panel.addItemListener(validationListener);
+        if (type.equals(Account.Type.DEVICE)) {
+            //Deveice type filter is enabled based on whether we are in table or graph view.
+            panel.setEnabled(deviceAccountTypeEnabled);
+        }
+
+        return panel;
     }
     
     /**
      * Populate the devices filter widgets
      * 
-     * @param initialState 
+     * @param selected Sets the initial state of device check box
+     * 
+     * @return true if a new device was found
      */
-    private void updateDeviceFilter(boolean initialState) {
+    private boolean updateDeviceFilter(boolean selected) {
+        boolean newOneFound = false;
         try {
             final SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
-                //store the device id in the map, but display a datasource name in the UI.
-                devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
-                    final JCheckBox jCheckBox = new JCheckBox(dsName, initialState);
-                    jCheckBox.addItemListener(validationListener);
-                    devicesListPane.add(jCheckBox);
-                    return jCheckBox;
-                });
+                if(devicesMap.containsKey(dataSource.getDeviceId())) {
+                    continue;
+                }
+                
+                final JCheckBox jCheckBox = new JCheckBox(dsName, selected);
+                jCheckBox.addItemListener(validationListener);
+                devicesListPane.add(jCheckBox);
+                devicesMap.put(dataSource.getDeviceId(), jCheckBox);
+                
+                newOneFound = true;
+
             }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Filter update cancelled.  Case is closed.");
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }
+        
+        if(newOneFound) {
+            devicesListPane.revalidate();
+        }
+        
+        return newOneFound;
     }
     
     /**
@@ -352,7 +387,7 @@ final public class FiltersPanel extends JPanel {
     }
     
     /**
-     * Sets the state of the device filter checkboxes
+     * Sets the state of the device filter check boxes
      * 
      * @param deviceFilter Selected devices
      */
@@ -399,6 +434,12 @@ final public class FiltersPanel extends JPanel {
         endDatePicker.setEnabled(state.isEnabled());
     }
     
+    /**
+     * Sets the state of the most recent UI controls based on the current values
+     * in MostRecentFilter.
+     * 
+     * @param filter The MostRecentFilter state to be set
+     */
     private void setMostRecentFilter(MostRecentFilter filter) {
         int limit = filter.getLimit();
         if(limit > 0) {
@@ -457,6 +498,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
         topPane.add(applyFiltersButton, gridBagConstraints);
 
         needsRefreshLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.needsRefreshLabel.text")); // NOI18N
@@ -730,7 +772,7 @@ final public class FiltersPanel extends JPanel {
 
         accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
 
-        accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.Y_AXIS));
+        accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.PAGE_AXIS));
         accountTypesScrollPane.setViewportView(accountTypeListPane);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -773,6 +815,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         add(scrollPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
@@ -841,6 +884,11 @@ final public class FiltersPanel extends JPanel {
                                     endCheckBox.isSelected() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0);
     }
     
+    /**
+     * Get a MostRecentFilter that based on the current state of the ui controls.
+     * 
+     * @return A new instance of MostRecentFilter 
+     */
     private MostRecentFilter getMostRecentFilter() {
         String value = (String)limitComboBox.getSelectedItem();
         if(value.trim().equalsIgnoreCase("all")){
