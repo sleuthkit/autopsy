@@ -215,7 +215,7 @@ final class ConfigVisualPanel1 extends JPanel {
 
         private final ConfigVisualPanel1 panel;
         
-        public MyDocumentListener(ConfigVisualPanel1 aThis) {
+        MyDocumentListener(ConfigVisualPanel1 aThis) {
             this.panel = aThis;
         }
 

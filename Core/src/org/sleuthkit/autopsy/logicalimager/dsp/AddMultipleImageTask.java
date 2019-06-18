@@ -158,7 +158,7 @@ class AddMultipleImageTask implements Runnable {
      * Attempts to cancel the processing of the input image files. May result in
      * partial processing of the input.
      */
-    public void cancelTask() {
+    void cancelTask() {
         LOGGER.log(Level.WARNING, "AddMultipleImageTask cancelled, processing may be incomplete"); // NON-NLS
         cancelled = true;
     }

@@ -770,7 +770,7 @@ final class ConfigVisualPanel2 extends JPanel {
         private final List<String> ruleDescription = new ArrayList<>();
         private final List<LogicalImagerRule> rule = new ArrayList<>();
 
-        public int findRow(String name) {
+        int findRow(String name) {
             return ruleName.indexOf(name);
         }
         
