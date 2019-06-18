@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +30,8 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -44,7 +46,7 @@ import org.sleuthkit.datamodel.Content;
 @ServiceProviders(value={
     @ServiceProvider(service=DataSourceProcessor.class)}
 )
-public class LogicalImagerDSProcessor implements DataSourceProcessor {
+public final class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private final LogicalImagerPanel configPanel;
@@ -168,10 +170,6 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
             return;
         }
         File src = imageDirPath.toFile();
-
-        String deviceId = UUID.randomUUID().toString();
-        String timeZone = Calendar.getInstance().getTimeZone().getID();
-        boolean ignoreFatOrphanFiles = false;
         
         // Get all VHD files in the src directory
         List<String> imagePaths = new ArrayList<>();
@@ -188,6 +186,8 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
             }
         }
         try {
+            String deviceId = UUID.randomUUID().toString();
+            String timeZone = Calendar.getInstance().getTimeZone().getID();
             run(deviceId, imagePaths,
                 timeZone, src, dest,
                 progressMonitor, callback);

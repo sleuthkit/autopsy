@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Logical Imager Rule Set
  */
-public class LogicalImagerRuleSet {
+class LogicalImagerRuleSet {
 
     @SerializedName("set-name")
     @Expose(serialize = true) 
@@ -35,16 +35,16 @@ public class LogicalImagerRuleSet {
     @Expose(serialize = true) 
     private final List<LogicalImagerRule> rules;
 
-    public LogicalImagerRuleSet(String setName, List<LogicalImagerRule> rules) {
+    LogicalImagerRuleSet(String setName, List<LogicalImagerRule> rules) {
         this.setName = setName;
         this.rules = rules;
     }
 
-    public String getSetName() {
+    String getSetName() {
         return setName;
     }
 
-    public List<LogicalImagerRule> getRules() {
+    List<LogicalImagerRule> getRules() {
         return rules;
     }
 

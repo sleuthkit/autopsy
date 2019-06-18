@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Configuration Wizard Panel 2
  */
-public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+final class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger LOGGER = Logger.getLogger(ConfigWizardPanel2.class.getName());
 
@@ -102,7 +102,7 @@ public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescript
         "ConfigWizardPanel2.reason=\nReason: ",       
         "ConfigWizardPanel2.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file",
     })
-    public void saveConfigFile() {
+    void saveConfigFile() {
         GsonBuilder gsonBuilder = new GsonBuilder()
                 .setPrettyPrinting()
                 .excludeFieldsWithoutExposeAnnotation()

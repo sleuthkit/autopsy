@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -41,7 +41,7 @@ import org.openide.util.NbBundle;
  * Edit non-full paths rule panel
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
+final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;

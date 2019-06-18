@@ -95,7 +95,7 @@ public class CategoryManager {
 
     public CategoryManager(ImageGalleryController controller) {
         this.controller = controller;
-        this.drawableDb = controller.getDatabase();
+        this.drawableDb = controller.getDrawablesDatabase();
     }
 
     private ImageGalleryController getController() {

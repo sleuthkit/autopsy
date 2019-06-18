@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,7 +41,7 @@ import org.openide.util.NbBundle;
  * Configuration Visual Panel 1
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class ConfigVisualPanel1 extends JPanel {
+final class ConfigVisualPanel1 extends JPanel {
 
     private LogicalImagerConfig config;
     private String configFilename;
@@ -50,7 +50,7 @@ public final class ConfigVisualPanel1 extends JPanel {
     /**
      * Creates new form ConfigVisualPanel1
      */
-    public ConfigVisualPanel1() {
+    ConfigVisualPanel1() {
         initComponents();
         configFileTextField.getDocument().addDocumentListener(new MyDocumentListener(this));
     }
@@ -188,15 +188,15 @@ public final class ConfigVisualPanel1 extends JPanel {
         }
     }
 
-    public LogicalImagerConfig getConfig() {
+    LogicalImagerConfig getConfig() {
         return config;
     }
 
-    public String getConfigFilename() {
+    String getConfigFilename() {
         return configFilename;
     }
 
-    public boolean isNewFile() {
+    boolean isNewFile() {
         return newFile;
     }
 
@@ -204,7 +204,7 @@ public final class ConfigVisualPanel1 extends JPanel {
         configFileTextField.setText(filename);
     }
 
-    public boolean isPanelValid() {
+    boolean isPanelValid() {
         return (newFile || !configFileTextField.getText().isEmpty());
     }
 
@@ -215,7 +215,7 @@ public final class ConfigVisualPanel1 extends JPanel {
 
         private final ConfigVisualPanel1 panel;
         
-        public MyDocumentListener(ConfigVisualPanel1 aThis) {
+        MyDocumentListener(ConfigVisualPanel1 aThis) {
             this.panel = aThis;
         }
 

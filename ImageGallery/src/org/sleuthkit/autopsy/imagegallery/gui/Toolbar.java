@@ -317,7 +317,7 @@ public class Toolbar extends ToolBar {
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     private ListenableFuture<List<DataSource>> syncDataSources() {
         ListenableFuture<List<DataSource>> dataSourcesFuture = exec.submit(() -> {
-            List<DataSource> dataSourcesInCase = controller.getSleuthKitCase().getDataSources();
+            List<DataSource> dataSourcesInCase = controller.getCaseDatabase().getDataSources();
             synchronized (dataSourcesViewable) {
                 dataSourcesViewable.clear();
                 dataSourcesViewable.put(null, controller.hasTooManyFiles(null));

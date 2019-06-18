@@ -16,13 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
@@ -156,7 +158,7 @@ class AddMultipleImageTask implements Runnable {
      * Attempts to cancel the processing of the input image files. May result in
      * partial processing of the input.
      */
-    public void cancelTask() {
+    void cancelTask() {
         LOGGER.log(Level.WARNING, "AddMultipleImageTask cancelled, processing may be incomplete"); // NON-NLS
         cancelled = true;
     }

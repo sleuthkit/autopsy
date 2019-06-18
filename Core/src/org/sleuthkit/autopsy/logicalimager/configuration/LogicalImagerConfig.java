@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Logical Imager Configuration file JSON
  */
-public class LogicalImagerConfig {
+class LogicalImagerConfig {
 
     @SerializedName("finalize-image-writer")
     @Expose(serialize = true) 
@@ -36,12 +36,12 @@ public class LogicalImagerConfig {
     @Expose(serialize = true) 
     private List<LogicalImagerRuleSet> ruleSets;
     
-    public LogicalImagerConfig() {
+    LogicalImagerConfig() {
         this.finalizeImageWriter = false;
         this.ruleSets = new ArrayList<>();
     }
     
-    public LogicalImagerConfig(
+    LogicalImagerConfig(
             boolean finalizeImageWriter,
             List<LogicalImagerRuleSet> ruleSets
     ) {
@@ -49,19 +49,19 @@ public class LogicalImagerConfig {
         this.ruleSets = ruleSets;
     }
 
-    public boolean isFinalizeImageWriter() {
+    boolean isFinalizeImageWriter() {
         return finalizeImageWriter;
     }
 
-    public void setFinalizeImageWriter(boolean finalizeImageWriter) {
+    void setFinalizeImageWriter(boolean finalizeImageWriter) {
         this.finalizeImageWriter = finalizeImageWriter;
     }
 
-    public List<LogicalImagerRuleSet> getRuleSets() {
+    List<LogicalImagerRuleSet> getRuleSets() {
         return ruleSets;
     }
 
-    public void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
+    void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
         this.ruleSets = ruleSets;
     }    
 }
