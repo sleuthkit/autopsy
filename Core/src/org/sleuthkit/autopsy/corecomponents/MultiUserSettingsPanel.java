@@ -477,9 +477,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             .addGroup(pnTestMultiUserLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                        .addComponent(lbTestResultText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())
+                    .addComponent(lbTestResultText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnTestMultiUserLayout.createSequentialGroup()
                         .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 284, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -488,9 +486,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                         .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(browseOutputFolderButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(bnTestMultiUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(35, 35, 35))))
+                        .addGap(8, 8, 8)))
+                .addContainerGap())
         );
         pnTestMultiUserLayout.setVerticalGroup(
             pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -592,6 +591,10 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cbEnableMultiUserItemStateChanged
 
     private void bnTestDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestDatabaseActionPerformed
+        testDatabase();
+    }//GEN-LAST:event_bnTestDatabaseActionPerformed
+
+    private boolean testDatabase() {
         lbTestDatabase.setIcon(null);
         lbTestDbWarning.setText("");
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -609,12 +612,18 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         } catch (TskCoreException ex) {
             lbTestDatabase.setIcon(badIcon);
             lbTestDbWarning.setText(ex.getMessage());
+            return false;
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
-    }//GEN-LAST:event_bnTestDatabaseActionPerformed
-
+        }       
+        return true;
+    }
+    
     private void bnTestMessageServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMessageServiceActionPerformed
+        testMessageService();
+    }//GEN-LAST:event_bnTestMessageServiceActionPerformed
+
+    private boolean testMessageService() {
         lbTestMessageService.setIcon(null);
         lbTestMessageWarning.setText("");
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -625,7 +634,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         } catch (NumberFormatException ex) {
             lbTestMessageService.setIcon(badIcon);
             lbTestMessageWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.InvalidPortNumber"));
-            return;
+            return false;
         }
 
         MessageServiceConnectionInfo info = new MessageServiceConnectionInfo(
@@ -640,12 +649,18 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         } catch (MessageServiceException ex) {
             lbTestMessageService.setIcon(badIcon);
             lbTestMessageWarning.setText(ex.getMessage());
+            return false;
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
-    }//GEN-LAST:event_bnTestMessageServiceActionPerformed
-
+        return true;
+    }
+    
     private void bnTestSolrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestSolrActionPerformed
+        testSolr();
+    }//GEN-LAST:event_bnTestSolrActionPerformed
+
+    private boolean testSolr() {
         lbTestSolr.setIcon(null);
         lbTestSolrWarning.setText("");
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -660,22 +675,38 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             } else {
                 lbTestSolr.setIcon(badIcon);
                 lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.KeywordSearchNull"));
+                return false;
             }
         } catch (NumberFormatException ex) {
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.InvalidPortNumber"));
+            return false;
         } catch (KeywordSearchServiceException ex) {
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(ex.getMessage());
+            return false;
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
-    }//GEN-LAST:event_bnTestSolrActionPerformed
-
+        return true;
+    }
+    
     private void bnTestMultiUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMultiUserActionPerformed
         
-        // ELTODO 
-        // should we run tests for all services?
+        lbTestResultText.setForeground(Color.BLACK);
+        lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.TestRunning"));
+        lbMultiUserResult.setIcon(null);
+        
+        // run standard tests for all services. this detects many problems sooner.
+        boolean databaseUp = testDatabase();
+        boolean messagingUp = testMessageService() ;
+        boolean solrUp = testSolr();
+        if (!databaseUp || !messagingUp || !solrUp) {
+            lbMultiUserResult.setIcon(badIcon);
+            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.servicesDown"));
+            lbTestResultText.setForeground(Color.RED);
+            return;             
+        }
         
         String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());        
         if (resultsFolderPath.isEmpty()) {
@@ -711,8 +742,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (testResult.equals(MULTI_USER_TEST_SUCCESSFUL)) {
             // test successful
             lbMultiUserResult.setIcon(goodIcon);
-            lbTestResultText.setText(testResult);
-            lbTestResultText.setForeground(Color.BLACK);
+            lbTestResultText.setText("");
         } else {
             // test failed
             lbMultiUserResult.setIcon(badIcon);
@@ -852,6 +882,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (portNumberIsValid(indexingServerPort)) {
             tbSolrPort.setText(indexingServerPort);
         }
+        
+        outputPathTextField.setText(UserPreferences.getMultiUserTestOutputDir());
 
         lbTestDatabase.setIcon(null);
         lbTestSolr.setIcon(null);
@@ -954,7 +986,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
-
+        UserPreferences.setMultiUserTestOutputDir(outputPathTextField.getText().trim());
     }
 
     /**
