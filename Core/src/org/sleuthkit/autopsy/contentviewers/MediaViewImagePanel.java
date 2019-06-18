@@ -25,7 +25,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -78,7 +77,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.ContentViewerTag;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.SerializationException;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtility;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtil;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagControls;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagCreator;
@@ -876,13 +875,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                                 .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
                         
                         //Apply tags to image and write to file
-                        BufferedImage pngImage = ImageTagsUtility.writeTags(file, regions, "png");
+                        BufferedImage taggedImage = ImageTagsUtil.getImageWithTags(file, regions);
                         Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
                                 FilenameUtils.getBaseName(file.getName()) + "-with_tags.png"); //NON-NLS
-                        ImageIO.write(pngImage, "png", output.toFile());
+                        ImageIO.write(taggedImage, "png", output.toFile());
                         
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
-                    } catch (TskCoreException | NoCurrentCaseException | IOException ex) {
+                    } catch (Exception ex) { //Runtime exceptions may spill out of ImageTagsUtil from JavaFX.
+                        //This ensures we (devs and users) have something when it doesn't work.
                         LOGGER.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_unsuccessfulExport());
                     }
