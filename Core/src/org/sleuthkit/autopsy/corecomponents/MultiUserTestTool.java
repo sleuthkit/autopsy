@@ -77,7 +77,8 @@ class MultiUserTestTool {
         "MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case",
         "MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database",
         "MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keword Search index",
-        "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source"  
+        "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source",
+        "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test"
     })
     static String runTest(String rootOutputDirectory) {
 
@@ -173,7 +174,10 @@ class MultiUserTestTool {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToRunIngest(), ex);
                 return Bundle.MultiUserTestTool_unableToRunIngest();
             }
-            //} catch (Throwable ex) {
+        } catch (Throwable ex) {
+            // unexpected exception firewall
+            LOGGER.log(Level.SEVERE, "Unexpected error while performing Multi User test", ex);
+            return Bundle.MultiUserTestTool_unexpectedError();
         } finally {
             // Close and delete the case.
             /* ELTODO try {
