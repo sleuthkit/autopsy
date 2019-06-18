@@ -23,9 +23,6 @@ import javafx.application.Platform;
 /**
  * An application start up task that sets a Platform property that makes the
  * JavaFX thread continue to run until the application calls Platform.exit.
- *
- * RJCTODO: Is this redundant with the call to Platform.setImplicitExit(false)
- * in org.sleuthkit.autopsy.core.Installer?
  */
 @org.openide.modules.OnStart
 public class OnStart implements Runnable {

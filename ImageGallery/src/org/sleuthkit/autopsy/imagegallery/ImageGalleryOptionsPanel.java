@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -35,7 +34,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
-    private static final Logger logger = Logger.getLogger(ImageGalleryOptionsPanel.class.getName());
+    private static final long serialVersionUID = 1L;
 
     ImageGalleryOptionsPanel(ImageGalleryOptionsPanelController controller) {
         initComponents();

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,6 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -50,7 +49,6 @@ import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -75,6 +73,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenAction.class.getName());
     private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
 
@@ -299,7 +298,7 @@ public final class OpenAction extends CallableSystemAction {
                 ImageGalleryTopComponent.openTopComponent();
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to open Image Gallery top component", ex); //NON-NLS}
-                // RJCTODO: Give the user some feedback here
+                // TODO (JIRA-5217): Give the user some feedback here
             }
         });
     }

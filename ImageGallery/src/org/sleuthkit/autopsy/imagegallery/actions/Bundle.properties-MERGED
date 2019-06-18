@@ -8,15 +8,15 @@ AddTagAction.menuItem.quickTag=Quick Tag
 AddTagAction.menuItem.tagAndComment=Tag and Comment...
 Back_diplayName=Back
 CategorizeAction.displayName=Categorize
+# {0} - fileID number
+CategorizeDrawableFileTask.errorUnable.msg=Unable to categorize {0}.
+CategorizeDrawableFileTask.errorUnable.title=Categorizing Error
 CategorizeGroupAction.dontShowAgain=Don't show this message again
 CategorizeGroupAction.fileCountHeader=Files in the following categories will have their categories overwritten: 
 # {0} - number of files with the category
 # {1} - the name of the category
 CategorizeGroupAction.fileCountMessage={0} with {1}
 CategorizeGroupAction.OverwriteButton.text=Overwrite
-# {0} - fileID number
-CategorizeTask.errorUnable.msg=Unable to categorize {0}.
-CategorizeTask.errorUnable.title=Categorizing Error
 CTL_AddImage=View Images/Videos
 CTL_OpenAction=Images/Videos
 # {0} - fileID
