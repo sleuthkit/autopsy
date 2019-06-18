@@ -14,6 +14,26 @@ AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
 # {0} - src
 # {1} - dest
 AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
+# {0} - imageFilePath
+AddMultipleImageTask.adding=Adding: {0}
+# {0} - file
+AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as logical file
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}
+# {0} - deviceId
+# {1} - exceptionMessage
+AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device %s: %s
+AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
 Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory
@@ -187,19 +207,21 @@ LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
 # {0} - directory
 LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
+# {0} - file
+LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}
 # {0} - imageDirPath
 LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
+LogicalImagerDSProcessor.noCurrentCase=No current case
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
 LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
 # {0} - sparseImageDirectory
-# {1} - image
-LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}
+LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
 # {0} - invalidFormatDirectory
 LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
 LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
 LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found
 LogicalImagerPanel.messageLabel.noImageSelected=No image selected
-LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...
+LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for images ...
 LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive
 Menu/Case/OpenRecentCase=Open Recent Case
 CTL_CaseDeleteAction=Delete Case

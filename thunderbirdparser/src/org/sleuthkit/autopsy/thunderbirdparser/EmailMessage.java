@@ -47,7 +47,10 @@ class EmailMessage {
     private long id = -1L;
     private String messageID = "";
     private String inReplyToID = "";
-    private List<String> references = null;
+    private List<String> references = new ArrayList();
+    private String simplifiedSubject = "";
+    private boolean replySubject = false;
+    private String messageThreadID = "";
 
     boolean hasAttachment() {
         return hasAttachment;
@@ -80,7 +83,33 @@ class EmailMessage {
     void setSubject(String subject) {
         if (subject != null) {
             this.subject = subject;
+            if(subject.matches("^[R|r][E|e].*?:.*")) {
+                this.simplifiedSubject = subject.replaceAll("[R|r][E|e].*?:", "").trim();
+                replySubject = true;
+            } else {
+                this.simplifiedSubject = subject;
+            }
+        } else {
+            this.simplifiedSubject = "";
         }
+    }
+    
+    /**
+     * Returns the orginal subject with the "RE:" stripped off".
+     * 
+     * @return Message subject with the "RE" stripped off
+     */
+    String getSimplifiedSubject() {
+        return simplifiedSubject;
+    }
+    
+    /**
+     * Returns whether or not the message subject started with "RE:"
+     * 
+     * @return true if the original subject started with RE otherwise false.
+     */
+    boolean isReplySubject() {
+        return replySubject;
     }
 
     String getHeaders() {
@@ -222,21 +251,39 @@ class EmailMessage {
     
     /**
      * Returns a list of Message-IDs listing the parent, grandparent, 
-     * great-grandparent, and so on, of this message.
+     * great-grandparent, and so on, of this message. 
      * 
-     * @return reference list or empty string if non is available.
+     * @return The reference list or empty string if none is available.
      */
     List<String> getReferences() {
         return references;
     }
     
     /**
-     * Set the list of reference message-IDs.
+     * Set the list of reference message-IDs from the email message header.
      * 
      * @param references 
      */
     void setReferences(List<String> references) {
         this.references = references;
+    }
+    
+    /**
+     * Sets the ThreadID of this message.
+     * 
+     * @param threadID - the thread ID to set
+     */
+    void setMessageThreadID(String threadID) {
+        this.messageThreadID = threadID;
+    }
+    
+    /**
+     * Returns the ThreadID for this message.
+     * 
+     * @return - the message thread ID or "" is non is available
+     */
+    String getMessageThreadID() {
+        return this.messageThreadID;
     }
 
     /**
