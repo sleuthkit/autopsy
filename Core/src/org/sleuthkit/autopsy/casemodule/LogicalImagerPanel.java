@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -54,7 +55,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private static final long serialVersionUID = 1L;
-    private static final String SPARSE_IMAGE_VHD = "sparse_image.vhd"; //NON-NLS
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
     private static final String DRIVE_HAS_NO_IMAGES = Bundle.LogicalImagerPanel_messageLabel_driveHasNoImages();
     private static final String[] EMPTY_LIST_DATA = {};
@@ -302,8 +302,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     @Messages({
         "# {0} - sparseImageDirectory",
-        "# {1} - image",
-        "LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain {1}",
+        "LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images",
         "# {0} - invalidFormatDirectory",
         "LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS"
     })
@@ -317,9 +316,15 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             String path = fileChooser.getSelectedFile().getPath();
             Matcher m = regex.matcher(path);
             if (m.find()) {
-                Path vhdPath = Paths.get(path, SPARSE_IMAGE_VHD);
-                if (!vhdPath.toFile().exists()) {
-                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path, SPARSE_IMAGE_VHD));
+                File dir = Paths.get(path).toFile();
+                String[] vhdFiles = dir.list(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        return name.endsWith(".vhd");
+                    }
+                });
+                if (vhdFiles.length == 0) {
+                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
                     firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
                     return;
                 }
@@ -348,6 +353,16 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         }
     }
 
+    private boolean dirHasVhdFiles(File dir) {
+        File[] fList = dir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".vhd");
+            }
+        });
+        return (fList != null && fList.length != 0);
+    }
+
     private void driveListSelect() {
         String selectedStr = driveList.getSelectedValue();
         if (selectedStr == null) {
@@ -361,10 +376,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             imageTableModel = new ImageTableModel();
             int row = 0;
             // Find all directories with name like Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
-            // and has a sparse_image.vhd file in it
+            // and has vhd files in it
             for (File file : fList) {
-                if (file.isDirectory()
-                        && Paths.get(driveLetter, file.getName(), SPARSE_IMAGE_VHD).toFile().exists()) {
+                if (file.isDirectory() && dirHasVhdFiles(file)) {
                     String dir = file.getName();
                     Matcher m = regex.matcher(dir);
                     if (m.find()) {
@@ -431,7 +445,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     private void toggleMouseAndKeyListeners(Component component, boolean isEnable) {
         component.setEnabled(isEnable);
     }
-    
+
     private void manualRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manualRadioButtonActionPerformed
         browseButton.setEnabled(true);
 
@@ -442,7 +456,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         toggleMouseAndKeyListeners(imageTable, false);
 
         refreshButton.setEnabled(false);
-        
+
         choosenImageDirPath = null;
         setNormalMessage("");
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
@@ -450,25 +464,25 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private void importRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importRadioButtonActionPerformed
         browseButton.setEnabled(false);
-        
+
         toggleMouseAndKeyListeners(driveList, true);
         toggleMouseAndKeyListeners(driveListScrollPane, true);
         toggleMouseAndKeyListeners(imageScrollPane, true);
         toggleMouseAndKeyListeners(imageTable, true);
 
         refreshButton.setEnabled(true);
-        
+
         choosenImageDirPath = null;
         setNormalMessage("");
         refreshButton.doClick();
     }//GEN-LAST:event_importRadioButtonActionPerformed
 
     @Messages({
-        "LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for sparse_image.vhd ...",
+        "LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for images ...",
         "LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found"
     })
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
-        // Scan external drives for sparse_image.vhd
+        // Scan external drives for vhd images
         clearImageTable();
         setNormalMessage(Bundle.LogicalImagerPanel_messageLabel_scanningExternalDrives());
         List<String> listData = new ArrayList<>();
@@ -530,7 +544,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         }
     }//GEN-LAST:event_driveListMouseReleased
 
-   
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.ButtonGroup buttonGroup1;
@@ -573,7 +587,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     Path getImageDirPath() {
         return choosenImageDirPath;
     }
-    
+
     @Override
     public void insertUpdate(DocumentEvent e) {
     }
