@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +27,11 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -40,7 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *   - add alert.txt and users.txt files to report
  *   - add an image data source to the case database.
  */
-public class AddLogicalImageTask extends AddImageTask {
+final class AddLogicalImageTask extends AddMultipleImageTask {
 
     private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());   
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS
@@ -50,16 +51,14 @@ public class AddLogicalImageTask extends AddImageTask {
     private final DataSourceProcessorCallback callback;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     
-    public AddLogicalImageTask(String deviceId, String imagePath, int sectorSize, 
-            String timeZone, boolean ignoreFatOrphanFiles, 
-            String md5, String sha1, String sha256, 
-            ImageWriterSettings imageWriterSettings, 
+    AddLogicalImageTask(String deviceId, 
+            List<String> imagePaths, 
+            String timeZone, 
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, 
             DataSourceProcessorCallback callback
-    ) {
-        super(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, 
-                md5, sha1, sha256, imageWriterSettings, progressMonitor, callback);
+    ) throws NoCurrentCaseException {
+        super(deviceId, imagePaths, timeZone, progressMonitor, callback);
         this.src = src;
         this.dest = dest;
         this.progressMonitor = progressMonitor;

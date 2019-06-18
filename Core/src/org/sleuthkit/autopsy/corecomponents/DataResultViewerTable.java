@@ -857,7 +857,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         void postPageSizeChangeEvent() {
             // Reset page variables when page size changes
             currentPage = 1;
-            totalPages = 0;
 
             if (this == pagingSupport) {
                 updateControls();
@@ -883,7 +882,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     togglePageControls(true);
                 }
 
-                updateControls();
+                // Only update UI controls if this event is for the node currently being viewed.
+                if (nodeName.equals(rootNode.getName())) {
+                    updateControls();
+                }
             }
         }
 
