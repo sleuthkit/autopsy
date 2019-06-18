@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,10 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.beans.PropertyChangeEvent;
 import java.util.EnumSet;
-import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * The Image/Video Gallery panel in the NetBeans provided Options Dialogs
@@ -37,7 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
-    private static final Logger logger = Logger.getLogger(ImageGalleryOptionsPanel.class.getName());
+    private static final long serialVersionUID = 1L;
 
     ImageGalleryOptionsPanel(ImageGalleryOptionsPanelController controller) {
         initComponents();
@@ -195,12 +192,13 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         // If a case is open, save the per case setting
         try {
             Case openCase = Case.getCurrentCaseThrows();
-            ImageGalleryModule.getController().setListeningEnabled(enabledForCaseBox.isSelected());
+            ImageGalleryController controller = ImageGalleryController.getController(openCase);
+            if (controller != null) {
+                controller.setListeningEnabled(enabledForCaseBox.isSelected());
+            }
             new PerCaseProperties(openCase).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         } catch (NoCurrentCaseException ex) {
             // It's not an error if there's no case open
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
         }
 
     }

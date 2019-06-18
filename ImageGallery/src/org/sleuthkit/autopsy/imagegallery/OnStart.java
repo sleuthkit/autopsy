@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,23 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import javafx.application.Platform;
+
 /**
- * The org.openide.modules.OnStart annotation tells NetBeans to invoke this
- * class's run method.
+ * An application start up task that sets a Platform property that makes the
+ * JavaFX thread continue to run until the application calls Platform.exit.
  */
 @org.openide.modules.OnStart
 public class OnStart implements Runnable {
 
     /**
-     * This method is invoked by virtue of the OnStart annotation on the this
-     * class
+     * This task is run by NetBeans during application start up due to the
+     * OnStart annotation of the class. It sets a Platform property that makes
+     * the JavaFX thread continue to run until the application calls
+     * Platform.exit.
      */
     @Override
     public void run() {
-        ImageGalleryModule.onStart();
+        Platform.setImplicitExit(false);
     }
 }
