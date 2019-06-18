@@ -66,8 +66,7 @@ public final class ImageTagsUtil {
         MatOfByte taggedMatrix = getTaggedImageMatrix(sourceImage, tagRegions);
 
         try (ByteArrayInputStream taggedStream = new ByteArrayInputStream(taggedMatrix.toArray())) {
-            BufferedImage taggedImage = ImageIO.read(taggedStream);
-            return taggedImage;
+            return ImageIO.read(taggedStream);
         } finally {
             sourceImage.release();
             taggedMatrix.release();
@@ -178,8 +177,7 @@ public final class ImageTagsUtil {
         MatOfByte thumbnailMatrix = getResizedMatrix(taggedMatrix, iconSize);
 
         try (ByteArrayInputStream thumbnailStream = new ByteArrayInputStream(thumbnailMatrix.toArray())) {
-            BufferedImage thumbnailImage = ImageIO.read(thumbnailStream);
-            return thumbnailImage;
+            return ImageIO.read(thumbnailStream);
         } finally {
             sourceImage.release();
             taggedMatrix.release();
