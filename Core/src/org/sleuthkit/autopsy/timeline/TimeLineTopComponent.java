@@ -254,7 +254,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     }
 
     /**
-     * Constructs a "static" version of the top component for the Timeline
+     * Constructs a "shell" version of the top component for the Timeline
      * feature which has only Swing components, no controller, and no listeners.
      * This constructor conforms to the NetBeans window system requirement that
      * all top components have a public, no argument constructor.
@@ -288,7 +288,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
      */
     public TimeLineTopComponent(TimeLineController controller) {
         this();
-        
+
         this.controller = controller;
 
         Platform.runLater(this::initFXComponents);
