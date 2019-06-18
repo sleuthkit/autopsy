@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * The class definition for the Logical Imager Rule.
  */
-public class LogicalImagerRule {
+class LogicalImagerRule {
 
     @Expose(serialize = true) 
     private final Boolean shouldAlert;

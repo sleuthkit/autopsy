@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Logical Imager Configuration file JSON
  */
-public class LogicalImagerConfig {
+class LogicalImagerConfig {
 
     @SerializedName("finalize-image-writer")
     @Expose(serialize = true) 

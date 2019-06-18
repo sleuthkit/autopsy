@@ -32,7 +32,6 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Configuration Logical Imager

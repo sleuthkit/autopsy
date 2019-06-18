@@ -36,13 +36,12 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Configuration Visual Panel 1
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class ConfigVisualPanel1 extends JPanel {
+final class ConfigVisualPanel1 extends JPanel {
 
     private LogicalImagerConfig config;
     private String configFilename;

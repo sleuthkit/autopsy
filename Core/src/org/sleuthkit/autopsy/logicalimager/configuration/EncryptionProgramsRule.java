@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.logicalimager.configuration;
 import java.util.ArrayList;
 import java.util.List;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Encryption programs rule 
@@ -30,7 +29,7 @@ import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
     "EncryptionProgramsRule.encryptionProgramsRuleName=Encryption Programs",
     "EncryptionProgramsRule.encryptionProgramsRuleDescription=Find encryption programs"
 })
-public final class EncryptionProgramsRule {
+final class EncryptionProgramsRule {
 
     private static final String ENCRYPTION_PROGRAMS_RULE_NAME = Bundle.EncryptionProgramsRule_encryptionProgramsRuleName();
     private static final String ENCRYPTION_PROGRAMS_RULE_DESCRIPTION = Bundle.EncryptionProgramsRule_encryptionProgramsRuleDescription();

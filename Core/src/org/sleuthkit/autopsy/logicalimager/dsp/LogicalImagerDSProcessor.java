@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.Content;
 @ServiceProviders(value={
     @ServiceProvider(service=DataSourceProcessor.class)}
 )
-public class LogicalImagerDSProcessor implements DataSourceProcessor {
+public final class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private final LogicalImagerPanel configPanel;

@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Logical Imager Rule Set
  */
-public class LogicalImagerRuleSet {
+class LogicalImagerRuleSet {
 
     @SerializedName("set-name")
     @Expose(serialize = true) 

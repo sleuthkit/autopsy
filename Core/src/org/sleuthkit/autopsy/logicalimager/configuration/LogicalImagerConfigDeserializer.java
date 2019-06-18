@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Logical Imager Configuration JSON deserializer
@@ -41,7 +40,7 @@ import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
     "LogicalImagerConfigDeserializer.unsupportedKeyException=Unsupported key: {0}",
     "LogicalImagerConfigDeserializer.fullPathsException=A rule with full-paths cannot have other rule definitions",
 })
-public class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerConfig> {
+class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerConfig> {
 
     @Override
     public LogicalImagerConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {

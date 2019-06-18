@@ -30,7 +30,6 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Configuration Visual Panel 2
@@ -40,7 +39,7 @@ import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
     "ConfigVisualPanel2.cancel=Cancel"
 })
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class ConfigVisualPanel2 extends JPanel {
+final class ConfigVisualPanel2 extends JPanel {
 
     private static final List<String> EMPTY_LIST = new ArrayList<>();
     private String configFilename;

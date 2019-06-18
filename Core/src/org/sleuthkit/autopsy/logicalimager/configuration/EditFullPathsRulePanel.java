@@ -30,13 +30,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Edit full paths rule panel
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class EditFullPathsRulePanel extends javax.swing.JPanel {
+class EditFullPathsRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;

@@ -52,7 +52,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
     "LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images",
     "LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive",})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class LogicalImagerPanel extends JPanel implements DocumentListener {
+final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private static final long serialVersionUID = 1L;
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();

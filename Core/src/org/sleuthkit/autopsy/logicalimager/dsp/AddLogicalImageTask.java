@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *   - add alert.txt and users.txt files to report
  *   - add an image data source to the case database.
  */
-public class AddLogicalImageTask extends AddMultipleImageTask {
+final class AddLogicalImageTask extends AddMultipleImageTask {
 
     private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());   
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS

@@ -35,13 +35,12 @@ import org.apache.commons.io.FileUtils;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Configuration Wizard Panel 2
  */
-public class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
+class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private static final Logger LOGGER = Logger.getLogger(ConfigWizardPanel2.class.getName());
 

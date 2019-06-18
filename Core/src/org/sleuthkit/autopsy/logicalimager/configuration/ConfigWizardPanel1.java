@@ -32,7 +32,7 @@ import org.openide.util.HelpCtx;
 /**
  * Configuration Wizard Panel 1
  */
-public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
+class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
     /**
      * The visual component that displays this panel. If you need to access the

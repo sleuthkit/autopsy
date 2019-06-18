@@ -31,13 +31,12 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.strip;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 
 /**
  * Edit rule panel
  */
-public class EditRulePanel extends JPanel {
+class EditRulePanel extends JPanel {
 
     private EditFullPathsRulePanel editFullPathsRulePanel = null;
     private EditNonFullPathsRulePanel editNonFullPathsRulePanel = null;

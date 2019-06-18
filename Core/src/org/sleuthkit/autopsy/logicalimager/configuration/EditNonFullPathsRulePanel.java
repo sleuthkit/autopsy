@@ -36,13 +36,12 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.strip;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Edit non-full paths rule panel
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class EditNonFullPathsRulePanel extends javax.swing.JPanel {
+class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;
