@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
  * A JPanel used by TranslatedContentViewer to display machine translation of
  * text.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class TranslationContentPanel extends javax.swing.JPanel {
 
     private static final ImmutableBiMap<String, String> LANGUAGE_NAMES;
