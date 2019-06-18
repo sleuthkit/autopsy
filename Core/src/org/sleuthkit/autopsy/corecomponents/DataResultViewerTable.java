@@ -857,7 +857,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         void postPageSizeChangeEvent() {
             // Reset page variables when page size changes
             currentPage = 1;
-            totalPages = 0;
 
             if (this == pagingSupport) {
                 updateControls();

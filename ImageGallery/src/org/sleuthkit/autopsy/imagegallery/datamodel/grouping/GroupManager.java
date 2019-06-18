@@ -64,7 +64,6 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -278,7 +277,7 @@ public class GroupManager {
     public ListenableFuture<?> markGroupSeen(DrawableGroup group) {
         return exec.submit(() -> {
             try {
-                Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
+                Examiner examiner = controller.getCaseDatabase().getCurrentExaminer();
                 getDrawableDB().markGroupSeen(group.getGroupKey(), examiner.getId());
                 // only update and reshuffle if its new results
                 if (group.isSeen() != true) {
@@ -757,7 +756,7 @@ public class GroupManager {
                 Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                 if (Objects.nonNull(fileIDs)) {
 
-                    long examinerID = collaborativeModeProp.get() ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId();
+                    long examinerID = collaborativeModeProp.get() ? -1 : controller.getCaseDatabase().getCurrentExaminer().getId();
                     final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examinerID);
                     DrawableGroup group;
 
@@ -766,7 +765,7 @@ public class GroupManager {
                         group.setFiles(fileIDs);
                         group.setSeen(groupSeen);
                     } else {
-                        group = new DrawableGroup(groupKey, fileIDs, groupSeen);
+                        group = new DrawableGroup(groupKey, fileIDs, groupSeen, controller.getDrawablesDatabase(), controller.getHashSetManager());
                         controller.getCategoryManager().registerListener(group);
                         groupMap.put(groupKey, group);
                     }
@@ -796,7 +795,7 @@ public class GroupManager {
                 ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL" //NON-NLS
                 : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'"; //NON-NLS
 
-        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);
+        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getCaseDatabase().executeQuery(query);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
                 final long fileID = resultSet.getLong("obj_id"); //NON-NLS
@@ -817,7 +816,7 @@ public class GroupManager {
             try {
                 boolean groupSeenByExaminer = getDrawableDB().isGroupSeenByExaminer(
                         group.getGroupKey(),
-                        newValue ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId()
+                        newValue ? -1 : controller.getCaseDatabase().getCurrentExaminer().getId()
                 );
                 group.setSeen(groupSeenByExaminer);
                 updateUnSeenGroups(group);
@@ -969,13 +968,13 @@ public class GroupManager {
                         // Use the group_concat function to get a list of files for each mime type.  
                         // This has different syntax on Postgres vs SQLite
                         String groupConcatClause;
-                        if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
+                        if (DbType.POSTGRESQL == controller.getCaseDatabase().getDatabaseType()) {
                             groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
                         } else {
                             groupConcatClause = " group_concat(obj_id) as object_ids";
                         }
                         String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
-                        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
+                        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getCaseDatabase().executeQuery(query); //NON-NLS
                                 ResultSet resultSet = executeQuery.getResultSet();) {
                             while (resultSet.next()) {
                                 final String mimeType = resultSet.getString("mime_type"); //NON-NLS
@@ -1020,7 +1019,7 @@ public class GroupManager {
      * @return the drawableDB
      */
     private DrawableDB getDrawableDB() {
-        return controller.getDatabase();
+        return controller.getDrawablesDatabase();
 
     }
 
