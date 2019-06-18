@@ -64,6 +64,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
+    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.Success");
     private static final long serialVersionUID = 1L;
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -707,7 +708,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         String testResult = MultiUserTestTool.runTest(resultsFolderPath);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        if (testResult.equals(MultiUserTestTool.RESULT_SUCCESS)) {
+        if (testResult.equals(MULTI_USER_TEST_SUCCESSFUL)) {
             // test successful
             lbMultiUserResult.setIcon(goodIcon);
             lbTestResultText.setText(testResult);

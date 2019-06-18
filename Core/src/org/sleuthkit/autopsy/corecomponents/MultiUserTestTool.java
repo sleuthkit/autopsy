@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
@@ -66,9 +67,18 @@ class MultiUserTestTool {
     private static final Logger LOGGER = Logger.getLogger(MultiUserTestTool.class.getName());
     private static final String TEST_FILE_NAME = "Test.txt";
     private static final Object INGEST_LOCK = new Object();
+    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.Success");
 
-    static final String RESULT_SUCCESS = "Success";
-
+    @NbBundle.Messages({
+        "MultiUserTestTool.unableToCreateCase=Unable to create case",
+        "MultiUserTestTool.unableToInitializeDatabase=Case database was not successfully initialized",
+        "MultiUserTestTool.unableToReadDatabase=Unable to read from case database",
+        "MultiUserTestTool.unableCreatFile=Unable to create a file in case output directory",
+        "MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case",
+        "MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database",
+        "MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keword Search index",
+        "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source"  
+    })
     static String runTest(String rootOutputDirectory) {
 
         // Create a case in the output folder.
@@ -76,13 +86,13 @@ class MultiUserTestTool {
         try {
             caseForJob = createCase(CASE_NAME, rootOutputDirectory);
         } catch (CaseActionException ex) {
-            LOGGER.log(Level.SEVERE, "Unable to create case", ex);
-            return "Unable to create case";
+            LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToCreateCase(), ex);
+            return Bundle.MultiUserTestTool_unableToCreateCase();
         }
 
         if (caseForJob == null) {
-            LOGGER.log(Level.SEVERE, "Error creating multi user case");
-            return "Error creating multi user case";
+            LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToCreateCase());
+            return Bundle.MultiUserTestTool_unableToCreateCase();
         }
 
         try {
@@ -93,11 +103,11 @@ class MultiUserTestTool {
                 // check if we got a result
                 if (resultSet.next() == false) {
                     // we got a result so we are able to read from the database
-                    return "Case database was not successfully initialized";
+                    return Bundle.MultiUserTestTool_unableToInitializeDatabase();
                 }
             } catch (TskCoreException | SQLException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to read from case database", ex);
-                return "Unable to read from case database";
+                LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadDatabase(), ex);
+                return Bundle.MultiUserTestTool_unableToReadDatabase();
             }
 
             // Make a text file in a temp folder with just the text "Test" in it. 
@@ -105,8 +115,8 @@ class MultiUserTestTool {
             try {
                 FileUtils.writeStringToFile(new File(tempFilePath), "Test", Charset.forName("UTF-8"));
             } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to create a file in case output directory", ex);
-                return "Unable to create a file in case output directory";
+                LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableCreatFile(), ex);
+                return Bundle.MultiUserTestTool_unableCreatFile();
             }
 
             //  Add it as a logical file set data source.
@@ -122,8 +132,8 @@ class MultiUserTestTool {
                 dataSource = new AutoIngestDataSource("", Paths.get("C:\\TEST\\Inputs\\Test archivedsp\\Test 6.zip"));
                 error = runLogicalFilesDSP(caseForJob, dataSource);
             } catch (InterruptedException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to add test file as data source to case", ex);
-                return "Unable to add test file as data source to case";
+                LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableAddFileAsDataSource(), ex);
+                return Bundle.MultiUserTestTool_unableAddFileAsDataSource();
             }
 
             // Verify that Solr was able to create the core and is able to write to it
@@ -133,12 +143,12 @@ class MultiUserTestTool {
             try {
                 listOfFiles = fileManager.findFiles(TEST_FILE_NAME);
                 if (listOfFiles == null || listOfFiles.isEmpty()) {
-                    LOGGER.log(Level.SEVERE, "Unable to read test file info from case database");
-                    return "Unable to read test file info from case database";
+                    LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase());
+                    return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase();
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to read test file info from case database", ex);
-                return "Unable to read test file info from case database";
+                LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase(), ex);
+                return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase();
             }
 
             file = listOfFiles.get(0);
@@ -148,8 +158,8 @@ class MultiUserTestTool {
             try {
                 kwsService.index(file);
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to write to Keword Search index", ex);
-                return "Unable to write to Keword Search index";
+                LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToUpdateKWSIndex(), ex);
+                return Bundle.MultiUserTestTool_unableToUpdateKWSIndex();
             }
 
             // Run ingest on that data source and report errors if the modules could not start.           
@@ -160,8 +170,8 @@ class MultiUserTestTool {
                     return error;
                 }
             } catch (InterruptedException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to run ingest on test data source", ex);
-                return "Unable to run ingest on test data source";
+                LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToRunIngest(), ex);
+                return Bundle.MultiUserTestTool_unableToRunIngest();
             }
             //} catch (Throwable ex) {
         } finally {
@@ -169,12 +179,12 @@ class MultiUserTestTool {
             /* ELTODO try {
                 Case.deleteCurrentCase();
             } catch (CaseActionException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to delete test case", ex);
-                return "Unable to delete test case";
+                // I don't think this should result in the test being marked as "failed" if everyhitng else went well
+                LOGGER.log(Level.WARNING, "Unable to delete test case", ex);
             } */
         }
 
-        return RESULT_SUCCESS;
+        return MULTI_USER_TEST_SUCCESSFUL;
     }
 
     private static Case createCase(String baseCaseName, String rootOutputDirectory) throws CaseActionException {
@@ -204,6 +214,11 @@ class MultiUserTestTool {
      * @throws InterruptedException if the thread running the job processing
      * task is interrupted while blocked, i.e., if ingest is shutting down.
      */
+    @NbBundle.Messages({
+        "MultiUserTestTool.noContent=Test data source failed to produce content",
+        "# {0} - errorMessage",
+        "MultiUserTestTool.criticalError=Critical error running data source processor on test data source: {0}"
+    })    
     private static String runLogicalFilesDSP(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException {
 
         AutoIngestDataSourceProcessor selectedProcessor = new LocalFilesDSProcessor();
@@ -219,14 +234,14 @@ class MultiUserTestTool {
             // at this point we got the content object(s) from the DSP.
             // check whether the data source was processed successfully
             if (dataSource.getContent().isEmpty()) {
-                return "Test data source failed to produce content";
+                return Bundle.MultiUserTestTool_noContent();
             }
 
             if ((dataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)) {
                 for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
                     LOGGER.log(Level.SEVERE, "Critical error running data source processor on test data source: {0}", errorMessage);
                 }
-                return "Critical error running data source processor on test data source: " + dataSource.getDataSourceProcessorErrorMessages().get(0);
+                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.criticalError", dataSource.getDataSourceProcessorErrorMessages().get(0));
             }
 
             return "";
@@ -246,6 +261,13 @@ class MultiUserTestTool {
      * @throws InterruptedException if the thread running the job processing
      * task is interrupted while blocked, i.e., if auto ingest is shutting down.
      */
+    @NbBundle.Messages({
+        "# {0} - cancellationReason",
+        "MultiUserTestTool.ingestCancelled=Ingest cancelled due to {0}",
+        "MultiUserTestTool.startupError=Failed to analyze data source due to ingest job startup error",
+        "MultiUserTestTool.errorStartingIngestJob=Ingest manager error while starting ingest job",
+        "MultiUserTestTool.ingestSettingsError=Failed to analyze data source due to ingest settings errors"  
+    })
     private static String analyze(AutoIngestDataSource dataSource) throws InterruptedException {
 
         LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", dataSource.getPath());
@@ -281,7 +303,7 @@ class MultiUserTestTool {
                                 LOGGER.log(Level.WARNING, "Analysis of data source cancelled");
                                 IngestJob.CancellationReason cancellationReason = snapshot.getCancellationReason();
                                 if (IngestJob.CancellationReason.NOT_CANCELLED != cancellationReason && IngestJob.CancellationReason.USER_CANCELLED != cancellationReason) {
-                                    return "Ingest cancelled due to " + cancellationReason.getDisplayName();
+                                    return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.ingestCancelled", cancellationReason.getDisplayName());
                                 }
                             }
                         }
@@ -290,16 +312,16 @@ class MultiUserTestTool {
                             LOGGER.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), dataSource.getPath()), error.getThrowable());
                         }
                         LOGGER.log(Level.SEVERE, "Failed to analyze data source due to ingest job startup error");
-                        return "Failed to analyze data source due to ingest job startup error";
+                        return Bundle.MultiUserTestTool_startupError();
                     } else {
                         LOGGER.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", dataSource.getPath()), ingestJobStartResult.getStartupException());
-                        return "Ingest manager error while starting ingest job";
+                        return Bundle.MultiUserTestTool_errorStartingIngestJob();
                     }
                 } else {
                     for (String warning : settingsWarnings) {
                         LOGGER.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{dataSource.getPath(), warning});
                     }
-                    return "Failed to analyze data source due to ingest settings errors";
+                    return Bundle.MultiUserTestTool_ingestSettingsError();
                 }
             }
         } finally {
