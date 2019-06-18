@@ -16,11 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Encryption programs rule 

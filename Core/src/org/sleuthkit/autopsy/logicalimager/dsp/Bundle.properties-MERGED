@@ -1,0 +1,35 @@
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+
+LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
+# {0} - directory
+LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
+# {0} - directory
+LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
+# {0} - file
+LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}
+# {0} - imageDirPath
+LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
+LogicalImagerDSProcessor.noCurrentCase=No current case
+LogicalImagerPanel.imageTable.columnModel.title0=Hostname
+LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
+# {0} - sparseImageDirectory
+LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
+# {0} - invalidFormatDirectory
+LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
+LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images
+LogicalImagerPanel.messageLabel.noExternalDriveFound=No drive found
+LogicalImagerPanel.messageLabel.noImageSelected=No image selected
+LogicalImagerPanel.messageLabel.scanningExternalDrives=Scanning external drives for images ...
+LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive
+LogicalImagerPanel.selectFromDriveLabel.text=Select Acquisition From Drive
+LogicalImagerPanel.selectDriveLabel.text=Select Drive
+LogicalImagerPanel.selectFolderLabel.text=Selected Folder:
+LogicalImagerPanel.messageTextArea.text=
+LogicalImagerPanel.pathTextField.text=
+LogicalImagerPanel.manualRadioButton.text=Manually Choose Folder
+LogicalImagerPanel.importRadioButton.toolTipText=
+LogicalImagerPanel.importRadioButton.text=Import From External Drive
+LogicalImagerPanel.browseButton.text=Browse
+LogicalImagerPanel.refreshButton.text=Refresh

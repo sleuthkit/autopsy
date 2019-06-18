@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -31,6 +31,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.strip;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 
 /**

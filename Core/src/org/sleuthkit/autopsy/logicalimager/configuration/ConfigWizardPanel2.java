@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,6 +35,7 @@ import org.apache.commons.io.FileUtils;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**

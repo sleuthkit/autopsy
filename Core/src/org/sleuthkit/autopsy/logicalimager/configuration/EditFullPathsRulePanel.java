@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -30,6 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.logicalimager.configuration.Bundle;
 
 /**
  * Edit full paths rule panel
