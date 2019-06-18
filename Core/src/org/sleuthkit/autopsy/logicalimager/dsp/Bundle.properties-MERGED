@@ -2,6 +2,40 @@
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
 
+# {0} - file
+AddLogicalImageTask.addingToReport=Adding {0} to report
+# {0} - src
+# {1} - dest
+AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
+# {0} - file
+AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
+AddLogicalImageTask.doneCopying=Done copying
+# {0} - file
+# {1} - exception message
+AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
+# {0} - src
+# {1} - dest
+AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
+# {0} - imageFilePath
+AddMultipleImageTask.adding=Adding: {0}
+# {0} - file
+AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as logical file
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}
+# {0} - deviceId
+# {1} - exceptionMessage
+AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device %s: %s
+AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type
+# {0} - imageFilePath
+# {1} - deviceId
+# {2} - exceptionMessage
+AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}
 LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
 # {0} - directory
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists

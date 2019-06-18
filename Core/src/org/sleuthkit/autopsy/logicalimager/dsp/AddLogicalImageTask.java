@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
