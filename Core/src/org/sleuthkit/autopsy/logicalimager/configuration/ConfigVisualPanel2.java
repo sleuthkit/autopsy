@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ import org.openide.util.NbBundle;
     "ConfigVisualPanel2.cancel=Cancel"
 })
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class ConfigVisualPanel2 extends JPanel {
+final class ConfigVisualPanel2 extends JPanel {
 
     private static final List<String> EMPTY_LIST = new ArrayList<>();
     private String configFilename;
@@ -51,7 +51,7 @@ public final class ConfigVisualPanel2 extends JPanel {
     /**
      * Creates new form ConfigVisualPanel2
      */
-    public ConfigVisualPanel2() {
+    ConfigVisualPanel2() {
         initComponents();
         if (config != null) {
             updatePanel(configFilename, config);
@@ -770,7 +770,7 @@ public final class ConfigVisualPanel2 extends JPanel {
         private final List<String> ruleDescription = new ArrayList<>();
         private final List<LogicalImagerRule> rule = new ArrayList<>();
 
-        public int findRow(String name) {
+        int findRow(String name) {
             return ruleName.indexOf(name);
         }
         

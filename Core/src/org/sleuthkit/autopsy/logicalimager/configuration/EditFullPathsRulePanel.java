@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -35,7 +35,7 @@ import org.openide.util.NbBundle;
  * Edit full paths rule panel
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class EditFullPathsRulePanel extends javax.swing.JPanel {
+final class EditFullPathsRulePanel extends javax.swing.JPanel {
 
     private JButton okButton;
     private JButton cancelButton;
@@ -47,7 +47,7 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     @NbBundle.Messages({
         "EditFullPathsRulePanel.example=Example: "
     })
-    public EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
+    EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
         
         if (editing) {
@@ -245,7 +245,7 @@ public class EditFullPathsRulePanel extends javax.swing.JPanel {
     @NbBundle.Messages({
         "EditFullPathsRulePanel.fullPaths=Full paths",
     })
-    public ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
+    ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
         List<String> fullPaths = EditRulePanel.validateTextList(fullPathsTextArea, Bundle.EditFullPathsRulePanel_fullPaths());
         String ruleName = EditRulePanel.validRuleName(ruleNameTextField.getText());
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();

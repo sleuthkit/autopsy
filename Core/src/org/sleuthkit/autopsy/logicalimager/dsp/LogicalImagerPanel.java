@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -52,7 +52,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
     "LogicalImagerPanel.messageLabel.driveHasNoImages=Drive has no images",
     "LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from Drive",})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class LogicalImagerPanel extends JPanel implements DocumentListener {
+final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private static final long serialVersionUID = 1L;
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
@@ -61,7 +61,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final Pattern regex = Pattern.compile("Logical_Imager_(.+)_(\\d{4})(\\d{2})(\\d{2})_(\\d{2})_(\\d{2})_(\\d{2})");
-    private final String contextName;
     private Path choosenImageDirPath;
     private TableModel imageTableModel;
 
@@ -72,7 +71,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
      *                settings.
      */
     private LogicalImagerPanel(String context) {
-        this.contextName = context;
         initComponents();
         jScrollPane1.setBorder(null);
         clearImageTable();
@@ -86,7 +84,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
      *
      * @return instance of the LogicalImagerPanel
      */
-    public static synchronized LogicalImagerPanel createInstance(String context) {
+    static synchronized LogicalImagerPanel createInstance(String context) {
         LogicalImagerPanel instance = new LogicalImagerPanel(context);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
         instance.imageTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -290,7 +288,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public static String humanReadableByteCount(long bytes, boolean si) {
+    private static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) {
             return bytes + " B"; //NON-NLS
@@ -501,12 +499,13 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                         firstRemovableDrive = i;
                     }
                 } catch (IOException ex) {
-                    ; // skip
+                    i++;
+                    continue;
                 }
             }
             i++;
         }
-        driveList.setListData(listData.toArray(new String[0]));
+        driveList.setListData(listData.toArray(new String[listData.size()]));
         if (!listData.isEmpty()) {
             // auto-select the first external drive, if any
             driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
@@ -564,7 +563,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     private javax.swing.JLabel selectFromDriveLabel;
     // End of variables declaration//GEN-END:variables
 
-    public void reset() {
+    void reset() {
         //reset the UI elements to default
         choosenImageDirPath = null;
         setNormalMessage("");
@@ -580,7 +579,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
-    public boolean validatePanel() {
+    boolean validatePanel() {
         return choosenImageDirPath != null && choosenImageDirPath.toFile().exists();
     }
 
@@ -603,6 +602,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     void storeSettings() {
     }
 
+    /**
+     * Image Table Model
+     */
     private class ImageTableModel extends AbstractTableModel {
 
         private final List<String> hostnames = new ArrayList<>();

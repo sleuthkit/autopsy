@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -32,7 +32,7 @@ import org.openide.util.HelpCtx;
 /**
  * Configuration Wizard Panel 1
  */
-public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
+final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
     /**
      * The visual component that displays this panel. If you need to access the
@@ -88,7 +88,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
      * @param l the change listener to add
      */
     @Override
-    public final void addChangeListener(ChangeListener l) {
+    public void addChangeListener(ChangeListener l) {
         synchronized (listeners) {
             listeners.add(l);
         }
@@ -100,7 +100,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
      * @param l the change listener to move
      */
     @Override
-    public final void removeChangeListener(ChangeListener l) {
+    public void removeChangeListener(ChangeListener l) {
         synchronized (listeners) {
             listeners.remove(l);
         }
@@ -110,7 +110,7 @@ public class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wiza
      * This method is auto-generated. It seems that this method is used to
      * listen to any change in this wizard panel.
      */
-    protected final void fireChangeEvent() {
+    void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
             it = new HashSet<>(listeners).iterator();
