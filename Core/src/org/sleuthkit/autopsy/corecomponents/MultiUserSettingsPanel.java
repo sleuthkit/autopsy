@@ -597,6 +597,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private boolean testDatabase() {
         lbTestDatabase.setIcon(null);
         lbTestDbWarning.setText("");
+        lbTestDatabase.paintImmediately(lbTestDatabase.getVisibleRect());
+        lbTestDbWarning.paintImmediately(lbTestDbWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             CaseDbConnectionInfo info = new CaseDbConnectionInfo(
@@ -626,6 +628,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private boolean testMessageService() {
         lbTestMessageService.setIcon(null);
         lbTestMessageWarning.setText("");
+        lbTestMessageService.paintImmediately(lbTestMessageService.getVisibleRect());
+        lbTestMessageWarning.paintImmediately(lbTestMessageWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         int port;
@@ -663,6 +667,8 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private boolean testSolr() {
         lbTestSolr.setIcon(null);
         lbTestSolrWarning.setText("");
+        lbTestSolr.paintImmediately(lbTestSolr.getVisibleRect());
+        lbTestSolrWarning.paintImmediately(lbTestSolrWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
@@ -695,7 +701,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         
         lbTestResultText.setForeground(Color.BLACK);
         lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.TestRunning"));
+        lbTestResultText.paintImmediately(lbTestResultText.getVisibleRect());
         lbMultiUserResult.setIcon(null);
+        lbMultiUserResult.paintImmediately(lbMultiUserResult.getVisibleRect());
         
         // run standard tests for all services. this detects many problems sooner.
         boolean databaseUp = testDatabase();
