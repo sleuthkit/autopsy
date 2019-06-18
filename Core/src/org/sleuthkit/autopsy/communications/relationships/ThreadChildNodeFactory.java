@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -119,38 +120,42 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
      * @throws TskCoreException 
      */
     private boolean createRootMessageKeys(List<BlackboardArtifact> list, Set<Content> relationshipSources) throws TskCoreException{
-        HashMap<String, BlackboardArtifact> rootMessageMap = new HashMap<>();
+        Map<String, BlackboardArtifact> rootMessageMap = new HashMap<>();
         for(Content content: relationshipSources) {
-            if(content instanceof BlackboardArtifact) {
-                BlackboardArtifact bba = (BlackboardArtifact) content;
-                BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
+            if(!(content instanceof BlackboardArtifact)) {
+                continue;
+            }
+            
+            BlackboardArtifact bba = (BlackboardArtifact) content;
+            BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
-                if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
-                        || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
-                        || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
+            if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
+                    || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
+                    || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
 
-                    // We want all artifacts that do not have "threadIDs" to appear as one thread in the UI
-                    // To achive this assign any artifact that does not have a threadID
-                    // the "UNTHREADED_ID"
-                    String threadID = MessageNode.UNTHREADED_ID;
-                    BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
+                // We want all artifacts that do not have "threadIDs" to appear as one thread in the UI
+                // To achive this assign any artifact that does not have a threadID
+                // the "UNTHREADED_ID"
+                String threadID = MessageNode.UNTHREADED_ID;
+                BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
-                    if(attribute != null) {
-                        threadID = attribute.getValueString();
-                    } 
+                if(attribute != null) {
+                    threadID = attribute.getValueString();
+                } 
 
-                    BlackboardArtifact tableArtifact = rootMessageMap.get(threadID);
-                    if(tableArtifact == null) {
-                        rootMessageMap.put(threadID, bba);          
-                    } else {
-                        // Get the date of the message
-                        BlackboardAttribute tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
-                        attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+                BlackboardArtifact tableArtifact = rootMessageMap.get(threadID);
+                if(tableArtifact == null) {
+                    rootMessageMap.put(threadID, bba);          
+                } else {
+                    // Get the date of the message
+                    BlackboardAttribute tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+                    attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
 
-                        // put the earliest message into the table
-                        if(tableAttribute != null && attribute != null && tableAttribute.getValueLong() > attribute.getValueLong()) {
-                            rootMessageMap.put(threadID, bba);
-                        }
+                    // put the earliest message into the table
+                    if(tableAttribute != null 
+                            && attribute != null 
+                            && tableAttribute.getValueLong() > attribute.getValueLong()) {
+                        rootMessageMap.put(threadID, bba);
                     }
                 }
             }
