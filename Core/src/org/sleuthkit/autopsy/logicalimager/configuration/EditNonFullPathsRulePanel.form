@@ -102,23 +102,23 @@
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="filenamesScrollPane" alignment="0" pref="94" max="32767" attributes="0"/>
+                  <Component id="filenamesScrollPane" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="2" attributes="0">
                           <Component id="filenamesLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="filenamesRadioButton" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="73" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="53" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="folderNamesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="folderNamesScrollPane" alignment="0" pref="95" max="32767" attributes="0"/>
+                  <Component id="folderNamesScrollPane" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="userFolderNote" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="8" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="2" attributes="0">
                   <Component id="fileSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="minSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>

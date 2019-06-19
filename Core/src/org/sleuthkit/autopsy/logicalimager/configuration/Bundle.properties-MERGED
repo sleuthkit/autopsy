@@ -162,6 +162,7 @@ LogicalImagerConfigDeserializer.fullPathsException=A rule with full-paths cannot
 LogicalImagerConfigDeserializer.missingRuleSetException=Missing rule-set
 # {0} - key
 LogicalImagerConfigDeserializer.unsupportedKeyException=Unsupported key: {0}
+NewRuleSetPanel.attributeRule.description=Search for files based on one or more attributes or metadata fields.
 NewRuleSetPanel.attributeRule.name=Attribute
 NewRuleSetPanel.chooseLabel.text=Choose the type of rule
 EditNonFullPathsRulePanel.minSizeLabel.text=Minimum:
@@ -179,4 +180,5 @@ EditNonFullPathsRulePanel.filenamesRadioButton.text=
 EditNonFullPathsRulePanel.extensionsRadioButton.toolTipText=Extensions and File names are mutually exclusive
 EditNonFullPathsRulePanel.filenamesRadioButton.toolTipText=Extensions and File names are mutually exclusive
 EditNonFullPathsRulePanel.userFolderNote.text=Starting a folder name with the token [USER_FOLDER] will allow matches of all user folders in the file system.
+NewRuleSetPanel.fullPathRule.description=Search for files based on full exact match path.
 NewRuleSetPanel.fullPathRule.name=Full Path

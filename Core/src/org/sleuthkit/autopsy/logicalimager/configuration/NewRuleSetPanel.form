@@ -22,7 +22,9 @@
                   <Component id="chooseLabel" max="32767" attributes="0"/>
                   <Component id="chooseComboBox" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace pref="716" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="ruleDescription" min="-2" pref="562" max="-2" attributes="0"/>
+              <EmptySpace pref="144" max="32767" attributes="0"/>
           </Group>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
@@ -37,7 +39,10 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="chooseLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="chooseComboBox" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="chooseComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="ruleDescription" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="sharedLayeredPane" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -82,5 +87,7 @@
         </DimensionLayout>
       </Layout>
     </Container>
+    <Component class="javax.swing.JLabel" name="ruleDescription">
+    </Component>
   </SubComponents>
 </Form>
