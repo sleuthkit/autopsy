@@ -1162,12 +1162,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
 
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        pbTaskInProgress.setEnabled(true);
-        pbTaskInProgress.setIndeterminate(true);
-        pbTaskInProgress.paintImmediately(pbTaskInProgress.getVisibleRect());
         String testResult = MultiUserTestTool.runTest(resultsFolderPath);
-        pbTaskInProgress.setIndeterminate(false);
-        pbTaskInProgress.setEnabled(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         if (testResult.equals(MultiUserTestTool.MULTI_USER_TEST_SUCCESSFUL)) {
             // test successful
