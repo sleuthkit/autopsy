@@ -843,7 +843,6 @@ public final class DataSourceIngestJob {
             DataSourceIngestJob.taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
             logErrorMessage(Level.SEVERE, "Adding files to job during second stage analysis not supported");
-            DataSourceIngestJob.logger.log(Level.SEVERE, "Adding files during second stage not supported"); //NON-NLS
         }
 
         /**
@@ -1095,7 +1094,7 @@ public final class DataSourceIngestJob {
      *
      * @param level   The logging level for the message.
      * @param message The message.
-     * @param ex      The exception associated with the error, may be null.
+     * @param ex      The exception associated with the error.
      */
     private void logErrorMessage(Level level, String message) {
         logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, dataSource.getName(), dataSource.getId(), id)); //NON-NLS
