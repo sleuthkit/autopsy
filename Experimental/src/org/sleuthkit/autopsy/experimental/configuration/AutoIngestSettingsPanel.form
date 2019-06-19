@@ -119,8 +119,8 @@
                           </Group>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="autoIngestModeRadioButton" alignment="0" min="-2" pref="145" max="-2" attributes="0"/>
-                                  <Component id="pnTestMultiUser" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="autoIngestModeRadioButton" min="-2" pref="145" max="-2" attributes="0"/>
+                                  <Component id="pnTestMultiUser" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
@@ -483,7 +483,7 @@
                               <Component id="lbTestResultText" alignment="0" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="lbTestMultiUserText" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="133" max="32767" attributes="0"/>
+                                  <EmptySpace pref="220" max="32767" attributes="0"/>
                                   <Component id="bnTestMultiUser" min="-2" pref="83" max="-2" attributes="0"/>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="lbMultiUserResult" min="-2" pref="16" max="-2" attributes="0"/>

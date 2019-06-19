@@ -60,7 +60,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(AutoIngestSettingsPanel.class.getName());
     private final Integer oldIngestThreads;
     private static final String MULTI_USER_SETTINGS_MUST_BE_ENABLED = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.MUdisabled");
-    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
     
@@ -456,7 +455,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             jLabelInvalidImageFolder.setVisible(true);
             jLabelInvalidImageFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CannotAccess")
                     + " " + inputPath + "   "
-                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions", System.getProperty("user.name")));
             return false;
         }
 
@@ -487,7 +486,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             jLabelInvalidResultsFolder.setVisible(true);
             jLabelInvalidResultsFolder.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CannotAccess")
                     + " " + outputPath + "   "
-                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions", System.getProperty("user.name")));
             return false;
         }
 
@@ -522,7 +521,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             sharedSettingsErrorTextField.setVisible(true);
             sharedSettingsErrorTextField.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CannotAccess")
                     + " " + sharedSettingsPath + " "
-                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions"));
+                    + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.CheckPermissions", System.getProperty("user.name")));
             return false;
         }
 
@@ -580,6 +579,11 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             downloadButton.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
             browseSharedSettingsButton.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
             uploadButton.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected() && masterNodeCheckBox.isSelected());
+            
+            lbTestMultiUserText.setEnabled(mode == OptionsUiMode.AIM);
+            bnTestMultiUser.setEnabled(mode == OptionsUiMode.AIM);
+            lbMultiUserResult.setEnabled(mode == OptionsUiMode.AIM);
+            lbTestResultText.setEnabled(mode == OptionsUiMode.AIM);
         } else {
             setEnabledState(false);
         }
@@ -802,7 +806,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                     .addComponent(lbTestResultText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnTestMultiUserLayout.createSequentialGroup()
                         .addComponent(lbTestMultiUserText)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 133, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 220, Short.MAX_VALUE)
                         .addComponent(bnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1158,9 +1162,14 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
 
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        String testResult = MultiUserTestTool.runTest(resultsFolderPath);
+        pbTaskInProgress.setEnabled(true);
+        pbTaskInProgress.setIndeterminate(true);
+        pbTaskInProgress.paintImmediately(pbTaskInProgress.getVisibleRect());
+        String testResult = MultiUserTestTool.runTest("" /*resultsFolderPath*/);
+        pbTaskInProgress.setIndeterminate(false);
+        pbTaskInProgress.setEnabled(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        if (testResult.equals(MULTI_USER_TEST_SUCCESSFUL)) {
+        if (testResult.equals(MultiUserTestTool.MULTI_USER_TEST_SUCCESSFUL)) {
             // test successful
             lbMultiUserResult.setIcon(goodIcon);
             lbTestResultText.setText("");

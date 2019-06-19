@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -67,7 +68,7 @@ class MultiUserTestTool {
     private static final Logger LOGGER = Logger.getLogger(MultiUserTestTool.class.getName());
     private static final String TEST_FILE_NAME = "Test.txt";
     private static final Object INGEST_LOCK = new Object();
-    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
+    static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
 
     @NbBundle.Messages({
         "MultiUserTestTool.unableToCreateCase=Unable to create case",
@@ -78,17 +79,40 @@ class MultiUserTestTool {
         "MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database",
         "MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keword Search index",
         "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source",
-        "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test"
+        "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test",
+        "# {0} - serviceName",
+        "MultiUserTestTool.serviceDown=Multi User service is down: {0}",
+        "# {0} - serviceName",
+        "MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}"        
     })
     static String runTest(String rootOutputDirectory) {
                 
         // run standard tests for all services. this detects many problems sooner.
-        // ELTODO 
-        boolean databaseUp = true; //testDatabase();
-        boolean messagingUp = true; //testMessageService() ;
-        boolean solrUp = true; //testSolr();
-        if (!databaseUp || !messagingUp || !solrUp) {
-            return NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.servicesDown");
+        try {
+            if (!isServiceUp(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
+                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName());
+            }
+        } catch (ServicesMonitor.ServicesMonitorException ex) {
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService", 
+                    ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName() + ". " + ex.getMessage());
+        }
+
+        try {
+            if (!isServiceUp(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString())) {
+                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getDisplayName());
+            }
+        } catch (ServicesMonitor.ServicesMonitorException ex) {
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService", 
+                    ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getDisplayName() + ". " + ex.getMessage());
+        }
+
+        try {
+            if (!isServiceUp(ServicesMonitor.Service.MESSAGING.toString())) {
+                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.MESSAGING.getDisplayName());
+            }
+        } catch (ServicesMonitor.ServicesMonitorException ex) {
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService", 
+                    ServicesMonitor.Service.MESSAGING.getDisplayName() + ". " + ex.getMessage());
         }
 
         // Create a case in the output folder.
@@ -97,7 +121,7 @@ class MultiUserTestTool {
             caseForJob = createCase(CASE_NAME, rootOutputDirectory);
         } catch (CaseActionException ex) {
             LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToCreateCase(), ex);
-            return Bundle.MultiUserTestTool_unableToCreateCase();
+            return Bundle.MultiUserTestTool_unableToCreateCase() + ". " + ex.getMessage();
         }
 
         if (caseForJob == null) {
@@ -117,7 +141,7 @@ class MultiUserTestTool {
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadDatabase(), ex);
-                return Bundle.MultiUserTestTool_unableToReadDatabase();
+                return Bundle.MultiUserTestTool_unableToReadDatabase() + ". " + ex.getMessage();
             }
 
             // Make a text file in a temp folder with just the text "Test" in it. 
@@ -126,7 +150,7 @@ class MultiUserTestTool {
                 FileUtils.writeStringToFile(new File(tempFilePath), "Test", Charset.forName("UTF-8"));
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableCreatFile(), ex);
-                return Bundle.MultiUserTestTool_unableCreatFile();
+                return Bundle.MultiUserTestTool_unableCreatFile() + ". " + ex.getMessage();
             }
 
             //  Add it as a logical file set data source.
@@ -137,13 +161,9 @@ class MultiUserTestTool {
                     LOGGER.log(Level.SEVERE, error);
                     return error;
                 }
-                
-                // ELTODO  DELETE
-                dataSource = new AutoIngestDataSource("", Paths.get("C:\\TEST\\Inputs\\Test archivedsp\\Test 6.zip"));
-                error = runLogicalFilesDSP(caseForJob, dataSource);
             } catch (InterruptedException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableAddFileAsDataSource(), ex);
-                return Bundle.MultiUserTestTool_unableAddFileAsDataSource();
+                return Bundle.MultiUserTestTool_unableAddFileAsDataSource() + ". " + ex.getMessage();
             }
 
             // Verify that Solr was able to create the core and is able to write to it
@@ -158,7 +178,7 @@ class MultiUserTestTool {
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase(), ex);
-                return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase();
+                return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase() + ". " + ex.getMessage();
             }
 
             file = listOfFiles.get(0);
@@ -169,7 +189,7 @@ class MultiUserTestTool {
                 kwsService.index(file);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToUpdateKWSIndex(), ex);
-                return Bundle.MultiUserTestTool_unableToUpdateKWSIndex();
+                return Bundle.MultiUserTestTool_unableToUpdateKWSIndex() + ". " + ex.getMessage();
             }
 
             // Run ingest on that data source and report errors if the modules could not start.           
@@ -181,20 +201,20 @@ class MultiUserTestTool {
                 }
             } catch (InterruptedException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToRunIngest(), ex);
-                return Bundle.MultiUserTestTool_unableToRunIngest();
+                return Bundle.MultiUserTestTool_unableToRunIngest() + ". " + ex.getMessage();
             }
         } catch (Throwable ex) {
             // unexpected exception firewall
             LOGGER.log(Level.SEVERE, "Unexpected error while performing Multi User test", ex);
-            return Bundle.MultiUserTestTool_unexpectedError();
+            return Bundle.MultiUserTestTool_unexpectedError() + ". " + ex.getMessage();
         } finally {
             // Close and delete the case.
-            /* ELTODO try {
+            try {
                 Case.deleteCurrentCase();
             } catch (CaseActionException ex) {
                 // I don't think this should result in the test being marked as "failed" if everyhitng else went well
                 LOGGER.log(Level.WARNING, "Unable to delete test case", ex);
-            } */
+            }
         }
 
         return MULTI_USER_TEST_SUCCESSFUL;
@@ -288,7 +308,7 @@ class MultiUserTestTool {
         IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
         try {
             synchronized (INGEST_LOCK) {
-                IngestJobSettings ingestJobSettings = new IngestJobSettings("DummyExecutionContext");
+                IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
                 List<String> settingsWarnings = ingestJobSettings.getWarnings();
                 if (settingsWarnings.isEmpty()) {
                     IngestJobStartResult ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
@@ -342,6 +362,20 @@ class MultiUserTestTool {
         }
         // ingest completed successfully
         return "";
+    }
+
+    /**
+     * Tests service of interest to verify that it is running.
+     *
+     * @param serviceName Name of the service.
+     *
+     * @return True if the service is running, false otherwise.
+     *
+     * @throws ServicesMonitorException if there is an error querying the
+     * services monitor.
+     */
+    private static boolean isServiceUp(String serviceName) throws ServicesMonitor.ServicesMonitorException {
+        return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatus.UP.toString()));
     }
 
     /**
