@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.experimental.configuration;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
+import java.awt.Color;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import java.awt.Dimension;
 import java.nio.file.Paths;
+import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
@@ -58,7 +60,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(AutoIngestSettingsPanel.class.getName());
     private final Integer oldIngestThreads;
     private static final String MULTI_USER_SETTINGS_MUST_BE_ENABLED = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.MUdisabled");
-
+    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
+    private final ImageIcon goodIcon;
+    private final ImageIcon badIcon;
+    
     enum OptionsUiMode {
 
         STANDALONE, AIM, DOWNLOADING_CONFIGURATION
@@ -92,6 +97,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jLabelTaskDescription.setEnabled(false);
 
         this.oldIngestThreads = UserPreferences.numberOfFileIngestThreads();
+        
+        goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/good.png", false));
+        badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/bad.png", false));
     }
 
     private class MyDocumentListener implements DocumentListener {
@@ -623,6 +631,11 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         masterNodeCheckBox = new javax.swing.JCheckBox();
         examinerModeRadioButton = new javax.swing.JRadioButton();
         autoIngestModeRadioButton = new javax.swing.JRadioButton();
+        pnTestMultiUser = new javax.swing.JPanel();
+        lbTestMultiUserText = new javax.swing.JLabel();
+        bnTestMultiUser = new javax.swing.JButton();
+        lbMultiUserResult = new javax.swing.JLabel();
+        lbTestResultText = new javax.swing.JLabel();
 
         nodeScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
 
@@ -761,6 +774,55 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        pnTestMultiUser.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        lbTestMultiUserText.setFont(lbTestMultiUserText.getFont().deriveFont(lbTestMultiUserText.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestMultiUserText, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestMultiUserText.text")); // NOI18N
+
+        bnTestMultiUser.setFont(bnTestMultiUser.getFont().deriveFont(bnTestMultiUser.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(bnTestMultiUser, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnTestMultiUser.text")); // NOI18N
+        bnTestMultiUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnTestMultiUserActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbMultiUserResult, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbMultiUserResult.text")); // NOI18N
+
+        lbTestResultText.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(lbTestResultText, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.lbTestResultText.text")); // NOI18N
+
+        javax.swing.GroupLayout pnTestMultiUserLayout = new javax.swing.GroupLayout(pnTestMultiUser);
+        pnTestMultiUser.setLayout(pnTestMultiUserLayout);
+        pnTestMultiUserLayout.setHorizontalGroup(
+            pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnTestMultiUserLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbTestResultText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnTestMultiUserLayout.createSequentialGroup()
+                        .addComponent(lbTestMultiUserText)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 133, Short.MAX_VALUE)
+                        .addComponent(bnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(8, 8, 8)))
+                .addContainerGap())
+        );
+        pnTestMultiUserLayout.setVerticalGroup(
+            pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnTestMultiUserLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(bnTestMultiUser)
+                        .addComponent(lbTestMultiUserText)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lbTestResultText, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 16, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout nodePanelLayout = new javax.swing.GroupLayout(nodePanel);
         nodePanel.setLayout(nodePanelLayout);
         nodePanelLayout.setHorizontalGroup(
@@ -820,7 +882,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addGap(10, 10, 10))
                     .addGroup(nodePanelLayout.createSequentialGroup()
-                        .addComponent(autoIngestModeRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(autoIngestModeRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         nodePanelLayout.setVerticalGroup(
@@ -875,7 +939,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                     .addComponent(jLabelTaskDescription))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pbTaskInProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(82, Short.MAX_VALUE))
         );
 
         nodeScrollPane.setViewportView(nodePanel);
@@ -888,7 +954,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 656, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1075,6 +1141,37 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         controller.changed();
     }//GEN-LAST:event_examinerModeRadioButtonActionPerformed
 
+    private void bnTestMultiUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMultiUserActionPerformed
+
+        lbTestResultText.setForeground(Color.BLACK);
+        lbTestResultText.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.TestRunning"));
+        lbTestResultText.paintImmediately(lbTestResultText.getVisibleRect());
+        lbMultiUserResult.setIcon(null);
+        lbMultiUserResult.paintImmediately(lbMultiUserResult.getVisibleRect());
+
+        String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
+        if (!validateResultsPath()) {
+            lbMultiUserResult.setIcon(badIcon);
+            lbTestResultText.setForeground(Color.RED);
+            lbTestResultText.setText(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.PathInvalid"));
+            return;
+        }
+
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        String testResult = MultiUserTestTool.runTest(resultsFolderPath);
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        if (testResult.equals(MULTI_USER_TEST_SUCCESSFUL)) {
+            // test successful
+            lbMultiUserResult.setIcon(goodIcon);
+            lbTestResultText.setText("");
+        } else {
+            // test failed
+            lbMultiUserResult.setIcon(badIcon);
+            lbTestResultText.setText(testResult);
+            lbTestResultText.setForeground(Color.RED);
+        }
+    }//GEN-LAST:event_bnTestMultiUserActionPerformed
+
     private void enableUI(boolean state) {
         enableOptionsBasedOnMode(OptionsUiMode.DOWNLOADING_CONFIGURATION);
         downloadButton.setEnabled(state);
@@ -1198,6 +1295,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnAdvancedSettings;
     private javax.swing.JButton bnEditIngestSettings;
     private javax.swing.JButton bnFileExport;
+    private javax.swing.JButton bnTestMultiUser;
     private javax.swing.JButton browseInputFolderButton;
     private javax.swing.JButton browseOutputFolderButton;
     private javax.swing.JButton browseSharedSettingsButton;
@@ -1211,12 +1309,16 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabelSelectInputFolder;
     private javax.swing.JLabel jLabelSelectOutputFolder;
     private javax.swing.JLabel jLabelTaskDescription;
+    private javax.swing.JLabel lbMultiUserResult;
+    private javax.swing.JLabel lbTestMultiUserText;
+    private javax.swing.JLabel lbTestResultText;
     private javax.swing.JCheckBox masterNodeCheckBox;
     private javax.swing.ButtonGroup modeSelectionButtonGroup;
     private javax.swing.JPanel nodePanel;
     private javax.swing.JScrollPane nodeScrollPane;
     private javax.swing.JTextField outputPathTextField;
     private javax.swing.JProgressBar pbTaskInProgress;
+    private javax.swing.JPanel pnTestMultiUser;
     private javax.swing.JCheckBox sharedConfigCheckbox;
     private javax.swing.JTextField sharedSettingsErrorTextField;
     private javax.swing.JTextField sharedSettingsTextField;

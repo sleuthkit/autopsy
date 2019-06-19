@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.experimental.configuration;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -67,7 +67,7 @@ class MultiUserTestTool {
     private static final Logger LOGGER = Logger.getLogger(MultiUserTestTool.class.getName());
     private static final String TEST_FILE_NAME = "Test.txt";
     private static final Object INGEST_LOCK = new Object();
-    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.Success");
+    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
 
     @NbBundle.Messages({
         "MultiUserTestTool.unableToCreateCase=Unable to create case",
@@ -81,6 +81,15 @@ class MultiUserTestTool {
         "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test"
     })
     static String runTest(String rootOutputDirectory) {
+                
+        // run standard tests for all services. this detects many problems sooner.
+        // ELTODO 
+        boolean databaseUp = true; //testDatabase();
+        boolean messagingUp = true; //testMessageService() ;
+        boolean solrUp = true; //testSolr();
+        if (!databaseUp || !messagingUp || !solrUp) {
+            return NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.servicesDown");
+        }
 
         // Create a case in the output folder.
         Case caseForJob;
