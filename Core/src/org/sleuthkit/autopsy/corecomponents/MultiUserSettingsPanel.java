@@ -31,16 +31,11 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.awt.Cursor;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
-import javax.swing.JFileChooser;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.MessageServiceException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -64,7 +59,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private static final String INVALID_DB_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidDatabasePort");
     private static final String INVALID_MESSAGE_SERVICE_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidMessageServicePort");
     private static final String INVALID_INDEXING_SERVER_PORT_MSG = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.invalidIndexingServerPort");
-    private static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.Success");
     private static final long serialVersionUID = 1L;
     private final MultiUserSettingsPanelController controller;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -73,7 +67,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
     private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
-    private final JFileChooser fc = new JFileChooser();
 
     /**
      * Creates new form AutopsyMultiUserSettingsPanel
@@ -201,13 +194,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         lbTestMessageWarning = new javax.swing.JLabel();
         cbEnableMultiUser = new javax.swing.JCheckBox();
         tbOops = new javax.swing.JTextField();
-        pnTestMultiUser = new javax.swing.JPanel();
-        lbTestMultiUserText = new javax.swing.JLabel();
-        bnTestMultiUser = new javax.swing.JButton();
-        lbMultiUserResult = new javax.swing.JLabel();
-        lbTestResultText = new javax.swing.JLabel();
-        outputPathTextField = new javax.swing.JTextField();
-        browseOutputFolderButton = new javax.swing.JButton();
 
         pnDatabaseSettings.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -343,9 +329,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                     .addComponent(lbTestSolr, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbSolrHostname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbSolrPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(tbSolrPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbTestSolrWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -442,73 +428,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         tbOops.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
-        pnTestMultiUser.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        lbTestMultiUserText.setFont(lbTestMultiUserText.getFont().deriveFont(lbTestMultiUserText.getFont().getStyle() & ~java.awt.Font.BOLD, 12));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestMultiUserText, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbTestMultiUserText.text")); // NOI18N
-
-        bnTestMultiUser.setFont(bnTestMultiUser.getFont().deriveFont(bnTestMultiUser.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(bnTestMultiUser, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.bnTestMultiUser.text")); // NOI18N
-        bnTestMultiUser.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnTestMultiUserActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbMultiUserResult, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbMultiUserResult.text")); // NOI18N
-
-        lbTestResultText.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbTestResultText, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.lbTestResultText.text")); // NOI18N
-
-        outputPathTextField.setText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.outputPathTextField.text")); // NOI18N
-        outputPathTextField.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.outputPathTextField.toolTipText")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(browseOutputFolderButton, org.openide.util.NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.browseOutputFolderButton.text")); // NOI18N
-        browseOutputFolderButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                browseOutputFolderButtonActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout pnTestMultiUserLayout = new javax.swing.GroupLayout(pnTestMultiUser);
-        pnTestMultiUser.setLayout(pnTestMultiUserLayout);
-        pnTestMultiUserLayout.setHorizontalGroup(
-            pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbTestResultText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                        .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 284, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lbTestMultiUserText, javax.swing.GroupLayout.Alignment.LEADING))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(browseOutputFolderButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(bnTestMultiUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(18, 18, 18)
-                        .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(8, 8, 8)))
-                .addContainerGap())
-        );
-        pnTestMultiUserLayout.setVerticalGroup(
-            pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnTestMultiUserLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lbMultiUserResult, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(bnTestMultiUser)
-                        .addComponent(lbTestMultiUserText)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnTestMultiUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(browseOutputFolderButton)
-                    .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(lbTestResultText, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 12, Short.MAX_VALUE))
-        );
-
         javax.swing.GroupLayout pnOverallPanelLayout = new javax.swing.GroupLayout(pnOverallPanel);
         pnOverallPanel.setLayout(pnOverallPanelLayout);
         pnOverallPanelLayout.setHorizontalGroup(
@@ -523,25 +442,21 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
                     .addComponent(pnSolrSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(822, Short.MAX_VALUE))
+                .addContainerGap())
         );
         pnOverallPanelLayout.setVerticalGroup(
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnOverallPanelLayout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnOverallPanelLayout.createSequentialGroup()
                 .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cbEnableMultiUser))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pnTestMultiUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(pnDatabaseSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(pnSolrSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnMessagingSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(206, Short.MAX_VALUE))
+                .addContainerGap(39, Short.MAX_VALUE))
         );
 
         jScrollPane.setViewportView(pnOverallPanel);
@@ -550,13 +465,13 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1245, Short.MAX_VALUE)
+            .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)
+                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -591,13 +506,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cbEnableMultiUserItemStateChanged
 
     private void bnTestDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestDatabaseActionPerformed
-        testDatabase();
-    }//GEN-LAST:event_bnTestDatabaseActionPerformed
-
-    private boolean testDatabase() {
         lbTestDatabase.setIcon(null);
-        lbTestDbWarning.setText("");
         lbTestDatabase.paintImmediately(lbTestDatabase.getVisibleRect());
+        lbTestDbWarning.setText("");
         lbTestDbWarning.paintImmediately(lbTestDbWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
@@ -614,21 +525,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         } catch (TskCoreException ex) {
             lbTestDatabase.setIcon(badIcon);
             lbTestDbWarning.setText(ex.getMessage());
-            return false;
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }       
-        return true;
-    }
-    
-    private void bnTestMessageServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMessageServiceActionPerformed
-        testMessageService();
-    }//GEN-LAST:event_bnTestMessageServiceActionPerformed
+        }
+    }//GEN-LAST:event_bnTestDatabaseActionPerformed
 
-    private boolean testMessageService() {
+    private void bnTestMessageServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMessageServiceActionPerformed
         lbTestMessageService.setIcon(null);
-        lbTestMessageWarning.setText("");
         lbTestMessageService.paintImmediately(lbTestMessageService.getVisibleRect());
+        lbTestMessageWarning.setText("");
         lbTestMessageWarning.paintImmediately(lbTestMessageWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -638,7 +543,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         } catch (NumberFormatException ex) {
             lbTestMessageService.setIcon(badIcon);
             lbTestMessageWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.InvalidPortNumber"));
-            return false;
+            return;
         }
 
         MessageServiceConnectionInfo info = new MessageServiceConnectionInfo(
@@ -653,21 +558,15 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         } catch (MessageServiceException ex) {
             lbTestMessageService.setIcon(badIcon);
             lbTestMessageWarning.setText(ex.getMessage());
-            return false;
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
-        return true;
-    }
-    
-    private void bnTestSolrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestSolrActionPerformed
-        testSolr();
-    }//GEN-LAST:event_bnTestSolrActionPerformed
+    }//GEN-LAST:event_bnTestMessageServiceActionPerformed
 
-    private boolean testSolr() {
+    private void bnTestSolrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestSolrActionPerformed
         lbTestSolr.setIcon(null);
-        lbTestSolrWarning.setText("");
         lbTestSolr.paintImmediately(lbTestSolr.getVisibleRect());
+        lbTestSolrWarning.setText("");
         lbTestSolrWarning.paintImmediately(lbTestSolrWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -681,179 +580,18 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
             } else {
                 lbTestSolr.setIcon(badIcon);
                 lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.KeywordSearchNull"));
-                return false;
             }
         } catch (NumberFormatException ex) {
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.InvalidPortNumber"));
-            return false;
         } catch (KeywordSearchServiceException ex) {
             lbTestSolr.setIcon(badIcon);
             lbTestSolrWarning.setText(ex.getMessage());
-            return false;
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
-        return true;
-    }
-    
-    private void bnTestMultiUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMultiUserActionPerformed
-        
-        lbTestResultText.setForeground(Color.BLACK);
-        lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.TestRunning"));
-        lbTestResultText.paintImmediately(lbTestResultText.getVisibleRect());
-        lbMultiUserResult.setIcon(null);
-        lbMultiUserResult.paintImmediately(lbMultiUserResult.getVisibleRect());
-        
-        // run standard tests for all services. this detects many problems sooner.
-        boolean databaseUp = testDatabase();
-        boolean messagingUp = testMessageService() ;
-        boolean solrUp = testSolr();
-        if (!databaseUp || !messagingUp || !solrUp) {
-            lbMultiUserResult.setIcon(badIcon);
-            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.servicesDown"));
-            lbTestResultText.setForeground(Color.RED);
-            return;             
-        }
-        
-        String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());        
-        if (resultsFolderPath.isEmpty()) {
-            lbMultiUserResult.setIcon(badIcon);
-            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.validationErrMsg.outputPathNotSpecified"));
-            lbTestResultText.setForeground(Color.RED);
-            return;            
-        }
-        
-        if (!isFolderPathValid(resultsFolderPath)) {
-            lbMultiUserResult.setIcon(badIcon);
-            lbTestResultText.setForeground(Color.RED);
-            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.PathInvalid"));
-            return;
-        }
+    }//GEN-LAST:event_bnTestSolrActionPerformed
 
-        if (false == permissionsAppropriate(resultsFolderPath)) {
-            lbMultiUserResult.setIcon(badIcon);
-            lbTestResultText.setForeground(Color.RED);
-            lbTestResultText.setText(NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.CannotAccess")
-                    + " " + resultsFolderPath + "   "
-                    + NbBundle.getMessage(MultiUserSettingsPanel.class, "MultiUserSettingsPanel.CheckPermissions"));
-            return;
-        }        
-        
-        // save the configuration that user has entered in other fields (i.e. Solr, Postgres, ActiveMQ).
-        // we need it stored in the settings file in order to create a case and connect to database/kws.
-        store();
-        
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        String testResult = MultiUserTestTool.runTest(resultsFolderPath);
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        if (testResult.equals(MULTI_USER_TEST_SUCCESSFUL)) {
-            // test successful
-            lbMultiUserResult.setIcon(goodIcon);
-            lbTestResultText.setText("");
-        } else {
-            // test failed
-            lbMultiUserResult.setIcon(badIcon);
-            lbTestResultText.setText(testResult);
-            lbTestResultText.setForeground(Color.RED);
-        }
-        
-        // ELTODO investigate ingest module startup popup when KWS wasn't able to load core (e.g. empty outputPathTextField)
-    }//GEN-LAST:event_bnTestMultiUserActionPerformed
-
-        /**
-     * Returns a path that was normalized by file system.
-     *
-     * @param path A path to be normalized. Normalization occurs inside a call
-     *             to new File().
-     *
-     * @return String returns normalized OS path
-     */
-    String getNormalizedFolderPath(String path) {
-        // removes "/", "\", and " " characters at the end of path string.
-        // normalizePath() removes spaces at the end of path and a call to "new File()" 
-        // internally formats the path string to remove "/" and "\" characters at the end of path.
-        File file = new File(normalizePath(path));
-        return file.getPath();
-    }
-    
-    /**
-     * Normalizes a path to make sure there are no "space" characters at the end
-     *
-     * @param path Path to a directory
-     *
-     * @return Path without "space" characters at the end
-     */
-    String normalizePath(String path) {
-
-        while (path.length() > 0) {
-            if (path.charAt(path.length() - 1) == ' ') {
-                path = path.substring(0, path.length() - 1);
-            } else {
-                break;
-            }
-        }
-        return path;
-    }
-    
-    private void browseOutputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseOutputFolderButtonActionPerformed
-        String oldText = outputPathTextField.getText().trim();
-        // set the current directory of the FileChooser if the oldText is valid
-        File currentDir = new File(oldText);
-        if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
-        }
-
-        fc.setDialogTitle("Select case output folder:");
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            outputPathTextField.setText(path);
-            valid();
-            controller.changed();
-        }
-        
-        // ELTODO 
-        // save output directory to storage and reload it next time
-    }//GEN-LAST:event_browseOutputFolderButtonActionPerformed
-
-    /**
-     * Validates that a path is valid and points to a folder.
-     *
-     * @param path A path to be validated
-     *
-     * @return boolean returns true if valid and points to a folder, false
-     *         otherwise
-     */
-    boolean isFolderPathValid(String path) {
-        try {
-            File file = new File(normalizePath(path));
-
-            // check if it's a symbolic link
-            if (Files.isSymbolicLink(file.toPath())) {
-                return true;
-            }
-
-            // local folder
-            if (file.exists() && file.isDirectory()) {
-                return true;
-            }
-        } catch (Exception ex) {
-            // Files.isSymbolicLink (and other "files" methods) throw exceptions on seemingly innocent inputs.
-            // For example, it will throw an exception when either " " is last character in path or
-            // a path starting with ":". 
-            // We can just ignore these exceptions as they occur in process of user typing in the path.
-            return false;
-        }
-        return false;
-    }
-    
-    boolean permissionsAppropriate(String path) {
-        return FileUtil.hasReadWriteAccess(Paths.get(path));
-    }    
-    
     void load() {
         lbTestDatabase.setIcon(null);
         lbTestSolr.setIcon(null);
@@ -890,8 +628,6 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         if (portNumberIsValid(indexingServerPort)) {
             tbSolrPort.setText(indexingServerPort);
         }
-        
-        outputPathTextField.setText(UserPreferences.getMultiUserTestOutputDir());
 
         lbTestDatabase.setIcon(null);
         lbTestSolr.setIcon(null);
@@ -994,7 +730,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
         UserPreferences.setIndexingServerHost(tbSolrHostname.getText().trim());
         UserPreferences.setIndexingServerPort(Integer.parseInt(tbSolrPort.getText().trim()));
-        UserPreferences.setMultiUserTestOutputDir(outputPathTextField.getText().trim());
+
     }
 
     /**
@@ -1110,29 +846,22 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnTestDatabase;
     private javax.swing.JButton bnTestMessageService;
-    private javax.swing.JButton bnTestMultiUser;
     private javax.swing.JButton bnTestSolr;
-    private javax.swing.JButton browseOutputFolderButton;
     private javax.swing.JCheckBox cbEnableMultiUser;
     private javax.swing.JScrollPane jScrollPane;
     private javax.swing.JLabel lbDatabaseSettings;
     private javax.swing.JLabel lbMessageServiceSettings;
-    private javax.swing.JLabel lbMultiUserResult;
     private javax.swing.JLabel lbSolrSettings;
     private javax.swing.JLabel lbTestDatabase;
     private javax.swing.JLabel lbTestDbWarning;
     private javax.swing.JLabel lbTestMessageService;
     private javax.swing.JLabel lbTestMessageWarning;
-    private javax.swing.JLabel lbTestMultiUserText;
-    private javax.swing.JLabel lbTestResultText;
     private javax.swing.JLabel lbTestSolr;
     private javax.swing.JLabel lbTestSolrWarning;
-    private javax.swing.JTextField outputPathTextField;
     private javax.swing.JPanel pnDatabaseSettings;
     private javax.swing.JPanel pnMessagingSettings;
     private javax.swing.JPanel pnOverallPanel;
     private javax.swing.JPanel pnSolrSettings;
-    private javax.swing.JPanel pnTestMultiUser;
     private javax.swing.JTextField tbDbHostname;
     private javax.swing.JPasswordField tbDbPassword;
     private javax.swing.JTextField tbDbPort;
