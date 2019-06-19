@@ -45,6 +45,12 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Utility for drawing rectangles on image files.
  */
 public final class ImageTagsUtil {
+    
+    //String constant for writing PNG in ImageIO
+    private final static String AWT_PNG = "png";
+    
+    //String constant for encoding PNG in OpenCV
+    private final static String OPENCV_PNG = ".png";
 
     /**
      * Creates an image with tags applied.
@@ -114,7 +120,7 @@ public final class ImageTagsUtil {
 
         //Convert it to OpenCV Mat.
         try (ByteArrayOutputStream outStream = new ByteArrayOutputStream()) {
-            ImageIO.write(buffImage, "png", outStream);
+            ImageIO.write(buffImage, AWT_PNG, outStream);
 
             byte[] imageBytes = outStream.toByteArray();
             MatOfByte rawSourceBytes = new MatOfByte(imageBytes);
@@ -150,7 +156,7 @@ public final class ImageTagsUtil {
         }
 
         MatOfByte taggedMatrix = new MatOfByte();
-        Highgui.imencode(".png", sourceImage, taggedMatrix);
+        Highgui.imencode(OPENCV_PNG, sourceImage, taggedMatrix);
 
         return taggedMatrix;
     }
@@ -201,7 +207,7 @@ public final class ImageTagsUtil {
         Imgproc.resize(taggedImage, thumbnailImage, resizeDimensions);
 
         MatOfByte thumbnailMatrix = new MatOfByte();
-        Highgui.imencode(".png", thumbnailImage, thumbnailMatrix);
+        Highgui.imencode(OPENCV_PNG, thumbnailImage, thumbnailMatrix);
 
         thumbnailImage.release();
         taggedImage.release();
