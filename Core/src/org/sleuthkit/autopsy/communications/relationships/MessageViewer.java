@@ -51,9 +51,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
-import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
  * The main panel for the messages tab of the RelationshipViewer
@@ -115,12 +113,9 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         };
 
         rootTablePane.getExplorerManager().setRootContext(
-                new TableFilterNode(
-                        new DataResultFilterNode(
-                                new AbstractNode(
-                                        Children.create(rootMessageFactory, true)),
-                                rootTablePane.getExplorerManager()),
-                        true));
+                new AbstractNode(Children.create(rootMessageFactory, true)));
+        
+        rootTablePane.getOutlineView().setPopupAllowed(false);
 
         Outline outline = rootTablePane.getOutlineView().getOutline();
         rootTablePane.getOutlineView().setPropertyColumns(

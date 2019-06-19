@@ -38,7 +38,8 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
  *
- * 
+ * General Purpose class for panels that need OutlineView of message nodes at 
+ * the top with a MessageContentViewer at the bottom.
  */
 public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider {
 
@@ -47,7 +48,7 @@ public class MessagesPanel extends javax.swing.JPanel implements Lookup.Provider
     private final PropertyChangeListener focusPropertyListener;
     
     /**
-     * Creates new form ThreadMessagesPanel
+     * Creates new form MessagesPanel
      */
     public MessagesPanel() {
         initComponents();
