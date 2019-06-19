@@ -327,7 +327,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         // Create place holders for S C O 
         properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
         properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
-        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+        if (EamDb.isEnabled() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
         }
 

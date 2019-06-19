@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -40,8 +39,9 @@ import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
+import org.sleuthkit.autopsy.logicalimager.dsp.LogicalImagerDSProcessor;
 
 /**
  * Panel which displays the available DataSourceProcessors and allows selection
