@@ -101,7 +101,7 @@ final public class FiltersPanel extends JPanel {
     private final PropertyChangeListener ingestJobListener;
 
     /**
-     * Flag that indicates the UI is not up-sto-date with respect to the case DB
+     * Flag that indicates the UI is not up-to-date with respect to the case DB
      * and it should be refreshed (by reapplying the filters).
      */
     private boolean needsRefresh;
@@ -164,9 +164,9 @@ final public class FiltersPanel extends JPanel {
                 ModuleDataEvent eventData = (ModuleDataEvent) pce.getOldValue();
                 if (null != eventData
                         && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                        && updateFilters(true)) {
-
+                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
+                    {
+                        updateFilters(true);
                         needsRefresh = true;
                         validateFilters();
                 }
