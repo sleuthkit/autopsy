@@ -302,6 +302,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (rootNode != null) {
+                this.rootNode = rootNode;
+
                 /**
                  * Check to see if we have previously created a paging support
                  * class for this node.
@@ -364,8 +366,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              * case database round trips.
              */
             if (rootNode != null && rootNode.getChildren().getNodesCount() > 0) {
-                this.rootNode = rootNode;
-
                 this.getExplorerManager().setRootContext(this.rootNode);
                 setupTable();
             } else {
