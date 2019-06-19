@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -408,7 +409,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         List<SleuthkitHashSet> nsrlHashsets = new ArrayList<>();
         for (SleuthkitHashSet hdb : unindexed) {
             //check if this is the NSRL if so point users toward already indexed versions
-            if (hdb.getHashSetName().toLowerCase().contains(NSRL_NAME_STRING)) {
+            if (isWindows() && hdb.getHashSetName().toLowerCase().contains(NSRL_NAME_STRING)) {
                 nsrlHashsets.add(hdb);
                 nsrlTotal += "\n" + hdb.getHashSetName();
             } else {
@@ -977,6 +978,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
+    /**
+     * Check if the current OS is windows
+     *
+     * @return true if running on windows, false otherwise
+     */
+    private boolean isWindows() {
+        return PlatformUtil.getOSName().toLowerCase().startsWith("Windows");
+    }
+
     @NbBundle.Messages({"HashLookupSettingsPanel.indexNsrl.text=This hash set appears to be the NSRL, it will be removed from the list.\n",
         "HashLookupSettingsPanel.indexNsrl.title=NSRL will not be indexed"})
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
@@ -987,7 +997,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         // Add a listener for the INDEXING_DONE event. This listener will update
         // the UI.
         SleuthkitHashSet hashDb = (SleuthkitHashSet) hashDatabase;
-        if (hashDb.getHashSetName().toLowerCase().contains(NSRL_NAME_STRING)) {
+        if (isWindows() && hashDb.getHashSetName().toLowerCase().contains(NSRL_NAME_STRING)) {
             JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_indexNsrl_text() + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL), Bundle.HashLookupSettingsPanel_indexNsrl_title(), JOptionPane.INFORMATION_MESSAGE);
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDatabase);
