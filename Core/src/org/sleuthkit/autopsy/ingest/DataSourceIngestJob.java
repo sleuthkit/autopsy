@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -286,7 +286,7 @@ public final class DataSourceIngestJob {
             this.addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
             this.addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
+            logErrorMessage(Level.WARNING, "Failed to add ingest modules listing to case database", ex);
         }
     }
 
@@ -421,13 +421,13 @@ public final class DataSourceIngestJob {
             try {
                 this.ingestJob = Case.getCurrentCaseThrows().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
+                logErrorMessage(Level.WARNING, "Failed to add ingest job info to case database", ex); //NON-NLS
             }
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
-                logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+                logInfoMessage("Starting first stage analysis"); //NON-NLS
                 this.startFirstStage();
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
-                logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+                logInfoMessage("Starting second stage analysis"); //NON-NLS
                 this.startSecondStage();
             }
         }
@@ -521,13 +521,13 @@ public final class DataSourceIngestJob {
          * Schedule the first stage tasks.
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
-            logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+            logInfoMessage("Scheduling first stage data source and file level analysis tasks"); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this);
         } else if (this.hasFirstStageDataSourceIngestPipeline()) {
-            logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+            logInfoMessage("Scheduling first stage data source level analysis tasks"); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
-            logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+            logInfoMessage("Scheduling file level analysis tasks, no first stage data source level analysis configured"); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
 
             /**
@@ -546,7 +546,7 @@ public final class DataSourceIngestJob {
      * Starts the second stage of this ingest job.
      */
     private void startSecondStage() {
-        logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+        logInfoMessage("Starting second stage analysis"); //NON-NLS        
         this.stage = DataSourceIngestJob.Stages.SECOND;
         if (this.doUI) {
             this.startDataSourceIngestProgressBar();
@@ -554,7 +554,7 @@ public final class DataSourceIngestJob {
         synchronized (this.dataSourceIngestPipelineLock) {
             this.currentDataSourceIngestPipeline = this.secondStageDataSourceIngestPipeline;
         }
-        logger.log(Level.INFO, "Scheduling second stage data source level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+        logInfoMessage("Scheduling second stage data source level analysis tasks"); //NON-NLS        
         DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
     }
 
@@ -643,7 +643,7 @@ public final class DataSourceIngestJob {
      * job and starts the second stage, if appropriate.
      */
     private void finishFirstStage() {
-        logger.log(Level.INFO, "Finished first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+        logInfoMessage("Finished first stage analysis"); //NON-NLS        
 
         // Shut down the file ingest pipelines. Note that no shut down is
         // required for the data source ingest pipeline because data source 
@@ -693,7 +693,7 @@ public final class DataSourceIngestJob {
      * Shuts down the ingest pipelines and progress bars for this job.
      */
     private void finish() {
-        logger.log(Level.INFO, "Finished analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
+        logInfoMessage("Finished analysis"); //NON-NLS        
         this.stage = DataSourceIngestJob.Stages.FINALIZATION;
 
         if (this.doUI) {
@@ -711,19 +711,19 @@ public final class DataSourceIngestJob {
                 try {
                     ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                    logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
                 }
             } else {
                 try {
                     ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                    logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
                 }
             }
             try {
                 this.ingestJob.setEndDateTime(new Date());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
+                logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
             }
         }
         this.parentJob.dataSourceJobFinished(this);
@@ -842,6 +842,7 @@ public final class DataSourceIngestJob {
         if (DataSourceIngestJob.Stages.FIRST == this.stage) {
             DataSourceIngestJob.taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
+            logErrorMessage(Level.SEVERE, "Adding files to job during second stage analysis not supported");
             DataSourceIngestJob.logger.log(Level.SEVERE, "Adding files during second stage not supported"); //NON-NLS
         }
 
@@ -1067,13 +1068,47 @@ public final class DataSourceIngestJob {
     }
 
     /**
+     * Writes an info message to the application log that includes the data
+     * source name, data source object id, and the job id.
+     *
+     * @param message The message.
+     */
+    private void logInfoMessage(String message) {
+        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, dataSource.getName(), dataSource.getId(), id)); //NON-NLS        
+    }
+
+    /**
+     * Writes an error message to the application log that includes the data
+     * source name, data source object id, and the job id.
+     *
+     * @param level     The logging level for the message.
+     * @param message   The message.
+     * @param throwable The error associated with the error, may be null.
+     */
+    private void logErrorMessage(Level level, String message, Throwable throwable) {
+        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, dataSource.getName(), dataSource.getId(), id), throwable); //NON-NLS
+    }
+
+    /**
+     * Writes an error message to the application log that includes the data
+     * source name, data source object id, and the job id.
+     *
+     * @param level   The logging level for the message.
+     * @param message The message.
+     * @param ex      The exception associated with the error, may be null.
+     */
+    private void logErrorMessage(Level level, String message) {
+        logger.log(level, String.format("%s (data source = %s, objId = %d, jobId = %d)", message, dataSource.getName(), dataSource.getId(), id)); //NON-NLS
+    }
+
+    /**
      * Write ingest module errors to the log.
      *
      * @param errors The errors.
      */
     private void logIngestModuleErrors(List<IngestModuleError> errors) {
         for (IngestModuleError error : errors) {
-            DataSourceIngestJob.logger.log(Level.SEVERE, String.format("%s experienced an error analyzing %s (jobId=%d)", error.getModuleDisplayName(), dataSource.getName(), this.id), error.getThrowable()); //NON-NLS
+            logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis", error.getModuleDisplayName()), error.getThrowable()); //NON-NLS
         }
     }
 

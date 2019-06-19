@@ -403,10 +403,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         synchronized (ingestJobsById) {
             ingestJobsById.put(job.getId(), job);
         }
+        IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
         errors = job.start();
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
         } else {
             synchronized (ingestJobsById) {
                 this.ingestJobsById.remove(job.getId());
