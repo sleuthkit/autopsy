@@ -130,9 +130,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
             logger.log(Level.WARNING, "Unable to update selection." , ex);
         }
 
-        if(artifactList.size() == 0) {
-            thumbnailViewer.resetComponent();
-        }
+        thumbnailViewer.resetComponent();
 
         thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentsChildren(artifactList)), tableEM), true, this.getClass().getName()));
     }
