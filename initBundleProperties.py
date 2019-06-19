@@ -17,8 +17,8 @@ def main(lang):
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print("Usage: " + sys.argv[0] + " [lang]")
-        exit(0)
+        exit(1)
     if len(sys.argv[1]) != 2:
         print("Language code must be two-letter")
-        exit(0)
+        exit(1)
     main(sys.argv[1])
