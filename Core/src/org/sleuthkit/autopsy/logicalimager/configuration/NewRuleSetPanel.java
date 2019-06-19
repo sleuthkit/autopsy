@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
  * New rule set panel
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class NewRuleSetPanel extends javax.swing.JPanel {
+class NewRuleSetPanel extends javax.swing.JPanel {
 
     private final JPanel nonFullPathsJPanel;
     private final EditNonFullPathsRulePanel editNonFullPathsRulePanel;
@@ -38,7 +38,7 @@ public class NewRuleSetPanel extends javax.swing.JPanel {
     /**
      * Creates new form NewRuleSetPanel
      */
-    public NewRuleSetPanel(JButton okButton, JButton cancelButton) {
+    NewRuleSetPanel(JButton okButton, JButton cancelButton) {
         initComponents();
         
         nonFullPathsJPanel = createPanel();

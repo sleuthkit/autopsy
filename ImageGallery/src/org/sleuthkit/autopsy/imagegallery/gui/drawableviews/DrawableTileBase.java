@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
@@ -202,7 +201,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 final MenuItem extractMenuItem = new MenuItem(Bundle.DrawableTileBase_menuItem_extractFiles());
                 extractMenuItem.setOnAction(actionEvent
                         -> SwingUtilities.invokeLater(() -> {
-                            TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
+                            TopComponent etc = ImageGalleryTopComponent.getTopComponent();
                             ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
                         }));
                 menuItems.add(extractMenuItem);

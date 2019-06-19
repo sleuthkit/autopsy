@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.configurelogicalimager;
+package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ import org.openide.util.NbBundle;
     "EncryptionProgramsRule.encryptionProgramsRuleName=Encryption Programs",
     "EncryptionProgramsRule.encryptionProgramsRuleDescription=Find encryption programs"
 })
-public final class EncryptionProgramsRule {
+final class EncryptionProgramsRule {
 
     private static final String ENCRYPTION_PROGRAMS_RULE_NAME = Bundle.EncryptionProgramsRule_encryptionProgramsRuleName();
     private static final String ENCRYPTION_PROGRAMS_RULE_DESCRIPTION = Bundle.EncryptionProgramsRule_encryptionProgramsRuleDescription();
@@ -80,15 +80,15 @@ public final class EncryptionProgramsRule {
 
     }
 
-    public static String getName() {
+    static String getName() {
         return ENCRYPTION_PROGRAMS_RULE_NAME;
     }
 
-    public static String getDescription() {
+    static String getDescription() {
         return ENCRYPTION_PROGRAMS_RULE_DESCRIPTION;
     }
     
-    public static List<String> getFilenames() {
+    static List<String> getFilenames() {
         return FILENAMES;
     }
 }
