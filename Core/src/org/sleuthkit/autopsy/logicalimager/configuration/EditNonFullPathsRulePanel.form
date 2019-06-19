@@ -30,25 +30,6 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="ruleNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="descriptionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="extensionsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="filenamesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="folderNamesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="fileSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="modifiedDateLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="folderNamesScrollPane" alignment="1" max="32767" attributes="0"/>
-                          <Component id="filenamesScrollPane" alignment="1" max="32767" attributes="0"/>
-                          <Component id="extensionsTextField" alignment="1" max="32767" attributes="0"/>
-                          <Component id="descriptionTextField" alignment="1" max="32767" attributes="0"/>
-                          <Component id="ruleNameTextField" alignment="1" max="32767" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
                           <Group type="102" attributes="0">
                               <EmptySpace min="81" pref="81" max="-2" attributes="0"/>
@@ -70,7 +51,30 @@
                           </Group>
                           <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="236" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="ruleNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="descriptionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="extensionsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="filenamesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="folderNamesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="fileSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="modifiedDateLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="userFolderNote" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="folderNamesScrollPane" alignment="1" max="32767" attributes="0"/>
+                          <Component id="filenamesScrollPane" alignment="1" max="32767" attributes="0"/>
+                          <Component id="extensionsTextField" alignment="1" max="32767" attributes="0"/>
+                          <Component id="descriptionTextField" alignment="1" max="32767" attributes="0"/>
+                          <Component id="ruleNameTextField" alignment="1" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -98,21 +102,23 @@
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="filenamesScrollPane" alignment="0" pref="70" max="32767" attributes="0"/>
+                  <Component id="filenamesScrollPane" alignment="0" pref="94" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="2" attributes="0">
                           <Component id="filenamesLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="filenamesRadioButton" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="73" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="folderNamesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="folderNamesScrollPane" alignment="0" pref="71" max="32767" attributes="0"/>
+                  <Component id="folderNamesScrollPane" alignment="0" pref="95" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="userFolderNote" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="2" attributes="0">
                   <Component id="fileSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="minSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
@@ -130,7 +136,7 @@
               <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -312,6 +318,16 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="filenamesRadioButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="userFolderNote">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/sleuthkit/autopsy/images/info-icon-16.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="EditNonFullPathsRulePanel.userFolderNote.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

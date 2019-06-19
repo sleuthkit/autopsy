@@ -63,7 +63,6 @@ EditNonFullPathsRulePanel.minFileSizeNotPositiveException=Minimum file size must
 # {0} - message
 EditNonFullPathsRulePanel.modifiedDaysMustBeNumberException=Modified days must be a number: {0}
 EditNonFullPathsRulePanel.modifiedDaysNotPositiveException=Modified days must be a positive
-EditNonFullPathsRulePanel.note=NOTE: A special [USER_FOLDER] token at the the start of a folder name to allow matches of all user folders in the file system.
 # {0} - fieldName
 EditRulePanel.blankLineException={0} cannot have a blank line
 EditRulePanel.shouldAlertCheckBox.text=Alert in imager console if rule matches
@@ -179,4 +178,5 @@ EditNonFullPathsRulePanel.extensionsRadioButton.text=
 EditNonFullPathsRulePanel.filenamesRadioButton.text=
 EditNonFullPathsRulePanel.extensionsRadioButton.toolTipText=Extensions and File names are mutually exclusive
 EditNonFullPathsRulePanel.filenamesRadioButton.toolTipText=Extensions and File names are mutually exclusive
+EditNonFullPathsRulePanel.userFolderNote.text=Starting a folder name with the token [USER_FOLDER] will allow matches of all user folders in the file system.
 NewRuleSetPanel.fullPathRule.name=Full Path

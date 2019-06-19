@@ -52,8 +52,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
      * Creates new form EditRulePanel
      */
     @NbBundle.Messages({
-        "EditNonFullPathsRulePanel.example=Example: ",
-        "EditNonFullPathsRulePanel.note=NOTE: A special [USER_FOLDER] token at the the start of a folder name to allow matches of all user folders in the file system."
+        "EditNonFullPathsRulePanel.example=Example: "
     })
     EditNonFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
@@ -96,10 +95,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>" 
                 + Bundle.EditNonFullPathsRulePanel_example() 
                 + "<br>[USER_FOLDER]/My Documents/Downloads"
-                + "<br>/Program Files/Common Files"
-                + "<br>"
-                + Bundle.EditNonFullPathsRulePanel_note()
-                + "</html>"); // NON-NLS
+                + "<br>/Program Files/Common Files</html>"); // NON-NLS
         validate();
         repaint();
     }
@@ -181,6 +177,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         minDaysTextField = new javax.swing.JFormattedTextField();
         extensionsRadioButton = new javax.swing.JRadioButton();
         filenamesRadioButton = new javax.swing.JRadioButton();
+        userFolderNote = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.modifiedDateLabel.text")); // NOI18N
 
@@ -241,6 +238,9 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             }
         });
 
+        userFolderNote.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/info-icon-16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(userFolderNote, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.userFolderNote.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -252,22 +252,6 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     .addComponent(filenamesRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ruleNameLabel)
-                            .addComponent(descriptionLabel)
-                            .addComponent(extensionsLabel)
-                            .addComponent(filenamesLabel)
-                            .addComponent(folderNamesLabel)
-                            .addComponent(fileSizeLabel)
-                            .addComponent(modifiedDateLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(folderNamesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(filenamesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(extensionsTextField, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(descriptionTextField, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(ruleNameTextField, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(shouldAlertCheckBox)
@@ -286,7 +270,26 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                                         .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addComponent(daysIncludedLabel)))
                             .addComponent(shouldSaveCheckBox))
-                        .addGap(0, 236, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(ruleNameLabel)
+                            .addComponent(descriptionLabel)
+                            .addComponent(extensionsLabel)
+                            .addComponent(filenamesLabel)
+                            .addComponent(folderNamesLabel)
+                            .addComponent(fileSizeLabel)
+                            .addComponent(modifiedDateLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(userFolderNote)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(folderNamesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(filenamesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(extensionsTextField, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(descriptionTextField, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(ruleNameTextField, javax.swing.GroupLayout.Alignment.TRAILING))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -307,17 +310,19 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                     .addComponent(extensionsRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(filenamesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE)
+                    .addComponent(filenamesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(filenamesLabel)
                             .addComponent(filenamesRadioButton))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 73, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(folderNamesLabel)
-                    .addComponent(folderNamesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(folderNamesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(userFolderNote)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(fileSizeLabel)
                     .addComponent(minSizeLabel)
@@ -333,7 +338,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 .addComponent(shouldSaveCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(shouldAlertCheckBox)
-                .addGap(19, 19, 19))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -375,6 +380,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private javax.swing.JTextField ruleNameTextField;
     private javax.swing.JCheckBox shouldAlertCheckBox;
     private javax.swing.JCheckBox shouldSaveCheckBox;
+    private javax.swing.JLabel userFolderNote;
     // End of variables declaration//GEN-END:variables
 
     private void setRule(String ruleName, LogicalImagerRule rule) {
