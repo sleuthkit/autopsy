@@ -492,7 +492,7 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(BlackboardArtifactNode ban) {
             
             Action preferredAction = ban.getPreferredAction();
-            if(preferredAction != null && preferredAction instanceof AbstractAction) {
+            if(preferredAction instanceof AbstractAction) {
                 return (AbstractAction) preferredAction;
             }
             

@@ -58,7 +58,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.DaysIncludedEmptyError=Number of days included cannot be empty.",
         "FilesSetRulePanel.DaysIncludedInvalidError=Number of days included must be a positive integer.",
         "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected).",
-        "#{0} - regex",
+        "# {0} - regex",
         "FilesSetRulePanel.CommaInRegexWarning=Warning: Comma(s) in the file extension field will be interpreted as part of a regex and will not split the entry into multiple extensions (Entered: \"{0}\")",
     })
 

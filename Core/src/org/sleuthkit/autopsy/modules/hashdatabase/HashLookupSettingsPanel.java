@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -45,6 +44,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -61,12 +61,15 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
+    private static final String NSRL_URL = "https://sourceforge.net/projects/autopsy/files/NSRL/";
+    private static final String NSRL_NAME_STRING = "nsrl";
     private static final String NO_SELECTION_TEXT = NbBundle
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.noSelectionText");
     private static final String ERROR_GETTING_PATH_TEXT = NbBundle
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingPathText");
     private static final String ERROR_GETTING_INDEX_STATUS_TEXT = NbBundle
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
+    private static final Logger logger = Logger.getLogger(HashLookupSettingsPanel.class.getName());
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
     private final List<Integer> newReferenceSetIDs = new ArrayList<>();
@@ -320,10 +323,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 @Override
                 public void run() {
                     //If unindexed ones are found, show a popup box that will either index them, or remove them.
-                    if (unindexed.size() == 1) {
-                        showInvalidIndex(false, unindexed);
-                    } else if (unindexed.size() > 1) {
-                        showInvalidIndex(true, unindexed);
+                    if (!unindexed.isEmpty()) {
+                        showInvalidIndex(unindexed);
                     }
                 }
             });
@@ -394,16 +395,45 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
-    private void showInvalidIndex(boolean plural, List<SleuthkitHashSet> unindexed) {
+    @NbBundle.Messages({"# {0} - nsrlUrlAddress",
+        "HashLookupSettingsPanel.removeUnindexedNsrl.text=Instead of indexing the NSRL, please download an already indexed version available here:\n{0}",
+        "# {0} - nsrlHashSet",
+        "HashLookupSettingsPanel.unindexedNsrl.base=The following hash set appears to be an unindexed version of the NSRL, it will be removed from the list.\nHash set:{0}\n",
+        "# {0} - nsrlHashSets",
+        "HashLookupSettingsPanel.unindexedNsrls.base=The following hash sets appear to be unindexed versions of the NSRL, they will be removed from the list.\nHash sets:{0}\n",
+        "HashLookupSettingsPanel.removeUnindexedNsrl.title=Unindexed NSRL(s) will be removed"})
+    private void showInvalidIndex(List<SleuthkitHashSet> unindexed) {
         String total = "";
-        String message;
-        for (HashDb hdb : unindexed) {
-            total += "\n" + hdb.getHashSetName();
+        String nsrlTotal = "";
+
+        List<SleuthkitHashSet> nsrlHashsets = new ArrayList<>();
+        for (SleuthkitHashSet hdb : unindexed) {
+            //check if this is the NSRL if so point users toward already indexed versions
+            if (isWindows() && hdb.getHashSetName().toLowerCase().contains(NSRL_NAME_STRING)) {
+                nsrlHashsets.add(hdb);
+                nsrlTotal += "\n" + hdb.getHashSetName();
+            } else {
+                total += "\n" + hdb.getHashSetName();
+            }
         }
-        if (plural) {
+        if (!nsrlHashsets.isEmpty()) {
+            String message;
+            if (nsrlHashsets.size() > 1) {
+                message = Bundle.HashLookupSettingsPanel_unindexedNsrls_base(nsrlTotal) + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL);
+            } else {
+                message = Bundle.HashLookupSettingsPanel_unindexedNsrl_base(nsrlTotal) + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL);
+            }
+            JOptionPane.showMessageDialog(this, message, Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_title(), JOptionPane.INFORMATION_MESSAGE);
+            for (SleuthkitHashSet hdb : nsrlHashsets) {
+                unindexed.remove(hdb);
+            }
+            removeThese(nsrlHashsets);
+        }
+        String message = NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.dbNotIndexedMsg", total);
+        if (unindexed.isEmpty()) {
+            return;
+        } else if (unindexed.size() > 1) {
             message = NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.dbsNotIndexedMsg", total);
-        } else {
-            message = NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.dbNotIndexedMsg", total);
         }
         int res = JOptionPane.showConfirmDialog(this, message,
                 NbBundle.getMessage(this.getClass(),
@@ -948,6 +978,17 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
+    /**
+     * Check if the current OS is windows
+     *
+     * @return true if running on windows, false otherwise
+     */
+    private boolean isWindows() {
+        return PlatformUtil.getOSName().toLowerCase().startsWith("Windows");
+    }
+
+    @NbBundle.Messages({"HashLookupSettingsPanel.indexNsrl.text=This hash set appears to be the NSRL, it will be removed from the list.\n",
+        "HashLookupSettingsPanel.indexNsrl.title=NSRL will not be indexed"})
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
         final HashDb hashDatabase = ((HashSetTable) hashSetTable).getSelection();
         assert hashDatabase != null;
@@ -956,28 +997,39 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         // Add a listener for the INDEXING_DONE event. This listener will update
         // the UI.
         SleuthkitHashSet hashDb = (SleuthkitHashSet) hashDatabase;
-        hashDb.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(SleuthkitHashSet.Event.INDEXING_DONE.toString())) {
-                    HashDb selectedHashDb = ((HashSetTable) hashSetTable).getSelection();
-                    if (selectedHashDb != null && hashDb != null && hashDb.equals(selectedHashDb)) {
-                        updateComponents();
-                    }
-                    hashSetTableModel.refreshDisplay();
-                }
+        if (isWindows() && hashDb.getHashSetName().toLowerCase().contains(NSRL_NAME_STRING)) {
+            JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_indexNsrl_text() + Bundle.HashLookupSettingsPanel_removeUnindexedNsrl_text(NSRL_URL), Bundle.HashLookupSettingsPanel_indexNsrl_title(), JOptionPane.INFORMATION_MESSAGE);
+            try {
+                hashSetManager.removeHashDatabaseNoSave(hashDatabase);
+                hashSetTableModel.refreshModel();
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            } catch (HashDbManager.HashDbManagerException ex) {
+                logger.log(Level.WARNING, "Unable to remove unindexed NSRL from hash set list", ex);
             }
-        });
+        } else {
+            hashDb.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(SleuthkitHashSet.Event.INDEXING_DONE.toString())) {
+                        HashDb selectedHashDb = ((HashSetTable) hashSetTable).getSelection();
+                        if (selectedHashDb != null && hashDb != null && hashDb.equals(selectedHashDb)) {
+                            updateComponents();
+                        }
+                        hashSetTableModel.refreshDisplay();
+                    }
+                }
+            });
 
-        // Display a modal dialog box to kick off the indexing on a worker thread
-        // and try to persuade the user to wait for the indexing task to finish.
-        // TODO: If the user waits, this defeats the purpose of doing the indexing on a worker thread.
-        // But if the user cancels the dialog, other operations on the database
-        // may be attempted when it is not in a suitable state.
-        ModalNoButtons indexDialog = new ModalNoButtons(this, new Frame(), hashDb);
-        indexDialog.setLocationRelativeTo(null);
-        indexDialog.setVisible(true);
-        indexDialog.setModal(true);
+            // Display a modal dialog box to kick off the indexing on a worker thread
+            // and try to persuade the user to wait for the indexing task to finish.
+            // TODO: If the user waits, this defeats the purpose of doing the indexing on a worker thread.
+            // But if the user cancels the dialog, other operations on the database
+            // may be attempted when it is not in a suitable state.
+            ModalNoButtons indexDialog = new ModalNoButtons(this, new Frame(), hashDb);
+            indexDialog.setLocationRelativeTo(null);
+            indexDialog.setVisible(true);
+            indexDialog.setModal(true);
+        }
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void importDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importDatabaseButtonActionPerformed

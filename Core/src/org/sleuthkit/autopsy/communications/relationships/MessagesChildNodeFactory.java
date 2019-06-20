@@ -33,7 +33,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * A ChildFactory subclass for creating MessageNodes from a set of 
+ * BlackboardArtifact objects.
  *
  */
 public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{

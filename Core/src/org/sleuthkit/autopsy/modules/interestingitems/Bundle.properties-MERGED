@@ -37,7 +37,7 @@ FilesSetPanel.ingest.createNewFilter=Create/edit file ingest filters...
 FilesSetPanel.ingest.messages.filtersMustBeNamed=File ingest filters must be named.
 FilesSetPanel.rule.title=File Filter Rule
 FilesSetRulePanel.bytes=Bytes
-#{0} - regex
+# {0} - regex
 FilesSetRulePanel.CommaInRegexWarning=Warning: Comma(s) in the file extension field will be interpreted as part of a regex and will not split the entry into multiple extensions (Entered: "{0}")
 FilesSetRulePanel.DaysIncludedEmptyError=Number of days included cannot be empty.
 FilesSetRulePanel.DaysIncludedInvalidError=Number of days included must be a positive integer.

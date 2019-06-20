@@ -20,8 +20,12 @@ package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.KeyboardFocusManager;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
@@ -29,6 +33,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -46,14 +51,13 @@ import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
-import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
- *
+ * The main panel for the messages tab of the RelationshipViewer
  *
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MessageViewer extends JPanel implements RelationshipsViewer {
 
     private static final Logger logger = Logger.getLogger(MessageViewer.class.getName());
@@ -81,7 +85,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         "MessageViewer_viewMessage_unthreaded=Unthreaded",})
 
     /**
-     * Creates new form MessageViewer2
+     * Creates new form MessageViewer
      */
     public MessageViewer() {
 
@@ -109,12 +113,9 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         };
 
         rootTablePane.getExplorerManager().setRootContext(
-                new TableFilterNode(
-                        new DataResultFilterNode(
-                                new AbstractNode(
-                                        Children.create(rootMessageFactory, true)),
-                                rootTablePane.getExplorerManager()),
-                        true));
+                new AbstractNode(Children.create(rootMessageFactory, true)));
+        
+        rootTablePane.getOutlineView().setPopupAllowed(false);
 
         Outline outline = rootTablePane.getOutlineView().getOutline();
         rootTablePane.getOutlineView().setPropertyColumns(
@@ -134,6 +135,9 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         threadMessagesPanel.setChildFactory(threadMessageNodeFactory);
 
         rootTablePane.setTableColumnsWidth(10, 20, 70);
+        
+        Image image = getScaledImage((new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/timeline/images/arrow-180.png"))).getImage(), 16, 16);
+        backButton.setIcon(new ImageIcon(image) );
     }
 
     @Override
@@ -223,20 +227,33 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
 
             if (!subject.isEmpty()) {
                 threadNameLabel.setText(subject);
+            } else {
+                threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
             }
             
            showMessagesPane();
         }
     }
     
+    /**
+     * Make the threads pane visible.
+     */
     private void showThreadsPane() {
         switchCard("threads");
     }
     
+    /**
+     * Make the message pane visible.
+     */
     private void showMessagesPane() {
         switchCard("messages");
     }
     
+    /**
+     * Changes the visible panel (card).
+     * 
+     * @param cardName Name of card to show
+     */
     private void switchCard(String cardName) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -245,6 +262,26 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
                 layout.show(MessageViewer.this, cardName);
             }
         });
+    }
+    
+    /**
+     * Scales the given image to the given width and height.
+     * 
+     * @param srcImg Image to scale
+     * @param w Image width
+     * @param h Image height
+     * 
+     * @return Scaled version of srcImg
+     */
+    private Image getScaledImage(Image srcImg, int w, int h){
+        BufferedImage resizedImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = resizedImg.createGraphics();
+
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.drawImage(srcImg, 0, 0, w, h, null);
+        g2.dispose();
+
+        return resizedImg;
     }
 
     /**
@@ -321,7 +358,6 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
         messagePanel.add(threadMessagesPanel, gridBagConstraints);
 
-        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/timeline/images/arrow-180.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(backButton, org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.backButton.text")); // NOI18N
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -384,6 +420,9 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
     private javax.swing.JLabel threadsLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * The preferred action of the table nodes.
+     */
     class ShowThreadMessagesAction extends AbstractAction {
 
         @Override
