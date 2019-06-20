@@ -52,16 +52,16 @@ class LogicalImagerRule {
     private List<String> fullPaths = new ArrayList<>();
     @SerializedName("size-range")    
     @Expose(serialize = true) 
-    final private Map<String, Integer> sizeRange = new HashMap<>();
+    final private Map<String, Long> sizeRange = new HashMap<>();
     @SerializedName("date-range")    
     @Expose(serialize = true) 
     final private Map<String, Integer> dateRange = new HashMap<>();
     
     // The following fields should not be serialized, internal use only
     @Expose(serialize = false) 
-    private Integer minFileSize;
+    private Long minFileSize;
     @Expose(serialize = false) 
-    private Integer maxFileSize;
+    private Long maxFileSize;
     @Expose(serialize = false) 
     private Integer minDays;
     @Expose(serialize = false) 
@@ -74,8 +74,8 @@ class LogicalImagerRule {
             List<String> filenames,
             List<String> paths,
             List<String> fullPaths,
-            Integer minFileSize,
-            Integer maxFileSize,
+            Long minFileSize,
+            Long maxFileSize,
             Integer minDays,
             Integer minDate,
             Integer maxDate
@@ -140,11 +140,11 @@ class LogicalImagerRule {
         return fullPaths;
     }
 
-    Integer getMinFileSize() {
+    Long getMinFileSize() {
         return minFileSize;
     }
 
-    Integer getMaxFileSize() {
+    Long getMaxFileSize() {
         return maxFileSize;
     }
 
@@ -172,8 +172,8 @@ class LogicalImagerRule {
         private List<String> filenames = null;        
         private List<String> paths = null;        
         private List<String> fullPaths = null;        
-        private Integer minFileSize = null;
-        private Integer maxFileSize = null;
+        private Long minFileSize = null;
+        private Long maxFileSize = null;
         private Integer minDays = null;
         private Integer minDate = null;
         private Integer maxDate = null;
@@ -218,12 +218,12 @@ class LogicalImagerRule {
             return this;
         }
         
-        Builder getMinFileSize(Integer minFileSize) {
+        Builder getMinFileSize(Long minFileSize) {
             this.minFileSize = minFileSize;
             return this;
         }
         
-        Builder getMaxFileSize(Integer maxFileSize) {
+        Builder getMaxFileSize(Long maxFileSize) {
             this.maxFileSize = maxFileSize;
             return this;
         }

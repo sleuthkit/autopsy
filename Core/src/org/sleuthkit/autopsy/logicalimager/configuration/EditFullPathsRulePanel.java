@@ -280,7 +280,6 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
             JOptionPane pane = getOptionPane(cancelButton);
             pane.setValue(cancelButton);
         });
-        this.setOkButton();
     }
 
     private void setRule(String ruleName, LogicalImagerRule rule) {

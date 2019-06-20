@@ -85,8 +85,8 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
             List<String> paths = null;
             List<String> fullPaths = null;
             List<String> filenames = null;
-            Integer minFileSize = null;
-            Integer maxFileSize = null;
+            Long minFileSize = null;
+            Long maxFileSize = null;
             Integer minDays = null;
             Integer minDate = null;
             Integer maxDate = null;
@@ -143,10 +143,10 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
                             String sizeKey = entry2.getKey();
                             switch (sizeKey) {
                                 case "min": // NON-NLS
-                                    minFileSize = entry2.getValue().getAsInt();
+                                    minFileSize = entry2.getValue().getAsLong();
                                     break;
                                 case "max": // NON-NLS
-                                    maxFileSize = entry2.getValue().getAsInt();
+                                    maxFileSize = entry2.getValue().getAsLong();
                                     break;  
                                 default:
                                     throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(sizeKey));
