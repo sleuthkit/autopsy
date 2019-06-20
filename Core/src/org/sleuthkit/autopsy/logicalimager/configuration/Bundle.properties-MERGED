@@ -56,7 +56,7 @@ EditNonFullPathsRulePanel.maxFileSizeMustBeNumberException=Maximum file size mus
 EditNonFullPathsRulePanel.maxFileSizeNotPositiveException=Maximum file size must be a positive
 # {0} - maxFileSize
 # {1} - minFileSize
-EditNonFullPathsRulePanel.maxFileSizeSmallerThanMinException=Maximum file size: {0} must be bigger than minimum file size: {1}
+EditNonFullPathsRulePanel.maxFileSizeSmallerThanMinException=Maximum file size: {0} bytes must be bigger than minimum file size: {1} bytes
 # {0} - message
 EditNonFullPathsRulePanel.minFileSizeMustBeNumberException=Minimum file size must be a number: {0}
 EditNonFullPathsRulePanel.minFileSizeNotPositiveException=Minimum file size must be a positive
