@@ -31,9 +31,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * New rule set panel
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class NewRuleSetPanel extends javax.swing.JPanel {
+class NewRulePanel extends javax.swing.JPanel {
 
-    private static final Logger logger = Logger.getLogger(NewRuleSetPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(NewRulePanel.class.getName());
     private final JPanel nonFullPathsJPanel;
     private final EditNonFullPathsRulePanel editNonFullPathsRulePanel;
     private final JPanel fullPathsPanel;
@@ -42,7 +42,7 @@ class NewRuleSetPanel extends javax.swing.JPanel {
     /**
      * Creates new form NewRuleSetPanel
      */
-    NewRuleSetPanel(JButton okButton, JButton cancelButton) {
+    NewRulePanel(JButton okButton, JButton cancelButton) {
         initComponents();
 
         nonFullPathsJPanel = createPanel();
@@ -84,7 +84,7 @@ class NewRuleSetPanel extends javax.swing.JPanel {
         sharedLayeredPane = new javax.swing.JLayeredPane();
         ruleDescription = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(chooseLabel, org.openide.util.NbBundle.getMessage(NewRuleSetPanel.class, "NewRuleSetPanel.chooseLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(chooseLabel, org.openide.util.NbBundle.getMessage(NewRulePanel.class, "NewRulePanel.chooseLabel.text")); // NOI18N
 
         chooseComboBox.setMaximumRowCount(2);
         chooseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {Bundle.NewRuleSetPanel_attributeRule_name(), Bundle.NewRuleSetPanel_fullPathRule_name()}));
@@ -102,7 +102,7 @@ class NewRuleSetPanel extends javax.swing.JPanel {
         );
         sharedLayeredPaneLayout.setVerticalGroup(
             sharedLayeredPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 373, Short.MAX_VALUE)
+            .addGap(0, 385, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

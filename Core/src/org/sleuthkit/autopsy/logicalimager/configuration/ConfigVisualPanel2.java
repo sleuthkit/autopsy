@@ -454,8 +454,8 @@ final class ConfigVisualPanel2 extends JPanel {
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
-        NewRuleSetPanel panel;
-        panel = new NewRuleSetPanel(okButton, cancelButton);
+        NewRulePanel panel;
+        panel = new NewRulePanel(okButton, cancelButton);
         panel.setEnabled(true);
         panel.setVisible(true);
 
@@ -624,7 +624,7 @@ final class ConfigVisualPanel2 extends JPanel {
             rulesTable.setRowSelectionInterval(selectThisRow, selectThisRow);
             rulesTableSelect();
         } else {
-            updateRuleSetButtons(false);
+            updateRuleButtons(false);
         }
     }
     
@@ -638,9 +638,9 @@ final class ConfigVisualPanel2 extends JPanel {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
             String description = (String) rulesTable.getModel().getValueAt(index, 1);
             updateRuleDetails(ruleName, description, config);
-            updateRuleSetButtons(ruleName.equals(EncryptionProgramsRule.getName()) ? false : true);
+            updateRuleButtons(ruleName.equals(EncryptionProgramsRule.getName()) ? false : true);
         } else {
-            updateRuleSetButtons(false);            
+            updateRuleButtons(false);            
         }
     }
 
@@ -739,7 +739,7 @@ final class ConfigVisualPanel2 extends JPanel {
         updatePanel(configFilename, config, ruleMap.getKey());
     }
 
-    private void updateRuleSetButtons(boolean isRowSelected) {
+    private void updateRuleButtons(boolean isRowSelected) {
         newRuleButton.setEnabled(true);
         editRuleButton.setEnabled(isRowSelected);
         deleteRuleButton.setEnabled(isRowSelected);
