@@ -1845,7 +1845,8 @@ final public class Accounts implements AutopsyVisitableItem {
             return ICON_BASE_PATH + "WhatsApp.png";
         } else {
             //there could be a default icon instead...
-            throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
+            return ICON_BASE_PATH + "face.png";
+//            throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
         }
     }
 }
