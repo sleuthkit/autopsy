@@ -111,8 +111,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     }
 
     private void setupMinMaxSizeOptions() {
-        String savedMinSize = rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString()
-        
+        String savedMinSize = rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString();
         setSizeAndUnits(minSizeTextField, minSizeUnitsCombobox, savedMinSize);
         minSizeCheckbox.setSelected(!StringUtils.isBlank(minSizeTextField.getText()));
         minSizeTextField.setEnabled(minSizeCheckbox.isSelected());
