@@ -72,7 +72,7 @@
                       <Component id="jScrollPane1" min="-2" pref="568" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace pref="338" max="32767" attributes="0"/>
+              <EmptySpace pref="-11" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -89,7 +89,7 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="imageScrollPane" pref="0" max="32767" attributes="0"/>
-                  <Component id="driveListScrollPane" pref="461" max="32767" attributes="0"/>
+                  <Component id="driveListScrollPane" pref="106" max="32767" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="refreshButton" min="-2" max="-2" attributes="0"/>

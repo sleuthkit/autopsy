@@ -93,7 +93,6 @@ ConfigVisualPanel2.jCheckBox2.text=jCheckBox2
 ConfigVisualPanel2.jTextField1.text=jTextField1
 ConfigVisualPanel1.jRadioButton1.text=Create new configuration
 ConfigVisualPanel1.jRadioButton2.text=Open existing configuration
-ConfigVisualPanel1.jLabel1.text_1=Configuration file:
 ConfigVisualPanel1.configFileTextField.text_1=
 ConfigVisualPanel2.modifiedDateLabel.text=Modified Within:
 ConfigVisualPanel2.folderNamesLabel.text=Folder names:
@@ -173,6 +172,9 @@ LogicalImagerConfigDeserializer.missingRuleSetException=Missing rule-set
 # {0} - key
 LogicalImagerConfigDeserializer.unsupportedKeyException=Unsupported key: {0}
 NewRulePanel.chooseLabel.text=Choose the type of rule
+ConfigVisualPanel1.jTextArea1.text=Select a location you will configure for use by the Logical Imager. A config file will be created if one does not already exist, and a copy of the Logical Imager executable will copied to this location. This will also be the location where the Logical Imager executable creates folders containing its output.
+ConfigVisualPanel1.configureDriveRadioButton.text_1=Configure selected external drive:
+ConfigVisualPanel1.configureFolderRadioButton.text_1=Configure in a folder:
 NewRuleSetPanel.attributeRule.description=Search for files based on one or more attributes or metadata fields.
 NewRuleSetPanel.attributeRule.name=Attribute
 NewRuleSetPanel.fullPathRule.description=Search for files based on full exact match path.
