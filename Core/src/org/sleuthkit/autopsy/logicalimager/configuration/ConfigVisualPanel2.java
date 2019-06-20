@@ -425,7 +425,7 @@ final class ConfigVisualPanel2 extends JPanel {
         int row = rulesTable.getSelectedRow();
         if (row != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(row, 0);
-            LogicalImagerRule rule = getFirstRuleSet().getRules().get(row);
+            LogicalImagerRule rule = getRuleSetFromCurrentConfig().getRules().get(row);
             EditRulePanel editPanel = new EditRulePanel(okButton, cancelButton, ruleName, rule);
             editPanel.setEnabled(true);
             editPanel.setVisible(true);
@@ -499,7 +499,7 @@ final class ConfigVisualPanel2 extends JPanel {
                 return;
             }
 
-            getFirstRuleSet().getRules().remove(index);
+            getRuleSetFromCurrentConfig().getRules().remove(index);
             updatePanel(configFilename, config);
             if (rulesTable.getRowCount() > 0) {
                 rulesTable.setRowSelectionInterval(0, 0);
@@ -526,7 +526,7 @@ final class ConfigVisualPanel2 extends JPanel {
             // remove it
             int index = ((RulesTableModel) rulesTable.getModel()).findRow(EncryptionProgramsRule.getName());
             if (index != -1) {
-                getFirstRuleSet().getRules().remove(index);
+                getRuleSetFromCurrentConfig().getRules().remove(index);
                 updatePanel(configFilename, config);
                 if (rulesTable.getRowCount() > 0) {
                     rulesTable.setRowSelectionInterval(0, 0);
@@ -588,7 +588,7 @@ final class ConfigVisualPanel2 extends JPanel {
     private javax.swing.JCheckBox shouldSaveCheckBox;
     // End of variables declaration//GEN-END:variables
 
-    private LogicalImagerRuleSet getFirstRuleSet() {
+    private LogicalImagerRuleSet getRuleSetFromCurrentConfig() {
         if (config.getRuleSets().isEmpty()) {
             List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
             ruleSets.add(new LogicalImagerRuleSet("no-set-name", new ArrayList<>())); // NON-NLS
@@ -600,7 +600,7 @@ final class ConfigVisualPanel2 extends JPanel {
     private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
-        LogicalImagerRuleSet ruleSet = getFirstRuleSet();
+        LogicalImagerRuleSet ruleSet = getRuleSetFromCurrentConfig();
         flagEncryptionProgramsCheckBox.setSelected(ruleSet.find(EncryptionProgramsRule.getName()) != null);
         RulesTableModel rulesTableModel = new RulesTableModel();
         int row = 0;
@@ -646,7 +646,7 @@ final class ConfigVisualPanel2 extends JPanel {
 
     private void updateRuleDetails(String ruleName, String description, LogicalImagerConfig config) {
         clearRuleDetails();
-        LogicalImagerRule rule = getFirstRuleSet().find(ruleName);
+        LogicalImagerRule rule = getRuleSetFromCurrentConfig().find(ruleName);
         shouldAlertCheckBox.setSelected(rule.isShouldAlert());
         shouldSaveCheckBox.setSelected(rule.isShouldSave());
         ruleNameEditTextField.setText(ruleName);
@@ -729,13 +729,13 @@ final class ConfigVisualPanel2 extends JPanel {
     }
 
     private void updateRow(int index, ImmutablePair<String, LogicalImagerRule> ruleMap) {
-        getFirstRuleSet().getRules().remove(index);
-        getFirstRuleSet().getRules().add(ruleMap.getValue());
+        getRuleSetFromCurrentConfig().getRules().remove(index);
+        getRuleSetFromCurrentConfig().getRules().add(ruleMap.getValue());
         updatePanel(configFilename, config, ruleMap.getKey());
     }
 
     private void appendRow(ImmutablePair<String, LogicalImagerRule> ruleMap) {
-        getFirstRuleSet().getRules().add(ruleMap.getValue());
+        getRuleSetFromCurrentConfig().getRules().add(ruleMap.getValue());
         updatePanel(configFilename, config, ruleMap.getKey());
     }
 

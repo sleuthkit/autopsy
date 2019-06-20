@@ -32,6 +32,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import org.apache.commons.lang.StringUtils;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.strip;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -44,10 +48,10 @@ import org.openide.util.NbBundle;
 final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Color DISABLED_COLOR = new Color(240,240,240);
+    private static final Color DISABLED_COLOR = new Color(240, 240, 240);
     private JButton okButton;
     private JButton cancelButton;
-    private final javax.swing.JTextArea filenamesTextArea;
+    private final javax.swing.JTextArea fileNamesTextArea;
     private final javax.swing.JTextArea folderNamesTextArea;
 
     /**
@@ -68,11 +72,11 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
         setExtensions(rule.getExtensions());
 
-        filenamesTextArea = new JTextArea();
-        initTextArea(filenamesScrollPane, filenamesTextArea);
-        setTextArea(filenamesTextArea, rule.getFilenames());
+        fileNamesTextArea = new JTextArea();
+        initTextArea(filenamesScrollPane, fileNamesTextArea);
+        setTextArea(fileNamesTextArea, rule.getFilenames());
 
-        if (rule.getExtensions() != null) {
+        if (rule.getExtensions() != null && !rule.getExtensions().isEmpty()) {
             extensionsCheckbox.setSelected(true);
         } else if (rule.getFilenames() != null && !rule.getFilenames().isEmpty()) {
             fileNamesCheckbox.setSelected(true);
@@ -89,7 +93,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         ruleNameTextField.requestFocus();
 
         EditRulePanel.setTextFieldPrompts(extensionsTextField, Bundle.EditNonFullPathsRulePanel_example() + "gif,jpg,png"); // NON-NLS
-        EditRulePanel.setTextFieldPrompts(filenamesTextArea, "<html>"
+        EditRulePanel.setTextFieldPrompts(fileNamesTextArea, "<html>"
                 + Bundle.EditNonFullPathsRulePanel_example()
                 + "<br>filename.txt<br>readme.txt</html>"); // NON-NLS
         EditRulePanel.setTextFieldPrompts(folderNamesTextArea, "<html>"
@@ -98,6 +102,40 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 + "<br>/Program Files/Common Files</html>"); // NON-NLS
         validate();
         repaint();
+        addDocumentListeners();
+    }
+
+    /**
+     * Update the OK button when contents of a field change
+     */
+    private void addDocumentListeners() {
+        SwingUtilities.invokeLater(() -> {
+            setOkButton();  //ensure initial state before listeners added is correct
+        });
+        DocumentListener docListener;
+        docListener = new DocumentListener() {
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                setOkButton();
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+               setOkButton();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+               setOkButton();
+            }
+        };
+        ruleNameTextField.getDocument().addDocumentListener(docListener);
+        extensionsTextField.getDocument().addDocumentListener(docListener);
+        fileNamesTextArea.getDocument().addDocumentListener(docListener);
+        folderNamesTextArea.getDocument().addDocumentListener(docListener);
+        minSizeTextField.getDocument().addDocumentListener(docListener);
+        maxSizeTextField.getDocument().addDocumentListener(docListener);
+        modifiedWithinTextField.getDocument().addDocumentListener(docListener);
     }
 
     private void initTextArea(JScrollPane pane, JTextArea textArea) {
@@ -123,7 +161,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     }
 
     private void setMinDays(Integer minDays) {
-        modifiedWithTextField.setText(minDays == null ? "" : minDays.toString());
+        modifiedWithinTextField.setText(minDays == null ? "" : minDays.toString());
     }
 
     private void setTextArea(JTextArea textArea, List<String> set) {
@@ -167,10 +205,10 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         folderNamesScrollPane = new javax.swing.JScrollPane();
         minSizeTextField = new javax.swing.JFormattedTextField();
         maxSizeTextField = new javax.swing.JFormattedTextField();
-        modifiedWithTextField = new javax.swing.JFormattedTextField();
+        modifiedWithinTextField = new javax.swing.JFormattedTextField();
         userFolderNote = new javax.swing.JLabel();
-        minSizeCheckBox = new javax.swing.JCheckBox();
-        maxSizeCheckBox = new javax.swing.JCheckBox();
+        minSizeCheckbox = new javax.swing.JCheckBox();
+        maxSizeCheckbox = new javax.swing.JCheckBox();
         modifiedWithinCheckbox = new javax.swing.JCheckBox();
         folderNamesCheckbox = new javax.swing.JCheckBox();
         fileNamesCheckbox = new javax.swing.JCheckBox();
@@ -185,45 +223,40 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(shouldAlertCheckBox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.shouldAlertCheckBox.text")); // NOI18N
         shouldAlertCheckBox.setActionCommand(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.shouldAlertCheckBox.actionCommand")); // NOI18N
 
-        extensionsTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.extensionsTextField.text")); // NOI18N
         extensionsTextField.setEnabled(false);
 
-        descriptionTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.descriptionTextField.text")); // NOI18N
         descriptionTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.ruleNameLabel.text")); // NOI18N
 
-        ruleNameTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.ruleNameTextField.text")); // NOI18N
-
+        filenamesScrollPane.setToolTipText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.filenamesScrollPane.toolTipText")); // NOI18N
         filenamesScrollPane.setEnabled(false);
 
         folderNamesScrollPane.setEnabled(false);
 
         minSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
-        minSizeTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.minSizeTextField.text")); // NOI18N
         minSizeTextField.setEnabled(false);
 
         maxSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
-        maxSizeTextField.setText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.maxSizeTextField.text")); // NOI18N
         maxSizeTextField.setEnabled(false);
 
-        modifiedWithTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("####; "))));
-        modifiedWithTextField.setEnabled(false);
+        modifiedWithinTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("####; "))));
+        modifiedWithinTextField.setEnabled(false);
 
         userFolderNote.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/info-icon-16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(userFolderNote, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.userFolderNote.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(minSizeCheckBox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.minSizeCheckBox.text")); // NOI18N
-        minSizeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(minSizeCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.minSizeCheckbox.text")); // NOI18N
+        minSizeCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                minSizeCheckBoxActionPerformed(evt);
+                minSizeCheckboxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(maxSizeCheckBox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.maxSizeCheckBox.text")); // NOI18N
-        maxSizeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(maxSizeCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.maxSizeCheckbox.text")); // NOI18N
+        maxSizeCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                maxSizeCheckBoxActionPerformed(evt);
+                maxSizeCheckboxActionPerformed(evt);
             }
         });
 
@@ -279,8 +312,8 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                                         .addComponent(descriptionCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(ruleNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                        .addComponent(minSizeCheckBox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(maxSizeCheckBox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)))
+                                        .addComponent(minSizeCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(maxSizeCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(ruleNameTextField, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -303,7 +336,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(modifiedWithinCheckbox)
                                 .addGap(10, 10, 10)
-                                .addComponent(modifiedWithTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(daysIncludedLabel))
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -343,15 +376,15 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(minSizeCheckBox))
+                    .addComponent(minSizeCheckbox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(maxSizeCheckBox))
+                    .addComponent(maxSizeCheckbox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(daysIncludedLabel)
-                    .addComponent(modifiedWithTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(modifiedWithinCheckbox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(shouldSaveCheckBox)
@@ -366,6 +399,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             fileNamesCheckbox.setSelected(false);
         }
         updateExclusiveConditions();
+        setOkButton();
     }//GEN-LAST:event_extensionsCheckboxActionPerformed
 
     private void fileNamesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNamesCheckboxActionPerformed
@@ -373,6 +407,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             extensionsCheckbox.setSelected(false);
         }
         updateExclusiveConditions();
+        setOkButton();
     }//GEN-LAST:event_fileNamesCheckboxActionPerformed
 
     private void descriptionCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_descriptionCheckboxActionPerformed
@@ -384,35 +419,39 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         folderNamesTextArea.setEditable(folderNamesCheckbox.isSelected());
         folderNamesTextArea.setEnabled(folderNamesCheckbox.isSelected());
         updateTextAreaBackgroundColor(folderNamesTextArea);
-        
+        setOkButton();
+
     }//GEN-LAST:event_folderNamesCheckboxActionPerformed
 
-    private void minSizeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minSizeCheckBoxActionPerformed
-        minSizeTextField.setEnabled(minSizeCheckBox.isSelected());
-    }//GEN-LAST:event_minSizeCheckBoxActionPerformed
+    private void minSizeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minSizeCheckboxActionPerformed
+        minSizeTextField.setEnabled(minSizeCheckbox.isSelected());
+        setOkButton();
+    }//GEN-LAST:event_minSizeCheckboxActionPerformed
 
-    private void maxSizeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxSizeCheckBoxActionPerformed
-        maxSizeTextField.setEnabled(maxSizeCheckBox.isSelected());
-    }//GEN-LAST:event_maxSizeCheckBoxActionPerformed
+    private void maxSizeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxSizeCheckboxActionPerformed
+        maxSizeTextField.setEnabled(maxSizeCheckbox.isSelected());
+        setOkButton();
+    }//GEN-LAST:event_maxSizeCheckboxActionPerformed
 
     private void modifiedWithinCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modifiedWithinCheckboxActionPerformed
-        modifiedWithTextField.setEnabled(modifiedWithinCheckbox.isSelected());
+        modifiedWithinTextField.setEnabled(modifiedWithinCheckbox.isSelected());
+        setOkButton();
     }//GEN-LAST:event_modifiedWithinCheckboxActionPerformed
 
-    private static void updateTextAreaBackgroundColor(JTextArea textArea){
-        if (textArea.isEnabled()){
+    private static void updateTextAreaBackgroundColor(JTextArea textArea) {
+        if (textArea.isEnabled()) {
             textArea.setBackground(Color.WHITE);
         } else {
             textArea.setBackground(DISABLED_COLOR);
         }
     }
-    
+
     private void updateExclusiveConditions() {
         extensionsTextField.setEnabled(extensionsCheckbox.isSelected());
         filenamesScrollPane.setEnabled(fileNamesCheckbox.isSelected());
-        filenamesTextArea.setEditable(fileNamesCheckbox.isSelected());
-        filenamesTextArea.setEnabled(fileNamesCheckbox.isSelected());
-        updateTextAreaBackgroundColor(filenamesTextArea);
+        fileNamesTextArea.setEditable(fileNamesCheckbox.isSelected());
+        fileNamesTextArea.setEnabled(fileNamesCheckbox.isSelected());
+        updateTextAreaBackgroundColor(fileNamesTextArea);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -425,12 +464,12 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane filenamesScrollPane;
     private javax.swing.JCheckBox folderNamesCheckbox;
     private javax.swing.JScrollPane folderNamesScrollPane;
-    private javax.swing.JCheckBox maxSizeCheckBox;
+    private javax.swing.JCheckBox maxSizeCheckbox;
     private javax.swing.JFormattedTextField maxSizeTextField;
-    private javax.swing.JCheckBox minSizeCheckBox;
+    private javax.swing.JCheckBox minSizeCheckbox;
     private javax.swing.JFormattedTextField minSizeTextField;
-    private javax.swing.JFormattedTextField modifiedWithTextField;
     private javax.swing.JCheckBox modifiedWithinCheckbox;
+    private javax.swing.JFormattedTextField modifiedWithinTextField;
     private javax.swing.JLabel ruleNameLabel;
     private javax.swing.JTextField ruleNameTextField;
     private javax.swing.JCheckBox shouldAlertCheckBox;
@@ -451,8 +490,18 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
      */
     private void setOkButton() {
         if (this.okButton != null) {
-            this.okButton.setEnabled(true);
+            this.okButton.setEnabled(!StringUtils.isBlank(ruleNameTextField.getText()) && atLeastOneConditionSet());
         }
+    }
+
+    private boolean atLeastOneConditionSet() {
+        return (extensionsCheckbox.isSelected() && !StringUtils.isBlank(extensionsTextField.getText()))
+                || (fileNamesCheckbox.isSelected() && !StringUtils.isBlank(fileNamesTextArea.getText()))
+                || (folderNamesCheckbox.isSelected() && !StringUtils.isBlank(folderNamesTextArea.getText()))
+                || (minSizeCheckbox.isSelected() && !StringUtils.isBlank(minSizeTextField.getText()))
+                || (maxSizeCheckbox.isSelected() && !StringUtils.isBlank(maxSizeTextField.getText()))
+                || (modifiedWithinCheckbox.isSelected() && !StringUtils.isBlank(modifiedWithinTextField.getText()));
+
     }
 
     /**
@@ -509,9 +558,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         "EditNonFullPathsRulePanel.folderNames=Folder names",})
     ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {
         String ruleName = EditRulePanel.validRuleName(ruleNameTextField.getText());
-        List<String> extensions = validateExtensions(extensionsTextField);
-        List<String> filenames = EditRulePanel.validateTextList(filenamesTextArea, Bundle.EditNonFullPathsRulePanel_fileNames());
-        List<String> folderNames = EditRulePanel.validateTextList(folderNamesTextArea, Bundle.EditNonFullPathsRulePanel_folderNames());
+        List<String> folderNames = folderNamesCheckbox.isSelected() ? EditRulePanel.validateTextList(folderNamesTextArea, Bundle.EditNonFullPathsRulePanel_folderNames()) : null;
 
         LogicalImagerRule.Builder builder = new LogicalImagerRule.Builder();
         builder.getName(ruleName)
@@ -521,16 +568,16 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 .getPaths(folderNames);
 
         if (extensionsCheckbox.isSelected()) {
-            builder.getExtensions(extensions);
+            builder.getExtensions(validateExtensions(extensionsTextField));
         } else if (fileNamesCheckbox.isSelected()) {
-            builder.getFilenames(filenames);
+            builder.getFilenames( EditRulePanel.validateTextList(fileNamesTextArea, Bundle.EditNonFullPathsRulePanel_fileNames()));
         }
 
         int minDays;
-        if (!isBlank(modifiedWithTextField.getText())) {
+        if (modifiedWithinCheckbox.isSelected() && !isBlank(modifiedWithinTextField.getText())) {
             try {
-                modifiedWithTextField.commitEdit();
-                minDays = ((Number) modifiedWithTextField.getValue()).intValue();
+                modifiedWithinTextField.commitEdit();
+                minDays = ((Number) modifiedWithinTextField.getValue()).intValue();
                 if (minDays < 0) {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_modifiedDaysNotPositiveException());
                 }
@@ -541,7 +588,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         }
 
         int minFileSize = 0;
-        if (!isBlank(minSizeTextField.getText())) {
+        if (minSizeCheckbox.isSelected() && !isBlank(minSizeTextField.getText())) {
             try {
                 minSizeTextField.commitEdit();
                 minFileSize = ((Number) minSizeTextField.getValue()).intValue();
@@ -554,7 +601,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         }
 
         int maxFileSize = 0;
-        if (!isBlank(maxSizeTextField.getText())) {
+        if (maxSizeCheckbox.isSelected() && !isBlank(maxSizeTextField.getText())) {
             try {
                 maxSizeTextField.commitEdit();
                 maxFileSize = ((Number) maxSizeTextField.getValue()).intValue();
@@ -569,10 +616,10 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         if (maxFileSize != 0 && (maxFileSize < minFileSize)) {
             throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeSmallerThanMinException(maxFileSize, minFileSize));
         }
-        if (minFileSize != 0) {
+        if (minSizeCheckbox.isSelected() && minFileSize != 0) {
             builder.getMinFileSize(minFileSize);
         }
-        if (maxFileSize != 0) {
+        if (maxSizeCheckbox.isSelected() && maxFileSize != 0) {
             builder.getMaxFileSize(maxFileSize);
         }
 

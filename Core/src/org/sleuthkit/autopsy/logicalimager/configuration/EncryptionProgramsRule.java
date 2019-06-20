@@ -37,7 +37,6 @@ final class EncryptionProgramsRule {
     
     private EncryptionProgramsRule() {}
     
-    // TODO: Add more files here
     static {
         // Truecrypt
         FILENAMES.add("truecrypt.exe"); // NON-NLS
