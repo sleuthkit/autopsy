@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,14 +28,22 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileSystemView;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.logicalimager.dsp.DriveListUtils;
 
 /**
  * Configuration Visual Panel 1
@@ -43,6 +51,7 @@ import org.openide.util.NbBundle;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ConfigVisualPanel1 extends JPanel {
 
+    private static final long serialVersionUID = 1L;
     private LogicalImagerConfig config;
     private String configFilename;
     private boolean newFile = true;
@@ -53,6 +62,10 @@ final class ConfigVisualPanel1 extends JPanel {
     ConfigVisualPanel1() {
         initComponents();
         configFileTextField.getDocument().addDocumentListener(new MyDocumentListener(this));
+        SwingUtilities.invokeLater(() -> {
+            updateControls();
+        });
+        refreshDriveList();
     }
 
     @NbBundle.Messages({
@@ -78,12 +91,18 @@ final class ConfigVisualPanel1 extends JPanel {
         descriptionTextArea = new javax.swing.JTextArea();
         configureDriveRadioButton = new javax.swing.JRadioButton();
         configureFolderRadioButton = new javax.swing.JRadioButton();
+        driveListScrollPane = new javax.swing.JScrollPane();
+        driveList = new javax.swing.JList<>();
+        refreshButton = new javax.swing.JButton();
+        warningLabel = new javax.swing.JLabel();
 
         configFileTextField.setEditable(false);
         configFileTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.configFileTextField.text_1")); // NOI18N
+        configFileTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.browseButton.text")); // NOI18N
         browseButton.setToolTipText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.browseButton.toolTipText")); // NOI18N
+        browseButton.setEnabled(false);
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
@@ -104,9 +123,43 @@ final class ConfigVisualPanel1 extends JPanel {
         configurationLocationButtonGroup.add(configureDriveRadioButton);
         configureDriveRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(configureDriveRadioButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.configureDriveRadioButton.text_1")); // NOI18N
+        configureDriveRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                configureDriveRadioButtonActionPerformed(evt);
+            }
+        });
 
         configurationLocationButtonGroup.add(configureFolderRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(configureFolderRadioButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.configureFolderRadioButton.text_1")); // NOI18N
+        configureFolderRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                configureFolderRadioButtonActionPerformed(evt);
+            }
+        });
+
+        driveList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        driveList.setEnabled(false);
+        driveList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                driveListMouseReleasedSelection(evt);
+            }
+        });
+        driveList.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                driveListKeyReleasedSelection(evt);
+            }
+        });
+        driveListScrollPane.setViewportView(driveList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.refreshButton.text")); // NOI18N
+        refreshButton.setEnabled(false);
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refreshButtonActionPerformed(evt);
+            }
+        });
+
+        warningLabel.setForeground(new java.awt.Color(255, 0, 0));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -115,21 +168,23 @@ final class ConfigVisualPanel1 extends JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(warningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(descriptionScrollPane)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(21, 21, 21)
-                        .addComponent(configFileTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 281, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
+                            .addComponent(configFileTextField, javax.swing.GroupLayout.Alignment.LEADING))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(browseButton)
-                        .addContainerGap(11, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(refreshButton, javax.swing.GroupLayout.DEFAULT_SIZE, 87, Short.MAX_VALUE)
+                            .addComponent(browseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(descriptionScrollPane)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(configureDriveRadioButton)
-                                    .addComponent(configureFolderRadioButton))
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())))
+                            .addComponent(configureDriveRadioButton)
+                            .addComponent(configureFolderRadioButton))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -138,13 +193,21 @@ final class ConfigVisualPanel1 extends JPanel {
                 .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(13, 13, 13)
                 .addComponent(configureDriveRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 60, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(refreshButton)
+                        .addGap(0, 46, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(configureFolderRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(configFileTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(browseButton))
-                .addGap(78, 78, 78))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(warningLabel)
+                .addContainerGap(70, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -152,21 +215,82 @@ final class ConfigVisualPanel1 extends JPanel {
         "ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration"
     })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-         chooseFile(Bundle.ConfigVisualPanel1_chooseFileTitle());
+        chooseFile(Bundle.ConfigVisualPanel1_chooseFileTitle());
     }//GEN-LAST:event_browseButtonActionPerformed
+
+    private void configureFolderRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configureFolderRadioButtonActionPerformed
+        updateControls();
+    }//GEN-LAST:event_configureFolderRadioButtonActionPerformed
+
+    private void configureDriveRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configureDriveRadioButtonActionPerformed
+        updateControls();
+    }//GEN-LAST:event_configureDriveRadioButtonActionPerformed
+
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
+        refreshDriveList();
+    }//GEN-LAST:event_refreshButtonActionPerformed
+
+    private void driveListKeyReleasedSelection(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_driveListKeyReleasedSelection
+        // TODO add your handling code here:
+    }//GEN-LAST:event_driveListKeyReleasedSelection
+
+    private void driveListMouseReleasedSelection(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseReleasedSelection
+        // TODO add your handling code here:
+    }//GEN-LAST:event_driveListMouseReleasedSelection
+
+    @Messages({"ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found"})
+    private void refreshDriveList() {
+        List<String> listData = new ArrayList<>();
+        File[] roots = File.listRoots();
+        int firstRemovableDrive = -1;
+        int i = 0;
+        for (File root : roots) {
+            String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
+            long spaceInBytes = root.getTotalSpace();
+            String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
+            listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
+            if (firstRemovableDrive == -1) {
+                try {
+                    FileStore fileStore = Files.getFileStore(root.toPath());
+                    if ((boolean) fileStore.getAttribute("volume:isRemovable")) { //NON-NLS
+                        firstRemovableDrive = i;
+                    }
+                } catch (IOException ignored) 
+                }
+            }
+            i++;
+        }
+        driveList.setListData(listData.toArray(new String[listData.size()]));
+        if (!listData.isEmpty()) {
+            // auto-select the first external drive, if any
+            driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
+            driveListMouseReleasedSelection(null);
+            driveList.requestFocusInWindow();
+            warningLabel.setText("");
+        } else {
+            warningLabel.setText(Bundle.ConfigVisualPanel1_messageLabel_noExternalDriveFound());
+        }
+    }
+
+    private void updateControls() {
+        browseButton.setEnabled(configureFolderRadioButton.isSelected());
+
+        driveList.setEnabled(configureDriveRadioButton.isSelected());
+        driveListScrollPane.setEnabled(configureDriveRadioButton.isSelected());
+
+    }
 
     @NbBundle.Messages({
         "ConfigVisualPanel1.fileNameExtensionFilter=Configuration JSON File",
         "ConfigVisualPanel1.invalidConfigJson=Invalid config JSON: ",
-        "ConfigVisualPanel1.configurationError=Configuration error",
-    })
+        "ConfigVisualPanel1.configurationError=Configuration error",})
     private void chooseFile(String title) {
         final String jsonExt = ".json"; // NON-NLS
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigVisualPanel1_fileNameExtensionFilter(), new String[] {"json"}); // NON-NLS
+        FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigVisualPanel1_fileNameExtensionFilter(), new String[]{"json"}); // NON-NLS
         fileChooser.setFileFilter(filter);
         fileChooser.setSelectedFile(new File("logical-imager-config.json")); // default
         fileChooser.setMultiSelectionEnabled(false);
@@ -179,10 +303,10 @@ final class ConfigVisualPanel1 extends JPanel {
                     configFileTextField.setText(path);
                     newFile = false;
                 } catch (JsonIOException | JsonSyntaxException | IOException ex) {
-                    JOptionPane.showMessageDialog(this, 
-                        Bundle.ConfigVisualPanel1_invalidConfigJson() + ex.getMessage() , 
-                        Bundle.ConfigVisualPanel1_configurationError(), 
-                        JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this,
+                            Bundle.ConfigVisualPanel1_invalidConfigJson() + ex.getMessage(),
+                            Bundle.ConfigVisualPanel1_configurationError(),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 if (!path.endsWith(jsonExt)) {
@@ -195,7 +319,7 @@ final class ConfigVisualPanel1 extends JPanel {
             }
         }
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.JTextField configFileTextField;
@@ -204,12 +328,15 @@ final class ConfigVisualPanel1 extends JPanel {
     private javax.swing.JRadioButton configureFolderRadioButton;
     private javax.swing.JScrollPane descriptionScrollPane;
     private javax.swing.JTextArea descriptionTextArea;
+    private javax.swing.JList<String> driveList;
+    private javax.swing.JScrollPane driveListScrollPane;
+    private javax.swing.JButton refreshButton;
+    private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
 
     @NbBundle.Messages({
         "# {0} - filename",
-        "ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty",
-    })
+        "ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty",})
     private void loadConfigFile(String path) throws FileNotFoundException, JsonIOException, JsonSyntaxException, IOException {
         try (FileInputStream is = new FileInputStream(path)) {
             InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
@@ -241,7 +368,8 @@ final class ConfigVisualPanel1 extends JPanel {
     }
 
     boolean isPanelValid() {
-        return (newFile || !configFileTextField.getText().isEmpty());
+        return (configureDriveRadioButton.isSelected() && driveList.getSelectedIndex() >= 0)
+                || (configureFolderRadioButton.isSelected() && (newFile || !configFileTextField.getText().isEmpty()));
     }
 
     /**
@@ -250,7 +378,7 @@ final class ConfigVisualPanel1 extends JPanel {
     private static class MyDocumentListener implements DocumentListener {
 
         private final ConfigVisualPanel1 panel;
-        
+
         MyDocumentListener(ConfigVisualPanel1 aThis) {
             this.panel = aThis;
         }

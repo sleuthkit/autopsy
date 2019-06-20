@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,12 +42,13 @@ import org.openide.util.NbBundle;
 final class ConfigVisualPanel2 extends JPanel {
 
     private static final List<String> EMPTY_LIST = new ArrayList<>();
+    private static final long serialVersionUID = 1L;
     private String configFilename;
     private LogicalImagerConfig config = null;
     private final JButton okButton = new JButton(Bundle.ConfigVisualPanel2_ok());
     private final JButton cancelButton = new JButton(Bundle.ConfigVisualPanel2_cancel());
     private boolean flagEncryptionPrograms = false;
-    
+
     /**
      * Creates new form ConfigVisualPanel2
      */
@@ -431,9 +432,9 @@ final class ConfigVisualPanel2 extends JPanel {
             editPanel.setVisible(true);
 
             while (true) {
-                int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), Bundle.ConfigVisualPanel2_editRuleSet(), 
-                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
-                            null, new Object[]{okButton, cancelButton}, okButton);
+                int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), Bundle.ConfigVisualPanel2_editRuleSet(),
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+                        null, new Object[]{okButton, cancelButton}, okButton);
                 if (option == JOptionPane.OK_OPTION) {
                     try {
                         ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
@@ -441,16 +442,16 @@ final class ConfigVisualPanel2 extends JPanel {
                         break;
                     } catch (IOException | NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this,
-                            ex.getMessage(),
-                            Bundle.ConfigVisualPanel2_editRuleError(),
-                            JOptionPane.ERROR_MESSAGE);
+                                ex.getMessage(),
+                                Bundle.ConfigVisualPanel2_editRuleError(),
+                                JOptionPane.ERROR_MESSAGE);
                         // let user fix the error
                     }
                 } else {
                     break;
                 }
             }
-        }   
+        }
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
@@ -460,9 +461,9 @@ final class ConfigVisualPanel2 extends JPanel {
         panel.setVisible(true);
 
         while (true) {
-            int option = JOptionPane.showOptionDialog(this, panel, "New rule", 
-                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
-                        null, new Object[]{okButton, cancelButton}, okButton);
+            int option = JOptionPane.showOptionDialog(this, panel, "New rule",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+                    null, new Object[]{okButton, cancelButton}, okButton);
             if (option == JOptionPane.OK_OPTION) {
                 try {
                     // Save the new rule
@@ -471,30 +472,29 @@ final class ConfigVisualPanel2 extends JPanel {
                     break;
                 } catch (IOException | NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this,
-                        ex.getMessage(),
-                        "New rule error",
-                        JOptionPane.ERROR_MESSAGE);
+                            ex.getMessage(),
+                            "New rule error",
+                            JOptionPane.ERROR_MESSAGE);
                     // let user fix the error
                 }
             } else {
                 break;
             }
-        }        
+        }
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     @NbBundle.Messages({
         "ConfigVisualPanel2.deleteRuleSet=Delete rule ",
-        "ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule confirmation",
-    })
+        "ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule confirmation",})
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
         int index = rulesTable.getSelectedRow();
         if (index != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
 
-            int option = JOptionPane.showOptionDialog(this, 
-                    Bundle.ConfigVisualPanel2_deleteRuleSet() + ruleName, 
-                    Bundle.ConfigVisualPanel2_deleteRuleSetConfirmation(), 
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+            int option = JOptionPane.showOptionDialog(this,
+                    Bundle.ConfigVisualPanel2_deleteRuleSet() + ruleName,
+                    Bundle.ConfigVisualPanel2_deleteRuleSetConfirmation(),
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
             if (option == JOptionPane.NO_OPTION) {
                 return;
             }
@@ -521,7 +521,7 @@ final class ConfigVisualPanel2 extends JPanel {
         if (flagEncryptionPrograms) {
             // add the special rule
             ImmutablePair<String, LogicalImagerRule> ruleMap = createEncryptionProgramsRule();
-            appendRow(ruleMap);            
+            appendRow(ruleMap);
         } else {
             // remove it
             int index = ((RulesTableModel) rulesTable.getModel()).findRow(EncryptionProgramsRule.getName());
@@ -535,7 +535,7 @@ final class ConfigVisualPanel2 extends JPanel {
             }
         }
     }
-    
+
     /*
      * Create an encryption programs rule
      */
@@ -596,7 +596,7 @@ final class ConfigVisualPanel2 extends JPanel {
         }
         return config.getRuleSets().get(0);
     }
-    
+
     private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
@@ -607,7 +607,7 @@ final class ConfigVisualPanel2 extends JPanel {
         int selectThisRow = 0;
 
         Collections.sort(ruleSet.getRules(), new SortRuleByName());
-        
+
         for (LogicalImagerRule rule : ruleSet.getRules()) {
             rulesTableModel.setValueAt(rule.getName(), row, 0);
             if (rowSelectionkey != null && rowSelectionkey.equals(rule.getName())) {
@@ -627,7 +627,7 @@ final class ConfigVisualPanel2 extends JPanel {
             updateRuleButtons(false);
         }
     }
-    
+
     private void updatePanel(String configFilePath, LogicalImagerConfig config) {
         updatePanel(configFilePath, config, null);
     }
@@ -638,9 +638,9 @@ final class ConfigVisualPanel2 extends JPanel {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
             String description = (String) rulesTable.getModel().getValueAt(index, 1);
             updateRuleDetails(ruleName, description, config);
-            updateRuleButtons(ruleName.equals(EncryptionProgramsRule.getName()) ? false : true);
+            updateRuleButtons(!ruleName.equals(EncryptionProgramsRule.getName()));
         } else {
-            updateRuleButtons(false);            
+            updateRuleButtons(false);
         }
     }
 
@@ -685,7 +685,7 @@ final class ConfigVisualPanel2 extends JPanel {
         }
         String content = "";
         boolean first = true;
-        for (String ext : extensions) {            
+        for (String ext : extensions) {
             content += (first ? "" : ",") + ext;
             first = false;
         }
@@ -750,6 +750,7 @@ final class ConfigVisualPanel2 extends JPanel {
      */
     private class SortRuleByName implements Comparator<LogicalImagerRule> {
 
+        @Override
         public int compare(LogicalImagerRule a, LogicalImagerRule b) {
             return a.getName().compareToIgnoreCase(b.getName());
         }
@@ -760,6 +761,7 @@ final class ConfigVisualPanel2 extends JPanel {
      */
     private class RulesTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
         private final List<String> ruleName = new ArrayList<>();
         private final List<String> ruleDescription = new ArrayList<>();
         private final List<LogicalImagerRule> rule = new ArrayList<>();
@@ -767,7 +769,7 @@ final class ConfigVisualPanel2 extends JPanel {
         int findRow(String name) {
             return ruleName.indexOf(name);
         }
-        
+
         @Override
         public int getRowCount() {
             return ruleName.size();
@@ -848,6 +850,8 @@ final class ConfigVisualPanel2 extends JPanel {
      * Table model for single column list table.
      */
     private class SingleColumnTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         private final List<String> list = new ArrayList<>();
 

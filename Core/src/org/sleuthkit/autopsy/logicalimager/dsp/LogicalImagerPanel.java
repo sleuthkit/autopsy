@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -288,15 +288,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private static String humanReadableByteCount(long bytes, boolean si) {
-        int unit = si ? 1000 : 1024;
-        if (bytes < unit) {
-            return bytes + " B"; //NON-NLS
-        }
-        int exp = (int) (Math.log(bytes) / Math.log(unit));
-        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); //NON-NLS
-        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //NON-NLS
-    }
+
 
     @Messages({
         "# {0} - sparseImageDirectory",
@@ -490,7 +482,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         for (File root : roots) {
             String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
             long spaceInBytes = root.getTotalSpace();
-            String sizeWithUnit = humanReadableByteCount(spaceInBytes, false);
+            String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
             listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
             if (firstRemovableDrive == -1) {
                 try {
