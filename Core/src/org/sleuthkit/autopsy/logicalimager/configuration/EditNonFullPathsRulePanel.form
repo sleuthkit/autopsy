@@ -67,7 +67,7 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="daysIncludedLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jComboBox2" min="-2" pref="110" max="-2" attributes="0"/>
+                                  <Component id="maxSizeUnitsCombobox" min="-2" pref="110" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -126,7 +126,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="maxSizeTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="maxSizeCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jComboBox2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="maxSizeUnitsCombobox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="2" attributes="0">
@@ -322,7 +322,7 @@
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>
     </Component>
-    <Component class="javax.swing.JComboBox" name="jComboBox2">
+    <Component class="javax.swing.JComboBox" name="maxSizeUnitsCombobox">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
           <Connection code="new javax.swing.DefaultComboBoxModel&lt;String&gt;(new String[] { Bundle.EditNonFullPathsRulePanel_units_bytes(), Bundle.EditNonFullPathsRulePanel_units_kilobytes(), Bundle.EditNonFullPathsRulePanel_units_megabytes(), Bundle.EditNonFullPathsRulePanel_units_gigabytes()})" type="code"/>

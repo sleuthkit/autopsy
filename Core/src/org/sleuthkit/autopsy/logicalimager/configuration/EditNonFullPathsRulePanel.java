@@ -100,7 +100,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         maxSizeTextField.setText(rule.getMaxFileSize() == null ? "" : rule.getMaxFileSize().toString());
         maxSizeCheckbox.setSelected(!StringUtils.isBlank(maxSizeTextField.getText()));
         maxSizeTextField.setEnabled(maxSizeCheckbox.isSelected());
-        jComboBox2.setEnabled(maxSizeCheckbox.isSelected());
+        maxSizeUnitsCombobox.setEnabled(maxSizeCheckbox.isSelected());
         ruleNameTextField.requestFocus();
 
         EditRulePanel.setTextFieldPrompts(extensionsTextField, Bundle.EditNonFullPathsRulePanel_example() + "gif,jpg,png"); // NON-NLS
@@ -228,7 +228,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         extensionsCheckbox = new javax.swing.JCheckBox();
         descriptionCheckbox = new javax.swing.JCheckBox();
         minSizeUnitsCombobox = new javax.swing.JComboBox<>();
-        jComboBox2 = new javax.swing.JComboBox<>();
+        maxSizeUnitsCombobox = new javax.swing.JComboBox<>();
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
 
@@ -315,8 +315,8 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         minSizeUnitsCombobox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.EditNonFullPathsRulePanel_units_bytes(), Bundle.EditNonFullPathsRulePanel_units_kilobytes(), Bundle.EditNonFullPathsRulePanel_units_megabytes(), Bundle.EditNonFullPathsRulePanel_units_gigabytes()}));
         minSizeUnitsCombobox.setEnabled(false);
 
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.EditNonFullPathsRulePanel_units_bytes(), Bundle.EditNonFullPathsRulePanel_units_kilobytes(), Bundle.EditNonFullPathsRulePanel_units_megabytes(), Bundle.EditNonFullPathsRulePanel_units_gigabytes()}));
-        jComboBox2.setEnabled(false);
+        maxSizeUnitsCombobox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.EditNonFullPathsRulePanel_units_bytes(), Bundle.EditNonFullPathsRulePanel_units_kilobytes(), Bundle.EditNonFullPathsRulePanel_units_megabytes(), Bundle.EditNonFullPathsRulePanel_units_gigabytes()}));
+        maxSizeUnitsCombobox.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -365,7 +365,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(daysIncludedLabel)
-                                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                    .addComponent(maxSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -409,7 +409,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(maxSizeCheckbox)
-                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(maxSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(daysIncludedLabel)
@@ -456,11 +456,13 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     private void minSizeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minSizeCheckboxActionPerformed
         minSizeTextField.setEnabled(minSizeCheckbox.isSelected());
+        minSizeUnitsCombobox.setEnabled(minSizeCheckbox.isSelected());
         setOkButton();
     }//GEN-LAST:event_minSizeCheckboxActionPerformed
 
     private void maxSizeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxSizeCheckboxActionPerformed
         maxSizeTextField.setEnabled(maxSizeCheckbox.isSelected());
+        maxSizeUnitsCombobox.setEnabled(maxSizeCheckbox.isSelected());
         setOkButton();
     }//GEN-LAST:event_maxSizeCheckboxActionPerformed
 
@@ -495,11 +497,11 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane filenamesScrollPane;
     private javax.swing.JCheckBox folderNamesCheckbox;
     private javax.swing.JScrollPane folderNamesScrollPane;
-    private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JCheckBox maxSizeCheckbox;
     private javax.swing.JFormattedTextField maxSizeTextField;
+    private javax.swing.JComboBox<String> maxSizeUnitsCombobox;
     private javax.swing.JCheckBox minSizeCheckbox;
     private javax.swing.JFormattedTextField minSizeTextField;
     private javax.swing.JComboBox<String> minSizeUnitsCombobox;
