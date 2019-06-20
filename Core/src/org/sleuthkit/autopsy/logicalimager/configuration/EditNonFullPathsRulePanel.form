@@ -16,72 +16,72 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
-              <EmptySpace min="-2" pref="27" max="-2" attributes="0"/>
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Component id="jSeparator2" max="32767" attributes="0"/>
+                  <Component id="jSeparator1" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="folderNamesCheckbox" pref="101" max="32767" attributes="0"/>
-                                      <Component id="extensionsCheckbox" alignment="0" max="32767" attributes="0"/>
-                                      <Component id="descriptionCheckbox" alignment="0" max="32767" attributes="0"/>
-                                      <Component id="ruleNameLabel" alignment="0" max="32767" attributes="0"/>
-                                  </Group>
-                                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                                      <Component id="minSizeCheckbox" alignment="0" max="32767" attributes="0"/>
-                                      <Component id="maxSizeCheckbox" alignment="0" pref="101" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="ruleNameTextField" alignment="1" max="32767" attributes="0"/>
-                                  <Component id="descriptionTextField" alignment="1" max="32767" attributes="0"/>
-                                  <Component id="extensionsTextField" alignment="1" max="32767" attributes="0"/>
-                                  <Component id="folderNamesScrollPane" max="32767" attributes="0"/>
-                                  <Component id="filenamesScrollPane" alignment="1" max="32767" attributes="0"/>
-                                  <Group type="102" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="minSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
-                                          <Component id="maxSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
-                                          <Component id="userFolderNote" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
+                          <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
+                              <Component id="folderNamesCheckbox" pref="101" max="32767" attributes="0"/>
+                              <Component id="extensionsCheckbox" alignment="0" max="32767" attributes="0"/>
+                              <Component id="descriptionCheckbox" alignment="0" max="32767" attributes="0"/>
+                              <Component id="ruleNameLabel" alignment="0" max="32767" attributes="0"/>
                           </Group>
+                          <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                              <Component id="minSizeCheckbox" alignment="0" max="32767" attributes="0"/>
+                              <Component id="maxSizeCheckbox" alignment="0" pref="101" max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="ruleNameTextField" alignment="1" max="32767" attributes="0"/>
+                          <Component id="descriptionTextField" alignment="1" max="32767" attributes="0"/>
+                          <Component id="extensionsTextField" alignment="1" max="32767" attributes="0"/>
+                          <Component id="folderNamesScrollPane" max="32767" attributes="0"/>
+                          <Component id="filenamesScrollPane" alignment="1" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
-                              <Component id="fileNamesCheckbox" min="-2" pref="101" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Component id="minSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="minSizeUnitsCombobox" min="-2" pref="110" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="maxSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
+                                  <Component id="userFolderNote" min="-2" max="-2" attributes="0"/>
+                              </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="fileNamesCheckbox" min="-2" pref="101" max="-2" attributes="0"/>
+                          <Component id="shouldAlertCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="shouldSaveCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="modifiedWithinCheckbox" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                               <Component id="modifiedWithinTextField" min="-2" pref="63" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="daysIncludedLabel" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="shouldAlertCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="shouldSaveCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="daysIncludedLabel" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jComboBox2" min="-2" pref="110" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="2" attributes="0">
                   <Component id="ruleNameLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="ruleNameTextField" alignment="2" min="-2" max="-2" attributes="0"/>
@@ -91,7 +91,9 @@
                   <Component id="descriptionTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="descriptionCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jSeparator2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="extensionsTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="extensionsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -118,11 +120,13 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="minSizeTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="minSizeCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="minSizeUnitsCombobox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="maxSizeTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="maxSizeCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jComboBox2" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="2" attributes="0">
@@ -131,10 +135,12 @@
                   <Component id="modifiedWithinCheckbox" alignment="2" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -304,6 +310,32 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="descriptionCheckboxActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="minSizeUnitsCombobox">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+          <Connection code="new javax.swing.DefaultComboBoxModel&lt;String&gt;(new String[] { Bundle.EditNonFullPathsRulePanel_units_bytes(), Bundle.EditNonFullPathsRulePanel_units_kilobytes(), Bundle.EditNonFullPathsRulePanel_units_megabytes(), Bundle.EditNonFullPathsRulePanel_units_gigabytes()})" type="code"/>
+        </Property>
+        <Property name="enabled" type="boolean" value="false"/>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="jComboBox2">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+          <Connection code="new javax.swing.DefaultComboBoxModel&lt;String&gt;(new String[] { Bundle.EditNonFullPathsRulePanel_units_bytes(), Bundle.EditNonFullPathsRulePanel_units_kilobytes(), Bundle.EditNonFullPathsRulePanel_units_megabytes(), Bundle.EditNonFullPathsRulePanel_units_gigabytes()})" type="code"/>
+        </Property>
+        <Property name="enabled" type="boolean" value="false"/>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JSeparator" name="jSeparator1">
+    </Component>
+    <Component class="javax.swing.JSeparator" name="jSeparator2">
     </Component>
   </SubComponents>
 </Form>

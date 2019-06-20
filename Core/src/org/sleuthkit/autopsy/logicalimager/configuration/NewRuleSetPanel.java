@@ -62,7 +62,7 @@ class NewRuleSetPanel extends javax.swing.JPanel {
 
     private JPanel createPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setSize(800, 640);
+        panel.setSize(800, 650);
         return panel;
     }
 
@@ -141,12 +141,14 @@ class NewRuleSetPanel extends javax.swing.JPanel {
         int index = chooseComboBox.getSelectedIndex();
         if (chooseComboBox.getItemAt(index).equals(Bundle.NewRuleSetPanel_attributeRule_name())) {
             nonFullPathsJPanel.setVisible(true);
+            editNonFullPathsRulePanel.setOkButton();
             ruleDescription.setText(Bundle.NewRuleSetPanel_attributeRule_description());
             fullPathsPanel.setVisible(false);
         } else if (chooseComboBox.getItemAt(index).equals(Bundle.NewRuleSetPanel_fullPathRule_name())) {
             nonFullPathsJPanel.setVisible(false);
             ruleDescription.setText(Bundle.NewRuleSetPanel_fullPathRule_description());
             fullPathsPanel.setVisible(true);
+            editFullPathsRulePanel.setOkButton();
         } else {
             logger.log(Level.WARNING, "Rule type selected was not one of the expected rule types");
             nonFullPathsJPanel.setVisible(false);
