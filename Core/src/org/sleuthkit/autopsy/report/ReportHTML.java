@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
@@ -59,7 +60,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.ContentViewerTag;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtility;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtil;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -805,10 +806,10 @@ class ReportHTML implements TableReportModule {
                 
                 if(!imageTags.isEmpty()) {
                     //Write the tags to the fullsize and thumbnail images
-                    BufferedImage fullImageWithTags = ImageTagsUtility.writeTags(file, imageTags, "png");
+                    BufferedImage fullImageWithTags = ImageTagsUtil.getImageWithTags(file, imageTags);
                     
-                    BufferedImage thumbnailImageWithTags = ImageTagsUtility.makeThumbnail(file, 
-                            imageTags, ImageTagsUtility.IconSize.MEDIUM, "png");
+                    BufferedImage thumbnailWithTags = ImageTagsUtil.getThumbnailWithTags(file, 
+                            imageTags, ImageTagsUtil.IconSize.MEDIUM);
                     
                     String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(file.getName());
                     
@@ -819,7 +820,7 @@ class ReportHTML implements TableReportModule {
                     File fullImageWithTagsFile = Paths.get(fullImageWithTagsPath).toFile();
                     
                     //Save images
-                    ImageIO.write(thumbnailImageWithTags, "png", thumbnailImageWithTagsFile);
+                    ImageIO.write(thumbnailWithTags, "png", thumbnailImageWithTagsFile);
                     ImageIO.write(fullImageWithTags, "png", fullImageWithTagsFile);
                     
                     thumbnailPath = THUMBS_REL_PATH + thumbnailImageWithTagsFile.getName();
@@ -828,7 +829,7 @@ class ReportHTML implements TableReportModule {
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Could not get tags for file.", ex); //NON-NLS
-            } catch (IOException ex) {
+            } catch (IOException | InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Could make marked up thumbnail.", ex); //NON-NLS
             }
 
