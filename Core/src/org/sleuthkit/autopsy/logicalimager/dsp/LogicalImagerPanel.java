@@ -288,8 +288,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-
-
     @Messages({
         "# {0} - sparseImageDirectory",
         "LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images",
@@ -490,9 +488,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     if ((boolean) fileStore.getAttribute("volume:isRemovable")) { //NON-NLS
                         firstRemovableDrive = i;
                     }
-                } catch (IOException ex) {
-                    i++;
-                    continue;
+                } catch (IOException ignored) {
                 }
             }
             i++;
