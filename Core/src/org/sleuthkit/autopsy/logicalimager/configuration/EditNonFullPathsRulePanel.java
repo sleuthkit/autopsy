@@ -225,6 +225,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private void setModifiedWithin(Integer minDays) {
         modifiedWithinTextField.setText(minDays == null ? "" : minDays.toString());
         modifiedWithinCheckbox.setSelected(!StringUtils.isBlank(modifiedWithinTextField.getText()));
+        modifiedWithinTextField.setEnabled(modifiedWithinCheckbox.isSelected());
     }
 
     private void setTextArea(JTextArea textArea, List<String> set) {
