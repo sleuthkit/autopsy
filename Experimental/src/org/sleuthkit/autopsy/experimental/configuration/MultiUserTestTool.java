@@ -66,7 +66,7 @@ class MultiUserTestTool {
 
     private static final String CASE_NAME = "Test_MU_Settings";
     private static final Logger LOGGER = Logger.getLogger(MultiUserTestTool.class.getName());
-    private static final String TEST_FILE_NAME = "Test.txt";
+    private static final String TEST_FILE_NAME = "AutopsyTempFile";
     private static final Object INGEST_LOCK = new Object();
     static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
 
@@ -144,8 +144,8 @@ class MultiUserTestTool {
                 return Bundle.MultiUserTestTool_unableToReadDatabase() + ". " + ex.getMessage();
             }
 
-            // Make a text file in a temp folder with just the text "Test" in it. 
-            String tempFilePath = caseForJob.getTempDirectory() + File.separator + TEST_FILE_NAME;
+            // Make a text file in Windows TEMP folder 
+            String tempFilePath = System.getProperty("java.io.tmpdir") + TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt";
             try {
                 FileUtils.writeStringToFile(new File(tempFilePath), "Test", Charset.forName("UTF-8"));
             } catch (IOException ex) {
@@ -171,7 +171,7 @@ class MultiUserTestTool {
             AbstractFile file = null;
             List<AbstractFile> listOfFiles = null;
             try {
-                listOfFiles = fileManager.findFiles(TEST_FILE_NAME);
+                listOfFiles = fileManager.findFiles(new File(tempFilePath).getName());
                 if (listOfFiles == null || listOfFiles.isEmpty()) {
                     LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase());
                     return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase();
