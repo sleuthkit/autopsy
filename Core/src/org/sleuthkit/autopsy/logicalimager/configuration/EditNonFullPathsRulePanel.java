@@ -27,6 +27,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -72,7 +73,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
         this.setRule(ruleName, rule);
         this.setButtons(okButton, cancelButton);
-        
+
         setExtensions(rule.getExtensions());
         fileNamesTextArea = new JTextArea();
         initTextArea(filenamesScrollPane, fileNamesTextArea);
@@ -93,14 +94,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         updateTextAreaBackgroundColor(folderNamesTextArea);
         setModifiedWithin(rule.getMinDays());
 
-        minSizeTextField.setText(rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString());
-        minSizeCheckbox.setSelected(!StringUtils.isBlank(minSizeTextField.getText()));
-        minSizeTextField.setEnabled(minSizeCheckbox.isSelected());
-        minSizeUnitsCombobox.setEnabled(minSizeCheckbox.isSelected());
-        maxSizeTextField.setText(rule.getMaxFileSize() == null ? "" : rule.getMaxFileSize().toString());
-        maxSizeCheckbox.setSelected(!StringUtils.isBlank(maxSizeTextField.getText()));
-        maxSizeTextField.setEnabled(maxSizeCheckbox.isSelected());
-        maxSizeUnitsCombobox.setEnabled(maxSizeCheckbox.isSelected());
+        setupMinMaxSizeOptions();
         ruleNameTextField.requestFocus();
 
         EditRulePanel.setTextFieldPrompts(extensionsTextField, Bundle.EditNonFullPathsRulePanel_example() + "gif,jpg,png"); // NON-NLS
@@ -114,6 +108,22 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         validate();
         repaint();
         addDocumentListeners();
+    }
+
+    private void setupMinMaxSizeOptions() {
+        String savedMinSize = rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString()
+        
+        setSizeAndUnits(minSizeTextField, minSizeUnitsCombobox, savedMinSize);
+        minSizeCheckbox.setSelected(!StringUtils.isBlank(minSizeTextField.getText()));
+        minSizeTextField.setEnabled(minSizeCheckbox.isSelected());
+        minSizeUnitsCombobox.setEnabled(minSizeCheckbox.isSelected());
+
+        String savedMaxSize = rule.getMaxFileSize() == null ? "" : rule.getMaxFileSize().toString();
+        setSizeAndUnits(maxSizeTextField, maxSizeUnitsCombobox, savedMaxSize);
+        maxSizeTextField.setText(savedMaxSize);
+        maxSizeCheckbox.setSelected(!StringUtils.isBlank(maxSizeTextField.getText()));
+        maxSizeTextField.setEnabled(maxSizeCheckbox.isSelected());
+        maxSizeUnitsCombobox.setEnabled(maxSizeCheckbox.isSelected());
     }
 
     /**
@@ -169,6 +179,50 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 }
             }
         });
+    }
+
+    private int convertToBytes(int value, String units) {
+        int convertedValue = value;
+        switch (units) {
+            case (Bundle.EditNonFullPathsRulePanel_units_gigabytes()):
+                convertedValue = convertedValue * 1000;
+            case (Bundle.EditNonFullPathsRulePanel_units_megabytes()):
+                convertedValue = convertedValue * 1000;
+            case (Bundle.EditNonFullPathsRulePanel_units_kilobytes()):
+                convertedValue = convertedValue * 1000;
+            default:
+        }
+        return convertedValue;
+    }
+
+    private void setSizeAndUnits(JTextField sizeField, JComboBox unitsComboBox, String value) {
+        if (StringUtils.isBlank(value)) {
+            unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_bytes());
+            sizeField.setText("");
+            return;
+        }
+        int integerValue = Integer.valueOf(value);
+        if (integerValue % 1000 != 0) {
+            unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_bytes());
+            sizeField.setText(integerValue);
+            return;
+        }
+        integerValue = integerValue / 1000;
+        if (integerValue % 1000 != 0) {
+            unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_kilobytes());
+            sizeField.setText(integerValue);
+            return;
+        }
+        integerValue = integerValue / 1000;
+        if (integerValue % 1000 != 0) {
+            unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_megabytes());
+            sizeField.setText(integerValue);
+            return;
+        }
+        integerValue = integerValue / 1000;
+        unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_gigabytes());
+        sizeField.setText(integerValue);
+
     }
 
     private void setModifiedWithin(Integer minDays) {
@@ -634,6 +688,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 if (minFileSize < 0) {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeNotPositiveException());
                 }
+                minFileSize = convertToBytes(minFileSize, minSizeUnitsCombobox.getItemAt(minSizeUnitsCombobox.getSelectedItem()));
             } catch (NumberFormatException | ParseException ex) {
                 throw new IOException(Bundle.EditNonFullPathsRulePanel_minFileSizeMustBeNumberException(ex.getMessage()), ex);
             }
@@ -647,6 +702,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 if (maxFileSize < 0) {
                     throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeNotPositiveException());
                 }
+                maxFileSize = convertToBytes(maxFileSize, maxSizeUnitsCombobox.getItemAt(maxSizeUnitsCombobox.getSelectedItem()));
             } catch (NumberFormatException | ParseException ex) {
                 throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeMustBeNumberException(ex.getMessage()), ex);
             }
@@ -656,7 +712,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             throw new IOException(Bundle.EditNonFullPathsRulePanel_maxFileSizeSmallerThanMinException(maxFileSize, minFileSize));
         }
         if (minSizeCheckbox.isSelected() && minFileSize != 0) {
-            builder.getMinFileSize(minFileSize);
+            builder.getMinFileSize();
         }
         if (maxSizeCheckbox.isSelected() && maxFileSize != 0) {
             builder.getMaxFileSize(maxFileSize);
