@@ -41,6 +41,8 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel import Relationship
+from org.sleuthkit.autopsy.ingest import IngestServices
+from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 
 import traceback
 import general
@@ -78,7 +80,8 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
     def __findWWFMessagesInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
             return
-
+			
+        bbartifacts = list()
         try:
             Class.forName("org.sqlite.JDBC"); # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
@@ -115,6 +118,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID, general.MODULE_NAME, game_id))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, message))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "Words With Friends Message"))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID, general.MODULE_NAME, user_id))
 
                 artifact.addAttributes(attributes)
 
@@ -124,6 +128,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 # create relationship between accounts
                 Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact,Relationship.Type.MESSAGE, created_at);
 
+                bbartifacts.append(artifact)
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getServices().getBlackboard()
@@ -140,6 +145,10 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error parsing WWF messages to the blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
+            if bbartifacts:
+
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE, bbartifacts))
+
             try:
                 if resultSet is not None:
                     resultSet.close()
