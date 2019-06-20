@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 class MultiUserTestTool {
 
-    private static final String CASE_NAME = "Test_MU_Settings";
+    private static final String CASE_NAME = "Test_Multi_User_Settings";
     private static final Logger LOGGER = Logger.getLogger(MultiUserTestTool.class.getName());
     private static final String TEST_FILE_NAME = "AutopsyTempFile";
     private static final Object INGEST_LOCK = new Object();
