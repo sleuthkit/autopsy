@@ -31,6 +31,8 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import com.google.common.collect.ImmutableSortedSet;
+import static com.google.common.collect.Sets.union;
 
 /**
  * Represents a set of other events clustered together. All the sub events
@@ -98,10 +100,14 @@ public class EventCluster implements MultiEvent<EventStripe> {
         }
 
         Interval spanningInterval = IntervalUtils.span(cluster1.span, cluster2.span);
+        
+        Set<Long> idsUnion = union(cluster1.getEventIDs(), cluster2.getEventIDs()).immutableCopy();
+        Set<Long> hashHitsUnion = union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits()).immutableCopy();
+        Set<Long> taggedUnion = union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags()).immutableCopy();
 
-        Set<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
-        Set<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Set<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+//        Set<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+//        Set<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+//        Set<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
         return new EventCluster(spanningInterval,
                 cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
@@ -222,7 +228,8 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
     @Override
     public SortedSet<EventCluster> getClusters() {
-        return DetailsViewModel.copyAsSortedSet(singleton(this), Comparator.comparing(cluster -> true));
+//        return DetailsViewModel.copyAsSortedSet(singleton(this), Comparator.comparing(cluster -> true));
+        return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
     }
 
     @Override

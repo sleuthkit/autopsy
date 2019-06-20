@@ -28,6 +28,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
+import com.google.common.collect.ImmutableSortedSet;
+import java.util.Comparator;
+import java.util.TreeSet;
 
 /**
  * A 'collection' of {@link EventCluster}s, all having the same type,
@@ -102,8 +105,13 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     public EventStripe(EventCluster cluster) {
-        this.clusters = DetailsViewModel.copyAsSortedSet(singleton(cluster.withParent(this)),
-                comparing(EventCluster::getStartMillis));
+//        this.clusters = DetailsViewModel.copyAsSortedSet(singleton(cluster.withParent(this)),
+//                comparing(EventCluster::getStartMillis));
+
+        this.clusters = ImmutableSortedSet
+            .orderedBy(Comparator.comparing(EventCluster::getStartMillis))
+            .add(cluster.withParent(this))
+            .build();
 
         type = cluster.getEventType();
         description = cluster.getDescription();
@@ -115,7 +123,10 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     private EventStripe(EventStripe stripeA, EventStripe stripeB) {
-        clusters = DetailsViewModel.copyAsSortedSet(Sets.union(stripeA.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
+//        clusters = DetailsViewModel.copyAsSortedSet(Sets.union(stripeA.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
+
+        clusters = Sets.union(stripeA.getClusters(), stripeB.getClusters())
+                .copyInto(new TreeSet<>(Comparator.comparing(EventCluster::getStartMillis)));
 
         type = stripeA.getEventType();
         description = stripeA.getDescription();
