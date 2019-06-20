@@ -71,11 +71,10 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         this.setButtons(okButton, cancelButton);
 
         setExtensions(rule.getExtensions());
-
         fileNamesTextArea = new JTextArea();
         initTextArea(filenamesScrollPane, fileNamesTextArea);
         setTextArea(fileNamesTextArea, rule.getFilenames());
-
+        fileNamesCheckbox.setSelected(!StringUtils.isBlank(fileNamesTextArea.getText()));
         if (rule.getExtensions() != null && !rule.getExtensions().isEmpty()) {
             extensionsCheckbox.setSelected(true);
         } else if (rule.getFilenames() != null && !rule.getFilenames().isEmpty()) {
@@ -85,11 +84,14 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         folderNamesTextArea = new JTextArea();
         initTextArea(folderNamesScrollPane, folderNamesTextArea);
         setTextArea(folderNamesTextArea, rule.getPaths());
+        folderNamesCheckbox.setSelected(!StringUtils.isBlank(folderNamesTextArea.getText()));
 
-        setMinDays(rule.getMinDays());
+        setModifiedWithin(rule.getMinDays());
 
         minSizeTextField.setText(rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString());
+        minSizeCheckbox.setSelected(!StringUtils.isBlank(minSizeTextField.getText()));
         maxSizeTextField.setText(rule.getMaxFileSize() == null ? "" : rule.getMaxFileSize().toString());
+        maxSizeCheckbox.setSelected(!StringUtils.isBlank(maxSizeTextField.getText()));
         ruleNameTextField.requestFocus();
 
         EditRulePanel.setTextFieldPrompts(extensionsTextField, Bundle.EditNonFullPathsRulePanel_example() + "gif,jpg,png"); // NON-NLS
@@ -121,12 +123,12 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
             @Override
             public void insertUpdate(DocumentEvent e) {
-               setOkButton();
+                setOkButton();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-               setOkButton();
+                setOkButton();
             }
         };
         ruleNameTextField.getDocument().addDocumentListener(docListener);
@@ -160,8 +162,9 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         });
     }
 
-    private void setMinDays(Integer minDays) {
+    private void setModifiedWithin(Integer minDays) {
         modifiedWithinTextField.setText(minDays == null ? "" : minDays.toString());
+        modifiedWithinCheckbox.setSelected(!StringUtils.isBlank(modifiedWithinTextField.getText()));
     }
 
     private void setTextArea(JTextArea textArea, List<String> set) {
@@ -182,6 +185,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                 first = false;
             }
         }
+        extensionsCheckbox.setSelected(!StringUtils.isBlank(content));
         extensionsTextField.setText(content);
     }
 
@@ -570,7 +574,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         if (extensionsCheckbox.isSelected()) {
             builder.getExtensions(validateExtensions(extensionsTextField));
         } else if (fileNamesCheckbox.isSelected()) {
-            builder.getFilenames( EditRulePanel.validateTextList(fileNamesTextArea, Bundle.EditNonFullPathsRulePanel_fileNames()));
+            builder.getFilenames(EditRulePanel.validateTextList(fileNamesTextArea, Bundle.EditNonFullPathsRulePanel_fileNames()));
         }
 
         int minDays;
