@@ -101,6 +101,15 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         outlineView.setEnabled(enabled);
     }
     
+    /**
+     * Sets the width of the columns of the OutlineView based on the passed in
+     * list of percentages.  There should be on double value for each column
+     * in the OutlineView.
+     * 
+     * @param percentages   A series of double percentages values representing
+     *                      what percent of the total width of the table each
+     *                      column should have.
+     */
     public void setTableColumnsWidth(double... percentages) {
         JTable table = outlineView.getOutline();
         double total = 0;
@@ -113,7 +122,7 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
             column.setPreferredWidth((int) (table.getPreferredSize().width * (percentages[i] / total)));
         }
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -127,11 +136,7 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         messagePanel = new javax.swing.JPanel();
         messageLabel = new javax.swing.JLabel();
 
-        setEnabled(false);
         setLayout(new java.awt.CardLayout(5, 5));
-
-        outlineView.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        outlineView.setPreferredSize(new java.awt.Dimension(300, 400));
         add(outlineView, "outlineCard");
 
         messagePanel.setLayout(new java.awt.BorderLayout());
