@@ -214,7 +214,7 @@ final class ConfigVisualPanel1 extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     @NbBundle.Messages({
-        "ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration"
+        "ConfigVisualPanel1.chooseFileTitle=Select location"
     })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         chooseFile(Bundle.ConfigVisualPanel1_chooseFileTitle());

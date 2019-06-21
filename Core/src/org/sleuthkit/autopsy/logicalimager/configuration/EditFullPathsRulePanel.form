@@ -23,19 +23,19 @@
                   <Component id="jSeparator1" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="ruleNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="descriptionCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="fullPathsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="ruleNameTextField" alignment="0" pref="649" max="32767" attributes="0"/>
-                          <Component id="descriptionTextField" alignment="0" max="32767" attributes="0"/>
-                          <Component id="fullPathsScrollPane" max="32767" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="ruleNameLabel" linkSize="1" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="fullPathsLabel" linkSize="1" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="jLabel1" linkSize="1" alignment="0" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="ruleNameTextField" linkSize="2" alignment="0" min="-2" pref="648" max="-2" attributes="0"/>
+                                  <Component id="descriptionTextField" linkSize="2" alignment="0" min="-2" pref="648" max="-2" attributes="0"/>
+                                  <Component id="fullPathsScrollPane" linkSize="2" min="-2" pref="648" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
                           <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
                           <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -57,7 +57,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="descriptionTextField" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="descriptionCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
@@ -108,14 +108,11 @@
           <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="EditFullPathsRulePanel.fullPathsLabel.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[101, 14]"/>
+          <Dimension value="[112, 14]"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="descriptionTextField">
-      <Properties>
-        <Property name="enabled" type="boolean" value="false"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="ruleNameLabel">
       <Properties>
@@ -123,7 +120,7 @@
           <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="EditFullPathsRulePanel.ruleNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[101, 14]"/>
+          <Dimension value="[112, 14]"/>
         </Property>
       </Properties>
     </Component>
@@ -137,18 +134,15 @@
     </Component>
     <Component class="javax.swing.JSeparator" name="jSeparator2">
     </Component>
-    <Component class="javax.swing.JCheckBox" name="descriptionCheckbox">
+    <Component class="javax.swing.JLabel" name="jLabel1">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="EditFullPathsRulePanel.descriptionCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="EditFullPathsRulePanel.jLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[101, 23]"/>
+          <Dimension value="[112, 14]"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="descriptionCheckboxActionPerformed"/>
-      </Events>
     </Component>
   </SubComponents>
 </Form>

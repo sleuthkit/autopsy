@@ -43,30 +43,25 @@
                           <Component id="finalizeImageWriter" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="shouldSaveCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                          <Component id="extensionsLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="filenamesLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="descriptionLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="ruleNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="extensionsLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="filenamesLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="descriptionLabel" min="-2" max="-2" attributes="0"/>
-                                  <Component id="ruleNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="modifiedDateLabel" alignment="0" min="-2" pref="79" max="-2" attributes="0"/>
-                                          <Component id="fileSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="fullPathsLabel" min="-2" max="-2" attributes="0"/>
-                                          <Component id="folderNamesLabel" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                                      <Component id="minSizeLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="minSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
-                                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                                      <Component id="maxSizeLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="maxSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
-                                  </Group>
+                                  <Component id="modifiedDateLabel" alignment="0" min="-2" pref="79" max="-2" attributes="0"/>
+                                  <Component id="fileSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="fullPathsLabel" min="-2" max="-2" attributes="0"/>
+                                  <Component id="folderNamesLabel" min="-2" max="-2" attributes="0"/>
                               </Group>
+                              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
+                              <Component id="minSizeLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="minSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="maxSizeLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="maxSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace min="-2" pref="107" max="-2" attributes="0"/>

@@ -138,7 +138,7 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
         fullPathsScrollPane = new javax.swing.JScrollPane();
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
-        descriptionCheckbox = new javax.swing.JCheckBox();
+        jLabel1 = new javax.swing.JLabel();
 
         shouldSaveCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldSaveCheckBox, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.shouldSaveCheckBox.text")); // NOI18N
@@ -148,20 +148,13 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(fullPathsLabel, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.fullPathsLabel.text")); // NOI18N
         fullPathsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.fullPathsLabel.toolTipText")); // NOI18N
-        fullPathsLabel.setPreferredSize(new java.awt.Dimension(101, 14));
-
-        descriptionTextField.setEnabled(false);
+        fullPathsLabel.setPreferredSize(new java.awt.Dimension(112, 14));
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.ruleNameLabel.text")); // NOI18N
-        ruleNameLabel.setPreferredSize(new java.awt.Dimension(101, 14));
+        ruleNameLabel.setPreferredSize(new java.awt.Dimension(112, 14));
 
-        org.openide.awt.Mnemonics.setLocalizedText(descriptionCheckbox, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.descriptionCheckbox.text")); // NOI18N
-        descriptionCheckbox.setPreferredSize(new java.awt.Dimension(101, 23));
-        descriptionCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                descriptionCheckboxActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.jLabel1.text")); // NOI18N
+        jLabel1.setPreferredSize(new java.awt.Dimension(112, 14));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -174,21 +167,26 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ruleNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(descriptionCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(fullPathsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ruleNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 649, Short.MAX_VALUE)
-                            .addComponent(descriptionTextField)
-                            .addComponent(fullPathsScrollPane)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(ruleNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(fullPathsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(0, 0, 0)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 648, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 648, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(fullPathsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 648, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addComponent(shouldSaveCheckBox)
                             .addComponent(shouldAlertCheckBox))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fullPathsLabel, jLabel1, ruleNameLabel});
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {descriptionTextField, fullPathsScrollPane, ruleNameTextField});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -199,7 +197,7 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(descriptionCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -218,16 +216,12 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void descriptionCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_descriptionCheckboxActionPerformed
-        descriptionTextField.setEnabled(descriptionCheckbox.isSelected());
-    }//GEN-LAST:event_descriptionCheckboxActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox descriptionCheckbox;
     private javax.swing.JTextField descriptionTextField;
     private javax.swing.JLabel fullPathsLabel;
     private javax.swing.JScrollPane fullPathsScrollPane;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel ruleNameLabel;
@@ -285,8 +279,6 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
     private void setRule(String ruleName, LogicalImagerRule rule) {
         ruleNameTextField.setText(ruleName);
         descriptionTextField.setText(rule.getDescription());
-        descriptionCheckbox.setSelected(!StringUtils.isBlank(descriptionTextField.getText()));
-        descriptionTextField.setEnabled(descriptionCheckbox.isSelected());
         shouldAlertCheckBox.setSelected(rule.isShouldAlert());
         shouldSaveCheckBox.setSelected(rule.isShouldSave());
     }

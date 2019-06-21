@@ -30,6 +30,7 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Configuration Visual Panel 2
@@ -60,7 +61,7 @@ final class ConfigVisualPanel2 extends JPanel {
     }
 
     @NbBundle.Messages({
-        "ConfigVisualPanel2.editConfiguration=Edit configuration"
+        "ConfigVisualPanel2.editConfiguration=Configure imager"
     })
     @Override
     public String getName() {
@@ -290,27 +291,24 @@ final class ConfigVisualPanel2 extends JPanel {
                             .addComponent(finalizeImageWriter)
                             .addComponent(shouldSaveCheckBox)
                             .addComponent(shouldAlertCheckBox)
+                            .addComponent(extensionsLabel)
+                            .addComponent(filenamesLabel)
+                            .addComponent(descriptionLabel)
+                            .addComponent(ruleNameLabel)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(0, 0, 0)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(extensionsLabel)
-                                    .addComponent(filenamesLabel)
-                                    .addComponent(descriptionLabel)
-                                    .addComponent(ruleNameLabel)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(modifiedDateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(fileSizeLabel)
-                                            .addComponent(fullPathsLabel)
-                                            .addComponent(folderNamesLabel))
-                                        .addGap(4, 4, 4)
-                                        .addComponent(minSizeLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(maxSizeLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                    .addComponent(modifiedDateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(fileSizeLabel)
+                                    .addComponent(fullPathsLabel)
+                                    .addComponent(folderNamesLabel))
+                                .addGap(4, 4, 4)
+                                .addComponent(minSizeLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(maxSizeLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(107, 107, 107))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(129, 129, 129)
@@ -419,7 +417,7 @@ final class ConfigVisualPanel2 extends JPanel {
     }//GEN-LAST:event_rulesTableKeyReleased
 
     @NbBundle.Messages({
-        "ConfigVisualPanel2.editRuleSet=Edit rule",
+        "ConfigVisualPanel2.editRuleSet=Edit Rule",
         "ConfigVisualPanel2.editRuleError=Edit rule error"
     })
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
@@ -454,6 +452,7 @@ final class ConfigVisualPanel2 extends JPanel {
         }
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
+    @Messages({"ConfigVisualPanel2.newRule.name=New Rule"})
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
         NewRulePanel panel;
         panel = new NewRulePanel(okButton, cancelButton);
@@ -461,7 +460,7 @@ final class ConfigVisualPanel2 extends JPanel {
         panel.setVisible(true);
 
         while (true) {
-            int option = JOptionPane.showOptionDialog(this, panel, "New rule",
+            int option = JOptionPane.showOptionDialog(this, panel, Bundle.ConfigVisualPanel2_newRule_name(),
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
                     null, new Object[]{okButton, cancelButton}, okButton);
             if (option == JOptionPane.OK_OPTION) {

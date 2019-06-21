@@ -204,19 +204,19 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             sizeField.setText(value);  //value stored in bytes is correct value to display
             return;
         }
-        longValue = longValue / BYTE_UNIT_CONVERSION;
+        longValue /= BYTE_UNIT_CONVERSION;
         if (longValue % BYTE_UNIT_CONVERSION != 0) {
             unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_kilobytes());
             sizeField.setText(String.valueOf(longValue));
             return;
         }
-        longValue = longValue / BYTE_UNIT_CONVERSION;
+        longValue /= BYTE_UNIT_CONVERSION;
         if (longValue % BYTE_UNIT_CONVERSION != 0) {
             unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_megabytes());
             sizeField.setText(String.valueOf(longValue));
             return;
         }
-        longValue = longValue / BYTE_UNIT_CONVERSION;
+        longValue /= BYTE_UNIT_CONVERSION;
         unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_gigabytes());
         sizeField.setText(String.valueOf(longValue));
 
@@ -278,11 +278,12 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         folderNamesCheckbox = new javax.swing.JCheckBox();
         fileNamesCheckbox = new javax.swing.JCheckBox();
         extensionsCheckbox = new javax.swing.JCheckBox();
-        descriptionCheckbox = new javax.swing.JCheckBox();
         minSizeUnitsCombobox = new javax.swing.JComboBox<>();
         maxSizeUnitsCombobox = new javax.swing.JComboBox<>();
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
+        descriptionLabel = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.daysIncludedLabel.text")); // NOI18N
 
@@ -294,9 +295,8 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
         extensionsTextField.setEnabled(false);
 
-        descriptionTextField.setEnabled(false);
-
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.ruleNameLabel.text")); // NOI18N
+        ruleNameLabel.setPreferredSize(new java.awt.Dimension(112, 14));
 
         filenamesScrollPane.setToolTipText(org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.filenamesScrollPane.toolTipText")); // NOI18N
         filenamesScrollPane.setEnabled(false);
@@ -316,6 +316,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(userFolderNote, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.userFolderNote.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(minSizeCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.minSizeCheckbox.text")); // NOI18N
+        minSizeCheckbox.setPreferredSize(new java.awt.Dimension(112, 23));
         minSizeCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 minSizeCheckboxActionPerformed(evt);
@@ -323,6 +324,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(maxSizeCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.maxSizeCheckbox.text")); // NOI18N
+        maxSizeCheckbox.setPreferredSize(new java.awt.Dimension(112, 23));
         maxSizeCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 maxSizeCheckboxActionPerformed(evt);
@@ -330,6 +332,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedWithinCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.modifiedWithinCheckbox.text")); // NOI18N
+        modifiedWithinCheckbox.setPreferredSize(new java.awt.Dimension(112, 23));
         modifiedWithinCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 modifiedWithinCheckboxActionPerformed(evt);
@@ -337,6 +340,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(folderNamesCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.folderNamesCheckbox.text")); // NOI18N
+        folderNamesCheckbox.setPreferredSize(new java.awt.Dimension(112, 23));
         folderNamesCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 folderNamesCheckboxActionPerformed(evt);
@@ -344,6 +348,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(fileNamesCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.fileNamesCheckbox.text")); // NOI18N
+        fileNamesCheckbox.setPreferredSize(new java.awt.Dimension(112, 23));
         fileNamesCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileNamesCheckboxActionPerformed(evt);
@@ -351,16 +356,10 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(extensionsCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.extensionsCheckbox.text")); // NOI18N
+        extensionsCheckbox.setPreferredSize(new java.awt.Dimension(112, 23));
         extensionsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 extensionsCheckboxActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(descriptionCheckbox, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.descriptionCheckbox.text")); // NOI18N
-        descriptionCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                descriptionCheckboxActionPerformed(evt);
             }
         });
 
@@ -370,26 +369,34 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         maxSizeUnitsCombobox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.EditNonFullPathsRulePanel_units_bytes(), Bundle.EditNonFullPathsRulePanel_units_kilobytes(), Bundle.EditNonFullPathsRulePanel_units_megabytes(), Bundle.EditNonFullPathsRulePanel_units_gigabytes()}));
         maxSizeUnitsCombobox.setEnabled(false);
 
+        org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.descriptionLabel.text")); // NOI18N
+        descriptionLabel.setPreferredSize(new java.awt.Dimension(112, 14));
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(EditNonFullPathsRulePanel.class, "EditNonFullPathsRulePanel.jLabel2.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSeparator2)
-                    .addComponent(jSeparator1)
-                    .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(shouldAlertCheckBox, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(shouldSaveCheckBox, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(fileNamesCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(modifiedWithinCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(maxSizeCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(folderNamesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                                .addComponent(extensionsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(descriptionCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(ruleNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(minSizeCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(maxSizeCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(extensionsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ruleNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(minSizeCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(folderNamesCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, 0)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(ruleNameTextField, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(descriptionTextField, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -397,76 +404,80 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
                             .addComponent(folderNamesScrollPane)
                             .addComponent(filenamesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(minSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(userFolderNote))
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fileNamesCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(shouldAlertCheckBox)
-                            .addComponent(shouldSaveCheckBox)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(modifiedWithinCheckbox)
-                                .addGap(10, 10, 10)
-                                .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(daysIncludedLabel)
-                                    .addComponent(maxSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 522, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(userFolderNote)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(minSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(maxSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(daysIncludedLabel)))))
+                                .addGap(0, 11, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {maxSizeTextField, minSizeTextField, modifiedWithinTextField});
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {descriptionLabel, extensionsCheckbox, fileNamesCheckbox, folderNamesCheckbox, maxSizeCheckbox, minSizeCheckbox, modifiedWithinCheckbox, ruleNameLabel});
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {maxSizeUnitsCombobox, minSizeUnitsCombobox});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(ruleNameLabel)
+                    .addComponent(ruleNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(descriptionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(descriptionCheckbox))
+                    .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(extensionsTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(extensionsCheckbox))
+                    .addComponent(extensionsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(filenamesScrollPane)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(fileNamesCheckbox)
+                        .addComponent(fileNamesCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(folderNamesScrollPane)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(folderNamesCheckbox)
+                        .addComponent(folderNamesCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(userFolderNote)
+                .addComponent(userFolderNote, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(minSizeCheckbox)
+                    .addComponent(minSizeCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(minSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(maxSizeCheckbox)
+                    .addComponent(maxSizeCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(maxSizeUnitsCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(daysIncludedLabel)
                     .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(modifiedWithinCheckbox))
+                    .addComponent(modifiedWithinCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -492,10 +503,6 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         updateExclusiveConditions();
         setOkButton();
     }//GEN-LAST:event_fileNamesCheckboxActionPerformed
-
-    private void descriptionCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_descriptionCheckboxActionPerformed
-        descriptionTextField.setEnabled(descriptionCheckbox.isSelected());
-    }//GEN-LAST:event_descriptionCheckboxActionPerformed
 
     private void folderNamesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_folderNamesCheckboxActionPerformed
         folderNamesScrollPane.setEnabled(folderNamesCheckbox.isSelected());
@@ -541,7 +548,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel daysIncludedLabel;
-    private javax.swing.JCheckBox descriptionCheckbox;
+    private javax.swing.JLabel descriptionLabel;
     private javax.swing.JTextField descriptionTextField;
     private javax.swing.JCheckBox extensionsCheckbox;
     private javax.swing.JTextField extensionsTextField;
@@ -549,6 +556,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane filenamesScrollPane;
     private javax.swing.JCheckBox folderNamesCheckbox;
     private javax.swing.JScrollPane folderNamesScrollPane;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JCheckBox maxSizeCheckbox;
@@ -569,8 +577,6 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private void setRule(String ruleName, LogicalImagerRule rule) {
         ruleNameTextField.setText(ruleName);
         descriptionTextField.setText(rule.getDescription());
-        descriptionCheckbox.setSelected(!StringUtils.isBlank(descriptionTextField.getText()));
-        descriptionTextField.setEnabled(descriptionCheckbox.isSelected());
         shouldAlertCheckBox.setSelected(rule.isShouldAlert());
         shouldSaveCheckBox.setSelected(rule.isShouldSave());
     }
