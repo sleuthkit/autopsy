@@ -235,13 +235,12 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     @NbBundle.Messages({
-        "# {0} - configurationFile",
-        "# {1} - configurationLocation",
-        "ConfigVisualPanel3.description.text=Press Save to write your configuration file {0} and the Logical imager executable to {1}."
+        "# {0} - configurationLocation",
+        "ConfigVisualPanel3.description.text=Press Save to write the imaging tool and configuration file to the destination.\nDestination: {0}."
     })
     void setConfigInfoForSaving(String configFile, LogicalImagerConfig config) {
         this.configFilename = configFile;
         this.config = config;
-        descriptionTextArea.setText(Bundle.ConfigVisualPanel3_description_text(FilenameUtils.getName(configFilename), FilenameUtils.getFullPath(configFilename)));
+        descriptionTextArea.setText(Bundle.ConfigVisualPanel3_description_text(FilenameUtils.getFullPath(configFilename)));
     }
 }
