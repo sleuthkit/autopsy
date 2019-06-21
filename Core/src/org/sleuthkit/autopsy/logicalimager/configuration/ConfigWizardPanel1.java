@@ -52,7 +52,7 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
             component.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals(component.getUpdateEventName())) { // NON-NLS
+                    if (evt.getPropertyName().equals(ConfigVisualPanel1.getUpdateEventName())) { // NON-NLS
                         valid = component.isPanelValid();
                         fireChangeEvent();
                     }

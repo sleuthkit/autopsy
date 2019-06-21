@@ -18,31 +18,14 @@
  */
 package org.sleuthkit.autopsy.logicalimager.configuration;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Level;
-import javax.swing.JOptionPane;
 import javax.swing.event.ChangeListener;
-import org.apache.commons.io.FileUtils;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Configuration Wizard Panel 2
  */
 final class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
-
-    private static final Logger LOGGER = Logger.getLogger(ConfigWizardPanel2.class.getName());
 
     /**
      * The visual component that displays this panel. If you need to access the
@@ -93,47 +76,6 @@ final class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescripto
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
-    }
-    
-    @NbBundle.Messages({
-        "# {0} - configFilename",
-        "ConfigWizardPanel2.failedToSaveConfigMsg=Failed to save configuration file: {0}",
-        "# {0} - reason",
-        "ConfigWizardPanel2.reason=\nReason: ",       
-        "ConfigWizardPanel2.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file",
-    })
-    void saveConfigFile() {
-        GsonBuilder gsonBuilder = new GsonBuilder()
-                .setPrettyPrinting()
-                .excludeFieldsWithoutExposeAnnotation()
-                .disableHtmlEscaping();
-        Gson gson = gsonBuilder.create();
-        String toJson = gson.toJson(config);
-        try {
-            List<String> lines = Arrays.asList(toJson.split("\\n"));
-            FileUtils.writeLines(new File(configFilename), "UTF-8", lines, System.getProperty("line.separator")); // NON-NLS
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveConfigMsg(configFilename)
-                + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
-        } catch (JsonIOException jioe) {
-            LOGGER.log(Level.SEVERE, "Failed to save configuration file: " + configFilename, jioe); // NON-NLS
-            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveConfigMsg(configFilename) 
-                    + Bundle.ConfigWizardPanel2_reason(jioe.getMessage()));
-        }
-        try {
-            writeTskLogicalImagerExe(Paths.get(configFilename).getParent());
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to save tsk_logical_imager.exe file", ex); // NON-NLS
-            JOptionPane.showMessageDialog(component, Bundle.ConfigWizardPanel2_failedToSaveExeMsg() 
-                    + Bundle.ConfigWizardPanel2_reason(ex.getMessage()));
-        }
-    }
-
-    private void writeTskLogicalImagerExe(Path destDir) throws IOException {
-        try (InputStream in = getClass().getResourceAsStream("tsk_logical_imager.exe")) { // NON-NLS
-            File destFile = Paths.get(destDir.toString(), "tsk_logical_imager.exe").toFile(); // NON-NLS
-            FileUtils.copyInputStreamToFile(in, destFile);
-        }
     }
 
     @Override

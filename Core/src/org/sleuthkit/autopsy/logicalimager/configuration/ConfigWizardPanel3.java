@@ -18,53 +18,89 @@
  */
 package org.sleuthkit.autopsy.logicalimager.configuration;
 
-import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
-import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
 
+final class ConfigWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor>  {
 
-final class ConfigWizardPanel3 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
-    
-    @Override
-    public void validate() throws WizardValidationException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
+    private ConfigVisualPanel3 component;
+
+
+
+    // Get the visual component for the panel. In this template, the component
+    // is kept separate. This can be more efficient: if the wizard is created
+    // but never displayed, or not all panels are displayed, it is better to
+    // create only those which really need to be visible.
     @Override
-    public Component getComponent() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public ConfigVisualPanel3 getComponent() {
+        if (component == null) {
+            component = new ConfigVisualPanel3();
+            component.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(ConfigVisualPanel3.getSavedEventName())) { // NON-NLS
+                        fireChangeEvent();
+                    }
+                }
+            });
+        }
+        return component;
     }
 
     @Override
     public HelpCtx getHelp() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return HelpCtx.DEFAULT_HELP;
     }
 
     @Override
-    public void readSettings(WizardDescriptor data) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void readSettings(WizardDescriptor wiz) {
+        String configFilename = (String) wiz.getProperty("configFilename"); // NON-NLS
+        LogicalImagerConfig config = (LogicalImagerConfig) wiz.getProperty("config"); // NON-NLS
+        component.setConfigInfoForSaving(configFilename, config);
     }
 
     @Override
     public void storeSettings(WizardDescriptor data) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
     }
 
     @Override
     public boolean isValid() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return component.isSaved();
+    }
+
+    private void fireChangeEvent() {
+        Iterator<ChangeListener> it;
+        synchronized (listeners) {
+            it = new HashSet<>(listeners).iterator();
+        }
+        ChangeEvent ev = new ChangeEvent(this);
+        while (it.hasNext()) {
+            it.next().stateChanged(ev);
+        }
     }
 
     @Override
     public void addChangeListener(ChangeListener cl) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        synchronized (listeners) {
+            listeners.add(cl);
+        }
     }
 
     @Override
     public void removeChangeListener(ChangeListener cl) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        synchronized (listeners) {
+            listeners.remove(cl);
+        }
     }
-    
+
 }
