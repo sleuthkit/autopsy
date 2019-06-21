@@ -1153,7 +1153,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         lbMultiUserResult.setIcon(null);
         lbMultiUserResult.paintImmediately(lbMultiUserResult.getVisibleRect());
 
-        String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
         if (!validateResultsPath()) {
             lbMultiUserResult.setIcon(badIcon);
             lbTestResultText.setForeground(Color.RED);
@@ -1162,6 +1161,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
 
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
         String testResult = MultiUserTestTool.runTest(resultsFolderPath);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         if (testResult.equals(MultiUserTestTool.MULTI_USER_TEST_SUCCESSFUL)) {

@@ -69,6 +69,9 @@ class MultiUserTestTool {
     private static final String TEST_FILE_NAME = "AutopsyTempFile";
     private static final Object INGEST_LOCK = new Object();
     static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
+    
+    private MultiUserTestTool() {
+    }
 
     @NbBundle.Messages({
         "MultiUserTestTool.unableToCreateCase=Unable to create case",
@@ -77,7 +80,7 @@ class MultiUserTestTool {
         "MultiUserTestTool.unableCreatFile=Unable to create a file in case output directory",
         "MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case",
         "MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database",
-        "MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keword Search index",
+        "MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keyword Search index",
         "MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source",
         "MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test",
         "# {0} - serviceName",
@@ -168,7 +171,6 @@ class MultiUserTestTool {
 
             // Verify that Solr was able to create the core and is able to write to it
             FileManager fileManager = caseForJob.getServices().getFileManager();
-            AbstractFile file = null;
             List<AbstractFile> listOfFiles = null;
             try {
                 listOfFiles = fileManager.findFiles(new File(tempFilePath).getName());
@@ -181,7 +183,7 @@ class MultiUserTestTool {
                 return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase() + ". " + ex.getMessage();
             }
 
-            file = listOfFiles.get(0);
+            AbstractFile file = listOfFiles.get(0);
 
             // write to KWS index
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
@@ -203,7 +205,7 @@ class MultiUserTestTool {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToRunIngest(), ex);
                 return Bundle.MultiUserTestTool_unableToRunIngest() + ". " + ex.getMessage();
             }
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             // unexpected exception firewall
             LOGGER.log(Level.SEVERE, "Unexpected error while performing Multi User test", ex);
             return Bundle.MultiUserTestTool_unexpectedError() + ". " + ex.getMessage();
@@ -220,6 +222,15 @@ class MultiUserTestTool {
         return MULTI_USER_TEST_SUCCESSFUL;
     }
 
+    /**
+     * Creates a new multi user case.
+     *
+     * @param baseCaseName Case name (will get time stamp appended to it)
+     * @param rootOutputDirectory Full path to directory in which the case will
+     * be created
+     * @return Case object
+     * @throws CaseActionException
+     */
     private static Case createCase(String baseCaseName, String rootOutputDirectory) throws CaseActionException {
 
         String caseDirectoryPath = rootOutputDirectory + File.separator + baseCaseName + "_" + TimeStampUtils.createTimeStamp();
@@ -229,9 +240,7 @@ class MultiUserTestTool {
 
         CaseDetails caseDetails = new CaseDetails(baseCaseName);
         Case.createAsCurrentCase(Case.CaseType.MULTI_USER_CASE, caseDirectoryPath, caseDetails);
-
-        Case caseForJob = Case.getCurrentCase();
-        return caseForJob;
+        return Case.getCurrentCase();
     }
 
     /**
@@ -437,7 +446,7 @@ class MultiUserTestTool {
                 String eventType = event.getPropertyName();
                 if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     synchronized (INGEST_LOCK) {
-                        INGEST_LOCK.notify();
+                        INGEST_LOCK.notifyAll();
                     }
                 }
             }
