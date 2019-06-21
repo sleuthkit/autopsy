@@ -87,7 +87,9 @@ class MessageNode extends BlackboardArtifactNode {
 
         sheetSet.put(new NodeProperty<>("Type", Bundle.MessageNode_Node_Property_Type(), "", getDisplayName())); //NON-NLS
         
-        BlackboardArtifact artifact = this.getArtifact();
+        sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? UNTHREADED_ID : threadID)); //NON-NLS
+
+        final BlackboardArtifact artifact = getArtifact();
 
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != fromID) {
@@ -107,8 +109,6 @@ class MessageNode extends BlackboardArtifactNode {
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex); //NON-NLS
                     }
-                    
-                    sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? "" : threadID)); //NON-NLS
 
                     break;
                 case TSK_MESSAGE:
