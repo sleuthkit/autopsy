@@ -175,7 +175,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
                 org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, Bundle.OccurrencePanel_commonPropertyKnownStatusLabel_text());
                 addItemToBag(gridY, 0, 0, 0, knownStatusLabel);
                 javax.swing.JLabel knownStatusValue = new javax.swing.JLabel();
-                knownStatusValue.setText(knownStatus.toString());
+                knownStatusValue.setText(knownStatus.getName());
                 if (knownStatus == TskData.FileKnown.BAD) {
                     knownStatusValue.setForeground(Color.RED);
                 }

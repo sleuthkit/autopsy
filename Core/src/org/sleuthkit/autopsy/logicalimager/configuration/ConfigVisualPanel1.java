@@ -135,7 +135,7 @@ final class ConfigVisualPanel1 extends JPanel {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigVisualPanel1_fileNameExtensionFilter(), new String[] {"json"}); // NON-NLS
         fileChooser.setFileFilter(filter);
-        fileChooser.setSelectedFile(new File("config.json")); // default
+        fileChooser.setSelectedFile(new File("logical-imager-config.json")); // default
         fileChooser.setMultiSelectionEnabled(false);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
