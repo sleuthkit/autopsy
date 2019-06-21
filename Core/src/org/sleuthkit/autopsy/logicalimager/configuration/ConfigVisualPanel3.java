@@ -59,6 +59,14 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         executableStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_notSaved());
     }
 
+    @NbBundle.Messages({
+        "ConfigVisualPanel3.saveConfigurationFile=Save configuration file"
+    })
+    @Override
+    public String getName() {
+        return Bundle.ConfigVisualPanel3_saveConfigurationFile();
+    }
+
     boolean isSaved() {
         return hasBeenSaved;
     }
@@ -234,6 +242,6 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
     void setConfigInfoForSaving(String configFile, LogicalImagerConfig config) {
         this.configFilename = configFile;
         this.config = config;
-        descriptionTextArea.setText(Bundle.ConfigVisualPanel3_description_text(FilenameUtils.getName(configFilename), FilenameUtils.getPath(configFilename)));
+        descriptionTextArea.setText(Bundle.ConfigVisualPanel3_description_text(FilenameUtils.getName(configFilename), FilenameUtils.getFullPath(configFilename)));
     }
 }

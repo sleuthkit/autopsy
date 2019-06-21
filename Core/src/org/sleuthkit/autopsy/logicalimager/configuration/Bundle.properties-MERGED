@@ -52,6 +52,7 @@ ConfigVisualPanel3.failedToSaveConfigMsg=Failed to save configuration file: {0}
 ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file
 # {0} - reason
 ConfigVisualPanel3.reason=\nReason: 
+ConfigVisualPanel3.saveConfigurationFile=Save configuration file
 CTL_ConfigureLogicalImager=Configure Logical Imager
 EditFullPathsRulePanel.example=Example: 
 EditFullPathsRulePanel.fullPaths=Full paths
