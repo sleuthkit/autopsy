@@ -56,8 +56,10 @@ import javax.swing.SortOrder;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
@@ -230,6 +232,7 @@ public final class DrawableDB {
         dbWriteLock();
         try {
             con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
+//            if (!initializeDBSchema() || !upgradeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !initializeImageList() || !checkDataSourceExistsInCase()) {
             if (!initializeDBSchema() || !upgradeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !initializeImageList()) {
                 close();
                 throw new TskCoreException("Failed to initialize drawables database for Image Gallery use"); //NON-NLS
@@ -431,6 +434,36 @@ public final class DrawableDB {
             } 
         }
         return tableExists;
+    }
+    
+    private Boolean checkDataSourceExistsInCase() throws SQLException {
+        try {
+            dbWriteLock();
+            Map<Long, DrawableDbBuildStatusEnum> dataSourceIdsMap = getDataSourceDbBuildStatus();
+            for (Map.Entry<Long, DrawableDbBuildStatusEnum> dataSourceMap : dataSourceIdsMap.entrySet()) {
+                String name
+                        = "SELECT COUNT(obj_id) obj_id FROM tsk_objects where obj_id = " + Long.toString(dataSourceMap.getKey()); //NON-NLS
+                try {
+                    SleuthkitCase.CaseDbQuery executeQuery = tskCase.executeQuery(name);
+                    ResultSet resultSet = executeQuery.getResultSet();
+                    while (resultSet.next()) {
+                        if (resultSet.getLong("obj_id") == 0) {
+                            try (Statement stmt = con.createStatement()) {
+                                stmt.execute("DELETE FROM datasources where ds_obj_id = " + Long.toString(dataSourceMap.getKey()));
+                           }
+                        }
+                    }
+                    resultSet.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.INFO, String.format("Error trying to Delete Data source", ex)); //NON-NLS
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.INFO, String.format("Error trying to Delete Data source", ex)); //NON-NLS
+        } finally {
+            dbWriteUnlock();
+            return true;
+        }
     }
     
     private static void deleteDatabaseIfOlderVersion(Path dbPath) throws SQLException, IOException {
@@ -2047,7 +2080,7 @@ public final class DrawableDB {
             commitTransaction(trans, true);
         } catch (SQLException | TskCoreException ex) {
             logger.log(Level.WARNING, "failed to deletesource for obj_id = " + dataSourceId, ex); //NON-NLS
-        } finally {
+        } finally { 
             dbWriteUnlock();
         }
     }
