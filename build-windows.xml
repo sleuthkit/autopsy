@@ -73,20 +73,28 @@
             <exclude name="libtsk_jni.dll"/> 
         </fileset>
         
+        <fileset dir="${win32.TskLogicalImager.path}" id="win32logicalImager">
+            <include name="tsk_logical_imager.exe" />
+        </fileset>
+
         <copy todir="${i386}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="win32logicalImager" />
         </copy>
 
         <copy todir="${x86}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="win32logicalImager" />
         </copy>
 
         <copy todir="${i586}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="win32logicalImager" />
         </copy>	
 
         <copy todir="${i686}" overwrite="true">
             <fileset refid="win32dlls" />
+            <fileset refid="win32logicalImager" />
         </copy>
     </target>
     
