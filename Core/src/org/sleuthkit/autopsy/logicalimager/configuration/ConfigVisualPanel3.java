@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -48,10 +49,10 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
     /**
      * Creates new form ConfigVisualPanel3
      */
-    @NbBundle.Messages({"ConfigVisualPanel3.copyStatus.notSaved=File has not been saved.",
-        "ConfigVisualPanel3.copyStatus.savingInProgress=Saving file, please wait.",
+    @NbBundle.Messages({"ConfigVisualPanel3.copyStatus.notSaved=File has not been saved",
+        "ConfigVisualPanel3.copyStatus.savingInProgress=Saving file, please wait",
         "ConfigVisualPanel3.copyStatus.saved=Saved",
-        "ConfigVisualPanel3.copyStatus.error=Unable to save file."})
+        "ConfigVisualPanel3.copyStatus.error=Unable to save file"})
     public ConfigVisualPanel3() {
         initComponents();
         configStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_notSaved());
@@ -71,9 +72,9 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
     void saveConfigFile() {
         boolean saveSuccess = true;
         executableStatusLabel.setForeground(Color.BLACK);
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         configStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_savingInProgress());
         executableStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_savingInProgress());
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         GsonBuilder gsonBuilder = new GsonBuilder()
                 .setPrettyPrinting()
                 .excludeFieldsWithoutExposeAnnotation()
@@ -158,7 +159,6 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         descriptionTextArea.setLineWrap(true);
         descriptionTextArea.setRows(5);
-        descriptionTextArea.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel3.class, "ConfigVisualPanel3.descriptionTextArea.text")); // NOI18N
         descriptionTextArea.setWrapStyleWord(true);
         descriptionTextArea.setEnabled(false);
         descriptionScrollPane.setViewportView(descriptionTextArea);
@@ -174,40 +174,40 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(configLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(executableLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(configStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 237, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(executableStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 10, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(descriptionScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(executableLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(executableStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(configLabel)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(configStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addComponent(descriptionScrollPane)
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(57, 57, 57)
+                .addGap(18, 18, 18)
                 .addComponent(saveButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(configLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(configStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(configStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(executableLabel)
                     .addComponent(executableStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(35, 35, 35))
+                .addContainerGap(120, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -226,8 +226,14 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
     private javax.swing.JButton saveButton;
     // End of variables declaration//GEN-END:variables
 
-    void setConfigInfoForSaving(String configFilename, LogicalImagerConfig config) {
-        this.configFilename = configFilename;
+    @NbBundle.Messages({
+        "# {0} - configurationFile",
+        "# {1} - configurationLocation",
+        "ConfigVisualPanel3.description.text=Press Save to write your configuration file {0} and the Logical imager executable to {1}."
+    })
+    void setConfigInfoForSaving(String configFile, LogicalImagerConfig config) {
+        this.configFilename = configFile;
         this.config = config;
+        descriptionTextArea.setText(Bundle.ConfigVisualPanel3_description_text(FilenameUtils.getName(configFilename), FilenameUtils.getPath(configFilename)));
     }
 }
