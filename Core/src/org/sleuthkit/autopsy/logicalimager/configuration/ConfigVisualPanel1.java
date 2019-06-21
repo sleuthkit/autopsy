@@ -41,6 +41,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.logicalimager.dsp.DriveListUtils;
@@ -52,7 +53,8 @@ import org.sleuthkit.autopsy.logicalimager.dsp.DriveListUtils;
 final class ConfigVisualPanel1 extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private LogicalImagerConfig config;
+    private static final String DEFAULT_CONFIG_FILE_NAME = "logical-imager-config.json";
+    private static final String UPDATE_UI_EVENT_NAME = "UPDATE_UI";
     private String configFilename;
     private boolean newFile = true;
 
@@ -62,10 +64,10 @@ final class ConfigVisualPanel1 extends JPanel {
     ConfigVisualPanel1() {
         initComponents();
         configFileTextField.getDocument().addDocumentListener(new MyDocumentListener(this));
+        refreshDriveList();
         SwingUtilities.invokeLater(() -> {
             updateControls();
         });
-        refreshDriveList();
     }
 
     @NbBundle.Messages({
@@ -231,11 +233,11 @@ final class ConfigVisualPanel1 extends JPanel {
     }//GEN-LAST:event_refreshButtonActionPerformed
 
     private void driveListKeyReleasedSelection(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_driveListKeyReleasedSelection
-        // TODO add your handling code here:
+        firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
     }//GEN-LAST:event_driveListKeyReleasedSelection
 
     private void driveListMouseReleasedSelection(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseReleasedSelection
-        // TODO add your handling code here:
+        firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
     }//GEN-LAST:event_driveListMouseReleasedSelection
 
     @Messages({"ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found"})
@@ -277,7 +279,7 @@ final class ConfigVisualPanel1 extends JPanel {
         refreshButton.setEnabled(configureDriveRadioButton.isSelected());
         driveList.setEnabled(configureDriveRadioButton.isSelected());
         driveListScrollPane.setEnabled(configureDriveRadioButton.isSelected());
-
+        firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
     }
 
     @NbBundle.Messages({
@@ -292,7 +294,7 @@ final class ConfigVisualPanel1 extends JPanel {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileFilter filter = new FileNameExtensionFilter(Bundle.ConfigVisualPanel1_fileNameExtensionFilter(), new String[]{"json"}); // NON-NLS
         fileChooser.setFileFilter(filter);
-        fileChooser.setSelectedFile(new File("logical-imager-config.json")); // default
+        fileChooser.setSelectedFile(new File(DEFAULT_CONFIG_FILE_NAME)); // default
         fileChooser.setMultiSelectionEnabled(false);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
@@ -314,7 +316,6 @@ final class ConfigVisualPanel1 extends JPanel {
                 }
                 configFilename = path;
                 configFileTextField.setText(path);
-                config = new LogicalImagerConfig();
                 newFile = true;
             }
         }
@@ -337,39 +338,63 @@ final class ConfigVisualPanel1 extends JPanel {
     @NbBundle.Messages({
         "# {0} - filename",
         "ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty",})
-    private void loadConfigFile(String path) throws FileNotFoundException, JsonIOException, JsonSyntaxException, IOException {
+    private LogicalImagerConfig loadConfigFile(String path) throws FileNotFoundException, JsonIOException, JsonSyntaxException, IOException {
         try (FileInputStream is = new FileInputStream(path)) {
             InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
             GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
             gsonBuilder.registerTypeAdapter(LogicalImagerConfig.class, new LogicalImagerConfigDeserializer());
             Gson gson = gsonBuilder.create();
-            config = gson.fromJson(reader, LogicalImagerConfig.class);
-            if (config == null) {
+            LogicalImagerConfig loadedConfig = gson.fromJson(reader, LogicalImagerConfig.class);
+            if (loadedConfig == null) {
                 // This happens if the file is empty. Gson doesn't call the deserializer and doesn't throw any exception.
                 throw new IOException(Bundle.ConfigVisualPanel1_configFileIsEmpty(path));
             }
+            return loadedConfig;
         }
     }
 
     LogicalImagerConfig getConfig() {
-        return config;
+        String configFileName = getConfigFilename();
+        if (new File(configFileName).exists()) {
+            try {
+                return loadConfigFile(configFileName);
+            } catch (JsonIOException | JsonSyntaxException | IOException ex) {
+                return new LogicalImagerConfig();
+            }
+        } else {
+            return new LogicalImagerConfig();
+        }
     }
 
     String getConfigFilename() {
-        return configFilename;
+        if (configureFolderRadioButton.isSelected()) {
+            return configFilename;
+        } else {
+            String selectedStr = driveList.getSelectedValue();
+            if (selectedStr == null) {
+                return null;
+            }
+            return selectedStr.substring(0, 3) + DEFAULT_CONFIG_FILE_NAME;
+        }
     }
 
+    static String getUpdateEventName(){
+        return UPDATE_UI_EVENT_NAME;
+    }
+    
     boolean isNewFile() {
         return newFile;
     }
 
-    void setConfigFilename(String filename) {
+    void setConfigFilename(String filename
+    ) {
         configFileTextField.setText(filename);
     }
 
     boolean isPanelValid() {
-        return (configureDriveRadioButton.isSelected() && driveList.getSelectedIndex() >= 0)
-                || (configureFolderRadioButton.isSelected() && (newFile || !configFileTextField.getText().isEmpty()));
+        return !StringUtils.isBlank(getConfigFilename()) && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
+                || (configureFolderRadioButton.isSelected() && (newFile || !configFileTextField.getText().isEmpty())));
+
     }
 
     /**
@@ -399,7 +424,7 @@ final class ConfigVisualPanel1 extends JPanel {
         }
 
         private void fireChange() {
-            panel.firePropertyChange("UPDATE_UI", false, true); // NON-NLS
+            panel.firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
         }
     }
 
