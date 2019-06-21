@@ -102,7 +102,7 @@ class NewRulePanel extends javax.swing.JPanel {
         );
         sharedLayeredPaneLayout.setVerticalGroup(
             sharedLayeredPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 403, Short.MAX_VALUE)
+            .addGap(0, 423, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

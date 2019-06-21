@@ -74,7 +74,7 @@ public final class CreateLogicalImager implements ActionListener {
         WizardDescriptor wiz = new WizardDescriptor(new WizardDescriptor.ArrayIterator<>(panels));
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}")); // NON-NLS
-        wiz.setTitle(Bundle.ConfigureLogicalImager_title());
+        wiz.setTitle(Bundle.CreateLogicalImager_title());
         DialogDisplayer.getDefault().notify(wiz);
     }
 }
