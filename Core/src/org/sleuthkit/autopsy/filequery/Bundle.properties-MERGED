@@ -1,0 +1,91 @@
+CTL_FileSearchTestAction=Test file search
+# {0} - Data source name
+# {1} - Data source ID
+FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
+# {0} - Data source ID
+FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
+FileSearch.GroupingAttributeType.datasource.displayName=Data source
+FileSearch.GroupingAttributeType.fileType.displayName=File type
+FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences
+FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names
+FileSearch.GroupingAttributeType.none.displayName=None
+FileSearch.GroupingAttributeType.parent.displayName=Parent folder
+FileSearch.GroupingAttributeType.size.displayName=Size
+FileSearch.KeywordListGroupKey.noKeywords=None
+FileSearch.NoGroupingGroupKey.allFiles=All Files
+FileSearchData.FileSize.large.displayName=200MB-1GB
+FileSearchData.FileSize.medium.displayName=50-200MB
+FileSearchData.FileSize.small.displayName=1-50MB
+FileSearchData.FileSize.XL.displayName=1GB+
+FileSearchData.FileSize.XS.displayName=Under 1MB
+FileSearchData.FileType.Audio.displayName=Audio
+FileSearchData.FileType.Documents.displayName=Documents
+FileSearchData.FileType.Executables.displayName=Executables
+FileSearchData.FileType.Image.displayName=Image
+FileSearchData.FileType.Other.displayName=Other/Unknown
+FileSearchData.FileType.Video.displayName=Video
+FileSearchData.Frequency.common.displayName=Common
+FileSearchData.Frequency.rare.displayName=Rare
+FileSearchData.Frequency.unique.displayName=Unique
+FileSearchData.Frequency.unknown.displayName=Unknown
+FileSearchDialog.dialogTitle.text=Test file search
+FileSearchDialog.jLabel1.text=File Type
+FileSearchDialog.dsCheckBox.text=Data source
+FileSearchDialog.cancelButton.text=Cancel
+FileSearchDialog.freqCheckBox.text=CR Frequency
+FileSearchDialog.sizeCheckBox.text=Size
+FileSearchDialog.kwCheckBox.text=Keyword
+FileSearchDialog.addParentButton.text=Add
+FileSearchDialog.deleteParentButton.text=Delete
+FileSearchDialog.parentFullRadioButton.text=Full
+FileSearchDialog.parentSubstringRadioButton.text=Substring
+FileSearchDialog.parentTextField.text=
+FileSearchDialog.jLabel2.text=(All will be used)
+FileSearchDialog.jLabel3.text=Group by attribute:
+FileSearchDialog.jLabel4.text=Order groups by:
+FileSearchDialog.orderAttrRadioButton.text=Attribute
+FileSearchDialog.orderSizeRadioButton.text=Group Size
+FileSearchDialog.jLabel5.text=Order files by: 
+FileSearchDialog.parentCheckBox.text=Parent
+FileSearchDialog.searchButton.text=Search
+# {0} - Data source name
+# {1} - Data source ID
+FileSearchFiltering.DataSourceFilter.datasource={0}({1})
+# {0} - filters
+FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}
+FileSearchFiltering.DataSourceFilter.or=\ or 
+# {0} - filters
+FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
+FileSearchFiltering.FileTypeFilter.or=\ or 
+# {0} - filters
+FileSearchFiltering.FrequencyFilter.desc=Files with frequency: {0}
+FileSearchFiltering.FrequencyFilter.or=\ or 
+FileSearchFiltering.KeywordListFilter.comma=, 
+# {0} - filters
+FileSearchFiltering.KeywordListFilter.desc=Files with keywords in list(s): {0}
+# {0} - filters
+FileSearchFiltering.ParentFilter.desc=Files with paths matching: {0}
+FileSearchFiltering.ParentFilter.exact=(exact match)
+FileSearchFiltering.ParentFilter.or=\ or 
+FileSearchFiltering.ParentFilter.substring=(substring)
+# {0} - search term
+FileSearchFiltering.ParentSearchTerm.fullString=\ {0} (exact)
+# {0} - search term
+FileSearchFiltering.ParentSearchTerm.subString=\ {0} (substring)
+# {0} - filters
+FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}
+FileSearchFiltering.SizeFilter.or=\ or 
+# {0} - Minimum bytes
+# {1} - Maximum bytes
+FileSearchFiltering.SizeFilter.range=({0} to {1})
+FileSorter.SortingMethod.datasource.displayName=By data source
+FileSorter.SortingMethod.filename.displayName=By file name
+FileSorter.SortingMethod.filesize.displayName=By file size
+FileSorter.SortingMethod.filetype.displayName=By file type
+FileSorter.SortingMethod.frequency.displayName=By central repo frequency
+FileSorter.SortingMethod.keywordlist.displayName=By keyword list names
+FileSorter.SortingMethod.parent.displayName=By parent path
+ResultsDialog.dialogTitle.text=File search results
+ResultsDialog.exitButton.text=Exit
+ResultsDialog.searchButton.text=Run another search
+FileSearchDialog.errorLabel.text=jLabel6
