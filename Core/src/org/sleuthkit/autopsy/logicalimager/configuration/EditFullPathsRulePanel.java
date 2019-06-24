@@ -95,12 +95,18 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
             @Override
             public void removeUpdate(DocumentEvent e) {
                 setOkButton();
-            }           
+            }
         };
         ruleNameTextField.getDocument().addDocumentListener(docListener);
         fullPathsTextArea.getDocument().addDocumentListener(docListener);
     }
-    
+
+    /**
+     * Initialize the text area and the scroll pane viewing it
+     *
+     * @param pane     the JScrollPane which will be viewing the JTextArea
+     * @param textArea the JTextArea being initialized
+     */
     private void initTextArea(JScrollPane pane, JTextArea textArea) {
         textArea.setColumns(20);
         textArea.setRows(5);
@@ -283,6 +289,12 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Set the name description and should alert / should save checkboxes
+     *
+     * @param ruleName the name of the rule
+     * @param rule     the LogicalImagerRule
+     */
     private void setRule(String ruleName, LogicalImagerRule rule) {
         ruleNameTextField.setText(ruleName);
         descriptionTextField.setText(rule.getDescription());
@@ -290,14 +302,29 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
         shouldSaveCheckBox.setSelected(rule.isShouldSave());
     }
 
-    private void setTextArea(JTextArea textArea, List<String> set) {
+    /**
+     * Set the text of a text area to contain the contents of the list each on
+     * its own line
+     *
+     * @param textArea the text area to set the contents of
+     * @param list     the list of strings to display in the text area
+     */
+    private void setTextArea(JTextArea textArea, List<String> list) {
         String text = "";
-        for (String s : set) {
+        for (String s : list) {
             text += s + System.getProperty("line.separator"); // NON-NLS
         }
         textArea.setText(text);
     }
 
+    /**
+     * Convert the contents of this panel to a rule and return it as well as its
+     * name.
+     *
+     * @return an ImmutablePair containing the name of the rule and the rule
+     *
+     * @throws IOException
+     */
     @NbBundle.Messages({
         "EditFullPathsRulePanel.fullPaths=Full paths",})
     ImmutablePair<String, LogicalImagerRule> toRule() throws IOException {

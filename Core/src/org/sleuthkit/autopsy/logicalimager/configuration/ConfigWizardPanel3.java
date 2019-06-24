@@ -28,18 +28,14 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 
-final class ConfigWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor>  {
-
+/**
+ * Configuration Wizard Panel 3
+ */
+final class ConfigWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
     private ConfigVisualPanel3 component;
 
-
-
-    // Get the visual component for the panel. In this template, the component
-    // is kept separate. This can be more efficient: if the wizard is created
-    // but never displayed, or not all panels are displayed, it is better to
-    // create only those which really need to be visible.
     @Override
     public ConfigVisualPanel3 getComponent() {
         if (component == null) {
@@ -78,6 +74,9 @@ final class ConfigWizardPanel3 implements WizardDescriptor.Panel<WizardDescripto
         return component.isSaved();
     }
 
+    /**
+     * Fire an envent to indicate that state of the wizard panel has changed
+     */
     private void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {

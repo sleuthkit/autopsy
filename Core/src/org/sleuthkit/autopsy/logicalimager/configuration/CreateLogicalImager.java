@@ -36,7 +36,6 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Configuration Logical Imager
  */
-
 @ActionID(
         category = "Tools",
         id = "org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImager"
@@ -47,7 +46,7 @@ import org.openide.util.NbBundle.Messages;
 @ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
 @Messages("CTL_CreateLogicalImager=Create Logical Imager")
 public final class CreateLogicalImager implements ActionListener {
-    
+
     @NbBundle.Messages({
         "CreateLogicalImager.title=Create Logical Imager"
     })

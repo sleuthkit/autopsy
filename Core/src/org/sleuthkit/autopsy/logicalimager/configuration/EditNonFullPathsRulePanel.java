@@ -111,6 +111,11 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         addDocumentListeners();
     }
 
+    /**
+     * Set the min and max size options
+     *
+     * @param rule the rule the min and max size options should reflect
+     */
     private void setupMinMaxSizeOptions(LogicalImagerRule rule) {
         String savedMinSize = rule.getMinFileSize() == null ? "" : rule.getMinFileSize().toString();
         setSizeAndUnits(minSizeTextField, minSizeUnitsCombobox, savedMinSize);
@@ -158,6 +163,12 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         modifiedWithinTextField.getDocument().addDocumentListener(docListener);
     }
 
+    /**
+     * Initialize the text area and the scroll pane viewing it
+     *
+     * @param pane     the JScrollPane which will be viewing the JTextArea
+     * @param textArea the JTextArea being initialized
+     */
     private void initTextArea(JScrollPane pane, JTextArea textArea) {
         textArea.setColumns(20);
         textArea.setRows(4);
@@ -180,6 +191,15 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Convert a long value and a string representing its units to Bytes
+     *
+     * @param value the numerical value to convert
+     * @param units the name of the units to convert to Kilobytes, Megabytes, or
+     *              Gigabytes
+     *
+     * @return
+     */
     private long convertToBytes(long value, String units) {
         long convertedValue = value;
         if (units.equals(Bundle.EditNonFullPathsRulePanel_units_gigabytes())) {
@@ -187,11 +207,19 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         } else if (units.equals(Bundle.EditNonFullPathsRulePanel_units_megabytes())) {
             convertedValue = convertedValue * BYTE_UNIT_CONVERSION * BYTE_UNIT_CONVERSION;
         } else if (units.equals(Bundle.EditNonFullPathsRulePanel_units_kilobytes())) {
-            convertedValue = convertedValue * BYTE_UNIT_CONVERSION;
+            convertedValue *= BYTE_UNIT_CONVERSION;
         }
         return convertedValue;
     }
 
+    /**
+     * Set the size and units for a specified sizeField and unitsComboBox
+     *
+     * @param sizeField     the size field to set
+     * @param unitsComboBox the units combo box to set
+     * @param value         the value as a string representation of the number
+     *                      of Bytes
+     */
     private void setSizeAndUnits(JTextField sizeField, JComboBox<String> unitsComboBox, String value) {
         if (StringUtils.isBlank(value)) {
             unitsComboBox.setSelectedItem(Bundle.EditNonFullPathsRulePanel_units_bytes());
@@ -222,20 +250,36 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
     }
 
+    /**
+     * Set the modified within X days field
+     *
+     * @param minDays the number of days to include
+     */
     private void setModifiedWithin(Integer minDays) {
         modifiedWithinTextField.setText(minDays == null ? "" : minDays.toString());
         modifiedWithinCheckbox.setSelected(!StringUtils.isBlank(modifiedWithinTextField.getText()));
         modifiedWithinTextField.setEnabled(modifiedWithinCheckbox.isSelected());
     }
 
-    private void setTextArea(JTextArea textArea, List<String> set) {
+    /**
+     * Set the contents of a text area to display a list of Strings
+     *
+     * @param textArea the text area to set the text of
+     * @param list     the list of Strings to display in the text area
+     */
+    private void setTextArea(JTextArea textArea, List<String> list) {
         String text = "";
-        if (set != null) {
-            text = set.stream().map((s) -> s + System.getProperty("line.separator")).reduce(text, String::concat); // NON-NLS
+        if (list != null) {
+            text = list.stream().map((s) -> s + System.getProperty("line.separator")).reduce(text, String::concat); // NON-NLS
         }
         textArea.setText(text);
     }
 
+    /**
+     * Set the extensions textField to display a list of extensions
+     *
+     * @param extensions the list of extensions to display
+     */
     private void setExtensions(List<String> extensions) {
         extensionsTextField.setText("");
         String content = "";
@@ -539,6 +583,12 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         setOkButton();
     }//GEN-LAST:event_modifiedWithinCheckboxActionPerformed
 
+    /**
+     * Update the background area of a JTextArea to reflect whether it is
+     * enabled or not
+     *
+     * @param textArea the textArea to update the background color of
+     */
     private static void updateTextAreaBackgroundColor(JTextArea textArea) {
         if (textArea.isEnabled()) {
             textArea.setBackground(Color.WHITE);
@@ -547,6 +597,10 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Update the enabled status of conditions which are exclusive of each other
+     * when either one is changed
+     */
     private void updateExclusiveConditions() {
         extensionsTextField.setEnabled(extensionsCheckbox.isSelected());
         filenamesScrollPane.setEnabled(fileNamesCheckbox.isSelected());
@@ -584,6 +638,12 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private javax.swing.JLabel userFolderNote;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Set the name description and should alert / should save checkboxes
+     *
+     * @param ruleName the name of the rule
+     * @param rule     the LogicalImagerRule
+     */
     private void setRule(String ruleName, LogicalImagerRule rule) {
         ruleNameTextField.setText(ruleName);
         descriptionTextField.setText(rule.getDescription());
@@ -601,6 +661,12 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Checks that at least one condition has been selected and set to have a
+     * value
+     *
+     * @return true if at least one condition is set, false otherwise
+     */
     private boolean atLeastOneConditionSet() {
         return (extensionsCheckbox.isSelected() && !StringUtils.isBlank(extensionsTextField.getText()))
                 || (fileNamesCheckbox.isSelected() && !StringUtils.isBlank(fileNamesTextArea.getText()))
@@ -648,6 +714,14 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         this.setOkButton();
     }
 
+    /**
+     * Convert the contents of this panel to a rule and return it as well as its
+     * name.
+     *
+     * @return an ImmutablePair containing the name of the rule and the rule
+     *
+     * @throws IOException
+     */
     @NbBundle.Messages({
         "EditNonFullPathsRulePanel.modifiedDaysNotPositiveException=Modified days must be a positive",
         "# {0} - message",
@@ -736,6 +810,16 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         return new ImmutablePair<>(ruleName, rule);
     }
 
+    /**
+     * Validate the contents of the extensions textField contain a list of comma
+     * seperated strings which could be file extensions
+     *
+     * @param textField the JTextField which contains the extensions
+     *
+     * @return a List containing a string for each possible extension specified.
+     *
+     * @throws IOException
+     */
     @NbBundle.Messages({
         "EditNonFullPathsRulePanel.emptyExtensionException=Extensions cannot have an empty entry",})
     private List<String> validateExtensions(JTextField textField) throws IOException {

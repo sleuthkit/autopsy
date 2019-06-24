@@ -58,7 +58,7 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
                     }
                 }
             });
-            
+
         }
         return component;
     }
@@ -79,7 +79,7 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
         // use ChangeSupport to implement add/removeChangeListener below.
         // WizardDescriptor.ERROR/WARNING/INFORMATION_MESSAGE will also be useful.
     }
-   
+
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
