@@ -66,7 +66,7 @@ final class ConfigWizardPanel3 implements WizardDescriptor.Panel<WizardDescripto
 
     @Override
     public void storeSettings(WizardDescriptor data) {
-
+        //no settings to store
     }
 
     @Override

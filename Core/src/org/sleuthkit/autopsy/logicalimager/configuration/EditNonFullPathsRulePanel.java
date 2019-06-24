@@ -829,7 +829,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         List<String> extensions = new ArrayList<>();
         for (String extension : textField.getText().split(",")) {
             String strippedExtension = strip(extension);
-            if (extension.isEmpty()) {
+            if (strippedExtension.isEmpty()) {
                 throw new IOException(Bundle.EditNonFullPathsRulePanel_emptyExtensionException());
             }
             extensions.add(strippedExtension);
