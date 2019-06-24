@@ -42,7 +42,6 @@ import org.openide.util.NbBundle.Messages;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ConfigVisualPanel2 extends JPanel {
 
-    private static final List<String> EMPTY_LIST = new ArrayList<>();
     private static final long serialVersionUID = 1L;
     private String configFilename;
     private LogicalImagerConfig config = null;
@@ -77,7 +76,7 @@ final class ConfigVisualPanel2 extends JPanel {
     private void initComponents() {
 
         modifiedDateLabel = new javax.swing.JLabel();
-        daysIncludedTextField = new javax.swing.JTextField();
+        modifiedWithinTextField = new javax.swing.JTextField();
         daysIncludedLabel = new javax.swing.JLabel();
         fullPathsLabel = new javax.swing.JLabel();
         flagEncryptionProgramsCheckBox = new javax.swing.JCheckBox();
@@ -114,12 +113,11 @@ final class ConfigVisualPanel2 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.modifiedDateLabel.text")); // NOI18N
 
-        daysIncludedTextField.setEditable(false);
-        daysIncludedTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
-        daysIncludedTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.daysIncludedTextField.text")); // NOI18N
-        daysIncludedTextField.setEnabled(false);
-        daysIncludedTextField.setMinimumSize(new java.awt.Dimension(60, 20));
-        daysIncludedTextField.setPreferredSize(new java.awt.Dimension(60, 20));
+        modifiedWithinTextField.setEditable(false);
+        modifiedWithinTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
+        modifiedWithinTextField.setEnabled(false);
+        modifiedWithinTextField.setMinimumSize(new java.awt.Dimension(60, 20));
+        modifiedWithinTextField.setPreferredSize(new java.awt.Dimension(60, 20));
 
         org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.daysIncludedLabel.text")); // NOI18N
         daysIncludedLabel.setEnabled(false);
@@ -135,7 +133,6 @@ final class ConfigVisualPanel2 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.ruleNameLabel.text")); // NOI18N
 
-        ruleNameEditTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.ruleNameEditTextField.text")); // NOI18N
         ruleNameEditTextField.setEnabled(false);
 
         newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
@@ -156,7 +153,6 @@ final class ConfigVisualPanel2 extends JPanel {
             }
         });
 
-        descriptionEditTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.descriptionEditTextField.text")); // NOI18N
         descriptionEditTextField.setEnabled(false);
 
         deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
@@ -208,13 +204,11 @@ final class ConfigVisualPanel2 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(extensionsLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.extensionsLabel.text")); // NOI18N
 
-        extensionsTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.extensionsTextField.text")); // NOI18N
         extensionsTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(filenamesLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.filenamesLabel.text")); // NOI18N
 
-        configFileTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.configFileTextField.text")); // NOI18N
-        configFileTextField.setToolTipText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.configFileTextField.toolTipText")); // NOI18N
+        configFileTextField.setToolTipText("");
         configFileTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleSetFileLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.ruleSetFileLabel.text")); // NOI18N
@@ -254,13 +248,11 @@ final class ConfigVisualPanel2 extends JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(minSizeLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.minSizeLabel.text")); // NOI18N
 
         minSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
-        minSizeTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.minSizeTextField.text")); // NOI18N
         minSizeTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(maxSizeLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.maxSizeLabel.text")); // NOI18N
 
         maxSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
-        maxSizeTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.maxSizeTextField.text")); // NOI18N
         maxSizeTextField.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -316,7 +308,7 @@ final class ConfigVisualPanel2 extends JPanel {
                                 .addGap(129, 129, 129)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(daysIncludedLabel))
                                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -394,7 +386,7 @@ final class ConfigVisualPanel2 extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(modifiedDateLabel)
-                            .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(daysIncludedLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(shouldSaveCheckBox)
@@ -411,7 +403,7 @@ final class ConfigVisualPanel2 extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void rulesTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_rulesTableKeyReleased
-        rulesTableSelect();
+        updateForSelectedRule();
     }//GEN-LAST:event_rulesTableKeyReleased
 
     @NbBundle.Messages({
@@ -500,25 +492,32 @@ final class ConfigVisualPanel2 extends JPanel {
             updatePanel(configFilename, config);
             if (rulesTable.getRowCount() > 0) {
                 rulesTable.setRowSelectionInterval(0, 0);
-                rulesTableSelect();
+                updateForSelectedRule();
             }
         }
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
     private void rulesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rulesTableMouseReleased
-        rulesTableSelect();
+        updateForSelectedRule();
     }//GEN-LAST:event_rulesTableMouseReleased
 
     private void flagEncryptionProgramsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flagEncryptionProgramsCheckBoxActionPerformed
         flagEncryptionPrograms = flagEncryptionProgramsCheckBox.isSelected();
-        toggleEncryptionProgramsRule(flagEncryptionPrograms);
+        setEnabledEncryptionProgramsRule(flagEncryptionPrograms);
     }//GEN-LAST:event_flagEncryptionProgramsCheckBoxActionPerformed
 
     private void finalizeImageWriterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_finalizeImageWriterActionPerformed
         config.setFinalizeImageWriter(finalizeImageWriter.isSelected());
     }//GEN-LAST:event_finalizeImageWriterActionPerformed
 
-    private void toggleEncryptionProgramsRule(boolean flagEncryptionPrograms) {
+    /**
+     * Set the whether the a rule for detecting encryption programs will be
+     * added to the rules in this config
+     *
+     * @param flagEncryptionPrograms true to have encryption programs rule
+     *                               added, false otherwise.
+     */
+    private void setEnabledEncryptionProgramsRule(boolean flagEncryptionPrograms) {
         if (flagEncryptionPrograms) {
             // add the special rule
             ImmutablePair<String, LogicalImagerRule> ruleMap = createEncryptionProgramsRule();
@@ -531,7 +530,7 @@ final class ConfigVisualPanel2 extends JPanel {
                 updatePanel(configFilename, config);
                 if (rulesTable.getRowCount() > 0) {
                     rulesTable.setRowSelectionInterval(0, 0);
-                    rulesTableSelect();
+                    updateForSelectedRule();
                 }
             }
         }
@@ -554,7 +553,6 @@ final class ConfigVisualPanel2 extends JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField configFileTextField;
     private javax.swing.JLabel daysIncludedLabel;
-    private javax.swing.JTextField daysIncludedTextField;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JTextField descriptionEditTextField;
     private javax.swing.JLabel descriptionLabel;
@@ -579,6 +577,7 @@ final class ConfigVisualPanel2 extends JPanel {
     private javax.swing.JLabel minSizeLabel;
     private javax.swing.JFormattedTextField minSizeTextField;
     private javax.swing.JLabel modifiedDateLabel;
+    private javax.swing.JTextField modifiedWithinTextField;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JTextField ruleNameEditTextField;
     private javax.swing.JLabel ruleNameLabel;
@@ -598,6 +597,13 @@ final class ConfigVisualPanel2 extends JPanel {
         return config.getRuleSets().get(0);
     }
 
+    /**
+     * Update the panel to reflect the rules in the current config
+     *
+     * @param configFilePath  path of the config file being modified
+     * @param config          contents of the config file being modifed
+     * @param rowSelectionkey the name of the rule to select by default
+     */
     private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
@@ -623,29 +629,46 @@ final class ConfigVisualPanel2 extends JPanel {
         // If there are any rules, select the first one
         if (rulesTableModel.getRowCount() > 0) {
             rulesTable.setRowSelectionInterval(selectThisRow, selectThisRow);
-            rulesTableSelect();
+            updateForSelectedRule();
         } else {
+            clearRuleDetails();
             updateRuleButtons(false);
         }
     }
 
+    /**
+     * Private helper method to call updatePanel with no row to select specified
+     *
+     * @param configFilePath path of the config file being modified
+     * @param config         contents of the config file being modifed
+     */
     private void updatePanel(String configFilePath, LogicalImagerConfig config) {
         updatePanel(configFilePath, config, null);
     }
 
-    private void rulesTableSelect() {
+    /**
+     * Update the panel to reflect the selected rule
+     */
+    private void updateForSelectedRule() {
         int index = rulesTable.getSelectedRow();
         if (index != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
             String description = (String) rulesTable.getModel().getValueAt(index, 1);
-            updateRuleDetails(ruleName, description, config);
+            updateRuleDetails(ruleName, description);
             updateRuleButtons(!ruleName.equals(EncryptionProgramsRule.getName()));
         } else {
+            clearRuleDetails();
             updateRuleButtons(false);
         }
     }
 
-    private void updateRuleDetails(String ruleName, String description, LogicalImagerConfig config) {
+    /**
+     * Update the panel to display details of the specified rule
+     *
+     * @param ruleName    the name of the rule to display
+     * @param description the description of the rule to display
+     */
+    private void updateRuleDetails(String ruleName, String description) {
         clearRuleDetails();
         LogicalImagerRule rule = getRuleSetFromCurrentConfig().find(ruleName);
         shouldAlertCheckBox.setSelected(rule.isShouldAlert());
@@ -667,18 +690,36 @@ final class ConfigVisualPanel2 extends JPanel {
             maxSizeTextField.setText(rule.getMaxFileSize().toString());
         }
         if (rule.getMinDays() == null) {
-            daysIncludedTextField.setText("");
+            modifiedWithinTextField.setText("");
         } else {
-            daysIncludedTextField.setText(Integer.toString(rule.getMinDays()));
+            modifiedWithinTextField.setText(Integer.toString(rule.getMinDays()));
         }
     }
 
+    /**
+     * Reset rule details displayed to be blank or default
+     */
     private void clearRuleDetails() {
+        ruleNameEditTextField.setText("");
+        descriptionEditTextField.setText("");
         extensionsTextField.setText("");
-        shouldAlertCheckBox.setSelected(false);
+        updateExtensions(null);
+        updateList(filenamesTable, null);
+        updateList(folderNamesTable, null);
+        updateList(fullPathsTable, null);
+        minSizeTextField.setText("");
+        maxSizeTextField.setText("");
+        modifiedWithinTextField.setText("");
         shouldSaveCheckBox.setSelected(true);
+        shouldAlertCheckBox.setSelected(false);
     }
 
+    /**
+     * Update the extensions displayed
+     *
+     * @param extensions the list of extensions to display, null to display
+     *                   nothing
+     */
     private void updateExtensions(List<String> extensions) {
         extensionsTextField.setText("");
         if (extensions == null) {
@@ -693,15 +734,21 @@ final class ConfigVisualPanel2 extends JPanel {
         extensionsTextField.setText(content);
     }
 
-    private void updateList(javax.swing.JTable jTable, List<String> set) {
+    /**
+     * Update a JTable to display a list of Strings
+     *
+     * @param jTable the JTable to update
+     * @param list   the list of Strings to display, null to display nothing
+     */
+    private void updateList(javax.swing.JTable jTable, List<String> list) {
         SingleColumnTableModel tableModel = new SingleColumnTableModel();
         jTable.setTableHeader(null);
-        if (set == null) {
+        if (list == null) {
             jTable.setModel(tableModel);
             return;
         }
         int row = 0;
-        for (String s : set) {
+        for (String s : list) {
             tableModel.setValueAt(s, row, 0);
             row++;
         }
@@ -725,6 +772,12 @@ final class ConfigVisualPanel2 extends JPanel {
         updatePanel(configFilename, config, ruleMap.getKey());
     }
 
+    /**
+     * Adjust the enabled status of the rule buttons to reflect wether there is
+     * a currently selected rule which can be modified
+     *
+     * @param isRowSelected true if a row is selected, false otherwise
+     */
     private void updateRuleButtons(boolean isRowSelected) {
         newRuleButton.setEnabled(true);
         editRuleButton.setEnabled(isRowSelected);

@@ -56,7 +56,6 @@ final class ConfigVisualPanel1 extends JPanel {
     private static final String DEFAULT_CONFIG_FILE_NAME = "logical-imager-config.json";
     private static final String UPDATE_UI_EVENT_NAME = "UPDATE_UI";
     private String configFilename;
-    private boolean newFile = true;
 
     /**
      * Creates new form ConfigVisualPanel1
@@ -99,7 +98,6 @@ final class ConfigVisualPanel1 extends JPanel {
         warningLabel = new javax.swing.JLabel();
 
         configFileTextField.setEditable(false);
-        configFileTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.configFileTextField.text_1")); // NOI18N
         configFileTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(ConfigVisualPanel1.class, "ConfigVisualPanel1.browseButton.text")); // NOI18N
