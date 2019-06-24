@@ -660,7 +660,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
      */
     void setOkButton() {
         if (this.okButton != null) {
-            this.okButton.setEnabled(!StringUtils.isBlank(ruleNameTextField.getText()) && atLeastOneConditionSet());
+            this.okButton.setEnabled(!StringUtils.isBlank(ruleNameTextField.getText()) && atLeastOneConditionSet() && (shouldAlertCheckBox.isSelected() || shouldSaveCheckBox.isSelected()));
         }
     }
 
