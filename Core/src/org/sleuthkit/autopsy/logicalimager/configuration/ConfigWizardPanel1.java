@@ -130,9 +130,8 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
-        wiz.putProperty("configFilename", component.getConfigFilename()); // NON-NLS
+        wiz.putProperty("configFilename", component.getConfigPath()); // NON-NLS
         wiz.putProperty("config", component.getConfig()); // NON-NLS
-        wiz.putProperty("newFile", component.isNewFile()); // NON-NLS
     }
 
     @Override

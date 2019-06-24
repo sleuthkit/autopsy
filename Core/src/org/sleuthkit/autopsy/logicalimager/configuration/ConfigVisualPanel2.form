@@ -33,7 +33,7 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="deleteRuleButton" linkSize="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jScrollPane1" alignment="1" min="-2" pref="341" max="-2" attributes="0"/>
+                  <Component id="rulesScrollPane" alignment="1" min="-2" pref="341" max="-2" attributes="0"/>
               </Group>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
@@ -81,9 +81,9 @@
                                           <Component id="ruleNameEditTextField" alignment="0" max="32767" attributes="0"/>
                                           <Component id="descriptionEditTextField" alignment="0" max="32767" attributes="0"/>
                                           <Component id="extensionsTextField" alignment="0" max="32767" attributes="0"/>
-                                          <Component id="jScrollPane5" alignment="0" pref="0" max="32767" attributes="0"/>
-                                          <Component id="jScrollPane6" alignment="0" pref="0" max="32767" attributes="0"/>
-                                          <Component id="jScrollPane7" alignment="0" pref="0" max="32767" attributes="0"/>
+                                          <Component id="fullPathsScrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
+                                          <Component id="filenamesScrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
+                                          <Component id="folderNamesScrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
                                       <EmptySpace min="-2" max="-2" attributes="0"/>
                                   </Group>
@@ -110,7 +110,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jScrollPane1" pref="479" max="32767" attributes="0"/>
+                      <Component id="rulesScrollPane" pref="479" max="32767" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="newRuleButton" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -139,7 +139,7 @@
                       </Group>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane6" pref="0" max="32767" attributes="0"/>
+                          <Component id="filenamesScrollPane" pref="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="filenamesLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -147,7 +147,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane7" pref="0" max="32767" attributes="0"/>
+                          <Component id="folderNamesScrollPane" pref="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="folderNamesLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -160,7 +160,7 @@
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
-                              <Component id="jScrollPane5" pref="0" max="32767" attributes="0"/>
+                              <Component id="fullPathsScrollPane" pref="0" max="32767" attributes="0"/>
                               <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -312,7 +312,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteRuleButtonActionPerformed"/>
       </Events>
     </Component>
-    <Container class="javax.swing.JScrollPane" name="jScrollPane5">
+    <Container class="javax.swing.JScrollPane" name="fullPathsScrollPane">
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
@@ -346,7 +346,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JScrollPane" name="jScrollPane6">
+    <Container class="javax.swing.JScrollPane" name="filenamesScrollPane">
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
@@ -401,7 +401,7 @@
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
     </Component>
-    <Container class="javax.swing.JScrollPane" name="jScrollPane7">
+    <Container class="javax.swing.JScrollPane" name="folderNamesScrollPane">
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
@@ -487,7 +487,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="finalizeImageWriterActionPerformed"/>
       </Events>
     </Component>
-    <Container class="javax.swing.JScrollPane" name="jScrollPane1">
+    <Container class="javax.swing.JScrollPane" name="rulesScrollPane">
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>

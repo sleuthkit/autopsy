@@ -240,6 +240,9 @@ final class ConfigVisualPanel1 extends JPanel {
         firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
     }//GEN-LAST:event_driveListMouseReleasedSelection
 
+    /**
+     * Refresh the list of local drives on the current machine
+     */
     @Messages({"ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found"})
     private void refreshDriveList() {
         List<String> listData = new ArrayList<>();
@@ -258,6 +261,7 @@ final class ConfigVisualPanel1 extends JPanel {
                         firstRemovableDrive = i;
                     }
                 } catch (IOException ignored) {
+                    //unable to get this removable drive for default selection will try and select next removable drive by default 
                 }
             }
             i++;
@@ -266,7 +270,7 @@ final class ConfigVisualPanel1 extends JPanel {
         if (!listData.isEmpty()) {
             // auto-select the first external drive, if any
             driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
-            driveListMouseReleasedSelection(null);
+            firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
             driveList.requestFocusInWindow();
             warningLabel.setText("");
         } else {
@@ -274,6 +278,10 @@ final class ConfigVisualPanel1 extends JPanel {
         }
     }
 
+    /**
+     * Update which controls are enabled to reflect the current radio button
+     * selection.
+     */
     private void updateControls() {
         browseButton.setEnabled(configureFolderRadioButton.isSelected());
         refreshButton.setEnabled(configureDriveRadioButton.isSelected());
@@ -282,6 +290,12 @@ final class ConfigVisualPanel1 extends JPanel {
         firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
     }
 
+    /**
+     * Open a file chooser to allow users to choose a json configuration file in
+     * a folder.
+     *
+     * @param title the dialog title
+     */
     @NbBundle.Messages({
         "ConfigVisualPanel1.fileNameExtensionFilter=Configuration JSON File",
         "ConfigVisualPanel1.invalidConfigJson=Invalid config JSON: ",
@@ -303,7 +317,6 @@ final class ConfigVisualPanel1 extends JPanel {
                     loadConfigFile(path);
                     configFilename = path;
                     configFileTextField.setText(path);
-                    newFile = false;
                 } catch (JsonIOException | JsonSyntaxException | IOException ex) {
                     JOptionPane.showMessageDialog(this,
                             Bundle.ConfigVisualPanel1_invalidConfigJson() + ex.getMessage(),
@@ -316,7 +329,6 @@ final class ConfigVisualPanel1 extends JPanel {
                 }
                 configFilename = path;
                 configFileTextField.setText(path);
-                newFile = true;
             }
         }
     }
@@ -335,6 +347,20 @@ final class ConfigVisualPanel1 extends JPanel {
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Load a json config file specified by the path argument.
+     *
+     *
+     * @param path the path of the json config to load
+     *
+     * @return the LogicalImagerConfig which contains the rules from the loaded
+     *         config.
+     *
+     * @throws FileNotFoundException
+     * @throws JsonIOException
+     * @throws JsonSyntaxException
+     * @throws IOException
+     */
     @NbBundle.Messages({
         "# {0} - filename",
         "ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty",})
@@ -353,9 +379,15 @@ final class ConfigVisualPanel1 extends JPanel {
         }
     }
 
+    /**
+     * Get the LogicalImagerConfig for the currently selected config file.
+     *
+     * @return the LogicalImagerConfig which contains the rules from the loaded
+     *         config.
+     */
     LogicalImagerConfig getConfig() {
-        String configFileName = getConfigFilename();
-        if (new File(configFileName).exists()) {
+        String configFileName = getConfigPath();
+        if (configFileName != null && new File(configFileName).exists()) {
             try {
                 return loadConfigFile(configFileName);
             } catch (JsonIOException | JsonSyntaxException | IOException ex) {
@@ -366,7 +398,13 @@ final class ConfigVisualPanel1 extends JPanel {
         }
     }
 
-    String getConfigFilename() {
+    /**
+     * Get the path of the currently selected json config file.
+     *
+     * @return the path of the currently selected config file or null if invalid
+     *         settings are selected
+     */
+    String getConfigPath() {
         if (configureFolderRadioButton.isSelected()) {
             return configFilename;
         } else {
@@ -378,12 +416,14 @@ final class ConfigVisualPanel1 extends JPanel {
         }
     }
 
-    static String getUpdateEventName(){
+    /**
+     * The name of the event which signifies an update to the settings reflected
+     * by ConfigVisualPanel1
+     *
+     * @return UPDATE_UI_EVENT_NAME
+     */
+    static String getUpdateEventName() {
         return UPDATE_UI_EVENT_NAME;
-    }
-    
-    boolean isNewFile() {
-        return newFile;
     }
 
     void setConfigFilename(String filename
@@ -391,9 +431,14 @@ final class ConfigVisualPanel1 extends JPanel {
         configFileTextField.setText(filename);
     }
 
+    /**
+     * Checks if the current panel has valid settings selected.
+     *
+     * @return true if panel has valid settings selected, false otherwise
+     */
     boolean isPanelValid() {
-        return !StringUtils.isBlank(getConfigFilename()) && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
-                || (configureFolderRadioButton.isSelected() && (newFile || !configFileTextField.getText().isEmpty())));
+        return !StringUtils.isBlank(getConfigPath()) && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
+                || (configureFolderRadioButton.isSelected() && (!configFileTextField.getText().isEmpty())));
 
     }
 

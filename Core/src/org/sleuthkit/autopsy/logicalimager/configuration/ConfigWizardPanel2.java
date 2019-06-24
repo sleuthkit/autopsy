@@ -70,7 +70,7 @@ final class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescripto
         // use wiz.getProperty to retrieve previous panel state
         configFilename = (String) wiz.getProperty("configFilename"); // NON-NLS
         config = (LogicalImagerConfig) wiz.getProperty("config"); // NON-NLS
-        component.setConfiguration(configFilename, config, (boolean) wiz.getProperty("newFile"));
+        component.setConfiguration(configFilename, config);
     }
 
     @Override
