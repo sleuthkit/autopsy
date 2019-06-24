@@ -18,8 +18,20 @@
  */
 package org.sleuthkit.autopsy.logicalimager.dsp;
 
+/**
+ * Utility class for displaying a list of drives
+ */
 public final class DriveListUtils {
 
+    /**
+     * Convert a number of bytes to a human readable string
+     *
+     * @param bytes the number of bytes to convert
+     * @param si    whether it takes 1000 or 1024 of a unit to reach the next
+     *              unit
+     *
+     * @return a human readable string representing the number of bytes
+     */
     public static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) {

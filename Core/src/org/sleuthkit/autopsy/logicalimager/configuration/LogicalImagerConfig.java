@@ -29,18 +29,18 @@ import java.util.List;
 class LogicalImagerConfig {
 
     @SerializedName("finalize-image-writer")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private boolean finalizeImageWriter;
 
     @SerializedName("rule-sets")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private List<LogicalImagerRuleSet> ruleSets;
-    
+
     LogicalImagerConfig() {
         this.finalizeImageWriter = false;
         this.ruleSets = new ArrayList<>();
     }
-    
+
     LogicalImagerConfig(
             boolean finalizeImageWriter,
             List<LogicalImagerRuleSet> ruleSets
@@ -63,5 +63,5 @@ class LogicalImagerConfig {
 
     void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
         this.ruleSets = ruleSets;
-    }    
+    }
 }

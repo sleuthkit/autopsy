@@ -38,8 +38,7 @@ import org.openide.util.NbBundle;
     "LogicalImagerConfigDeserializer.missingRuleSetException=Missing rule-set",
     "# {0} - key",
     "LogicalImagerConfigDeserializer.unsupportedKeyException=Unsupported key: {0}",
-    "LogicalImagerConfigDeserializer.fullPathsException=A rule with full-paths cannot have other rule definitions",
-})
+    "LogicalImagerConfigDeserializer.fullPathsException=A rule with full-paths cannot have other rule definitions",})
 class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerConfig> {
 
     @Override
@@ -58,7 +57,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
         }
 
         List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
-        for (JsonElement element: asJsonArray) {
+        for (JsonElement element : asJsonArray) {
             String setName = null;
             List<LogicalImagerRule> rules = null;
             JsonObject asJsonObject = element.getAsJsonObject();
@@ -71,11 +70,11 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
         }
         return new LogicalImagerConfig(finalizeImageWriter, ruleSets);
     }
-    
+
     private List<LogicalImagerRule> parseRules(JsonArray asJsonArray) {
         List<LogicalImagerRule> rules = new ArrayList<>();
 
-        for (JsonElement element: asJsonArray) {
+        for (JsonElement element : asJsonArray) {
             String key1;
             Boolean shouldSave = false;
             Boolean shouldAlert = true;
@@ -90,7 +89,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
             Integer minDays = null;
             Integer minDate = null;
             Integer maxDate = null;
-            
+
             Set<Map.Entry<String, JsonElement>> entrySet = element.getAsJsonObject().entrySet();
 
             for (Map.Entry<String, JsonElement> entry1 : entrySet) {
@@ -147,7 +146,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
                                     break;
                                 case "max": // NON-NLS
                                     maxFileSize = entry2.getValue().getAsLong();
-                                    break;  
+                                    break;
                                 default:
                                     throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(sizeKey));
                             }
@@ -166,7 +165,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
                                     maxDate = entry2.getValue().getAsInt();
                                     break;
                                 case "min-days": // NON-NLS
-                                    minDays = entry2.getValue().getAsInt();  
+                                    minDays = entry2.getValue().getAsInt();
                                     break;
                                 default:
                                     throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_unsupportedKeyException(dateKey));
@@ -184,7 +183,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
                     || (filenames != null && !filenames.isEmpty()))) {
                 throw new JsonParseException(Bundle.LogicalImagerConfigDeserializer_fullPathsException());
             }
-            
+
             LogicalImagerRule rule = new LogicalImagerRule.Builder()
                     .getShouldAlert(shouldAlert)
                     .getShouldSave(shouldSave)
@@ -202,11 +201,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
                     .build();
             rules.add(rule);
         } // for
-            
+
         return rules;
     }
 }
-
-
-
-    

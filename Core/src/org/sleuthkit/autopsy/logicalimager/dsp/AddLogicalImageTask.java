@@ -36,26 +36,25 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A runnable that 
- *   - copy the logical image folder to a destination folder
- *   - add alert.txt and users.txt files to report
- *   - add an image data source to the case database.
+ * A runnable that - copy the logical image folder to a destination folder - add
+ * alert.txt and users.txt files to report - add an image data source to the
+ * case database.
  */
 final class AddLogicalImageTask extends AddMultipleImageTask {
 
-    private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());   
+    private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS
     private final static String USERS_TXT = "users.txt"; //NON-NLS
     private final File src;
     private final File dest;
     private final DataSourceProcessorCallback callback;
     private final DataSourceProcessorProgressMonitor progressMonitor;
-    
-    AddLogicalImageTask(String deviceId, 
-            List<String> imagePaths, 
-            String timeZone, 
+
+    AddLogicalImageTask(String deviceId,
+            List<String> imagePaths,
+            String timeZone,
             File src, File dest,
-            DataSourceProcessorProgressMonitor progressMonitor, 
+            DataSourceProcessorProgressMonitor progressMonitor,
             DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
         super(deviceId, imagePaths, timeZone, progressMonitor, callback);
@@ -64,11 +63,10 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         this.progressMonitor = progressMonitor;
         this.callback = callback;
     }
-    
+
     /**
-     * Copy the src directory to dest.
-     * Add alert.txt and users.txt to the case report
-     * Adds the image to the case database.
+     * Copy the src directory to dest. Add alert.txt and users.txt to the case
+     * report Adds the image to the case database.
      */
     @Messages({
         "# {0} - src", "# {1} - dest", "AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}",
@@ -81,7 +79,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
     public void run() {
         List<String> errorList = new ArrayList<>();
         List<Content> emptyDataSources = new ArrayList<>();
-        
+
         try {
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_copyingImageFromTo(src.toString(), dest.toString()));
             FileUtils.copyDirectory(src, dest);
@@ -94,7 +92,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
-        
+
         // Add the alert.txt and users.txt to the case report
         progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingToReport(ALERT_TXT));
         String status = addReport(Paths.get(dest.toString(), ALERT_TXT), ALERT_TXT + " " + src.getName());
@@ -113,15 +111,16 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             return;
         }
         progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingToReport(USERS_TXT));
-        
+
         super.run();
     }
-    
-    /** 
+
+    /**
      * Add a file specified by the reportPath to the case report.
-     * 
+     *
      * @param reportPath Path to the report to be added
      * @param reportName Name associated the report
+     *
      * @returns null if success, or exception message if failure
      *
      */
@@ -139,6 +138,6 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             String msg = Bundle.AddLogicalImageTask_failedToAddReport(reportPath.toString(), ex.getMessage());
             logger.log(Level.SEVERE, String.format("Failed to add report {0}. Reason= {1}", reportPath.toString(), ex.getMessage()));
             return msg;
-        }        
+        }
     }
 }

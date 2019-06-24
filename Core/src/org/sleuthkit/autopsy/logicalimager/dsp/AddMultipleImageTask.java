@@ -40,9 +40,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * 
+ *
  * A runnable that adds multiple images to the case database
- * 
+ *
  */
 @Messages({
     "AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type"
@@ -59,12 +59,11 @@ class AddMultipleImageTask implements Runnable {
     private final Case currentCase;
     private boolean criticalErrorOccurred;
     private volatile boolean cancelled;
-    
+
     /**
-     * Constructs a runnable that adds multiple image files
-     * to a case database. If Sleuth Kit fails to find a filesystem
-     * in any of input image files, the file is added to the case as a
-     * local/logical file instead.
+     * Constructs a runnable that adds multiple image files to a case database.
+     * If Sleuth Kit fails to find a filesystem in any of input image files, the
+     * file is added to the case as a local/logical file instead.
      *
      * @param deviceId        An ASCII-printable identifier for the device
      *                        associated with the data source that is intended
@@ -76,14 +75,14 @@ class AddMultipleImageTask implements Runnable {
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      * @param callback        Callback to call when processing is done.
-     * @throws NoCurrentCaseException   The exception if there is no open case.
+     *
+     * @throws NoCurrentCaseException The exception if there is no open case.
      */
     @Messages({
         "# {0} - file", "AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as logical file",
-        "# {0} - deviceId", "# {1} - exceptionMessage", 
-        "AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device %s: %s",
-    })    
-    AddMultipleImageTask(String deviceId, List<String> imageFilePaths, String timeZone, 
+        "# {0} - deviceId", "# {1} - exceptionMessage",
+        "AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device %s: %s",})
+    AddMultipleImageTask(String deviceId, List<String> imageFilePaths, String timeZone,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) throws NoCurrentCaseException {
         this.deviceId = deviceId;
         this.imageFilePaths = imageFilePaths;
@@ -171,9 +170,9 @@ class AddMultipleImageTask implements Runnable {
      *                                 added to this list for eventual return to
      *                                 the caller via the callback.
      * @param localFileDataSourcePaths If the image cannot be added because
-     *                                 Sleuth Kit cannot detect a filesystem, the
-     *                                 image file path is added to this list for
-     *                                 later addition as a part of a
+     *                                 Sleuth Kit cannot detect a filesystem,
+     *                                 the image file path is added to this list
+     *                                 for later addition as a part of a
      *                                 local/logical files data source.
      * @param errorMessages            If there are any error messages, the
      *                                 error messages are added to this list for
@@ -184,8 +183,7 @@ class AddMultipleImageTask implements Runnable {
         "# {0} - imageFilePath", "AddMultipleImageTask.adding=Adding: {0}",
         "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImageTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}",
         "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImageTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}",
-        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}",
-    })
+        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}",})
     private void addImageToCase(String imageFilePath, List<Content> newDataSources, List<String> localFileDataSourcePaths, List<String> errorMessages) {
         /*
          * Try to add the image to the case database as a data source.

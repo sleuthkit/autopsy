@@ -31,44 +31,44 @@ import java.util.Map;
  */
 class LogicalImagerRule {
 
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private final Boolean shouldAlert;
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private final Boolean shouldSave;
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private final String name;
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private final String description;
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private List<String> extensions = new ArrayList<>();
     @SerializedName("file-names")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private List<String> filenames = new ArrayList<>();
     @SerializedName("folder-names")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private List<String> paths = new ArrayList<>();
     @SerializedName("full-paths")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private List<String> fullPaths = new ArrayList<>();
-    @SerializedName("size-range")    
-    @Expose(serialize = true) 
+    @SerializedName("size-range")
+    @Expose(serialize = true)
     final private Map<String, Long> sizeRange = new HashMap<>();
-    @SerializedName("date-range")    
-    @Expose(serialize = true) 
+    @SerializedName("date-range")
+    @Expose(serialize = true)
     final private Map<String, Integer> dateRange = new HashMap<>();
-    
+
     // The following fields should not be serialized, internal use only
-    @Expose(serialize = false) 
+    @Expose(serialize = false)
     private Long minFileSize;
-    @Expose(serialize = false) 
+    @Expose(serialize = false)
     private Long maxFileSize;
-    @Expose(serialize = false) 
+    @Expose(serialize = false)
     private Integer minDays;
-    @Expose(serialize = false) 
+    @Expose(serialize = false)
     private Integer minDate;
-    @Expose(serialize = false) 
+    @Expose(serialize = false)
     private Integer maxDate;
-    
+
     private LogicalImagerRule(Boolean shouldAlert, Boolean shouldSave, String name, String description,
             List<String> extensions,
             List<String> filenames,
@@ -88,7 +88,7 @@ class LogicalImagerRule {
         this.filenames = filenames;
         this.paths = paths;
         this.fullPaths = fullPaths;
-        
+
         this.sizeRange.put("min", minFileSize); // NON-NLS
         this.minFileSize = minFileSize;
         this.sizeRange.put("max", maxFileSize); // NON-NLS
@@ -107,7 +107,7 @@ class LogicalImagerRule {
         this.description = null;
         this.name = null;
     }
-    
+
     Boolean isShouldAlert() {
         return shouldAlert;
     }
@@ -164,87 +164,88 @@ class LogicalImagerRule {
      * Builder class
      */
     static class Builder {
+
         private Boolean shouldAlert = null;
         private Boolean shouldSave = null;
         private String name = null;
         private String description = null;
         private List<String> extensions = null;
-        private List<String> filenames = null;        
-        private List<String> paths = null;        
-        private List<String> fullPaths = null;        
+        private List<String> filenames = null;
+        private List<String> paths = null;
+        private List<String> fullPaths = null;
         private Long minFileSize = null;
         private Long maxFileSize = null;
         private Integer minDays = null;
         private Integer minDate = null;
         private Integer maxDate = null;
-        
+
         Builder getShouldAlert(boolean shouldAlert) {
             this.shouldAlert = shouldAlert;
             return this;
         }
-        
+
         Builder getShouldSave(boolean shouldSave) {
             this.shouldSave = shouldSave;
             return this;
         }
-        
+
         Builder getName(String name) {
             this.name = name;
             return this;
         }
-        
+
         Builder getDescription(String description) {
             this.description = description;
             return this;
         }
-        
+
         Builder getExtensions(List<String> extensions) {
             this.extensions = extensions;
             return this;
         }
-        
+
         Builder getFilenames(List<String> filenames) {
             this.filenames = filenames;
             return this;
         }
-        
+
         Builder getPaths(List<String> paths) {
             this.paths = paths;
             return this;
         }
-        
+
         Builder getFullPaths(List<String> fullPaths) {
             this.fullPaths = fullPaths;
             return this;
         }
-        
+
         Builder getMinFileSize(Long minFileSize) {
             this.minFileSize = minFileSize;
             return this;
         }
-        
+
         Builder getMaxFileSize(Long maxFileSize) {
             this.maxFileSize = maxFileSize;
             return this;
         }
-        
+
         Builder getMinDays(Integer minDays) {
             this.minDays = minDays;
             return this;
         }
-        
+
         Builder getMinDate(Integer minDate) {
             this.minDate = minDate;
             return this;
         }
-        
+
         Builder getMaxDate(Integer maxDate) {
             this.maxDate = maxDate;
             return this;
         }
-        
+
         LogicalImagerRule build() {
-            return new LogicalImagerRule(shouldAlert, shouldSave, name, description, 
+            return new LogicalImagerRule(shouldAlert, shouldSave, name, description,
                     extensions, filenames, paths, fullPaths,
                     minFileSize, maxFileSize,
                     minDays, minDate, maxDate
