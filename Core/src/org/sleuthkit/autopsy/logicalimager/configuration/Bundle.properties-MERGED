@@ -22,14 +22,14 @@ ConfigureLogicalImagerDialog.daysIncludedTextField.text=
 ConfigureLogicalImagerDialog.modifiedDateLabel.text=Modified Within:
 ConfigureLogicalImagerDialog.fullPathsLabel.text=Full paths:
 ConfigureLogicalImagerDialog.flagEncryptionProgramsCheckBox.text=Flag encryption programs
-ConfigVisualPanel1.chooseFileTitle=Select location
+ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration
 # {0} - filename
 ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty
 ConfigVisualPanel1.configurationError=Configuration error
 ConfigVisualPanel1.fileNameExtensionFilter=Configuration JSON File
 ConfigVisualPanel1.invalidConfigJson=Invalid config JSON: 
 ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found
-ConfigVisualPanel1.selectConfigurationFile=Select configuration file
+ConfigVisualPanel1.selectConfigurationFile=Select location
 ConfigVisualPanel2.cancel=Cancel
 ConfigVisualPanel2.deleteRuleSet=Delete rule 
 ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule confirmation
@@ -45,7 +45,7 @@ ConfigVisualPanel3.copyStatus.notSaved=File has not been saved
 ConfigVisualPanel3.copyStatus.saved=Saved
 ConfigVisualPanel3.copyStatus.savingInProgress=Saving file, please wait
 # {0} - configurationLocation
-ConfigVisualPanel3.description.text=Press Save to write the imaging tool and configuration file to the destination.\nDestination: {0}.
+ConfigVisualPanel3.description.text=Press Save to write the imaging tool and configuration file to the destination.\nDestination: {0}
 # {0} - configFilename
 ConfigVisualPanel3.failedToSaveConfigMsg=Failed to save configuration file: {0}
 ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file

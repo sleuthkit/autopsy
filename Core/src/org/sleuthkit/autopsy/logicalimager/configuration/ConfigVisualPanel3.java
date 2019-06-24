@@ -236,7 +236,7 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
 
     @NbBundle.Messages({
         "# {0} - configurationLocation",
-        "ConfigVisualPanel3.description.text=Press Save to write the imaging tool and configuration file to the destination.\nDestination: {0}."
+        "ConfigVisualPanel3.description.text=Press Save to write the imaging tool and configuration file to the destination.\nDestination: {0}"
     })
     void setConfigInfoForSaving(String configFile, LogicalImagerConfig config) {
         this.configFilename = configFile;
