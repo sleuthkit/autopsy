@@ -75,7 +75,7 @@ class LogicalImagerConfig {
         this.version = version;
     }
     
-    static public String getDefaultVersion() {
+    static public String getCurrentVersion() {
         return CURRENT_VERSION;
     }
     

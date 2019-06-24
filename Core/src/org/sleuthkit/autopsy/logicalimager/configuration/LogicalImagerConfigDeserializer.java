@@ -44,7 +44,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
 
     @Override
     public LogicalImagerConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
-        String version = LogicalImagerConfig.getDefaultVersion();
+        String version = LogicalImagerConfig.getCurrentVersion();
         boolean finalizeImageWriter = false;
 
         final JsonObject jsonObject = je.getAsJsonObject();
