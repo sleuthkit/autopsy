@@ -39,7 +39,11 @@
         <copy todir="${basedir}/release/Tesseract-OCR" >
             <fileset dir="${thirdparty.dir}/Tesseract-OCR"/>
         </copy>
-            
+        
+        <!--Copy Plaso to release-->
+        <copy todir="${basedir}/release/plaso" >
+            <fileset dir="${thirdparty.dir}/plaso"/>
+        </copy>     
         <!--Copy GStreamer to release-->
         <copy todir="${basedir}/release/gstreamer" >
             <fileset dir="${thirdparty.dir}/gstreamer"/>
