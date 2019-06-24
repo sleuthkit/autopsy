@@ -28,7 +28,7 @@ import java.util.List;
  */
 class LogicalImagerConfig {
 
-    static private final String DEFAULT_VERSION = "1.0";
+    static private final String CURRENT_VERSION = "1.0";
     
     @SerializedName("version")
     @Expose(serialize = true) 
@@ -43,7 +43,7 @@ class LogicalImagerConfig {
     private List<LogicalImagerRuleSet> ruleSets;
     
     LogicalImagerConfig() {
-        this.version = DEFAULT_VERSION;
+        this.version = CURRENT_VERSION;
         this.finalizeImageWriter = false;
         this.ruleSets = new ArrayList<>();
     }
@@ -52,7 +52,7 @@ class LogicalImagerConfig {
         boolean finalizeImageWriter,
         List<LogicalImagerRuleSet> ruleSets
     ) {
-        this.version = DEFAULT_VERSION;
+        this.version = CURRENT_VERSION;
         this.finalizeImageWriter = finalizeImageWriter;
         this.ruleSets = ruleSets;
     }
@@ -76,7 +76,7 @@ class LogicalImagerConfig {
     }
     
     static public String getDefaultVersion() {
-        return DEFAULT_VERSION;
+        return CURRENT_VERSION;
     }
     
     boolean isFinalizeImageWriter() {
