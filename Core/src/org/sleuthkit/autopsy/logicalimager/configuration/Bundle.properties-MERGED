@@ -102,7 +102,6 @@ ConfigVisualPanel2.jCheckBox2.text=jCheckBox2
 ConfigVisualPanel2.jTextField1.text=jTextField1
 ConfigVisualPanel1.jRadioButton1.text=Create new configuration
 ConfigVisualPanel1.jRadioButton2.text=Open existing configuration
-ConfigVisualPanel1.configFileTextField.text_1=
 ConfigVisualPanel2.modifiedDateLabel.text=Modified Within:
 ConfigVisualPanel2.folderNamesLabel.text=Folder names:
 ConfigVisualPanel2.filenamesLabel.text=File names:

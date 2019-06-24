@@ -37,7 +37,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-public class ConfigVisualPanel3 extends javax.swing.JPanel {
+/**
+ * Configuration visual panel 3
+ */
+class ConfigVisualPanel3 extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(ConfigVisualPanel3.class.getName());
     private static final String SAVED_LOGICAL_IMAGER = "SAVED_LOGICAL_IMAGER";
@@ -53,7 +56,7 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         "ConfigVisualPanel3.copyStatus.savingInProgress=Saving file, please wait",
         "ConfigVisualPanel3.copyStatus.saved=Saved",
         "ConfigVisualPanel3.copyStatus.error=Unable to save file"})
-    public ConfigVisualPanel3() {
+    ConfigVisualPanel3() {
         initComponents();
         configStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_notSaved());
         executableStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_notSaved());
@@ -67,10 +70,19 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         return Bundle.ConfigVisualPanel3_saveConfigurationFile();
     }
 
+    /**
+     * Identifies whether the configuration has been saved
+     *
+     * @return true if it has been saved, false otherwise
+     */
     boolean isSaved() {
         return hasBeenSaved;
     }
 
+    /**
+     * Save the current configuration file and copy the logical imager
+     * executable to the same location.
+     */
     @NbBundle.Messages({
         "# {0} - configFilename",
         "ConfigVisualPanel3.failedToSaveConfigMsg=Failed to save configuration file: {0}",
@@ -109,7 +121,6 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         }
         try {
             writeTskLogicalImagerExe(Paths.get(configFilename).getParent());
-
             executableStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_saved());
         } catch (IOException ex) {
             saveSuccess = false;
@@ -126,6 +137,13 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
+    /**
+     * Write the logical imager executable to the specified location
+     *
+     * @param destDir the location to write the logical imager executable to
+     *
+     * @throws IOException
+     */
     private void writeTskLogicalImagerExe(Path destDir) throws IOException {
         try (InputStream in = getClass().getResourceAsStream("tsk_logical_imager.exe")) { // NON-NLS
             File destFile = Paths.get(destDir.toString(), "tsk_logical_imager.exe").toFile(); // NON-NLS
@@ -133,6 +151,12 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * The name of the event which is sent when the configuration and executable
+     * have been saved.
+     *
+     * @return SAVED_LOGICAL_IMAGER
+     */
     static String getSavedEventName() {
         return SAVED_LOGICAL_IMAGER;
     }
@@ -234,6 +258,12 @@ public class ConfigVisualPanel3 extends javax.swing.JPanel {
     private javax.swing.JButton saveButton;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Set the information necessary to save the configuration
+     *
+     * @param configFile the path to the json configuration file
+     * @param config     the configuration to save
+     */
     @NbBundle.Messages({
         "# {0} - configurationLocation",
         "ConfigVisualPanel3.description.text=Press Save to write the imaging tool and configuration file to the destination.\nDestination: {0}"
