@@ -122,6 +122,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCaseAdmin;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
@@ -737,19 +738,13 @@ public class Case {
             } else {
                 progressIndicator = new LoggingProgressIndicator();
             }
-            progressIndicator.start(Bundle.Case_progressIndicatorStatus_closingCase());
             closeCurrentCase();
-            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_openingCase());
-            openAsCurrentCase(new Case(newMetadata), false);
-            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_deletingDataSource());
-            deleteDataSource(dataSourceId, progressIndicator);
-            progressIndicator.start(Bundle.Case_progressIndicatorStatus_closingCase());
-            closeCurrentCase();
-            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_openingCase());
-            openAsCurrentCase(new Case(newMetadata), false);
+            progressIndicator.switchToIndeterminate(Bundle.Case_progressIndicatorStatus_openingCase());
+            progressIndicator.start(Bundle.Case_progressIndicatorStatus_deletingDataSource());
+            deleteDataSource(dataSourceId, progressIndicator, metadata);
             progressIndicator.finish();
+            openAsCurrentCase(new Case(newMetadata), false);
         }
-
     }
 
     /**
@@ -762,12 +757,22 @@ public class Case {
         "Case.DeletingDataSourceFromCase=Deleting the Data Source from the case.",
         "Case.ErrorDeletingDataSource.name.text=Error Deleting Data Source"
     })
-    private static void deleteDataSource(Long dataSourceId, ProgressIndicator progressIndicator) {
+    private static void deleteDataSource(Long dataSourceId, ProgressIndicator progressIndicator, CaseMetadata metadata) {
             progressIndicator.progress(Bundle.Case_DeletingDataSourceFromCase());
+//            CaseMetadata metadata = currentCase.getMetadata();
+            SleuthkitCaseAdmin skCaseAdmin = null;
             try {
-                Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceId);
+                if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
+                    String caseDbPath = metadata.getCaseDirectory() + File.separator + metadata.getCaseDatabaseName();
+                    skCaseAdmin = new SleuthkitCaseAdmin(caseDbPath);
+                } else {
+//                    String caseName, CaseDbConnectionInfo info, String caseDirPath
+                    CaseDbConnectionInfo caseDbConnectionInfo = UserPreferences.getDatabaseConnectionInfo();
+                    skCaseAdmin = new SleuthkitCaseAdmin(metadata.getCaseDatabaseName(), caseDbConnectionInfo, metadata.getCaseDirectory());  
+                }
+                skCaseAdmin.deleteDataSource(dataSourceId);
                 eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));    
-            } catch (NoCurrentCaseException | TskCoreException ex) {
+            } catch (TskCoreException | UserPreferencesException ex) {
                 logger.log(Level.WARNING, String.format("Error Deleting Data Source %s", dataSourceId), ex);                
             }
     }
