@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.MessageFormat;
@@ -74,6 +75,7 @@ public final class CreateLogicalImager implements ActionListener {
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}")); // NON-NLS
         wiz.setTitle(Bundle.CreateLogicalImager_title());
-        DialogDisplayer.getDefault().notify(wiz);
+        Dialog dialog = DialogDisplayer.getDefault().createDialog(wiz);
+        dialog.setVisible(true);
     }
 }

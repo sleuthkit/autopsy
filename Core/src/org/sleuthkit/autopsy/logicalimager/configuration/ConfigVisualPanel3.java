@@ -172,7 +172,7 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
 
         javax.swing.JButton saveButton = new javax.swing.JButton();
         descriptionScrollPane = new javax.swing.JScrollPane();
-        javax.swing.JTextArea descriptionTextArea = new javax.swing.JTextArea();
+        descriptionTextArea = new javax.swing.JTextArea();
         javax.swing.JLabel configLabel = new javax.swing.JLabel();
         configStatusLabel = new javax.swing.JLabel();
         javax.swing.JLabel executableLabel = new javax.swing.JLabel();
@@ -252,6 +252,7 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel configStatusLabel;
     private javax.swing.JScrollPane descriptionScrollPane;
+    private javax.swing.JTextArea descriptionTextArea;
     private javax.swing.JLabel executableStatusLabel;
     // End of variables declaration//GEN-END:variables
 
