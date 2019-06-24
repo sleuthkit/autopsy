@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
@@ -42,6 +43,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Panel for adding an logical image file from drive letters. Allows the user to
@@ -54,6 +56,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
+    private static final Logger logger = Logger.getLogger(LogicalImagerPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
     private static final String DRIVE_HAS_NO_IMAGES = Bundle.LogicalImagerPanel_messageLabel_driveHasNoImages();
@@ -489,7 +492,8 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                         firstRemovableDrive = i;
                     }
                 } catch (IOException ignored) {
-                     //unable to get this removable drive for default selection will try and select next removable drive by default 
+                    //unable to get this removable drive for default selection will try and select next removable drive by default 
+                    logger.log(Level.INFO, "Unable to select first removable drive found", ignored);
                 }
             }
             i++;

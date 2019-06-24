@@ -32,6 +32,7 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -44,6 +45,7 @@ import javax.swing.filechooser.FileSystemView;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.logicalimager.dsp.DriveListUtils;
 
 /**
@@ -52,6 +54,7 @@ import org.sleuthkit.autopsy.logicalimager.dsp.DriveListUtils;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ConfigVisualPanel1 extends JPanel {
 
+    private static final Logger logger = Logger.getLogger(ConfigVisualPanel1.class.getName());
     private static final long serialVersionUID = 1L;
     private static final String DEFAULT_CONFIG_FILE_NAME = "logical-imager-config.json";
     private static final String UPDATE_UI_EVENT_NAME = "UPDATE_UI";
@@ -260,6 +263,7 @@ final class ConfigVisualPanel1 extends JPanel {
                     }
                 } catch (IOException ignored) {
                     //unable to get this removable drive for default selection will try and select next removable drive by default 
+                    logger.log(Level.INFO, "Unable to select first removable drive found", ignored);
                 }
             }
             i++;
