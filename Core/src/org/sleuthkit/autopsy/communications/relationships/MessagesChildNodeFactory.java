@@ -27,52 +27,51 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * ChildFactory that creates createKeys and nodes from a given selectionInfo for
- * only emails, call logs and messages.
+ * A ChildFactory subclass for creating MessageNodes from a set of 
+ * BlackboardArtifact objects.
  *
  */
-final class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact> {
+public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
 
     private static final Logger logger = Logger.getLogger(MessagesChildNodeFactory.class.getName());
 
     private SelectionInfo selectionInfo;
-
-    /**
-     * Construct a new MessageChildNodeFactory from the currently selectionInfo
-     *
-     * @param selectionInfo SelectionInfo object for the currently selected
-     *                      accounts
-     */
-    MessagesChildNodeFactory(SelectionInfo selectionInfo) {
+    
+    private List<String> threadIDs;
+    
+    MessagesChildNodeFactory(SelectionInfo selectionInfo, List<String> threadIDs) {
         this.selectionInfo = selectionInfo;
+        this.threadIDs = threadIDs;
+    }
+    
+    MessagesChildNodeFactory() {
+        this(null, null);
     }
     
     /**
      * Updates the current instance of selectionInfo and calls the refresh method.
      * 
      * @param selectionInfo New instance of the currently selected accounts
+     * @param threadIDs A list of threadIDs to filter the keys by, null will 
+     *                  return all keys for the selected accounts.
      */
-    public void refresh(SelectionInfo selectionInfo) {
-        this.selectionInfo = selectionInfo;
+    public void refresh(SelectionInfo selectionInfo, List<String> threadIDs) {
+        this.threadIDs = threadIDs;
+        this.selectionInfo = selectionInfo;        
         refresh(true);
-    }
 
-    /**
-     * Creates a list of Keys (BlackboardArtifact) for only messages for the
-     * currently selected accounts
-     *
-     * @param list List of BlackboardArtifact to populate
-     *
-     * @return True on success
-     */
+    }
+    
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
         CommunicationsManager communicationManager;
+        
         try {
             communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
         } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -87,19 +86,37 @@ final class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact> {
         final Set<Content> relationshipSources;
 
         try {
+            
             relationshipSources = communicationManager.getRelationshipSources(selectionInfo.getAccountDevicesInstances(), selectionInfo.getCommunicationsFilter());
-
-            relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
-
+            for(Content content: relationshipSources) {
+                if( !(content instanceof BlackboardArtifact)){
+                    continue;
+                }
+                
                 BlackboardArtifact bba = (BlackboardArtifact) content;
                 BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
-                if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
-                        || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
-                        || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
+                if (fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
+                        && fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
+                        && fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
+                    continue;
+                }
+
+                // We want all artifacts that do not have "threadIDs" to appear as one thread in the UI
+                // To achive this assign any artifact that does not have a threadID
+                // the "UNTHREADED_ID"
+                String artifactThreadID = MessageNode.UNTHREADED_ID;
+                BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
+
+                if(attribute != null) {
+                    artifactThreadID = attribute.getValueString();
+                }
+
+                if(threadIDs == null || threadIDs.contains(artifactThreadID)) {
                     list.add(bba);
                 }
-            });
+                
+            }
 
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get relationship sources.", ex); //NON-NLS
@@ -107,9 +124,10 @@ final class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact> {
 
         return true;
     }
-
+    
     @Override
     protected Node createNodeForKey(BlackboardArtifact key) {
-        return new MessageNode(key);
+        return new MessageNode(key, null, null);
     }
+    
 }

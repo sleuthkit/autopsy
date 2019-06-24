@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * ChildFactory for ContactNodes.
  */
 final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
-    private static final Logger logger = Logger.getLogger(MessagesChildNodeFactory.class.getName());
+    private static final Logger logger = Logger.getLogger(ContactsChildNodeFactory.class.getName());
 
     private SelectionInfo selectionInfo;
 
