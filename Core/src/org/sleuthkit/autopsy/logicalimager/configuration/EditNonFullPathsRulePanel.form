@@ -167,6 +167,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="EditNonFullPathsRulePanel.shouldSaveCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="shouldSaveCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="shouldAlertCheckBox">
       <Properties>
@@ -177,6 +180,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="EditNonFullPathsRulePanel.shouldAlertCheckBox.actionCommand" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="shouldAlertCheckBoxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JTextField" name="extensionsTextField">
       <Properties>
@@ -233,7 +239,7 @@
     <Component class="javax.swing.JFormattedTextField" name="modifiedWithinTextField">
       <Properties>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-          <Format format="####; " subtype="-1" type="0"/>
+          <Format format="" subtype="-1" type="0"/>
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>

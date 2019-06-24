@@ -149,9 +149,19 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
 
         shouldSaveCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldSaveCheckBox, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.shouldSaveCheckBox.text")); // NOI18N
+        shouldSaveCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                shouldSaveCheckBoxActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(shouldAlertCheckBox, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.shouldAlertCheckBox.text")); // NOI18N
         shouldAlertCheckBox.setActionCommand(org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.shouldAlertCheckBox.actionCommand")); // NOI18N
+        shouldAlertCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                shouldAlertCheckBoxActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(fullPathsLabel, org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.fullPathsLabel.text")); // NOI18N
         fullPathsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(EditFullPathsRulePanel.class, "EditFullPathsRulePanel.fullPathsLabel.toolTipText")); // NOI18N
@@ -227,6 +237,14 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void shouldSaveCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shouldSaveCheckBoxActionPerformed
+        setOkButton();
+    }//GEN-LAST:event_shouldSaveCheckBoxActionPerformed
+
+    private void shouldAlertCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shouldAlertCheckBoxActionPerformed
+        setOkButton();
+    }//GEN-LAST:event_shouldAlertCheckBoxActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
