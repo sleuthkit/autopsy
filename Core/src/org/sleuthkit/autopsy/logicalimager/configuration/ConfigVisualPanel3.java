@@ -58,6 +58,10 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
         "ConfigVisualPanel3.copyStatus.error=Unable to save file"})
     ConfigVisualPanel3() {
         initComponents();
+    }
+
+    final void resetPanel() {
+        hasBeenSaved = false;
         configStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_notSaved());
         executableStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_notSaved());
     }

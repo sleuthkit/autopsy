@@ -62,6 +62,7 @@ final class ConfigWizardPanel3 implements WizardDescriptor.Panel<WizardDescripto
         String configFilename = (String) wiz.getProperty("configFilename"); // NON-NLS
         LogicalImagerConfig config = (LogicalImagerConfig) wiz.getProperty("config"); // NON-NLS
         component.setConfigInfoForSaving(configFilename, config);
+        component.resetPanel();
     }
 
     @Override
