@@ -671,8 +671,8 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         return (extensionsCheckbox.isSelected() && !StringUtils.isBlank(extensionsTextField.getText()))
                 || (fileNamesCheckbox.isSelected() && !StringUtils.isBlank(fileNamesTextArea.getText()))
                 || (folderNamesCheckbox.isSelected() && !StringUtils.isBlank(folderNamesTextArea.getText()))
-                || (minSizeCheckbox.isSelected() && !StringUtils.isBlank(minSizeTextField.getText()))
-                || (maxSizeCheckbox.isSelected() && !StringUtils.isBlank(maxSizeTextField.getText()))
+                || (minSizeCheckbox.isSelected() && !StringUtils.isBlank(minSizeTextField.getText()) && !(Long.parseLong(minSizeTextField.getText())== 0))
+                || (maxSizeCheckbox.isSelected() && !StringUtils.isBlank(maxSizeTextField.getText())&& !(Long.parseLong(maxSizeTextField.getText())== 0))
                 || (modifiedWithinCheckbox.isSelected() && !StringUtils.isBlank(modifiedWithinTextField.getText()));
 
     }
