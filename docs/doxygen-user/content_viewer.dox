@@ -38,7 +38,7 @@ Different scripts can be chosen from the drop-down menu to display results for n
 
 \subsection cv_indexed_text Indexed Text
 
-The Indexed Text tab shows the text that has been indexed by the \ref keyword_search_page. You can switch the "Text Source" field to "Result Text" to see the text has been indexed for results associated with a file.
+The Indexed Text tab shows the text that has been indexed by the \ref keyword_search_page. You can switch the "Text Source" field to "Result Text" to see the text that has been indexed for the results associated with a file.
 
 \image html content_viewer_indexed_text.png
 
