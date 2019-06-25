@@ -362,13 +362,13 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
 
         folderNamesScrollPane.setEnabled(false);
 
-        minSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
+        minSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new DefaultToEmptyNumberFormatter(new java.text.DecimalFormat("#,###; "))));
         minSizeTextField.setEnabled(false);
 
-        maxSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
+        maxSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new DefaultToEmptyNumberFormatter(new java.text.DecimalFormat("#,###; "))));
         maxSizeTextField.setEnabled(false);
 
-        modifiedWithinTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat(""))));
+        modifiedWithinTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new DefaultToEmptyNumberFormatter(new java.text.DecimalFormat("#,###; "))));
         modifiedWithinTextField.setEnabled(false);
 
         userFolderNote.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/info-icon-16.png"))); // NOI18N
@@ -694,14 +694,30 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             return (extensionsCheckbox.isSelected() && !StringUtils.isBlank(extensionsTextField.getText()) && !validateExtensions(extensionsTextField).isEmpty())
                     || (fileNamesCheckbox.isSelected() && !StringUtils.isBlank(fileNamesTextArea.getText()))
                     || (folderNamesCheckbox.isSelected() && !StringUtils.isBlank(folderNamesTextArea.getText()))
-                    || (minSizeCheckbox.isSelected() && !StringUtils.isBlank(minSizeTextField.getText()) && !(Long.parseLong(minSizeTextField.getText()) == 0))
-                    || (maxSizeCheckbox.isSelected() && !StringUtils.isBlank(maxSizeTextField.getText()) && !(Long.parseLong(maxSizeTextField.getText()) == 0))
+                    || (minSizeCheckbox.isSelected() && !StringUtils.isBlank(minSizeTextField.getText()) && isNonZeroLong(minSizeTextField.getText()))
+                    || (maxSizeCheckbox.isSelected() && !StringUtils.isBlank(maxSizeTextField.getText()) && isNonZeroLong(maxSizeTextField.getText()))
                     || (modifiedWithinCheckbox.isSelected() && !StringUtils.isBlank(modifiedWithinTextField.getText()));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Invalid contents of extensionsTextField", ex);
             return false;
         }
+    }
 
+    /**
+     * Check that value could be a non zero long
+     *
+     * @param numberString the string to check
+     *
+     * @return true if the value is a non-zero long
+     */
+    private boolean isNonZeroLong(String numberString) {
+        Long value = 0L;
+        try {
+            value = Long.parseLong(numberString);
+        } catch (NumberFormatException ignored) {
+            //The string was not a number, this method will return false becaue the value is still 0L
+        }
+        return (value != 0);
     }
 
     /**
