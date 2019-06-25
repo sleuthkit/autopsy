@@ -23,7 +23,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -36,6 +35,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.logicalimager.configuration.ConfigureLogicalImager.getTskLogicalImagerExe;
 
 /**
  * Configuration Wizard Panel 2
@@ -130,10 +130,7 @@ final class ConfigWizardPanel2 implements WizardDescriptor.Panel<WizardDescripto
     }
 
     private void writeTskLogicalImagerExe(Path destDir) throws IOException {
-        try (InputStream in = getClass().getResourceAsStream("tsk_logical_imager.exe")) { // NON-NLS
-            File destFile = Paths.get(destDir.toString(), "tsk_logical_imager.exe").toFile(); // NON-NLS
-            FileUtils.copyInputStreamToFile(in, destFile);
-        }
+        FileUtils.copyFileToDirectory(getTskLogicalImagerExe(), destDir.toFile());
     }
 
     @Override

@@ -69,7 +69,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      *
      * @return A data source type display string for this data source processor.
      */
-    @Messages({"LogicalImagerDSProcessor.dataSourceType=Autopsy Imager"})
+    @Messages({"LogicalImagerDSProcessor.dataSourceType=Autopsy Logical Imager Results"})
     public static String getType() {
         return Bundle.LogicalImagerDSProcessor_dataSourceType();
     }
