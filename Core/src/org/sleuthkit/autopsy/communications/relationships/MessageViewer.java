@@ -74,7 +74,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
     @Messages({
         "MessageViewer_tabTitle=Messages",
         "MessageViewer_columnHeader_From=From",
-        "MessageViewer_columnHeader_Date=Data",
+        "MessageViewer_columnHeader_Date=Date",
         "MessageViewer_columnHeader_To=To",
         "MessageViewer_columnHeader_EarlyDate=Earliest Message",
         "MessageViewer_columnHeader_Subject=Subject",

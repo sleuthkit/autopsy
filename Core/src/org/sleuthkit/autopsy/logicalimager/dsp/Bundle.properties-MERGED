@@ -36,7 +36,7 @@ AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type
 # {1} - deviceId
 # {2} - exceptionMessage
 AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}
-LogicalImagerDSProcessor.dataSourceType=Autopsy Imager
+LogicalImagerDSProcessor.dataSourceType=Autopsy Logical Imager Results
 # {0} - directory
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
 # {0} - directory
