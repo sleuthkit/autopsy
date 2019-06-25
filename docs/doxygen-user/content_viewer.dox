@@ -78,7 +78,7 @@ The Message tab shows details of emails and SMS messages.
 
 \section cv_metadata File Metadata
 
-The File Metadata tab displays basic information about the file, such as type, size, and hash. It also displays the output of the SleuthKit istat tool.
+The File Metadata tab displays basic information about the file, such as type, size, and hash. It also displays the output of the Sleuth Kit istat tool.
 
 \image html content_viewer_metadata.png
 
