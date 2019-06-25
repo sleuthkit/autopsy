@@ -1,0 +1,37 @@
+/*! \page machine_translation_page Machine Translation
+
+You can configure a machine translation service to use with Autopsy. If one is configured, you will be able to translate text in the \ref content_viewer_page and file names in the \ref result_viewer_page and \ref tree_viewer_page.
+
+\section mt_config Configuration
+
+To set up a machine translation service, go to Options->Tools and then select the Machine Translation tab. Select the service you want to use from the drop down menu at the top.
+
+\image html mt_config.png
+
+Each service will require slightly different configuration steps. After setting everything up, you can run a quick check that the service is set up correctly using the "Test" button.
+
+\section mt_file_names Translating File Names
+
+You can use machine translation to automatically translate file and folder names, such as the ones seen below:
+
+\image html mt_file_name_original.png
+
+To enable file name translation, go to the \ref view_options_page and check the box under "Translate Text".
+
+\image html mt_file_name_enable.png
+
+Once enabled, the translated versions of the file and folder names will be shown in the \ref tree_viewer_page and in the first column of the \ref result_viewer_page. The original name will be displayed in the new "Original Name" column.
+
+\image html mt_file_names_translated.png
+
+\section mt_content_viewer Translating File Content
+
+After you set up a machine translation service, the Translation tab under the Text content viewer will be active. The Translation tab allows you to use your service to translate the beginning of a file. For example, you might see the following in the default Indexed Text tab:
+
+\image html mt_content_viewer_untranslated_text.png
+
+Switching to the Translation tab will display the results of running the text through the machine translation service.  
+
+\image html mt_content_viewer_translated.png
+
+*/

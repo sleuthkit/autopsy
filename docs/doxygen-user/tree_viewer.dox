@@ -1,8 +1,48 @@
 /*! \page tree_viewer_page Tree Viewer
 
-The Tree Viewer shows the discovered folders by the data sources they come from, as well as a list of files in the folders. It is located on the left side of the Autopsy screen. The "Group by Data Source" option on the top left moves all views, results, and tags under their corresponding data source.
+The tree on the left-hand side is where you can browse the files in the image and find saved results from automated procedures (ingest). The tree has five main areas:
+- <b>Data Sources:</b> This shows the directory tree hierarchy of the file systems in the images. You can navigate to a specific file or directory here. Each data source added is represented as a drive. If you add a data source multiple times, it shows up multiple times.
+- <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source. Look here for files of a specific type or property.
+- <b>Results:</b> Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
+- <b>Tags:</b> Where files and results that have been \ref tagging_page "tagged" are shown
+- <b>Reports:</b> References to reports that you have generated or that ingest modules have created show up here
 
-Each folder in the tree on the left shows how many items are contained within it in parentheses after the directory name. See the picture below.
+You can also use the "Group by data source" option available through the \ref view_options_page to move the views, results, and tags subtrees under their corresponding data sources. This can be helpful on very large cases to reduce the size of each node.
 
-\image html directory-tree.PNG
+\image html ui_layout_group_tree.PNG
+
+\section ui_tree_ds Data Sources
+
+The Data Sources section shows each data source that has been added to the case, in order added (top one is first).
+Right clicking on the various nodes in the Data Sources section of the tree will allow you to get more options for each data source and its contents. 
+
+Unallocated space is chunks of the file system that is currently not being used for anything. Unallocated space can store deleted files and other interesting artifacts. On the actual image, Unallocated space is stored in blocks with distinct locations on the system. However, because of the way various carving tools work, it is more ideal to feed them a single, large unallocated file. Autopsy provides access to both methods of looking at unallocated space.
+\li <b>Individual blocks in a volume</b>  There is a folder named "Unalloc". This folder contains all the individual unallocated blocks as the image is storing them. You can right click and extract them the same way you can extract any other type of file in the Directory Tree.
+\li <b>Single files</b>  Right click on a volume and select "Extract Unallocated Space as Single File" to concatenate all the unallocated files in the volume into a single, continuous file. (If desired, you can right click on an image, and select "Extract Unallocated Space to Single Files" which will do the same thing, but once for each volume in the image).
+
+An example of the single file extraction option is shown below.
+\image html extracting-unallocated-space.PNG
+
+\section ui_tree_views Views
+
+Views filter all the files in the case by some external property of the file, not by any internal analysis of the file. 
+- <b>File Type</b>  Sorts files by file extension or MIME type, and shows them in the appropriate group. For example, .mp3 and .wav both end up in the "Audio" group. 
+- <b>Recent Files</b>  Displays files that are accessed within the last seven days the user had the device.
+- <b>Deleted Files</b>  Displays files that have been deleted but the names have been recovered.
+- <b>File Size</b>  Sorts files based upon size. This can give you an idea where to look for files you are interested in.
+
+
+\section ui_tree_results Results
+- <b>Extracted Content:</b> Many ingest modules will place results here; EXIF data, GPS locations, or Web History for example
+- <b>Keyword Hits:</b> Keyword search hits show up here
+- <b>Hashset Hits:</b> Hashset hits show up here 
+- <b>E-Mail Messages:</b> Email messages show up here
+- <b>Interesting Items:</b> Things deemed interesting show up here
+- <b>Accounts:</b> Credit card accounts show up here
+- <b>Tags:</b> Any item you tag shows up here so you can find it again easily
+
+\section ui_tree_reports Reports
+
+Reports can be added by \subpage ingest_page or created using the \subpage reporting_page tool.
+
 */
