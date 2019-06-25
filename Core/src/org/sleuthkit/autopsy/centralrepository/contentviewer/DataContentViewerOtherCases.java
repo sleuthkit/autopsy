@@ -128,6 +128,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         reset();
     }
 
+    /**
+     * Get a placeholder string to use in place of case uuid when it isn't
+     * available
+     *
+     * @return UUID_PLACEHOLDER_STRING
+     */
     static String getPlaceholderUUID() {
         return UUID_PLACEHOLDER_STRING;
     }
