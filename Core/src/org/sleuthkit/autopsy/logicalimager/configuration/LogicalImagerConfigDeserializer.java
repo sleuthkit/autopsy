@@ -43,9 +43,15 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
 
     @Override
     public LogicalImagerConfig deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
+        String version = LogicalImagerConfig.getCurrentVersion();
         boolean finalizeImageWriter = false;
 
         final JsonObject jsonObject = je.getAsJsonObject();
+        final JsonElement jsonVersion = jsonObject.get("version"); // NON-NLS
+        if (jsonVersion != null) {
+            version = jsonVersion.getAsString();
+        }
+
         final JsonElement jsonFinalizeImageWriter = jsonObject.get("finalize-image-writer"); // NON-NLS
         if (jsonFinalizeImageWriter != null) {
             finalizeImageWriter = jsonFinalizeImageWriter.getAsBoolean();
@@ -68,7 +74,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
             LogicalImagerRuleSet ruleSet = new LogicalImagerRuleSet(setName, rules);
             ruleSets.add(ruleSet);
         }
-        return new LogicalImagerConfig(finalizeImageWriter, ruleSets);
+        return new LogicalImagerConfig(version, finalizeImageWriter, ruleSets);
     }
 
     private List<LogicalImagerRule> parseRules(JsonArray asJsonArray) {

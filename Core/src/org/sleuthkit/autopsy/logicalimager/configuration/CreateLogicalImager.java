@@ -20,8 +20,7 @@ package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.Component;
 import java.awt.Dialog;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,28 +30,30 @@ import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.actions.CallableSystemAction;
+import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getInstallModulesPath;
 
 /**
  * Configuration Logical Imager
  */
-@ActionID(
-        category = "Tools",
-        id = "org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImager"
-)
-@ActionRegistration(
-        displayName = "#CTL_CreateLogicalImager"
-)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImager")
+@ActionRegistration(displayName = "#CTL_CreateLogicalImager", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
 @Messages("CTL_CreateLogicalImager=Create Logical Imager")
-public final class CreateLogicalImager implements ActionListener {
+public final class CreateLogicalImager extends CallableSystemAction {
+
+    private static final String DISPLAY_NAME = Bundle.CTL_ConfigureLogicalImager();
+    private static final String TSK_LOGICAL_IMAGER_DIR = "tsk_logical_imager"; // NON-NLS
+    private static final String TSK_LOGICAL_IMAGER_EXE = "tsk_logical_imager.exe"; // NON-NLS
 
     @NbBundle.Messages({
         "CreateLogicalImager.title=Create Logical Imager"
     })
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void performAction() {
         List<WizardDescriptor.Panel<WizardDescriptor>> panels = new ArrayList<>();
         panels.add(new ConfigWizardPanel1());
         panels.add(new ConfigWizardPanel2());
@@ -77,5 +78,27 @@ public final class CreateLogicalImager implements ActionListener {
         wiz.setTitle(Bundle.CreateLogicalImager_title());
         Dialog dialog = DialogDisplayer.getDefault().createDialog(wiz);
         dialog.setVisible(true);
+    }
+
+    @Override
+    public String getName() {
+        return DISPLAY_NAME;
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        File tskLogicalImagerExe = getTskLogicalImagerExe();
+        return tskLogicalImagerExe.exists();
+    }
+
+    static public File getTskLogicalImagerExe() {
+        String installModulesPath = getInstallModulesPath();
+        File tskLogicalImagerExe = new File(installModulesPath + File.separator + TSK_LOGICAL_IMAGER_DIR + File.separator + TSK_LOGICAL_IMAGER_EXE);
+        return tskLogicalImagerExe;
     }
 }

@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -36,6 +35,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.logicalimager.configuration.ConfigureLogicalImager.getTskLogicalImagerExe;
 
 /**
  * Configuration visual panel 3
@@ -149,10 +149,7 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
      * @throws IOException
      */
     private void writeTskLogicalImagerExe(Path destDir) throws IOException {
-        try (InputStream in = getClass().getResourceAsStream("tsk_logical_imager.exe")) { // NON-NLS
-            File destFile = Paths.get(destDir.toString(), "tsk_logical_imager.exe").toFile(); // NON-NLS
-            FileUtils.copyInputStreamToFile(in, destFile);
-        }
+        FileUtils.copyFileToDirectory(getTskLogicalImagerExe(), destDir.toFile());
     }
 
     /**
