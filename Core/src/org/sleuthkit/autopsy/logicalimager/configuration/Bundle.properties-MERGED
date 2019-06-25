@@ -50,15 +50,10 @@ ConfigVisualPanel3.description.text=Press Save to write the imaging tool and con
 ConfigVisualPanel3.failedToSaveConfigMsg=Failed to save configuration file: {0}
 ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file
 # {0} - reason
-<<<<<<< HEAD
 ConfigVisualPanel3.reason=\nReason: 
 ConfigVisualPanel3.saveConfigurationFile=Save imager
-CreateLogicalImager.title=Create Logical Imager
-CTL_CreateLogicalImager=Create Logical Imager
-=======
-ConfigWizardPanel2.reason=\nReason: 
-CTL_ConfigureLogicalImager=Create Logical Imager
->>>>>>> f8151e1e596f18d4af47f08435cc74a171d3e436
+CreateLogicalImagerAction.title=Create Logical Imager
+CTL_CreateLogicalImagerAction=Create Logical Imager
 EditFullPathsRulePanel.example=Example: 
 EditFullPathsRulePanel.fullPaths=Full paths
 EditNonFullPathsRulePanel.emptyExtensionException=Extensions cannot have an empty entry
