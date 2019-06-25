@@ -44,7 +44,7 @@ ConfigWizardPanel2.failedToSaveConfigMsg=Failed to save configuration file: {0}
 ConfigWizardPanel2.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file
 # {0} - reason
 ConfigWizardPanel2.reason=\nReason: 
-CTL_ConfigureLogicalImager=Configure Logical Imager
+CTL_ConfigureLogicalImager=Create Logical Imager
 EditFullPathsRulePanel.example=Example: 
 EditFullPathsRulePanel.fullPaths=Full paths
 EditNonFullPathsRulePanel.emptyExtensionException=Extensions cannot have an empty entry
