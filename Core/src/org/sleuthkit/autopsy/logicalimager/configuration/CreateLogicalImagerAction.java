@@ -39,18 +39,18 @@ import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getInstallModulesPath
 /**
  * Configuration Logical Imager
  */
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImager")
-@ActionRegistration(displayName = "#CTL_CreateLogicalImager", lazy = false)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImagerAction")
+@ActionRegistration(displayName = "#CTL_CreateLogicalImagerAction", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
-@Messages("CTL_CreateLogicalImager=Create Logical Imager")
-public final class CreateLogicalImager extends CallableSystemAction {
+@Messages("CTL_CreateLogicalImagerAction=Create Logical Imager")
+public final class CreateLogicalImagerAction extends CallableSystemAction {
 
-    private static final String DISPLAY_NAME = Bundle.CTL_ConfigureLogicalImager();
+    private static final String DISPLAY_NAME = Bundle.CTL_CreateLogicalImagerAction();
     private static final String TSK_LOGICAL_IMAGER_DIR = "tsk_logical_imager"; // NON-NLS
     private static final String TSK_LOGICAL_IMAGER_EXE = "tsk_logical_imager.exe"; // NON-NLS
 
     @NbBundle.Messages({
-        "CreateLogicalImager.title=Create Logical Imager"
+        "CreateLogicalImagerAction.title=Create Logical Imager"
     })
     @Override
     public void performAction() {
@@ -75,7 +75,7 @@ public final class CreateLogicalImager extends CallableSystemAction {
         WizardDescriptor wiz = new WizardDescriptor(new WizardDescriptor.ArrayIterator<>(panels));
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}")); // NON-NLS
-        wiz.setTitle(Bundle.CreateLogicalImager_title());
+        wiz.setTitle(Bundle.CreateLogicalImagerAction_title());
         Dialog dialog = DialogDisplayer.getDefault().createDialog(wiz);
         dialog.setVisible(true);
     }

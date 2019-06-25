@@ -35,7 +35,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.logicalimager.configuration.ConfigureLogicalImager.getTskLogicalImagerExe;
+import static org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImagerAction.getTskLogicalImagerExe;
 
 /**
  * Configuration visual panel 3
