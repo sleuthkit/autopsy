@@ -64,17 +64,17 @@ show up as Hashset Hits.
 
 \subsection report_case_uco CASE-UCO
 
-This module creates an JSON output file in <a href="https://github.com/ucoProject/CASE/wiki">CASE-UCO</a> format from a single data source. 
+This module creates an JSON output file in <a href="https://github.com/ucoProject/CASE/wiki">CASE-UCO</a> format for a single data source. 
 
 \image html reports_case.png
 
 \subsection report_files Files - Text
 
-This report module allows you create a tab or comma delimited text file from all files in the current case. Start by selecting which delimiter you would like to use.
+This report module allows you create a tab or comma delimited text file report of all of the files in the current case. Start by selecting which delimiter you would like to use.
 
 \image html reports_files_delimiter.png
 
-You can then select which fields should be exported.
+You can then select which fields should be reported.
 
 \image html reports_files_config.png
 <br>
@@ -88,7 +88,7 @@ This report module generates a KML file from any GPS data in the case. This file
 
 \subsection report_portable_case Portable Case
 
-This report module generates a new Autopsy case from any tagged files and results. See the \ref portable_case_page page for additional information.
+This report module generates a new Autopsy case that includes tagged and/or interesting items. See the \ref portable_case_page page for additional information.
 
 \subsection report_stix STIX
 

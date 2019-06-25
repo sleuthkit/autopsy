@@ -26,7 +26,7 @@ Once enabled, the translated versions of the file and folder names will be shown
 
 \section mt_content_viewer Translating File Content
 
-After you set up a machine translation service, the Translation tab under the Text content viewer will be active. The Translation tab allows you to use your service to translate the beginning of a file. For example, you might see the following in the default Indexed Text tab:
+After you set up a machine translation service, the Translation tab under the Text tab in the Content Viewer will be active. The Translation tab allows you to use your service to translate the beginning of a file. For example, you might see the following in the default Indexed Text tab:
 
 \image html mt_content_viewer_untranslated_text.png
 
