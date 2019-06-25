@@ -4,17 +4,17 @@ The Result Viewer is located on the top right of the Autopsy screen and shows th
 
 \section result_viewer_table Table Viewers
 
-The main table viewer in the "Listing" tab displays the contents of the current selection as a table with some details (properties) of each item. For files, some examples of the properties that this viewer shows are: name, time (modified, changed, accessed, and created), size, flags (directory and meta), mode, user ID, group ID, metadata address, attribute address, and type (directory and meta). For other data types, the columns will be different. Click the "Table" tab to select this view.
+The main table viewer in the "Listing" tab displays the contents of the current selection as a table with selected details (properties) of each item. For files, some examples of the properties that this viewer shows are: name, time (modified, changed, accessed, and created), size, flags (directory and meta), mode, user ID, group ID, metadata address, attribute address, and type (directory and meta). For other data types, the columns will be different. Click the "Table" tab to select this view.
 
-The following shows the main table viewer when a folder is selected in the Data Source section of the tree viewer.
+The following shows the main table viewer when a folder is selected in the Data Source section of the \ref tree_viewer_page.
 \image html result-viewer-example-1.PNG
 
-As mentioned above, the table viewer is context-aware which means it will show applicable columns for the data type selected. The following shows the data in the "Web Bookmarks" node in the \ref tree_viewer_page.
+As mentioned above, a table viewer is context-aware which means it will show applicable columns for the data type selected. The following shows the data in the "Web Bookmarks" node in the \ref tree_viewer_page.
 
 \image html result-viewer-example-3.PNG
 
 \subsection result_viewer_sco SCO Columns
-By default, the first three columns after the file name in the table viewer are named "S", "C" and "O". 
+By default, the first three columns after the file name in a table viewer are named "S", "C" and "O". 
 
 \image html view_options_sco.png
 
@@ -42,11 +42,11 @@ Table viewers in the Results Viewer have certain right-click functions built-in 
 Here are some examples that you may see:
 \li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS or through the External Viewer tab that you can navigate to by selecting the Options menu item from the Tools menu. For example, HTML files may be opened by Chrome or Firefox or some other browser, depending on what the local system is configured to use.
 \li View in New Window: Opens the selected item in a new content viewer (instead of in the default location in the lower right area of the main window).
-\li Extract: Makes a local copy of a selected file or directory for further analysis.
+\li Extract: Makes a local copy of the selected file or directory for further analysis.
 
 
 \section thumbnail_result_viewer Thumbnail Viewers
-Thumbnail viewers display items selected in the Tree Viewer as a table of thumbnail images in adjustable sizes. This viewer only supports "picture" files (currently only supports the JPG, GIF, and PNG formats). Click on the Thumbnail tab in the Listing tab to select this view. Note that for a large number of images in a directory selected in the Data Sources area of the Tree Viewer, or for a selection in the Views area of the Tree Viewer that contains a large number of images, it might take a while to populate the thumbnail viewer for the first time, before the thumbnails are cached.
+Thumbnail viewers display items selected in the \ref tree_viewer_page as a table of thumbnail images in adjustable sizes. This viewer only supports "picture" files (it currently only supports the JPG, GIF, and PNG formats). Click on the Thumbnail tab in the Listing tab to select this view. Note that for a large number of images in a directory selected in the Data Sources area of the \ref tree_viewer_page, or for a selection in the Views area of the \ref tree_viewer_page that contains a large number of images, it might take a while to populate the thumbnail viewer for the first time, i.e., before the thumbnails are cached.
 
 \image html thumbnail-result-viewer-tab.PNG
 
