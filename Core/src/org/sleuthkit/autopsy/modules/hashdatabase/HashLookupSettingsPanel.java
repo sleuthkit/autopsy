@@ -392,7 +392,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * unindexed, along with solutions. This method is related to
      * ModalNoButtons, to be removed at a later date.
      *
-     * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
     @NbBundle.Messages({"# {0} - nsrlUrlAddress",
