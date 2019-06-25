@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
@@ -32,6 +33,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.TagName;
 
@@ -58,6 +60,8 @@ import org.sleuthkit.datamodel.TagName;
     "DrawableAttribute.height=Height",
     "DrawableAttribute.mimeType=MIME type"})
 public class DrawableAttribute<T extends Comparable<T>> {
+    
+    private static final Logger logger = Logger.getLogger(DrawableAttribute.class.getName());
 
     public final static DrawableAttribute<String> MD5_HASH =
             new DrawableAttribute<>(AttributeName.MD5_HASH, Bundle.DrawableAttribute_md5hash(),
@@ -226,9 +230,14 @@ public class DrawableAttribute<T extends Comparable<T>> {
     }
 
     public Collection<T> getValue(DrawableFile f) {
-        return extractor.apply(f).stream()
+        try {
+            return extractor.apply(f).stream()
               .filter(value ->  (value != null && value.toString().isEmpty()== false) )
-              .collect(Collectors.toSet());
+              .collect(Collectors.toSet()); 
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "Failed to insert standard groups", ex.getMessage()); //NON-NLS
+            return Collections.EMPTY_SET;
+        }
     }
 
     public static enum AttributeName {
