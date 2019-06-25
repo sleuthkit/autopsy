@@ -25,11 +25,11 @@ Selecting an account in the middle column will bring up the data for that accoun
 
 \image html cvt_summary_tab.png
 
-<li> The <b>Messages</b> tab displays any messages associated with the account. If possible, the messages will be organized into threads. 
+<li> The <b>Messages</b> tab displays any messages associated with the account. The Messages will either be in a thread, or listed under a node called "Unthreaded".  Clicking on the "Unthreaded" node will show all the messages that are not "Threaded".
 
 \image html cvt_messages_threaded.png
 
-You can use the "All Messages" button at the bottom of the panel to disable threading. Clicking on a threaded message will show you all messages in that thread. You can click on an individual message to view it in the lower panel. Click the "Threads" button to return to the original screen.
+You can use the "All Messages" button at the bottom of the panel to show all messages. Clicking on a threaded message will show you all messages in that thread. You can click on an individual message to view it in the lower panel. Click the "Threads" button to return to the original screen.
 
 \image html cvt_message_email.png
 
