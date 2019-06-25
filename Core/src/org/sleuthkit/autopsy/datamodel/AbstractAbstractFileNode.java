@@ -199,7 +199,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             //Set the tooltip
             this.setShortDescription(content.getName());
             updateSheet(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, content.getName()));
-        } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString())) {
+        } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
             SCOData scoData = (SCOData) evt.getNewValue();
             if (scoData.getScoreAndDescription() != null) {
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoData.getScoreAndDescription().getRight(), scoData.getScoreAndDescription().getLeft()));
@@ -207,8 +207,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (scoData.getComment() != null) {
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, scoData.getComment()));
             }
-            if (scoData.getCountAndDescription() != null
-                    && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+            if (scoData.getCountAndDescription() != null) {
                 updateSheet(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
             }
         }
@@ -325,10 +324,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
 
         // Create place holders for S C O 
-        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
-        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
-        if (EamDb.isEnabled() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
+        if (!UserPreferences.getHideSCOColumns()) {
+            properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
+            properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
+            if (EamDb.isEnabled()) {
+                properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
+            }
         }
 
         // Get the SCO columns data in a background task
@@ -362,7 +363,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     @Deprecated
-    protected void addTagProperty(Sheet.Set sheetSet) {
+    protected void addTagProperty(Sheet.Set sheetSet
+    ) {
         List<ContentTag> tags = getContentTagsFromDatabase();
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
@@ -381,7 +383,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @deprecated
      */
     @Deprecated
-    protected static String getHashSetHitsCsvList(AbstractFile file) {
+    protected static String getHashSetHitsCsvList(AbstractFile file
+    ) {
         try {
             return StringUtils.join(file.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {
@@ -396,7 +399,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "# {0} - occurenceCount",
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurences of the MD5 correlation value"})
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue,
+             String defaultDescription
+    ) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = defaultDescription;
         try {
@@ -423,7 +428,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
         "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
     @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags
+    ) {
         DataResultViewerTable.Score score = DataResultViewerTable.Score.NO_SCORE;
         String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
         if (content.getKnown() == TskData.FileKnown.BAD) {
@@ -455,7 +461,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     @Override
-    protected HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+    protected HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute
+    ) {
 
         DataResultViewerTable.HasCommentStatus status = !tags.isEmpty() ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
 
@@ -535,7 +542,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @Override
     protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
-        if (EamDb.isEnabled() && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+        if (EamDb.isEnabled() && !UserPreferences.getHideSCOColumns()) {
             attribute = EamArtifactUtil.getInstanceFromContent(content);
         }
         return attribute;

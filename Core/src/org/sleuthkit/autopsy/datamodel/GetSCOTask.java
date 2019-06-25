@@ -72,7 +72,7 @@ class GetSCOTask implements Runnable {
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
 
-        if (EamDb.isEnabled() && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+        if (EamDb.isEnabled() && !UserPreferences.getHideSCOColumns()) {
             Type type = null;
             String value = null;
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();
