@@ -45,7 +45,7 @@ import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getInstallModulesPath
 )
 @ActionRegistration(displayName = "#CTL_ConfigureLogicalImager", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
-@Messages("CTL_ConfigureLogicalImager=Configure Logical Imager")
+@Messages("CTL_ConfigureLogicalImager=Create Logical Imager")
 public final class ConfigureLogicalImager extends CallableSystemAction {
 
     private static final String DISPLAY_NAME = Bundle.CTL_ConfigureLogicalImager();
