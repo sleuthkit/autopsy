@@ -64,7 +64,7 @@ show up as Hashset Hits.
 
 \subsection report_case_uco CASE-UCO
 
-This module creates an JSON output file in <a href="https://github.com/ucoProject/CASE/wiki">CASE-UCO</a> format for a single data source. 
+This module creates a JSON output file in <a href="https://github.com/ucoProject/CASE/wiki">CASE-UCO</a> format for a single data source. 
 
 \image html reports_case.png
 
