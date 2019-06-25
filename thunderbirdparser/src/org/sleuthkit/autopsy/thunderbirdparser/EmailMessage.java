@@ -47,7 +47,7 @@ class EmailMessage {
     private long id = -1L;
     private String messageID = "";
     private String inReplyToID = "";
-    private List<String> references = new ArrayList();
+    private List<String> references = new ArrayList<>();
     private String simplifiedSubject = "";
     private boolean replySubject = false;
     private String messageThreadID = "";
