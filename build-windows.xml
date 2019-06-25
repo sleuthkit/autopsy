@@ -8,6 +8,7 @@
     <property name="i586" location="${basedir}/Core/release/modules/lib/i586" />
     <property name="i686" location="${basedir}/Core/release/modules/lib/i686"/>
     <property name="crt" location="${basedir}/thirdparty/crt" />
+    <property name="tsk_logical_imager_dir" location="${basedir}/Core/release/modules/tsk_logical_imager"/>
  
     <import file="build-windows-installer.xml" />
     
@@ -27,14 +28,12 @@
         </condition>
         <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
         
-        <property name="win64.TskLogicalImager.path" value="${env.TSK_HOME}/win32/x64/Release_NoLibs/tsk_logical_imager.exe"/>
-        <property name="win32.TskLogicalImager.path" value="${env.TSK_HOME}/win32/Release_NoLibs/tsk_logical_imager.exe" />
+        <property name="tskLogicalImager.path" value="${env.TSK_HOME}/win32/Release_NoLibs/tsk_logical_imager.exe" />
         <property name="win64.TskLib.path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
         <property name="win32.TskLib.path" value="${env.TSK_HOME}/win32/Release_PostgreSQL" />
         <property name="win64.TskLib.postgres_path" value="${env.TSK_HOME}/win32/x64/Release_PostgreSQL"/>
         <property name="win32.TskLib.postgres_path" value="${env.TSK_HOME}/win32/Release_PostgreSQL"/>
-        <available property="win64.TskLogicalImager.exists" type="file" file="${win64.TskLogicalImager.path}" />
-        <available property="win32.TskLogicalImager.exists" type="file" file="${win32.TskLogicalImager.path}" />
+        <available property="tskLogicalImager.exists" type="file" file="${tskLogicalImager.path}" />
         <available property="win64.TskLib.exists" type="dir" file="${win64.TskLib.path}" />
         <available property="win32.TskLib.exists" type="dir" file="${win32.TskLib.path}" />
         <available property="win64.TskLib_postgres.exists" type="dir" file="{win64.TskLib.postgres_path}" />
@@ -51,17 +50,12 @@
             <exclude name="libtsk_jni.dll"/> 
         </fileset>
         
-        <fileset file="${win64.TskLogicalImager.path}" id="win64logicalImager">
-        </fileset>
-        
         <copy todir="${amd64}" overwrite="true">
             <fileset refid="win64dlls" />
-            <fileset refid="win64logicalImager" />
         </copy>
 
         <copy todir="${x86_64}" overwrite="true">
             <fileset refid="win64dlls" />
-            <fileset refid="win64logicalImager" />
         </copy>		
     </target>
 
@@ -72,35 +66,37 @@
             <exclude name="libtsk_jni.dll"/> 
         </fileset>
         
-        <fileset file="${win32.TskLogicalImager.path}" id="win32logicalImager">
-        </fileset>
-
         <copy todir="${i386}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="win32logicalImager" />
         </copy>
 
         <copy todir="${x86}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="win32logicalImager" />
         </copy>
 
         <copy todir="${i586}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="win32logicalImager" />
         </copy>	
 
         <copy todir="${i686}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="win32logicalImager" />
         </copy>
     </target>
     
+    <target name="copyTskLogicalImager" if="tskLogicalImager.exists">
+        <fileset file="${tskLogicalImager.path}" id="tskLogicalImager" />
+        <mkdir dir="${tsk_logical_imager_dir}"/>
+        <copy todir="${tsk_logical_imager_dir}" overwrite="true">
+            <fileset refid="tskLogicalImager" />
+        </copy>
+    </target>
+
     <!-- This gets called from the main build.xml -->
     <target name="copyLibsToBaseDir" depends="checkTskLibDirs" description="Copy windows dlls to the correct location." >
         <antcall target="makeBaseLibDirs" inheritRefs="true" />
         <antcall target="copyWinTskLibs32ToBaseDir" inheritRefs="true" />
         <antcall target="copyWinTskLibs64ToBaseDir" inheritRefs="true" />
+        <antcall target="copyTskLogicalImager" inheritRefs="true" />
     </target>
 
 </project>
