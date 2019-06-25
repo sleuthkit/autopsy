@@ -49,8 +49,6 @@ import org.sleuthkit.autopsy.experimental.autoingest.FileExporterSettingsPanel;
 /**
  * Configuration panel for auto ingest settings.
  */
-@Messages({"AutoIngestSettingsPanel.examinerModeRadioButton.text=Examiner mode",
-    "AutoIngestSettingsPanel.autoIngestModeRadioButton.text=Auto Ingest mode"})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
@@ -128,6 +126,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * @param inStartup True if we're doing the initial population of the UI
      */
     final void load(boolean inStartup) {
+        
+        lbMultiUserResult.setIcon(null);
+        lbTestResultText.setText("");
 
         // multi user mode must be enabled
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
