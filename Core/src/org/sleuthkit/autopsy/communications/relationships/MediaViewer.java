@@ -113,20 +113,17 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        final Set<Content> relationshipSources;
-
-        CommunicationsManager communicationManager;
+        Set<Content> relationshipSources;
         Set<BlackboardArtifact> artifactList = new HashSet<>();
 
         try {
-            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-            relationshipSources = communicationManager.getRelationshipSources(info.getAccountDevicesInstances(), info.getCommunicationsFilter());
+            relationshipSources = info.getRelationshipSources();
 
             relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
                 artifactList.add((BlackboardArtifact) content);
             });
 
-        } catch (TskCoreException | NoCurrentCaseException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to update selection." , ex);
         }
 

@@ -108,7 +108,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
                     accountDeviceInstances.add(((AccountDeviceInstanceNode) node).getAccountDeviceInstance());
                     filter = ((AccountDeviceInstanceNode)node).getFilter();
                 }
-                relationshipBrowser.setSelectionInfo(new SelectionInfo(accountDeviceInstances, filter));
+                relationshipBrowser.setSelectionInfo(new SelectionInfo(accountDeviceInstances, new HashSet<>(), filter));
             }
         });
         

@@ -68,36 +68,28 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
      */
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
-        CommunicationsManager communicationManager;
-        try {
-            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get communications manager from case.", ex); //NON-NLS
-            return false;
-        }
         
         if(selectionInfo == null) {
             return true;
         }
 
         final Set<Content> relationshipSources;
-
         try {
-            relationshipSources = communicationManager.getRelationshipSources(selectionInfo.getAccountDevicesInstances(), selectionInfo.getCommunicationsFilter());
-
-            relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
-
-                BlackboardArtifact bba = (BlackboardArtifact) content;
-                BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
-
-                if (fromID == TSK_CONTACT) {
-                    list.add(bba);
-                }
-            });
-
+            relationshipSources = selectionInfo.getRelationshipSources();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get relationship sources.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to load relationship sources.", ex); //NON-NLS
+            return false;
         }
+  
+        relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
+
+            BlackboardArtifact bba = (BlackboardArtifact) content;
+            BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
+
+            if (fromID == TSK_CONTACT) {
+                list.add(bba);
+            }
+        });
 
         return true;
     }

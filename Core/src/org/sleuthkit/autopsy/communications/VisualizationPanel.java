@@ -914,23 +914,24 @@ final public class VisualizationPanel extends JPanel {
             Object[] selectionCells = graph.getSelectionCells();
             if (selectionCells.length > 0) {
                 mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
-                HashSet<AccountDeviceInstance> deviceInstances = new HashSet<>();
+                HashSet<AccountDeviceInstance> selectedNodes = new HashSet<>();
+                HashSet<SelectionInfo.GraphEdge> selectedEdges = new HashSet<>();
                 for (mxICell cell : selectedCells) {
                     if (cell.isEdge()) {
                         mxICell source = (mxICell) graph.getModel().getTerminal(cell, true);
                         mxICell target = (mxICell) graph.getModel().getTerminal(cell, false);
 
-                        deviceInstances.add(((AccountDeviceInstanceKey) source.getValue()).getAccountDeviceInstance());
-                        deviceInstances.add(((AccountDeviceInstanceKey) target.getValue()).getAccountDeviceInstance());
+                        selectedEdges.add(new SelectionInfo.GraphEdge(((AccountDeviceInstanceKey) source.getValue()).getAccountDeviceInstance(),
+                            ((AccountDeviceInstanceKey) target.getValue()).getAccountDeviceInstance()));
 
                     } else if (cell.isVertex()) {
-                        deviceInstances.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
+                        selectedNodes.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
                     }
                 }
 
-                relationshipBrowser.setSelectionInfo(new SelectionInfo(deviceInstances, currentFilter));
+                relationshipBrowser.setSelectionInfo(new SelectionInfo(selectedNodes, selectedEdges, currentFilter));
             } else {
-                relationshipBrowser.setSelectionInfo(new SelectionInfo(Collections.EMPTY_SET, currentFilter));
+                relationshipBrowser.setSelectionInfo(new SelectionInfo(new HashSet<>(), new HashSet<>(), currentFilter));
             }
         }
     }

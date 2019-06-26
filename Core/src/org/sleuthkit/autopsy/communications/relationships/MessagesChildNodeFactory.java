@@ -70,24 +70,20 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
-        CommunicationsManager communicationManager;
-        
-        try {
-            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get communications manager from case.", ex); //NON-NLS
-            return false;
-        }
         
         if(selectionInfo == null) {
             return true;
         }
-
+        
         final Set<Content> relationshipSources;
+        try {
+            relationshipSources = selectionInfo.getRelationshipSources();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to load relationship sources.", ex); //NON-NLS
+            return false;
+        }
 
         try {
-            
-            relationshipSources = communicationManager.getRelationshipSources(selectionInfo.getAccountDevicesInstances(), selectionInfo.getCommunicationsFilter());
             for(Content content: relationshipSources) {
                 if( !(content instanceof BlackboardArtifact)){
                     continue;
@@ -119,7 +115,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
             }
 
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get relationship sources.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to load artifacts for relationship sources.", ex); //NON-NLS
         }
 
         return true;
