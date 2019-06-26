@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Configuration Visual Panel 2
@@ -41,13 +42,13 @@ import org.openide.util.NbBundle;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ConfigVisualPanel2 extends JPanel {
 
-    private static final List<String> EMPTY_LIST = new ArrayList<>();
+    private static final long serialVersionUID = 1L;
     private String configFilename;
     private LogicalImagerConfig config = null;
     private final JButton okButton = new JButton(Bundle.ConfigVisualPanel2_ok());
     private final JButton cancelButton = new JButton(Bundle.ConfigVisualPanel2_cancel());
     private boolean flagEncryptionPrograms = false;
-    
+
     /**
      * Creates new form ConfigVisualPanel2
      */
@@ -59,7 +60,7 @@ final class ConfigVisualPanel2 extends JPanel {
     }
 
     @NbBundle.Messages({
-        "ConfigVisualPanel2.editConfiguration=Edit configuration"
+        "ConfigVisualPanel2.editConfiguration=Configure imager"
     })
     @Override
     public String getName() {
@@ -75,7 +76,7 @@ final class ConfigVisualPanel2 extends JPanel {
     private void initComponents() {
 
         modifiedDateLabel = new javax.swing.JLabel();
-        daysIncludedTextField = new javax.swing.JTextField();
+        modifiedWithinTextField = new javax.swing.JTextField();
         daysIncludedLabel = new javax.swing.JLabel();
         fullPathsLabel = new javax.swing.JLabel();
         flagEncryptionProgramsCheckBox = new javax.swing.JCheckBox();
@@ -86,13 +87,13 @@ final class ConfigVisualPanel2 extends JPanel {
         editRuleButton = new javax.swing.JButton();
         descriptionEditTextField = new javax.swing.JTextField();
         deleteRuleButton = new javax.swing.JButton();
-        jScrollPane5 = new javax.swing.JScrollPane();
+        fullPathsScrollPane = new javax.swing.JScrollPane();
         fullPathsTable = new javax.swing.JTable();
-        jScrollPane6 = new javax.swing.JScrollPane();
+        filenamesScrollPane = new javax.swing.JScrollPane();
         filenamesTable = new javax.swing.JTable();
         shouldSaveCheckBox = new javax.swing.JCheckBox();
         shouldAlertCheckBox = new javax.swing.JCheckBox();
-        jScrollPane7 = new javax.swing.JScrollPane();
+        folderNamesScrollPane = new javax.swing.JScrollPane();
         folderNamesTable = new javax.swing.JTable();
         extensionsLabel = new javax.swing.JLabel();
         extensionsTextField = new javax.swing.JTextField();
@@ -100,7 +101,7 @@ final class ConfigVisualPanel2 extends JPanel {
         configFileTextField = new javax.swing.JTextField();
         ruleSetFileLabel = new javax.swing.JLabel();
         finalizeImageWriter = new javax.swing.JCheckBox();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        rulesScrollPane = new javax.swing.JScrollPane();
         rulesTable = new javax.swing.JTable();
         folderNamesLabel = new javax.swing.JLabel();
         fileSizeLabel = new javax.swing.JLabel();
@@ -112,12 +113,11 @@ final class ConfigVisualPanel2 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.modifiedDateLabel.text")); // NOI18N
 
-        daysIncludedTextField.setEditable(false);
-        daysIncludedTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
-        daysIncludedTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.daysIncludedTextField.text")); // NOI18N
-        daysIncludedTextField.setEnabled(false);
-        daysIncludedTextField.setMinimumSize(new java.awt.Dimension(60, 20));
-        daysIncludedTextField.setPreferredSize(new java.awt.Dimension(60, 20));
+        modifiedWithinTextField.setEditable(false);
+        modifiedWithinTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
+        modifiedWithinTextField.setEnabled(false);
+        modifiedWithinTextField.setMinimumSize(new java.awt.Dimension(60, 20));
+        modifiedWithinTextField.setPreferredSize(new java.awt.Dimension(60, 20));
 
         org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.daysIncludedLabel.text")); // NOI18N
         daysIncludedLabel.setEnabled(false);
@@ -133,7 +133,6 @@ final class ConfigVisualPanel2 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.ruleNameLabel.text")); // NOI18N
 
-        ruleNameEditTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.ruleNameEditTextField.text")); // NOI18N
         ruleNameEditTextField.setEnabled(false);
 
         newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
@@ -154,7 +153,6 @@ final class ConfigVisualPanel2 extends JPanel {
             }
         });
 
-        descriptionEditTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.descriptionEditTextField.text")); // NOI18N
         descriptionEditTextField.setEnabled(false);
 
         deleteRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
@@ -171,7 +169,7 @@ final class ConfigVisualPanel2 extends JPanel {
         fullPathsTable.setShowHorizontalLines(false);
         fullPathsTable.setShowVerticalLines(false);
         fullPathsTable.getTableHeader().setReorderingAllowed(false);
-        jScrollPane5.setViewportView(fullPathsTable);
+        fullPathsScrollPane.setViewportView(fullPathsTable);
         fullPathsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         if (fullPathsTable.getColumnModel().getColumnCount() > 0) {
             fullPathsTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.fullPathsTable.columnModel.title0")); // NOI18N
@@ -182,17 +180,15 @@ final class ConfigVisualPanel2 extends JPanel {
         filenamesTable.setShowHorizontalLines(false);
         filenamesTable.setShowVerticalLines(false);
         filenamesTable.getTableHeader().setReorderingAllowed(false);
-        jScrollPane6.setViewportView(filenamesTable);
+        filenamesScrollPane.setViewportView(filenamesTable);
         if (filenamesTable.getColumnModel().getColumnCount() > 0) {
             filenamesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.filenamesTable.columnModel.title0")); // NOI18N
         }
 
-        shouldSaveCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldSaveCheckBox, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.shouldSaveCheckBox.text")); // NOI18N
         shouldSaveCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.shouldSaveCheckBox.toolTipText")); // NOI18N
         shouldSaveCheckBox.setEnabled(false);
 
-        shouldAlertCheckBox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(shouldAlertCheckBox, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.shouldAlertCheckBox.text")); // NOI18N
         shouldAlertCheckBox.setEnabled(false);
 
@@ -201,20 +197,18 @@ final class ConfigVisualPanel2 extends JPanel {
         folderNamesTable.setShowHorizontalLines(false);
         folderNamesTable.setShowVerticalLines(false);
         folderNamesTable.getTableHeader().setReorderingAllowed(false);
-        jScrollPane7.setViewportView(folderNamesTable);
+        folderNamesScrollPane.setViewportView(folderNamesTable);
         if (folderNamesTable.getColumnModel().getColumnCount() > 0) {
             folderNamesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.folderNamesTable.columnModel.title0")); // NOI18N
         }
 
         org.openide.awt.Mnemonics.setLocalizedText(extensionsLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.extensionsLabel.text")); // NOI18N
 
-        extensionsTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.extensionsTextField.text")); // NOI18N
         extensionsTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(filenamesLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.filenamesLabel.text")); // NOI18N
 
-        configFileTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.configFileTextField.text")); // NOI18N
-        configFileTextField.setToolTipText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.configFileTextField.toolTipText")); // NOI18N
+        configFileTextField.setToolTipText("");
         configFileTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleSetFileLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.ruleSetFileLabel.text")); // NOI18N
@@ -241,7 +235,7 @@ final class ConfigVisualPanel2 extends JPanel {
                 rulesTableKeyReleased(evt);
             }
         });
-        jScrollPane1.setViewportView(rulesTable);
+        rulesScrollPane.setViewportView(rulesTable);
         if (rulesTable.getColumnModel().getColumnCount() > 0) {
             rulesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.rulesTable.columnModel.title0")); // NOI18N
             rulesTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.rulesTable.columnModel.title1")); // NOI18N
@@ -254,13 +248,11 @@ final class ConfigVisualPanel2 extends JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(minSizeLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.minSizeLabel.text")); // NOI18N
 
         minSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
-        minSizeTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.minSizeTextField.text")); // NOI18N
         minSizeTextField.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(maxSizeLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.maxSizeLabel.text")); // NOI18N
 
         maxSizeTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,###; "))));
-        maxSizeTextField.setText(org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.maxSizeTextField.text")); // NOI18N
         maxSizeTextField.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -268,78 +260,73 @@ final class ConfigVisualPanel2 extends JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(480, 480, 480)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(daysIncludedLabel))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(ruleNameEditTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(descriptionEditTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(extensionsTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane6, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane7, javax.swing.GroupLayout.Alignment.LEADING))
-                        .addContainerGap())))
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 377, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(newRuleButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(editRuleButton)
-                                .addGap(37, 37, 37)
-                                .addComponent(deleteRuleButton)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(flagEncryptionProgramsCheckBox)
-                            .addComponent(finalizeImageWriter)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(393, 393, 393)
-                        .addComponent(shouldSaveCheckBox))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(397, 397, 397)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(extensionsLabel)
-                            .addComponent(filenamesLabel)
-                            .addComponent(descriptionLabel)
-                            .addComponent(ruleNameLabel)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(397, 397, 397)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(modifiedDateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(fileSizeLabel)
-                            .addComponent(fullPathsLabel)
-                            .addComponent(folderNamesLabel))
-                        .addGap(4, 4, 4)
-                        .addComponent(minSizeLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(maxSizeLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(393, 393, 393)
-                        .addComponent(shouldAlertCheckBox)))
+                .addGap(17, 17, 17)
+                .addComponent(ruleSetFileLabel)
+                .addGap(18, 18, 18)
+                .addComponent(configFileTextField)
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addComponent(ruleSetFileLabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(configFileTextField))
+                        .addComponent(newRuleButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(editRuleButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(deleteRuleButton))
+                    .addComponent(rulesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 341, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(397, 397, 397)
-                        .addComponent(jSeparator1)))
-                .addGap(10, 10, 10))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(flagEncryptionProgramsCheckBox)
+                                    .addComponent(finalizeImageWriter)
+                                    .addComponent(shouldSaveCheckBox)
+                                    .addComponent(shouldAlertCheckBox)
+                                    .addComponent(extensionsLabel)
+                                    .addComponent(filenamesLabel)
+                                    .addComponent(descriptionLabel)
+                                    .addComponent(ruleNameLabel)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(modifiedDateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(fileSizeLabel)
+                                            .addComponent(fullPathsLabel)
+                                            .addComponent(folderNamesLabel))
+                                        .addGap(4, 4, 4)
+                                        .addComponent(minSizeLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(minSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(maxSizeLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(maxSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGap(107, 107, 107))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(129, 129, 129)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(daysIncludedLabel))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(ruleNameEditTextField, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(descriptionEditTextField, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(extensionsTextField, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(fullPathsScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                            .addComponent(filenamesScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                            .addComponent(folderNamesScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                                        .addContainerGap())))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jSeparator1))))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteRuleButton, editRuleButton, newRuleButton});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -350,7 +337,7 @@ final class ConfigVisualPanel2 extends JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
+                        .addComponent(rulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 479, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(newRuleButton)
@@ -372,13 +359,13 @@ final class ConfigVisualPanel2 extends JPanel {
                                 .addComponent(ruleNameLabel)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(filenamesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(filenamesLabel)
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(folderNamesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(folderNamesLabel)
                                 .addGap(0, 0, Short.MAX_VALUE)))
@@ -388,7 +375,7 @@ final class ConfigVisualPanel2 extends JPanel {
                                 .addComponent(fullPathsLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                .addComponent(fullPathsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                                 .addGap(11, 11, 11)))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(minSizeLabel)
@@ -399,13 +386,13 @@ final class ConfigVisualPanel2 extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(modifiedDateLabel)
-                            .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(modifiedWithinTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(daysIncludedLabel))
-                        .addGap(3, 3, 3)
-                        .addComponent(shouldAlertCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(shouldSaveCheckBox)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(shouldAlertCheckBox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(flagEncryptionProgramsCheckBox)
@@ -415,31 +402,27 @@ final class ConfigVisualPanel2 extends JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void finalizeImageWriterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_finalizeImageWriterActionPerformed
-        config.setFinalizeImageWriter(finalizeImageWriter.isSelected());
-    }//GEN-LAST:event_finalizeImageWriterActionPerformed
-
     private void rulesTableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_rulesTableKeyReleased
-        rulesTableSelect();
+        updateForSelectedRule();
     }//GEN-LAST:event_rulesTableKeyReleased
 
     @NbBundle.Messages({
-        "ConfigVisualPanel2.editRuleSet=Edit rule",
+        "ConfigVisualPanel2.editRuleSet=Edit Rule",
         "ConfigVisualPanel2.editRuleError=Edit rule error"
     })
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
         int row = rulesTable.getSelectedRow();
         if (row != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(row, 0);
-            LogicalImagerRule rule = getFirstRuleSet().getRules().get(row);
+            LogicalImagerRule rule = getRuleSetFromCurrentConfig().getRules().get(row);
             EditRulePanel editPanel = new EditRulePanel(okButton, cancelButton, ruleName, rule);
             editPanel.setEnabled(true);
             editPanel.setVisible(true);
 
             while (true) {
-                int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), Bundle.ConfigVisualPanel2_editRuleSet(), 
-                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
-                            null, new Object[]{okButton, cancelButton}, okButton);
+                int option = JOptionPane.showOptionDialog(this, editPanel.getPanel(), Bundle.ConfigVisualPanel2_editRuleSet(),
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+                        null, new Object[]{okButton, cancelButton}, okButton);
                 if (option == JOptionPane.OK_OPTION) {
                     try {
                         ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
@@ -447,28 +430,29 @@ final class ConfigVisualPanel2 extends JPanel {
                         break;
                     } catch (IOException | NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this,
-                            ex.getMessage(),
-                            Bundle.ConfigVisualPanel2_editRuleError(),
-                            JOptionPane.ERROR_MESSAGE);
+                                ex.getMessage(),
+                                Bundle.ConfigVisualPanel2_editRuleError(),
+                                JOptionPane.ERROR_MESSAGE);
                         // let user fix the error
                     }
                 } else {
                     break;
                 }
             }
-        }   
+        }
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
+    @Messages({"ConfigVisualPanel2.newRule.name=New Rule"})
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
-        NewRuleSetPanel panel;
-        panel = new NewRuleSetPanel(okButton, cancelButton);
+        NewRulePanel panel;
+        panel = new NewRulePanel(okButton, cancelButton);
         panel.setEnabled(true);
         panel.setVisible(true);
 
         while (true) {
-            int option = JOptionPane.showOptionDialog(this, panel, "New rule", 
-                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
-                        null, new Object[]{okButton, cancelButton}, okButton);
+            int option = JOptionPane.showOptionDialog(this, panel, Bundle.ConfigVisualPanel2_newRule_name(),
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+                    null, new Object[]{okButton, cancelButton}, okButton);
             if (option == JOptionPane.OK_OPTION) {
                 try {
                     // Save the new rule
@@ -477,71 +461,81 @@ final class ConfigVisualPanel2 extends JPanel {
                     break;
                 } catch (IOException | NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this,
-                        ex.getMessage(),
-                        "New rule error",
-                        JOptionPane.ERROR_MESSAGE);
+                            ex.getMessage(),
+                            "New rule error",
+                            JOptionPane.ERROR_MESSAGE);
                     // let user fix the error
                 }
             } else {
                 break;
             }
-        }        
+        }
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     @NbBundle.Messages({
         "ConfigVisualPanel2.deleteRuleSet=Delete rule ",
-        "ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule confirmation",
-    })
+        "ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule confirmation",})
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
         int index = rulesTable.getSelectedRow();
         if (index != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
 
-            int option = JOptionPane.showOptionDialog(this, 
-                    Bundle.ConfigVisualPanel2_deleteRuleSet() + ruleName, 
-                    Bundle.ConfigVisualPanel2_deleteRuleSetConfirmation(), 
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+            int option = JOptionPane.showOptionDialog(this,
+                    Bundle.ConfigVisualPanel2_deleteRuleSet() + ruleName,
+                    Bundle.ConfigVisualPanel2_deleteRuleSetConfirmation(),
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
             if (option == JOptionPane.NO_OPTION) {
                 return;
             }
 
-            getFirstRuleSet().getRules().remove(index);
+            getRuleSetFromCurrentConfig().getRules().remove(index);
             updatePanel(configFilename, config);
             if (rulesTable.getRowCount() > 0) {
                 rulesTable.setRowSelectionInterval(0, 0);
-                rulesTableSelect();
+                updateForSelectedRule();
             }
         }
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
-    private void flagEncryptionProgramsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flagEncryptionProgramsCheckBoxActionPerformed
-        flagEncryptionPrograms = flagEncryptionProgramsCheckBox.isSelected();
-        toggleEncryptionProgramsRule(flagEncryptionPrograms);
-    }//GEN-LAST:event_flagEncryptionProgramsCheckBoxActionPerformed
-
     private void rulesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rulesTableMouseReleased
-        rulesTableSelect();
+        updateForSelectedRule();
     }//GEN-LAST:event_rulesTableMouseReleased
 
-    private void toggleEncryptionProgramsRule(boolean flagEncryptionPrograms) {
+    private void flagEncryptionProgramsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flagEncryptionProgramsCheckBoxActionPerformed
+        flagEncryptionPrograms = flagEncryptionProgramsCheckBox.isSelected();
+        setEnabledEncryptionProgramsRule(flagEncryptionPrograms);
+    }//GEN-LAST:event_flagEncryptionProgramsCheckBoxActionPerformed
+
+    private void finalizeImageWriterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_finalizeImageWriterActionPerformed
+        config.setFinalizeImageWriter(finalizeImageWriter.isSelected());
+    }//GEN-LAST:event_finalizeImageWriterActionPerformed
+
+    /**
+     * Set the whether the a rule for detecting encryption programs will be
+     * added to the rules in this config
+     *
+     * @param flagEncryptionPrograms true to have encryption programs rule
+     *                               added, false otherwise.
+     */
+    private void setEnabledEncryptionProgramsRule(boolean flagEncryptionPrograms) {
         if (flagEncryptionPrograms) {
             // add the special rule
             ImmutablePair<String, LogicalImagerRule> ruleMap = createEncryptionProgramsRule();
-            appendRow(ruleMap);            
+            appendRow(ruleMap);
         } else {
             // remove it
             int index = ((RulesTableModel) rulesTable.getModel()).findRow(EncryptionProgramsRule.getName());
             if (index != -1) {
-                getFirstRuleSet().getRules().remove(index);
+                getRuleSetFromCurrentConfig().getRules().remove(index);
                 updatePanel(configFilename, config);
                 if (rulesTable.getRowCount() > 0) {
                     rulesTable.setRowSelectionInterval(0, 0);
-                    rulesTableSelect();
+                    updateForSelectedRule();
                 }
             }
         }
     }
-    
+
     /*
      * Create an encryption programs rule
      */
@@ -559,7 +553,6 @@ final class ConfigVisualPanel2 extends JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField configFileTextField;
     private javax.swing.JLabel daysIncludedLabel;
-    private javax.swing.JTextField daysIncludedTextField;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JTextField descriptionEditTextField;
     private javax.swing.JLabel descriptionLabel;
@@ -568,33 +561,34 @@ final class ConfigVisualPanel2 extends JPanel {
     private javax.swing.JTextField extensionsTextField;
     private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JLabel filenamesLabel;
+    private javax.swing.JScrollPane filenamesScrollPane;
     private javax.swing.JTable filenamesTable;
     private javax.swing.JCheckBox finalizeImageWriter;
     private javax.swing.JCheckBox flagEncryptionProgramsCheckBox;
     private javax.swing.JLabel folderNamesLabel;
+    private javax.swing.JScrollPane folderNamesScrollPane;
     private javax.swing.JTable folderNamesTable;
     private javax.swing.JLabel fullPathsLabel;
+    private javax.swing.JScrollPane fullPathsScrollPane;
     private javax.swing.JTable fullPathsTable;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JScrollPane jScrollPane6;
-    private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel maxSizeLabel;
     private javax.swing.JFormattedTextField maxSizeTextField;
     private javax.swing.JLabel minSizeLabel;
     private javax.swing.JFormattedTextField minSizeTextField;
     private javax.swing.JLabel modifiedDateLabel;
+    private javax.swing.JTextField modifiedWithinTextField;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JTextField ruleNameEditTextField;
     private javax.swing.JLabel ruleNameLabel;
     private javax.swing.JLabel ruleSetFileLabel;
+    private javax.swing.JScrollPane rulesScrollPane;
     private javax.swing.JTable rulesTable;
     private javax.swing.JCheckBox shouldAlertCheckBox;
     private javax.swing.JCheckBox shouldSaveCheckBox;
     // End of variables declaration//GEN-END:variables
 
-    private LogicalImagerRuleSet getFirstRuleSet() {
+    private LogicalImagerRuleSet getRuleSetFromCurrentConfig() {
         if (config.getRuleSets().isEmpty()) {
             List<LogicalImagerRuleSet> ruleSets = new ArrayList<>();
             ruleSets.add(new LogicalImagerRuleSet("no-set-name", new ArrayList<>())); // NON-NLS
@@ -602,18 +596,25 @@ final class ConfigVisualPanel2 extends JPanel {
         }
         return config.getRuleSets().get(0);
     }
-    
+
+    /**
+     * Update the panel to reflect the rules in the current config
+     *
+     * @param configFilePath  path of the config file being modified
+     * @param config          contents of the config file being modifed
+     * @param rowSelectionkey the name of the rule to select by default
+     */
     private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
-        LogicalImagerRuleSet ruleSet = getFirstRuleSet();
+        LogicalImagerRuleSet ruleSet = getRuleSetFromCurrentConfig();
         flagEncryptionProgramsCheckBox.setSelected(ruleSet.find(EncryptionProgramsRule.getName()) != null);
         RulesTableModel rulesTableModel = new RulesTableModel();
         int row = 0;
         int selectThisRow = 0;
 
         Collections.sort(ruleSet.getRules(), new SortRuleByName());
-        
+
         for (LogicalImagerRule rule : ruleSet.getRules()) {
             rulesTableModel.setValueAt(rule.getName(), row, 0);
             if (rowSelectionkey != null && rowSelectionkey.equals(rule.getName())) {
@@ -628,31 +629,48 @@ final class ConfigVisualPanel2 extends JPanel {
         // If there are any rules, select the first one
         if (rulesTableModel.getRowCount() > 0) {
             rulesTable.setRowSelectionInterval(selectThisRow, selectThisRow);
-            rulesTableSelect();
+            updateForSelectedRule();
         } else {
-            updateRuleSetButtons(false);
+            clearRuleDetails();
+            updateRuleButtons(false);
         }
     }
-    
+
+    /**
+     * Private helper method to call updatePanel with no row to select specified
+     *
+     * @param configFilePath path of the config file being modified
+     * @param config         contents of the config file being modifed
+     */
     private void updatePanel(String configFilePath, LogicalImagerConfig config) {
         updatePanel(configFilePath, config, null);
     }
 
-    private void rulesTableSelect() {
+    /**
+     * Update the panel to reflect the selected rule
+     */
+    private void updateForSelectedRule() {
         int index = rulesTable.getSelectedRow();
         if (index != -1) {
             String ruleName = (String) rulesTable.getModel().getValueAt(index, 0);
             String description = (String) rulesTable.getModel().getValueAt(index, 1);
-            updateRuleDetails(ruleName, description, config);
-            updateRuleSetButtons(ruleName.equals(EncryptionProgramsRule.getName()) ? false : true);
+            updateRuleDetails(ruleName, description);
+            updateRuleButtons(!ruleName.equals(EncryptionProgramsRule.getName()));
         } else {
-            updateRuleSetButtons(false);            
+            clearRuleDetails();
+            updateRuleButtons(false);
         }
     }
 
-    private void updateRuleDetails(String ruleName, String description, LogicalImagerConfig config) {
+    /**
+     * Update the panel to display details of the specified rule
+     *
+     * @param ruleName    the name of the rule to display
+     * @param description the description of the rule to display
+     */
+    private void updateRuleDetails(String ruleName, String description) {
         clearRuleDetails();
-        LogicalImagerRule rule = getFirstRuleSet().find(ruleName);
+        LogicalImagerRule rule = getRuleSetFromCurrentConfig().find(ruleName);
         shouldAlertCheckBox.setSelected(rule.isShouldAlert());
         shouldSaveCheckBox.setSelected(rule.isShouldSave());
         ruleNameEditTextField.setText(ruleName);
@@ -672,18 +690,36 @@ final class ConfigVisualPanel2 extends JPanel {
             maxSizeTextField.setText(rule.getMaxFileSize().toString());
         }
         if (rule.getMinDays() == null) {
-            daysIncludedTextField.setText("");
+            modifiedWithinTextField.setText("");
         } else {
-            daysIncludedTextField.setText(Integer.toString(rule.getMinDays()));
+            modifiedWithinTextField.setText(Integer.toString(rule.getMinDays()));
         }
     }
 
+    /**
+     * Reset rule details displayed to be blank or default
+     */
     private void clearRuleDetails() {
+        ruleNameEditTextField.setText("");
+        descriptionEditTextField.setText("");
         extensionsTextField.setText("");
-        shouldAlertCheckBox.setSelected(false);
+        updateExtensions(null);
+        updateList(filenamesTable, null);
+        updateList(folderNamesTable, null);
+        updateList(fullPathsTable, null);
+        minSizeTextField.setText("");
+        maxSizeTextField.setText("");
+        modifiedWithinTextField.setText("");
         shouldSaveCheckBox.setSelected(true);
+        shouldAlertCheckBox.setSelected(false);
     }
 
+    /**
+     * Update the extensions displayed
+     *
+     * @param extensions the list of extensions to display, null to display
+     *                   nothing
+     */
     private void updateExtensions(List<String> extensions) {
         extensionsTextField.setText("");
         if (extensions == null) {
@@ -691,61 +727,58 @@ final class ConfigVisualPanel2 extends JPanel {
         }
         String content = "";
         boolean first = true;
-        for (String ext : extensions) {            
+        for (String ext : extensions) {
             content += (first ? "" : ",") + ext;
             first = false;
         }
         extensionsTextField.setText(content);
     }
 
-    private void updateList(javax.swing.JTable jTable, List<String> set) {
+    /**
+     * Update a JTable to display a list of Strings
+     *
+     * @param jTable the JTable to update
+     * @param list   the list of Strings to display, null to display nothing
+     */
+    private void updateList(javax.swing.JTable jTable, List<String> list) {
         SingleColumnTableModel tableModel = new SingleColumnTableModel();
         jTable.setTableHeader(null);
-        if (set == null) {
+        if (list == null) {
             jTable.setModel(tableModel);
             return;
         }
         int row = 0;
-        for (String s : set) {
+        for (String s : list) {
             tableModel.setValueAt(s, row, 0);
             row++;
         }
         jTable.setModel(tableModel);
     }
 
-    void setConfiguration(String configFilename, LogicalImagerConfig config, boolean newFile) {
+    void setConfiguration(String configFilename, LogicalImagerConfig config) {
         this.configFilename = configFilename;
         this.config = config;
-        if (newFile) {
-            initPanel();
-        }
         updatePanel(configFilename, config);
     }
 
-    private void initPanel() {
-        configFileTextField.setText("");
-        rulesTable.setModel(new RulesTableModel());
-        shouldAlertCheckBox.setSelected(false);
-        shouldSaveCheckBox.setSelected(true);
-        ruleNameEditTextField.setText("");
-        descriptionEditTextField.setText("");
-        extensionsTextField.setText("");
-        updateList(filenamesTable, EMPTY_LIST);
-        updateList(folderNamesTable, EMPTY_LIST);
-    }
-
     private void updateRow(int index, ImmutablePair<String, LogicalImagerRule> ruleMap) {
-        getFirstRuleSet().getRules().remove(index);
-        getFirstRuleSet().getRules().add(ruleMap.getValue());
+        getRuleSetFromCurrentConfig().getRules().remove(index);
+        getRuleSetFromCurrentConfig().getRules().add(ruleMap.getValue());
         updatePanel(configFilename, config, ruleMap.getKey());
     }
 
     private void appendRow(ImmutablePair<String, LogicalImagerRule> ruleMap) {
-        getFirstRuleSet().getRules().add(ruleMap.getValue());
+        getRuleSetFromCurrentConfig().getRules().add(ruleMap.getValue());
         updatePanel(configFilename, config, ruleMap.getKey());
     }
 
-    private void updateRuleSetButtons(boolean isRowSelected) {
+    /**
+     * Adjust the enabled status of the rule buttons to reflect wether there is
+     * a currently selected rule which can be modified
+     *
+     * @param isRowSelected true if a row is selected, false otherwise
+     */
+    private void updateRuleButtons(boolean isRowSelected) {
         newRuleButton.setEnabled(true);
         editRuleButton.setEnabled(isRowSelected);
         deleteRuleButton.setEnabled(isRowSelected);
@@ -756,6 +789,7 @@ final class ConfigVisualPanel2 extends JPanel {
      */
     private class SortRuleByName implements Comparator<LogicalImagerRule> {
 
+        @Override
         public int compare(LogicalImagerRule a, LogicalImagerRule b) {
             return a.getName().compareToIgnoreCase(b.getName());
         }
@@ -766,6 +800,7 @@ final class ConfigVisualPanel2 extends JPanel {
      */
     private class RulesTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
         private final List<String> ruleName = new ArrayList<>();
         private final List<String> ruleDescription = new ArrayList<>();
         private final List<LogicalImagerRule> rule = new ArrayList<>();
@@ -773,7 +808,7 @@ final class ConfigVisualPanel2 extends JPanel {
         int findRow(String name) {
             return ruleName.indexOf(name);
         }
-        
+
         @Override
         public int getRowCount() {
             return ruleName.size();
@@ -854,6 +889,8 @@ final class ConfigVisualPanel2 extends JPanel {
      * Table model for single column list table.
      */
     private class SingleColumnTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         private final List<String> list = new ArrayList<>();
 

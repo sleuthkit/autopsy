@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.logicalimager.configuration;
 
 import java.awt.Component;
+import java.awt.Dialog;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -38,28 +39,25 @@ import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getInstallModulesPath
 /**
  * Configuration Logical Imager
  */
-
-@ActionID(
-        category = "Tools",
-        id = "org.sleuthkit.autopsy.configurelogicalimager.ConfigureLogicalImager"
-)
-@ActionRegistration(displayName = "#CTL_ConfigureLogicalImager", lazy = false)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImagerAction")
+@ActionRegistration(displayName = "#CTL_CreateLogicalImagerAction", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
-@Messages("CTL_ConfigureLogicalImager=Create Logical Imager")
-public final class ConfigureLogicalImager extends CallableSystemAction {
+@Messages("CTL_CreateLogicalImagerAction=Create Logical Imager")
+public final class CreateLogicalImagerAction extends CallableSystemAction {
 
-    private static final String DISPLAY_NAME = Bundle.CTL_ConfigureLogicalImager();
+    private static final String DISPLAY_NAME = Bundle.CTL_CreateLogicalImagerAction();
     private static final String TSK_LOGICAL_IMAGER_DIR = "tsk_logical_imager"; // NON-NLS
     private static final String TSK_LOGICAL_IMAGER_EXE = "tsk_logical_imager.exe"; // NON-NLS
-    
+
     @NbBundle.Messages({
-        "ConfigureLogicalImager.title=Configure Logical Imager"
+        "CreateLogicalImagerAction.title=Create Logical Imager"
     })
     @Override
     public void performAction() {
         List<WizardDescriptor.Panel<WizardDescriptor>> panels = new ArrayList<>();
         panels.add(new ConfigWizardPanel1());
         panels.add(new ConfigWizardPanel2());
+        panels.add(new ConfigWizardPanel3());
         String[] steps = new String[panels.size()];
         for (int i = 0; i < panels.size(); i++) {
             Component c = panels.get(i).getComponent();
@@ -77,12 +75,9 @@ public final class ConfigureLogicalImager extends CallableSystemAction {
         WizardDescriptor wiz = new WizardDescriptor(new WizardDescriptor.ArrayIterator<>(panels));
         // {0} will be replaced by WizardDesriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}")); // NON-NLS
-        wiz.setTitle(Bundle.ConfigureLogicalImager_title());
-        if ((DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) &&
-            (panels.get(1) instanceof ConfigWizardPanel2)) {
-                ConfigWizardPanel2 panel = (ConfigWizardPanel2) panels.get(1);
-                panel.saveConfigFile();
-        }
+        wiz.setTitle(Bundle.CreateLogicalImagerAction_title());
+        Dialog dialog = DialogDisplayer.getDefault().createDialog(wiz);
+        dialog.setVisible(true);
     }
 
     @Override
@@ -100,7 +95,7 @@ public final class ConfigureLogicalImager extends CallableSystemAction {
         File tskLogicalImagerExe = getTskLogicalImagerExe();
         return tskLogicalImagerExe.exists();
     }
-    
+
     static public File getTskLogicalImagerExe() {
         String installModulesPath = getInstallModulesPath();
         File tskLogicalImagerExe = new File(installModulesPath + File.separator + TSK_LOGICAL_IMAGER_DIR + File.separator + TSK_LOGICAL_IMAGER_EXE);

@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,19 +35,19 @@ class LogicalImagerConfig {
     private String version;
 
     @SerializedName("finalize-image-writer")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private boolean finalizeImageWriter;
 
     @SerializedName("rule-sets")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private List<LogicalImagerRuleSet> ruleSets;
-    
+
     LogicalImagerConfig() {
         this.version = CURRENT_VERSION;
         this.finalizeImageWriter = false;
         this.ruleSets = new ArrayList<>();
     }
-    
+
     LogicalImagerConfig(
         boolean finalizeImageWriter,
         List<LogicalImagerRuleSet> ruleSets
@@ -93,5 +93,5 @@ class LogicalImagerConfig {
 
     void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
         this.ruleSets = ruleSets;
-    }    
+    }
 }
