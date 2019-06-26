@@ -47,8 +47,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_CaseRefNameColumn_Title=Case Name",
         "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other Occurrences>",
         "SummaryViewer_Creation_Date_Title=Creation Date",
-        "SummeryViewer_FileRef_Message=<Select one Accout to see File References>",
-    })
+        "SummeryViewer_FileRef_Message=<Select one Accout to see File References>",})
 
     /**
      * Creates new form SummaryViewer
@@ -71,7 +70,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.SummaryViewer_CaseRefNameColumn_Title());
 
         clearControls();
-        
+
         caseReferencesPanel.hideOutlineView(Bundle.SummaryViewer_CentralRepository_Message());
         fileReferencesPanel.hideOutlineView(Bundle.SummeryViewer_FileRef_Message());
     }
@@ -100,7 +99,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         if (info.getAccounts().size() != 1) {
             setEnabled(false);
             clearControls();
-            
+
             fileReferencesPanel.hideOutlineView(Bundle.SummeryViewer_FileRef_Message());
         } else {
             SelectionSummary summaryDetails = info.getSummary();
@@ -108,8 +107,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             attachmentsDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
             callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
             contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
-            messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt())+Integer.toString(summaryDetails.getEmailCnt()));
-            
+            messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
+
             fileReferencesPanel.showOutlineView();
 
             fileReferencesPanel.setNode(new AbstractNode(Children.create(new AccountSourceContentChildNodeFactory(info.getAccounts()), true)));
