@@ -235,9 +235,9 @@ public class DrawableAttribute<T extends Comparable<T>> {
                     .filter(value -> (value != null && value.toString().isEmpty() == false))
                     .collect(Collectors.toSet());
         } catch (Exception ex) {
-            /* NOTE: (JIRA-5144) Some of the lambda expressions may throw exceptions,
-            often unexpected ones. For example this happens when a file's MIME type was 
-            incorrectly identified as a picture. */
+            /* There is a catch-all here because the code in the try block executes third-party
+             library calls that throw unchecked exceptions. See JIRA-5144, where an IllegalStateException
+             was thrown because a file's MIME type was incorrectly identified as a picture type. */
             logger.log(Level.WARNING, "Exception while getting image attributes", ex); //NON-NLS
             return Collections.EMPTY_SET;
         }
