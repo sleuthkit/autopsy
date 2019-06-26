@@ -72,7 +72,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         classifiers = new HashMap<>();
         //Load all classifiers found in PlatformUtil.getObjectDetectionClassifierPath()
-        if (OpenCvLoader.isOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
+        if (OpenCvLoader.hasOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
             for (File classifier : classifierDir.listFiles()) {
                 if (classifier.isFile() && FilenameUtils.getExtension(classifier.getName()).equalsIgnoreCase("xml")) {
                     classifiers.put(classifier.getName(), new CascadeClassifier(classifier.getAbsolutePath()));
