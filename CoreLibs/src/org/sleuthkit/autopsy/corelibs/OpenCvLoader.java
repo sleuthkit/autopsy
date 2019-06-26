@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,43 +18,31 @@
  */
 package org.sleuthkit.autopsy.corelibs;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.opencv.core.Core;
 
 public final class OpenCvLoader {
 
+    private static Logger logger = Logger.getLogger(OpenCvLoader.getClass().getName());
     private static final boolean OPEN_CV_LOADED;
-    private static UnsatisfiedLinkError exception = null;
-
+    
     static {
-        boolean tempOpenCvLoaded = false;
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            tempOpenCvLoaded = true;
-        } catch (UnsatisfiedLinkError e) {
-            tempOpenCvLoaded = false;
-            exception = e;  //save relevant error for throwing at appropriate time
+            OPEN_CV_LOADED = true;
+        } catch (UnsatisfiedLinkError | SecurityException ex) {
+            OPEN_CV_LOADED = false;
+            logger.log(Level.WARNING, "Unable to load OpenCV", ex);
         }
-        OPEN_CV_LOADED = tempOpenCvLoaded;
     }
 
     /**
      * Return whether or not the OpenCV library has been loaded.
      *
      * @return - true if the opencv library is loaded or false if it is not
-     * @throws UnsatisfiedLinkError - A COPY of the exception that prevented OpenCV from loading.  
-     *   Note that the stack trace in the exception can be confusing because it refers to a
-     *   past invocation. 
      */
-    public static boolean isOpenCvLoaded() throws UnsatisfiedLinkError {
-        if (!OPEN_CV_LOADED) {
-             //exception should never be null if the open cv isn't loaded but just in case
-            if (exception != null) {
-                throw exception;
-            } else {
-                throw new UnsatisfiedLinkError("OpenCV native library failed to load");
-            }
-
-        }
+    public static boolean isOpenCvLoaded() {
         return OPEN_CV_LOADED;
     }
 }
