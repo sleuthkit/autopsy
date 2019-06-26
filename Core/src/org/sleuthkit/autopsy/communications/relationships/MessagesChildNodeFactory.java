@@ -98,10 +98,16 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                     continue;
                 }
 
-                // We want all artifacts that do not have "threadIDs" to appear as one thread in the UI
+                // We want email and message artifacts that do not have "threadIDs" to appear as one thread in the UI
                 // To achive this assign any artifact that does not have a threadID
                 // the "UNTHREADED_ID"
-                String artifactThreadID = MessageNode.UNTHREADED_ID;
+                // All call logs will default to a single call logs thread
+                String artifactThreadID;
+                if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) {
+                    artifactThreadID = MessageNode.CALL_LOG_ID;
+                } else {
+                    artifactThreadID = MessageNode.UNTHREADED_ID;
+                }
                 BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
                 if(attribute != null) {

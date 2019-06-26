@@ -25,7 +25,7 @@ import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * An AbstractNode subclass which wraps a MessagNode object.  Doing this allows
+ * An AbstractNode subclass which wraps a MessageNode object.  Doing this allows
  * for the reuse of the createSheet and other function from MessageNode, but
  * also some customizing of how a ThreadNode is shown.
  */
