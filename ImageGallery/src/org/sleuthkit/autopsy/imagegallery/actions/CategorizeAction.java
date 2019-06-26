@@ -42,6 +42,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.autopsy.imagegallery.DrawableDbTask;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -52,7 +53,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * An action that associates a drawable file with a Project Vic category.
  */
 @NbBundle.Messages({"CategorizeAction.displayName=Categorize"})
 public class CategorizeAction extends Action {
@@ -85,10 +86,9 @@ public class CategorizeAction extends Action {
         return new CategoryMenu(controller);
     }
 
-
     final void addCatToFiles(Set<Long> ids) {
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), cat.getDisplayName()}); //NON-NLS
-        controller.queueDBTask(new CategorizeTask(ids, cat, createUndo));
+        controller.queueDBTask(new CategorizeDrawableFileTask(ids, cat, createUndo));
     }
 
     /**
@@ -111,17 +111,22 @@ public class CategorizeAction extends Action {
         }
     }
 
-    @NbBundle.Messages({"# {0} - fileID number",
-        "CategorizeTask.errorUnable.msg=Unable to categorize {0}.",
-        "CategorizeTask.errorUnable.title=Categorizing Error"})
-    private class CategorizeTask extends ImageGalleryController.BackgroundTask {
+    /**
+     * A task that associates a drawable file with a Project Vic category.
+     */
+    @NbBundle.Messages({
+        "# {0} - fileID number",
+        "CategorizeDrawableFileTask.errorUnable.msg=Unable to categorize {0}.",
+        "CategorizeDrawableFileTask.errorUnable.title=Categorizing Error"
+    })
+    private class CategorizeDrawableFileTask extends DrawableDbTask {
 
-        private final Set<Long> fileIDs;
+        final Set<Long> fileIDs;
 
-        private final boolean createUndo;
-        private final DhsImageCategory cat;
+        final boolean createUndo;
+        final DhsImageCategory cat;
 
-        CategorizeTask(Set<Long> fileIDs, @Nonnull DhsImageCategory cat, boolean createUndo) {
+        CategorizeDrawableFileTask(Set<Long> fileIDs, @Nonnull DhsImageCategory cat, boolean createUndo) {
             super();
             this.fileIDs = fileIDs;
             java.util.Objects.requireNonNull(cat);
@@ -135,7 +140,6 @@ public class CategorizeAction extends Action {
             final CategoryManager categoryManager = controller.getCategoryManager();
             Map<Long, DhsImageCategory> oldCats = new HashMap<>();
             TagName tagName = categoryManager.getTagName(cat);
-            TagName catZeroTagName = categoryManager.getTagName(DhsImageCategory.ZERO);
             for (long fileID : fileIDs) {
                 try {
                     DrawableFile file = controller.getFileFromID(fileID);   //drawable db access
@@ -171,8 +175,8 @@ public class CategorizeAction extends Action {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            Bundle.CategorizeTask_errorUnable_msg(fileID),
-                            Bundle.CategorizeTask_errorUnable_title(),
+                            Bundle.CategorizeDrawableFileTask_errorUnable_msg(fileID),
+                            Bundle.CategorizeDrawableFileTask_errorUnable_title(),
                             JOptionPane.ERROR_MESSAGE);
                     break;
                 }

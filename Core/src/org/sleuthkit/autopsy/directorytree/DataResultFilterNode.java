@@ -490,6 +490,12 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
+            
+            Action preferredAction = ban.getPreferredAction();
+            if(preferredAction instanceof AbstractAction) {
+                return (AbstractAction) preferredAction;
+            }
+            
             BlackboardArtifact artifact = ban.getArtifact();
             try {
                 if ((artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())

@@ -41,6 +41,9 @@ public final class OpenCvLoader {
      * Return whether or not the OpenCV library has been loaded.
      *
      * @return - true if the opencv library is loaded or false if it is not
+     * @throws UnsatisfiedLinkError - A COPY of the exception that prevented OpenCV from loading.  
+     *   Note that the stack trace in the exception can be confusing because it refers to a
+     *   past invocation. 
      */
     public static boolean isOpenCvLoaded() throws UnsatisfiedLinkError {
         if (!OPEN_CV_LOADED) {

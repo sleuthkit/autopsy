@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018  Basis Technology Corp.
+ * Copyright 2015-2019  Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,9 +33,10 @@ import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
+import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -63,10 +64,15 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     //cache if this group has been seen
     private final ReadOnlyBooleanWrapper seen = new ReadOnlyBooleanWrapper(false);
 
-    DrawableGroup(GroupKey<?> groupKey, Set<Long> filesInGroup, boolean seen) {
+    private final DrawableDB drawableDb;
+    private final HashSetManager hashSetManager;
+
+    DrawableGroup(GroupKey<?> groupKey, Set<Long> filesInGroup, boolean seen, DrawableDB drawableDb, HashSetManager hashSetManager) {
         this.groupKey = groupKey;
         this.fileIDs.setAll(filesInGroup);
         this.seen.set(seen);
+        this.drawableDb = drawableDb;
+        this.hashSetManager = hashSetManager;
     }
 
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
@@ -113,14 +119,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
      */
     public synchronized long getHashSetHitsCount() {
         if (hashSetHitsCount.get() < 0) {
-            try {
-                hashSetHitsCount.set(fileIDs.stream()
-                        .map(ImageGalleryModule.getController().getHashSetManager()::isInAnyHashSet)
-                        .filter(Boolean::booleanValue)
-                        .count());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
-            }
+            hashSetHitsCount.set(fileIDs.stream()
+                    .map(hashSetManager::isInAnyHashSet)
+                    .filter(Boolean::booleanValue)
+                    .count());
         }
         return hashSetHitsCount.get();
     }
@@ -133,9 +135,9 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     public final synchronized long getUncategorizedCount() {
         if (uncatCount.get() < 0) {
             try {
-                uncatCount.set(ImageGalleryModule.getController().getDatabase().getUncategorizedCount(fileIDs));
+                uncatCount.set(drawableDb.getUncategorizedCount(fileIDs));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
+                logger.log(Level.WARNING, String.format("Failed to get the uncategorized files count for DrawableGroup with GroupKey: %s ", this.groupKey), ex); //NON-NLS
             }
         }
         return uncatCount.get();
@@ -215,8 +217,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        return Objects.equals(this.groupKey,
-                ((DrawableGroup) obj).groupKey);
+        return Objects.equals(this.getGroupKey(), ((DrawableGroup) obj).getGroupKey());
     }
 
     // By default, sort by group key name

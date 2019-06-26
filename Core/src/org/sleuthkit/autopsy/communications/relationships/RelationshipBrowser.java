@@ -31,7 +31,7 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
 
     private SelectionInfo currentSelection;
     
-    private final MessagesViewer messagesViewer;
+    private final MessageViewer messagesViewer;
     private final ContactsViewer contactsViewer;
     private final SummaryViewer summaryViewer;
     private final MediaViewer mediaViewer;
@@ -42,24 +42,23 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
      * Creates new form RelationshipBrowser
      */
     public RelationshipBrowser() {
-        messagesViewer = new MessagesViewer();
+        initComponents();
+        messagesViewer = new MessageViewer();
         contactsViewer = new ContactsViewer();
         summaryViewer = new SummaryViewer();
         mediaViewer = new MediaViewer();
         
         proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
-        
-         initComponents();
-        
+ 
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
-        tabPane.add(mediaViewer.getDisplayName(), mediaViewer);        
+        tabPane.add(mediaViewer.getDisplayName(), mediaViewer);
     }
 
     /**
      * Sets the value of currentSelection and passes the SelectionInfo onto the
-     * currently selected or visible tab.
+     * currently selected, visible tab.
      *
      * @param info Currently selected account nodes
      */
@@ -94,7 +93,6 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(1, 1, 1, 1);
         add(tabPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
