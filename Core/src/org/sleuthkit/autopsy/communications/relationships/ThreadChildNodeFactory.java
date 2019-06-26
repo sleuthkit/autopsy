@@ -217,7 +217,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                 sheet.put(sheetSet);
             }
             
-            // Give this node a threadID of "UNTHEADED_ID"
+            // Give this node a threadID of "CALL_LOG_ID"
             sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",MessageNode.CALL_LOG_ID));
             
             return sheet;
