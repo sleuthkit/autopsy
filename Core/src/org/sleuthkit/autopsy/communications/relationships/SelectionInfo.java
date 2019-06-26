@@ -106,8 +106,6 @@ public final class SelectionInfo {
      */
     Set<Content> getRelationshipSources() throws TskCoreException {
 
-        Set<Content> relationshipSources = new HashSet<>();
-        
         CommunicationsManager communicationManager;
         try {
             communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
@@ -115,8 +113,12 @@ public final class SelectionInfo {
             throw new TskCoreException("Failed to get current case", ex);
         }
         
+        Set<Content> relationshipSources = new HashSet<>();
         try {
+            // Add all nodes
             relationshipSources.addAll(communicationManager.getRelationshipSources(getSelectedNodes(), getCommunicationsFilter()));
+            
+            // Add all edges. For edges, the relationship has to include both endpoints
             for (SelectionInfo.GraphEdge edge : getSelectedEdges()) {
                 relationshipSources.addAll(communicationManager.getRelationshipSources(edge.getStartNode(), 
                         edge.getEndNode(), getCommunicationsFilter()));
@@ -215,6 +217,9 @@ public final class SelectionInfo {
         }
     }
 
+    /**
+     * Utility class to represent an edge from the graph visualization.
+     */
     public static class GraphEdge {
         AccountDeviceInstance startNode;
         AccountDeviceInstance endNode;
