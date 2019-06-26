@@ -89,11 +89,10 @@ import org.sleuthkit.datamodel.TskData;
 public class DataContentViewerOtherCases extends JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = -1L;
-
+    private static final String UUID_PLACEHOLDER_STRING = "NoCorrelationAttributeInstance";
     private static final Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
     private static final CorrelationCaseWrapper NO_ARTIFACTS_CASE = new CorrelationCaseWrapper(Bundle.DataContentViewerOtherCases_table_noArtifacts());
     private static final CorrelationCaseWrapper NO_RESULTS_CASE = new CorrelationCaseWrapper(Bundle.DataContentViewerOtherCases_table_noResultsFound());
-
     private final OtherOccurrencesFilesTableModel filesTableModel;
     private final OtherOccurrencesCasesTableModel casesTableModel;
     private final OtherOccurrencesDataSourcesTableModel dataSourcesTableModel;
@@ -127,6 +126,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             }
         });
         reset();
+    }
+
+    /**
+     * Get a placeholder string to use in place of case uuid when it isn't
+     * available
+     *
+     * @return UUID_PLACEHOLDER_STRING
+     */
+    static String getPlaceholderUUID() {
+        return UUID_PLACEHOLDER_STRING;
     }
 
     private void customizeComponents() {
@@ -837,7 +846,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * selection
      */
     private void updateOnDataSourceSelection() {
-        int[] selectedCaseIndexes = casesTable.getSelectedRows();
         int[] selectedDataSources = dataSourcesTable.getSelectedRows();
         filesTableModel.clearTable();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
@@ -846,23 +854,20 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             // get correlation and reference set instances from DB
             correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
             for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
-                for (int selectedCaseRow : selectedCaseIndexes) {
-                    for (int selectedDataSourceRow : selectedDataSources) {
-                        try {
-                            if (nodeData.isCentralRepoNode()) {
-                                if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow)) != null
-                                        && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                        && dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                    filesTableModel.addNodeData(nodeData);
-                                }
-                            } else {
-                                if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                    filesTableModel.addNodeData(nodeData);
-                                }
+                for (int selectedDataSourceRow : selectedDataSources) {
+                    try {
+                        if (nodeData.isCentralRepoNode()) {
+                            if (dataSourcesTableModel.getCaseUUIDForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                    && dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
+                                filesTableModel.addNodeData(nodeData);
                             }
-                        } catch (EamDbException ex) {
-                            LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
+                        } else {
+                            if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
+                                filesTableModel.addNodeData(nodeData);
+                            }
                         }
+                    } catch (EamDbException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                     }
                 }
             }
@@ -928,7 +933,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             if (EamDb.isEnabled()) {
                 CorrelationCase partialCase;
                 partialCase = casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(caseTableRowIdx));
-                if (partialCase == null){
+                if (partialCase == null) {
                     return "";
                 }
                 return EamDb.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
@@ -1141,6 +1146,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         private final String dataSourceID;
         private final String filePath;
         private final String type;
+        private final String caseUUID;
 
         UniquePathKey(OtherOccurrenceNodeInstanceData nodeData) {
             super();
@@ -1151,6 +1157,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 filePath = null;
             }
             type = nodeData.getType();
+            String tempCaseUUID;
+            try {
+                tempCaseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
+            } catch (EamDbException ignored) {
+                tempCaseUUID = UUID_PLACEHOLDER_STRING;
+                //place holder value will be used since correlation attribute was unavailble
+            }
+            caseUUID = tempCaseUUID;
         }
 
         @Override
@@ -1159,14 +1173,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 UniquePathKey otherKey = (UniquePathKey) (other);
                 return (Objects.equals(otherKey.getDataSourceID(), this.getDataSourceID())
                         && Objects.equals(otherKey.getFilePath(), this.getFilePath())
-                        && Objects.equals(otherKey.getType(), this.getType()));
+                        && Objects.equals(otherKey.getType(), this.getType())
+                        && Objects.equals(otherKey.getCaseUUID(), this.getCaseUUID()));
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getDataSourceID(), getFilePath(), getType());
+            return Objects.hash(getDataSourceID(), getFilePath(), getType(), getCaseUUID());
         }
 
         /**
@@ -1194,6 +1209,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
          */
         String getDataSourceID() {
             return dataSourceID;
+        }
+
+        /**
+         * Get the case uuid for the UniquePathKey
+         *
+         * @return the case UUID
+         */
+        String getCaseUUID() {
+            return caseUUID;
         }
     }
 }
