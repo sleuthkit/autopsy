@@ -363,8 +363,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     @Deprecated
-    protected void addTagProperty(Sheet.Set sheetSet
-    ) {
+    protected void addTagProperty(Sheet.Set sheetSet) {
         List<ContentTag> tags = getContentTagsFromDatabase();
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
@@ -383,8 +382,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @deprecated
      */
     @Deprecated
-    protected static String getHashSetHitsCsvList(AbstractFile file
-    ) {
+    protected static String getHashSetHitsCsvList(AbstractFile file) {
         try {
             return StringUtils.join(file.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {
@@ -400,8 +398,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurences of the MD5 correlation value"})
     @Override
     protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue,
-             String defaultDescription
-    ) {
+            String defaultDescription) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = defaultDescription;
         try {
@@ -428,8 +425,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
         "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
     @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags
-    ) {
+    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
         DataResultViewerTable.Score score = DataResultViewerTable.Score.NO_SCORE;
         String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
         if (content.getKnown() == TskData.FileKnown.BAD) {
@@ -461,8 +457,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     @Override
-    protected HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute
-    ) {
+    protected HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
 
         DataResultViewerTable.HasCommentStatus status = !tags.isEmpty() ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
 
