@@ -44,11 +44,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements PropertyChangeListener {
 
     private UnpackageWorker worker;
-    
+
     /**
      * Creates new form UnpackagePortableCaseProgressDialog
      */
-    @NbBundle.Messages({"UnpackagePortableCaseProgressDialog.title.text=Unpackage Portable Case Progress",}) 
+    @NbBundle.Messages({"UnpackagePortableCaseProgressDialog.title.text=Unpackage Portable Case Progress",})
     UnpackagePortableCaseProgressDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.UnpackagePortableCaseProgressDialog_title_text(),
@@ -56,32 +56,45 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
         cancelButton.setEnabled(true);
         okButton.setEnabled(false);
         progressBar.setIndeterminate(true);
         resultLabel.setText(""); // NON-NLS
     }
-    
+
     /**
      * Unpackage the case
-     * 
-     * @param packagedCase  The compressed case
-     * @param outputFolder  The output folder
+     *
+     * @param packagedCase The compressed case
+     * @param outputFolder The output folder
      */
     void unpackageCase(String packagedCase, String outputFolder) {
-        
+
         worker = new UnpackageWorker(packagedCase, outputFolder);
         worker.addPropertyChangeListener(this);
         worker.execute();
 
         setLocationRelativeTo((JFrame) WindowManager.getDefault().getMainWindow());
         this.setVisible(true);
-        
+
     }
-    
-    @NbBundle.Messages({"UnpackagePortableCaseProgressDialog.propertyChange.success=Successfully unpacked case",}) 
+
+    /**
+     * Returns whether the unpackaging was completed successfully.
+     *
+     * @return True if unpackaging was completed successfully, false otherwise
+     */
+    boolean isSuccess() {
+        if (worker == null) {
+            return false;
+        } else {
+            return worker.isSuccess();
+        }
+    }
+
+    @NbBundle.Messages({"UnpackagePortableCaseProgressDialog.propertyChange.success=Successfully unpacked case",})
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
 
@@ -92,7 +105,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             // Disable cancel button and enable ok
             cancelButton.setEnabled(false);
             okButton.setEnabled(true);
-            
+
             if (worker.isSuccess()) {
                 progressBar.setIndeterminate(false);
                 progressBar.setValue(progressBar.getMaximum());
@@ -106,48 +119,47 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             }
         }
     }
-    
+
     /**
      * Swing worker to do the decompression.
      */
     private class UnpackageWorker extends SwingWorker<Void, Void> {
-        
+
         private final String packagedCase;
         private final String outputFolder;
-        
+
         private final AtomicBoolean success = new AtomicBoolean();
         private String lastError = "";
-        
+
         UnpackageWorker(String packagedCase, String outputFolder) {
             this.packagedCase = packagedCase;
             this.outputFolder = outputFolder;
             this.success.set(false);
         }
-        
+
         @NbBundle.Messages({
-                "UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executable",
-                "UnpackageWorker.doInBackground.errorCompressingCase=Error unpackaging case",
-                "UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user",
-        })
+            "UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executable",
+            "UnpackageWorker.doInBackground.errorCompressingCase=Error unpackaging case",
+            "UnpackageWorker.doInBackground.canceled=Unpackaging canceled by user",})
         @Override
         protected Void doInBackground() throws Exception {
-            
+
             // Find 7-Zip
             File sevenZipExe = locate7ZipExecutable();
             if (sevenZipExe == null) {
                 setDisplayError(Bundle.UnpackageWorker_doInBackground_errorFinding7zip());
                 throw new TskCoreException("Error finding 7-Zip executable"); // NON-NLS
             }
-            
+
             String outputFolderSwitch = "-o" + outputFolder; // NON-NLS
             ProcessBuilder procBuilder = new ProcessBuilder();
             procBuilder.command(
                     sevenZipExe.getAbsolutePath(),
-                    "x",     // Extract
+                    "x", // Extract
                     packagedCase,
                     outputFolderSwitch
             );
-            
+
             try {
                 Process process = procBuilder.start();
 
@@ -158,7 +170,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
                     }
                     Thread.sleep(200);
                 }
-                
+
                 int exitCode = process.exitValue();
                 if (exitCode != 0) {
                     // Save any errors so they can be logged
@@ -181,63 +193,64 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             success.set(true);
             return null;
         }
-        
+
         @Override
         synchronized protected void done() {
             if (this.isCancelled()) {
                 return;
             }
-            
+
             try {
                 get();
             } catch (Exception ex) {
                 Logger.getLogger(UnpackagePortableCaseProgressDialog.class.getName()).log(Level.SEVERE, "Error unpackaging portable case", ex); // NON-NLS
             }
         }
-        
+
         /**
          * Save the error that should be displayed to the user
-         * 
+         *
          * @param errorStr Error to be displayed in the UI
          */
         private synchronized void setDisplayError(String errorStr) {
             lastError = errorStr;
         }
-        
+
         /**
          * Gets the error to display to the user
+         *
          * @return Error to be displayed in the UI
          */
         private synchronized String getDisplayError() {
             return lastError;
         }
-        
-        private boolean isSuccess() {
+
+        protected boolean isSuccess() {
             return success.get();
         }
-        
+
         /**
-        * Locate the 7-Zip executable from the release folder.
-        *
-        * @return 7-Zip executable
-        */
-       private File locate7ZipExecutable() {
-           if (!PlatformUtil.isWindowsOS()) {
-               return null;
-           }
+         * Locate the 7-Zip executable from the release folder.
+         *
+         * @return 7-Zip executable
+         */
+        private File locate7ZipExecutable() {
+            if (!PlatformUtil.isWindowsOS()) {
+                return null;
+            }
 
-           String executableToFindName = Paths.get("7-Zip", "7z.exe").toString(); // NON-NLS
-           File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, UnpackagePortableCaseProgressDialog.class.getPackage().getName(), false);
-           if (null == exeFile) {
-               return null;
-           }
+            String executableToFindName = Paths.get("7-Zip", "7z.exe").toString(); // NON-NLS
+            File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, UnpackagePortableCaseProgressDialog.class.getPackage().getName(), false);
+            if (null == exeFile) {
+                return null;
+            }
 
-           if (!exeFile.canExecute()) {
-               return null;
-           }
+            if (!exeFile.canExecute()) {
+                return null;
+            }
 
-           return exeFile;
-       }
+            return exeFile;
+        }
     }
 
     /**
