@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,11 +28,11 @@ import java.util.List;
 class LogicalImagerRuleSet {
 
     @SerializedName("set-name")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     final private String setName;
 
     @SerializedName("rules")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private final List<LogicalImagerRule> rules;
 
     LogicalImagerRuleSet(String setName, List<LogicalImagerRule> rules) {
@@ -49,8 +49,8 @@ class LogicalImagerRuleSet {
     }
 
     /*
-    * Find a rule with the given name. Return null if not found.
-    */
+     * Find a rule with the given name. Return null if not found.
+     */
     LogicalImagerRule find(String name) {
         for (LogicalImagerRule rule : rules) {
             if (rule.getName().equals(name)) {

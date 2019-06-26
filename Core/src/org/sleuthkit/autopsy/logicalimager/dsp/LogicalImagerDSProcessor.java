@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,20 +38,20 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.datamodel.Content;
 
 /**
- * A Logical Imager data source processor that implements the DataSourceProcessor service
- * provider interface to allow integration with the add data source wizard. It
- * also provides a run method overload to allow it to be used independently of
- * the wizard.
+ * A Logical Imager data source processor that implements the
+ * DataSourceProcessor service provider interface to allow integration with the
+ * add data source wizard. It also provides a run method overload to allow it to
+ * be used independently of the wizard.
  */
-@ServiceProviders(value={
-    @ServiceProvider(service=DataSourceProcessor.class)}
+@ServiceProviders(value = {
+    @ServiceProvider(service = DataSourceProcessor.class)}
 )
 public final class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private final LogicalImagerPanel configPanel;
     private AddLogicalImageTask addLogicalImageTask;
-    
+
     /*
      * Constructs a Logical Imager data source processor that implements the
      * DataSourceProcessor service provider interface to allow integration with
@@ -131,16 +131,15 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
         "# {0} - file", "LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}",
-        "LogicalImagerDSProcessor.noCurrentCase=No current case",
-    })
+        "LogicalImagerDSProcessor.noCurrentCase=No current case",})
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        
+
         Path imageDirPath = configPanel.getImageDirPath();
         List<String> errorList = new ArrayList<>();
         List<Content> emptyDataSources = new ArrayList<>();
-        
+
         if (!imageDirPath.toFile().exists()) {
             // This can happen if the USB drive was selected in the panel, but
             // was ejected before pressing the NEXT button
@@ -150,7 +149,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
-        
+
         // Create the LogicalImager directory under ModuleDirectory
         String moduleDirectory = Case.getCurrentCase().getModuleDirectory();
         File logicalImagerDir = Paths.get(moduleDirectory, LOGICAL_IMAGER_DIR).toFile();
@@ -170,7 +169,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             return;
         }
         File src = imageDirPath.toFile();
-        
+
         // Get all VHD files in the src directory
         List<String> imagePaths = new ArrayList<>();
         for (File f : src.listFiles()) {
@@ -189,8 +188,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             String deviceId = UUID.randomUUID().toString();
             String timeZone = Calendar.getInstance().getTimeZone().getID();
             run(deviceId, imagePaths,
-                timeZone, src, dest,
-                progressMonitor, callback);
+                    timeZone, src, dest,
+                    progressMonitor, callback);
         } catch (NoCurrentCaseException ex) {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
             errorList.add(msg);
@@ -198,29 +197,28 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             return;
         }
     }
-    
+
     /**
-     * Adds a "Logical Imager" data source to the case database using a background task in
-     * a separate thread and the given settings instead of those provided by the
-     * selection and configuration panel. Returns as soon as the background task
-     * is started and uses the callback object to signal task completion and
-     * return results.
+     * Adds a "Logical Imager" data source to the case database using a
+     * background task in a separate thread and the given settings instead of
+     * those provided by the selection and configuration panel. Returns as soon
+     * as the background task is started and uses the callback object to signal
+     * task completion and return results.
      *
-     * @param deviceId             An ASCII-printable identifier for the device
-     *                             associated with the data source that is
-     *                             intended to be unique across multiple cases
-     *                             (e.g., a UUID).
-     * @param imagePaths           Paths to the image files.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param src                  The source directory of image.
-     * @param dest                 The destination directory to copy the source.
-     * @param progressMonitor      Progress monitor for reporting progress
-     *                             during processing.
-     * @param callback             Callback to call when processing is done.
+     * @param deviceId        An ASCII-printable identifier for the device
+     *                        associated with the data source that is intended
+     *                        to be unique across multiple cases (e.g., a UUID).
+     * @param imagePaths      Paths to the image files.
+     * @param timeZone        The time zone to use when processing dates and
+     *                        times for the image, obtained from
+     *                        java.util.TimeZone.getID.
+     * @param src             The source directory of image.
+     * @param dest            The destination directory to copy the source.
+     * @param progressMonitor Progress monitor for reporting progress during
+     *                        processing.
+     * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, List<String> imagePaths, String timeZone,  
+    private void run(String deviceId, List<String> imagePaths, String timeZone,
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {

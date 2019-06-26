@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,17 +38,20 @@ import org.sleuthkit.autopsy.corecomponents.TextPrompt;
  */
 final class EditRulePanel extends JPanel {
 
-    private EditFullPathsRulePanel editFullPathsRulePanel = null;
-    private EditNonFullPathsRulePanel editNonFullPathsRulePanel = null;
+    private static final long serialVersionUID = 1L;
+    private final EditFullPathsRulePanel editFullPathsRulePanel;
+    private final EditNonFullPathsRulePanel editNonFullPathsRulePanel;
 
     /**
      * Creates new form EditRulePanel
      */
-     EditRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
+    EditRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule) {
         if (rule.getFullPaths() != null && rule.getFullPaths().size() > 0) {
             editFullPathsRulePanel = new EditFullPathsRulePanel(okButton, cancelButton, ruleName, rule, true);
+            editNonFullPathsRulePanel = null;
         } else {
             editNonFullPathsRulePanel = new EditNonFullPathsRulePanel(okButton, cancelButton, ruleName, rule, true);
+            editFullPathsRulePanel = null;
         }
     }
 
@@ -66,10 +69,10 @@ final class EditRulePanel extends JPanel {
             ruleMap = editFullPathsRulePanel.toRule();
         } else {
             ruleMap = editNonFullPathsRulePanel.toRule();
-       }
+        }
         return ruleMap;
     }
-    
+
     static void setTextFieldPrompts(JTextComponent textField, String text) {
         /**
          * Add text prompt to the text field.
@@ -78,41 +81,45 @@ final class EditRulePanel extends JPanel {
         if (textField instanceof JTextArea) {
             textPrompt = new TextPrompt(text, textField, BorderLayout.NORTH);
         } else {
-            textPrompt = new TextPrompt(text, textField);            
+            textPrompt = new TextPrompt(text, textField);
         }
-        
+
         /**
          * Sets the foreground color and transparency of the text prompt.
          */
         textPrompt.setForeground(Color.LIGHT_GRAY);
         textPrompt.changeAlpha(0.9f); // Mostly opaque
     }
-    
+
     @NbBundle.Messages({
-        "EditRulePanel.validateRuleNameExceptionMsg=Rule name cannot be empty"
-    })
+        "EditRulePanel.emptyRuleName.message=Rule name cannot be empty",
+        "# {0} - ruleName",
+        "EditRulePanel.reservedRuleName.message=Rule name \"{0}\" is reserved for use with a predefined rule"})
     static String validRuleName(String name) throws IOException {
         if (name.isEmpty()) {
-            throw new IOException(Bundle.EditRulePanel_validateRuleNameExceptionMsg());
+            throw new IOException(Bundle.EditRulePanel_emptyRuleName_message());
         }
+        if (name.equals(EncryptionProgramsRule.getName())) {
+            throw new IOException(Bundle.EditRulePanel_reservedRuleName_message(name));
+        }
+        //TODO JIRA-5239 check if rule name exists already
         return name;
     }
-    
+
     @NbBundle.Messages({
         "# {0} - fieldName",
-        "EditRulePanel.blankLineException={0} cannot have a blank line",
-    })
+        "EditRulePanel.blankLineException={0} cannot have a blank line",})
     static List<String> validateTextList(JTextArea textArea, String fieldName) throws IOException {
         if (isBlank(textArea.getText())) {
             return null;
         }
         List<String> list = new ArrayList<>();
         for (String line : textArea.getText().split("\\n")) { // NON-NLS
-            line = strip(line);
-            if (line.isEmpty()) {
+            String strippedLine = strip(line);
+            if (strippedLine.isEmpty()) {
                 throw new IOException(Bundle.EditRulePanel_blankLineException(fieldName));
             }
-            list.add(line);
+            list.add(strippedLine);
         }
         if (list.isEmpty()) {
             return null;
