@@ -1,6 +1,6 @@
 /*! \page tagging_page Tagging
 
-Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later or include in a \ref reporting_page "report". For images, you can select a portion of the image to tag. Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable.
+Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later or include it in a \ref reporting_page "report". For images, you can select a portion of the image to tag. Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable.
 
 \section tagging_items Tagging items
 
