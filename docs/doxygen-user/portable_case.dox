@@ -25,7 +25,7 @@ Alice only tagged eight files and results and her case had no interesting items,
 
 \section portable_case_creation Creating a Portable Case
 
-A portable case can contain tagged files and results and data from the Interesting Items section of the \ref result_viewer_page. You'll be able to choose which of the Interesting Item sets you want to include in the portable case.
+A portable case can contain tagged files and results and data from the Interesting Items section of the \ref tree_viewer_page. You'll be able to choose which of the Interesting Item sets you want to include in the portable case.
 
 \image html portable_case_interesting_items.png
 
