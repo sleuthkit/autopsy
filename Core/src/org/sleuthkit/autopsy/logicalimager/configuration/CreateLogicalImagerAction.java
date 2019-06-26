@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.logicalimager.configuration;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +32,11 @@ import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getInstallModulesPath;
 
 /**
  * Configuration Logical Imager
@@ -45,9 +47,19 @@ import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getInstallModulesPath
 @Messages("CTL_CreateLogicalImagerAction=Create Logical Imager")
 public final class CreateLogicalImagerAction extends CallableSystemAction {
 
-    private static final String DISPLAY_NAME = Bundle.CTL_CreateLogicalImagerAction();
-    private static final String TSK_LOGICAL_IMAGER_DIR = "tsk_logical_imager"; // NON-NLS
-    private static final String TSK_LOGICAL_IMAGER_EXE = "tsk_logical_imager.exe"; // NON-NLS
+    private static final long serialVersionUID = 1L;
+    private static final String LOGICAL_IMAGER_DIR = "tsk_logical_imager"; // NON-NLS
+    private static final String LOGICAL_IMAGER_EXE = "tsk_logical_imager.exe"; // NON-NLS
+    private static final Path LOGICAL_IMAGER_EXE_PATH = Paths.get(LOGICAL_IMAGER_DIR, LOGICAL_IMAGER_EXE);
+
+    /**
+     * Finds the installed logical imager executable.
+     *
+     * @return A File object for the executable or null if it is not found.
+     */
+    static File getLogicalImagerExe() {
+        return InstalledFileLocator.getDefault().locate(LOGICAL_IMAGER_EXE_PATH.toString(), CreateLogicalImagerAction.class.getPackage().getName(), false);
+    }
 
     @NbBundle.Messages({
         "CreateLogicalImagerAction.title=Create Logical Imager"
@@ -82,7 +94,7 @@ public final class CreateLogicalImagerAction extends CallableSystemAction {
 
     @Override
     public String getName() {
-        return DISPLAY_NAME;
+        return Bundle.CTL_CreateLogicalImagerAction();
     }
 
     @Override
@@ -92,13 +104,8 @@ public final class CreateLogicalImagerAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        File tskLogicalImagerExe = getTskLogicalImagerExe();
-        return tskLogicalImagerExe.exists();
+        File logicalImagerExe = getLogicalImagerExe();
+        return logicalImagerExe != null && logicalImagerExe.exists();
     }
 
-    static public File getTskLogicalImagerExe() {
-        String installModulesPath = getInstallModulesPath();
-        File tskLogicalImagerExe = new File(installModulesPath + File.separator + TSK_LOGICAL_IMAGER_DIR + File.separator + TSK_LOGICAL_IMAGER_EXE);
-        return tskLogicalImagerExe;
-    }
 }

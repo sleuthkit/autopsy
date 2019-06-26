@@ -35,7 +35,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImagerAction.getTskLogicalImagerExe;
+import static org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImagerAction.getLogicalImagerExe;
 
 /**
  * Configuration visual panel 3
@@ -92,7 +92,8 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
         "ConfigVisualPanel3.failedToSaveConfigMsg=Failed to save configuration file: {0}",
         "# {0} - reason",
         "ConfigVisualPanel3.reason=\nReason: ",
-        "ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file",})
+        "ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file"
+    })
     void saveConfigFile() {
         boolean saveSuccess = true;
         executableStatusLabel.setForeground(Color.BLACK);
@@ -142,14 +143,22 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
     }
 
     /**
-     * Write the logical imager executable to the specified location
+     * Writes the logical imager executable to the specified location.
      *
-     * @param destDir the location to write the logical imager executable to
+     * @param destDir The destination directory.
      *
-     * @throws IOException
+     * @throws IOException If the executable cannot be found or copying fails.
      */
+    @NbBundle.Messages({
+        "ConfigVisualPanel3.errorMsg.cannotFindLogicalImager=Cannot locate logical imager, cannot copy to destination"
+    })
     private void writeTskLogicalImagerExe(Path destDir) throws IOException {
-        FileUtils.copyFileToDirectory(getTskLogicalImagerExe(), destDir.toFile());
+        File logicalImagerExe = getLogicalImagerExe();
+        if (logicalImagerExe != null && logicalImagerExe.exists()) {
+            FileUtils.copyFileToDirectory(getLogicalImagerExe(), destDir.toFile());
+        } else {
+            throw new IOException(Bundle.ConfigVisualPanel3_errorMsg_cannotFindLogicalImager());
+        }
     }
 
     /**
