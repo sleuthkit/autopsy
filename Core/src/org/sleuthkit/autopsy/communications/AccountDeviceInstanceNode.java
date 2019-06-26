@@ -72,7 +72,7 @@ final class AccountDeviceInstanceNode extends AbstractNode {
     }
 
     @Override
-    @NbBundle.Messages(value = {"AccountNode.device=Device", "AccountNode.accountName=Account", "AccountNode.accountType=Type", "AccountNode.messageCount=Messages"})
+    @NbBundle.Messages(value = {"AccountNode.device=Device", "AccountNode.accountName=Account", "AccountNode.accountType=Type", "AccountNode.messageCount=Items"})
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
         Sheet.Set properties = sheet.get(Sheet.PROPERTIES);

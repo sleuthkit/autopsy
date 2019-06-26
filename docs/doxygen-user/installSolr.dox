@@ -4,10 +4,10 @@ A central Solr server is needed to store keyword indexes, and its embedded Zooke
 \section install_solr_prereq Prerequisites
 
 You will need:
-- 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
-- Download the Apache Solr 4.10.3-0 installation package from https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr or Direct Download Link
+- A 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
+- The Apache Solr 4.10.3-0 installation package from https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr or Direct Download Link
 - Access to an installed version of Autopsy so that you can copy files from it. 
-- A network-accessible machine to install Solr upon. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
+- A network-accessible machine to install Solr on. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
 \section install_solr_install Installation
 
@@ -29,7 +29,7 @@ The following steps will configure Solr to run using an account that will have a
 
 \subsection install_solr_config Solr Configuration
 1.	Stop the _solrJetty_ service by pressing _Start_, typing _services.msc_, pressing _Enter_, and locating the _solrJetty_ Windows service. Select the service and press _Stop the service_. If the service is already stopped and there is no _Stop the service_ available, this is okay.
-2.	Edit the <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat"</i> script. You need administrator permission to change this file. The easiest way around this is to save a copy on the Desktop, edit the Desktop version, and copy the new one back over the top of the old. Windows will ask for permission to overwrite the old file; allow it. You should make the following changes to this file:
+2.	Edit the <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat"</i> script. You need administrator rights to change this file. The easiest way around this is to save a copy on the Desktop, edit the Desktop version, and copy the new one back over the top of the old. Windows will ask for permission to overwrite the old file; allow it. You should make the following changes to this file:
     <br>
     <br>
     - Add the following options in the line that begins with <i>"C:\Bitnami\solr-4.10.3-0/apache-solr\scripts\prunsrv.exe"</i> :

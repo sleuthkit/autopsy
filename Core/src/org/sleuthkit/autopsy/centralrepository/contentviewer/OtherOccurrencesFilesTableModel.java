@@ -25,6 +25,7 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
  * Model for cells in the files section of the other occurrences data content
@@ -114,7 +115,14 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     }
 
     private String createNodeKey(OtherOccurrenceNodeInstanceData nodeData) {
-        return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath();
+        String caseUUID;
+        try {
+            caseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
+        } catch (EamDbException ignored) {
+            caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
+            //place holder value will be used since correlation attribute was unavailble
+        }
+        return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath() + caseUUID;
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
@@ -42,6 +43,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Panel for adding an logical image file from drive letters. Allows the user to
@@ -54,6 +56,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
+    private static final Logger logger = Logger.getLogger(LogicalImagerPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
     private static final String DRIVE_HAS_NO_IMAGES = Bundle.LogicalImagerPanel_messageLabel_driveHasNoImages();
@@ -255,7 +258,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 568, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(338, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -269,7 +272,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 461, Short.MAX_VALUE))
+                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(refreshButton)
                 .addGap(18, 18, 18)
@@ -287,16 +290,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                 .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private static String humanReadableByteCount(long bytes, boolean si) {
-        int unit = si ? 1000 : 1024;
-        if (bytes < unit) {
-            return bytes + " B"; //NON-NLS
-        }
-        int exp = (int) (Math.log(bytes) / Math.log(unit));
-        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); //NON-NLS
-        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //NON-NLS
-    }
 
     @Messages({
         "# {0} - sparseImageDirectory",
@@ -490,7 +483,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         for (File root : roots) {
             String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
             long spaceInBytes = root.getTotalSpace();
-            String sizeWithUnit = humanReadableByteCount(spaceInBytes, false);
+            String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
             listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
             if (firstRemovableDrive == -1) {
                 try {
@@ -498,9 +491,9 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     if ((boolean) fileStore.getAttribute("volume:isRemovable")) { //NON-NLS
                         firstRemovableDrive = i;
                     }
-                } catch (IOException ex) {
-                    i++;
-                    continue;
+                } catch (IOException ignored) {
+                    //unable to get this removable drive for default selection will try and select next removable drive by default 
+                    logger.log(Level.INFO, "Unable to select first removable drive found", ignored);
                 }
             }
             i++;
