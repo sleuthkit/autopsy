@@ -152,7 +152,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     removeListeners();
                     contentCache.invalidateAll();
                 }
-            } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString())) {
+            } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
                 SCOData scoData = (SCOData) evt.getNewValue();
                 if (scoData.getScoreAndDescription() != null) {
                     updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoData.getScoreAndDescription().getRight(), scoData.getScoreAndDescription().getLeft()));
@@ -160,8 +160,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 if (scoData.getComment() != null) {
                     updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR, scoData.getComment()));
                 }
-                if (scoData.getCountAndDescription() != null
-                        && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+                if (scoData.getCountAndDescription() != null) {
                     updateSheet(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
                 }
             }
@@ -364,10 +363,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 this.getSourceName()));
 
         // Create place holders for S C O 
-        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), VALUE_LOADING, ""));
-        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), VALUE_LOADING, ""));
-        if (EamDb.isEnabled() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), VALUE_LOADING, ""));
+        if (!UserPreferences.getHideSCOColumns()) {
+            sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), VALUE_LOADING, ""));
+            sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), VALUE_LOADING, ""));
+            if (EamDb.isEnabled()) {
+                sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), VALUE_LOADING, ""));
+            }
         }
 
         // Get the SCO columns data in a background task

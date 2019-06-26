@@ -136,7 +136,6 @@ public final class ImageTagsUtil {
      *
      * @param sourceImage
      * @param tagRegions
-     * @param outputEncoding
      * @return
      */
     private static MatOfByte getTaggedImageMatrix(Mat sourceImage, Collection<ImageTagRegion> tagRegions) {
