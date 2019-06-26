@@ -171,8 +171,10 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
          * source name
          *
          * @param caseName       the name of the case the data source exists in
-         * @param deviceId       the name of the device id for the data source
+         * @param deviceId       the device id for the data source
          * @param dataSourceName the name of the data source
+         * @param caseUUID       the case uuid for the case the data source
+         *                       exists in
          */
         private DataSourceColumnItem(String caseName, String deviceId, String dataSourceName, String caseUUID) {
             this.caseName = caseName;
