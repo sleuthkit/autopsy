@@ -258,7 +258,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 568, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(66, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -272,7 +272,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE))
+                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(refreshButton)
                 .addGap(18, 18, 18)
@@ -482,6 +482,9 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         int i = 0;
         for (File root : roots) {
             String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
+            if ("Network Drive".equalsIgnoreCase(description)) {
+                continue; // skip network drive
+            }
             long spaceInBytes = root.getTotalSpace();
             String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
             listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
