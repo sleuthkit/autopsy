@@ -51,8 +51,8 @@ public final class SelectionInfo {
     /**
      * Wraps the details of the currently selected accounts.
      *
-     * @param selectedNodes Selected accountDecivedInstances
-     * @param selectedEdges Selected pairs of accountDecivedInstances
+     * @param selectedNodes Selected AccountDeviceInstances
+     * @param selectedEdges Selected pairs of AccountDeviceInstances
      * @param communicationFilter    Currently selected communications filters
      */
     public SelectionInfo(Set<AccountDeviceInstance> selectedNodes, Set<GraphEdge> selectedEdges, 
