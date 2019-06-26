@@ -59,7 +59,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     private final ModifiableProxyLookup proxyLookup;
 
     @Messages({
-        "MediaViewer_Name=Media"
+        "MediaViewer_Name=Media Attachments"
     })
     /**
      * Creates new form ThumbnailViewer
