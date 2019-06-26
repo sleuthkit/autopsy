@@ -25,39 +25,38 @@ import org.opencv.core.Core;
 public final class OpenCvLoader {
 
     private static final Logger LOGGER = Logger.getLogger(OpenCvLoader.class.getName());
-    private static final boolean OPEN_CV_LOADED;
+    private static boolean openCvLoaded;
     private static UnsatisfiedLinkError exception = null;
 
     static {
-        boolean isLoaded = false;
-        
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            isLoaded = true;
+            openCvLoaded = true;
         } catch (UnsatisfiedLinkError ex) {
             LOGGER.log(Level.WARNING, "Unable to load OpenCV", ex);
-            isLoaded = false;
             exception = ex;  //save relevant error for throwing at appropriate time
+            openCvLoaded = false;
         } catch (SecurityException ex) {
             LOGGER.log(Level.WARNING, "Unable to load OpenCV", ex);
-            isLoaded = false;
+            openCvLoaded = false;
         }
         
-        OPEN_CV_LOADED = isLoaded;
     }
 
     /**
      * Return whether or not the OpenCV library has been loaded.
      *
      * @return - true if the opencv library is loaded or false if it is not
-     * @throws UnsatisfiedLinkError - A COPY of the exception that prevented OpenCV from loading.  
-     *   Note that the stack trace in the exception can be confusing because it refers to a
-     *   past invocation. 
+     * @throws UnsatisfiedLinkError - A COPY of the exception that prevented
+     * OpenCV from loading. Note that the stack trace in the exception can be
+     * confusing because it refers to a past invocation.
+     *
+     * @deprecated Use hasOpenCvLoaded instead.
      */
     @Deprecated
     public static boolean isOpenCvLoaded() throws UnsatisfiedLinkError {
-        if (!OPEN_CV_LOADED) {
-             //exception should never be null if the open cv isn't loaded but just in case
+        if (!openCvLoaded) {
+            //exception should never be null if the open cv isn't loaded but just in case
             if (exception != null) {
                 throw exception;
             } else {
@@ -65,15 +64,15 @@ public final class OpenCvLoader {
             }
 
         }
-        return OPEN_CV_LOADED;
+        return openCvLoaded;
     }
-    
+
     /**
      * Return whether OpenCV library has been loaded.
-     * 
+     *
      * @return true if OpenCV library was loaded, false if not.
      */
     public static boolean hasOpenCvLoaded() {
-        return OPEN_CV_LOADED;
+        return openCvLoaded;
     }
 }
