@@ -235,12 +235,10 @@ public class DrawableAttribute<T extends Comparable<T>> {
                     .filter(value -> (value != null && value.toString().isEmpty() == false))
                     .collect(Collectors.toSet());
         } catch (Exception ex) {
-            /* NOTE: (JIRA-5144) Some of the lambda extressions may throw exceptions,
+            /* NOTE: (JIRA-5144) Some of the lambda expressions may throw exceptions,
             often unexpected ones. For example this happens when a file's MIME type was 
-            incorrectly identified as a picture. 
-             */
-            // We do not need to log full stack trace here, just the exception message.
-            logger.log(Level.WARNING, "Failed to insert standard groups", ex.getMessage()); //NON-NLS
+            incorrectly identified as a picture. */
+            logger.log(Level.WARNING, "Exception while getting image attributes", ex); //NON-NLS
             return Collections.EMPTY_SET;
         }
     }
