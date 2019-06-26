@@ -759,19 +759,26 @@ public class Case {
     })
     private static void deleteDataSource(Long dataSourceId, ProgressIndicator progressIndicator, CaseMetadata metadata) {
             progressIndicator.progress(Bundle.Case_DeletingDataSourceFromCase());
-//            CaseMetadata metadata = currentCase.getMetadata();
             SleuthkitCaseAdmin skCaseAdmin = null;
             try {
                 if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                     String caseDbPath = metadata.getCaseDirectory() + File.separator + metadata.getCaseDatabaseName();
                     skCaseAdmin = new SleuthkitCaseAdmin(caseDbPath);
                 } else {
-//                    String caseName, CaseDbConnectionInfo info, String caseDirPath
-                    CaseDbConnectionInfo caseDbConnectionInfo = UserPreferences.getDatabaseConnectionInfo();
-                    skCaseAdmin = new SleuthkitCaseAdmin(metadata.getCaseDatabaseName(), caseDbConnectionInfo, metadata.getCaseDirectory());  
+                    try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
+                        if (null == resourcesLock) {
+                            throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
+                        }
+                        CaseDbConnectionInfo caseDbConnectionInfo = UserPreferences.getDatabaseConnectionInfo();
+                        skCaseAdmin = new SleuthkitCaseAdmin(metadata.getCaseDatabaseName(), caseDbConnectionInfo, metadata.getCaseDirectory());  
+                    } catch (CaseActionException | CoordinationServiceException ex) {
+                        logger.log(Level.WARNING, String.format("Error acquiring MultiCase Lock"), ex);
+                    }
                 }
-                skCaseAdmin.deleteDataSource(dataSourceId);
-                eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));    
+                if (skCaseAdmin != null) {
+                    skCaseAdmin.deleteDataSource(dataSourceId);
+                    eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));    
+                }
             } catch (TskCoreException | UserPreferencesException ex) {
                 logger.log(Level.WARNING, String.format("Error Deleting Data Source %s", dataSourceId), ex);                
             }
