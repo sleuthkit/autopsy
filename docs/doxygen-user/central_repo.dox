@@ -170,23 +170,15 @@ The user can click on any column heading to sort by the values in that column.
 
 If the user selects a row and then right-clicks, a menu will be displayed.
 This menu has several options.
--# Select All
--# Export Selected Rows to CSV
+-# Export All Other Occurrences to CSV
 -# Show Case Details
 -# Show Frequency
 
-<b>Select All</b>
+<b>Export All Other Occurrences to CSV</b>
 
-This option will select all rows in the Content Viewer table.
-
-<b>Export Selected Rows to CSV</b>
-
-This option will save ALL SELECTED rows in the Content Viewer table to a CSV file.
+This option will save every other occurrence in the Content Viewer table to a CSV file.
 By default, the CSV file is saved into the Export directory inside the currently open Autopsy case,
 but the user is free to select a different location.
-
-Note: if you want to copy/paste rows, it is usually possible to use CTRL+C to copy the
-selected rows and then CTRL+V to paste them into a file, but it will not be CSV formatted.
 
 <b>Show Case Details</b>
 
