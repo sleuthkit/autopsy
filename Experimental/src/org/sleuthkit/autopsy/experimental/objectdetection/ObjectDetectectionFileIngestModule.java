@@ -65,14 +65,32 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
     private Blackboard blackboard;
 
     @Messages({"ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found.",
-        "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
+        "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed.",
+        "ObjectDetectionFileIngestModule.openCVNotLoaded=OpenCV was not loaded, but is required to run.",
+        "ObjectDetectionFileIngestModule.notWindowsError=This module is only available on Windows."
+    })
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         jobId = context.getJobId();
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         classifiers = new HashMap<>();
+        
+        if(!PlatformUtil.isWindowsOS()) {
+            //Pop-up that catches IngestModuleException will automatically indicate 
+            //the name of the module before the message.
+            String errorMsg = Bundle.ObjectDetectionFileIngestModule_notWindowsError();
+            logger.log(Level.SEVERE, errorMsg);
+            throw new IngestModule.IngestModuleException(errorMsg);
+        }
+        
+        if(!OpenCvLoader.hasOpenCvLoaded()) {
+            String errorMsg = Bundle.ObjectDetectionFileIngestModule_openCVNotLoaded();
+            logger.log(Level.SEVERE, errorMsg);
+            throw new IngestModule.IngestModuleException(errorMsg);
+        }
+        
         //Load all classifiers found in PlatformUtil.getObjectDetectionClassifierPath()
-        if (OpenCvLoader.isOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
+        if (classifierDir.exists() && classifierDir.isDirectory()) {
             for (File classifier : classifierDir.listFiles()) {
                 if (classifier.isFile() && FilenameUtils.getExtension(classifier.getName()).equalsIgnoreCase("xml")) {
                     classifiers.put(classifier.getName(), new CascadeClassifier(classifier.getAbsolutePath()));
