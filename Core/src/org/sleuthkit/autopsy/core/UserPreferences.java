@@ -73,12 +73,12 @@ public final class UserPreferences {
     private static final int LOG_FILE_NUM_INT = 10;
     public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
-    public static final String HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES = "HideCentralRepoCommentsAndOccurrences";
+    public static final String HIDE_SCO_COLUMNS = "HideCentralRepoCommentsAndOccurrences"; //The key for this setting pre-dates the settings current functionality //NON-NLS
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
     public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
-    
+
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -187,11 +187,11 @@ public final class UserPreferences {
     public static void setDisplayTimesInLocalTime(boolean value) {
         preferences.putBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, value);
     }
-    
+
     public static String getTimeZoneForDisplays() {
         return preferences.get(TIME_ZONE_FOR_DISPLAYS, TimeZone.GMT_ZONE.getID());
     }
-    
+
     public static void setTimeZoneForDisplays(String timeZone) {
         preferences.put(TIME_ZONE_FOR_DISPLAYS, timeZone);
     }
@@ -224,11 +224,10 @@ public final class UserPreferences {
         return preferences.getBoolean(SHOW_ONLY_CURRENT_USER_TAGS, false);
     }
 
-
     /**
      * Set the user preference which identifies whether tags should be shown for
      * only the current user or all users.
-     * 
+     *
      * @param value - true for just the current user, false for all users
      */
     public static void setShowOnlyCurrentUserTags(boolean value) {
@@ -236,33 +235,31 @@ public final class UserPreferences {
     }
 
     /**
-     * Get the user preference which identifies whether the Central Repository
-     * should be called to get comments and occurrences for the (C)omments and
-     * (O)ccurrences columns in the result view.
-     * 
-     * @return True if hiding Central Repository data for comments and
-     *         occurrences; otherwise false.
+     * Get the user preference which identifies whether the (S)core, (C)omments,
+     * and (O)ccurrences columns should be populated and displayed in the result
+     * view.
+     *
+     * @return True if hiding SCO columns; otherwise false.
      */
-    public static boolean hideCentralRepoCommentsAndOccurrences() {
-        return preferences.getBoolean(HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES, false);
+    public static boolean getHideSCOColumns() {
+        return preferences.getBoolean(HIDE_SCO_COLUMNS, false);
     }
-
 
     /**
-     * Set the user preference which identifies whether the Central Repository
-     * should be called to get comments and occurrences for the (C)omments and
-     * (O)ccurrences columns in the result view.
-     * 
+     * Set the user preference which identifies whether the (S)core, (C)omments,
+     * and (O)ccurrences columns should be populated and displayed in the result
+     * view.
+     *
      * @param value The value of which to assign to the user preference.
      */
-    public static void setHideCentralRepoCommentsAndOccurrences(boolean value) {
-        preferences.putBoolean(HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES, value);
+    public static void setHideSCOColumns(boolean value) {
+        preferences.putBoolean(HIDE_SCO_COLUMNS, value);
     }
-    
+
     public static void setDisplayTranslatedFileNames(boolean value) {
         preferences.putBoolean(DISPLAY_TRANSLATED_NAMES, value);
     }
-    
+
     public static boolean displayTranslatedFileNames() {
         return preferences.getBoolean(DISPLAY_TRANSLATED_NAMES, false);
     }
@@ -336,12 +333,12 @@ public final class UserPreferences {
     public static void setIndexingServerPort(int port) {
         preferences.putInt(INDEXING_SERVER_PORT, port);
     }
-    
-    public static void setTextTranslatorName(String textTranslatorName){
+
+    public static void setTextTranslatorName(String textTranslatorName) {
         preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
     }
-    
-    public static String getTextTranslatorName(){
+
+    public static String getTextTranslatorName() {
         return preferences.get(TEXT_TRANSLATOR_NAME, null);
     }
 
@@ -482,7 +479,7 @@ public final class UserPreferences {
     public static void setLogFileCount(int count) {
         preferences.putInt(MAX_NUM_OF_LOG_FILE, count);
     }
-    
+
     /**
      * Get the maximum JVM heap size (in MB) for the embedded Solr server.
      *
@@ -521,17 +518,17 @@ public final class UserPreferences {
 
     /**
      * Set the HdX path.
-     * 
+     *
      * @param executablePath User-inputted path to HxD executable
      */
     public static void setExternalHexEditorPath(String executablePath) {
         preferences.put(EXTERNAL_HEX_EDITOR_PATH, executablePath);
     }
-    
+
     /**
      * Retrieves the HdXEditor path set by the User. If not found, the default
      * will be the default install location of HxD.
-     * 
+     *
      * @return Path to HdX
      */
     public static String getExternalHexEditorPath() {

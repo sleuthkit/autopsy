@@ -91,7 +91,7 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
         "# {0} - configFilename",
         "ConfigVisualPanel3.failedToSaveConfigMsg=Failed to save configuration file: {0}",
         "# {0} - reason",
-        "ConfigVisualPanel3.reason=\nReason: ",
+        "ConfigVisualPanel3.reason=\nReason: {0}",
         "ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file"
     })
     void saveConfigFile() {
@@ -112,8 +112,8 @@ class ConfigVisualPanel3 extends javax.swing.JPanel {
             configStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_saved());
         } catch (IOException ex) {
             saveSuccess = false;
-            executableStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_error());
-            executableStatusLabel.setForeground(Color.RED);
+            configStatusLabel.setText(Bundle.ConfigVisualPanel3_copyStatus_error());
+            configStatusLabel.setForeground(Color.RED);
             JOptionPane.showMessageDialog(this, Bundle.ConfigVisualPanel3_failedToSaveConfigMsg(configFilename)
                     + Bundle.ConfigVisualPanel3_reason(ex.getMessage()));
         } catch (JsonIOException jioe) {

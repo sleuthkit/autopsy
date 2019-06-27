@@ -51,7 +51,7 @@ ConfigVisualPanel3.errorMsg.cannotFindLogicalImager=Cannot locate logical imager
 ConfigVisualPanel3.failedToSaveConfigMsg=Failed to save configuration file: {0}
 ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file
 # {0} - reason
-ConfigVisualPanel3.reason=\nReason: 
+ConfigVisualPanel3.reason=\nReason: {0}
 ConfigVisualPanel3.saveConfigurationFile=Save imager
 CreateLogicalImagerAction.title=Create Logical Imager
 CTL_CreateLogicalImagerAction=Create Logical Imager
