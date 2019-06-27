@@ -70,24 +70,20 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
-        CommunicationsManager communicationManager;
-        
-        try {
-            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get communications manager from case.", ex); //NON-NLS
-            return false;
-        }
         
         if(selectionInfo == null) {
             return true;
         }
-
+        
         final Set<Content> relationshipSources;
+        try {
+            relationshipSources = selectionInfo.getRelationshipSources();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to load relationship sources.", ex); //NON-NLS
+            return false;
+        }
 
         try {
-            
-            relationshipSources = communicationManager.getRelationshipSources(selectionInfo.getAccountDevicesInstances(), selectionInfo.getCommunicationsFilter());
             for(Content content: relationshipSources) {
                 if( !(content instanceof BlackboardArtifact)){
                     continue;
@@ -102,10 +98,16 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                     continue;
                 }
 
-                // We want all artifacts that do not have "threadIDs" to appear as one thread in the UI
+                // We want email and message artifacts that do not have "threadIDs" to appear as one thread in the UI
                 // To achive this assign any artifact that does not have a threadID
                 // the "UNTHREADED_ID"
-                String artifactThreadID = MessageNode.UNTHREADED_ID;
+                // All call logs will default to a single call logs thread
+                String artifactThreadID;
+                if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) {
+                    artifactThreadID = MessageNode.CALL_LOG_ID;
+                } else {
+                    artifactThreadID = MessageNode.UNTHREADED_ID;
+                }
                 BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
                 if(attribute != null) {
@@ -119,7 +121,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
             }
 
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get relationship sources.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to load artifacts for relationship sources.", ex); //NON-NLS
         }
 
         return true;

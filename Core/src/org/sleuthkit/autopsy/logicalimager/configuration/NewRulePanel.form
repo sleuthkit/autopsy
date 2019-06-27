@@ -22,7 +22,9 @@
                   <Component id="chooseLabel" max="32767" attributes="0"/>
                   <Component id="chooseComboBox" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace pref="716" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="ruleDescription" min="-2" pref="562" max="-2" attributes="0"/>
+              <EmptySpace pref="114" max="32767" attributes="0"/>
           </Group>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
@@ -37,7 +39,10 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="chooseLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="chooseComboBox" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="chooseComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="ruleDescription" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="sharedLayeredPane" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -49,18 +54,15 @@
     <Component class="javax.swing.JLabel" name="chooseLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="NewRuleSetPanel.chooseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="NewRulePanel.chooseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JComboBox" name="chooseComboBox">
       <Properties>
         <Property name="maximumRowCount" type="int" value="2"/>
-        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="2">
-            <StringItem index="0" value="By Attribute"/>
-            <StringItem index="1" value="By Full Path"/>
-          </StringArray>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+          <Connection code="new javax.swing.DefaultComboBoxModel&lt;&gt;(new String[] {Bundle.NewRuleSetPanel_attributeRule_name(), Bundle.NewRuleSetPanel_fullPathRule_name()})" type="code"/>
         </Property>
       </Properties>
       <Events>
@@ -80,10 +82,12 @@
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="373" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="467" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
       </Layout>
     </Container>
+    <Component class="javax.swing.JLabel" name="ruleDescription">
+    </Component>
   </SubComponents>
 </Form>
