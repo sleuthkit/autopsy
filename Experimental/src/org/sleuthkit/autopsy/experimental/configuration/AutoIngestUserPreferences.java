@@ -19,10 +19,7 @@
 package org.sleuthkit.autopsy.experimental.configuration;
 
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.TextConverter;
-import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Provides convenient access to a Preferences node for auto ingest user
@@ -42,12 +39,6 @@ public final class AutoIngestUserPreferences {
     private static final String MAX_NUM_TIMES_TO_PROCESS_IMAGE = "MaxNumTimesToAttemptToProcessImage"; // NON-NLS
     private static final int DEFAULT_MAX_TIMES_TO_PROCESS_IMAGE = 0;
     private static final String MAX_CONCURRENT_NODES_FOR_ONE_CASE = "MaxConcurrentNodesForOneCase"; // NON-NLS
-    private static final String STATUS_DATABASE_LOGGING_ENABLED = "StatusDatabaseLoggingEnabled"; // NON-NLS
-    private static final String LOGGING_DB_HOSTNAME_OR_IP = "LoggingHostnameOrIP"; // NON-NLS
-    private static final String LOGGING_PORT = "LoggingPort"; // NON-NLS
-    private static final String LOGGING_USERNAME = "LoggingUsername"; // NON-NLS
-    private static final String LOGGING_PASSWORD = "LoggingPassword"; // NON-NLS
-    private static final String LOGGING_DATABASE_NAME = "LoggingDatabaseName"; // NON-NLS
     private static final String INPUT_SCAN_INTERVAL_TIME = "IntervalBetweenInputScan"; // NON-NLS
 
     // Prevent instantiation.

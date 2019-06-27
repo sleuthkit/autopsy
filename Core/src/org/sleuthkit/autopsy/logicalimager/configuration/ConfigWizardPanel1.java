@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,13 +52,13 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
             component.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals("UPDATE_UI")) { // NON-NLS
+                    if (evt.getPropertyName().equals(ConfigVisualPanel1.getUpdateEventName())) { // NON-NLS
                         valid = component.isPanelValid();
                         fireChangeEvent();
                     }
                 }
             });
-            
+
         }
         return component;
     }
@@ -79,7 +79,7 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
         // use ChangeSupport to implement add/removeChangeListener below.
         // WizardDescriptor.ERROR/WARNING/INFORMATION_MESSAGE will also be useful.
     }
-   
+
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
@@ -130,9 +130,8 @@ final class ConfigWizardPanel1 implements WizardDescriptor.ValidatingPanel<Wizar
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         // use wiz.putProperty to remember current panel state
-        wiz.putProperty("configFilename", component.getConfigFilename()); // NON-NLS
+        wiz.putProperty("configFilename", component.getConfigPath()); // NON-NLS
         wiz.putProperty("config", component.getConfig()); // NON-NLS
-        wiz.putProperty("newFile", component.isNewFile()); // NON-NLS
     }
 
     @Override
