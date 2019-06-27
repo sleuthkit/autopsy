@@ -351,7 +351,11 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
     private void unpackageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unpackageButtonActionPerformed
         UnpackagePortableCaseProgressDialog dialog = new UnpackagePortableCaseProgressDialog();
         dialog.unpackageCase(caseTextField.getText(), outputTextField.getText());
-        validatePaths(); // The output folder now exists so we need to disable the unpackage button
+        if (dialog.isSuccess()) {
+            dispose();
+        } else {
+            validatePaths(); // The output folder now exists so we need to disable the unpackage button
+        }
     }//GEN-LAST:event_unpackageButtonActionPerformed
 
 

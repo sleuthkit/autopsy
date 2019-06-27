@@ -176,8 +176,7 @@ abstract class Extract {
             temprs = tempdbconnect.executeQry(query);
             list = this.resultSetToArrayList(temprs);
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
-            errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
+            logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
             return Collections.<HashMap<String, Object>>emptyList();
         }
         finally {
