@@ -101,7 +101,7 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                 .addComponent(flagTaggedNotableItemsCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(flagPreviouslySeenDevicesCheckbox)
-                .addContainerGap(197, Short.MAX_VALUE))
+                .addContainerGap(47, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
