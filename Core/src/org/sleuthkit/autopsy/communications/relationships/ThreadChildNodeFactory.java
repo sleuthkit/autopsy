@@ -142,15 +142,41 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                     rootMessageMap.put(threadID, bba);          
                 } else {
                     // Get the date of the message
-                    BlackboardAttribute tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
-                    attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
-
-                    // put the earliest message into the table
-                    if(tableAttribute != null 
-                            && attribute != null 
-                            && tableAttribute.getValueLong() > attribute.getValueLong()) {
-                        rootMessageMap.put(threadID, bba);
+                    BlackboardAttribute tableAttribute = null;
+                    switch(fromID) {
+                        case TSK_EMAIL_MSG:
+                            tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+                            attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+                            // put the earliest message into the table
+                            if(tableAttribute != null 
+                                    && attribute != null 
+                                    && tableAttribute.getValueLong() > attribute.getValueLong()) {
+                                rootMessageMap.put(threadID, bba);
+                            }
+                        break;
+                        case TSK_MESSAGE:
+                            tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+                            attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+                            // put the earliest message into the table
+                            if(tableAttribute != null 
+                                    && attribute != null 
+                                    && tableAttribute.getValueLong() < attribute.getValueLong()) {
+                                rootMessageMap.put(threadID, bba);
+                            }
+                            break;
+                        case TSK_CALLLOG:
+                            tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
+                            attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
+                            // put the earliest message into the table
+                            if(tableAttribute != null 
+                                    && attribute != null 
+                                    && tableAttribute.getValueLong() > attribute.getValueLong()) {
+                                rootMessageMap.put(threadID, bba);
+                            }
+                            break;
                     }
+
+                    
                 }
             }
         }
@@ -286,7 +312,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                 }
             }
 
-            if (bba2 != null) {
+            if (bba1 != null) {
                 BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba2.getArtifactTypeID());
                 if (fromID != null) {
                     try {
