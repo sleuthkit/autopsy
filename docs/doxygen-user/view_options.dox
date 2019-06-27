@@ -39,6 +39,10 @@ This option allows you to hide tags from other users in the Tagging section of t
 
 By default, the first three columns in the result viewer after the file name in the results viewer are named "S", "C" and "O". These are described in more detail on the \ref result_viewer_page page. The Comment and Other occurrences columns query the Central Repository. If this seems to be having a performance impact, it can be disabled using the checkbox. This will remove the Other occurrences column entirely and the Comment column will be based only on tags.
 
+\subsection view_options_paging Paging
+
+By default, only 10,000 results will be show in the Result Viewer. You can change that threshold here. Setting it to zero will disable paging.
+
 \subsection view_options_content_viewer Content viewer selection
 
 By default, the \ref content_viewer_page attempts to select the most relevant tab to display when choosing a node. If you would like to change this behavior to instead stay on the same content viewer when changing nodes, switch to the "Stay on the same file viewer" option.
@@ -53,7 +57,7 @@ Timestamps can be viewed in either local time or in a time zone selected in the 
 
 \subsection view_options_translate Translate text
 
-If you have a custom translation module installed, this option will add a column to the \ref result_viewer_page to show the translated name of files and folders. 
+If you have a \ref machine_translation_page module installed, this option will add a column to the \ref result_viewer_page to show the translated name of files and folders. 
 
 \section view_options_case Current Case Settings
 

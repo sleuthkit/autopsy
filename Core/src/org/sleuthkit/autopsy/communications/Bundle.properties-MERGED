@@ -1,7 +1,7 @@
 AccountNode.accountName=Account
 AccountNode.accountType=Type
 AccountNode.device=Device
-AccountNode.messageCount=Messages
+AccountNode.messageCount=Items
 applyText=Apply
 CTL_OpenCVTAction=Communications
 CVTTopComponent.name=\ Communications Visualization
