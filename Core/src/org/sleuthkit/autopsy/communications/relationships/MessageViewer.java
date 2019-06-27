@@ -74,7 +74,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
     @Messages({
         "MessageViewer_tabTitle=Messages",
         "MessageViewer_columnHeader_From=From",
-        "MessageViewer_columnHeader_Date=Data",
+        "MessageViewer_columnHeader_Date=Date",
         "MessageViewer_columnHeader_To=To",
         "MessageViewer_columnHeader_EarlyDate=Earliest Message",
         "MessageViewer_columnHeader_Subject=Subject",
@@ -82,7 +82,8 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         "MessageViewer_no_messages=<No messages found for selected account>",
         "MessageViewer_viewMessage_all=All",
         "MessageViewer_viewMessage_selected=Selected",
-        "MessageViewer_viewMessage_unthreaded=Unthreaded",})
+        "MessageViewer_viewMessage_unthreaded=Unthreaded",
+        "MessageViewer_viewMessage_calllogs=Call Logs"})
 
     /**
      * Creates new form MessageViewer
@@ -228,7 +229,11 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
             if (!subject.isEmpty()) {
                 threadNameLabel.setText(subject);
             } else {
-                threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
+                if (threadIDList.contains(MessageNode.CALL_LOG_ID)) {
+                    threadNameLabel.setText(Bundle.MessageViewer_viewMessage_calllogs());
+                } else {
+                    threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
+                }
             }
             
            showMessagesPane();

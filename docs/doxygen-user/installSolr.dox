@@ -4,10 +4,10 @@ A central Solr server is needed to store keyword indexes, and its embedded Zooke
 \section install_solr_prereq Prerequisites
 
 You will need:
-- 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
-- Download the Apache Solr 4.10.3-0 installation package from https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr or Direct Download Link
+- A 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
+- The Apache Solr 4.10.3-0 installation package from https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr or Direct Download Link
 - Access to an installed version of Autopsy so that you can copy files from it. 
-- A network-accessible machine to install Solr upon. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
+- A network-accessible machine to install Solr on. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
 \section install_solr_install Installation
 
@@ -29,7 +29,7 @@ The following steps will configure Solr to run using an account that will have a
 
 \subsection install_solr_config Solr Configuration
 1.	Stop the _solrJetty_ service by pressing _Start_, typing _services.msc_, pressing _Enter_, and locating the _solrJetty_ Windows service. Select the service and press _Stop the service_. If the service is already stopped and there is no _Stop the service_ available, this is okay.
-2.	Edit the <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat"</i> script. You need administrator permission to change this file. The easiest way around this is to save a copy on the Desktop, edit the Desktop version, and copy the new one back over the top of the old. Windows will ask for permission to overwrite the old file; allow it. You should make the following changes to this file:
+2.	Edit the <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat"</i> script. You need administrator rights to change this file. The easiest way around this is to save a copy on the Desktop, edit the Desktop version, and copy the new one back over the top of the old. Windows will ask for permission to overwrite the old file; allow it. You should make the following changes to this file:
     <br>
     <br>
     - Add the following options in the line that begins with <i>"C:\Bitnami\solr-4.10.3-0/apache-solr\scripts\prunsrv.exe"</i> :
@@ -74,22 +74,35 @@ The following steps will configure Solr to run using an account that will have a
  <br><br>
  \image html solrinstall1.PNG
  <br><br>
-\subsection start_solr Start Solr
-1. You should be able to see the Solr service in a web browser via the URL http://localhost:8983/solr/#/ as shown in the screenshot below.  If you can, you should skip the next step. If you cannot, proceed to the next step.
+ 
+\subsection running_solr Running Solr
+ 
+To run Solr, first you'll need to choose which account should run the service. Once you've decided, you'll start the service through the Windows Service Manager. Both of these steps are described below.
+ 
+\subsubsection solr_user Choosing the User Account for the Solr Service
 
-2. Press _Start_, type _services.msc_, and press _Enter_. Find _solrJetty_. If the service is running, press _Stop the service_, then double click it, and switch to the _Log On_ tab to change the logon credentials to a user who will have access to read and write the primary shared drive. Note that selecting "Local System account" will work only if Solr service and case output folders are on the same machine. Using "Local System account" to run Solr service and having case output folders on a different machine will result in Solr being unable to create index files.
- <br>If the machine is on a domain, the Account Name will be in the form of _DOMAINNAME\\username_ as shown in the example below. Note that in the screenshot below, the domain name is _DOMAIN_ and the user name is _username_. These are just examples, not real values.
- <br><br>
- \image html solrinstall2.PNG
- <br>
- If the machine is on a domain, **make sure** to select the domain with the mouse by going to the _Log On_ tab, clicking _Browse_, then clicking _Locations_ and selecting the domain of interest. Then enter the user name desired and press _Check Names_. When that completes, press _OK_, type in the password once for each box and press _OK_. You may see "The user has been granted the log on as a service right."
+Solr will run as a Windows service as a specific user. If the wrong user account is used, Solr will not have permissions to write indexes.
 
-3. You should be able to see the Solr service in a web browser via the URL <i>http://localhost:8983/solr/#/</i> as shown in the screenshot below.
+Generally, you'll want to run Solr as a Windows Domain account. You will NOT want to use the default setup, which is to run Solr as a "Local Service Account", because this account does not have access to network-based shared storage. The one exception is if the computer running Solr is also the computer that hosts the shared storage. In that is the case, then the "Local Service Account" will still be able to access the shared storage since the network is not required.
+ 
+\subsubsection start_solr Starting Solr
+<ol>
+<li>You should be able to see the Solr service in a web browser via the URL http://localhost:8983/solr/#/ as shown in the screenshot below.  If you can, you should skip the next step. If you cannot, proceed to the next step.
+
+<li>Press _Start_, type _services.msc_, and press _Enter_. Find _solrJetty_. If the service is running, press _Stop the service_, then double click it, and switch to the _Log On_ tab to change the logon credentials to a user who will have access to read and write the primary shared drive. Refer to the \ref solr_user section to see which account type is appropriate for your case.
+
+If the machine is on a domain, the Account Name will be in the form of _DOMAINNAME\\username_ as shown in the example below. Note that in the screenshot below, the domain name is _DOMAIN_ and the user name is _username_. These are just examples, not real values.
+
+\image html solrinstall2.PNG
+
+If the machine is on a domain, **make sure** to select the domain with the mouse by going to the _Log On_ tab, clicking _Browse_, then clicking _Locations_ and selecting the domain of interest. Then enter the user name desired and press _Check Names_. When that completes, press _OK_, type in the password once for each box and press _OK_. You may see "The user has been granted the log on as a service right."
+
+<li>You should be able to see the Solr service in a web browser via the URL <i>http://localhost:8983/solr/#/</i> as shown in the screenshot below.
  <br><br>
  \image html solrinstall3.PNG
  <br><br>
 If the service is appropriately started and you are unable to see the screenshot above, contact your network administrator to open ports in the firewall.
 <br><br>
 <b>Warning: The Solr process must have adequate permissions to write data to the main shared storage drive where case output will be stored.</b>
-<br><br>
+</ol>
 */

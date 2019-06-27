@@ -4,8 +4,8 @@ AbstractAbstractFileNode.changeTimeColLbl=Change Time
 AbstractAbstractFileNode.createdTimeColLbl=Created Time
 AbstractAbstractFileNode.createSheet.comment.displayName=C
 AbstractAbstractFileNode.createSheet.comment.name=C
-# {0} - occurenceCount
-AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurences of the MD5 correlation value
+# {0} - occurrenceCount
+AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value
 AbstractAbstractFileNode.createSheet.count.displayName=O
 AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated
 AbstractAbstractFileNode.createSheet.count.name=O
@@ -53,7 +53,7 @@ BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type
 BlackboardArtifactNode.createSheet.artifactType.name=Result Type
 BlackboardArtifactNode.createSheet.comment.displayName=C
 BlackboardArtifactNode.createSheet.comment.name=C
-# {0} - occurenceCount
+# {0} - occurrenceCount
 # {1} - attributeType
 BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}
 BlackboardArtifactNode.createSheet.count.displayName=O
