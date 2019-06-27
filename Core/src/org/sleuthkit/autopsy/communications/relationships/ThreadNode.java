@@ -18,11 +18,19 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An AbstractNode subclass which wraps a MessageNode object.  Doing this allows
@@ -30,6 +38,10 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * also some customizing of how a ThreadNode is shown.
  */
 final class ThreadNode extends AbstractNode{
+    
+    private static final Logger logger = Logger.getLogger(ThreadNode.class.getName());
+    
+    final static int MAX_SUBJECT_LENGTH = 120;
     
     final private MessageNode messageNode;
     
@@ -41,7 +53,35 @@ final class ThreadNode extends AbstractNode{
     
     @Override
     protected Sheet createSheet() {
-        return messageNode.createSheet();
+        Sheet sheet =  messageNode.createSheet();
+        
+        BlackboardArtifact artifact = messageNode.getArtifact();
+        if(artifact != null) {
+            BlackboardArtifact.ARTIFACT_TYPE artifactTypeID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
+
+            // If its a text message, replace the subject node which is probably 
+            // an empty string with the firest 120 characters of the text message
+            if(artifactTypeID != null && artifactTypeID == TSK_MESSAGE) {
+                try {
+                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(TSK_TEXT.getTypeID())));
+                    if(attribute != null) {
+                        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+                        sheetSet.remove("Subject");
+
+                        String msg = attribute.getDisplayString();
+                        if(msg != null && msg.length() > MAX_SUBJECT_LENGTH) {
+                            msg = msg.substring(0, MAX_SUBJECT_LENGTH) + "...";
+                        }
+
+                        sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "", msg)); //NON-NLS
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, String.format("Unable to get the text message from message artifact %d", artifact.getId()), ex);
+                }
+            }
+        }
+        
+        return sheet;
     }
     
     String getThreadID() {
