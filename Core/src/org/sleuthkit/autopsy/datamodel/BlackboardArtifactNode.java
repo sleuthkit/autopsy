@@ -748,7 +748,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.count.displayName=O",
         "BlackboardArtifactNode.createSheet.count.noCorrelationAttributes.description=No correlation properties found",
         "BlackboardArtifactNode.createSheet.count.noCorrelationValues.description=Unable to find other occurrences because no value exists for the available correlation property",
-        "# {0} - occurenceCount",
+        "# {0} - occurrenceCount",
         "# {1} - attributeType",
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}"})
     @Deprecated
