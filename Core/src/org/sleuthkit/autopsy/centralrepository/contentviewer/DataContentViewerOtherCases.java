@@ -141,9 +141,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void customizeComponents() {
         ActionListener actList = (ActionEvent e) -> {
             JMenuItem jmi = (JMenuItem) e.getSource();
-            if (jmi.equals(selectAllMenuItem)) {
-                filesTable.selectAll();
-            } else if (jmi.equals(showCaseDetailsMenuItem)) {
+            if (jmi.equals(showCaseDetailsMenuItem)) {
                 showCaseDetails(filesTable.getSelectedRow());
             } else if (jmi.equals(exportToCSVMenuItem)) {
                 try {
@@ -157,7 +155,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         };
 
         exportToCSVMenuItem.addActionListener(actList);
-        selectAllMenuItem.addActionListener(actList);
         showCaseDetailsMenuItem.addActionListener(actList);
         showCommonalityMenuItem.addActionListener(actList);
 
@@ -956,7 +953,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void initComponents() {
 
         rightClickPopupMenu = new javax.swing.JPopupMenu();
-        selectAllMenuItem = new javax.swing.JMenuItem();
         exportToCSVMenuItem = new javax.swing.JMenuItem();
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
@@ -985,9 +981,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.selectAllMenuItem.text")); // NOI18N
-        rightClickPopupMenu.add(selectAllMenuItem);
 
         org.openide.awt.Mnemonics.setLocalizedText(exportToCSVMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.exportToCSVMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(exportToCSVMenuItem);
@@ -1130,7 +1123,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JScrollPane filesTableScrollPane;
     private javax.swing.JLabel foundInLabel;
     private javax.swing.JPopupMenu rightClickPopupMenu;
-    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JMenuItem showCaseDetailsMenuItem;
     private javax.swing.JMenuItem showCommonalityMenuItem;
     private javax.swing.JPanel tableContainerPanel;
