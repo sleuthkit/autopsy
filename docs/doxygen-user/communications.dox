@@ -25,7 +25,7 @@ Selecting an account in the middle column will bring up the data for that accoun
 
 \image html cvt_summary_tab.png
 
-<li> The <b>Messages</b> tab displays any messages associated with the account. The Messages will either be in a thread, or listed under a node called "Unthreaded".  Clicking on the "Unthreaded" node will show all the messages that are not "Threaded".
+<li> The <b>Messages</b> tab displays any messages or call logs associated with the account. The Messages will either be in a thread, or listed under a node called "Unthreaded". Clicking on the "Unthreaded" node will show all the messages that are not "Threaded". Call logs will all be under a node named "Call Logs".
 
 \image html cvt_messages_threaded.png
 
@@ -68,5 +68,9 @@ After selecting either option, the middle tab will switch to the Visualize view 
 The options at the top allow you to clear the graph and resize the graph. The nodes in the graph can be dragged around and nodes and edges can be selected to display their messages or relationships in the right side tab. For example, in the image below only one node has been selected so the Messages viewer is displaying only messages involving that email address.
 
 \image html cvt_links.png
+
+If you click the "Snapshot Report" button, you can generate a report similar to the HTML \ref reporting_page "report module". Select a name for your report, which will be saved to the "Reports" folder in the current case. The Snapshot Report will contain two pages. The first will have a summary of the case, and second will contain the current graph along with your filter settings.
+
+\image html cvt_snapshot.png
 
 */
