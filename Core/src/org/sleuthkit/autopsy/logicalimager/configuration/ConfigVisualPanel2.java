@@ -442,7 +442,10 @@ final class ConfigVisualPanel2 extends JPanel {
         }
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
-    @Messages({"ConfigVisualPanel2.newRule.name=New Rule"})
+    @Messages({"ConfigVisualPanel2.newRule.name=New Rule",
+        "ConfigVisualPanel2.newRuleError.title=New rule error",
+        "# {0} - ruleName",
+        "ConfigVisualPanel2.newRuleError.duplicateName=A rule with named \"{0}\" already exists please choose a different name"})
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
         NewRulePanel panel;
         panel = new NewRulePanel(okButton, cancelButton);
@@ -455,14 +458,22 @@ final class ConfigVisualPanel2 extends JPanel {
                     null, new Object[]{okButton, cancelButton}, okButton);
             if (option == JOptionPane.OK_OPTION) {
                 try {
-                    // Save the new rule
+
                     ImmutablePair<String, LogicalImagerRule> ruleMap = panel.toRule();
+                    if (ruleExists(ruleMap)) {
+                        JOptionPane.showMessageDialog(this,
+                                Bundle.ConfigVisualPanel2_newRuleError_duplicateName(ruleMap.getKey()),
+                                Bundle.ConfigVisualPanel2_newRuleError_title(),
+                                JOptionPane.ERROR_MESSAGE);
+                        continue;
+                    }
+                    // Save the new rule
                     appendRow(ruleMap);
                     break;
                 } catch (IOException | NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this,
                             ex.getMessage(),
-                            "New rule error",
+                            Bundle.ConfigVisualPanel2_newRuleError_title(),
                             JOptionPane.ERROR_MESSAGE);
                     // let user fix the error
                 }
@@ -765,6 +776,22 @@ final class ConfigVisualPanel2 extends JPanel {
         getRuleSetFromCurrentConfig().getRules().remove(index);
         getRuleSetFromCurrentConfig().getRules().add(ruleMap.getValue());
         updatePanel(configFilename, config, ruleMap.getKey());
+    }
+
+    /**
+     * Check if a rule with the same name as this rule already exists
+     *
+     * @param ruleMap the rule to check the name of
+     *
+     * @return true if it exists, false otherwise
+     */
+    private boolean ruleExists(ImmutablePair<String, LogicalImagerRule> ruleMap) {
+        for (LogicalImagerRule rule : getRuleSetFromCurrentConfig().getRules()) {
+            if (rule.getName().equals(ruleMap.getKey())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void appendRow(ImmutablePair<String, LogicalImagerRule> ruleMap) {
