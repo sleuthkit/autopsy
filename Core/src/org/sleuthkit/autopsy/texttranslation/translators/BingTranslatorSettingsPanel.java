@@ -94,7 +94,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
             });
             targetLanguageComboBox.setEnabled(true);
         } catch (IOException | IllegalStateException | ClassCastException | NullPointerException | IndexOutOfBoundsException ex) {
-            logger.log(Level.SEVERE, Bundle.BingTranslatorSettingsPanel_warning_targetLanguageFailure(), ex);
+            logger.log(Level.WARNING, Bundle.BingTranslatorSettingsPanel_warning_targetLanguageFailure(), ex);
             warningLabel.setText(Bundle.BingTranslatorSettingsPanel_warning_targetLanguageFailure());
             targetLanguageComboBox.setEnabled(false);
         }
