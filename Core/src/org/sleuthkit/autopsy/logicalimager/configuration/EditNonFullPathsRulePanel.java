@@ -729,7 +729,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     private boolean isNonZeroLong(Object numberObject) {
         Long value = 0L;
         try {
-            if (numberObject != null && numberObject instanceof Number) {
+            if (numberObject instanceof Number) {
                 value = ((Number) numberObject).longValue();
             }
         } catch (NumberFormatException ignored) {
