@@ -23,7 +23,6 @@ import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -41,7 +40,7 @@ final class ThreadNode extends AbstractNode{
     
     private static final Logger logger = Logger.getLogger(ThreadNode.class.getName());
     
-    final static int MAX_SUBJECT_LENGTH = 120;
+    private final static int MAX_SUBJECT_LENGTH = 120;
     
     final private MessageNode messageNode;
     

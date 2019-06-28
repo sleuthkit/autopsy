@@ -27,8 +27,6 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -158,16 +156,15 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                         switch (fromID) {
                             case TSK_EMAIL_MSG:
                                 attribute1 = bba1.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
-
                                 break;
                             case TSK_MESSAGE:
                                 attribute1 = bba1.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-
                                 break;
                             case TSK_CALLLOG:
                                 attribute1 = bba1.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
-
                                 break;
+                            default:
+                                attribute1 = null;
                         }
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to compare attributes for artifact %d", bba1.getArtifactID()), ex);
@@ -189,6 +186,8 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                             case TSK_CALLLOG:
                                 attribute2 = bba2.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
                                 break;
+                            default:
+                                attribute2 = null;
                         }
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to compare attributes for artifact %d", bba2.getArtifactID()), ex);
