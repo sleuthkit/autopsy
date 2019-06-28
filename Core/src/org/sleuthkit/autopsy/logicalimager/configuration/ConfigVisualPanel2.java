@@ -427,13 +427,11 @@ final class ConfigVisualPanel2 extends JPanel {
                     try {
                         ImmutablePair<String, LogicalImagerRule> ruleMap = editPanel.toRule();
                         if (!ruleName.equals(ruleMap.getKey()) && ruleExists(ruleMap)) {
-                            if (ruleExists(ruleMap)) {
-                                JOptionPane.showMessageDialog(this,
-                                        Bundle.ConfigVisualPanel2_newRuleError_duplicateName(ruleMap.getKey()),
-                                        Bundle.ConfigVisualPanel2_editRuleError(),
-                                        JOptionPane.ERROR_MESSAGE);
-                                continue;
-                            }
+                            JOptionPane.showMessageDialog(this,
+                                    Bundle.ConfigVisualPanel2_newRuleError_duplicateName(ruleMap.getKey()),
+                                    Bundle.ConfigVisualPanel2_editRuleError(),
+                                    JOptionPane.ERROR_MESSAGE);
+                            continue;
                         }
                         updateRow(row, ruleMap);
                         break;
