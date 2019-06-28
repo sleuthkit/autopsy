@@ -1,0 +1,18 @@
+# NTFS specific artifacts.
+
+name: NTFSMFTFiles
+doc: |
+  The NTFS $MFT and $MFTMirr file system metadata files.
+
+  GRR collection note: you currently need to specify 'use tsk' and
+  'ignore download size limits' for this artifact to work. This will go away in
+  the future.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '%%environ_systemdrive%%\$MFT'
+      - '%%environ_systemdrive%%\$MFTMirr'
+    separator: '\'
+labels: [System]
+supported_os: [Windows]

@@ -1,0 +1,87 @@
+name: sam
+type: format
+description: Security Accounts Manager (SAM) format
+urls: ["https://github.com/libyal/winreg-kb/blob/master/documentation/Security%20Accounts%20Manager%20keys.asciidoc"]
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: f_value
+type: structure
+description: Security Accounts Manager F value.
+attributes:
+  byte_order: little-endian
+members:
+- name: major_version
+  data_type: uint16
+- name: minor_version
+  data_type: uint16
+- name: unknown1
+  data_type: uint32
+- name: last_login_time
+  data_type: uint64
+- name: unknown2
+  data_type: uint64
+- name: last_password_set_time
+  data_type: uint64
+- name: account_expiration_time
+  data_type: uint64
+- name: last_password_failure_time
+  data_type: uint64
+- name: rid
+  data_type: uint32
+- name: primary_gid
+  data_type: uint32
+- name: user_account_control_flags
+  data_type: uint32
+- name: country_code
+  data_type: uint16
+- name: codepage
+  data_type: uint16
+- name: number_of_password_failures
+  data_type: uint16
+- name: number_of_logons
+  data_type: uint16
+- name: unknown6
+  data_type: uint32
+- name: unknown7
+  data_type: uint32
+- name: unknown8
+  data_type: uint32
+---
+name: user_information_descriptor
+type: structure
+description: Security Accounts Manager user information descriptor.
+attributes:
+  byte_order: little-endian
+members:
+- name: offset
+  data_type: uint32
+- name: size
+  data_type: uint32
+- name: unknown1
+  data_type: uint32
+---
+name: v_value
+type: sequence
+description: Security Accounts Manager V value.
+element_data_type: user_information_descriptor
+number_of_elements: 17

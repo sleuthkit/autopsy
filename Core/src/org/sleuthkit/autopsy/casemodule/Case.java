@@ -391,7 +391,13 @@ public class Case {
          * An item in the central repository has had its comment modified. The
          * old value is null, the new value is string for current comment.
          */
-        CR_COMMENT_CHANGED;
+        CR_COMMENT_CHANGED,
+        /**
+         * An timeline event, such mac time or web activity was added to the
+         * current case. The old value is null and the new value is the
+         * TimelineEvent that was added.
+         */
+        TIMELINE_EVENT_ADDED;
 
     };
 
