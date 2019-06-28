@@ -481,10 +481,10 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         int firstRemovableDrive = -1;
         int i = 0;
         for (File root : roots) {
-            String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
-            if ("Network Drive".equalsIgnoreCase(description)) { // NON-NLS
+            if (DriveListUtils.isNetworkDrive(root.toString().replace(":\\", ""))) {
                 continue;
             }
+            String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
             long spaceInBytes = root.getTotalSpace();
             String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
             listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
