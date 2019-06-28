@@ -52,31 +52,32 @@ final class ThreadNode extends AbstractNode{
     
     @Override
     protected Sheet createSheet() {
-        Sheet sheet =  messageNode.createSheet();
-        
         BlackboardArtifact artifact = messageNode.getArtifact();
-        if(artifact != null) {
-            BlackboardArtifact.ARTIFACT_TYPE artifactTypeID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
+        if(artifact == null) {
+           return messageNode.createSheet() ;
+        }
+        
+        Sheet sheet =  messageNode.createSheet();
+        BlackboardArtifact.ARTIFACT_TYPE artifactTypeID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
 
-            // If its a text message, replace the subject node which is probably 
-            // an empty string with the firest 120 characters of the text message
-            if(artifactTypeID != null && artifactTypeID == TSK_MESSAGE) {
-                try {
-                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(TSK_TEXT.getTypeID())));
-                    if(attribute != null) {
-                        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-                        sheetSet.remove("Subject");
+        // If its a text message, replace the subject node which is probably 
+        // an empty string with the firest 120 characters of the text message
+        if(artifactTypeID != null && artifactTypeID == TSK_MESSAGE) {
+            try {
+                BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(TSK_TEXT.getTypeID())));
+                if(attribute != null) {
+                    Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+                    sheetSet.remove("Subject");
 
-                        String msg = attribute.getDisplayString();
-                        if(msg != null && msg.length() > MAX_SUBJECT_LENGTH) {
-                            msg = msg.substring(0, MAX_SUBJECT_LENGTH) + "...";
-                        }
-
-                        sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "", msg)); //NON-NLS
+                    String msg = attribute.getDisplayString();
+                    if(msg != null && msg.length() > MAX_SUBJECT_LENGTH) {
+                        msg = msg.substring(0, MAX_SUBJECT_LENGTH) + "...";
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to get the text message from message artifact %d", artifact.getId()), ex);
+
+                    sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "", msg)); //NON-NLS
                 }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Unable to get the text message from message artifact %d", artifact.getId()), ex);
             }
         }
         

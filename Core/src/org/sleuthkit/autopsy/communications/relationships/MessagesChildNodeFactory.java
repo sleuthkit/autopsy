@@ -165,6 +165,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                                 break;
                             default:
                                 attribute1 = null;
+                                break;
                         }
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to compare attributes for artifact %d", bba1.getArtifactID()), ex);
@@ -188,6 +189,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                                 break;
                             default:
                                 attribute2 = null;
+                                break;
                         }
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to compare attributes for artifact %d", bba2.getArtifactID()), ex);
