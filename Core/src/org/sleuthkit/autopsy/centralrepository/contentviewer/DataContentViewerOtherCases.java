@@ -141,9 +141,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void customizeComponents() {
         ActionListener actList = (ActionEvent e) -> {
             JMenuItem jmi = (JMenuItem) e.getSource();
-            if (jmi.equals(selectAllMenuItem)) {
-                filesTable.selectAll();
-            } else if (jmi.equals(showCaseDetailsMenuItem)) {
+            if (jmi.equals(showCaseDetailsMenuItem)) {
                 showCaseDetails(filesTable.getSelectedRow());
             } else if (jmi.equals(exportToCSVMenuItem)) {
                 try {
@@ -157,7 +155,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         };
 
         exportToCSVMenuItem.addActionListener(actList);
-        selectAllMenuItem.addActionListener(actList);
         showCaseDetailsMenuItem.addActionListener(actList);
         showCommonalityMenuItem.addActionListener(actList);
 
@@ -813,6 +810,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             occurrencePanel.getPreferredSize();
             detailsPanelScrollPane.setViewportView(occurrencePanel);
         } else {
+            String currentCaseName;
+            try {
+                currentCaseName = Case.getCurrentCaseThrows().getName();
+            } catch (NoCurrentCaseException ex) {
+                currentCaseName = null;
+                LOGGER.log(Level.WARNING, "Unable to get current case for other occurrences content viewer", ex);
+            }
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
                 Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
@@ -826,7 +830,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                         && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
                                     dataSourcesTableModel.addNodeData(nodeData);
                                 }
-                            } else {
+                            } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
                                 dataSourcesTableModel.addNodeData(nodeData);
                             }
                         } catch (EamDbException ex) {
@@ -956,7 +960,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void initComponents() {
 
         rightClickPopupMenu = new javax.swing.JPopupMenu();
-        selectAllMenuItem = new javax.swing.JMenuItem();
         exportToCSVMenuItem = new javax.swing.JMenuItem();
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
@@ -985,9 +988,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.selectAllMenuItem.text")); // NOI18N
-        rightClickPopupMenu.add(selectAllMenuItem);
 
         org.openide.awt.Mnemonics.setLocalizedText(exportToCSVMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.exportToCSVMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(exportToCSVMenuItem);
@@ -1130,7 +1130,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JScrollPane filesTableScrollPane;
     private javax.swing.JLabel foundInLabel;
     private javax.swing.JPopupMenu rightClickPopupMenu;
-    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JMenuItem showCaseDetailsMenuItem;
     private javax.swing.JMenuItem showCommonalityMenuItem;
     private javax.swing.JPanel tableContainerPanel;
@@ -1161,8 +1160,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             try {
                 tempCaseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
             } catch (EamDbException ignored) {
-                tempCaseUUID = UUID_PLACEHOLDER_STRING;
-                //place holder value will be used since correlation attribute was unavailble
+                //non central repo nodeData won't have a correlation case
+                try {
+                    tempCaseUUID = Case.getCurrentCaseThrows().getName();
+                    //place holder value will be used since correlation attribute was unavailble
+                } catch (NoCurrentCaseException ex) {
+                    LOGGER.log(Level.WARNING, "Unable to get current case", ex);
+                    tempCaseUUID = UUID_PLACEHOLDER_STRING;
+                }
             }
             caseUUID = tempCaseUUID;
         }

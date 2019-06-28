@@ -394,8 +394,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.count.displayName=O",
         "AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
-        "# {0} - occurenceCount",
-        "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurences of the MD5 correlation value"})
+        "# {0} - occurrenceCount",
+        "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value"})
     @Override
     protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue,
             String defaultDescription) {
