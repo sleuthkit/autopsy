@@ -78,8 +78,6 @@ public final class DriveListUtils {
             }
             
             int rc = p.waitFor();
-//            System.out.println(consoleOutput);
-//            System.out.println("rc=" + rc);
             return rc == 0;
         } catch(IOException | InterruptedException e) {
 //            throw new IllegalStateException("Unable to run 'net use' on " + driveLetter, e);
