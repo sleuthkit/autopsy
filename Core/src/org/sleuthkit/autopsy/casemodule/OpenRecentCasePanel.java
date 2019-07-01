@@ -26,6 +26,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -53,6 +55,15 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
     private OpenRecentCasePanel() {
         initComponents();
         imagesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        imagesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                //enable the ok button when something is selected
+                if (!e.getValueIsAdjusting()){
+                    openButton.setEnabled(e.getFirstIndex()>=0);
+                }
+            }
+        });
     }
 
     /*
@@ -90,11 +101,9 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         imagesTable.getColumnModel().getColumn(0).setPreferredWidth((int) (.30 * width));
         imagesTable.getColumnModel().getColumn(1).setPreferredWidth((int) (.70 * width));
         // If there are any images, let's select the first one
+        openButton.setEnabled(false);
         if (imagesTable.getRowCount() > 0) {
             imagesTable.setRowSelectionInterval(0, 0);
-            openButton.setEnabled(true);
-        } else {
-            openButton.setEnabled(false);
         }
     }
 
