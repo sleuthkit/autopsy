@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
@@ -51,6 +52,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
      */
     private OpenRecentCasePanel() {
         initComponents();
+        imagesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
 
     /*
