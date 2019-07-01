@@ -82,6 +82,8 @@ hs_err_pid*.log
 /RecentActivity/release/
 /CentralRepository/release/
 
+/.idea/
+
 *.img
 *.vhd
 *.E01

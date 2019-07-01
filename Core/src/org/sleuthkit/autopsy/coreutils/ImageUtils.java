@@ -22,7 +22,6 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.io.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
@@ -122,7 +121,7 @@ public class ImageUtils {
         }
         DEFAULT_THUMBNAIL = tempImage;
         boolean tempFfmpegLoaded = false;
-        if (OpenCvLoader.isOpenCvLoaded()) {
+        if (OpenCvLoader.hasOpenCvLoaded()) {
             try {
                 if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
                     System.loadLibrary("opencv_ffmpeg248_64"); //NON-NLS
