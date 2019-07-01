@@ -76,7 +76,7 @@ EditNonFullPathsRulePanel.modifiedDaysNotPositiveException=Modified days must be
 EditNonFullPathsRulePanel.units.bytes=Bytes
 EditNonFullPathsRulePanel.units.gigabytes=Gigabytes
 EditNonFullPathsRulePanel.units.kilobytes=Kilobytes
-EditNonFullPathsRulePanel.units.megabytes=MegaBytes
+EditNonFullPathsRulePanel.units.megabytes=Megabytes
 # {0} - fieldName
 EditRulePanel.blankLineException={0} cannot have a blank line
 EditRulePanel.emptyRuleName.message=Rule name cannot be empty
