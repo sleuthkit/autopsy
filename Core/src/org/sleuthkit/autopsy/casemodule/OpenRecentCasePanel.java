@@ -60,7 +60,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             public void valueChanged(ListSelectionEvent e) {
                 //enable the ok button when something is selected
                 if (!e.getValueIsAdjusting()){
-                    openButton.setEnabled(e.getFirstIndex()>=0);
+                    openButton.setEnabled(imagesTable.getSelectedRowCount() > 0);
                 }
             }
         });
@@ -101,7 +101,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         imagesTable.getColumnModel().getColumn(0).setPreferredWidth((int) (.30 * width));
         imagesTable.getColumnModel().getColumn(1).setPreferredWidth((int) (.70 * width));
         // If there are any images, let's select the first one
-        openButton.setEnabled(false);
         if (imagesTable.getRowCount() > 0) {
             imagesTable.setRowSelectionInterval(0, 0);
         }
@@ -262,6 +261,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         cancelButton.setText(org.openide.util.NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.cancelButton.text")); // NOI18N
 
         openButton.setText(org.openide.util.NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.openButton.text")); // NOI18N
+        openButton.setEnabled(false);
         openButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openButtonActionPerformed(evt);
