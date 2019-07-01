@@ -48,7 +48,11 @@ In a triage situation, there is generally not time to make a full image of the s
 
 \subsubsection triage_vhd Making a Sparse Image
 
-With any of the above methods for analyzing live systems and devices there is still the problem that your Autopsy case won't be very useful after you disconnect from the drive. To solve this problem you can choose to make a "sparse VHD" as Autopsy is processing the device. This is a file format used by Microsoft Virtual Machines that is readable by Windows and other forensic tools. Instead of copying each sector sequentially, sparse VHDs allow us to copy sectors in any order. This lets us copy each sector as Autopsy reads it, so the sparse VHD will contain all of the files that have been processed so far. We will also have the data associated with volumes and file systems since Autopsy has to process those in the course of analyzing the system.
+With any of the above methods for analyzing live systems and devices there is still the problem that your Autopsy case won't be very useful after you disconnect from the drive. It will refer to a device that no longer exists and, more importantly, you may not have a copy of any files of interest that you observed during the triage. 
+
+To solve this problem you can choose to make a "sparse VHD" as Autopsy is processing the device. This will save a copy of every sector that Autopsy reads, which will include file system structures (such as Master File Tables) and files that passed the ingest filters (such as all pictures). 
+
+VHD is a file format used by Microsoft Virtual Machines that is readable by Windows and other forensic tools.  The VHD will grow in size as Autopsy reads more data from the target drive. 
 
 To create a sparse VHD, check the box for "Make a VHD image..." when selecting the disk to analyze.
 
@@ -60,7 +64,7 @@ To create a sparse VHD, check the box for "Make a VHD image..." when selecting t
 
 In this scenario, you are trying to answer whether child exploitation images exist in a knock and talk type situation where you will have a limited amount of time with the target system.
 
-<b>Preparaton at the office:</b>
+<b>Preparation at the office:</b>
 <ul>
 <li> Create a \ref live_triage_page "live triage drive" on your USB drive
 <li> Launch Autopsy from that USB drive and create an \ref ingest_profiles "ingest profile" that:
@@ -75,7 +79,7 @@ In this scenario, you are trying to answer whether child exploitation images exi
 <ul>
 <li>Start the analysis:
 <ul>
- <li>Plus the live triage drive you made at the office into their laptop
+ <li>Plug the live triage drive you made at the office into their laptop
  <li>Launch Autopsy from the .bat file
  <li>\ref cases_page "Create a case" (saving to your USB drive)
  <li>Add a \ref ds_local "local drive data source"
