@@ -126,6 +126,7 @@ class AddMultipleImageTask implements Runnable {
                 caseDatabase.acquireSingleUserCaseWriteLock();
 
                 Image dataSource = caseDatabase.addImageInfo(0, corruptedImageFilePaths, timeZone);
+                newDataSources.add(dataSource);
                 List<TskFileRange> fileRanges = new ArrayList<>();
 
                 long imageSize = dataSource.getSize();
