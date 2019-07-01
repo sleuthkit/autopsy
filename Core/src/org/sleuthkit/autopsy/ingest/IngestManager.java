@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -403,10 +403,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         synchronized (ingestJobsById) {
             ingestJobsById.put(job.getId(), job);
         }
+        IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
         errors = job.start();
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
         } else {
             synchronized (ingestJobsById) {
                 this.ingestJobsById.remove(job.getId());

@@ -507,7 +507,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void bnTestDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestDatabaseActionPerformed
         lbTestDatabase.setIcon(null);
+        lbTestDatabase.paintImmediately(lbTestDatabase.getVisibleRect());
         lbTestDbWarning.setText("");
+        lbTestDbWarning.paintImmediately(lbTestDbWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             CaseDbConnectionInfo info = new CaseDbConnectionInfo(
@@ -530,7 +532,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void bnTestMessageServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestMessageServiceActionPerformed
         lbTestMessageService.setIcon(null);
+        lbTestMessageService.paintImmediately(lbTestMessageService.getVisibleRect());
         lbTestMessageWarning.setText("");
+        lbTestMessageWarning.paintImmediately(lbTestMessageWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         int port;
@@ -561,7 +565,9 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void bnTestSolrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestSolrActionPerformed
         lbTestSolr.setIcon(null);
+        lbTestSolr.paintImmediately(lbTestSolr.getVisibleRect());
         lbTestSolrWarning.setText("");
+        lbTestSolrWarning.paintImmediately(lbTestSolrWarning.getVisibleRect());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);

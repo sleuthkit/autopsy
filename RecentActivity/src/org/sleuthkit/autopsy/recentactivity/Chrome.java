@@ -300,10 +300,7 @@ class Chrome extends Extract {
             try {
                 tempReader = new FileReader(temps);
             } catch (FileNotFoundException ex) {
-                logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzeFile", this.getName(),
-                                bookmarkFile.getName()));
+                logger.log(Level.WARNING, "Error while trying to read into the Bookmarks for Chrome.", ex); //NON-NLS
                 continue;
             }
 

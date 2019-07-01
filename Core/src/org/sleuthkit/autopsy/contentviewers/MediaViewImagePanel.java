@@ -25,7 +25,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -78,14 +77,16 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.ContentViewerTag;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.SerializationException;
-import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtility;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtil;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagControls;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagCreator;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTag;
 import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsGroup;
+import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -117,7 +118,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
 
-    private final JPopupMenu popupMenu = new JPopupMenu();
+    private final JPopupMenu imageTaggingOptions = new JPopupMenu();
     private final JMenuItem createTagMenuItem;
     private final JMenuItem deleteTagMenuItem;
     private final JMenuItem hideTagsMenuItem;
@@ -159,6 +160,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     /**
      * Creates new form MediaViewImagePanel
      */
+    @NbBundle.Messages({
+        "MediaViewImagePanel.createTagOption=Create",
+        "MediaViewImagePanel.deleteTagOption=Delete",
+        "MediaViewImagePanel.hideTagOption=Hide",
+        "MediaViewImagePanel.exportTagOption=Export"
+    })
     public MediaViewImagePanel() {
         initComponents();
         fxInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
@@ -167,29 +174,35 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         exportChooser.setDialogTitle(Bundle.MediaViewImagePanel_fileChooserTitle());
 
         //Build popupMenu when Tags Menu button is pressed.
-        createTagMenuItem = new JMenuItem("Create");
+        createTagMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_createTagOption());
         createTagMenuItem.addActionListener((event) -> createTag());
-        popupMenu.add(createTagMenuItem);
+        imageTaggingOptions.add(createTagMenuItem);
 
-        popupMenu.add(new JSeparator());
+        imageTaggingOptions.add(new JSeparator());
 
-        deleteTagMenuItem = new JMenuItem("Delete");
+        deleteTagMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_deleteTagOption());
         deleteTagMenuItem.addActionListener((event) -> deleteTag());
-        popupMenu.add(deleteTagMenuItem);
+        imageTaggingOptions.add(deleteTagMenuItem);
 
-        popupMenu.add(new JSeparator());
+        imageTaggingOptions.add(new JSeparator());
 
-        hideTagsMenuItem = new JMenuItem("Hide");
+        hideTagsMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_hideTagOption());
         hideTagsMenuItem.addActionListener((event) -> showOrHideTags());
-        popupMenu.add(hideTagsMenuItem);
+        imageTaggingOptions.add(hideTagsMenuItem);
 
-        popupMenu.add(new JSeparator());
+        imageTaggingOptions.add(new JSeparator());
 
-        exportTagsMenuItem = new JMenuItem("Export");
+        exportTagsMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_exportTagOption());
         exportTagsMenuItem.addActionListener((event) -> exportTags());
-        popupMenu.add(exportTagsMenuItem);
+        imageTaggingOptions.add(exportTagsMenuItem);
 
-        popupMenu.setPopupSize(300, 150);
+        imageTaggingOptions.setPopupSize(300, 150);
+        
+        //Disable image tagging for non-windows users or upon failure to load OpenCV.
+        if (!PlatformUtil.isWindowsOS() || !OpenCvLoader.hasOpenCvLoaded()) {
+            tagsMenu.setEnabled(false);
+            imageTaggingOptions.setEnabled(false);
+        }
 
         if (fxInited) {
             Platform.runLater(new Runnable() {
@@ -876,13 +889,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                                 .map(cvTag -> cvTag.getDetails()).collect(Collectors.toList());
                         
                         //Apply tags to image and write to file
-                        BufferedImage pngImage = ImageTagsUtility.writeTags(file, regions, "png");
+                        BufferedImage taggedImage = ImageTagsUtil.getImageWithTags(file, regions);
                         Path output = Paths.get(exportChooser.getSelectedFile().getPath(),
                                 FilenameUtils.getBaseName(file.getName()) + "-with_tags.png"); //NON-NLS
-                        ImageIO.write(pngImage, "png", output.toFile());
+                        ImageIO.write(taggedImage, "png", output.toFile());
                         
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
-                    } catch (TskCoreException | NoCurrentCaseException | IOException ex) {
+                    } catch (Exception ex) { //Runtime exceptions may spill out of ImageTagsUtil from JavaFX.
+                        //This ensures we (devs and users) have something when it doesn't work.
                         LOGGER.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
                         JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_unsuccessfulExport());
                     }
@@ -893,7 +907,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }
 
     private void tagsMenuMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagsMenuMousePressed
-        popupMenu.show(tagsMenu, -300 + tagsMenu.getWidth(), tagsMenu.getHeight() + 3);
+        if (imageTaggingOptions.isEnabled()) {
+            imageTaggingOptions.show(tagsMenu, -300 + tagsMenu.getWidth(), tagsMenu.getHeight() + 3);
+        }
     }//GEN-LAST:event_tagsMenuMousePressed
 
     /**

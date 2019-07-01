@@ -59,7 +59,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     private final ModifiableProxyLookup proxyLookup;
 
     @Messages({
-        "MediaViewer_Name=Media"
+        "MediaViewer_Name=Media Attachments"
     })
     /**
      * Creates new form ThumbnailViewer
@@ -113,26 +113,21 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        final Set<Content> relationshipSources;
-
-        CommunicationsManager communicationManager;
+        Set<Content> relationshipSources;
         Set<BlackboardArtifact> artifactList = new HashSet<>();
 
         try {
-            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-            relationshipSources = communicationManager.getRelationshipSources(info.getAccountDevicesInstances(), info.getCommunicationsFilter());
+            relationshipSources = info.getRelationshipSources();
 
             relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
                 artifactList.add((BlackboardArtifact) content);
             });
 
-        } catch (TskCoreException | NoCurrentCaseException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to update selection." , ex);
         }
 
-        if(artifactList.size() == 0) {
-            thumbnailViewer.resetComponent();
-        }
+        thumbnailViewer.resetComponent();
 
         thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentsChildren(artifactList)), tableEM), true, this.getClass().getName()));
     }

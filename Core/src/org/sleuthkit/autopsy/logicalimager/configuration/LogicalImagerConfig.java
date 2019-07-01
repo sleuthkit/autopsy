@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,27 +28,57 @@ import java.util.List;
  */
 class LogicalImagerConfig {
 
-    @SerializedName("finalize-image-writer")
+    static private final String CURRENT_VERSION = "1.0";
+    
+    @SerializedName("version")
     @Expose(serialize = true) 
+    private String version;
+
+    @SerializedName("finalize-image-writer")
+    @Expose(serialize = true)
     private boolean finalizeImageWriter;
 
     @SerializedName("rule-sets")
-    @Expose(serialize = true) 
+    @Expose(serialize = true)
     private List<LogicalImagerRuleSet> ruleSets;
-    
+
     LogicalImagerConfig() {
+        this.version = CURRENT_VERSION;
         this.finalizeImageWriter = false;
         this.ruleSets = new ArrayList<>();
     }
-    
+
     LogicalImagerConfig(
-            boolean finalizeImageWriter,
-            List<LogicalImagerRuleSet> ruleSets
+        boolean finalizeImageWriter,
+        List<LogicalImagerRuleSet> ruleSets
     ) {
+        this.version = CURRENT_VERSION;
         this.finalizeImageWriter = finalizeImageWriter;
         this.ruleSets = ruleSets;
     }
 
+    LogicalImagerConfig(
+        String version,
+        boolean finalizeImageWriter,
+        List<LogicalImagerRuleSet> ruleSets
+    ) {
+        this.version = version;
+        this.finalizeImageWriter = finalizeImageWriter;
+        this.ruleSets = ruleSets;
+    }
+
+    String getVersion() {
+        return version;
+    }
+    
+    void setVersion(String version) {
+        this.version = version;
+    }
+    
+    static public String getCurrentVersion() {
+        return CURRENT_VERSION;
+    }
+    
     boolean isFinalizeImageWriter() {
         return finalizeImageWriter;
     }
@@ -63,5 +93,5 @@ class LogicalImagerConfig {
 
     void setRuleSet(List<LogicalImagerRuleSet> ruleSets) {
         this.ruleSets = ruleSets;
-    }    
+    }
 }
