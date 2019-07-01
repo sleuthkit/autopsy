@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import java.util.List;
 import org.openide.util.NbBundle;
 
 /**
- * Encryption programs rule 
+ * Encryption programs rule
  */
 @NbBundle.Messages({
     "EncryptionProgramsRule.encryptionProgramsRuleName=Encryption Programs",
@@ -34,14 +34,15 @@ final class EncryptionProgramsRule {
     private static final String ENCRYPTION_PROGRAMS_RULE_NAME = Bundle.EncryptionProgramsRule_encryptionProgramsRuleName();
     private static final String ENCRYPTION_PROGRAMS_RULE_DESCRIPTION = Bundle.EncryptionProgramsRule_encryptionProgramsRuleDescription();
     private static final List<String> FILENAMES = new ArrayList<>();
-    
-    private EncryptionProgramsRule() {}
-    
-    // TODO: Add more files here
+
+    private EncryptionProgramsRule() {
+        //private no arg constructor intentionally blank
+    }
+
     static {
         // Truecrypt
         FILENAMES.add("truecrypt.exe"); // NON-NLS
-        
+
         // AxCrypt
         FILENAMES.add("AxCrypt.exe"); // NON-NLS
 
@@ -62,7 +63,7 @@ final class EncryptionProgramsRule {
         FILENAMES.add("gpgsm.exe"); // NON-NLS
         FILENAMES.add("gpgtar.exe"); // NON-NLS
         FILENAMES.add("gpgv.exe"); // NON-NLS
-        
+
         // Symantec Encryption Desktop aka PGP
         FILENAMES.add("PGP Viewer.exe"); // NON-NLS
         FILENAMES.add("PGPcbt64.exe"); // NON-NLS
@@ -87,7 +88,7 @@ final class EncryptionProgramsRule {
     static String getDescription() {
         return ENCRYPTION_PROGRAMS_RULE_DESCRIPTION;
     }
-    
+
     static List<String> getFilenames() {
         return FILENAMES;
     }

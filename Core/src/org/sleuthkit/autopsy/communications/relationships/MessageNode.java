@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 class MessageNode extends BlackboardArtifactNode {
 
     public static final String UNTHREADED_ID = "<UNTHREADED>";
+    public static final String CALL_LOG_ID = "<CALLLOG>";
     
     private static final Logger logger = Logger.getLogger(MessageNode.class.getName());
     
@@ -87,9 +88,14 @@ class MessageNode extends BlackboardArtifactNode {
 
         sheetSet.put(new NodeProperty<>("Type", Bundle.MessageNode_Node_Property_Type(), "", getDisplayName())); //NON-NLS
         
-        sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? UNTHREADED_ID : threadID)); //NON-NLS
+        
 
         final BlackboardArtifact artifact = getArtifact();
+        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
+            sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",CALL_LOG_ID)); //NON-NLS
+        } else {
+            sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? UNTHREADED_ID : threadID)); //NON-NLS
+        }
 
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != fromID) {

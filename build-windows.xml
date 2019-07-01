@@ -8,7 +8,7 @@
     <property name="i586" location="${basedir}/Core/release/modules/lib/i586" />
     <property name="i686" location="${basedir}/Core/release/modules/lib/i686"/>
     <property name="crt" location="${basedir}/thirdparty/crt" />
-    <property name="tsk_logical_imager_dir" location="${basedir}/Core/release/modules/tsk_logical_imager"/>
+    <property name="tsk_logical_imager_dir" location="${basedir}/Core/release/tsk_logical_imager"/>
  
     <import file="build-windows-installer.xml" />
     
