@@ -80,7 +80,6 @@ public final class DriveListUtils {
             int rc = p.waitFor();
             return rc == 0;
         } catch(IOException | InterruptedException e) {
-//            throw new IllegalStateException("Unable to run 'net use' on " + driveLetter, e);
             return false; // assume not a network drive
         }
     }
