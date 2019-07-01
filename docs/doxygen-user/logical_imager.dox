@@ -1,0 +1,57 @@
+/*! \page logical_imager_page Logical Imager
+
+\section logical_imager_overview Overview
+
+The logical imager allows you to collect files from a live Windows computer. The imager is configured with rules that specify what files to collect. Rules can be based on file attributes such as folder names, extensions, and sizes. You can use this feature when you do not have time or authorization to perform a full drive acquisition.
+
+The logical imager produces a sparse VHD image that contains all of the file system data that was read. This VHD image can be imported into Autopsy or mounted by Windows. The imager also enumerates the user accounts on the system and can generate alerts if encryption programs exist.
+
+The general workflow is:
+<ul>
+<li>Configure logical imager using Autopsy. This will copy a configuration file specifying which files to collect and the logical imager executable to the target drive.
+<li>Insert the drive into the target system and run logical imager. This will give you a folder containing the sparse VHD copy of the target system, a file containing user account information, and a record of which files generated alerts.
+<li>Load the result of running logical imager into Autopsy to browse any matching files and see user account information.
+</ul>
+
+\section logical_imager_config Configuration
+
+To start, open Autopsy and go to Tools->Create Logical Imager.
+
+\image html LogicalImager/tools_menu.png
+
+<ul>
+<li><b>Configuring an external drive</b>
+
+The normal use case is to select a drive from the list under "Configure selected external drive." This will put the logical imager executable and a configuration file into the root directory of that drive once you finish the configuration. It is important to run the executable from the root of your drive because its presence on the drive makes the imager skip that drive during processing. MOVE THIS??
+
+\image html LogicalImager/configure_drive.png
+
+<li><b>Configuring in a folder</b>
+
+If you're not ready to set up your drive yet, or if you want to create a different configuration file, you can use the second option to browse to a folder or an existing configuration file. If you're creating a new file, browse to the folder you want to create it in. 
+Notice that the configuration file has the default name "logical-imager-config.json". You can change this, but if you do you'll need to rename it after you copy it to your drive or use the command prompt to run the imager. SEE SECTION
+
+\image html LogicalImager/select_folder.png
+</ul>
+
+In either case you can now configure your imager. If the configuration file already exists, this screen will be loaded with the current settings from the file.
+
+\image html LogicalImager/main_config_panel.png
+
+On the left side you can see each rule in the configuration file. Each of these rules will be applied against the live system. A rule has a name, an optional description, one or more conditions, and settings for what should happen when a file matching the rule is found. When you select a rule you'll see all the settings for that rule on the right side of the panel. You can edit or delete rules once you select them. There are also two global settings in the bottom right that apply to the configuration file as a whole:
+<ul>
+<li>Alert if encryption programs are found - This will add a predefined rule to find encryption programs and alert and export any that are found. You will not be able to edit this rule.
+<li>Continue imaging after searches are performed - By default, the logical imager will only copy sectors that it uses or that are part of matching files being exported. If this option is selected, logical imager will go back through the image after the rule matching is complete and copy over any remaining sectors. This will take longer to run and result in much larger VHD images. 
+</ul>
+
+To make a new rule, click on the "New Rule" button. 
+
+\image html LogicalImager/new_attr_rule.png
+
+There are two rule types:
+<ul>
+<li>Attribute rules allow you enter multiple conditions that must be true for a file to match
+<li>Full path rules allow you to enter one or more full paths (path and file name) which must match exactly
+</ul>
+
+*/
