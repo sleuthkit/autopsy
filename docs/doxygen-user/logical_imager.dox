@@ -48,10 +48,30 @@ To make a new rule, click on the "New Rule" button.
 
 \image html LogicalImager/new_attr_rule.png
 
-There are two rule types:
+There are two rule types to choose from:
 <ul>
 <li>Attribute rules allow you enter multiple conditions that must be true for a file to match
 <li>Full path rules allow you to enter one or more full paths (path and file name) which must match exactly
+</ul>
+
+For either rule type, you start by entering a rule name and optional description. You will also need to choose at least one action to take when a match is found.
+<ul>
+<li>Alert in Imager console if rule matches - this will display the file data in the console and add it to the "alerts.txt" output file.
+<li>Extract file if it matches a rule - this will ensure that the matching file’s contents will be copied to the sparse VHD
+</ul>
+
+Attribute rules can have one or more conditions. All conditions must be true for a rule to match.
+<ul>
+<li>Extensions - File must match one of the given extensions (comma-separated). Extensions are case-insensitive.
+<li>File names - File must match one of the given file names (new line-separated). File names should include extensions and are case-insensitive.
+<li>Folder names - File must match one of the given paths (new line-separated). The given path may be a substring of the file path. You can use "[USER_FOLDER]" to match any user folder on the system. For example, "[USER_FOLDER]/Downloads" will match the downloads folder in any user folder, such as "Users/username/Downloads".
+<li>Minimum size / Maximum size - File must be in the given range. You can either both fields to specify a range or use just one to match all files larger or smaller than the given size.
+<li>Modified Within - File must have been changed within the specified last number of days
+</ul>
+
+Full path rules have a single condition.
+<ul>
+<li>Full paths: File must exactly match one of the given full paths (new line-separated)
 </ul>
 
 */
