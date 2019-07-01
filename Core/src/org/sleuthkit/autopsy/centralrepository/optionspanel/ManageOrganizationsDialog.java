@@ -159,7 +159,8 @@ public final class ManageOrganizationsDialog extends JDialog {
         editButton = new javax.swing.JButton();
         orgDetailsLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(603, 443));
+        setMinimumSize(new java.awt.Dimension(600, 450));
+        setPreferredSize(new java.awt.Dimension(600, 450));
 
         manageOrganizationsScrollPane.setMinimumSize(null);
         manageOrganizationsScrollPane.setPreferredSize(new java.awt.Dimension(535, 415));
