@@ -452,7 +452,7 @@ final class ConfigVisualPanel2 extends JPanel {
     @Messages({"ConfigVisualPanel2.newRule.name=New Rule",
         "ConfigVisualPanel2.newRuleError.title=New rule error",
         "# {0} - ruleName",
-        "ConfigVisualPanel2.newRuleError.duplicateName=A rule with named \"{0}\" already exists please choose a different name"})
+        "ConfigVisualPanel2.newRuleError.duplicateName=A rule with name \"{0}\" already exists. Please enter a different rule name"})
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
         NewRulePanel panel;
         panel = new NewRulePanel(okButton, cancelButton);
