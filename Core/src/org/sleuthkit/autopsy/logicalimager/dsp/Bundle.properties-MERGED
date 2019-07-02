@@ -19,7 +19,7 @@ AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
 # {0} - imageFilePath
 AddMultipleImageTask.adding=Adding: {0}
 # {0} - file
-AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as logical file
+AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.
 # {0} - imageFilePath
 # {1} - deviceId
 # {2} - exceptionMessage
