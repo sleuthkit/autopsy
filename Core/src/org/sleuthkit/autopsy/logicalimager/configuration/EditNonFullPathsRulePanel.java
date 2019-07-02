@@ -66,7 +66,7 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
         "EditNonFullPathsRulePanel.example=Example: ",
         "EditNonFullPathsRulePanel.units.bytes=Bytes",
         "EditNonFullPathsRulePanel.units.kilobytes=Kilobytes",
-        "EditNonFullPathsRulePanel.units.megabytes=MegaBytes",
+        "EditNonFullPathsRulePanel.units.megabytes=Megabytes",
         "EditNonFullPathsRulePanel.units.gigabytes=Gigabytes"
     })
     EditNonFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
