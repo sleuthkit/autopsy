@@ -48,7 +48,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
 
     private static final long serialVersionUID = 1L;
     private String name;
-    private final Map<String, Rule> rules;
+    private final TreeMap<String, Rule> rules;
 
     /**
      * Constructs an empty named set of uniquely named rules.
