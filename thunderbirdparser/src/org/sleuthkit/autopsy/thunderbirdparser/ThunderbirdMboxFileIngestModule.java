@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -183,51 +184,53 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         PstParser parser = new PstParser(services);
-        PstParser.ParseResult result = parser.parse(file, abstractFile.getId());
+        PstParser.ParseResult result = parser.open(file, abstractFile.getId());
 
-        if (result == PstParser.ParseResult.OK) {
-            // parse success: Process email and add artifacts
-            processEmails(parser.getResults(), abstractFile);
+        switch( result) {
+            case OK:
+                processEmails(parser.getPartialEmailMessages(), parser.getEmailMessageIterator(), abstractFile);
+                break;
 
-        } else if (result == PstParser.ParseResult.ENCRYPT) {
-            // encrypted pst: Add encrypted file artifact
-            try {
-                BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
-
+            case ENCRYPT:
+                // encrypted pst: Add encrypted file artifact
                 try {
-                    // index the artifact for keyword search
-                    blackboard.indexArtifact(artifact);
-                } catch (Blackboard.BlackboardException ex) {
-                    MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                }
+                    BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
+                    artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
 
-                services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
-            } catch (TskCoreException ex) {
-                logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
-            }
-        } else {
-            // parsing error: log message
-            postErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
-                            abstractFile.getName()),
-                    NbBundle.getMessage(this.getClass(),
-                            "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
-            logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
-            return ProcessResult.ERROR;
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException ex) {
+                        MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
+                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    }
+
+                    services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
+                }
+                break;
+            default:
+                // parsing error: log message
+                postErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
+                                abstractFile.getName()),
+                        NbBundle.getMessage(this.getClass(),
+                                "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
+                logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
+                return ProcessResult.ERROR;
         }
 
         if (file.delete() == false) {
             logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
         }
 
-        String errors = parser.getErrors();
-        if (errors.isEmpty() == false) {
-            postErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg2",
-                            abstractFile.getName()), errors);
-        }
+//        String errors = parser.getErrors();
+//        if (errors.isEmpty() == false) {
+//            postErrorMessage(
+//                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg2",
+//                            abstractFile.getName()), errors);
+//        }
 
         return ProcessResult.OK;
     }
@@ -281,19 +284,27 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        MboxParser parser = new MboxParser(services, emailFolder);
-        List<EmailMessage> emails = parser.parse(file, abstractFile.getId());
-        processEmails(emails, abstractFile);
+        MboxParser emailIterator = MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId());
+        List<EmailMessage> emails = new ArrayList<>();
+        if(emailIterator != null) {
+            while(emailIterator.hasNext()) {
+                EmailMessage emailMessage = emailIterator.next();
+                if(emailMessage != null) {
+                    emails.add(emailMessage);
+                }
+            }
+            
+            String errors = emailIterator.getErrors();
+            if (!errors.isEmpty()) {
+                postErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
+                                abstractFile.getName()), errors);
+            }
+        }
+        processEmails(emails, MboxParser.getEmailIterator( emailFolder, file, abstractFile.getId()), abstractFile);
 
         if (file.delete() == false) {
             logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
-        }
-
-        String errors = parser.getErrors();
-        if (errors.isEmpty() == false) {
-            postErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processMBox.errProcFile.msg2",
-                            abstractFile.getName()), errors);
         }
 
         return ProcessResult.OK;
@@ -434,7 +445,50 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         context.addFilesToJob(derivedFiles);
         services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
     }
+    
+    private void processEmails(List<EmailMessage> partialEmailsForThreading, Iterator<EmailMessage> fullMessageIterator, AbstractFile abstractFile) {
+        // Putting try/catch around this to catch any exception and still allow
+        // the creation of the artifacts to continue.
+        try{
+            EmailMessageThreader.threadMessages(partialEmailsForThreading, String.format("%d", abstractFile.getId()));
+        } catch(Exception ex) {
+            logger.log(Level.WARNING, String.format("Exception thrown parsing emails from %s", abstractFile.getName()), ex);
+        }
+        
+        List<AbstractFile> derivedFiles = new ArrayList<>();
 
+        int msgCnt = 0;
+        while(fullMessageIterator.hasNext()) {
+            EmailMessage current = fullMessageIterator.next();
+            
+            if(current == null) {
+                continue;
+            }
+
+            if(partialEmailsForThreading.size() > msgCnt) {
+                EmailMessage threaded = partialEmailsForThreading.get(msgCnt++);
+                
+                if(threaded.getMessageID().equals(current.getMessageID()) &&
+                        threaded.getSubject().equals(current.getSubject())) {
+                    current.setMessageThreadID(threaded.getMessageThreadID());
+                }
+            }
+            
+            BlackboardArtifact msgArtifact = addEmailArtifact(current, abstractFile);
+            
+            if ((msgArtifact != null) && (current.hasAttachment()))  {
+                derivedFiles.addAll(handleAttachments(current.getAttachments(), abstractFile, msgArtifact ));
+            }
+        }
+
+        if (derivedFiles.isEmpty() == false) {
+            for (AbstractFile derived : derivedFiles) {
+                services.fireModuleContentEvent(new ModuleContentEvent(derived));
+            }
+        }
+        context.addFilesToJob(derivedFiles);
+        services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+    }
     /**
      * Add the given attachments as derived files and reschedule them for
      * ingest.
