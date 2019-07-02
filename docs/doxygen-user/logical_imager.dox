@@ -57,7 +57,7 @@ There are two rule types to choose from:
 For either rule type, you start by entering a rule name and optional description. You will also need to choose at least one action to take when a match is found.
 <ul>
 <li>Alert in Imager console if rule matches - this will display the file data in the console and add it to the "alerts.txt" output file.
-<li>Extract file if it matches a rule - this will ensure that the matching file’s contents will be copied to the sparse VHD
+<li>Extract file if it matches a rule - this will ensure that the matching file's contents will be copied to the sparse VHD
 </ul>
 
 Attribute rules can have one or more conditions. All conditions must be true for a rule to match.
@@ -73,5 +73,52 @@ Full path rules have a single condition.
 <ul>
 <li>Full paths: File must exactly match one of the given full paths (new line-separated)
 </ul>
+
+\image html LogicalImager/full_path_rule.png
+
+\section logical_imager_running Running Logical Imager
+
+\subsection logical_imager_default_run Running with the Default Configuration
+
+Using the defaults in the configuration process will create a drive with the config file (named "logical-imager-config.json") and the logical imager executable in the root folder of your drive.
+
+\image html LogicalImager/exe_folder.png
+
+The default case is to run the logical imager on every drive except the one containing it. Note that the logical imager executable must be in the root directory for the drive to be skipped. To run the imager, right-click on "tsk_logical_imager.exe" and select "Run as administrator".  This will open a console window where you'll see some information about the processing and if you set any rules to create alerts, you'll see matches in the console window as well. The window will close automatically when the processing is complete.
+ 
+The logical imager will start writing the sparse VHD(s) and any other data to a directory next to the executable. 
+
+\image html LogicalImager/output_folder.png
+
+\subsection logical_imager_custom_run Running from a Command Prompt
+
+To run the logical imager with custom settings, you'll need to first open a command prompt in administrator mode (right-click and then select "Run as administrator"). Then switch to the drive where logical imager is located. You can run using the default configuration by simply typing "tsk_logical_imager.exe".
+
+\image html LogicalImager/command_prompt.png
+
+If your configuration file is not named "logical-imager-config.json" (for example, if you have multiple configuration files for different situations), you'll need to specify the file name using the "-c" flag.
+
+\image html LogicalImager/config_flag.png
+
+If you want to specify the drive to run on, you can use the "-i" flag. This can be helpful for testing your configuration file - you can create a small USB drive with files that should match your rules to ensure that everything is working correctly before using it on a real system. The following example shows how to only run on the "G" drive on this system:
+
+\image html LogicalImager/image_flag.png
+
+\section logical_imager_results Viewing Results
+
+The logical imager results can be added to an Autopsy case as a \ref ds_page "data source". This brings in the sparse VHD(s) as a disk image and also adds the other files created by the logical imager. Select the "Autopsy Imager" option and proceed to the next page.
+
+\image html LogicalImager/dsp_select.png
+
+In the top section, you can see all the logical imager result folders in the root folder of each drive. Select the one you want to add and then hit the "Next" button.
+
+\image html LogicalImager/import.png
+
+If your logical imager results are in a different location, select "Manually Choose Folder" and use the "Browse" button to locate your results.
+
+In either case you'll get to configure the \ref ingest_page "ingest modules" to run. You can run any of them, but since your disk image may not be complete you may see more errors than normal. For example, the sparse VHD may contain the entire file allocation table but the actual data that goes with the files will be missing.
+
+The alert and user files created by the logical imager can be found under the Reports section of the Tree Viewer.
+
 
 */
