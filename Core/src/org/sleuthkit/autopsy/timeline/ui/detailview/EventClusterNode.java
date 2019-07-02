@@ -191,25 +191,25 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         Task<List<EventStripe>> loggedTask;
         loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventClusterNode_loggedTask_name(), false) {
 
-            private volatile TimelineEvent.DescriptionLevel loadedDescription = withRelativeDetail(getDescriptionLevel(), relativeDetail);
+            private volatile TimelineEvent.DescriptionLevel loadedDescriptionLevel = withRelativeDetail(getDescriptionLevel(), relativeDetail);
 
             @Override
             protected List<EventStripe> call() throws Exception {
                 //newly loaded substripes                
                 List<EventStripe> stripes;
                 //next LoD in diraction of given relativeDetail
-                TimelineEvent.DescriptionLevel next = loadedDescription;
+                TimelineEvent.DescriptionLevel next = loadedDescriptionLevel;
                 do {
-                    loadedDescription = next;
-                    if (loadedDescription == getEvent().getDescriptionLevel()) {
+                    loadedDescriptionLevel = next;
+                    if (loadedDescriptionLevel == getEvent().getDescriptionLevel()) {
                         //if we are back at the level of detail of the original cluster, return empty list to inidicate.
                         return Collections.emptyList();
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(descriptionFilter, zoom.withDescrLOD(loadedDescription));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(descriptionFilter, zoom.withDescrLOD(loadedDescriptionLevel));
                     //setup next for subsequent go through the "do" loop
-                    next = withRelativeDetail(loadedDescription, relativeDetail);
+                    next = withRelativeDetail(loadedDescriptionLevel, relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.
 
                 // return list of EventStripes with parents set to this cluster
@@ -227,7 +227,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                 subNodes.clear();
 
                 try {
-                    setDescriptionLOD(loadedDescription);
+                    setDescriptionLOD(loadedDescriptionLevel);
                     List<EventStripe> newSubStripes = get();
                     if (newSubStripes.isEmpty()) {
                         //restore original display

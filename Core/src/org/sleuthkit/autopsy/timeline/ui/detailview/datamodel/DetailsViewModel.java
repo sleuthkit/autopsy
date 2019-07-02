@@ -153,7 +153,7 @@ final public class DetailsViewModel {
      * @throws org.sleuthkit.datamodel.TskCoreException If there is an error
      *                                                  querying the db.
      */
-    List<TimelineEvent> getEvents(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
+    private List<TimelineEvent> getEvents(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
         Interval timeRange = zoom.getTimeRange();
         TimelineFilter.RootFilter activeFilter = zoom.getFilterState().getActiveFilter();
