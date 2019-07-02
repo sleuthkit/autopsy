@@ -4,12 +4,12 @@
 
 The logical imager allows you to collect files from a live Windows computer. The imager is configured with rules that specify what files to collect. Rules can be based on file attributes such as folder names, extensions, and sizes. You can use this feature when you do not have time or authorization to perform a full drive acquisition.
 
-The logical imager produces a sparse VHD image that contains all of the file system data that was read. This VHD image can be imported into Autopsy or mounted by Windows. The imager also enumerates the user accounts on the system and can generate alerts if encryption programs exist.
+The logical imager produces one or more sparse VHD images that contain all of the file system data that was read. These VHD images can be imported into Autopsy or mounted by Windows. The imager also enumerates the user accounts on the system and can generate alerts if encryption programs exist.
 
 The general workflow is:
 <ul>
 <li>Configure logical imager using Autopsy. This will copy a configuration file specifying which files to collect and the logical imager executable to the target drive.
-<li>Insert the drive into the target system and run logical imager. This will give you a folder containing the sparse VHD copy of the target system, a file containing user account information, and a record of which files generated alerts.
+<li>Insert the drive into the target system and run logical imager. This will give you a folder containing the sparse VHD copy of the target system (or multiple VHDs if more than one drive was analyzed), a file containing user account information, and a record of which files generated alerts.
 <li>Load the result of running logical imager into Autopsy to browse any matching files and see user account information.
 </ul>
 
@@ -29,7 +29,7 @@ The normal use case is to select a drive from the list under "Configure selected
 <li><b>Configuring in a folder</b>
 
 If you're not ready to set up your drive yet, or if you want to create a different configuration file, you can use the second option to browse to a folder or an existing configuration file. If you're creating a new file, browse to the folder you want to create it in. 
-Notice that the configuration file has the default name "logical-imager-config.json". You can change this, but if you do you'll need to rename it after you copy it to your drive or use the command prompt to run the imager. SEE SECTION
+Notice that the configuration file has the default name "logical-imager-config.json". You can change this, but if you do you'll need to rename it after you copy it to your drive or use the command prompt to run the imager. See the section on \ref logical_imager_custom_run.
 
 \image html LogicalImager/select_folder.png
 </ul>
