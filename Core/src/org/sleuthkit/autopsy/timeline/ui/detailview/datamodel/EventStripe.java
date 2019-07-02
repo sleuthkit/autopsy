@@ -26,8 +26,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * A 'collection' of {@link EventCluster}s, all having the same type,
@@ -52,7 +52,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     /**
      * the description level of detail that the events were clustered at.
      */
-    private final DescriptionLoD lod;
+    private final TimelineEvent.DescriptionLevel lod;
 
     /**
      * the set of ids of the events
@@ -88,7 +88,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     private EventStripe(EventCluster parent, EventType type, String description,
-                        DescriptionLoD lod, SortedSet<EventCluster> clusters,
+                        TimelineEvent.DescriptionLevel lod, SortedSet<EventCluster> clusters,
                         Set<Long> eventIDs, Set<Long> tagged, Set<Long> hashHits) {
         this.parent = parent;
         this.type = type;
@@ -107,7 +107,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
 
         type = cluster.getEventType();
         description = cluster.getDescription();
-        lod = cluster.getDescriptionLoD();
+        lod = cluster.getDescriptionLevel();
         eventIDs = cluster.getEventIDs();
         tagged = cluster.getEventIDsWithTags();
         hashHits = cluster.getEventIDsWithHashHits();
@@ -119,7 +119,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
 
         type = stripeA.getEventType();
         description = stripeA.getDescription();
-        lod = stripeA.getDescriptionLoD();
+        lod = stripeA.getDescriptionLevel();
         eventIDs = Sets.union(stripeA.getEventIDs(), stripeB.getEventIDs());
         tagged = Sets.union(stripeA.getEventIDsWithTags(), stripeB.getEventIDsWithTags());
         hashHits = Sets.union(stripeA.getEventIDsWithHashHits(), stripeB.getEventIDsWithHashHits());
@@ -151,7 +151,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     @Override
-    public DescriptionLoD getDescriptionLoD() {
+    public TimelineEvent.DescriptionLevel getDescriptionLevel() {
         return lod;
     }
 

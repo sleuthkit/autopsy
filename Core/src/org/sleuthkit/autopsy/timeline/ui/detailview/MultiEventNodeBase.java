@@ -36,7 +36,7 @@ import javafx.scene.layout.Pane;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.MultiEvent;
-import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -52,11 +52,11 @@ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, Pa
     final ObservableList<EventNodeBase<?>> subNodes = FXCollections.observableArrayList();
     final Pane subNodePane = new Pane();
 
-    private final ReadOnlyObjectWrapper<DescriptionLoD> descLOD = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<TimelineEvent.DescriptionLevel> descLOD = new ReadOnlyObjectWrapper<>();
 
     MultiEventNodeBase(DetailsChartLane<?> chartLane, BundleType event, ParentNodeType parentNode) {
         super(event, parentNode, chartLane);
-        setDescriptionLOD(event.getDescriptionLoD());
+        setDescriptionLOD(event.getDescriptionLevel());
 
         setAlignment(Pos.TOP_LEFT);
         setMaxWidth(USE_PREF_SIZE);
@@ -80,18 +80,18 @@ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, Pa
         Bindings.bindContent(subNodePane.getChildren(), subNodes);
     }
 
-    public ReadOnlyObjectProperty<DescriptionLoD> descriptionLoDProperty() {
+    public ReadOnlyObjectProperty<TimelineEvent.DescriptionLevel> descriptionLoDProperty() {
         return descLOD.getReadOnlyProperty();
     }
 
-    final DescriptionLoD getDescriptionLoD() {
+    final TimelineEvent.DescriptionLevel getDescriptionLevel() {
         return descLOD.get();
     }
 
     /**
      *
      */
-    final void setDescriptionLOD(final DescriptionLoD descriptionLoD) {
+    final void setDescriptionLOD(final TimelineEvent.DescriptionLevel descriptionLoD) {
         descLOD.set(descriptionLoD);
     }
 

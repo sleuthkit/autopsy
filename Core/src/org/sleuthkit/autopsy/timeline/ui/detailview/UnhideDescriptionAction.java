@@ -23,7 +23,7 @@ import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
-import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * An Action that un-hides, in the given chart, events with the given
@@ -34,7 +34,7 @@ class UnhideDescriptionAction extends Action {
 
     private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
 
-    UnhideDescriptionAction(String description, DescriptionLoD descriptionLoD, DetailsChart chart) {
+    UnhideDescriptionAction(String description, TimelineEvent.DescriptionLevel descriptionLoD, DetailsChart chart) {
         super(Bundle.UnhideDescriptionAction_displayName());
         setGraphic(new ImageView(SHOW));
 

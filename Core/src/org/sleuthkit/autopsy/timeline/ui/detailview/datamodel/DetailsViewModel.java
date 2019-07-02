@@ -51,14 +51,14 @@ import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
-import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineFilter;
 
 /**
  * Model for the Details View. Uses FilteredEventsModel as underlying datamodel
@@ -116,8 +116,8 @@ final public class DetailsViewModel {
         DateTimeZone timeZone = TimeLineController.getJodaTimeZone();
         //unpack params
         Interval timeRange = zoom.getTimeRange();
-        DescriptionLoD descriptionLOD = zoom.getDescriptionLOD();
-        EventTypeZoomLevel typeZoomLevel = zoom.getTypeZoomLevel();
+        TimelineEvent.DescriptionLevel descriptionLOD = zoom.getDescriptionLOD();
+        EventType.TypeLevel typeZoomLevel = zoom.getTypeZoomLevel();
 
         //intermediate results 
         Map<EventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();

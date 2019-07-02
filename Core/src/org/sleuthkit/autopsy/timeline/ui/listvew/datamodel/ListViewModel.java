@@ -33,7 +33,7 @@ import static org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils.unGroupConcat
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * Model for the ListView. Uses FilteredEventsModel as underlying datamodel and

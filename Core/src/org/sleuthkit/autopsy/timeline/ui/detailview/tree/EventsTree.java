@@ -207,8 +207,8 @@ final public class EventsTree extends BorderPane {
                     setOnMouseClicked((MouseEvent event) -> {
                         if (event.getButton() == MouseButton.SECONDARY) {
                             Action action = hidden.get()
-                                    ? detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())
-                                    : detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD());
+                                    ? detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLevel())
+                                    : detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLevel());
 
                             ActionUtils.createContextMenu(ImmutableList.of(action))
                                     .show(this, event.getScreenX(), event.getScreenY());

@@ -26,8 +26,8 @@ import static org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCatego
 import static org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory.EXECUTABLE;
 import static org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory.MEDIA;
 import org.sleuthkit.datamodel.TimelineManager;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
+import org.sleuthkit.datamodel.TimelineFilter.FileTypeFilter;
+import org.sleuthkit.datamodel.TimelineFilter.FileTypesFilter;
 
 /**
  * Utilities to deal with TimelineFilters

@@ -26,9 +26,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import org.joda.time.Interval;
-import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * A single event.
@@ -66,7 +66,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * The three descriptions (full, med, short) stored in a map, keyed by
      * DescriptionLOD (Level of Detail)
      */
-    private final ImmutableMap<DescriptionLoD, String> descriptions;
+    private final ImmutableMap<TimelineEvent.DescriptionLevel, String> descriptions;
 
     /**
      * True if the file this event is derived from hits any of the configured
@@ -107,9 +107,9 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
         this.artifactID = Long.valueOf(0).equals(artifactID) ? null : artifactID;
         this.time = time;
         this.type = type;
-        descriptions = ImmutableMap.<DescriptionLoD, String>of(DescriptionLoD.FULL, fullDescription,
-                DescriptionLoD.MEDIUM, medDescription,
-                DescriptionLoD.SHORT, shortDescription);
+        descriptions = ImmutableMap.<TimelineEvent.DescriptionLevel, String>of(TimelineEvent.DescriptionLevel.FULL, fullDescription,
+                TimelineEvent.DescriptionLevel.MEDIUM, medDescription,
+                TimelineEvent.DescriptionLevel.SHORT, shortDescription);
         this.hashHit = hashHit;
         this.tagged = tagged;
     }
@@ -138,7 +138,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      *         with the given parent.
      */
     public SingleDetailsViewEvent withParent(MultiEvent<?> newParent) {
-        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceObjId, fileObjId, artifactID, time, type, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), hashHit, tagged);
+        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceObjId, fileObjId, artifactID, time, type, descriptions.get(TimelineEvent.DescriptionLevel.FULL), descriptions.get(TimelineEvent.DescriptionLevel.MEDIUM), descriptions.get(TimelineEvent.DescriptionLevel.SHORT), hashHit, tagged);
         singleEvent.parent = newParent;
         return singleEvent;
     }
@@ -213,7 +213,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * @return the full description
      */
     public String getFullDescription() {
-        return getDescription(DescriptionLoD.FULL);
+        return getDescription(TimelineEvent.DescriptionLevel.FULL);
     }
 
     /**
@@ -222,7 +222,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * @return the medium description
      */
     public String getMedDescription() {
-        return getDescription(DescriptionLoD.MEDIUM);
+        return getDescription(TimelineEvent.DescriptionLevel.MEDIUM);
     }
 
     /**
@@ -231,7 +231,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * @return the short description
      */
     public String getShortDescription() {
-        return getDescription(DescriptionLoD.SHORT);
+        return getDescription(TimelineEvent.DescriptionLevel.SHORT);
     }
 
     /**
@@ -241,7 +241,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      *
      * @return The description of this event at the given level of detail.
      */
-    public String getDescription(DescriptionLoD lod) {
+    public String getDescription(TimelineEvent.DescriptionLevel lod) {
         return descriptions.get(lod);
     }
 
@@ -300,7 +300,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
 
     @Override
     public SortedSet<EventCluster> getClusters() {
-        EventCluster eventCluster = new EventCluster(new Interval(time * 1000, time * 1000), type, getEventIDs(), getEventIDsWithHashHits(), getEventIDsWithTags(), getFullDescription(), DescriptionLoD.FULL);
+        EventCluster eventCluster = new EventCluster(new Interval(time * 1000, time * 1000), type, getEventIDs(), getEventIDsWithHashHits(), getEventIDsWithTags(), getFullDescription(), TimelineEvent.DescriptionLevel.FULL);
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(eventCluster).build();
     }
 
@@ -310,8 +310,8 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     }
 
     @Override
-    public DescriptionLoD getDescriptionLoD() {
-        return DescriptionLoD.FULL;
+    public TimelineEvent.DescriptionLevel getDescriptionLevel() {
+        return TimelineEvent.DescriptionLevel.FULL;
     }
 
     /**

@@ -89,11 +89,11 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
-import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -297,9 +297,9 @@ public class TimeLineController {
 
         try {
             InitialZoomState = new ZoomState(filteredEvents.getSpanningInterval(),
-                    EventTypeZoomLevel.BASE_TYPE,
+                    EventType.TypeLevel.BASE_TYPE,
                     filteredEvents.filterProperty().get(),
-                    DescriptionLoD.SHORT);
+                    TimelineEvent.DescriptionLevel.SHORT);
         } catch (TskCoreException ex) {
             throw new TskCoreException("Error getting spanning interval.", ex);
         }
@@ -493,7 +493,7 @@ public class TimeLineController {
         return topComponent;
     }
 
-    synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
+    synchronized public void pushEventTypeZoom(EventType.TypeLevel typeZoomeLevel) {
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
@@ -555,7 +555,7 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void pushDescrLOD(DescriptionLoD newLOD) {
+    synchronized public void pushDescrLOD(TimelineEvent.DescriptionLevel newLOD) {
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withDescrLOD(newLOD));
@@ -565,7 +565,7 @@ public class TimeLineController {
     }
 
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
-    synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) throws TskCoreException {
+    synchronized public void pushTimeAndType(Interval timeRange, EventType.TypeLevel typeZoom) throws TskCoreException {
         Interval overlappingTimeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {

@@ -28,9 +28,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * Represents a set of other events clustered together. All the sub events
@@ -59,7 +59,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
     /**
      * the description level of detail that the events were clustered at.
      */
-    private final DescriptionLoD lod;
+    private final TimelineEvent.DescriptionLevel lod;
 
     /**
      * the set of ids of the clustered events
@@ -109,7 +109,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
-                         Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod,
+                         Set<Long> hashHits, Set<Long> tagged, String description, TimelineEvent.DescriptionLevel lod,
                          EventStripe parent) {
 
         this.span = spanningInterval;
@@ -124,11 +124,11 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
-                        Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
+                        Set<Long> hashHits, Set<Long> tagged, String description, TimelineEvent.DescriptionLevel lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
-    public EventCluster(TimelineEvent event, EventType type, DescriptionLoD lod) {
+    public EventCluster(TimelineEvent event, EventType type, TimelineEvent.DescriptionLevel lod) {
         this(new Interval(event.getStartMillis(), event.getEndMillis()),
                 type,
                 singleton(event.getEventID()),
@@ -202,7 +202,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    public DescriptionLoD getDescriptionLoD() {
+    public TimelineEvent.DescriptionLevel getDescriptionLevel() {
         return lod;
     }
 

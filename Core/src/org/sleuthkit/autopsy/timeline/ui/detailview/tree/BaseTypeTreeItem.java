@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * EventTreeItem for base event types (file system, misc, web, ...)
@@ -61,7 +61,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
          * if the stripe and this tree item have the same type, create a
          * description tree item, else create a sub-type tree item
          */
-        if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
+        if (head.getEventType().getTypeLevel() == EventType.TypeLevel.SUB_TYPE) {
             descriptionKey = head.getEventType().getDisplayName();
             treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(head, getComparator()));
         } else {
@@ -87,7 +87,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
          * if the stripe and this tree item have the same type, get the child
          * item keyed on event type, else keyed on description.
          */
-        if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
+        if (head.getEventType().getTypeLevel() == EventType.TypeLevel.SUB_TYPE) {
             descTreeItem = childMap.get(head.getEventType().getDisplayName());
         } else {
             path.remove(0); //remove head of list if we are going straight to description

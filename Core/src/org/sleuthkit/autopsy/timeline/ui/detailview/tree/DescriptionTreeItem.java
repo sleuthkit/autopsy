@@ -27,7 +27,7 @@ import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * EventsTreeItem for specific event descriptions

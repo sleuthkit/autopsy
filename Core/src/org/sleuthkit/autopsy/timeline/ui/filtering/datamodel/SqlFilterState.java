@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.TimelineFilter;
 
 /**
  * Default FilterState implementation for individual TimelineFilters.

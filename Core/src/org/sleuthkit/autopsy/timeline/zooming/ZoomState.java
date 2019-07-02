@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.timeline.zooming;
 import java.util.Objects;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * This class encapsulates all the zoom(and filter) parameters into one object
@@ -32,17 +32,17 @@ final public class ZoomState {
 
     private final Interval timeRange;
 
-    private final EventTypeZoomLevel typeZoomLevel;
+    private final EventType.TypeLevel typeZoomLevel;
 
     private final RootFilterState filter;
 
-    private final DescriptionLoD descrLOD;
+    private final TimelineEvent.DescriptionLevel descrLOD;
 
     public Interval getTimeRange() {
         return timeRange;
     }
 
-    public EventTypeZoomLevel getTypeZoomLevel() {
+    public EventType.TypeLevel getTypeZoomLevel() {
         return typeZoomLevel;
     }
 
@@ -50,22 +50,22 @@ final public class ZoomState {
         return filter;
     }
 
-    public DescriptionLoD getDescriptionLOD() {
+    public TimelineEvent.DescriptionLevel getDescriptionLOD() {
         return descrLOD;
     }
 
-    public ZoomState(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilterState filter, DescriptionLoD descrLOD) {
+    public ZoomState(Interval timeRange, EventType.TypeLevel zoomLevel, RootFilterState filter, TimelineEvent.DescriptionLevel descrLOD) {
         this.timeRange = timeRange;
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
         this.descrLOD = descrLOD;
     }
 
-    public ZoomState withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
+    public ZoomState withTimeAndType(Interval timeRange, EventType.TypeLevel zoomLevel) {
         return new ZoomState(timeRange, zoomLevel, filter, descrLOD);
     }
 
-    public ZoomState withTypeZoomLevel(EventTypeZoomLevel zoomLevel) {
+    public ZoomState withTypeZoomLevel(EventType.TypeLevel zoomLevel) {
         return new ZoomState(timeRange, zoomLevel, filter, descrLOD);
     }
 
@@ -73,7 +73,7 @@ final public class ZoomState {
         return new ZoomState(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public ZoomState withDescrLOD(DescriptionLoD descrLOD) {
+    public ZoomState withDescrLOD(TimelineEvent.DescriptionLevel descrLOD) {
         return new ZoomState(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
@@ -85,7 +85,7 @@ final public class ZoomState {
         return this.filter.equals(filterSet);
     }
 
-    public boolean hasTypeZoomLevel(EventTypeZoomLevel typeZoom) {
+    public boolean hasTypeZoomLevel(EventType.TypeLevel typeZoom) {
         return this.typeZoomLevel.equals(typeZoom);
     }
 
@@ -93,7 +93,7 @@ final public class ZoomState {
         return this.timeRange != null && this.timeRange.equals(timeRange);
     }
 
-    public boolean hasDescrLOD(DescriptionLoD newLOD) {
+    public boolean hasDescrLOD(TimelineEvent.DescriptionLevel newLOD) {
         return this.descrLOD.equals(newLOD);
     }
 
