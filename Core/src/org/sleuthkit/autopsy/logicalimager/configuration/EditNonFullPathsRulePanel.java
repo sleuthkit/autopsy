@@ -710,9 +710,9 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
             return (extensionsCheckbox.isSelected() && !StringUtils.isBlank(extensionsTextField.getText()) && !validateExtensions(extensionsTextField).isEmpty())
                     || (fileNamesCheckbox.isSelected() && !StringUtils.isBlank(fileNamesTextArea.getText()))
                     || (folderNamesCheckbox.isSelected() && !StringUtils.isBlank(folderNamesTextArea.getText()))
-                    || (minSizeCheckbox.isSelected() && !StringUtils.isBlank(minSizeTextField.getText()) && isNonZeroLong(minSizeTextField.getText()))
-                    || (maxSizeCheckbox.isSelected() && !StringUtils.isBlank(maxSizeTextField.getText()) && isNonZeroLong(maxSizeTextField.getText()))
-                    || (modifiedWithinCheckbox.isSelected() && !StringUtils.isBlank(modifiedWithinTextField.getText()));
+                    || (minSizeCheckbox.isSelected() && !StringUtils.isBlank(minSizeTextField.getText()) && isNonZeroLong(minSizeTextField.getValue()))
+                    || (maxSizeCheckbox.isSelected() && !StringUtils.isBlank(maxSizeTextField.getText()) && isNonZeroLong(maxSizeTextField.getValue()))
+                    || (modifiedWithinCheckbox.isSelected() && !StringUtils.isBlank(modifiedWithinTextField.getText()) && isNonZeroLong(modifiedWithinTextField.getValue()));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Invalid contents of extensionsTextField", ex);
             return false;
@@ -722,14 +722,16 @@ final class EditNonFullPathsRulePanel extends javax.swing.JPanel {
     /**
      * Check that value could be a non zero long
      *
-     * @param numberString the string to check
+     * @param numberObject the object to check
      *
      * @return true if the value is a non-zero long
      */
-    private boolean isNonZeroLong(String numberString) {
+    private boolean isNonZeroLong(Object numberObject) {
         Long value = 0L;
         try {
-            value = Long.parseLong(numberString);
+            if (numberObject instanceof Number) {
+                value = ((Number) numberObject).longValue();
+            }
         } catch (NumberFormatException ignored) {
             //The string was not a number, this method will return false becaue the value is still 0L
         }
