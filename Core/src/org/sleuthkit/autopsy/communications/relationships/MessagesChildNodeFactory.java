@@ -23,12 +23,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -92,8 +89,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                 BlackboardArtifact bba = (BlackboardArtifact) content;
                 BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
-                if (fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
-                        && fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
+                if (fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG 
                         && fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
                     continue;
                 }
@@ -102,12 +98,8 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                 // To achive this assign any artifact that does not have a threadID
                 // the "UNTHREADED_ID"
                 // All call logs will default to a single call logs thread
-                String artifactThreadID;
-                if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) {
-                    artifactThreadID = MessageNode.CALL_LOG_ID;
-                } else {
-                    artifactThreadID = MessageNode.UNTHREADED_ID;
-                }
+                String artifactThreadID = MessageNode.UNTHREADED_ID;
+                
                 BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
                 if(attribute != null) {
@@ -116,8 +108,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
 
                 if(threadIDs == null || threadIDs.contains(artifactThreadID)) {
                     list.add(bba);
-                }
-                
+                }                
             }
 
         } catch (TskCoreException ex) {

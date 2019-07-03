@@ -1,3 +1,5 @@
+CallLogViewer_noCallLogs=<No call logs found for selected account>
+CallLogViewer_title=Call Logs
 ContactDetailsPane.nameLabel.text=Placeholder
 ContactNode_Email=Email Address
 ContactNode_Home_Number=Home Number
