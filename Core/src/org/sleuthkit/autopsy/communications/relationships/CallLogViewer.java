@@ -19,9 +19,6 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import javax.swing.JPanel;
-import javax.swing.table.TableColumnModel;
-import org.netbeans.swing.etable.ETableColumn;
-import org.netbeans.swing.etable.ETableColumnModel;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.nodes.AbstractNode;
@@ -32,13 +29,13 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION;
 
 /**
  *
- * 
+ * CallLogViewer Panel 
  */
 final class CallLogViewer extends javax.swing.JPanel implements RelationshipsViewer {
     
@@ -46,7 +43,10 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
     
     @Messages({
         "CallLogViewer_title=Call Logs",
-        "CallLogViewer_noCallLogs=<No call logs found for selected account>"
+        "CallLogViewer_noCallLogs=<No call logs found for selected account>",
+        "CallLogViewer_recipient_label=Recipient",
+        "CallLogViewer_duration_label=Duration(seconds)",
+        "CallLogViewer_device_label=Device"      
     })
     
     /**
@@ -59,17 +59,15 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
         outlineViewPanel.hideOutlineView(Bundle.CallLogViewer_noCallLogs());
         
         outlineViewPanel.getOutlineView().setPropertyColumns(
-                TSK_PHONE_NUMBER_FROM.getLabel(), TSK_PHONE_NUMBER_FROM.getDisplayName(),
-                TSK_PHONE_NUMBER_TO.getLabel(), TSK_PHONE_NUMBER_TO.getDisplayName(),
-                TSK_DATETIME_START.getLabel(), TSK_DATETIME_START.getDisplayName()
+                TSK_DIRECTION.getLabel(), TSK_DIRECTION.getDisplayName(),
+                TSK_PHONE_NUMBER.getLabel(), Bundle.CallLogViewer_recipient_label(),
+                TSK_DATETIME_START.getLabel(), TSK_DATETIME_START.getDisplayName(),
+                CallLogNode.DURATION_PROP, Bundle.CallLogViewer_duration_label()
         );
         
         Outline outline = outlineViewPanel.getOutlineView().getOutline();
         outline.setRootVisible(false);
-        
-        TableColumnModel columnModel = outline.getColumnModel();
-        ETableColumn column = (ETableColumn) columnModel.getColumn(0);
-        ((ETableColumnModel) columnModel).setColumnHidden(column, true);
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.CallLogViewer_device_label());
         
         outlineViewPanel.getExplorerManager().setRootContext(
                 new TableFilterNode(

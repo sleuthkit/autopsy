@@ -29,8 +29,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * 
+ *A ChildFactory for CallLog artifacts. 
  */
 final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     

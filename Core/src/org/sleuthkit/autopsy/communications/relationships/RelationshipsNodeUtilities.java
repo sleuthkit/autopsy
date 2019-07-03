@@ -5,7 +5,6 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import java.util.Comparator;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.communications.Utils;
