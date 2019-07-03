@@ -125,7 +125,6 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     public static synchronized DataContentTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (win == null) {
-            logger.warning("Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system."); //NON-NLS
             return getDefault();
         }
         if (win instanceof DataContentTopComponent) {
