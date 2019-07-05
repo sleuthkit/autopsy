@@ -117,7 +117,6 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
             if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
-                    || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
                     || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
 
                 // We want email and message artifacts that do not have "threadIDs" to appear as one thread in the UI
