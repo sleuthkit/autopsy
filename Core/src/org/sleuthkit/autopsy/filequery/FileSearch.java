@@ -747,6 +747,158 @@ class FileSearch {
     }    
     
     /**
+     * Attribute for grouping/sorting by hash set lists
+     */
+    static class HashHitsAttribute extends AttributeType {
+        
+        @Override
+        GroupKey getGroupKey(ResultFile file) {
+            return new HashHitsGroupKey(file);
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            // Concatenate the object IDs in the list of files
+            String objIdList = ""; // NON-NLS
+            for (ResultFile file : files) {
+                if ( ! objIdList.isEmpty()) {
+                    objIdList += ","; // NON-NLS
+                }
+                objIdList += "\'" + file.getAbstractFile().getId() + "\'"; // NON-NLS
+            }
+            
+            // Get pairs of (object ID, keyword list name) for all files in the list of files that have
+            // keyword list hits.
+            String selectQuery = "blackboard_artifacts.obj_id AS object_id, blackboard_attributes.value_text AS hash_set_name " +
+                            "FROM blackboard_artifacts " +
+                            "INNER JOIN blackboard_attributes ON blackboard_artifacts.artifact_id=blackboard_attributes.artifact_id " +
+                            "WHERE blackboard_attributes.artifact_type_id=\'" + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + "\' " +
+                            "AND blackboard_attributes.attribute_type_id=\'" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "\' " +
+                            "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
+            
+            SetHashSetNamesCallback callback = new SetHashSetNamesCallback(files);
+            try {
+                caseDb.getCaseDbAccessManager().select(selectQuery, callback);
+            } catch (TskCoreException ex) {
+                throw new FileSearchException("Error looking up hash set attributes", ex); // NON-NLS
+            }
+        }
+        
+        /**
+         * Callback to process the results of the CaseDbAccessManager select query. Will add
+         * the keyword list names to the list of ResultFile objects.
+         */
+        private static class SetHashSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+            List<ResultFile> resultFiles;
+            
+            /**
+             * Create the callback.
+             * 
+             * @param resultFiles List of files to add keyword list names to
+             */
+            SetHashSetNamesCallback(List<ResultFile> resultFiles) {
+                this.resultFiles = resultFiles;
+            }
+            
+            @Override
+            public void process(ResultSet rs) {
+                try {
+                    // Create a temporary map of object ID to ResultFile
+                    Map<Long, ResultFile> tempMap = new HashMap<>();
+                    for (ResultFile file : resultFiles) {
+                        tempMap.put(file.getAbstractFile().getId(), file);
+                    }
+                    
+                    while (rs.next()) {
+                        try {
+                            Long objId = rs.getLong("object_id"); // NON-NLS
+                            String hashSetName = rs.getString("hash_set_name"); // NON-NLS
+
+                            tempMap.get(objId).addHashSetName(hashSetName);
+
+                        } catch (SQLException ex) {
+                            logger.log(Level.SEVERE, "Unable to get object_id or hash_set_name from result set", ex); // NON-NLS
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get hash set names", ex); // NON-NLS
+                }
+            }   
+        }
+    }   
+
+    /**
+     * Key representing a hash hits group
+     */    
+    private static class HashHitsGroupKey extends GroupKey {
+        private final List<String> hashSetNames;
+        private final String hashSetNamesString;
+                
+        @NbBundle.Messages({
+            "FileSearch.HashHitsGroupKey.noHashHits=None",
+        })
+        HashHitsGroupKey(ResultFile file) {
+            hashSetNames = file.getKeywordListNames();
+            
+            if (hashSetNames.isEmpty()) {
+                hashSetNamesString = Bundle.FileSearch_HashHitsGroupKey_noHashHits();
+            } else {
+                hashSetNamesString = String.join(",", hashSetNames); // NON-NLS
+            }
+        }
+        
+        @Override
+        String getDisplayName() {
+            return hashSetNamesString;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof HashHitsGroupKey) {
+                HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey)otherGroupKey;
+                
+                // Put the empty list at the end
+                if (hashSetNames.isEmpty()) {
+                    if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                    return -1;
+                }
+                
+                return hashSetNamesString.compareTo(otherHashHitsGroupKey.hashSetNamesString);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof HashHitsGroupKey)) {
+                return false;
+            }
+            
+            HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey)otherKey;
+            return hashSetNamesString.equals(otherHashHitsGroupKey.hashSetNamesString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(hashSetNamesString);
+        }    
+    }    
+        
+    
+    /**
      * Default attribute used to make one group
      */
     static class NoGroupingAttribute extends AttributeType {

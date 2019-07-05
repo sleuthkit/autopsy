@@ -33,6 +33,9 @@ class ResultFile {
     private final AbstractFile abstractFile;
     private FileSearchData.Frequency frequency;
     private final List<String> keywordListNames;
+    private final List<String> hashSetNames;
+    private final List<String> tagNames;
+    private final List<String> interestingSetNames;
     private FileType fileType;
     
     /**
@@ -44,6 +47,9 @@ class ResultFile {
         this.abstractFile = abstractFile;
         this.frequency = FileSearchData.Frequency.UNKNOWN;
         keywordListNames = new ArrayList<>();
+        hashSetNames = new ArrayList();
+        tagNames = new ArrayList();
+        interestingSetNames = new ArrayList();
         fileType = FileType.OTHER;
     }
     
@@ -100,10 +106,79 @@ class ResultFile {
     /**
      * Get the keyword list names for this file
      * 
-     * @return the keyword lists that matched this file.
+     * @return the keyword list names that matched this file.
      */
     List<String> getKeywordListNames() {
         return keywordListNames;
+    }
+    
+    /**
+     * Add a hash set name that matched this file.
+     * 
+     * @param keywordListName 
+     */
+    void addHashSetName (String hashSetName) {
+        if (! hashSetNames.contains(hashSetName)) {
+            hashSetNames.add(hashSetName);
+        }
+        
+        // Sort the list so the getHashHitNames() will be consistent regardless of the order added
+        Collections.sort(hashSetNames);
+    }
+    
+    /**
+     * Get the hash set names for this file
+     * 
+     * @return the hash set names that matched this file.
+     */
+    List<String> getHashSetNames() {
+        return hashSetNames;
+    }
+    
+    /**
+     * Add a hash set name that matched this file.
+     * 
+     * @param tagName 
+     */
+    void addTagName (String tagName) {
+        if (! tagNames.contains(tagName)) {
+            tagNames.add(tagName);
+        }
+        
+        // Sort the list so the getTagNames() will be consistent regardless of the order added
+        Collections.sort(tagNames);
+    }
+    
+    /**
+     * Get the tag names for this file
+     * 
+     * @return the tag names that matched this file.
+     */
+    List<String> getTagNames() {
+        return tagNames;
+    }
+    
+    /**
+     * Add a hash set name that matched this file.
+     * 
+     * @param interestingSetName 
+     */
+    void addInterestingSetName (String interestingSetName) {
+        if (! interestingSetNames.contains(interestingSetName)) {
+            interestingSetNames.add(interestingSetName);
+        }
+        
+        // Sort the list so the getInterestingSetNames() will be consistent regardless of the order added
+        Collections.sort(interestingSetNames);
+    }
+    
+    /**
+     * Get the interesting item set names for this file
+     * 
+     * @return the interesting item set names that matched this file.
+     */
+    List<String> getInterestingSetNames() {
+        return interestingSetNames;
     }
     
     /**
