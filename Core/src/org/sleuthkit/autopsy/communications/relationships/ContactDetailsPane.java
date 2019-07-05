@@ -18,24 +18,36 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import java.util.logging.Level;
+import javax.swing.ImageIcon;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays the propertied of a ContactNode in a PropertySheet.
  */
 public final class ContactDetailsPane extends javax.swing.JPanel implements ExplorerManager.Provider {
 
-    final private ExplorerManager explorerManager = new ExplorerManager();
+    private static final Logger logger = Logger.getLogger(ContactDetailsPane.class.getName());
+    
+    private final static String DEFAULT_IMAGE_PATH = "/org/sleuthkit/autopsy/images/face.png";
+    
+    private final ExplorerManager explorerManager = new ExplorerManager();
+    private final ImageIcon defaultImage;
 
     /**
      * Displays the propertied of a ContactNode in a PropertySheet.
      */
     public ContactDetailsPane() {
         initComponents();
-        this.setEnabled(false);
-        
         nameLabel.setText("");
+        
+        defaultImage = new ImageIcon(ContactDetailsPane.class.getResource(DEFAULT_IMAGE_PATH));
     }
 
     /**
@@ -46,9 +58,16 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     public void setNode(Node[] nodes) {
         if (nodes != null && nodes.length == 1) {
             nameLabel.setText(nodes[0].getDisplayName());
+            nameLabel.setIcon(null);
             propertySheet.setNodes(nodes);
+            
+            BlackboardArtifact n = nodes[0].getLookup().lookup(BlackboardArtifact.class);
+            if(n != null) {
+                nameLabel.setIcon(getImageForFromArtifact(n));
+            }
         } else {
             nameLabel.setText("");
+            nameLabel.setIcon(null);
             propertySheet.setNodes(null);
         }
     }
@@ -57,12 +76,24 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     public ExplorerManager getExplorerManager() {
         return explorerManager;
     }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        nameLabel.setEnabled(enabled);
-        propertySheet.setEnabled(enabled);
+    
+    public ImageIcon getImageForFromArtifact(BlackboardArtifact artifact){
+        ImageIcon image = defaultImage;
+        
+        try {
+            for(Content content: artifact.getChildren()) {
+                if(content instanceof AbstractFile) {
+                    AbstractFile file = (AbstractFile)content;
+                    file.getLocalAbsPath();
+                    
+                    image = new ImageIcon(file.getLocalAbsPath());
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Unable to load image for contact: %d", artifact.getId()), ex);
+        }
+        
+        return image;
     }
 
     /**
@@ -75,7 +106,6 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        messageContentViewer1 = new org.sleuthkit.autopsy.contentviewers.MessageContentViewer();
         nameLabel = new javax.swing.JLabel();
         propertySheet = new org.openide.explorer.propertysheet.PropertySheet();
 
@@ -107,7 +137,6 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.contentviewers.MessageContentViewer messageContentViewer1;
     private javax.swing.JLabel nameLabel;
     private org.openide.explorer.propertysheet.PropertySheet propertySheet;
     // End of variables declaration//GEN-END:variables

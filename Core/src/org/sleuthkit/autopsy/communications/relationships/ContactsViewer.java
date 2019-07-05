@@ -142,9 +142,6 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        contactPane.setNode(new Node[]{new AbstractNode(Children.LEAF)});
-        contactPane.setEnabled(false);
-
         nodeFactory.refresh(info);
     }
     
