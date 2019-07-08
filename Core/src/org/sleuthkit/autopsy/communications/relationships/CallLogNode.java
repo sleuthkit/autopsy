@@ -6,7 +6,6 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.communications.Utils;
 import static org.sleuthkit.autopsy.communications.relationships.RelationshipsNodeUtilities.getAttributeDisplayString;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;

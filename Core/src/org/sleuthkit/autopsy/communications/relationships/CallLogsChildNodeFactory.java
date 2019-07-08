@@ -29,6 +29,7 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
@@ -112,8 +113,13 @@ final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
 
             List<String> list = new ArrayList<>();
             list.add(dataSourceName);
+            
+            List<Account.Type> typeList = new ArrayList<Account.Type>();
+            typeList.add(Account.Type.DEVICE);
 
             filter.addAndFilter(new CommunicationsFilter.DeviceFilter(list));
+            filter.addAndFilter(new CommunicationsFilter.AccountTypeFilter(typeList));
+            
 
             // This list should just have 1 item in it
             List<AccountDeviceInstance> adiList = manager.getAccountDeviceInstancesWithRelationships(filter);
