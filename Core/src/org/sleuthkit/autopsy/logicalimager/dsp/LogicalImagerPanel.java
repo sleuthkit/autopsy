@@ -346,11 +346,9 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private void imageTableSelect() {
         int index = imageTable.getSelectedRow();
         if (index != -1) {
-            choosenImageDirPath = Paths.get((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(index), 2));
-            setNormalMessage(choosenImageDirPath.toString());
+            setNormalMessage((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(index), 2));
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } else {
-            choosenImageDirPath = null;
             setErrorMessage(NO_IMAGE_SELECTED);
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
         }
@@ -418,12 +416,10 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                 imageTable.setRowSelectionInterval(0, 0);
                 imageTableSelect();
             } else {
-                choosenImageDirPath = null;
                 setErrorMessage(DRIVE_HAS_NO_IMAGES);
             }
         } else {
             clearImageTable();
-            choosenImageDirPath = null;
             setErrorMessage(DRIVE_HAS_NO_IMAGES);
         }
     }
@@ -601,11 +597,24 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      * @return true if a proper image has been selected, false otherwise
      */
     boolean validatePanel() {
-        return choosenImageDirPath != null && choosenImageDirPath.toFile().exists();
+        if (manualRadioButton.isSelected()) {
+            return choosenImageDirPath != null && choosenImageDirPath.toFile().exists();
+        } else if (imageTable.getSelectedRow() != -1) {
+            Path path = Paths.get((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(imageTable.getSelectedRow()), 2));
+            return path != null && path.toFile().exists();
+        } else {
+            return false;
+        }
     }
 
     Path getImageDirPath() {
-        return choosenImageDirPath;
+        if (manualRadioButton.isSelected()) {
+            return choosenImageDirPath;
+        } else if (imageTable.getSelectedRow() != -1) {
+            return Paths.get((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(imageTable.getSelectedRow()), 2));
+        } else {
+            return null;
+        }
     }
 
     @Override
