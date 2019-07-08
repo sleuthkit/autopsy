@@ -35,7 +35,7 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
 
     private static final Logger logger = Logger.getLogger(ContactDetailsPane.class.getName());
     
-    private final static String DEFAULT_IMAGE_PATH = "/org/sleuthkit/autopsy/images/face.png";
+    private final static String DEFAULT_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images/defaultContact.png";
     
     private final ExplorerManager explorerManager = new ExplorerManager();
     private final ImageIcon defaultImage;
