@@ -40,6 +40,8 @@ final class AccountDeviceInstanceNode extends AbstractNode {
     private final AccountDeviceInstanceKey accountDeviceInstanceKey;
     private final CommunicationsManager commsManager;
     private final Account account;
+    
+    private String tooltip = "";
 
     AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
         super(Children.LEAF, Lookups.fixed(accountDeviceInstanceKey, commsManager));
@@ -82,15 +84,15 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         }
         properties.put(new NodeProperty<>("type",
                 Bundle.AccountNode_accountType(),
-                "type",
+                Bundle.AccountNode_accountType(),
                 account.getAccountType().getDisplayName())); // NON-NLS
         properties.put(new NodeProperty<>("count",
                 Bundle.AccountNode_messageCount(),
-                "count",
+                Bundle.AccountNode_messageCount(),
                 accountDeviceInstanceKey.getMessageCount())); // NON-NLS
         properties.put(new NodeProperty<>("device",
                 Bundle.AccountNode_device(),
-                "device",
+                Bundle.AccountNode_device(),
                 accountDeviceInstanceKey.getDataSourceName())); // NON-NLS
         return sheet;
     }
