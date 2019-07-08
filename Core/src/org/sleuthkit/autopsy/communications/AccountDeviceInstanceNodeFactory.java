@@ -54,7 +54,6 @@ final class AccountDeviceInstanceNodeFactory extends ChildFactory<AccountDeviceI
             final List<AccountDeviceInstance> accountDeviceInstancesWithRelationships =
                     commsManager.getAccountDeviceInstancesWithRelationships(commsFilter);
             for (AccountDeviceInstance accountDeviceInstance : accountDeviceInstancesWithRelationships) {
-                //Filter out device accounts, in the table.
                 long communicationsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, commsFilter);
                 accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, communicationsCount));
 
