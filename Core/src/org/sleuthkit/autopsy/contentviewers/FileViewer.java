@@ -143,7 +143,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 viewer.setFile(file);
                 this.removeAll();
                 this.add(viewer.getComponent());
-                this.repaint();
+                this.validate();
             }
         }
 
