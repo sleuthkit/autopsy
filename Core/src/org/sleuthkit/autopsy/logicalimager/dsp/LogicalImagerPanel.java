@@ -66,7 +66,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final Pattern regex = Pattern.compile("Logical_Imager_(.+)_(\\d{4})(\\d{2})(\\d{2})_(\\d{2})_(\\d{2})_(\\d{2})");
-    private Path choosenImageDirPath;
+    private Path manualImageDirPath;
     private DefaultTableModel imageTableModel;
 
     /**
@@ -311,7 +311,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         imageTable.clearSelection();
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setErrorMessage(NO_IMAGE_SELECTED);
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int retval = fileChooser.showOpenDialog(this);
@@ -331,7 +331,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
                     return;
                 }
-                choosenImageDirPath = Paths.get(path);
+                manualImageDirPath = Paths.get(path);
                 setNormalMessage(path);
                 firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             } else {
@@ -472,7 +472,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
         refreshButton.setEnabled(false);
 
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setNormalMessage("");
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
     }//GEN-LAST:event_manualRadioButtonActionPerformed
@@ -487,7 +487,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
         refreshButton.setEnabled(true);
 
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setNormalMessage("");
         refreshButton.doClick();
     }//GEN-LAST:event_importRadioButtonActionPerformed
@@ -582,7 +582,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     void reset() {
         //reset the UI elements to default
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setNormalMessage("");
         driveList.setListData(EMPTY_LIST_DATA);
         clearImageTable();
@@ -598,7 +598,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      */
     boolean validatePanel() {
         if (manualRadioButton.isSelected()) {
-            return choosenImageDirPath != null && choosenImageDirPath.toFile().exists();
+            return manualImageDirPath != null && manualImageDirPath.toFile().exists();
         } else if (imageTable.getSelectedRow() != -1) {
             Path path = Paths.get((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(imageTable.getSelectedRow()), 2));
             return path != null && path.toFile().exists();
@@ -609,7 +609,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     Path getImageDirPath() {
         if (manualRadioButton.isSelected()) {
-            return choosenImageDirPath;
+            return manualImageDirPath;
         } else if (imageTable.getSelectedRow() != -1) {
             return Paths.get((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(imageTable.getSelectedRow()), 2));
         } else {
