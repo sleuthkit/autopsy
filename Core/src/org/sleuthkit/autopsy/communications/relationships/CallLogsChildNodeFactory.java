@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.communications.relationships.CallLogsChildNodeFactory.CallLogNodeKey;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -40,7 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *A ChildFactory for CallLog artifacts. 
  */
-final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
+final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
     
     private static final Logger logger = Logger.getLogger(CallLogsChildNodeFactory.class.getName());
     
@@ -58,7 +60,7 @@ final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     }
     
     @Override
-    protected boolean createKeys(List<BlackboardArtifact> list) {
+    protected boolean createKeys(List<CallLogNodeKey> list) {
         
         if(selectionInfo == null) {
             return true;
@@ -81,26 +83,28 @@ final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
             BlackboardArtifact bba = (BlackboardArtifact) content;
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
-            if ( fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) {                
-                list.add(bba);
+            if ( fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) { 
+                
+                String deviceID = "";
+                try {
+                    deviceID = getDeviceIDForDataSource(bba.getDataSource().getName());
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.WARNING, String.format("Unable to get account for artifact data source: artifactID = %d", bba.getId()), ex);
+                }
+                
+                list.add(new CallLogNodeKey(bba, deviceID));
             }
         }
         
-        list.sort(new BlackboardArtifactDateComparator(BlackboardArtifactDateComparator.ACCENDING));
+        list.sort(new CallLogComparator(BlackboardArtifactDateComparator.ACCENDING));
 
         return true;
     }
-    
+
     @Override
-    protected Node createNodeForKey(BlackboardArtifact key) {
-        String deviceID = "";
-        try {
-            deviceID = getDeviceIDForDataSource(key.getDataSource().getName());
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("Unable to get account for artifact data source: artifactID = %d", key.getId()), ex);
-        }
+    protected Node createNodeForKey(CallLogNodeKey key) {
         
-        return new CallLogNode(key, deviceID);
+        return new CallLogNode(key.getArtifact(), key.getDeviceID());
     }
     
     private String getDeviceIDForDataSource(String dataSourceName) throws NoCurrentCaseException, TskCoreException{
@@ -134,5 +138,37 @@ final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
         }
         
        return deviceID;
+    }
+    
+    final class CallLogNodeKey{
+        private final BlackboardArtifact artifact;
+        private final String deviceID;
+        
+        private CallLogNodeKey(BlackboardArtifact artifact, String deviceID) {
+            this.artifact = artifact;
+            this.deviceID = deviceID;
+        }
+        
+        BlackboardArtifact getArtifact() {
+            return artifact;
+        }
+        
+        String getDeviceID() {
+            return deviceID;
+        }
+    }
+    
+    final class CallLogComparator implements Comparator<CallLogNodeKey>{
+        
+        final BlackboardArtifactDateComparator comparator;
+        
+        CallLogComparator(int direction) {
+            comparator = new BlackboardArtifactDateComparator(direction);
+        }
+
+        @Override
+        public int compare(CallLogNodeKey key1, CallLogNodeKey key2) {
+            return comparator.compare(key1.getArtifact(), key2.getArtifact());
+        }
     }
 }
