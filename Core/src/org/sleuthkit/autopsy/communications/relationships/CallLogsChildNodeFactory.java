@@ -18,13 +18,21 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -36,6 +44,8 @@ final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     private static final Logger logger = Logger.getLogger(CallLogsChildNodeFactory.class.getName());
     
     private SelectionInfo selectionInfo;
+    
+    private Map<String, String> deviceIDMap = new HashMap<String,String>();
     
     CallLogsChildNodeFactory(SelectionInfo selectionInfo) {
         this.selectionInfo = selectionInfo;
@@ -70,7 +80,7 @@ final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
             BlackboardArtifact bba = (BlackboardArtifact) content;
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
-            if ( fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) {
+            if ( fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) {                
                 list.add(bba);
             }
         }
@@ -82,6 +92,41 @@ final class CallLogsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     
     @Override
     protected Node createNodeForKey(BlackboardArtifact key) {
-        return new CallLogNode(key);
+        String deviceID = "";
+        try {
+            deviceID = getDeviceIDForDataSource(key.getDataSource().getName());
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Unable to get account for artifact data source: artifactID = %d", key.getId()), ex);
+        }
+        
+        return new CallLogNode(key, deviceID);
+    }
+    
+    private String getDeviceIDForDataSource(String dataSourceName) throws NoCurrentCaseException, TskCoreException{
+       
+        String deviceID = deviceIDMap.get(dataSourceName);
+        
+        if(deviceID == null) {
+            CommunicationsManager manager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+            CommunicationsFilter filter = new CommunicationsFilter();
+
+            List<String> list = new ArrayList<>();
+            list.add(dataSourceName);
+
+            filter.addAndFilter(new CommunicationsFilter.DeviceFilter(list));
+
+            // This list should just have 1 item in it
+            List<AccountDeviceInstance> adiList = manager.getAccountDeviceInstancesWithRelationships(filter);
+            
+            if(adiList != null && adiList.size() > 0) {
+                deviceID = adiList.get(0).getDeviceId();
+            } else {
+                deviceID = "";
+            }     
+            
+            deviceIDMap.put(dataSourceName, deviceID);
+        }
+        
+       return deviceID;
     }
 }

@@ -30,14 +30,9 @@ final class CallLogNode extends BlackboardArtifactNode {
     
     final static String DURATION_PROP = "duration";
     
-    CallLogNode(BlackboardArtifact artifact) { 
-        super(artifact, Utils.getIconFilePath(Account.Type.DEVICE));
-        
-        try {
-            setDisplayName(artifact.getDataSource().getName());
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+    CallLogNode(BlackboardArtifact artifact, String deviceID) { 
+        super(artifact, Utils.getIconFilePath(Account.Type.PHONE));
+        setDisplayName(deviceID);
     }
     
     @Override
