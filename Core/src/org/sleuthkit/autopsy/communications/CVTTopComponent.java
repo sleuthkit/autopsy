@@ -68,7 +68,6 @@ public final class CVTTopComponent extends TopComponent {
                 Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
                 proxyLookup.setNewLookups(lookup);
             }
-            filtersPane.setDeviceAccountTypeEnabled(browseVisualizeTabPane.getSelectedIndex() != 0);
         });
         
         
