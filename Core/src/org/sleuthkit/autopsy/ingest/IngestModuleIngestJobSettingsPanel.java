@@ -22,7 +22,8 @@ import javax.swing.JPanel;
 
 /**
  * Abstract base class for panels that allow users to specify per ingest job
- * settings for ingest modules.
+ * settings for ingest modules. The max recommended dimensions for these panels
+ * is 300 width by 300 height.
  */
 public abstract class IngestModuleIngestJobSettingsPanel extends JPanel {
 
