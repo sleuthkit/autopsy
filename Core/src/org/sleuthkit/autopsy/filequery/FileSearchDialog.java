@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.DefaultListModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -46,6 +47,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Dialog to allow the user to choose filtering and grouping options.
@@ -97,6 +99,11 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         setUpSizeFilter();
         setUpKWFilter();    
         setUpParentPathFilter();
+        
+        setUpHashFilter();
+        setUpInterestingItemsFilter();
+        setUpTagsFilter();
+        setUpObjectFilter();
         
         // Set up the grouping attributes
         for (GroupingAttributeType type : GroupingAttributeType.values()) {
@@ -202,20 +209,8 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         try {
             DefaultListModel<String> kwListModel = (DefaultListModel<String>)kwList.getModel();
             
-            // TODO - create case DB query
-            List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            List<String> setNames = new ArrayList<>();
-            for (BlackboardArtifact art : arts) {
-                for (BlackboardAttribute attr : art.getAttributes()) {
-                    if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                        String setName = attr.getValueString();
-                        if ( ! setNames.contains(setName)) {
-                            setNames.add(setName);
-                        }
-                    }
-                }
-            }
-            Collections.sort(setNames);
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for(String name : setNames) {
                 kwListModel.add(count, name);
             }
@@ -225,6 +220,116 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             kwList.setEnabled(false);
         } 
         addListeners(kwCheckBox, kwList);
+    }
+    
+    private void setUpHashFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<String> hashListModel = (DefaultListModel<String>)hashList.getModel();
+            
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+            for(String name : setNames) {
+                hashListModel.add(count, name);
+                count++;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading hash set names", ex);
+            hashCheckBox.setEnabled(false);
+            hashList.setEnabled(false);
+        } 
+        addListeners(hashCheckBox, hashList);
+    }
+    
+    private void setUpInterestingItemsFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<String> intListModel = (DefaultListModel<String>)intList.getModel();
+            
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+            for(String name : setNames) {
+                intListModel.add(count, name);
+                count++;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading interesting file set names", ex);
+            intCheckBox.setEnabled(false);
+            intList.setEnabled(false);
+        } 
+        addListeners(intCheckBox, intList);
+    }
+    
+    private void setUpTagsFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<TagName> tagsListModel = (DefaultListModel<TagName>)tagsList.getModel();
+            
+            List<TagName> tagNames = caseDb.getTagNamesInUse();
+            for(TagName name : tagNames) {
+                //tagsListModel.add(count, name.getDisplayName());
+                tagsListModel.add(count, name);
+                count++;
+            }
+            tagsList.setCellRenderer(new TagsListCellRenderer());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading tag names", ex);
+            tagsCheckBox.setEnabled(false);
+            tagsList.setEnabled(false);
+        } 
+        addListeners(tagsCheckBox, tagsList);
+    }
+    
+    private class TagsListCellRenderer extends DefaultListCellRenderer {
+
+        @Override
+        public java.awt.Component getListCellRendererComponent(
+                                       JList<?> list,
+                                       Object value,
+                                       int index,
+                                       boolean isSelected,
+                                       boolean cellHasFocus) {
+            if (value instanceof TagName) {
+                value = ((TagName)value).getDisplayName();
+            }
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            return this;
+        }
+    }
+    
+    private void setUpObjectFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<String> objListModel = (DefaultListModel<String>)objList.getModel();
+            
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
+            for(String name : setNames) {
+                objListModel.add(count, name);
+                count++;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading object detected set names", ex);
+            objCheckBox.setEnabled(false);
+            objList.setEnabled(false);
+        } 
+        addListeners(objCheckBox, objList);
+    }
+    
+    private List<String> getSetNames(BlackboardArtifact.ARTIFACT_TYPE artifactType, BlackboardAttribute.ATTRIBUTE_TYPE setNameAttribute) throws TskCoreException {
+        List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(artifactType);
+        List<String> setNames = new ArrayList<>();
+        for (BlackboardArtifact art : arts) {
+            for (BlackboardAttribute attr : art.getAttributes()) {
+                if (attr.getAttributeType().getTypeID() == setNameAttribute.getTypeID()) {
+                    String setName = attr.getValueString();
+                    if ( ! setNames.contains(setName)) {
+                        setNames.add(setName);
+                    }
+                }
+            }
+        }
+        Collections.sort(setNames);  
+        return setNames;
     }
     
     /**
@@ -270,6 +375,22 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         
         if (kwCheckBox.isSelected()) {
             filters.add(new FileSearchFiltering.KeywordListFilter(kwList.getSelectedValuesList()));
+        }
+        
+        if (hashCheckBox.isSelected()) {
+            filters.add(new FileSearchFiltering.HashSetFilter(hashList.getSelectedValuesList()));
+        }
+        
+        if (intCheckBox.isSelected()) {
+            filters.add(new FileSearchFiltering.InterestingFileSetFilter(intList.getSelectedValuesList()));
+        }
+        
+        if (objCheckBox.isSelected()) {
+            filters.add(new FileSearchFiltering.ObjectDetectionFilter(objList.getSelectedValuesList()));
+        }
+        
+        if (tagsCheckBox.isSelected()) {
+            filters.add(new FileSearchFiltering.TagsFilter(tagsList.getSelectedValuesList()));
         }
         
         return filters;
@@ -385,6 +506,26 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             return;
         }
         
+        if (hashCheckBox.isSelected() && hashList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one hash set name must be selected");
+            return;
+        }     
+        
+        if (intCheckBox.isSelected() && intList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one interesting file set name must be selected");
+            return;
+        } 
+        
+        if (objCheckBox.isSelected() && objList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one object type name must be selected");
+            return;
+        } 
+        
+        if (tagsCheckBox.isSelected() && tagsList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one tag name must be selected");
+            return;
+        } 
+        
         setValid();
         
     }
@@ -456,6 +597,18 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         errorLabel = new javax.swing.JLabel();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(8, 7), new java.awt.Dimension(8, 7), new java.awt.Dimension(8, 7));
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(265, 23), new java.awt.Dimension(265, 23), new java.awt.Dimension(265, 23));
+        hashCheckBox = new javax.swing.JCheckBox();
+        jScrollPane7 = new javax.swing.JScrollPane();
+        hashList = new javax.swing.JList<>();
+        intCheckBox = new javax.swing.JCheckBox();
+        jScrollPane8 = new javax.swing.JScrollPane();
+        intList = new javax.swing.JList<>();
+        jScrollPane9 = new javax.swing.JScrollPane();
+        tagsList = new javax.swing.JList<>();
+        tagsCheckBox = new javax.swing.JCheckBox();
+        jScrollPane10 = new javax.swing.JScrollPane();
+        objList = new javax.swing.JList<>();
+        objCheckBox = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -580,6 +733,50 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.errorLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(hashCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.hashCheckBox.text")); // NOI18N
+        hashCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hashCheckBoxActionPerformed(evt);
+            }
+        });
+
+        hashList.setModel(new DefaultListModel<String>());
+        hashList.setEnabled(false);
+        jScrollPane7.setViewportView(hashList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(intCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.intCheckBox.text")); // NOI18N
+        intCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                intCheckBoxActionPerformed(evt);
+            }
+        });
+
+        intList.setModel(new DefaultListModel<String>());
+        intList.setEnabled(false);
+        jScrollPane8.setViewportView(intList);
+
+        tagsList.setModel(new DefaultListModel<TagName>());
+        tagsList.setEnabled(false);
+        jScrollPane9.setViewportView(tagsList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(tagsCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.tagsCheckBox.text")); // NOI18N
+        tagsCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tagsCheckBoxActionPerformed(evt);
+            }
+        });
+
+        objList.setModel(new DefaultListModel<String>());
+        objList.setEnabled(false);
+        jScrollPane10.setViewportView(objList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(objCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.objCheckBox.text")); // NOI18N
+        objCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                objCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -615,30 +812,50 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                     .addComponent(jScrollPane5)
                     .addComponent(jScrollPane6, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton))
-                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cancelButton)
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(344, 344, 344))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel3)
-                                    .addComponent(jLabel4)
-                                    .addComponent(jLabel5))
-                                .addGap(29, 29, 29)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(orderAttrRadioButton)
-                                    .addComponent(groupComboBox, 0, 144, Short.MAX_VALUE)
-                                    .addComponent(orderSizeRadioButton)
-                                    .addComponent(fileOrderComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                            .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 25, Short.MAX_VALUE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(hashCheckBox)
+                                .addGap(18, 18, 18)
+                                .addComponent(jScrollPane7))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(intCheckBox)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane8))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(tagsCheckBox)
+                                .addGap(18, 18, 18)
+                                .addComponent(jScrollPane9))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(objCheckBox)
+                                .addGap(18, 18, 18)
+                                .addComponent(jScrollPane10)))
+                        .addGap(35, 35, 35)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel5))
+                        .addGap(29, 29, 29)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(orderAttrRadioButton)
+                            .addComponent(groupComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(orderSizeRadioButton)
+                            .addComponent(fileOrderComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -648,8 +865,24 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                     .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(hashCheckBox))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane10, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(objCheckBox))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane9, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tagsCheckBox))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(dsCheckBox)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel3)
@@ -659,14 +892,14 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                             .addComponent(jLabel4)
                             .addComponent(orderAttrRadioButton))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(orderSizeRadioButton)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(dsCheckBox)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel5)
-                        .addComponent(fileOrderComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(orderSizeRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel5)
+                            .addComponent(fileOrderComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(intCheckBox)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(freqCheckBox)
@@ -698,8 +931,8 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                     .addComponent(errorLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
-                    .addComponent(searchButton))
+                    .addComponent(searchButton)
+                    .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -767,6 +1000,22 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         setVisible(false);
     }//GEN-LAST:event_searchButtonActionPerformed
 
+    private void hashCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashCheckBoxActionPerformed
+        hashList.setEnabled(hashCheckBox.isSelected());
+    }//GEN-LAST:event_hashCheckBoxActionPerformed
+
+    private void intCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intCheckBoxActionPerformed
+        intList.setEnabled(intCheckBox.isSelected());
+    }//GEN-LAST:event_intCheckBoxActionPerformed
+
+    private void tagsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tagsCheckBoxActionPerformed
+        tagsList.setEnabled(tagsCheckBox.isSelected());
+    }//GEN-LAST:event_tagsCheckBoxActionPerformed
+
+    private void objCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_objCheckBoxActionPerformed
+        objList.setEnabled(objCheckBox.isSelected());
+    }//GEN-LAST:event_objCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addParentButton;
     private javax.swing.JButton cancelButton;
@@ -781,19 +1030,29 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JCheckBox freqCheckBox;
     private javax.swing.JList<Frequency> freqList;
     private javax.swing.JComboBox<GroupingAttributeType> groupComboBox;
+    private javax.swing.JCheckBox hashCheckBox;
+    private javax.swing.JList<String> hashList;
+    private javax.swing.JCheckBox intCheckBox;
+    private javax.swing.JList<String> intList;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane10;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
+    private javax.swing.JScrollPane jScrollPane7;
+    private javax.swing.JScrollPane jScrollPane8;
+    private javax.swing.JScrollPane jScrollPane9;
     private javax.swing.JCheckBox kwCheckBox;
     private javax.swing.JList<String> kwList;
+    private javax.swing.JCheckBox objCheckBox;
+    private javax.swing.JList<String> objList;
     private javax.swing.JRadioButton orderAttrRadioButton;
     private javax.swing.ButtonGroup orderButtonGroup;
     private javax.swing.JRadioButton orderSizeRadioButton;
@@ -806,5 +1065,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JButton searchButton;
     private javax.swing.JCheckBox sizeCheckBox;
     private javax.swing.JList<FileSize> sizeList;
+    private javax.swing.JCheckBox tagsCheckBox;
+    private javax.swing.JList<TagName> tagsList;
     // End of variables declaration//GEN-END:variables
 }

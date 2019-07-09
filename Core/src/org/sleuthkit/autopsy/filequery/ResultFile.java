@@ -36,6 +36,7 @@ class ResultFile {
     private final List<String> hashSetNames;
     private final List<String> tagNames;
     private final List<String> interestingSetNames;
+    private final List<String> objectDetectedNames;
     private FileType fileType;
     
     /**
@@ -47,9 +48,11 @@ class ResultFile {
         this.abstractFile = abstractFile;
         this.frequency = FileSearchData.Frequency.UNKNOWN;
         keywordListNames = new ArrayList<>();
-        hashSetNames = new ArrayList();
-        tagNames = new ArrayList();
-        interestingSetNames = new ArrayList();
+        hashSetNames = new ArrayList<>();
+        tagNames = new ArrayList<>();
+        interestingSetNames = new ArrayList<>();
+        objectDetectedNames = new ArrayList<>();
+        
         fileType = FileType.OTHER;
     }
     
@@ -159,7 +162,7 @@ class ResultFile {
     }
     
     /**
-     * Add a hash set name that matched this file.
+     * Add an interesting file set name that matched this file.
      * 
      * @param interestingSetName 
      */
@@ -179,6 +182,29 @@ class ResultFile {
      */
     List<String> getInterestingSetNames() {
         return interestingSetNames;
+    }
+    
+    /**
+     * Add an object detected in this file.
+     * 
+     * @param objectDetectedName 
+     */
+    void addObjectDetectedName (String objectDetectedName) {
+        if (! objectDetectedNames.contains(objectDetectedName)) {
+            objectDetectedNames.add(objectDetectedName);
+        }
+        
+        // Sort the list so the getObjectDetectedNames() will be consistent regardless of the order added
+        Collections.sort(objectDetectedNames);
+    }
+    
+    /**
+     * Get the objects detected for this file
+     * 
+     * @return the objects detected in this file.
+     */
+    List<String> getObjectDetectedNames() {
+        return objectDetectedNames;
     }
     
     /**

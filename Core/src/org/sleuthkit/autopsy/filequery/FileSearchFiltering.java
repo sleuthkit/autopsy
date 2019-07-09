@@ -30,12 +30,15 @@ import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Run various filters to return a subset of files from the current case.
@@ -381,13 +384,7 @@ class FileSearchFiltering {
         
         @Override
         String getWhereClause() {
-            String keywordListPart = ""; // NON-NLS
-            for (String listName : listNames) {
-                if (! keywordListPart.isEmpty()) {
-                    keywordListPart += " OR "; // NON-NLS
-                } 
-                keywordListPart += "value_text = \'" + listName + "\'"; // TODO - these should really be prepared statements  // NON-NLS
-            }
+            String keywordListPart = concatenateNamesForSQL(listNames);
             
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN " + 
                     "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = 9 AND attribute_type_ID = 37 " + 
@@ -399,19 +396,10 @@ class FileSearchFiltering {
         @NbBundle.Messages({
             "# {0} - filters",
             "FileSearchFiltering.KeywordListFilter.desc=Files with keywords in list(s): {0}",
-            "FileSearchFiltering.KeywordListFilter.comma=, ",
         })
         @Override
         String getDesc() {
-            String desc = ""; // NON-NLS
-            for (String listName : listNames) {
-                if ( ! desc.isEmpty()) {
-                    desc += Bundle.FileSearchFiltering_KeywordListFilter_comma();
-                }
-                desc += listName;
-            }
-            desc = Bundle.FileSearchFiltering_KeywordListFilter_desc(desc);
-            return desc;
+            return Bundle.FileSearchFiltering_KeywordListFilter_desc(concatenateSetNamesForDisplay(listNames));
         }
     }    
     
@@ -541,6 +529,198 @@ class FileSearchFiltering {
             }
             return Bundle.FileSearchFiltering_FrequencyFilter_desc(desc);
         }
+    }
+    
+    /**
+     * A filter for specifying hash set names.
+     * A file must match one of the given sets to pass.
+     */
+    static class HashSetFilter extends FileFilter {
+        private final List<String> setNames;
+        
+        /**
+         * Create the HashSetFilter
+         * @param setNames 
+         */
+        HashSetFilter(List<String> setNames) {
+            this.setNames = setNames;
+        }
+        
+        @Override
+        String getWhereClause() {
+            String hashSetPart = concatenateNamesForSQL(setNames);
+            
+            String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN " + 
+                    "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() +
+                    " AND attribute_type_ID = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + 
+                    "AND (" + hashSetPart + "))))";  // NON-NLS
+            
+            return queryStr;
+        }
+        
+        @NbBundle.Messages({
+            "# {0} - filters",
+            "FileSearchFiltering.HashSetFilter.desc=Files with hash set hits in set(s): {0}",
+        })
+        @Override
+        String getDesc() {
+            return Bundle.FileSearchFiltering_HashSetFilter_desc(concatenateSetNamesForDisplay(setNames));
+        }
+    }        
+    
+    /**
+     * A filter for specifying interesting file set names.
+     * A file must match one of the given sets to pass.
+     */
+    static class InterestingFileSetFilter extends FileFilter {
+        private final List<String> setNames;
+        
+        /**
+         * Create the InterestingFileSetFilter
+         * @param setNames 
+         */
+        InterestingFileSetFilter(List<String> setNames) {
+            this.setNames = setNames;
+        }
+        
+        @Override
+        String getWhereClause() {
+            String intItemSetPart = concatenateNamesForSQL(setNames);
+            
+            String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN " + 
+                    "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() +
+                    " AND attribute_type_ID = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " + 
+                    "AND (" + intItemSetPart + "))))";  // NON-NLS
+            
+            return queryStr;
+        }
+        
+        @NbBundle.Messages({
+            "# {0} - filters",
+            "FileSearchFiltering.InterestingItemSetFilter.desc=Files with interesting item hits in set(s): {0}",
+        })
+        @Override
+        String getDesc() {
+            return Bundle.FileSearchFiltering_InterestingItemSetFilter_desc(concatenateSetNamesForDisplay(setNames));
+        }
+    }   
+    
+    /**
+     * A filter for specifying object types detected.
+     * A file must match one of the given types to pass.
+     */
+    static class ObjectDetectionFilter extends FileFilter {
+        private final List<String> typeNames;
+        
+        /**
+         * Create the ObjectDetectionFilter
+         * @param typeNames 
+         */
+        ObjectDetectionFilter(List<String> typeNames) {
+            this.typeNames = typeNames;
+        }
+        
+        @Override
+        String getWhereClause() {
+            String objTypePart = concatenateNamesForSQL(typeNames);
+            
+            String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN " + 
+                    "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID() +
+                    " AND attribute_type_ID = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID() + " " + 
+                    "AND (" + objTypePart + "))))";  // NON-NLS
+            
+            return queryStr;
+        }
+        
+        @NbBundle.Messages({
+            "# {0} - filters",
+            "FileSearchFiltering.ObjectDetectionFilter.desc=Files with objects detected in set(s): {0}",
+        })
+        @Override
+        String getDesc() {
+            return Bundle.FileSearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
+        }
+    }       
+    
+    /**
+     * A filter for specifying tag names.
+     * A file must contain one of the given tags to pass.
+     */
+    static class TagsFilter extends FileFilter {
+        private final List<TagName> tagNames;
+        
+        /**
+         * Create the TagsFilter
+         * @param tagNames 
+         */
+        TagsFilter(List<TagName> tagNames) {
+            this.tagNames = tagNames;
+        }
+        
+        @Override
+        String getWhereClause() {
+            String tagIDs = ""; // NON-NLS
+            for (TagName tagName : tagNames) {
+                if (! tagIDs.isEmpty()) {
+                    tagIDs += ",";
+                }
+                tagIDs += tagName.getId();
+            }
+            
+            String queryStr = "(obj_id IN (SELECT obj_id FROM content_tags WHERE tag_name_id IN (" + tagIDs + ")))";
+            
+            return queryStr;
+        }
+        
+        @NbBundle.Messages({
+            "# {0} - tag names",
+            "FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}",
+            "FileSearchFiltering.TagsFilter.or= or ",
+        })
+        @Override
+        String getDesc() {
+            String desc = ""; // NON-NLS
+            for (TagName name : tagNames) {
+                if ( ! desc.isEmpty()) {
+                    desc += Bundle.FileSearchFiltering_TagsFilter_or();
+                }
+                desc += name.getDisplayName();
+            }
+            return Bundle.FileSearchFiltering_TagsFilter_desc(desc); // Nope
+        }
+    }          
+    
+    @NbBundle.Messages({
+        "FileSearchFiltering.concatenateSetNamesForDisplay.comma=, ",
+    })
+    private static String concatenateSetNamesForDisplay(List<String> setNames) {
+        String desc = ""; // NON-NLS
+        for (String setName : setNames) {
+            if ( ! desc.isEmpty()) {
+                desc += Bundle.FileSearchFiltering_concatenateSetNamesForDisplay_comma();
+            }
+            desc += setName;
+        }
+        return desc;
+    }
+    
+    /**
+     * Concatenate the set names into an "OR" separated list.
+     * This does not do any SQL-escaping.
+     * 
+     * @param setNames
+     * 
+     * @return the list to use in the SQL query
+     */
+    private static String concatenateNamesForSQL(List<String> setNames) {
+        String result = ""; // NON-NLS
+        for (String setName : setNames) {
+            if (! result.isEmpty()) {
+                result += " OR "; // NON-NLS
+            } 
+            result += "value_text = \'" + setName + "\'";  // NON-NLS
+        }
+        return result;
     }
     
     private FileSearchFiltering() {
