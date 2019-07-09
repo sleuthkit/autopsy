@@ -38,6 +38,8 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.RowSorterEvent;
+import javax.swing.event.RowSorterListener;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -77,19 +79,28 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      */
     private LogicalImagerPanel(String context) {
         initComponents();
+        configureImageTable();
+        jScrollPane1.setBorder(null);
+        clearImageTable();
+    }
+
+    private void configureImageTable() {
         //hide path column while leaving it in model
         if (imageTable.getColumnCount() > NUMBER_OF_VISIBLE_COLUMNS) {
             TableColumn columnToHide = imageTable.getColumn(imageTableModel.getColumnName(NUMBER_OF_VISIBLE_COLUMNS));
             if (columnToHide != null) {
                 imageTable.removeColumn(columnToHide);
             }
+            imageTable.getRowSorter().addRowSorterListener(new RowSorterListener() {
+                @Override
+                public void sorterChanged(RowSorterEvent e) {
+                    imageTableSelect();
+                }
+            });
             //sort on specified column in decending orders
             imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
             imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
         }
-
-        jScrollPane1.setBorder(null);
-        clearImageTable();
     }
 
     /**
@@ -400,16 +411,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     + " " + driveLetter);
             imageTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
             imageTable.setModel(imageTableModel);
-            //hide path column while leaving it in model
-            if (imageTable.getColumnCount() > NUMBER_OF_VISIBLE_COLUMNS) {
-                TableColumn columnToHide = imageTable.getColumn(imageTableModel.getColumnName(NUMBER_OF_VISIBLE_COLUMNS));
-                if (columnToHide != null) {
-                    imageTable.removeColumn(columnToHide);
-                }
-                //sort on specified column in decending order
-                imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
-                imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
-            }
+            configureImageTable();
             fixImageTableColumnWidth();
             // If there are any images, select the first one
             if (imageTable.getRowCount() > 0) {
@@ -444,16 +446,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private void clearImageTable() {
         imageTableModel = new ImageTableModel();
         imageTable.setModel(imageTableModel);
-        //hide path column while leaving it in model
-        if (imageTable.getColumnCount() > NUMBER_OF_VISIBLE_COLUMNS) {
-            TableColumn columnToHide = imageTable.getColumn(imageTableModel.getColumnName(NUMBER_OF_VISIBLE_COLUMNS));
-            if (columnToHide != null) {
-                imageTable.removeColumn(columnToHide);
-            }
-            //sort on specified column in decending order
-            imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
-            imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
-        }
+        configureImageTable();
         fixImageTableColumnWidth();
     }
 
