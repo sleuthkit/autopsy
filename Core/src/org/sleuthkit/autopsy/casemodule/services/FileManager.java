@@ -754,9 +754,8 @@ public class FileManager implements Closeable {
      *                        the parent local directory.
      * @param localFile       The local/logical file or directory.
      * @param progressUpdater notifier to receive progress notifications on
-     *                        folders added, or null if not used
-     * @param progressUpdater Called after each file/directory is added to the
-     *                        case database.
+     *                        folders added, or null if not used. Called after 
+     *                        each file/directory is added to the case database.
      *
      * @return An AbstractFile representation of the local/logical file.
      *

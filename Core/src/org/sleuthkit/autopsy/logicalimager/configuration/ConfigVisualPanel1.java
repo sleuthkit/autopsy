@@ -36,9 +36,9 @@ import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
@@ -251,6 +251,9 @@ final class ConfigVisualPanel1 extends JPanel {
         int firstRemovableDrive = -1;
         int i = 0;
         for (File root : roots) {
+            if (DriveListUtils.isNetworkDrive(root.toString().replace(":\\", ""))) {
+                continue;
+            }            
             String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
             long spaceInBytes = root.getTotalSpace();
             String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);

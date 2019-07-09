@@ -64,6 +64,8 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
         jLabel3 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
+        setPreferredSize(new java.awt.Dimension(300, 155));
+
         org.openide.awt.Mnemonics.setLocalizedText(computeHashesCheckbox, org.openide.util.NbBundle.getMessage(DataSourceIntegrityIngestSettingsPanel.class, "DataSourceIntegrityIngestSettingsPanel.computeHashesCheckbox.text")); // NOI18N
         computeHashesCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -89,7 +91,7 @@ final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJob
                     .addComponent(verifyHashesCheckbox)
                     .addComponent(computeHashesCheckbox)
                     .addComponent(jLabel3))
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

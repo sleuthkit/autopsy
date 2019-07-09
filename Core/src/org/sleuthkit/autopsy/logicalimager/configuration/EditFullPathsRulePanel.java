@@ -54,10 +54,6 @@ final class EditFullPathsRulePanel extends javax.swing.JPanel {
     EditFullPathsRulePanel(JButton okButton, JButton cancelButton, String ruleName, LogicalImagerRule rule, boolean editing) {
         initComponents();
 
-        if (editing) {
-            ruleNameTextField.setEnabled(!editing);
-        }
-
         this.setRule(ruleName, rule);
         this.setButtons(okButton, cancelButton);
 

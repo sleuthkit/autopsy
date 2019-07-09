@@ -18,6 +18,12 @@
  */
 package org.sleuthkit.autopsy.logicalimager.dsp;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Utility class for displaying a list of drives
  */
@@ -47,5 +53,34 @@ public final class DriveListUtils {
      */
     private DriveListUtils() {
         //empty private constructor for util class
+    }
+
+    /** Use the command <code>net</code> to determine what this drive is.
+     * <code>net use</code> will return an error for anything which isn't a share.
+     */
+    public static boolean isNetworkDrive(String driveLetter) {
+        List<String> cmd = Arrays.asList("cmd", "/c", "net", "use", driveLetter + ":");
+        
+        try {
+            Process p = new ProcessBuilder(cmd)
+                .redirectErrorStream(true)
+                .start();
+        
+            p.getOutputStream().close();
+            
+            StringBuilder consoleOutput = new StringBuilder();
+            
+            String line;
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                while ((line = in.readLine()) != null) {
+                    consoleOutput.append(line).append("\r\n");
+                }
+            }
+            
+            int rc = p.waitFor();
+            return rc == 0;
+        } catch(IOException | InterruptedException e) {
+            return false; // assume not a network drive
+        }
     }
 }
