@@ -115,7 +115,6 @@ ManageCorrelationPropertiesDialog.cancelButton.text=Cancel
 ManageCorrelationPropertiesDialog.okButton.text=OK
 GlobalSettingsPanel.bnManageProperties.text=Manage Correlation Properties
 EamDbSettingsDialog.lbDatabaseDesc.text=Database File:
-EamDbSettingsDialog.lbFullDbPath.text=
 GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository
 GlobalSettingsPanel.organizationTextArea.text=Organization information can be tracked in the Central Repository.
 GlobalSettingsPanel.manageOrganizationButton.text=Manage Organizations
