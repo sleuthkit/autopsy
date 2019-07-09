@@ -810,6 +810,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             occurrencePanel.getPreferredSize();
             detailsPanelScrollPane.setViewportView(occurrencePanel);
         } else {
+            String currentCaseName;
+            try {
+                currentCaseName = Case.getCurrentCaseThrows().getName();
+            } catch (NoCurrentCaseException ex) {
+                currentCaseName = null;
+                LOGGER.log(Level.WARNING, "Unable to get current case for other occurrences content viewer", ex);
+            }
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
                 Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
@@ -823,7 +830,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                         && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
                                     dataSourcesTableModel.addNodeData(nodeData);
                                 }
-                            } else {
+                            } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
                                 dataSourcesTableModel.addNodeData(nodeData);
                             }
                         } catch (EamDbException ex) {
@@ -1153,8 +1160,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             try {
                 tempCaseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
             } catch (EamDbException ignored) {
-                tempCaseUUID = UUID_PLACEHOLDER_STRING;
-                //place holder value will be used since correlation attribute was unavailble
+                //non central repo nodeData won't have a correlation case
+                try {
+                    tempCaseUUID = Case.getCurrentCaseThrows().getName();
+                    //place holder value will be used since correlation attribute was unavailble
+                } catch (NoCurrentCaseException ex) {
+                    LOGGER.log(Level.WARNING, "Unable to get current case", ex);
+                    tempCaseUUID = UUID_PLACEHOLDER_STRING;
+                }
             }
             caseUUID = tempCaseUUID;
         }
