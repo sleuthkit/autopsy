@@ -273,7 +273,7 @@ final class CommunicationsGraph extends mxGraph {
 
                     for (final AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
                         final long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
-                        final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
+                        final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount, null);
                         relatedAccounts.put(relatedADI, relatedADIKey); //store related accounts
                     }
                     progressIndicator.progress(++progressCounter);

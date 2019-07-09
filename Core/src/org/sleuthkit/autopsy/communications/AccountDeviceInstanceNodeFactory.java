@@ -19,15 +19,20 @@
 package org.sleuthkit.autopsy.communications;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -56,8 +61,8 @@ final class AccountDeviceInstanceNodeFactory extends ChildFactory<AccountDeviceI
             for (AccountDeviceInstance accountDeviceInstance : accountDeviceInstancesWithRelationships) {
                 //Filter out device accounts, in the table.
                 if (Account.Type.DEVICE.equals(accountDeviceInstance.getAccount().getAccountType()) ==false) {
-                    long communicationsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, commsFilter);
-                    accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, communicationsCount));
+                    Set<Content> relationshipSources = commsManager.getRelationshipSources(new HashSet<>(Arrays.asList(accountDeviceInstance)), commsFilter);
+                    accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, relationshipSources.size(), findContact(relationshipSources)));
                 }
             }
         } catch (TskCoreException tskCoreException) {
@@ -71,5 +76,33 @@ final class AccountDeviceInstanceNodeFactory extends ChildFactory<AccountDeviceI
     @Override
     protected Node createNodeForKey(AccountDeviceInstanceKey key) {
         return new AccountDeviceInstanceNode(key, commsManager);
+    }
+    
+    /**
+     * Finds the first contact artifact that has a relationship with this account.
+     * 
+     * @param relationshipSources   List of sources that have a 
+     *                              relationship with this account
+     * 
+     * @return A Contact BlackboardArtifact or null if non was found
+     */
+    BlackboardArtifact findContact(Set<Content> relationshipSources) {
+        if(relationshipSources == null) {
+            return null;
+        }
+        
+        for(Content content: relationshipSources) {
+            if(!(content instanceof BlackboardArtifact)) {
+                continue;
+            }
+            
+            BlackboardArtifact artifact = (BlackboardArtifact)content;
+            
+             if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
+                 return artifact;
+             }
+        }
+        
+        return null;
     }
 }

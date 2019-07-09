@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -43,12 +44,14 @@ final class AccountDeviceInstanceKey {
     private final CommunicationsFilter filter;
     private final long messageCount;
     private final String dataSourceName;
+    private final BlackboardArtifact contactArtifact;
 
-    AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter, long msgCount) {
+    AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter, long msgCount, BlackboardArtifact contactArtifact) {
         this.accountDeviceInstance = accountDeviceInstance;
         this.filter = filter;
         this.messageCount = msgCount;
         this.dataSourceName = getDataSourceName(accountDeviceInstance);
+        this.contactArtifact = contactArtifact;
     }
 
     AccountDeviceInstance getAccountDeviceInstance() {
@@ -65,6 +68,10 @@ final class AccountDeviceInstanceKey {
 
     String getDataSourceName() {
         return dataSourceName;
+    }
+    
+    BlackboardArtifact getContactArtifact() {
+        return contactArtifact;
     }
 
     @Override

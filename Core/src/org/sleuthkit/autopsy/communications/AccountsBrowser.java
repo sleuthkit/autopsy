@@ -19,24 +19,18 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.Color;
 import java.awt.Component;
-import java.beans.BeanInfo;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
-import org.netbeans.swing.outline.RenderDataProvider;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.explorer.view.Visualizer;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -97,7 +91,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
         
-        outline.setRenderDataProvider(new CellRenderer());
         
         relationshipBrowser = new RelationshipBrowser();
         jSplitPane1.setRightComponent(relationshipBrowser);
@@ -207,45 +200,5 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     @Override
     public Lookup getLookup() {
         return proxyLookup;
-    }
-    
-    final class CellRenderer implements RenderDataProvider {
-
-        @Override
-        public String getDisplayName(Object o) {           
-            return o.toString();
-        }
-
-        @Override
-        public boolean isHtmlDisplayName(Object o) {
-            return false;
-        }
-
-        @Override
-        public Color getBackground(Object o) {
-            return null;
-        }
-
-        @Override
-        public Color getForeground(Object o) {
-            return null;
-        }
-
-        @Override
-        public String getTooltipText(Object o) {
-            return "test";
-        }
-
-        @Override
-        public Icon getIcon(Object o) {
-            Node node = Visualizer.findNode(o);
-            
-            if(node instanceof AccountDeviceInstanceNode) {
-                return new ImageIcon(((AccountDeviceInstanceNode)node).getIcon(BeanInfo.ICON_COLOR_16x16));
-            }
-            
-            return null;
-        }
-        
     }
 }
