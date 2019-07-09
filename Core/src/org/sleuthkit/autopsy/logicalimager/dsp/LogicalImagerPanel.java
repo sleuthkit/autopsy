@@ -84,6 +84,10 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         clearImageTable();
     }
 
+    /**
+     * Perform the Image Table configuration necessary when a new table model is
+     * set.
+     */
     private void configureImageTable() {
         //hide path column while leaving it in model
         if (imageTable.getColumnCount() > NUMBER_OF_VISIBLE_COLUMNS) {
@@ -91,6 +95,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
             if (columnToHide != null) {
                 imageTable.removeColumn(columnToHide);
             }
+            //Allow refreshing of the Path displayed when sort order changed
             imageTable.getRowSorter().addRowSorterListener(new RowSorterListener() {
                 @Override
                 public void sorterChanged(RowSorterEvent e) {
