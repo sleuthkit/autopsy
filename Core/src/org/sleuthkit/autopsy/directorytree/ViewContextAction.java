@@ -325,16 +325,19 @@ public class ViewContextAction extends AbstractAction {
         * content.
          */
         Children treeNodeChildren = node.getChildren();
+        Node parentTreeViewNode = null;
         for (int i = 0; i < ancestorChildren.getNodesCount(); i++) {
             Node ancestorNode = ancestorChildren.getNodeAt(i);
             for (int j = 0; j < treeNodeChildren.getNodesCount(); j++) {
                 Node treeNode = treeNodeChildren.getNodeAt(j);
                 if (ancestorNode.getName().equals(treeNode.getName())) {
-                    return treeNode;
+                    parentTreeViewNode = treeNode;
+                    treeNodeChildren = treeNode.getChildren();
+                    break;
                 }
             }
         }
-        return null;
+        return parentTreeViewNode;
     }
 
     /**
