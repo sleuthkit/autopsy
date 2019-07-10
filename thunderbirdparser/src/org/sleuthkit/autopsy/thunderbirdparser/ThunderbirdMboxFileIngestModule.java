@@ -413,7 +413,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         // Putting try/catch around this to catch any exception and still allow
         // the creation of the artifacts to continue.
         try{
-            EmailMessageThreader.threadMessages(emails, String.format("%d", abstractFile.getId()));
+            EmailMessageThreader.threadMessages(emails);
         } catch(Exception ex) {
             logger.log(Level.WARNING, String.format("Exception thrown parsing emails from %s", abstractFile.getName()), ex);
         }
