@@ -723,7 +723,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * property at the end.
          */
         int offset = props.size();
-        boolean noPreviousSettings = true;
 
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
@@ -768,7 +767,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return;
         }
 
-        // otherwise, move map the elemets into the available positions. 
+        // otherwise, move map elemets into the available positions. 
         // we don't want to just move down all elements, as we want to preserve the order
         // of the ones that had previous setting (i.e. ones that have key < size)
         ArrayList<Integer> keys = new ArrayList<>(propertiesMap.keySet());
