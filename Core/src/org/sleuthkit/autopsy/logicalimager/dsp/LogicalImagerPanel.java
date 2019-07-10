@@ -95,13 +95,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
             if (columnToHide != null) {
                 imageTable.removeColumn(columnToHide);
             }
-            //Allow refreshing of the Path displayed when sort order changed
-            imageTable.getRowSorter().addRowSorterListener(new RowSorterListener() {
-                @Override
-                public void sorterChanged(RowSorterEvent e) {
-                    imageTableSelect();
-                }
-            });
             //sort on specified column in decending order, the first call will toggle to ascending order, the second to descending order
             imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
             imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
@@ -222,7 +215,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         imageTable.setShowHorizontalLines(false);
         imageTable.setShowVerticalLines(false);
         imageTable.getTableHeader().setReorderingAllowed(false);
-        imageTable.setUpdateSelectionOnSort(false);
         imageTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 imageTableMouseReleased(evt);
