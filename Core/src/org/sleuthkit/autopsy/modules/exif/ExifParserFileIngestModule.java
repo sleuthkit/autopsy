@@ -31,10 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import org.apache.commons.collections4.CollectionUtils;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -43,16 +43,15 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -76,9 +75,12 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
+    private static final String MODULE_NAME = ExifParserModuleFactory.getModuleName();
+    
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private long jobId;
+    private final List<BlackboardArtifact> artifactsToPost = new ArrayList<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
     private final HashSet<String> supportedMimeTypes = new HashSet<>();
@@ -107,7 +109,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     public ProcessResult process(AbstractFile content) {
         try {
             currentCase = Case.getCurrentCaseThrows();
-            blackboard = currentCase.getServices().getBlackboard();
+            blackboard = currentCase.getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -209,18 +211,9 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                     bba.addAttributes(attributes);
 
-                    try {
-                        // index the artifact for keyword search
-                        blackboard.indexArtifact(bba);
-                    } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(
-                                Bundle.ExifParserFileIngestModule_indexError_message(), bba.getDisplayName());
+                    synchronized (artifactsToPost) {
+                        artifactsToPost.add(bba);
                     }
-                    
-                    services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), 
-                                    BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF, 
-                                    Collections.singletonList(bba)));
                 }
             }
 
@@ -270,6 +263,28 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         // We only need to check for this final event on the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
             timeZone = null;
+            postArtifacts();
+        }
+    }
+    
+    private void postArtifacts() {
+        synchronized (artifactsToPost) {
+            if (CollectionUtils.isNotEmpty(artifactsToPost)) {
+                try {
+                    /*
+                     * Post the artifact which will index the artifact for
+                     * keyword search, and fire an event to notify UI of this
+                     * new artifact
+                     */
+                    blackboard.postArtifacts(artifactsToPost, MODULE_NAME);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, "Unable to post exif blackboard artifacts", ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(Bundle.ExifParserFileIngestModule_indexError_message(), "");
+                }
+                artifactsToPost.clear();
+            } else {
+
+            }
         }
     }
 }

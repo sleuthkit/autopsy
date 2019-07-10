@@ -29,7 +29,6 @@ from java.sql import Statement
 from java.util.logging import Level
 from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
@@ -38,6 +37,7 @@ from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.autopsy.ingest import IngestServices
 from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.datamodel import AbstractFile
+from org.sleuthkit.datamodel import Blackboard
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
@@ -166,8 +166,8 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
                 try:
                     # index the artifact for keyword search
-                    blackboard = Case.getCurrentCase().getServices().getBlackboard()
-                    blackboard.indexArtifact(artifact)
+                    blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
+                    blackboard.postArtifact(artifact, MODULE_NAME)
                 except Blackboard.BlackboardException as ex:
                     self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -180,8 +180,6 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error posting to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
-            if bbartifacts:
-                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts))
 
             try:
                 if resultSet is not None:

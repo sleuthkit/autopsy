@@ -29,7 +29,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -39,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -113,7 +113,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
         }
-        blackboard = currentCase.getServices().getBlackboard();
+        blackboard = currentCase.getSleuthkitCase().getBlackboard();
         
         // Skip slack space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
@@ -153,13 +153,11 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         
                         try {
                             // index the artifact for keyword search
-                            blackboard.indexArtifact(artifact);
+                            blackboard.postArtifact(artifact, moduleName);
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                             MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
                         }
-
-                        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
 
                         // make an ingest inbox message
                         StringBuilder detailsSb = new StringBuilder();

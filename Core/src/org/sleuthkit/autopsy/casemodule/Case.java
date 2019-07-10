@@ -35,7 +35,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -65,6 +64,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
+import org.python.google.common.eventbus.Subscribe;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
@@ -108,12 +108,17 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
+import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
@@ -121,6 +126,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
@@ -155,6 +161,7 @@ public class Case {
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     private boolean hasDataSources;
+     private final TSKCaseRepublisher tskEventForwarder = new TSKCaseRepublisher();
 
     /*
      * Get a reference to the main window of the desktop application to use to
@@ -400,6 +407,30 @@ public class Case {
         TIMELINE_EVENT_ADDED;
 
     };
+    
+   private final class TSKCaseRepublisher {
+
+        @Subscribe
+        public void rebroadcastTimelineEventCreated(TimelineManager.TimelineEventAddedEvent event) {
+            eventPublisher.publish(new TimelineEventAddedEvent(event));
+        }
+
+        @Subscribe
+        public void rebroadcastArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
+            for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
+                /*
+                 * fireModuleDataEvent is deprecated so module writers don't use
+                 * it (they should use Blackboard.postArtifact(s) instead), but
+                 * we still need a way to rebroadcast the ArtifactsPostedEvent
+                 * as a ModuleDataEvent.
+                 */
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                        event.getModuleName(),
+                        artifactType,
+                        event.getArtifacts(artifactType)));
+            }
+        }
+    }
 
     /**
      * Adds a subscriber to all case events. To subscribe to only specific
@@ -2156,6 +2187,8 @@ public class Case {
     private void openCaseLevelServices(ProgressIndicator progressIndicator) {
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseLevelServices());
         this.caseServices = new Services(caseDb);
+        
+        caseDb.registerForEvents(tskEventForwarder);
     }
 
     /**
@@ -2421,6 +2454,7 @@ public class Case {
          */
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());
+            caseDb.unregisterForEvents(tskEventForwarder);
             caseDb.close();
         }
 

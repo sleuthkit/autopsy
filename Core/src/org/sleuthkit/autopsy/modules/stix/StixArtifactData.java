@@ -24,10 +24,10 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -37,6 +37,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 class StixArtifactData {
+    
+    private static final String MODULE_NAME = "Stix";
 
     private AbstractFile file;
     private final String observableId;
@@ -81,9 +83,9 @@ class StixArtifactData {
         }
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, "Stix", setName)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, "Stix", observableId)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, "Stix", objType)); //NON-NLS
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, setName)); //NON-NLS
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, MODULE_NAME, observableId)); //NON-NLS
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, objType)); //NON-NLS
         
         org.sleuthkit.datamodel.Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
         // Create artifact if it doesn't already exist.
@@ -93,8 +95,8 @@ class StixArtifactData {
             
             try {
                 // index the artifact for keyword search
-                Blackboard blackboard = currentCase.getServices().getBlackboard();
-                blackboard.indexArtifact(bba);
+                Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
+                blackboard.postArtifact(bba, MODULE_NAME);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
