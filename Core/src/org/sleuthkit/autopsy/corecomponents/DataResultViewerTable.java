@@ -730,7 +730,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             Integer value = preferences.getInt(ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName()), -1);
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
-                noPreviousSettings = false;
             } else {
                 propertiesMap.put(offset, prop);
                 offset++;
@@ -767,7 +766,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return;
         }
 
-        // otherwise, move map elemets into the available positions. 
+        // otherwise, move map elements into the available positions. 
         // we don't want to just move down all elements, as we want to preserve the order
         // of the ones that had previous setting (i.e. ones that have key < size)
         ArrayList<Integer> keys = new ArrayList<>(propertiesMap.keySet());
