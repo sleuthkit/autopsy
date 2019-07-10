@@ -102,7 +102,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     imageTableSelect();
                 }
             });
-            //sort on specified column in decending orders
+            //sort on specified column in decending order, the first call will toggle to ascending order, the second to descending order
             imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
             imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
         }
