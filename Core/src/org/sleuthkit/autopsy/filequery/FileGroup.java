@@ -59,13 +59,13 @@ class FileGroup implements Comparable<FileGroup> {
     }
     
     /**
-     * Get the display name for this group, including the size of the group.
+     * Get the display name for this group.
      * This must be unique for each group.
      * 
      * @return the display name
      */
     String getDisplayName() {
-        return displayName + " (" + files.size() + ")"; // NON-NLS
+        return displayName; // NON-NLS
     }
     
     /**

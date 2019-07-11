@@ -686,9 +686,106 @@ class FileSearchFiltering {
                 }
                 desc += name.getDisplayName();
             }
-            return Bundle.FileSearchFiltering_TagsFilter_desc(desc); // Nope
+            return Bundle.FileSearchFiltering_TagsFilter_desc(desc);
         }
     }          
+    
+    /**
+     * A filter for specifying that the file must have EXIF data.
+     */
+    static class ExifFilter extends FileFilter {
+        
+        /**
+         * Create the ExifFilter
+         */
+        ExifFilter() {
+        }
+        
+        @Override
+        String getWhereClause() {
+            String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN " + 
+                    "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = " + 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID() + ")))";
+            
+            return queryStr;
+        }
+        
+        @NbBundle.Messages({
+            "FileSearchFiltering.ExifFilter.desc=Files that contain EXIF data",
+        })
+        @Override
+        String getDesc() {
+            return Bundle.FileSearchFiltering_ExifFilter_desc(); 
+        }
+    }              
+    
+    /**
+     * A filter for specifying that the file must have been marked as notable in the CR.
+     */
+    static class NotableFilter extends FileFilter {
+        
+        /**
+         * Create the NotableFilter
+         */
+        NotableFilter() {
+        }
+        
+        @Override
+        String getWhereClause() {
+            // Since this relies on the central repository database, there is no
+            // query on the case database.
+            return ""; // NON-NLS
+        }
+        
+        @Override
+        boolean useAlternateFilter() {
+            return true;
+        }
+        
+        @Override
+        List<ResultFile> applyAlternateFilter (List<ResultFile> currentResults, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            if (centralRepoDb == null) {
+                throw new FileSearchException("Can not run Previously Notable filter with null Central Repository DB"); // NON-NLS
+            }
+            
+            // We have to have run some kind of SQL filter before getting to this point,
+            // and should have checked afterward to see if the results were empty.
+            if (currentResults.isEmpty()) {
+                throw new FileSearchException("Can not run on empty list"); // NON-NLS
+            }
+            
+            // The matching files
+            List<ResultFile> notableResults = new ArrayList<>();
+            
+            try {
+                CorrelationAttributeInstance.Type type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
+            
+                for (ResultFile file : currentResults) {
+                    if (file.getAbstractFile().getMd5Hash() != null && ! file.getAbstractFile().getMd5Hash().isEmpty()) {
+                        
+                        // Check if this file hash is marked as notable in the CR
+                        String value = file.getAbstractFile().getMd5Hash();
+                        if (centralRepoDb.getCountArtifactInstancesKnownBad(type, value) > 0) {
+                            notableResults.add(file);
+                        }
+                    }
+                }
+                return notableResults;
+            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+                throw new FileSearchException("Error querying central repository", ex); // NON-NLS
+            }
+        }
+        
+        @NbBundle.Messages({
+            "FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable",
+        })
+        @Override
+        String getDesc() {
+            return Bundle.FileSearchFiltering_PreviouslyNotableFilter_desc(); 
+        }
+    }           
     
     @NbBundle.Messages({
         "FileSearchFiltering.concatenateSetNamesForDisplay.comma=, ",

@@ -393,6 +393,14 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             filters.add(new FileSearchFiltering.TagsFilter(tagsList.getSelectedValuesList()));
         }
         
+        if (exifCheckBox.isSelected()) {
+            filters.add(new FileSearchFiltering.ExifFilter());
+        }
+        
+        if (notableCheckBox.isSelected()) {
+            filters.add(new FileSearchFiltering.NotableFilter());
+        }
+        
         return filters;
     }
     
@@ -609,8 +617,8 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         jScrollPane10 = new javax.swing.JScrollPane();
         objList = new javax.swing.JList<>();
         objCheckBox = new javax.swing.JCheckBox();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jCheckBox2 = new javax.swing.JCheckBox();
+        exifCheckBox = new javax.swing.JCheckBox();
+        notableCheckBox = new javax.swing.JCheckBox();
         jCheckBox3 = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -780,9 +788,14 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox1, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.jCheckBox1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(exifCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.exifCheckBox.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox2, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.jCheckBox2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(notableCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.notableCheckBox.text")); // NOI18N
+        notableCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                notableCheckBoxActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jCheckBox3, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.jCheckBox3.text")); // NOI18N
 
@@ -865,8 +878,8 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jCheckBox1)
-                            .addComponent(jCheckBox2)
+                            .addComponent(exifCheckBox)
+                            .addComponent(notableCheckBox)
                             .addComponent(jCheckBox3))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
@@ -921,9 +934,9 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                     .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(kwCheckBox)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jCheckBox1)
+                        .addComponent(exifCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jCheckBox2)))
+                        .addComponent(notableCheckBox)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -1029,6 +1042,10 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         objList.setEnabled(objCheckBox.isSelected());
     }//GEN-LAST:event_objCheckBoxActionPerformed
 
+    private void notableCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_notableCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_notableCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addParentButton;
     private javax.swing.JButton cancelButton;
@@ -1036,6 +1053,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JCheckBox dsCheckBox;
     private javax.swing.JList<DataSourceItem> dsList;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JCheckBox exifCheckBox;
     private javax.swing.JComboBox<SortingMethod> fileOrderComboBox;
     private javax.swing.JList<FileSearchData.FileType> fileTypeList;
     private javax.swing.Box.Filler filler1;
@@ -1047,8 +1065,6 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JList<String> hashList;
     private javax.swing.JCheckBox intCheckBox;
     private javax.swing.JList<String> intList;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JCheckBox jCheckBox3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -1067,6 +1083,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JScrollPane jScrollPane9;
     private javax.swing.JCheckBox kwCheckBox;
     private javax.swing.JList<String> kwList;
+    private javax.swing.JCheckBox notableCheckBox;
     private javax.swing.JCheckBox objCheckBox;
     private javax.swing.JList<String> objList;
     private javax.swing.JRadioButton orderAttrRadioButton;

@@ -63,6 +63,7 @@ FileSearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
 FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}
 FileSearchFiltering.DataSourceFilter.or=\ or 
+FileSearchFiltering.ExifFilter.desc=Files that contain EXIF data
 # {0} - filters
 FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
 FileSearchFiltering.FileTypeFilter.or=\ or 
@@ -86,6 +87,7 @@ FileSearchFiltering.ParentFilter.substring=(substring)
 FileSearchFiltering.ParentSearchTerm.fullString=\ {0} (exact)
 # {0} - search term
 FileSearchFiltering.ParentSearchTerm.subString=\ {0} (substring)
+FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable
 # {0} - filters
 FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}
 FileSearchFiltering.SizeFilter.or=\ or 
@@ -110,6 +112,6 @@ FileSearchDialog.hashCheckBox.text=Hash Set
 FileSearchDialog.intCheckBox.text=Interesting Items
 FileSearchDialog.tagsCheckBox.text=Tags
 FileSearchDialog.objCheckBox.text=Objects
-FileSearchDialog.jCheckBox1.text=Must contain EXIF data
-FileSearchDialog.jCheckBox2.text=Must have been previously tagged as notable
 FileSearchDialog.jCheckBox3.text=Must meet "is suspicious" criteria
+FileSearchDialog.exifCheckBox.text=Must contain EXIF data
+FileSearchDialog.notableCheckBox.text=Must have been tagged as notable

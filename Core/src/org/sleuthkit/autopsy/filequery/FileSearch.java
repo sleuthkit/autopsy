@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,7 +61,6 @@ class FileSearch {
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
      * @param fileSortingMethod  The method to use to sort the files within the groups
-     * @param attributesNeededForGroupingOrSorting  Any attributes that will used for grouping or sorting
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if not needed.
      * 
@@ -73,8 +73,15 @@ class FileSearch {
             AttributeType groupAttributeType, 
             FileGroup.GroupSortingAlgorithm groupSortingType, 
             FileSorter.SortingMethod fileSortingMethod, 
-            List<AttributeType> attributesNeededForGroupingOrSorting,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        // Make a list of attributes that we want to add values for. This ensures the
+        // ResultFile objects will have all needed fields set when it's time to group
+        // and sort them. For example, if we're grouping by central repo frequency, we need
+        // to make sure we've loaded those values before grouping.
+        List<AttributeType> attributesNeededForGroupingOrSorting = new ArrayList<>();
+        attributesNeededForGroupingOrSorting.add(groupAttributeType);
+        attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
         
         // Run the queries for each filter
         List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
@@ -93,13 +100,93 @@ class FileSearch {
     }
     
     /**
+     * Run the file search to get the group names and sizes.
+     * 
+     * @param filters            The filters to apply
+     * @param groupAttributeType The attribute to use for grouping
+     * @param groupSortingType   The method to use to sort the groups
+     * @param fileSortingMethod  The method to use to sort the files within the groups
+     * @param caseDb             The case database
+     * @param centralRepoDb      The central repository database. Can be null if not needed.
+     * 
+     * @return A LinkedHashMap grouped and sorted according to the parameters
+     * 
+     * @throws FileSearchException 
+     */    
+    static LinkedHashMap<String, Integer> getGroupSizes(
+            List<FileSearchFiltering.FileFilter> filters, 
+            AttributeType groupAttributeType, 
+            FileGroup.GroupSortingAlgorithm groupSortingType, 
+            FileSorter.SortingMethod fileSortingMethod, 
+            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+                groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+        
+        LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
+        for (String groupName : searchResults.keySet()) {
+            groupSizes.put(groupName, searchResults.get(groupName).size());
+        }
+        return groupSizes;
+    }
+    
+    /**
+     * Run the file search to get the group names and sizes.
+     * 
+     * @param filters            The filters to apply
+     * @param groupAttributeType The attribute to use for grouping
+     * @param groupSortingType   The method to use to sort the groups
+     * @param fileSortingMethod  The method to use to sort the files within the groups
+     * @param groupName          Name of the group to get entries from
+     * @param startingEntry      The first entry to return
+     * @param numberOfEntries    The number of entries to return
+     * @param caseDb             The case database
+     * @param centralRepoDb      The central repository database. Can be null if not needed.
+     * 
+     * @return A LinkedHashMap grouped and sorted according to the parameters
+     * 
+     * @throws FileSearchException 
+     */    
+    static List<AbstractFile> getGroupEntries(
+            List<FileSearchFiltering.FileFilter> filters, 
+            AttributeType groupAttributeType, 
+            FileGroup.GroupSortingAlgorithm groupSortingType, 
+            FileSorter.SortingMethod fileSortingMethod,
+            String groupName,
+            int startingEntry,
+            int numberOfEntries,
+            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+                groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+        
+        List<AbstractFile> page = new ArrayList<>();
+        
+        // Check that the group exists
+        if (! searchResults.containsKey(groupName)) {
+            return page;
+        }
+        
+        // Check that there is data after the starting point
+        if (searchResults.get(groupName).size() < startingEntry) {
+            return page;
+        }
+        
+        // Add each page in the range
+        for (int i = startingEntry; (i < startingEntry + numberOfEntries) 
+                && (i < searchResults.get(groupName).size());i++) {
+            page.add(searchResults.get(groupName).get(i));
+        }
+        return page;
+    }    
+    
+    /**
      * Run the file search.
      * 
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
      * @param fileSortingMethod  The method to use to sort the files within the groups
-     * @param attributesNeededForGroupingOrSorting  Any attributes that will used for grouping or sorting
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if not needed.
      * 
@@ -112,8 +199,15 @@ class FileSearch {
             AttributeType groupAttributeType, 
             FileGroup.GroupSortingAlgorithm groupSortingType, 
             FileSorter.SortingMethod fileSortingMethod, 
-            List<AttributeType> attributesNeededForGroupingOrSorting,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        // Make a list of attributes that we want to add values for. This ensures the
+        // ResultFile objects will have all needed fields set when it's time to group
+        // and sort them. For example, if we're grouping by central repo frequency, we need
+        // to make sure we've loaded those values before grouping.
+        List<AttributeType> attributesNeededForGroupingOrSorting = new ArrayList<>();
+        attributesNeededForGroupingOrSorting.add(groupAttributeType);
+        attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());        
         
         // Run the queries for each filter
         List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
