@@ -281,11 +281,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                               + "                       'WEBHIST') " // bad dates and duplicates with what we have.
                               + "   AND sourcetype NOT IN ('UNKNOWN', "
                               + "                          'PE Import Time');"; // lots of bad dates //NON-NLS
-        SQLiteDBConnect tempdbconnect = null;
-        ResultSet resultSet = null;
-        try {
-            tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + plasoDb); //NON-NLS
-            resultSet = tempdbconnect.executeQry(sqlStatement);
+
+        try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + plasoDb); //NON-NLS
+                ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled Plaso Artifact Creation."); //NON-NLS
@@ -328,18 +326,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
-        } finally {
-            if(resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Unable to close ResultSet", ex);
-                }
-            }
-            
-            if(tempdbconnect != null) {
-                tempdbconnect.closeConnection();
-            }
         }
     }
 

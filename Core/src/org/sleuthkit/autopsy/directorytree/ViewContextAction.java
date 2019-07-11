@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
@@ -105,6 +106,22 @@ public class ViewContextAction extends AbstractAction {
         super(displayName);
         this.content = fileSystemContentNode.getLookup().lookup(Content.class);
     }
+    
+    
+    /**
+     * An action that displays the context for abstract file by
+     * expanding the data sources branch of the tree view to the level of the
+     * parent of the content, selecting the parent in the tree view, then
+     * selecting the content in the results view.
+     *
+     * @param displayName The display name for the action.
+     * @param abstractAbstractFileNode The AbstractAbstractFileNode node for the
+     * content.
+     */
+    public ViewContextAction(String displayName, AbstractAbstractFileNode<? extends AbstractFile> abstractAbstractFileNode) {
+        super(displayName);
+        this.content = abstractAbstractFileNode.getLookup().lookup(Content.class);
+    } 
 
     /**
      * An action that displays the context for some content by expanding the

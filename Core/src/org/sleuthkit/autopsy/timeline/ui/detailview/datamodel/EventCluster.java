@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
-import com.google.common.collect.Sets;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -99,9 +99,26 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
         Interval spanningInterval = IntervalUtils.span(cluster1.span, cluster2.span);
 
-        Set<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
-        Set<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Set<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+        Set<Long> idsUnion = cluster1.getEventIDs();
+        if(!idsUnion.isEmpty()) {
+            idsUnion.addAll(cluster2.getEventIDs());
+        } else {
+            idsUnion = cluster2.getEventIDs();
+        }
+        
+        Set<Long> hashHitsUnion = cluster1.getEventIDsWithHashHits();
+        if(!hashHitsUnion.isEmpty()) {
+            hashHitsUnion.addAll(cluster2.getEventIDsWithHashHits());
+        } else {
+            hashHitsUnion = cluster2.getEventIDsWithHashHits();
+        }
+        
+        Set<Long> taggedUnion = cluster1.getEventIDsWithTags();
+        if(!taggedUnion.isEmpty()) {
+            taggedUnion.addAll(cluster2.getEventIDsWithTags()); 
+        } else {
+            taggedUnion = cluster2.getEventIDsWithTags();
+        }
 
         return new EventCluster(spanningInterval,
                 cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
@@ -128,15 +145,18 @@ public class EventCluster implements MultiEvent<EventStripe> {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
-    public EventCluster(TimelineEvent event, EventType type, TimelineEvent.DescriptionLevel lod) {
-        this(new Interval(event.getStartMillis(), event.getEndMillis()),
-                type,
-                singleton(event.getEventID()),
-                event.isHashHit() ? singleton(event.getEventID()) : emptySet(),
-                event.isTagged() ? singleton(event.getEventID()) : emptySet(),
-                event.getDescription(lod),
-                lod);
 
+    public EventCluster(TimelineEvent event, EventType type, TimelineEvent.DescriptionLevel lod) {
+        this.span = new Interval(event.getStartMillis(), event.getEndMillis());
+        this.type = type;
+
+        this.eventIDs = new HashSet<>();
+        this.eventIDs.add(event.getEventID());
+        this.hashHits = event.isHashHit() ? new HashSet<>(eventIDs) : emptySet();
+        this.tagged = event.isTagged() ? new HashSet<>(eventIDs) : emptySet();
+        this.lod = lod;
+        this.description = event.getDescription(lod);
+        this.parent = null;
     }
 
     /**

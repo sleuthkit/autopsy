@@ -42,18 +42,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -102,7 +101,7 @@ final class VcardParser {
         this.context = context;
         this.currentCase = currentCase;
         tskCase = currentCase.getSleuthkitCase();
-        blackboard = currentCase.getServices().getBlackboard();
+        blackboard = tskCase.getBlackboard();
         fileManager = currentCase.getServices().getFileManager();
     }
 
@@ -242,16 +241,11 @@ final class VcardParser {
                 
                 // Index the artifact for keyword search.
                 try {
-                    blackboard.indexArtifact(artifact);
+                    blackboard.postArtifact(artifact,  EmailParserModuleFactory.getModuleName());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(Bundle.VcardParser_addContactArtifact_indexError(), artifact.getDisplayName());
                 }
-                
-                // Fire event to notify UI of this new artifact.
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                        EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT,
-                        blackboardArtifacts));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed to create contact artifact for vCard file '%s' (id=%d).",
