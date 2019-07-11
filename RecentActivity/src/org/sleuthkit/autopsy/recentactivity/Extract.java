@@ -39,7 +39,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -111,7 +110,7 @@ abstract class Extract {
     }
 
     /**
-     * Generic method for adding a blackboard artifact to the blackboard and indexing it
+     * Generic method for creating a blackboard artifact with attributes
      *
      * @param type         is a blackboard.artifact_type enum to determine which
      *                     type the artifact should be
@@ -122,33 +121,51 @@ abstract class Extract {
      *                     been created
      * @return The newly-created artifact, or null on error
      */
-    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> bbattributes) {
+    protected BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> bbattributes) {
         try {
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);
-            // index the artifact for keyword search
-            this.indexArtifact(bbart);
             return bbart;
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error while trying to add an artifact", ex); //NON-NLS
         }
         return null;
     }
     
     /**
-     * Method to index a blackboard artifact for keyword search
+     * Method to post a blackboard artifact to the blackboard.
      *
-     * @param bbart Blackboard artifact to be indexed
+     * @param bbart Blackboard artifact to be indexed. Nothing will occure if a null object is passed in.
      */
     @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
                "Extract.noOpenCase.errMsg=No open case available."})
-    void indexArtifact(BlackboardArtifact bbart) {
+    void postArtifact(BlackboardArtifact bbart) {
+        if(bbart == null) {
+            return;
+        }
+        
         try {
             // index the artifact for keyword search
             blackboard.postArtifact(bbart, getName());
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
+        }
+    }
+    
+    /**
+     * Method to post a list of BlackboardArtifacts to the blackboard.
+     * 
+     * @param artifacts A list of artifacts.  IF list is empty or null, the function will return.
+     */
+    void postArtifacts(Collection<BlackboardArtifact> artifacts) {
+        if(artifacts == null || artifacts.isEmpty()) {
+            return;
+        }
+        
+        try{
+            blackboard.postArtifacts(artifacts, getName());
+        } catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, "Unable to post blackboard artifacts", ex); //NON-NLS
         }
     }
 

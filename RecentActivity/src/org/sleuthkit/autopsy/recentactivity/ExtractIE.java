@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -162,14 +161,13 @@ class ExtractIE extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
 
-            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
+            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
             if (bbart != null) {
                 bbartifacts.add(bbart);
             }
         }
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
+        
+        postArtifacts(bbartifacts);
     }
 
     private String getURLFromIEBookmarkFile(AbstractFile fav) {
@@ -273,14 +271,13 @@ class ExtractIE extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
-            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
             if (bbart != null) {
                 bbartifacts.add(bbart);
             }
         }
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
+
+        postArtifacts(bbartifacts); 
     }
 
     /**
@@ -379,12 +376,8 @@ class ExtractIE extends Extract {
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
             }
         }
-
-        if (foundHistory) {
-            services.fireModuleDataEvent(new ModuleDataEvent(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
-        }
+        
+        postArtifacts(bbartifacts);
     }
 
     /**
@@ -571,8 +564,6 @@ class ExtractIE extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), user));
                 bbart.addAttributes(bbattributes);
 
-                // index the artifact for keyword search
-                this.indexArtifact(bbart);
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard. Pasco results will be incomplete", ex); //NON-NLS

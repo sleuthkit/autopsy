@@ -49,8 +49,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -361,10 +361,16 @@ final class ChromeCacheExtractor {
          });
 
         context.addFilesToJob(derivedFiles);
-        
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, !sourceArtifacts.isEmpty() ? sourceArtifacts : null));
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, !webCacheArtifacts.isEmpty() ? webCacheArtifacts : null));
 
+        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
+        
+        try {
+            blackboard.postArtifacts(sourceArtifacts, moduleName);
+            blackboard.postArtifacts(webCacheArtifacts, moduleName);
+        } catch (Blackboard.BlackboardException ex) {
+           logger.log(Level.WARNING, String.format("Failed to post cacheIndex artifacts "), ex); //NON-NLS
+        }
+       
         cleanup();
     }
     
