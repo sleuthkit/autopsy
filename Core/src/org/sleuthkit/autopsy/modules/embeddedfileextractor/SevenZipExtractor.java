@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
 import net.sf.sevenzipjbinding.ExtractAskMode;
@@ -43,7 +45,11 @@ import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
 import net.sf.sevenzipjbinding.PropID;
+import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
+import org.mozilla.universalchardet.UniversalDetector;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -400,8 +406,7 @@ class SevenZipExtractor {
      * @throws SevenZipException
      */
     private String getPathInArchive(ISevenZipInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
-        String pathInArchive = (String) archive.getProperty(
-                inArchiveItemIndex, PropID.PATH);
+        String pathInArchive = (String) archive.getProperty(inArchiveItemIndex, PropID.PATH);
 
         if (pathInArchive == null || pathInArchive.isEmpty()) {
             //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
@@ -593,6 +598,8 @@ class SevenZipExtractor {
                 }
 
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
+                pathInArchive = correctlyDecodePath(pathInArchive);
+
                 UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
@@ -789,6 +796,49 @@ class SevenZipExtractor {
             }
         }
         return unpackSuccessful;
+    }
+
+    private String correctlyDecodePath(String path) {
+        // TODO maybe make this a class member?
+        // not sure about possible multithreading issues
+        UniversalDetector encodingDetector = new UniversalDetector(null);
+
+        // TODO maybe do this with directories later
+        // Get the filename from the path
+        File f = new File(path);
+        String filename = f.getName();
+
+        char[] chars = filename.toCharArray();
+        byte[] bytes = getDirectBytes(chars);
+
+        encodingDetector.reset();
+        encodingDetector.handleData(bytes, 0, bytes.length);
+        encodingDetector.dataEnd();
+        String detectedCharset = encodingDetector.getDetectedCharset();
+
+        if (detectedCharset != null) {
+            String decodedName = null;
+            try {
+                decodedName = new String(bytes, detectedCharset);
+            } catch (UnsupportedEncodingException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+
+            if (decodedName != null) {
+                path = path.substring(0, path.indexOf(filename)) + decodedName;
+            }
+        }
+        return path;
+    }
+
+    private static byte[] getDirectBytes(char[] chars) {
+        byte[] ret = new byte[chars.length];
+
+        for (int i = 0; i < chars.length; i++) {
+            ret[i] = (byte) chars[i];
+        }
+
+        return ret;
     }
 
     /**
