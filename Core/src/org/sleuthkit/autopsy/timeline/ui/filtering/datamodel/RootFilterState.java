@@ -28,17 +28,17 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.TimelineFilter;
+import org.sleuthkit.datamodel.TimelineFilter.DataSourceFilter;
+import org.sleuthkit.datamodel.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.TimelineFilter.FileTypeFilter;
+import org.sleuthkit.datamodel.TimelineFilter.FileTypesFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HashHitsFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HashSetFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HideKnownFilter;
+import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 
 /** A FilterState for RootFilters. Provides named access to the sub
  * filterstates.

@@ -26,7 +26,7 @@ import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * A node in the nav tree. Manages inserts and resorts. Has parents and

@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * An AutopsyEvent broadcast when a TimelineEvent is added to the case.

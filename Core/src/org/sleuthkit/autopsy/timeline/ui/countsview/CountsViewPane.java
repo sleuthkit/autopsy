@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * FXML Controller class for a StackedBarChart<String,Number> based

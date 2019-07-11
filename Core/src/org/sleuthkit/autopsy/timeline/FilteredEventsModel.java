@@ -68,28 +68,28 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineFilter;
+import org.sleuthkit.datamodel.TimelineFilter.DataSourceFilter;
+import org.sleuthkit.datamodel.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.TimelineFilter.FileTypesFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HashHitsFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HashSetFilter;
+import org.sleuthkit.datamodel.TimelineFilter.HideKnownFilter;
+import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TagNameFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 
 /**
  * This class acts as the model for a TimelineView
@@ -121,8 +121,8 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper<RootFilterState> requestedFilter = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<ZoomState> requestedZoomState = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
-    private final ReadOnlyObjectWrapper< DescriptionLoD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLoD.SHORT);
+    private final ReadOnlyObjectWrapper< EventType.TypeLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventType.TypeLevel.BASE_TYPE);
+    private final ReadOnlyObjectWrapper< TimelineEvent.DescriptionLevel> requestedLOD = new ReadOnlyObjectWrapper<>(TimelineEvent.DescriptionLevel.SHORT);
     // end Filter and zoome state
 
     //caches 
@@ -311,7 +311,7 @@ public final class FilteredEventsModel {
         return requestedTimeRange.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<DescriptionLoD> descriptionLODProperty() {
+    synchronized public ReadOnlyObjectProperty<TimelineEvent.DescriptionLevel> descriptionLODProperty() {
         return requestedLOD.getReadOnlyProperty();
     }
 
@@ -319,7 +319,7 @@ public final class FilteredEventsModel {
         return requestedFilter.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<EventTypeZoomLevel> eventTypeZoomProperty() {
+    synchronized public ReadOnlyObjectProperty<EventType.TypeLevel> eventTypeZoomProperty() {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 
@@ -332,7 +332,7 @@ public final class FilteredEventsModel {
         return getZoomState().getTimeRange();
     }
 
-    synchronized public DescriptionLoD getDescriptionLOD() {
+    synchronized public TimelineEvent.DescriptionLevel getDescriptionLOD() {
         return getZoomState().getDescriptionLOD();
     }
 
@@ -340,7 +340,7 @@ public final class FilteredEventsModel {
         return getZoomState().getFilterState();
     }
 
-    synchronized public EventTypeZoomLevel getEventTypeZoom() {
+    synchronized public EventType.TypeLevel getEventTypeZoom() {
         return getZoomState().getTypeZoomLevel();
     }
 
@@ -432,7 +432,7 @@ public final class FilteredEventsModel {
     public Map<EventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
 
         final RootFilterState filter;
-        final EventTypeZoomLevel typeZoom;
+        final EventType.TypeLevel typeZoom;
         synchronized (this) {
             filter = getFilterState();
             typeZoom = getEventTypeZoom();

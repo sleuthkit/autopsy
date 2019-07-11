@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import java.util.function.Predicate;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * A Filter over TimelineEvents that is applied in the UI, not the DB. *

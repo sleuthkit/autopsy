@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * A container for several events that have the same timestamp and description

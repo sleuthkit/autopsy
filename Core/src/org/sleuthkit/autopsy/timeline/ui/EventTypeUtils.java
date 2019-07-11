@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * Utilities for dealy with EventTypes, specifically for getting GUI properties

@@ -83,9 +83,9 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CO
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  *
@@ -154,7 +154,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
             show(tagIV, false);
         }
 
-        if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
+        if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventType.TypeLevel.SUB_TYPE) {
             evtColor = getColor(getEventType());
         } else {
             evtColor = getColor(getEventType().getBaseType());

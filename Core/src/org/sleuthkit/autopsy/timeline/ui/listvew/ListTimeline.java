@@ -93,14 +93,14 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventType;
-import static org.sleuthkit.datamodel.timeline.EventType.FILE_ACCESSED;
-import static org.sleuthkit.datamodel.timeline.EventType.FILE_CHANGED;
-import static org.sleuthkit.datamodel.timeline.EventType.FILE_CREATED;
-import static org.sleuthkit.datamodel.timeline.EventType.FILE_MODIFIED;
-import static org.sleuthkit.datamodel.timeline.EventType.FILE_SYSTEM;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.EventType;
+import static org.sleuthkit.datamodel.EventType.FILE_ACCESSED;
+import static org.sleuthkit.datamodel.EventType.FILE_CHANGED;
+import static org.sleuthkit.datamodel.EventType.FILE_CREATED;
+import static org.sleuthkit.datamodel.EventType.FILE_MODIFIED;
+import static org.sleuthkit.datamodel.EventType.FILE_SYSTEM;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * The inner component that makes up the List view. Manages the TableView.
@@ -239,7 +239,7 @@ class ListTimeline extends BorderPane {
 
         descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         descriptionColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
-                -> singleEvent.getDescription(DescriptionLoD.FULL)));
+                -> singleEvent.getDescription(TimelineEvent.DescriptionLevel.FULL)));
 
         typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         typeColumn.setCellFactory(col -> new EventTypeCell());

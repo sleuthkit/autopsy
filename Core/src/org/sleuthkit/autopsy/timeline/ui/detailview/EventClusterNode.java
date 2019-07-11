@@ -59,11 +59,11 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.SqlFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
-import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 
 /**
  * A Node to represent an EventCluster in a DetailsChart
@@ -181,35 +181,35 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                 .intersect(new SqlFilterState<>(
                         new EventTypeFilter(getEventType()), true));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
-        final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
-        final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
+        final EventType.TypeLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
+        final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLevel());
 
-        DescriptionFilter descriptionFilter = new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription());
+        DescriptionFilter descriptionFilter = new DescriptionFilter(getEvent().getDescriptionLevel(), getDescription());
         /*
          * task to load sub-stripes in a background thread
          */
         Task<List<EventStripe>> loggedTask;
         loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventClusterNode_loggedTask_name(), false) {
 
-            private volatile DescriptionLoD loadedDescriptionLoD = withRelativeDetail(getDescriptionLoD(), relativeDetail);
+            private volatile TimelineEvent.DescriptionLevel loadedDescriptionLevel = withRelativeDetail(getDescriptionLevel(), relativeDetail);
 
             @Override
             protected List<EventStripe> call() throws Exception {
                 //newly loaded substripes                
                 List<EventStripe> stripes;
                 //next LoD in diraction of given relativeDetail
-                DescriptionLoD next = loadedDescriptionLoD;
+                TimelineEvent.DescriptionLevel next = loadedDescriptionLevel;
                 do {
-                    loadedDescriptionLoD = next;
-                    if (loadedDescriptionLoD == getEvent().getDescriptionLoD()) {
+                    loadedDescriptionLevel = next;
+                    if (loadedDescriptionLevel == getEvent().getDescriptionLevel()) {
                         //if we are back at the level of detail of the original cluster, return empty list to inidicate.
                         return Collections.emptyList();
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(descriptionFilter, zoom.withDescrLOD(loadedDescriptionLoD));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(descriptionFilter, zoom.withDescrLOD(loadedDescriptionLevel));
                     //setup next for subsequent go through the "do" loop
-                    next = withRelativeDetail(loadedDescriptionLoD, relativeDetail);
+                    next = withRelativeDetail(loadedDescriptionLevel, relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.
 
                 // return list of EventStripes with parents set to this cluster
@@ -227,7 +227,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                 subNodes.clear();
 
                 try {
-                    setDescriptionLOD(loadedDescriptionLoD);
+                    setDescriptionLOD(loadedDescriptionLevel);
                     List<EventStripe> newSubStripes = get();
                     if (newSubStripes.isEmpty()) {
                         //restore original display
@@ -305,13 +305,13 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
             setGraphic(new ImageView(PLUS));
 
             setEventHandler(actionEvent -> {
-                if (node.getDescriptionLoD().moreDetailed() != null) {
+                if (node.getDescriptionLevel().moreDetailed() != null) {
                     node.loadSubStripes(RelativeDetail.MORE);
                 }
             });
 
             //disabled if the given node is already at full description level of detail
-            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(DescriptionLoD.FULL));
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(TimelineEvent.DescriptionLevel.FULL));
         }
     }
 
@@ -329,13 +329,13 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
             setGraphic(new ImageView(MINUS));
 
             setEventHandler(actionEvent -> {
-                if (node.getDescriptionLoD().lessDetailed() != null) {
+                if (node.getDescriptionLevel().lessDetailed() != null) {
                     node.loadSubStripes(RelativeDetail.LESS);
                 }
             });
 
             //disabled if node is at clusters level of detail
-            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEvent().getDescriptionLoD()));
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEvent().getDescriptionLevel()));
         }
     }
 
@@ -346,7 +346,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         LESS;
     }
 
-    private static DescriptionLoD withRelativeDetail(DescriptionLoD LoD, RelativeDetail relativeDetail) {
+    private static TimelineEvent.DescriptionLevel withRelativeDetail(TimelineEvent.DescriptionLevel LoD, RelativeDetail relativeDetail) {
         switch (relativeDetail) {
             case EQUAL:
                 return LoD;

@@ -32,9 +32,9 @@ import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 
 /**
  * A TreeTableCell that shows an icon and color corresponding to the represented
@@ -79,7 +79,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                     setLegendColor(filter, rect, newZoomLevel);
                 });
 
-                HBox hBox = new HBox(new Rectangle(filter.getEventType().getZoomLevel().ordinal() * 10, 5, CLEAR),
+                HBox hBox = new HBox(new Rectangle(filter.getEventType().getTypeLevel().ordinal() * 10, 5, CLEAR),
                         new ImageView(EventTypeUtils.getImagePath(filter.getEventType())), rect
                 );
                 hBox.setAlignment(Pos.CENTER);
@@ -104,9 +104,9 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
         }
     }
 
-    private void setLegendColor(EventTypeFilter filter, Rectangle rect, EventTypeZoomLevel eventTypeZoom) {
+    private void setLegendColor(EventTypeFilter filter, Rectangle rect, EventType.TypeLevel eventTypeZoom) {
         //only show legend color if filter is of the same zoomlevel as requested in filteredEvents
-        if (eventTypeZoom.equals(filter.getEventType().getZoomLevel())) {
+        if (eventTypeZoom.equals(filter.getEventType().getTypeLevel())) {
             Platform.runLater(() -> {
                 rect.setStroke(EventTypeUtils.getColor(filter.getEventType().getSuperType()));
                 rect.setFill(EventTypeUtils.getColor(filter.getEventType()));

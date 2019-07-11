@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 import com.google.common.collect.Lists;
 import java.util.Collection;
 import javafx.collections.ListChangeListener;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TagNameFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
 
 /**
  * Specialization of CompoundFilterState for TagName/Tags-Filter.

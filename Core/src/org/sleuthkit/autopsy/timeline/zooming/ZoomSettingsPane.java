@@ -38,9 +38,9 @@ import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
-import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.EventType;
 
 /**
  * A Panel that acts as a view for a given
@@ -93,21 +93,21 @@ public class ZoomSettingsPane extends TitledPane {
         zoomLabel.setText(Bundle.ZoomSettingsPane_zoomLabel_text());
 
         typeZoomSlider.setMin(1); //don't show ROOT_TYPE
-        typeZoomSlider.setMax(EventTypeZoomLevel.values().length - 1);
+        typeZoomSlider.setMax(EventType.TypeLevel.values().length - 1);
         configureSliderListeners(typeZoomSlider,
                 controller::pushEventTypeZoom,
                 filteredEvents.eventTypeZoomProperty(),
-                EventTypeZoomLevel.class,
-                EventTypeZoomLevel::ordinal,
+                EventType.TypeLevel.class,
+                EventType.TypeLevel::ordinal,
                 Function.identity());
         typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
 
-        descrLODSlider.setMax(DescriptionLoD.values().length - 1);
+        descrLODSlider.setMax(TimelineEvent.DescriptionLevel.values().length - 1);
         configureSliderListeners(descrLODSlider,
                 controller::pushDescrLOD,
                 filteredEvents.descriptionLODProperty(),
-                DescriptionLoD.class,
-                DescriptionLoD::ordinal,
+                TimelineEvent.DescriptionLevel.class,
+                TimelineEvent.DescriptionLevel::ordinal,
                 Function.identity());
         descrLODLabel.setText(Bundle.ZoomSettingsPane_descrLODLabel_text());
         //the description slider is only usefull in the detail view

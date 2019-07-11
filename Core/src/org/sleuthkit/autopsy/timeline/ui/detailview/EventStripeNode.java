@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * Node used in DetailsChart to represent an EventStripe.
@@ -101,7 +101,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
      *         one.
      */
     private Action newHideAction() {
-        return new HideDescriptionAction(getDescription(), getEvent().getDescriptionLoD(), chartLane.getParentChart());
+        return new HideDescriptionAction(getDescription(), getEvent().getDescriptionLevel(), chartLane.getParentChart());
     }
 
     @Override

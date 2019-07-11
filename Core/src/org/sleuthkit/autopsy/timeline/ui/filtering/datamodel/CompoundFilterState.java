@@ -27,8 +27,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.openide.util.Exceptions;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
+import org.sleuthkit.datamodel.TimelineFilter;
+import org.sleuthkit.datamodel.TimelineFilter.CompoundFilter;
 
 /**
  *
