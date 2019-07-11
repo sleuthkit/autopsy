@@ -179,12 +179,6 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                         }
-
-                        /*
-                         * Send an event to update the view with the new result.
-                         */
-                        services.fireModuleDataEvent(new ModuleDataEvent(ObjectDetectionModuleFactory.getModuleName(), TSK_OBJECT_DETECTED, Collections.singletonList(artifact)));
-
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
                         detectionRectangles.release();

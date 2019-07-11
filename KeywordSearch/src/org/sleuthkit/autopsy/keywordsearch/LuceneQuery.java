@@ -192,7 +192,7 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     /**
-     * Add a keyword hit artifact for a given keyword hit.
+     *Add a keyword hit artifact for a given keyword hit.
      *
      * @param content      The text source object for the hit.
      * @param foundKeyword The keyword that was found by the search, this may be
