@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import com.google.common.annotations.Beta;
+import com.google.common.eventbus.Subscribe;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -35,6 +36,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -64,11 +66,9 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
-import org.python.google.common.eventbus.Subscribe;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
-import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
@@ -161,7 +161,7 @@ public class Case {
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     private boolean hasDataSources;
-     private final TSKCaseRepublisher tskEventForwarder = new TSKCaseRepublisher();
+    private final TSKCaseRepublisher tskEventForwarder = new TSKCaseRepublisher();
 
     /*
      * Get a reference to the main window of the desktop application to use to
@@ -395,20 +395,20 @@ public class Case {
          */
         TAG_DEFINITION_CHANGED,
         /**
-         * An item in the central repository has had its comment modified. The
-         * old value is null, the new value is string for current comment.
-         */
-        CR_COMMENT_CHANGED,
-        /**
          * An timeline event, such mac time or web activity was added to the
          * current case. The old value is null and the new value is the
          * TimelineEvent that was added.
          */
-        TIMELINE_EVENT_ADDED;
+        TIMELINE_EVENT_ADDED,
+        /* An item in the central repository has had its comment
+         * modified. The old value is null, the new value is string for current
+         * comment.
+         */
+        CR_COMMENT_CHANGED;
 
     };
-    
-   private final class TSKCaseRepublisher {
+
+    private final class TSKCaseRepublisher {
 
         @Subscribe
         public void rebroadcastTimelineEventCreated(TimelineManager.TimelineEventAddedEvent event) {
@@ -536,8 +536,8 @@ public class Case {
      */
     public static boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
-                || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
-                || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
+                 || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
+                 || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
     }
 
     /**
@@ -2165,7 +2165,7 @@ public class Case {
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
             } else {
-                throw new CaseActionException(Case_open_exception_multiUserCaseNotEnabled());
+                throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
         } catch (TskUnsupportedSchemaVersionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_unsupportedSchemaVersionMessage(ex.getLocalizedMessage()), ex);
@@ -2187,7 +2187,7 @@ public class Case {
     private void openCaseLevelServices(ProgressIndicator progressIndicator) {
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseLevelServices());
         this.caseServices = new Services(caseDb);
-        
+
         caseDb.registerForEvents(tskEventForwarder);
     }
 
