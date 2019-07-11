@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -43,11 +44,13 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -422,9 +425,30 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
     }
+    
+     /**
+     * Event handler for ArtifactsPostedEvents from SleuthkitCase.
+     *
+     * @param event The ArtifactsPostedEvent to handle.
+     */
+    @NbBundle.Messages("SolrSearchService.indexingError=Unable to index blackboard artifact.")
+    @Subscribe
+    void handleNewArtifacts(Blackboard.ArtifactsPostedEvent event) {
+        for (BlackboardArtifact artifact : event.getArtifacts()) {
+            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) { //don't index KWH artifacts.
+                try {
+                    index(artifact);
+                } catch (TskCoreException ex) {
+                    //TODO: is this the right error handling?
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(Bundle.SolrSearchService_indexingError(), artifact.getDisplayName());
+                }
+            }
+        }
+    }
 
     /**
-     * Adds an artifact to the keyword search text index as a concantenation of
+     * Adds an artifact to the keyword search text index as a concatenation of
      * all of its attributes.
      *
      * @param artifact The artifact to index.
