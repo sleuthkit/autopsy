@@ -54,11 +54,9 @@ final class AccountDeviceInstanceNodeFactory extends ChildFactory<AccountDeviceI
             final List<AccountDeviceInstance> accountDeviceInstancesWithRelationships =
                     commsManager.getAccountDeviceInstancesWithRelationships(commsFilter);
             for (AccountDeviceInstance accountDeviceInstance : accountDeviceInstancesWithRelationships) {
-                //Filter out device accounts, in the table.
-                if (Account.Type.DEVICE.equals(accountDeviceInstance.getAccount().getAccountType()) ==false) {
-                    long communicationsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, commsFilter);
-                    accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, communicationsCount));
-                }
+                long communicationsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, commsFilter);
+                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, communicationsCount));
+
             }
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Error getting filtered account device instances", tskCoreException);

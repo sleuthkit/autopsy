@@ -322,11 +322,6 @@ final public class FiltersPanel extends JPanel {
 
         panel.setSelected(initalState);
         panel.addItemListener(validationListener);
-        if (type.equals(Account.Type.DEVICE)) {
-            //Deveice type filter is enabled based on whether we are in table or graph view.
-            panel.setEnabled(deviceAccountTypeEnabled);
-        }
-
         return panel;
     }
     
@@ -914,21 +909,6 @@ final public class FiltersPanel extends JPanel {
     }
 
     /**
-     * Enable or disable the device account type filter. The filter should be
-     * disabled for the browse/table mode and enabled for the visualization.
-     *
-     * @param enable True to enable the device account type filter, False to
-     *               disable it.
-     */
-    void setDeviceAccountTypeEnabled(boolean enable) {
-        deviceAccountTypeEnabled = enable;
-        JCheckBox deviceCheckbox = accountTypeMap.get(Account.Type.DEVICE);
-        if (deviceCheckbox != null) {
-            deviceCheckbox.setEnabled(deviceAccountTypeEnabled);
-        }
-    }
-
-    /**
      * Set the selection state of all the account type check boxes
      *
      * @param selected The selection state to set the check boxes to.
@@ -949,11 +929,11 @@ final public class FiltersPanel extends JPanel {
     }
 
     /**
-     * Helper method that sets all the checkboxes in the given map to the given
+     * Helper method that sets all the check boxes in the given map to the given
      * selection state.
      *
      * @param map      A map from anything to JCheckBoxes.
-     * @param selected The selection state to set all the checkboxes to.
+     * @param selected The selection state to set all the check boxes to.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
