@@ -1,0 +1,40 @@
+/*! \page install_multiuser_page Setting Up Multi-user Cluster
+
+\section multiuser_install_overview Overview
+
+Autopsy can be setup to work in an environment where multiple users on different computers can have the same case open at the same time.  To set up this type of environment, you will need to configure additional (free and open source) network-based services.  
+
+The basic concept is that you'll have a central:
+- Database 
+- Keyword search index
+- Storage
+
+Each Autopsy client will then use those shared resources instead of the embedded versions that are used for single-user cases.  
+
+\image html multi-user-network.png
+
+
+\section multiuser_install_install Cluster Installation and Configuration
+
+Let's now step through the process of setting up an Autopsy cluster. 
+
+Step 1: \ref multiuser_system
+
+Step 2: \ref multiuser_users
+
+Step 3: \ref multiuser_storage  
+
+Step 4: \ref install_postgresql
+
+Step 5: \ref install_solr
+
+Step 6: \ref install_activemq
+
+Step 7: \ref multiuser_install_clients
+
+
+
+When you setup the above services, write down the addresses, user names, and passwords or each so that you can configure each of the client systems afterwards. 
+
+
+*/

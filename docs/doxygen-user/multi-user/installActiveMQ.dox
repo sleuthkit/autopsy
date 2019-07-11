@@ -1,5 +1,9 @@
 /*! \page install_activemq Install and Configure ActiveMQ
-To install ActiveMQ, perform the following steps:
+
+\section install_activemq_overview Overview
+
+ActiveMQ is a messaging service that allows the Autopsy clients to communicate with each other. This allows each client to get real-time updates.  This service has minimal storage requirements. 
+
 
 \section install_activemq_prereq Prerequisites
 
@@ -32,15 +36,27 @@ If you need the JRE, install it with the default settings.
 
 4. Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
 
-5. ActiveMQ should now be installed and configured using the default credentials.  You should go to the next section to change the default passwords. To test your installation, you can access the admin pages in your web browser via a URL like this (set your host): http://localhost:8161/admin. The default administrator username is _admin_ with a password of _admin_ and the default regular username is _user_ with a default password of _password_.  You can change these passwords by following the instructions below. If you can see a page that looks like the following, it is ready to function.
+5. ActiveMQ should now be installed and configured using the default credentials. 
+
+
+\subsection install_activemq_test Testing
+
+To test your installation, you can access the admin pages in your web browser via a URL like this: http://localhost:8161/admin. 
+
+The default administrator username is _admin_ with a password of _admin_ and the default regular username is _user_ with a default password of _password_.  You can change these passwords by following the instructions below. 
+
+If you can see a page that looks like the following, the service is ready to function.
 <br><br>
 \image html activemq.PNG
 <br><br>
 
-If you do not see a screen like the above screenshot and you have double checked that the ActiveMQ service is running, contact your network administrator. For the ActiveMQ service to be accessible by network clients you may need to configure your Windows firewall (and any other 3rd party firewall in use) to allow communication.
+If you do not see this page:
+- Double check that the ActiveMQ service is running
+- Check that the port is not being blocked by a firewall. 
 
 
-\subsection install_activemq_install_pw Configuring Authentication
+
+\section install_activemq_install_pw Configuring Authentication
 
 You can optionally add authentication to your ActiveMQ server.  The ActiveMQ communications are not encrypted and contain basic messages between the systems about when new data has been found. 
 
@@ -60,6 +76,7 @@ When complete, the file should look like this:
 <br><br>
 \image html groups.properties.after.PNG
 <br><br>     
+
 2. Copy and paste the following text to the file <i>"conf\users.properties"</i>, overwriting the text highlighted in yellow in the screenshot below:
 <BLOCKQUOTE>            
 system=manager<br />
@@ -74,6 +91,7 @@ When complete, the file should look like this:
 <br><br>
 \image html users.properties.after.PNG
 <br><br>        
+
 3. Copy and paste the following text to the file <i>"conf\activemq.xml"</i>, inserting the text at the line shown in yellow in the screenshot below.
 
             <plugins>
@@ -110,5 +128,9 @@ To add a new user or change the password:
 <br><br>
 \image html StartActiveMQService.PNG
 <br><br>
+
+\section install_mq_backup Backing Up
+
+There is nothing to backup for ActiveMQ.  It does not store any case-related data in files. 
 
 */
