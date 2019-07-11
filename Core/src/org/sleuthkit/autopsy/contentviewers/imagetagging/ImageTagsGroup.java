@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javafx.event.Event;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
@@ -65,13 +66,8 @@ public final class ImageTagsGroup extends Group {
                 return;
             }
 
-            //Pull out the logical image tag that this node is associated with
-            Node topLevelChild = e.getPickResult().getIntersectedNode();
-            while (!this.getChildren().contains(topLevelChild)) {
-                topLevelChild = topLevelChild.getParent();
-            }
-
-            requestFocus((ImageTag) topLevelChild);
+            ImageTag selection = getTagToSelect(new Point2D(e.getX(), e.getY()));
+            requestFocus(selection);
         });
     }
 
@@ -102,6 +98,31 @@ public final class ImageTagsGroup extends Group {
             currentFocus = null;
         }
     }
+    
+    /**
+     * Find which tag to select on a user mouse press. If multiple tags are 
+     * overlapping, pick the smallest one that is determined by the L + W of
+     * the tag sides.
+     * 
+     * @param coordinate User mouse press location
+     * @return The tag to give focus
+     */
+    private ImageTag getTagToSelect(Point2D coordinate) {
+        ImageTag tagToSelect = null;
+        double minTagSize = Double.MAX_VALUE;
+        
+        //Find all intersecting tags, select the absolute min based on L + W.
+        for (Node node : this.getChildren()) {
+            ImageTag tag = (ImageTag) node;
+            double tagSize = tag.getWidth() + tag.getHeight();
+            if (tag.contains(coordinate) && tagSize < minTagSize) {
+                tagToSelect = tag;
+                minTagSize = tagSize;
+            }
+        }
+        
+        return tagToSelect;
+    }
 
     /**
      * Notifies the logical image tag that it is no longer in focus.
@@ -119,7 +140,7 @@ public final class ImageTagsGroup extends Group {
      * @param n 
      */
     private void requestFocus(ImageTag n) {
-        if (n.equals(currentFocus)) {
+        if (n == null || n.equals(currentFocus)) {
             return;
         } else if (currentFocus != null && !currentFocus.equals(n)) {
             resetFocus(currentFocus);

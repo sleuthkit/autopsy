@@ -48,6 +48,8 @@ public final class ImageTag extends Group {
     // Used to tell the 8 edit handles to hide if this tag is no longer selected
     private final EventDispatchChainImpl ALL_CHILDREN;
     
+    private final PhysicalTag physicalTag;
+    
     //Notifies listeners that the user has editted the tag boundaries
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     
@@ -64,7 +66,7 @@ public final class ImageTag extends Group {
         });
 
         ImageTagRegion details = contentViewerTag.getDetails();
-        PhysicalTag physicalTag = new PhysicalTag(details);
+        physicalTag = new PhysicalTag(details);
 
         //Defines the max allowable boundary that a user may drag any given handle.
         Boundary dragBoundary = (x, y) -> {
@@ -130,6 +132,14 @@ public final class ImageTag extends Group {
      */
     public void subscribeToEditEvents(PropertyChangeListener listener) {
         pcs.addPropertyChangeListener(listener);
+    }
+    
+    public double getWidth() {
+        return physicalTag.getWidth();
+    }
+    
+    public double getHeight() {
+        return physicalTag.getHeight();
     }
 
     /**

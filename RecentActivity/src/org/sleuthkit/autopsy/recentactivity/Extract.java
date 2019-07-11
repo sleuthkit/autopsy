@@ -35,11 +35,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
@@ -48,6 +46,7 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -60,6 +59,7 @@ abstract class Extract {
 
     protected Case currentCase;
     protected SleuthkitCase tskCase;
+    protected Blackboard blackboard;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
     String moduleName = "";
@@ -72,6 +72,7 @@ abstract class Extract {
         try {
             currentCase = Case.getCurrentCaseThrows();
             tskCase = currentCase.getSleuthkitCase();
+            blackboard = tskCase.getBlackboard();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
         }
@@ -143,15 +144,11 @@ abstract class Extract {
                "Extract.noOpenCase.errMsg=No open case available."})
     void indexArtifact(BlackboardArtifact bbart) {
         try {
-            Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
             // index the artifact for keyword search
-            blackboard.indexArtifact(bbart);
+            blackboard.postArtifact(bbart, getName());
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.Extract_noOpenCase_errMsg(), bbart.getDisplayName());
         }
     }
 

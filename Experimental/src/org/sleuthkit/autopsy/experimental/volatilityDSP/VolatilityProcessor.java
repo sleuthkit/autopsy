@@ -33,7 +33,6 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -42,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -317,7 +317,7 @@ class VolatilityProcessor {
         "VolatilityProcessor_errorMessage_failedToIndexArtifact=Error indexing artifact from output of {0} plugin"
     })
     private void flagFiles(Set<String> fileSet, String pluginName) throws VolatilityProcessorException {
-        Blackboard blackboard = currentCase.getServices().getBlackboard();
+        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
         for (String file : fileSet) {
             if (isCancelled) {
                 return;
@@ -387,7 +387,7 @@ class VolatilityProcessor {
 
                             try {
                                 // index the artifact for keyword search
-                                blackboard.indexArtifact(volArtifact);
+                                blackboard.postArtifact(volArtifact, VOLATILITY);
                             } catch (Blackboard.BlackboardException ex) {
                                 errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
                                 /*
@@ -397,9 +397,6 @@ class VolatilityProcessor {
                                  */
                                 logger.log(Level.SEVERE, String.format("Failed to index artifact (artifactId=%d) for for output of %s plugin", volArtifact.getArtifactID(), pluginName), ex);
                             }
-
-                            // fire event to notify UI of this new artifact
-                            services.fireModuleDataEvent(new ModuleDataEvent(VOLATILITY, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
                         }
                     } catch (TskCoreException ex) {
                         throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorCreatingArtifact(pluginName), ex);
