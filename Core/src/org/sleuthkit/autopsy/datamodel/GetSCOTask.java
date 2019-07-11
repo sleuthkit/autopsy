@@ -69,7 +69,7 @@ class GetSCOTask implements Runnable {
         SCOData scoData = new SCOData();
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
         //getting the correlation attribute and setting the comment column is done before the eamdb isEnabled check
-        //because the Comment column will reflect the presence of columns in the CR when the CR is enabled but still reflect tag comments when not
+        //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless 
         CorrelationAttributeInstance fileAttribute = contentNode.getCorrelationAttributeInstance();
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
 
