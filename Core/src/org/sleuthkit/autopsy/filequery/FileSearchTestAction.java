@@ -65,7 +65,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
             }
         }
         
-        FileSearchDialog dialog = new FileSearchDialog(null, true, Case.getCurrentCase().getSleuthkitCase(), crDb);
+        FileDiscoveryDialog dialog = new FileDiscoveryDialog(null, true, Case.getCurrentCase().getSleuthkitCase(), crDb);
         
         // For testing, allow the user to run different searches in loop
         while (true) {
