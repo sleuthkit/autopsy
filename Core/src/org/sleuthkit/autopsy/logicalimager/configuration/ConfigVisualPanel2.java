@@ -644,6 +644,7 @@ final class ConfigVisualPanel2 extends JPanel {
     private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
+        promptBeforeExit.setSelected(config.isPromptBeforeExit());
         LogicalImagerRuleSet ruleSet = getRuleSetFromCurrentConfig();
         flagEncryptionProgramsCheckBox.setSelected(ruleSet.find(EncryptionProgramsRule.getName()) != null);
         RulesTableModel rulesTableModel = new RulesTableModel();

@@ -58,7 +58,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
             finalizeImageWriter = jsonFinalizeImageWriter.getAsBoolean();
         }
 
-        final JsonElement jsonPromptBeforeExit = jsonObject.get("finalize-image-writer"); // NON-NLS
+        final JsonElement jsonPromptBeforeExit = jsonObject.get("prompt-before-exit"); // NON-NLS
         if (jsonPromptBeforeExit != null) {
             promptBeforeExit = jsonPromptBeforeExit.getAsBoolean();
         }
