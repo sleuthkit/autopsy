@@ -1,6 +1,6 @@
-/*! \page install_multiuseruser_page Picking Users
+/*! \page install_multiuseruser_page Pick Your User Accounts
 
-\section multiuser_users Pick Your User Accounts
+\section multiuser_users Overview
 
 Before you get into configuring any computers, you should have an understanding about what user accounts will be used.  User account permissions are one of the most common challenges people have when setting up a cluster. 
 

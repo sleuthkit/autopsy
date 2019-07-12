@@ -1,6 +1,6 @@
-/*! \page install_multiuser_storage_page Setting Up Shared Storage
+/*! \page install_multiuser_storage_page Set Up Shared Storage
 
-\section multiuser_storage Set Up Shared Storage
+\section multiuser_storage Overview
 
 The cluster will need shared storage that can be accessed from:
 - Autopsy clients

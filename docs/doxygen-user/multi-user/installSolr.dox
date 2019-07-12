@@ -1,4 +1,4 @@
-/*! \page install_solr Install and Configure Solr
+/*! \page install_solr_page Install and Configure Solr
 
 \section install_solr_overview Overview
 
@@ -15,12 +15,8 @@ We use Bitnami Solr, which packages Solr as a Windows service.
 You will need:
 - A 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
 - The Apache Solr 4.10.3-0 installation package.  This is no longer available from its original source, but you can find it on our site: https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr.
+-- NOTE: We tested Solr 6 at one point, but ran into stability problems when loading and unloading cores.  For now, you need to use Solr 4. 
 - An installed version of Autopsy so that you can copy files from it.   You can install Autopsy on one of the planned client systems.  You do not need to install it on the Solr server. 
-
-
-
-
-
 - A network-accessible machine to install Solr on. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
 
