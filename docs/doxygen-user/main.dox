@@ -49,6 +49,7 @@ The following topics are available here:
  - \subpage common_properties_page
  - \subpage search_all_cases_page
  - \subpage logs_and_output_page
+ - \subpage machine_translation_page
 - Reporting
  - \subpage tagging_page
  - \subpage reporting_page
@@ -68,6 +69,7 @@ The following topics are available here:
 - \subpage advanced_page
 - \subpage experimental_page
 - \subpage command_line_ingest_page
+- \subpage logical_imager_page
 - \subpage translations_page
 
 If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.

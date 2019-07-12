@@ -18,16 +18,13 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -40,24 +37,35 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME;
-import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.communications.Utils;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 
 /**
  * Wraps a BlackboardArtifact as an AbstractNode for use in an OutlookView
  */
-final class MessageNode extends BlackboardArtifactNode {
+class MessageNode extends BlackboardArtifactNode {
 
+    public static final String UNTHREADED_ID = "<UNTHREADED>";
+    public static final String CALL_LOG_ID = "<CALLLOG>";
+    
     private static final Logger logger = Logger.getLogger(MessageNode.class.getName());
+    
+    private final String threadID;
+    
+    private final Action preferredAction;
 
-    MessageNode(BlackboardArtifact artifact) {
+    MessageNode(BlackboardArtifact artifact, String threadID,  Action preferredAction) {
         super(artifact);
+        
+        this.preferredAction = preferredAction;
 
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s"); // NON-NLS
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message"); // NON-NLS
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
+        
+        this.threadID = threadID;
     }
 
     @Messages({
@@ -72,7 +80,6 @@ final class MessageNode extends BlackboardArtifactNode {
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
-        List<Tag> tags = getAllTagsFromDatabase();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
@@ -80,19 +87,15 @@ final class MessageNode extends BlackboardArtifactNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", Bundle.MessageNode_Node_Property_Type(), "", getDisplayName())); //NON-NLS
+        
+        
 
-        addScoreProperty(sheetSet, tags);
-
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            correlationAttribute = getCorrelationAttributeInstance();
-        }
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-
-        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            addCountProperty(sheetSet, correlationAttribute);
-        }
         final BlackboardArtifact artifact = getArtifact();
+        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
+            sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",CALL_LOG_ID)); //NON-NLS
+        } else {
+            sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",threadID == null ? UNTHREADED_ID : threadID)); //NON-NLS
+        }
 
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != fromID) {
@@ -182,5 +185,14 @@ final class MessageNode extends BlackboardArtifactNode {
     @Override
     public String getSourceName() {
         return getDisplayName();
+    }
+    
+    String getThreadID() {
+        return threadID;
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        return preferredAction;
     }
 }

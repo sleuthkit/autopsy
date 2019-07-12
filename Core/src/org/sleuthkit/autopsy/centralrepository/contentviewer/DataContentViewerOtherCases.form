@@ -11,13 +11,6 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
       <SubComponents>
-        <MenuItem class="javax.swing.JMenuItem" name="selectAllMenuItem">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/contentviewer/Bundle.properties" key="DataContentViewerOtherCases.selectAllMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-        </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="exportToCSVMenuItem">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -46,11 +39,11 @@
   </NonVisualComponents>
   <Properties>
     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[600, 10]"/>
+      <Dimension value="[1000, 10]"/>
     </Property>
     <Property name="opaque" type="boolean" value="false"/>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[600, 63]"/>
+      <Dimension value="[1000, 63]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -68,7 +61,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="tableContainerPanel" alignment="0" pref="775" max="32767" attributes="0"/>
+          <Component id="tableContainerPanel" alignment="0" pref="1000" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -101,7 +94,7 @@
                           <EmptySpace max="32767" attributes="0"/>
                           <Component id="foundInLabel" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="tablesViewerSplitPane" pref="765" max="32767" attributes="0"/>
+                      <Component id="tablesViewerSplitPane" pref="990" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
               </Group>

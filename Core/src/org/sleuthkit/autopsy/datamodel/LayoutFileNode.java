@@ -23,24 +23,34 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Node for layout file
  */
 public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
+    
+    private static final Logger logger = Logger.getLogger(LayoutFileNode.class.getName());
 
     @Deprecated
     public static enum LayoutContentPropertyType {
@@ -90,9 +100,14 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     }
 
     @Override
+    @NbBundle.Messages({
+        "LayoutFileNode.getActions.viewFileInDir.text=View File in Directory"})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(true)));
+        actionsList.add(new ViewContextAction(Bundle.LayoutFileNode_getActions_viewFileInDir_text(), this));
+        actionsList.add(null); // Creates an item separator
+        
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.getActions.viewInNewWin.text"), this));
         final Collection<AbstractFile> selectedFilesList
@@ -103,8 +118,10 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         } else {
             actionsList.add(ExternalViewerShortcutAction.getInstance());
         }
+        actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
+        actionsList.add(ExportCSVAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
 
@@ -113,6 +130,15 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         }
 
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        if (FileTypeExtensions.getArchiveExtensions().contains("." + this.content.getNameExtension().toLowerCase())) {
+            try {
+                if (this.content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
+                    actionsList.add(new ExtractArchiveWithPasswordAction(this.getContent()));
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
+            }
+        }
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 

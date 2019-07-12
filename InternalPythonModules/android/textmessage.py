@@ -29,6 +29,7 @@ from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
 from java.util import ArrayList
+from java.util import UUID
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -95,17 +96,19 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
         ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
         deviceID = ds.getDeviceId()
         deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
+        uuid = UUID.randomUUID().toString()
 
         resultSet = None
         try:
             resultSet = statement.executeQuery(
-                "SELECT address, date, read, type, subject, body FROM sms;")
+                "SELECT address, date, read, type, subject, body, thread_id FROM sms;")
             while resultSet.next():
                 address = resultSet.getString("address") # may be phone number, or other addresses
                 date = Long.valueOf(resultSet.getString("date")) / 1000
                 read = resultSet.getInt("read") # may be unread = 0, read = 1
                 subject = resultSet.getString("subject") # message subject
                 body = resultSet.getString("body") # message body
+                thread_id = "{0}-{1}".format(uuid, resultSet.getInt("thread_id"))
                 attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); #create Message artifact and then add attributes from result set.
                 if resultSet.getString("type") == "1":
@@ -119,6 +122,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT, general.MODULE_NAME, subject))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, body))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "SMS Message"))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID, general.MODULE_NAME, thread_id))
 
                 artifact.addAttributes(attributes)
 

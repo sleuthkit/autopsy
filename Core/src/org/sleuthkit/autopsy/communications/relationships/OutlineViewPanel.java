@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
+import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.table.TableColumn;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.explorer.view.OutlineView;
@@ -98,6 +100,28 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         super.setEnabled(enabled);
         outlineView.setEnabled(enabled);
     }
+    
+    /**
+     * Sets the width of the columns of the OutlineView based on the passed in
+     * list of percentages.  There should be on double value for each column
+     * in the OutlineView.
+     * 
+     * @param percentages   A series of double percentages values representing
+     *                      what percent of the total width of the table each
+     *                      column should have.
+     */
+    public void setTableColumnsWidth(double... percentages) {
+        JTable table = outlineView.getOutline();
+        double total = 0;
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            total += percentages[i];
+        }
+
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            TableColumn column = table.getColumnModel().getColumn(i);
+            column.setPreferredWidth((int) (table.getPreferredSize().width * (percentages[i] / total)));
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -113,8 +137,6 @@ public class OutlineViewPanel extends javax.swing.JPanel implements ExplorerMana
         messageLabel = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout(5, 5));
-
-        outlineView.setPreferredSize(new java.awt.Dimension(300, 400));
         add(outlineView, "outlineCard");
 
         messagePanel.setLayout(new java.awt.BorderLayout());

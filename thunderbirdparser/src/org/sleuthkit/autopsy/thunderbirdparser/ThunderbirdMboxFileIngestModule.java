@@ -409,8 +409,14 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      */
     private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) {
         List<AbstractFile> derivedFiles = new ArrayList<>();
-        
-       
+
+        // Putting try/catch around this to catch any exception and still allow
+        // the creation of the artifacts to continue.
+        try{
+            EmailMessageThreader.threadMessages(emails);
+        } catch(Exception ex) {
+            logger.log(Level.WARNING, String.format("Exception thrown parsing emails from %s", abstractFile.getName()), ex);
+        }
         
         for (EmailMessage email : emails) {
             BlackboardArtifact msgArtifact = addEmailArtifact(email, abstractFile);
@@ -510,6 +516,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String subject = email.getSubject();
         long id = email.getId();
         String localPath = email.getLocalPath();
+        String threadID = email.getMessageThreadID();
 
         List<String> senderAddressList = new ArrayList<>();
         String senderAddress;
@@ -567,6 +574,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         addArtifactAttribute(cc, ATTRIBUTE_TYPE.TSK_EMAIL_CC, bbattributes);
         addArtifactAttribute(bodyHTML, ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML, bbattributes);
         addArtifactAttribute(rtf, ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF, bbattributes);
+        addArtifactAttribute(threadID, ATTRIBUTE_TYPE.TSK_THREAD_ID, bbattributes);
         
    
         try {

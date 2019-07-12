@@ -71,7 +71,7 @@ public final class DrawableTagsManager {
                                     .build()));
 
     public DrawableTagsManager(ImageGalleryController controller) throws TskCoreException {
-        this.autopsyTagsManager = controller.getAutopsyCase().getServices().getTagsManager();
+        this.autopsyTagsManager = controller.getCase().getServices().getTagsManager();
         followUpTagName = getTagName(Bundle.DrawableTagsManager_followUp());
         bookmarkTagName = getTagName(Bundle.DrawableTagsManager_bookMark());
     }

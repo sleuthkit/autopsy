@@ -372,6 +372,7 @@ public class DataResultFilterNode extends FilterNode {
                 }
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(ExtractAction.getInstance());
+                actionsList.add(ExportCSVAction.getInstance());
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(AddContentTagAction.getInstance());
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
@@ -489,6 +490,12 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
+            
+            Action preferredAction = ban.getPreferredAction();
+            if(preferredAction instanceof AbstractAction) {
+                return (AbstractAction) preferredAction;
+            }
+            
             BlackboardArtifact artifact = ban.getArtifact();
             try {
                 if ((artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())

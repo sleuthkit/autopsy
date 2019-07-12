@@ -222,7 +222,7 @@ public final class DrawableDB {
     private DrawableDB(Path dbPath, ImageGalleryController controller) throws IOException, SQLException, TskCoreException {
         this.dbPath = dbPath;
         this.controller = controller;
-        tskCase = this.controller.getSleuthKitCase();
+        tskCase = this.controller.getCaseDatabase();
         groupManager = this.controller.getGroupManager();
         Files.createDirectories(this.dbPath.getParent());
         dbWriteLock();
@@ -384,7 +384,7 @@ public final class DrawableDB {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public static DrawableDB getDrawableDB(ImageGalleryController controller) throws TskCoreException {
-        Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase()).resolve("drawable.db");
+        Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getCase()).resolve("drawable.db");
         try {
             deleteDatabaseIfOlderVersion(dbPath);
         } catch (SQLException ex) {

@@ -77,12 +77,12 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
     }
 
     /**
-     * Get the FileTypeViewer for a given mimetype
+     * Get the FileTypeViewer for a given file
      *
-     * @param mimeType
+     * @param file
      *
      * @return FileTypeViewer, null if no known content viewer supports the
-     *         mimetype
+     *         file
      */
     private FileTypeViewer getSupportingViewer(AbstractFile file) {
         FileTypeViewer viewer = mimeTypeToViewerMap.get(file.getMIMEType());
@@ -143,7 +143,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 viewer.setFile(file);
                 this.removeAll();
                 this.add(viewer.getComponent());
-                this.repaint();
+                this.validate();
             }
         }
 
