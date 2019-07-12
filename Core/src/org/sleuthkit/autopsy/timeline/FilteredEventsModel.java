@@ -254,7 +254,7 @@ public final class FilteredEventsModel {
         hashSets.addAll(eventManager.getHashSetNames());
 
         //because there is no way to remove a datasource we only add to this map.
-        for (DataSource ds : eventManager.getSleuthkitCase().getDataSources()) {
+        for (DataSource ds : skCase.getDataSources()) {
             datasourcesMap.putIfAbsent(ds.getId(), ds.getName());
         }
 
