@@ -267,7 +267,6 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             
             List<TagName> tagNames = caseDb.getTagNamesInUse();
             for(TagName name : tagNames) {
-                //tagsListModel.add(count, name.getDisplayName());
                 tagsListModel.add(count, name);
                 count++;
             }
