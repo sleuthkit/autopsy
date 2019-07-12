@@ -364,8 +364,6 @@ class Chrome extends Extract {
                             RecentActivityExtracterModuleFactory.getModuleName(), domain));
                     bbart.addAttributes(bbattributes);
 
-                    // index the artifact for keyword search
-                    postArtifact(bbart);
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact{0}", ex); //NON-NLS
@@ -374,6 +372,7 @@ class Chrome extends Extract {
                                     this.getName(), bookmarkFile.getName()));
                 }
             }
+            postArtifact(bbartifacts);
             dbFile.delete();
         }
     }
