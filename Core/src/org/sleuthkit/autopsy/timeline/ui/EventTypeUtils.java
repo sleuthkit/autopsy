@@ -91,7 +91,11 @@ final public class EventTypeUtils {
             imageFileName = "raw_access_logs.png";
         } else if (typeID == EventType.USER_CREATED.getTypeID()) {
             imageFileName = "hand_point.png";
-        } else {
+        } else if (typeID == EventType.WEB_FORM_AUTOFILL.getTypeID()) {
+            imageFileName = "artifact-icon.png";
+        } else if (typeID == EventType.WEB_FORM_ADDRESSES.getTypeID()) {
+            imageFileName = "artifact-icon.png";
+        }else {
             imageFileName = "timeline_marker.png";
         }
 
