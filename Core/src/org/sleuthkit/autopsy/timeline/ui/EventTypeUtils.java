@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Utilities for dealy with EventTypes, specifically for getting GUI properties
@@ -32,64 +32,64 @@ import org.sleuthkit.datamodel.EventType;
 final public class EventTypeUtils {
 
     static final private String IMAGE_BASE_PATH = "org/sleuthkit/autopsy/timeline/images/";
-    static private final Map<EventType, Image> imageMap = new HashMap<>();
+    static private final Map<TimelineEventType, Image> imageMap = new HashMap<>();
 
-    public static Image getImage(EventType type) {
+    public static Image getImage(TimelineEventType type) {
         return imageMap.computeIfAbsent(type, type2 -> new Image(getImagePath(type2)));
     }
 
-    public static String getImagePath(EventType type) {
+    public static String getImagePath(TimelineEventType type) {
         long typeID = type.getTypeID();
         String imageFileName;
-        if (typeID == EventType.FILE_SYSTEM.getTypeID()) {
+        if (typeID == TimelineEventType.FILE_SYSTEM.getTypeID()) {
             imageFileName = "blue-document.png";
-        } else if (typeID == EventType.MISC_TYPES.getTypeID()) {
+        } else if (typeID == TimelineEventType.MISC_TYPES.getTypeID()) {
             imageFileName = "block.png";
-        } else if (typeID == EventType.WEB_ACTIVITY.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_ACTIVITY.getTypeID()) {
             imageFileName = "web-file.png";
-        } else if (typeID == EventType.MISC_TYPES.getTypeID()) {
+        } else if (typeID == TimelineEventType.MISC_TYPES.getTypeID()) {
             imageFileName = "block.png";
-        } else if (typeID == EventType.FILE_ACCESSED.getTypeID()) {
+        } else if (typeID == TimelineEventType.FILE_ACCESSED.getTypeID()) {
             imageFileName = "blue-document-attribute-a.png";
-        } else if (typeID == EventType.FILE_CHANGED.getTypeID()) {
+        } else if (typeID == TimelineEventType.FILE_CHANGED.getTypeID()) {
             imageFileName = "blue-document-attribute-c.png";
-        } else if (typeID == EventType.FILE_MODIFIED.getTypeID()) {
+        } else if (typeID == TimelineEventType.FILE_MODIFIED.getTypeID()) {
             imageFileName = "blue-document-attribute-m.png";
-        } else if (typeID == EventType.FILE_CREATED.getTypeID()) {
+        } else if (typeID == TimelineEventType.FILE_CREATED.getTypeID()) {
             imageFileName = "blue-document-attribute-b.png";
-        } else if (typeID == EventType.WEB_DOWNLOADS.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_DOWNLOADS.getTypeID()) {
             imageFileName = "downloads.png";
-        } else if (typeID == EventType.WEB_COOKIE.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_COOKIE.getTypeID()) {
             imageFileName = "cookies.png";
-        } else if (typeID == EventType.WEB_BOOKMARK.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_BOOKMARK.getTypeID()) {
             imageFileName = "bookmarks.png";
-        } else if (typeID == EventType.WEB_HISTORY.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_HISTORY.getTypeID()) {
             imageFileName = "history.png";
-        } else if (typeID == EventType.WEB_SEARCH.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_SEARCH.getTypeID()) {
             imageFileName = "searchquery.png";
-        } else if (typeID == EventType.CALL_LOG.getTypeID()) {
+        } else if (typeID == TimelineEventType.CALL_LOG.getTypeID()) {
             imageFileName = "calllog.png";
-        } else if (typeID == EventType.DEVICES_ATTACHED.getTypeID()) {
+        } else if (typeID == TimelineEventType.DEVICES_ATTACHED.getTypeID()) {
             imageFileName = "usb_devices.png";
-        } else if (typeID == EventType.EMAIL.getTypeID()) {
+        } else if (typeID == TimelineEventType.EMAIL.getTypeID()) {
             imageFileName = "mail-icon-16.png";
-        } else if (typeID == EventType.EXIF.getTypeID()) {
+        } else if (typeID == TimelineEventType.EXIF.getTypeID()) {
             imageFileName = "camera-icon-16.png";
-        } else if (typeID == EventType.GPS_ROUTE.getTypeID()) {
+        } else if (typeID == TimelineEventType.GPS_ROUTE.getTypeID()) {
             imageFileName = "gps-search.png";
-        } else if (typeID == EventType.GPS_TRACKPOINT.getTypeID()) {
+        } else if (typeID == TimelineEventType.GPS_TRACKPOINT.getTypeID()) {
             imageFileName = "gps-trackpoint.png";
-        } else if (typeID == EventType.INSTALLED_PROGRAM.getTypeID()) {
+        } else if (typeID == TimelineEventType.INSTALLED_PROGRAM.getTypeID()) {
             imageFileName = "programs.png";
-        } else if (typeID == EventType.MESSAGE.getTypeID()) {
+        } else if (typeID == TimelineEventType.MESSAGE.getTypeID()) {
             imageFileName = "message.png";
-        } else if (typeID == EventType.RECENT_DOCUMENTS.getTypeID()) {
+        } else if (typeID == TimelineEventType.RECENT_DOCUMENTS.getTypeID()) {
             imageFileName = "recent_docs.png";
-        } else if (typeID == EventType.REGISTRY.getTypeID()) {
+        } else if (typeID == TimelineEventType.REGISTRY.getTypeID()) {
             imageFileName = "registry.png";
-        } else if (typeID == EventType.LOG_ENTRY.getTypeID()) {
+        } else if (typeID == TimelineEventType.LOG_ENTRY.getTypeID()) {
             imageFileName = "raw_access_logs.png";
-        } else if (typeID == EventType.USER_CREATED.getTypeID()) {
+        } else if (typeID == TimelineEventType.USER_CREATED.getTypeID()) {
             imageFileName = "hand_point.png";
         } else {
             imageFileName = "timeline_marker.png";
@@ -98,12 +98,12 @@ final public class EventTypeUtils {
         return IMAGE_BASE_PATH + imageFileName;
     }
 
-    public static Color getColor(EventType type) {
-        if (type.equals(EventType.ROOT_EVENT_TYPE)) {
+    public static Color getColor(TimelineEventType type) {
+        if (type.equals(TimelineEventType.ROOT_EVENT_TYPE)) {
             return Color.hsb(359, .9, .9, 0);
         }
 
-        EventType superType = type.getSuperType();
+        TimelineEventType superType = type.getSuperType();
 
         Color baseColor = getColor(superType);
         int siblings = superType.getSiblingTypes().stream()

@@ -33,7 +33,7 @@ import static org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils.unGroupConcat
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Model for the ListView. Uses FilteredEventsModel as underlying datamodel and
@@ -104,9 +104,9 @@ public class ListViewModel {
 
                 //make a map from event type to event ID
                 List<Long> eventIDs = unGroupConcat(resultSet.getString("eventIDs"), Long::valueOf);
-                List<EventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
+                List<TimelineEventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
                         typesString -> eventManager.getEventType(Integer.valueOf(typesString)).orElseThrow(() -> new TskCoreException("Error mapping event type id " + typesString + ".S")));
-                Map<EventType, Long> eventMap = new HashMap<>();
+                Map<TimelineEventType, Long> eventMap = new HashMap<>();
                 for (int i = 0; i < eventIDs.size(); i++) {
                     eventMap.put(eventTypes.get(i), eventIDs.get(i));
                 }

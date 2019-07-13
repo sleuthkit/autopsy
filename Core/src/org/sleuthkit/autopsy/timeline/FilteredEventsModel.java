@@ -68,16 +68,13 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
-import org.sleuthkit.datamodel.EventType;
-import org.sleuthkit.datamodel.EventType;
 import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineFilter;
 import org.sleuthkit.datamodel.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.TimelineFilter.DataSourcesFilter;
@@ -121,7 +118,7 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper<RootFilterState> requestedFilter = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<ZoomState> requestedZoomState = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyObjectWrapper< EventType.TypeLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventType.TypeLevel.BASE_TYPE);
+    private final ReadOnlyObjectWrapper< TimelineEventType.TypeLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(TimelineEventType.TypeLevel.BASE_TYPE);
     private final ReadOnlyObjectWrapper< TimelineEvent.DescriptionLevel> requestedLOD = new ReadOnlyObjectWrapper<>(TimelineEvent.DescriptionLevel.SHORT);
     // end Filter and zoome state
 
@@ -129,7 +126,7 @@ public final class FilteredEventsModel {
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
-    private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
+    private final LoadingCache<ZoomState, Map<TimelineEventType, Long>> eventCountsCache;
     /** Map from datasource id to datasource name. */
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
@@ -206,7 +203,7 @@ public final class FilteredEventsModel {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    private Map<EventType, Long> countEventsByType(ZoomState zoomState) throws TskCoreException {
+    private Map<TimelineEventType, Long> countEventsByType(ZoomState zoomState) throws TskCoreException {
         if (zoomState.getTimeRange() == null) {
             return Collections.emptyMap();
         } else {
@@ -319,7 +316,7 @@ public final class FilteredEventsModel {
         return requestedFilter.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<EventType.TypeLevel> eventTypeZoomProperty() {
+    synchronized public ReadOnlyObjectProperty<TimelineEventType.TypeLevel> eventTypeZoomProperty() {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 
@@ -340,7 +337,7 @@ public final class FilteredEventsModel {
         return getZoomState().getFilterState();
     }
 
-    synchronized public EventType.TypeLevel getEventTypeZoom() {
+    synchronized public TimelineEventType.TypeLevel getEventTypeZoom() {
         return getZoomState().getTypeZoomLevel();
     }
 
@@ -365,7 +362,7 @@ public final class FilteredEventsModel {
                 tagsFilter,
                 hashHitsFilter,
                 new TextFilter(),
-                new EventTypeFilter(EventType.ROOT_EVENT_TYPE),
+                new EventTypeFilter(TimelineEventType.ROOT_EVENT_TYPE),
                 dataSourcesFilter,
                 fileTypesFilter,
                 Collections.emptySet()));
@@ -429,10 +426,10 @@ public final class FilteredEventsModel {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public Map<EventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
+    public Map<TimelineEventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
 
         final RootFilterState filter;
-        final EventType.TypeLevel typeZoom;
+        final TimelineEventType.TypeLevel typeZoom;
         synchronized (this) {
             filter = getFilterState();
             typeZoom = getEventTypeZoom();
@@ -635,7 +632,7 @@ public final class FilteredEventsModel {
         eventbus.post(event);
     }
 
-    public ImmutableList<EventType> getEventTypes() {
+    public ImmutableList<TimelineEventType> getEventTypes() {
         return eventManager.getEventTypes();
     }
 

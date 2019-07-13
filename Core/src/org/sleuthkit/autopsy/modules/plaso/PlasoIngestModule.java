@@ -64,7 +64,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TL_
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Data source ingest module that runs Plaso against the image.
@@ -381,23 +381,23 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             case "WEBHIST":  //These shouldn't actually be present, but keeping the logic just in case...
                 if (fileName.toLowerCase().contains(COOKIE)
                     || row.getString("type").toLowerCase().contains(COOKIE)) {//NON-NLS
-                    return EventType.WEB_COOKIE.getTypeID();
+                    return TimelineEventType.WEB_COOKIE.getTypeID();
                 } else {
-                    return EventType.WEB_HISTORY.getTypeID();
+                    return TimelineEventType.WEB_HISTORY.getTypeID();
                 }
             case "EVT":
             case "LOG":
-                return EventType.LOG_ENTRY.getTypeID();
+                return TimelineEventType.LOG_ENTRY.getTypeID();
             case "REG":
                 switch (row.getString("sourcetype").toLowerCase()) {//NON-NLS
                     case "unknown : usb entries":
                     case "unknown : usbstor entries":
-                        return EventType.DEVICES_ATTACHED.getTypeID();
+                        return TimelineEventType.DEVICES_ATTACHED.getTypeID();
                     default:
-                        return EventType.REGISTRY.getTypeID();
+                        return TimelineEventType.REGISTRY.getTypeID();
                 }
             default:
-                return EventType.OTHER.getTypeID();
+                return TimelineEventType.OTHER.getTypeID();
         }
     }
 

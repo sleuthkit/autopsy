@@ -55,8 +55,8 @@ import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TimelineFilter;
 
@@ -117,15 +117,15 @@ final public class DetailsViewModel {
         //unpack params
         Interval timeRange = zoom.getTimeRange();
         TimelineEvent.DescriptionLevel descriptionLOD = zoom.getDescriptionLOD();
-        EventType.TypeLevel typeZoomLevel = zoom.getTypeZoomLevel();
+        TimelineEventType.TypeLevel typeZoomLevel = zoom.getTypeZoomLevel();
 
         //intermediate results 
-        Map<EventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();
+        Map<TimelineEventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();
         try {
             eventCache.get(zoom).stream()
                     .filter(uiFilter)
                     .forEach(event -> {
-                        EventType clusterType = event.getEventType(typeZoomLevel);
+                        TimelineEventType clusterType = event.getEventType(typeZoomLevel);
                         eventClusters.computeIfAbsent(clusterType, eventType -> HashMultimap.create())
                                 .put(event.getDescription(descriptionLOD), new EventCluster(event, clusterType, descriptionLOD));
                     });
@@ -210,7 +210,7 @@ final public class DetailsViewModel {
 
         //the event tyepe to use to get the description.
         int eventTypeID = resultSet.getInt("event_type_id");
-        EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
+        TimelineEventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
                 -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
 
         return new TimelineEvent(
@@ -241,14 +241,14 @@ final public class DetailsViewModel {
      *
      * @return
      */
-    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, Map<EventType, SetMultimap< String, EventCluster>> eventClusters) {
+    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, Map<TimelineEventType, SetMultimap< String, EventCluster>> eventClusters) {
 
         //result list to return
         ArrayList<EventCluster> mergedClusters = new ArrayList<>();
 
         //For each (type, description) key, merge agg events
-        for (Map.Entry<EventType, SetMultimap<String, EventCluster>> typeMapEntry : eventClusters.entrySet()) {
-            EventType type = typeMapEntry.getKey();
+        for (Map.Entry<TimelineEventType, SetMultimap<String, EventCluster>> typeMapEntry : eventClusters.entrySet()) {
+            TimelineEventType type = typeMapEntry.getKey();
             SetMultimap<String, EventCluster> descrMap = typeMapEntry.getValue();
             //for each description ...
             for (String descr : descrMap.keySet()) {
@@ -280,7 +280,7 @@ final public class DetailsViewModel {
         }
 
         //merge clusters to stripes
-        Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
+        Map<ImmutablePair<TimelineEventType, String>, EventStripe> stripeDescMap = new HashMap<>();
 
         for (EventCluster eventCluster : mergedClusters) {
             stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),

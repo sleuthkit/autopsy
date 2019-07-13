@@ -25,7 +25,7 @@ import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * TreeItem for the root of all the events in the EventsTree.
@@ -35,7 +35,7 @@ class RootItem extends EventsTreeItem {
     /**
      * A map of the children BaseTypeTreeItems, keyed by EventType.
      */
-    private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
+    private final Map<TimelineEventType, BaseTypeTreeItem> childMap = new HashMap<>();
 
     /**
      * Constructor
@@ -78,7 +78,7 @@ class RootItem extends EventsTreeItem {
     }
 
     @Override
-    EventType getEventType() {
+    TimelineEventType getEventType() {
         return null;
     }
 

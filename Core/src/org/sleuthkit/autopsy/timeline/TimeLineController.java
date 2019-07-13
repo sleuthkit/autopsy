@@ -91,8 +91,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 
 /**
@@ -297,7 +296,7 @@ public class TimeLineController {
 
         try {
             InitialZoomState = new ZoomState(filteredEvents.getSpanningInterval(),
-                    EventType.TypeLevel.BASE_TYPE,
+                    TimelineEventType.TypeLevel.BASE_TYPE,
                     filteredEvents.filterProperty().get(),
                     TimelineEvent.DescriptionLevel.SHORT);
         } catch (TskCoreException ex) {
@@ -493,7 +492,7 @@ public class TimeLineController {
         return topComponent;
     }
 
-    synchronized public void pushEventTypeZoom(EventType.TypeLevel typeZoomeLevel) {
+    synchronized public void pushEventTypeZoom(TimelineEventType.TypeLevel typeZoomeLevel) {
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
@@ -565,7 +564,7 @@ public class TimeLineController {
     }
 
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
-    synchronized public void pushTimeAndType(Interval timeRange, EventType.TypeLevel typeZoom) throws TskCoreException {
+    synchronized public void pushTimeAndType(Interval timeRange, TimelineEventType.TypeLevel typeZoom) throws TskCoreException {
         Interval overlappingTimeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
@@ -611,7 +610,7 @@ public class TimeLineController {
         selectedEventIDs.setAll(eventIDs);
     }
 
-    public void selectTimeAndType(Interval interval, EventType type) throws TskCoreException {
+    public void selectTimeAndType(Interval interval, TimelineEventType type) throws TskCoreException {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
 
         final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { //NON-NLS

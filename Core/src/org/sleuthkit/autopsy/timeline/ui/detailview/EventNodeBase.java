@@ -83,8 +83,8 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CO
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
@@ -99,7 +99,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
     private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png"); // NON-NLS //NOI18N
     private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png"); // NON-NLS //NOI18N
 
-    private static final Map<EventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
+    private static final Map<TimelineEventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
 
     static void configureActionButton(ButtonBase b) {
         b.setMinSize(16, 16);
@@ -154,7 +154,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
             show(tagIV, false);
         }
 
-        if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventType.TypeLevel.SUB_TYPE) {
+        if (chartLane.getController().getEventsModel().getEventTypeZoom() == TimelineEventType.TypeLevel.SUB_TYPE) {
             evtColor = getColor(getEventType());
         } else {
             evtColor = getColor(getEventType().getBaseType());
@@ -351,7 +351,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
         }
     }
 
-    final EventType getEventType() {
+    final TimelineEventType getEventType() {
         return tlEvent.getEventType();
     }
 
