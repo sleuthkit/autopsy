@@ -46,7 +46,6 @@ import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
 import net.sf.sevenzipjbinding.PropID;
 import org.mozilla.universalchardet.UniversalDetector;
 import org.netbeans.api.progress.ProgressHandle;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -815,7 +814,8 @@ class SevenZipExtractor {
             try {
                 decodedName = new String(bytes, charset);
             } catch (UnsupportedEncodingException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error decoding filename. ", ex); //NON-NLS
+                return null;
             }
 
             if (decodedName != null) {
@@ -1302,7 +1302,7 @@ class SevenZipExtractor {
                     String originalName = child.getFileName();
                     String decodedName = decodeFilename(originalName, correctCharset);
 
-                    if (!decodedName.equals(originalName)) {
+                    if (decodedName != null) {
                         child.setFileName(decodedName);
                     }
                 }
