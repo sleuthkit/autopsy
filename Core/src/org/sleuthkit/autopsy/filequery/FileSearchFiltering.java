@@ -26,6 +26,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Score;
 
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
@@ -36,9 +37,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Run various filters to return a subset of files from the current case.
@@ -641,6 +644,83 @@ class FileSearchFiltering {
             return Bundle.FileSearchFiltering_ObjectDetectionFilter_desc(concatenateSetNamesForDisplay(typeNames));
         }
     }       
+    
+    /**
+     * A filter for specifying the score.
+     * A file must have one of the given scores to pass
+     */
+    static class ScoreFilter extends FileFilter {
+        private final List<Score> scores;
+        
+        /**
+         * Create the ObjectDetectionFilter
+         * @param typeNames 
+         */
+        ScoreFilter(List<Score> scores) {
+            this.scores = scores;
+        }
+        
+        @Override
+        String getWhereClause() {
+            
+            // Current algorithm:
+            // "Notable" if the file is a match for a notable hashset or has been tagged with a notable tag.
+            // "Interesting" if the file has an interesting item match or has been tagged with a non-notable tag.
+            String hashsetQueryPart = "";
+            String tagQueryPart = "";
+            String intItemQueryPart = "";
+            
+            if (scores.contains(Score.NOTABLE)) {
+                // do hashset
+                hashsetQueryPart = " (known = " + TskData.FileKnown.BAD.getFileKnownValue() + ") ";
+            }
+            
+            if (scores.contains(Score.INTERESTING)) {
+                // Matches interesting item artifact
+                intItemQueryPart = " (obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_type_id = " +
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + ")) ";
+            }
+            
+            if (scores.contains(Score.NOTABLE) && scores.contains(Score.INTERESTING)) {
+                // Any tag will work
+                tagQueryPart = "(obj_id IN (SELECT obj_id FROM content_tags))";
+            } else if (scores.contains(Score.NOTABLE)) {
+                // Notable tags
+                tagQueryPart = "(obj_id IN (SELECT obj_id FROM content_tags WHERE tag_name_id IN (SELECT tag_name_id FROM tag_names WHERE knownStatus = " + 
+                        TskData.FileKnown.BAD.getFileKnownValue() + ")))";
+            } else if (scores.contains(Score.INTERESTING)) {
+                // Non-notable tags
+                tagQueryPart = "(obj_id IN (SELECT obj_id FROM content_tags WHERE tag_name_id IN (SELECT tag_name_id FROM tag_names WHERE knownStatus != " + 
+                        TskData.FileKnown.BAD.getFileKnownValue() + ")))";
+            }
+            
+            String queryStr = hashsetQueryPart;
+            if (! intItemQueryPart.isEmpty()) {
+                if (! queryStr.isEmpty()) {
+                    queryStr += " OR ";
+                }
+                queryStr += intItemQueryPart;
+            }
+            if (! tagQueryPart.isEmpty()) {
+                if (! queryStr.isEmpty()) {
+                    queryStr += " OR ";
+                }
+                queryStr += tagQueryPart;
+            }
+            System.out.println("\n#### query for score\n" + queryStr + "\n");
+            return queryStr;
+        }
+        
+        @NbBundle.Messages({
+            "# {0} - filters",
+            "FileSearchFiltering.ScoreFilter.desc=Files with score(s) of : {0}",
+        })
+        @Override
+        String getDesc() {
+            return Bundle.FileSearchFiltering_ScoreFilter_desc(
+                    concatenateSetNamesForDisplay(scores.stream().map(p -> p.toString()).collect(Collectors.toList())));
+        }
+    }           
     
     /**
      * A filter for specifying tag names.

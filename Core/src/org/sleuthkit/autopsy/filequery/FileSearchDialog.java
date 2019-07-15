@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Score;
 import org.sleuthkit.autopsy.filequery.FileSearchFiltering.ParentSearchTerm;
 import org.sleuthkit.autopsy.filequery.FileSorter.SortingMethod;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -104,6 +105,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         setUpInterestingItemsFilter();
         setUpTagsFilter();
         setUpObjectFilter();
+        setUpScoreFilter();
         
         // Set up the grouping attributes
         for (GroupingAttributeType type : GroupingAttributeType.values()) {
@@ -314,6 +316,19 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         addListeners(objCheckBox, objList);
     }
     
+    /**
+     * Initialize the score filter
+     */
+    private void setUpScoreFilter() {
+
+        int count = 0;
+        DefaultListModel<Score> scoreListModel = (DefaultListModel<Score>)scoreList.getModel();
+        for (Score score : Score.getOptionsForFiltering()) {
+            scoreListModel.add(count, score);
+        }
+        addListeners(scoreCheckBox, scoreList);
+    }    
+    
     private List<String> getSetNames(BlackboardArtifact.ARTIFACT_TYPE artifactType, BlackboardAttribute.ATTRIBUTE_TYPE setNameAttribute) throws TskCoreException {
         List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(artifactType);
         List<String> setNames = new ArrayList<>();
@@ -398,6 +413,10 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         
         if (notableCheckBox.isSelected()) {
             filters.add(new FileSearchFiltering.NotableFilter());
+        }
+        
+        if (scoreCheckBox.isSelected()) {
+            filters.add(new FileSearchFiltering.ScoreFilter(scoreList.getSelectedValuesList()));
         }
         
         return filters;
@@ -533,6 +552,11 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             return;
         } 
         
+        if (scoreCheckBox.isSelected() && scoreList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one score must be selected");
+            return;
+        }
+        
         setValid();
         
     }
@@ -618,7 +642,9 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         objCheckBox = new javax.swing.JCheckBox();
         exifCheckBox = new javax.swing.JCheckBox();
         notableCheckBox = new javax.swing.JCheckBox();
-        jCheckBox3 = new javax.swing.JCheckBox();
+        scoreCheckBox = new javax.swing.JCheckBox();
+        jScrollPane11 = new javax.swing.JScrollPane();
+        scoreList = new javax.swing.JList<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -796,7 +822,16 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox3, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.jCheckBox3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(scoreCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.scoreCheckBox.text")); // NOI18N
+        scoreCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                scoreCheckBoxActionPerformed(evt);
+            }
+        });
+
+        scoreList.setModel(new DefaultListModel<Score>());
+        scoreList.setEnabled(false);
+        jScrollPane11.setViewportView(scoreList);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -846,22 +881,18 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                         .addGap(344, 344, 344))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(hashCheckBox)
-                                .addGap(18, 18, 18)
-                                .addComponent(jScrollPane7))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(intCheckBox)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jScrollPane8))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(tagsCheckBox)
-                                .addGap(18, 18, 18)
-                                .addComponent(jScrollPane9))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(objCheckBox)
-                                .addGap(18, 18, 18)
-                                .addComponent(jScrollPane10)))
+                            .addComponent(intCheckBox)
+                            .addComponent(tagsCheckBox)
+                            .addComponent(objCheckBox)
+                            .addComponent(hashCheckBox)
+                            .addComponent(scoreCheckBox))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jScrollPane11)
+                            .addComponent(jScrollPane7, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane10, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane9, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane8, javax.swing.GroupLayout.Alignment.LEADING))
                         .addGap(35, 35, 35)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
@@ -878,8 +909,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(exifCheckBox)
-                            .addComponent(notableCheckBox)
-                            .addComponent(jCheckBox3))
+                            .addComponent(notableCheckBox))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -929,27 +959,28 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                     .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(intCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(kwCheckBox)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(exifCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(notableCheckBox)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(scoreCheckBox)
+                    .addComponent(jScrollPane11, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(parentCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel2))
                     .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jCheckBox3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(exifCheckBox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(notableCheckBox)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteParentButton)
                     .addComponent(parentFullRadioButton)
                     .addComponent(parentSubstringRadioButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addParentButton)
                     .addComponent(parentTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1045,6 +1076,10 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         // TODO add your handling code here:
     }//GEN-LAST:event_notableCheckBoxActionPerformed
 
+    private void scoreCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scoreCheckBoxActionPerformed
+        scoreList.setEnabled(scoreCheckBox.isSelected());
+    }//GEN-LAST:event_scoreCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addParentButton;
     private javax.swing.JButton cancelButton;
@@ -1064,7 +1099,6 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JList<String> hashList;
     private javax.swing.JCheckBox intCheckBox;
     private javax.swing.JList<String> intList;
-    private javax.swing.JCheckBox jCheckBox3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -1072,6 +1106,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JLabel jLabel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane10;
+    private javax.swing.JScrollPane jScrollPane11;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -1094,6 +1129,8 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
     private javax.swing.JList<ParentSearchTerm> parentList;
     private javax.swing.JRadioButton parentSubstringRadioButton;
     private javax.swing.JTextField parentTextField;
+    private javax.swing.JCheckBox scoreCheckBox;
+    private javax.swing.JList<Score> scoreList;
     private javax.swing.JButton searchButton;
     private javax.swing.JCheckBox sizeCheckBox;
     private javax.swing.JList<FileSize> sizeList;

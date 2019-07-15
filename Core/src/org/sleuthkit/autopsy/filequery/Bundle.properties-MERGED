@@ -36,6 +36,9 @@ FileSearchData.Frequency.common.displayName=Common
 FileSearchData.Frequency.rare.displayName=Rare
 FileSearchData.Frequency.unique.displayName=Unique
 FileSearchData.Frequency.unknown.displayName=Unknown
+FileSearchData.Score.interesting.displayName=Interesting
+FileSearchData.Score.notable.displayName=Notable
+FileSearchData.Score.unknown.displayName=Unknown
 FileSearchDialog.dialogTitle.text=Test file search
 FileSearchDialog.jLabel1.text=File Type
 FileSearchDialog.dsCheckBox.text=Data source
@@ -89,6 +92,8 @@ FileSearchFiltering.ParentSearchTerm.fullString=\ {0} (exact)
 FileSearchFiltering.ParentSearchTerm.subString=\ {0} (substring)
 FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable
 # {0} - filters
+FileSearchFiltering.ScoreFilter.desc=Files with score(s) of : {0}
+# {0} - filters
 FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}
 FileSearchFiltering.SizeFilter.or=\ or 
 # {0} - Minimum bytes
@@ -112,6 +117,6 @@ FileSearchDialog.hashCheckBox.text=Hash Set
 FileSearchDialog.intCheckBox.text=Interesting Items
 FileSearchDialog.tagsCheckBox.text=Tags
 FileSearchDialog.objCheckBox.text=Objects
-FileSearchDialog.jCheckBox3.text=Must meet "is suspicious" criteria
 FileSearchDialog.exifCheckBox.text=Must contain EXIF data
 FileSearchDialog.notableCheckBox.text=Must have been tagged as notable
+FileSearchDialog.scoreCheckBox.text=Has score
