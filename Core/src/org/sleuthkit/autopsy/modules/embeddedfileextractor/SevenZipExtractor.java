@@ -800,27 +800,21 @@ class SevenZipExtractor {
         universalDetector.reset();
         universalDetector.handleData(bytes, 0, bytes.length);
         universalDetector.dataEnd();
-        String detectedCharset = universalDetector.getDetectedCharset();
-        return detectedCharset;
+        return universalDetector.getDetectedCharset();
     }
 
     private String decodeFilename(String name, String charset) {
         byte[] bytes = getDirectBytes(name);
+        String decodedName = null;
 
         if (charset != null) {
-            String decodedName = null;
             try {
                 decodedName = new String(bytes, charset);
             } catch (UnsupportedEncodingException ex) {
                 logger.log(Level.WARNING, "Error decoding filename. ", ex); //NON-NLS
-                return null;
-            }
-
-            if (decodedName != null) {
-                name = name.substring(0, name.indexOf(name)) + decodedName;
             }
         }
-        return name;
+        return decodedName;
     }
 
     private static byte[] getDirectBytes(String str) {
