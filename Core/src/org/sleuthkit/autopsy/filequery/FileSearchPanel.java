@@ -54,7 +54,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private final static Logger logger = Logger.getLogger(FileSearchPanel.class.getName());
 
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
-    private boolean runAnotherSearch = false;
     private final SleuthkitCase caseDb;
     private final EamDb centralRepoDb;
 
@@ -217,7 +216,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         parentButtonGroup.add(substringRadioButton);
         fullRadioButton.setSelected(true);
         parentListModel = (DefaultListModel<FileSearchFiltering.ParentSearchTerm>) parentList.getModel();
-
         addListeners(parentCheckbox, parentList);
     }
 
@@ -329,26 +327,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     /**
-     * Check whether the user chose to run the search or cancel
-     *
-     * @return true if the search was cancelled, false otherwise
-     */
-    boolean searchCancelled() {
-        return (!runAnotherSearch);
-    }
-
-    /**
      * Validate the form. If we use any of this in the final dialog we should
      * use bundle messages.
      */
     private void validateFields() {
-
         // There must be at least one file type selected
         if (fileTypeList.getSelectedValuesList().isEmpty()) {
             setInvalid("At least one file type must be selected");
             return;
         }
-
         // For most enabled filters, there should be something selected
         if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
             setInvalid("At least one data source must be selected");
@@ -372,9 +359,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             setInvalid("At least one parent path must be entered");
             return;
         }
-
         setValid();
-
     }
 
     /**
@@ -812,61 +797,22 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        runAnotherSearch = true;
+        searchButton.setEnabled(false);
         // For testing, allow the user to run different searches in loop
 
-//        if (searchCancelled()) {
-//            return;
-//        }
-//
-//        // Get the selected filters
-//        List<FileSearchFiltering.FileFilter> filters = getFilters();
-//
-//        // Get the grouping attribute and group sorting method
-//        FileSearch.AttributeType groupingAttr = getGroupingAttribute();
-//        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = getGroupSortingMethod();
-//
-//        // Get the file sorting method
-//        FileSorter.SortingMethod fileSort = getFileSortingMethod();
-//
-//        try {
-//
-//            // Make a list of attributes that we want to add values for. This ensures the
-//            // ResultFile objects will have all needed fields set when it's time to group
-//            // and sort them. For example, if we're grouping by central repo frequency, we need
-//            // to make sure we've loaded those values before grouping.
-//            List<FileSearch.AttributeType> attrsForGroupingAndSorting = new ArrayList<>();
-//            attrsForGroupingAndSorting.add(groupingAttr);
-//            attrsForGroupingAndSorting.addAll(fileSort.getRequiredAttributes());
-//
-//            // Run the search
-//            SearchResults results = FileSearch.runFileSearchDebug(filters,
-//                    groupingAttr,
-//                    groupSortAlgorithm,
-//                    fileSort,
-//                    attrsForGroupingAndSorting,
-//                    Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
-//
-//            // Display the results
-//            ResultsDialog resultsDialog = new ResultsDialog(null, true, results.toString());
-//            resultsDialog.display();
-//
-//            if (!resultsDialog.shouldRunAnotherSearch()) {
-//                return;
-//            }
-//
-//        } catch (FileSearchException ex) {
-//            logger.log(Level.SEVERE, "Error running file search test", ex);
-//
-//            // Display the exception in the UI for easier debugging
-//            String message = ex.toString() + "\n" + ExceptionUtils.getStackTrace(ex);
-//            ResultsDialog resultsDialog = new ResultsDialog(null, true, message);
-//            resultsDialog.display();
-//            if (!resultsDialog.runAnotherSearch) {
-//                return;
-//            }
-//        }
+        // Get the selected filters
+        List<FileSearchFiltering.FileFilter> filters = getFilters();
+
+        // Get the grouping attribute and group sorting method
+        FileSearch.AttributeType groupingAttr = getGroupingAttribute();
+        FileGroup.GroupSortingAlgorithm groupSortAlgorithm = getGroupSortingMethod();
+
+        // Get the file sorting method
+        FileSorter.SortingMethod fileSort = getFileSortingMethod();
+        SearchWorker searchWorker = new SearchWorker(centralRepoDb, searchButton, filters, groupingAttr, groupSortAlgorithm, fileSort);
+        searchWorker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
+
 
     private void parentCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parentCheckboxActionPerformed
         parentList.setEnabled(parentCheckbox.isSelected());

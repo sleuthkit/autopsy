@@ -18,21 +18,26 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.common.eventbus.Subscribe;
 import javax.swing.JFrame;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Node;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 class FileDiscoveryDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
-
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
     private final DataResultViewerThumbnail thumbnailViewer;
+
     /**
      * Creates new form FileDiscoveryDialog
      */
@@ -41,7 +46,9 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         initComponents();
         //create results callback and pass it into the search panel
         fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
+
         groupListPanel = new GroupListPanel();
+        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         dataContentPanel = DataContentPanel.createInstance();
         thumbnailViewer = new DataResultViewerThumbnail();
         leftSplitPane.setLeftComponent(fileSearchPanel);
@@ -49,13 +56,34 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         rightSplitPane.setTopComponent(thumbnailViewer);
         rightSplitPane.setBottomComponent(dataContentPanel);
     }
-        /**
+
+    /**
      * Show the dialog
      */
     void display() {
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 //        runAnotherSearch = false;
         setVisible(true);
+    }
+
+    @Subscribe
+    void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+        if (groupSelectedEvent.getFiles().size() > 0) {
+            thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChild(groupSelectedEvent.getFiles()))), true));
+            System.out.println("FILES SET");
+        } else {
+            thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            System.out.println("EMPTY NODE SET");
+        }
+        validate();
+        repaint();
+    }
+    
+    @Override
+    public void dispose(){
+        DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
+        DiscoveryEvents.getDiscoveryEventBus().unregister(this);
+        super.dispose();
     }
 
     /**

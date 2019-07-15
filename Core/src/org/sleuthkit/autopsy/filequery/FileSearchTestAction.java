@@ -65,7 +65,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
         }
 
         FileDiscoveryDialog dialog = new FileDiscoveryDialog(null, true, Case.getCurrentCase().getSleuthkitCase(), crDb);
-
+        DiscoveryEvents.getDiscoveryEventBus().register(dialog);
         // Display the dialog
         dialog.display();
 

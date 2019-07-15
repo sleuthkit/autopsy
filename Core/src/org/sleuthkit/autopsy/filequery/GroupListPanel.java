@@ -18,15 +18,39 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-public class GroupListPanel extends javax.swing.JPanel {
+import com.google.common.eventbus.Subscribe;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.AbstractFile;
+
+class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    LinkedHashMap<String, List<AbstractFile>> results = null;
 
     /**
      * Creates new form GroupListPanel
      */
-    public GroupListPanel() {
+    GroupListPanel() {
         initComponents();
+    }
+
+    @Subscribe
+    void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
+        System.out.println("EVENT RECEIVED");
+        try {
+            results = searchCompleteEvent.getSearchResults().toLinkedHashMap();
+            Set<String> resultsKeySet = results.keySet();
+            System.out.println("NUMBER OF GROUPS: " + results.size());
+            jList1.setListData(resultsKeySet.toArray(new String[results.size()]));
+            validate();
+            repaint();
+        } catch (FileSearchException ex) {
+            Exceptions.printStackTrace(ex);
+            jList1.setListData(new String[0]);
+        }
     }
 
     /**
@@ -41,6 +65,11 @@ public class GroupListPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
 
+        jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                groupSelected(evt);
+            }
+        });
         jScrollPane1.setViewportView(jList1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -58,6 +87,14 @@ public class GroupListPanel extends javax.swing.JPanel {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
+        if (results != null) {
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(results.get(jList1.getSelectedValue())));
+        } else {
+            System.out.println("RESULTS NULL");
+        }
+    }//GEN-LAST:event_groupSelected
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
