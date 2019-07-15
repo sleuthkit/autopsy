@@ -5,7 +5,7 @@
 
 In a multi-user case, a central PostgreSQL database server is used instead of the embedded SQLite databases.  
 
-A new database will be created for each case and the database will be stored on the local drive.  
+A new database will be created for each case and the database will be stored in a location you choose during installation. It is recommended that you choose a drive that is local to the machine and is not the system drive.
 
 You should ensure that the database folder is backed up. 
 
@@ -17,7 +17,7 @@ To install PostgreSQL, perform the following steps:
 
 2. Run the installer. The name will be similar to _postgresql-9.5.3-1-windows-x64.exe_.
 
-3. You may accept defaults for all items except for the password as you work through the wizard. Do not lose the password you enter in. This is the PostgreSQL administrator login password.
+3. You may accept defaults for all items except for the password and the database storage location as you work through the wizard. Do not lose the password you enter in. This is the PostgreSQL administrator login password.
 
 4. You do not need to launch the StackBuilder nor acquire any more software from it. Uncheck the option to use StackBuilder and press _Finish_.
 
@@ -103,17 +103,17 @@ Note the removal of the leading number symbol-this uncomments that entry.
 
 You can verify that PostgreSQL is running by using either the _pgAdmin_ tool or the _psql_ tool to connect to the database server from another machine on the network.
 
-Common problems are from:
-- Firewall blocking the ports on the PostgreSQL server
-- Incorrect credentials 
-- Wrong IP address range in the configuration file
+Common problems are typically the result of:
+- Firewall blocking the port (default: 5432) on the PostgreSQL server.
+- Incorrectly configured database user account or incorrect credentials.
+- Incorrectly configured IP address range in pg_hba.conf file.
 
 
 \section install_post_backup Backing Up
 
-The database are stored on the local drive (not shared storage).  So, you should backup that directory periodically. 
+The databases and configuration files are stored at the location you chose during PostgreSQL installation (not shared storage).  So, you should backup that directory periodically. 
 
-The default location is XYZ. 
+For an installation where the default options were chosen, the directory can be found at C:\\Program Files\\PostgreSQL\\9.5\\data. 
 
 
 */
