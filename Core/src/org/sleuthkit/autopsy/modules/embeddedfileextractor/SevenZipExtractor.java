@@ -404,7 +404,8 @@ class SevenZipExtractor {
      * @throws SevenZipException
      */
     private String getPathInArchive(ISevenZipInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
-        String pathInArchive = (String) archive.getProperty(inArchiveItemIndex, PropID.PATH);
+        String pathInArchive = (String) archive.getProperty(
+                inArchiveItemIndex, PropID.PATH);
 
         if (pathInArchive == null || pathInArchive.isEmpty()) {
             //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
@@ -595,8 +596,7 @@ class SevenZipExtractor {
                     return unpackSuccessful;
                 }
 
-                String pathInArchive = getPathInArchive(
-                        inArchive, inArchiveItemIndex, archiveFile);
+                String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
                 UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
