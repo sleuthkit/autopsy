@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -62,8 +63,6 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
     private static final String DISPLAY_NAME = Bundle.CTL_CaseOpenAction();
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
-    private static JDialog multiUserCaseWindow;
-    private volatile JFileChooser fileChooser;
     private final FileFilter caseMetadataFileFilter;
 
     /**
@@ -81,17 +80,14 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      * metadata file (.aut file). Upon confirming the selection, it will attempt
      * to open the case described by the file.
      */
-    void openCaseSelectionWindow() {
-        if(fileChooser == null) {
-            //Configure fileChooser, details JIRA-4930
-            fileChooser = new JFileChooser();
-            fileChooser.setDragEnabled(false);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setMultiSelectionEnabled(false);
-            fileChooser.setFileFilter(caseMetadataFileFilter);
-            if (null != ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE)) {
-                fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
-            }
+    void openCaseSelectionWindow() {        
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDragEnabled(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
+        fileChooser.setFileFilter(caseMetadataFileFilter);
+        if (null != ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE)) {
+            fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
         }
         
         String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
@@ -111,9 +107,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                 /*
                  * Close the Open Multi-User Case window, if it is open.
                  */
-                if (multiUserCaseWindow != null) {
-                    multiUserCaseWindow.setVisible(false);
-                }
+                OpenMultiUserCaseDialog.getInstance().setVisible(false);
 
                 /*
                  * Try to open the case associated with the case metadata file
@@ -165,9 +159,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
         if (UserPreferences.getIsMultiUserModeEnabled()) {
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-            if (multiUserCaseWindow == null) {
-                multiUserCaseWindow = OpenMultiUserCaseDialog.getInstance();
-            }
+            OpenMultiUserCaseDialog multiUserCaseWindow = OpenMultiUserCaseDialog.getInstance();
             multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
             multiUserCaseWindow.setVisible(true);
 
