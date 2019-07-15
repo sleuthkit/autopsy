@@ -23,7 +23,7 @@ We distribute a Windows installer and ZIP files to run on Linux and OS X.
 
 \subsection prereqs_av AntiVirus
 
-You should consider disabling AntiVirus software that runs on your computers that will be running Autopsy.  AntiVirus software may quarantine or even delete some of your results before you get a chance to look at them.  Autopsy encodes some of the files that it extracts so that they can not be executed or scanned, but some modules (such as our ZIP extraction module) will directly write files to disk in an unencoded format. 
+You should consider either disabling AntiVirus software that runs on your computers that will be running Autopsy or configuring your AntiVirus software to ignore the contents of your case output directory.  AntiVirus software may quarantine or even delete some of your results before you get a chance to look at them.  Autopsy encodes some of the files that it extracts so that they can not be executed or scanned, but some modules (such as our ZIP extraction module) will directly write files to disk in an unencoded format. 
 
 Of course, the risk with disabling AntiVirus software is that your computer could be infected with malware that came from your media. 
 
