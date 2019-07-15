@@ -28,30 +28,22 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author markm
- */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private final Long selectDataSource;
+    private final Long selectedDataSource;
     
     @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
     public DeleteDataSourceAction(Long selectedDataSource) {
         super(Bundle.DeleteDataSourceAction_name_text());
-        selectDataSource = selectedDataSource;
-
+        this.selectedDataSource = selectedDataSource;
     }
-    @NbBundle.Messages({"ErrorDeletingDataSource.name.text=Error Deleting Data Source"})
+
     @Override
     public void actionPerformed(ActionEvent event) {
         try {
-            //VersionNumber checkVersionNumber = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaVersion();
-            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectDataSource);
+            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectedDataSource);
         } catch (NoCurrentCaseException | TskCoreException e) {
-	    String msg = MessageFormat.format(Bundle.ErrorDeletingDataSource_name_text(), selectDataSource);
-            logger.log(Level.WARNING, msg, e);
-            //throw new TskCoreException(msg, e);
+            logger.log(Level.WARNING, "Error Deleting Data source " + selectedDataSource, e);
         }
     }
 
