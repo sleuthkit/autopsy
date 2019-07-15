@@ -106,11 +106,21 @@ public class ListViewModel {
                 List<Long> eventIDs = unGroupConcat(resultSet.getString("eventIDs"), Long::valueOf);
                 List<EventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
                         typesString -> eventManager.getEventType(Integer.valueOf(typesString)).orElseThrow(() -> new TskCoreException("Error mapping event type id " + typesString + ".S")));
+                
                 Map<EventType, Long> eventMap = new HashMap<>();
-                for (int i = 0; i < eventIDs.size(); i++) {
-                    eventMap.put(eventTypes.get(i), eventIDs.get(i));
+                
+                if(hasFileTypeEvents(eventTypes)) {
+                    for (int i = 0; i < eventIDs.size(); i++) {
+                        eventMap.put(eventTypes.get(i), eventIDs.get(i));
+                    }
+                    combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000,   eventMap));
+                } else {
+                    for (int i = 0; i < eventIDs.size(); i++) {
+                        eventMap.put(eventTypes.get(i), eventIDs.get(i));
+                        combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000,   eventMap));
+                        eventMap = new HashMap<>();
+                    }
                 }
-                combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000,   eventMap));
             }
 
         } catch (SQLException sqlEx) {
@@ -118,5 +128,16 @@ public class ListViewModel {
         }
 
         return combinedEvents;
+    }
+    
+    private boolean hasFileTypeEvents(List<EventType> eventTypes) {
+
+        for(EventType type: eventTypes) {
+            if(type.getBaseType() != EventType.FILE_SYSTEM) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
