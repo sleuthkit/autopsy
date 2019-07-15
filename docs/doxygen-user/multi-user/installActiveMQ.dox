@@ -45,14 +45,16 @@ To test your installation, you can access the admin pages in your web browser vi
 
 The default administrator username is _admin_ with a password of _admin_ and the default regular username is _user_ with a default password of _password_.  You can change these passwords by following the instructions below. 
 
-If you can see a page that looks like the following, the service is ready to function.
+If you can see a page that looks like the following, it confirms that the ActiveMQ service is running locally but it does not necessarily mean that the service is visible to other computers on the network.
 <br><br>
 \image html activemq.PNG
 <br><br>
 
-If you do not see this page:
+You can confirm that your ActiveMQ installation is visible to other computers on the network by attempting to connect to a URL like the following (replacing the host name with that of the ActiveMQ computer) in a web browser: http://activemq-computer:61616
+
+If you are unable to connect to this address:
 - Double check that the ActiveMQ service is running
-- Check that the port is not being blocked by a firewall. 
+- Check that the port (61616) is not being blocked by a firewall. 
 
 
 
