@@ -795,8 +795,7 @@ class SevenZipExtractor {
     }
 
     private String detectFilenamesCharset(String filenames) {
-        char[] chars = filenames.toCharArray();
-        byte[] bytes = getDirectBytes(chars);
+        byte[] bytes = getDirectBytes(filenames);
 
         universalDetector.reset();
         universalDetector.handleData(bytes, 0, bytes.length);
@@ -806,8 +805,7 @@ class SevenZipExtractor {
     }
 
     private String decodeFilename(String name, String charset) {
-        char[] chars = name.toCharArray();
-        byte[] bytes = getDirectBytes(chars);
+        byte[] bytes = getDirectBytes(name);
 
         if (charset != null) {
             String decodedName = null;
@@ -825,7 +823,8 @@ class SevenZipExtractor {
         return name;
     }
 
-    private static byte[] getDirectBytes(char[] chars) {
+    private static byte[] getDirectBytes(String str) {
+        char[] chars = str.toCharArray();
         byte[] ret = new byte[chars.length];
 
         for (int i = 0; i < chars.length; i++) {
