@@ -595,8 +595,8 @@ class SevenZipExtractor {
                     return unpackSuccessful;
                 }
 
-                String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
-
+                String pathInArchive = getPathInArchive(
+                        inArchive, inArchiveItemIndex, archiveFile);
                 UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
