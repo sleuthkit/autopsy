@@ -18,10 +18,15 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Level;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -63,7 +68,7 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
             
             BlackboardArtifact n = nodes[0].getLookup().lookup(BlackboardArtifact.class);
             if(n != null) {
-                nameLabel.setIcon(getImageForFromArtifact(n));
+                nameLabel.setIcon(getImageFromArtifact(n));
             }
         } else {
             nameLabel.setText("");
@@ -77,23 +82,39 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
         return explorerManager;
     }
     
-    public ImageIcon getImageForFromArtifact(BlackboardArtifact artifact){
-        ImageIcon image = defaultImage;
+    public ImageIcon getImageFromArtifact(BlackboardArtifact artifact){
+        ImageIcon imageIcon = defaultImage;
+        
+        if(artifact == null) {
+            return imageIcon;
+        }
+        
+        BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
+        if(artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT) {
+            return imageIcon;
+        }
         
         try {
             for(Content content: artifact.getChildren()) {
                 if(content instanceof AbstractFile) {
                     AbstractFile file = (AbstractFile)content;
-                    file.getLocalAbsPath();
                     
-                    image = new ImageIcon(file.getLocalAbsPath());
+                    try {
+                        BufferedImage image = ImageIO.read(new File(file.getLocalAbsPath()));
+                        imageIcon = new ImageIcon(image);
+                        break;
+                    } catch (IOException ex) {
+                       // ImageIO.read will through an IOException if file is not an image
+                       // therefore we don't need to report this exception just try
+                       // the next file.
+                    }
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("Unable to load image for contact: %d", artifact.getId()), ex);
         }
         
-        return image;
+        return imageIcon;
     }
 
     /**
