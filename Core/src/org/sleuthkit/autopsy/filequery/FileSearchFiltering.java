@@ -707,7 +707,6 @@ class FileSearchFiltering {
                 }
                 queryStr += tagQueryPart;
             }
-            System.out.println("\n#### query for score\n" + queryStr + "\n");
             return queryStr;
         }
         
