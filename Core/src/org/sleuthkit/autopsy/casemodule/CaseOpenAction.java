@@ -63,7 +63,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
     private static JDialog multiUserCaseWindow;
-    private final JFileChooser fileChooser = new JFileChooser();
+    private volatile JFileChooser fileChooser;
     private final FileFilter caseMetadataFileFilter;
 
     /**
@@ -74,13 +74,6 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      */
     public CaseOpenAction() {
         caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), CaseMetadata.getFileExtension()), CaseMetadata.getFileExtension().substring(1));
-        fileChooser.setDragEnabled(false);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setMultiSelectionEnabled(false);
-        fileChooser.setFileFilter(caseMetadataFileFilter);
-        if (null != ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE)) {
-            fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
-        }
     }
 
     /**
@@ -89,6 +82,18 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      * to open the case described by the file.
      */
     void openCaseSelectionWindow() {
+        if(fileChooser == null) {
+            //Configure fileChooser, details JIRA-4930
+            fileChooser = new JFileChooser();
+            fileChooser.setDragEnabled(false);
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setMultiSelectionEnabled(false);
+            fileChooser.setFileFilter(caseMetadataFileFilter);
+            if (null != ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE)) {
+                fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
+            }
+        }
+        
         String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
         String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
