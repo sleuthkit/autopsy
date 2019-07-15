@@ -122,7 +122,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     public static synchronized DataContentTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (win == null) {
-            logger.log(Level.FINE, "Cannot find " + PREFERRED_ID + " component. It will "
+            logger.log(Level.INFO, "Cannot find " + PREFERRED_ID + " component. It will "
                     + "not be located properly in the window system."); //NON-NLS
             return getDefault();
         }
@@ -131,7 +131,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             return (DataContentTopComponent) win;
         }
         
-        logger.log(Level.FINE, "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
+        logger.log(Level.INFO, "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
                 + "' ID. That is a potential source of errors and unexpected behavior."); //NON-NLS
         
         return getDefault();
