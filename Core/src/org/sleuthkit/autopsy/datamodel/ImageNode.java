@@ -205,7 +205,7 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     private Boolean checkSchemaVersion() {
-        String sqlStatement = "SELECT a.value creationMajorVersion, b.value creationMinorVersion FROM tsk_db_info_extended a, tsk_db_info_extended b " +
+        String sqlStatement = "SELECT a.value AS creationMajorVersion, b.value AS creationMinorVersion FROM tsk_db_info_extended a, tsk_db_info_extended b " +
                               " WHERE a.name = 'CREATION_SCHEMA_MAJOR_VERSION' and b.name = 'CREATION_SCHEMA_MINOR_VERSION';";
         try (CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(sqlStatement);) {
             ResultSet schemaVersion = query.getResultSet();
@@ -213,11 +213,9 @@ public class ImageNode extends AbstractContentNode<Image> {
                 int creationMajorVersion = schemaVersion.getInt("creationMajorVersion");
                 int creationMinorVersion = schemaVersion.getInt("creationMinorVersion");
                 if ((creationMajorVersion == 8 && creationMinorVersion >= 3) || creationMajorVersion > 8) {
-                    schemaVersion.close();
                     return true;
                 }
             }
-            schemaVersion.close();
         } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get the Create Major and Minor Schema Versions", ex);
         }
