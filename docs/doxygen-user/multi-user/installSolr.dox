@@ -4,9 +4,9 @@
 
 Autopsy uses Apache Solr to store keyword text indexes.  A central server is needed in a multi-user cluster to maintain and search the indexes.  
 
-A new Solr core is created for each case and the core/index is stored in the case folder (not on the local drive of the Solr server). 
+A new text index is created for each case and is stored in the case folder on shared storage (not on the local drive of the Solr server). 
 
-Solr's embedded Zookeeper is also used as a coordination service for Autopsy. 
+Solr's embedded ZooKeeper is also used as a coordination service for Autopsy. 
 
 \section install_solr_prereq Prerequisites
 
@@ -97,7 +97,7 @@ Because we made changes to the service configuration, we need to reinstall it.
  <br><br>
  
 
-You should be able to see the Solr service in a web browser via the URL http://localhost:8983/solr/#/ as shown in the screenshot below.  If you can, you should skip the next step. If you cannot, proceed to the next step.
+At this point you should be able to access the Solr admin panel in a web browser via the URL http://localhost:8983/solr/#/
 
 
 \subsection install_solr_service_user Configure Service User
@@ -117,25 +117,26 @@ Back in \ref install_multiuseruser_page, you should have decided what user to ru
 
 \section install_solr_test Testing
 
-There are two tests that you should do before declaring that Solr has been configured. 
+There are two tests that you should perform to confirm that the Solr machine is configured correctly. 
 
-- <b>Web Interface</b>: You should be able to see the Solr admin panel in a web browser via the URL <i>http://localhost:8983/solr/#/</i>.
+- <b>Web Interface</b>: You should attempt to access the Solr admin panel in a web browser from another machine on the network. Replace the IP address in the following URL with the IP address or the host name that the Solr service is running on: <i>http://172.16.12.61:8983/solr/#/</i>.
  <br><br>
  \image html solrinstall3.PNG
  <br><br>
 
-If the service is appropriately started and you are unable to see the screenshot above, then it could be that port 8983 is blocked by your firewall. Contact your network administrator to open this port. 
+If the service is appropriately started but you are unable to see the screenshot above, then it could be that port 8983 for Solr and port 9983 for ZooKeeper are blocked by your firewall. Contact your network administrator to open these ports. 
 
-- <b>Shared Storage</b>: If you are running Solr as a normal user, then log into the Solr computer as that user and and access the shared storage paths.  Ensure that you can access the UNC paths (or drive letters if you have hardware NAS).   If you are prompted for a password to access the shared storage, then either enter the password and choose to save the credentials or reconfigure the setup so that the same passwords are used, etc. See \ref multiuser_users_store for steps on storing credentials.  If you needed to store the credentials, then you should restart the service or reboot the computer (we have observed that a running service does not get the updated credentials). 
+- <b>Shared Storage</b>: Log into the Solr computer as the user you decided to run the Solr service as and attempt to access the shared storage paths. Ensure that you can access the UNC paths (or drive letters if you have hardware NAS).  If everything is configured correctly you should be able to access the storage paths without having to provide credentials. 
+If you are prompted for a password to access the shared storage, then either enter the password and choose to save the credentials or reconfigure the setup so that the same passwords are used, etc. See \ref multiuser_users_store for steps on storing credentials.  If you needed to store the credentials, then you should restart the service or reboot the computer (we have observed that a running service does not get the updated credentials). 
 
 NOTE: You can not do a full test of permissions until you make a test case after all of the services are configured.
 
 \section install_solr_backup Backing Up
 
 Solr creates two types of data that need to be backed up:
-- <b>Text Indexes</b>: These are stored in the case folder on the shared storage and should get backed up.
-- <b>ZooKeeper Data</b>: Autopsy uses a service called ZooKeeper that Solr runs and it stores data about what cases exist and who has them open. You should back this data up so that you can have a list of all available multi-user cases. 
- - That data is stored in X.
+- <b>Text Indexes</b>: These are stored in the case folder on the shared storage.
+- <b>ZooKeeper Data</b>: Autopsy uses a service called ZooKeeper embedded in Solr that stores data about what cases exist and who has them open. This data needs to be backed up so that you can have a list of all available multi-user cases. 
+ - In a default installation that data is stored in C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\solr\\zoo_data.
 
 
 */
