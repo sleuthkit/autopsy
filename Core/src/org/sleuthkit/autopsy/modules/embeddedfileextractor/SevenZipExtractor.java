@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
 import net.sf.sevenzipjbinding.ExtractAskMode;
@@ -45,8 +44,6 @@ import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
 import net.sf.sevenzipjbinding.PropID;
-import org.apache.tika.parser.txt.CharsetDetector;
-import org.apache.tika.parser.txt.CharsetMatch;
 import org.mozilla.universalchardet.UniversalDetector;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Exceptions;
@@ -83,6 +80,7 @@ class SevenZipExtractor {
     private IngestServices services = IngestServices.getInstance();
     private final IngestJobContext context;
     private final FileTypeDetector fileTypeDetector;
+    private final UniversalDetector universalDetector = new UniversalDetector(null);
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
             "EmbeddedFileExtractorIngestModule.ArchiveExtractor.encryptionFileLevel");
@@ -598,7 +596,6 @@ class SevenZipExtractor {
                 }
 
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
-                pathInArchive = correctlyDecodePath(pathInArchive);
 
                 UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
 
@@ -798,37 +795,34 @@ class SevenZipExtractor {
         return unpackSuccessful;
     }
 
-    private String correctlyDecodePath(String path) {
-        // TODO maybe make this a class member?
-        // not sure about possible multithreading issues
-        UniversalDetector encodingDetector = new UniversalDetector(null);
-
-        // TODO maybe do this with directories later
-        // Get the filename from the path
-        File f = new File(path);
-        String filename = f.getName();
-
-        char[] chars = filename.toCharArray();
+    private String detectFilenamesCharset(String filenames) {
+        char[] chars = filenames.toCharArray();
         byte[] bytes = getDirectBytes(chars);
 
-        encodingDetector.reset();
-        encodingDetector.handleData(bytes, 0, bytes.length);
-        encodingDetector.dataEnd();
-        String detectedCharset = encodingDetector.getDetectedCharset();
+        universalDetector.reset();
+        universalDetector.handleData(bytes, 0, bytes.length);
+        universalDetector.dataEnd();
+        String detectedCharset = universalDetector.getDetectedCharset();
+        return detectedCharset;
+    }
 
-        if (detectedCharset != null) {
+    private String decodeFilename(String name, String charset) {
+        char[] chars = name.toCharArray();
+        byte[] bytes = getDirectBytes(chars);
+
+        if (charset != null) {
             String decodedName = null;
             try {
-                decodedName = new String(bytes, detectedCharset);
+                decodedName = new String(bytes, charset);
             } catch (UnsupportedEncodingException ex) {
                 Exceptions.printStackTrace(ex);
             }
 
             if (decodedName != null) {
-                path = path.substring(0, path.indexOf(filename)) + decodedName;
+                name = name.substring(0, name.indexOf(name)) + decodedName;
             }
         }
-        return path;
+        return name;
     }
 
     private static byte[] getDirectBytes(char[] chars) {
@@ -1293,6 +1287,27 @@ class SevenZipExtractor {
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackedTree.exception.msg",
                                 node.getFileName()), ex);
             }
+
+            // Determine encoding of children
+            String names = "";
+            for (UnpackedNode child : node.getChildren()) {
+                String name = child.getFileName();
+                names += name;
+            }
+            String correctCharset = detectFilenamesCharset(names);
+
+            // If a charset was detected, transcode filenames accordingly
+            if (correctCharset != null) {
+                for (UnpackedNode child : node.getChildren()) {
+                    String originalName = child.getFileName();
+                    String decodedName = decodeFilename(originalName, correctCharset);
+
+                    if (!decodedName.equals(originalName)) {
+                        child.setFileName(decodedName);
+                    }
+                }
+            }
+
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.getChildren()) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
