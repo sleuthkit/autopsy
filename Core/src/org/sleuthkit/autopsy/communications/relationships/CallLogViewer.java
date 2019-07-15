@@ -44,7 +44,7 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
     @Messages({
         "CallLogViewer_title=Call Logs",
         "CallLogViewer_noCallLogs=<No call logs found for selected account>",
-        "CallLogViewer_recipient_label=Recipient",
+        "CallLogViewer_recipient_label=To/From",
         "CallLogViewer_duration_label=Duration(seconds)",
         "CallLogViewer_device_label=Device"      
     })

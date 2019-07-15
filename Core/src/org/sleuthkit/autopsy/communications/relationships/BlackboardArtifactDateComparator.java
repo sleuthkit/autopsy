@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obt ain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
@@ -32,61 +45,13 @@ class BlackboardArtifactDateComparator implements Comparator<BlackboardArtifact>
     @Override
     public int compare(BlackboardArtifact bba1, BlackboardArtifact bba2) {
 
-        BlackboardAttribute attribute1 = null;
-        BlackboardAttribute attribute2 = null;
+        BlackboardAttribute attribute1 = getTimeAttributeForArtifact(bba1);
+        BlackboardAttribute attribute2 = getTimeAttributeForArtifact(bba2);
         // Inializing to Long.MAX_VALUE so that if a BlackboardArtifact of 
         // any unexpected type is passed in, it will bubble to the top of 
         // the list.
         long dateTime1 = Long.MAX_VALUE;
         long dateTime2 = Long.MAX_VALUE;
-
-        if (bba1 != null) {
-            BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba1.getArtifactTypeID());
-            if (fromID != null) {
-                try {
-                    switch (fromID) {
-                        case TSK_EMAIL_MSG:
-                            attribute1 = bba1.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
-                            break;
-                        case TSK_MESSAGE:
-                            attribute1 = bba1.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-                            break;
-                        case TSK_CALLLOG:
-                            attribute1 = bba1.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
-                            break;
-                        default:
-                            attribute1 = null;
-                            break;
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to compare attributes for artifact %d", bba1.getArtifactID()), ex);
-                }
-            }
-        }
-
-        if (bba2 != null) {
-            BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba2.getArtifactTypeID());
-            if (fromID != null) {
-                try {
-                    switch (fromID) {
-                        case TSK_EMAIL_MSG:
-                            attribute2 = bba2.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
-                            break;
-                        case TSK_MESSAGE:
-                            attribute2 = bba2.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-                            break;
-                        case TSK_CALLLOG:
-                            attribute2 = bba2.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
-                            break;
-                        default:
-                            attribute2 = null;
-                            break;
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to compare attributes for artifact %d", bba2.getArtifactID()), ex);
-                }
-            }
-        }
 
         if (attribute1 != null) {
             dateTime1 = attribute1.getValueLong();
@@ -97,5 +62,37 @@ class BlackboardArtifactDateComparator implements Comparator<BlackboardArtifact>
         }
 
         return Long.compare(dateTime1, dateTime2) * direction;
+    }
+    
+    private BlackboardAttribute getTimeAttributeForArtifact(BlackboardArtifact artifact) {
+        if(artifact == null) {
+            return null;
+        }
+        
+        BlackboardAttribute attribute = null;
+        
+        BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
+        if (fromID != null) {
+            try {
+                switch (fromID) {
+                    case TSK_EMAIL_MSG:
+                        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+                        break;
+                    case TSK_MESSAGE:
+                        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+                        break;
+                    case TSK_CALLLOG:
+                        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
+                        break;
+                    default:
+                        attribute = null;
+                        break;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Unable to compare attributes for artifact %d", artifact.getArtifactID()), ex);
+            }
+        }
+        
+        return attribute;
     }
 }
