@@ -62,9 +62,9 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
 
 /**
- * An Iterator for parsing mbox files.  Wraps an instance of MBoxEmailIterator.
+ * An Iterator for parsing mbox files. Wraps an instance of MBoxEmailIterator.
  */
-class MboxParser implements Iterator<EmailMessage>{
+class MboxParser implements Iterator<EmailMessage> {
 
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
     private final DefaultMessageBuilder messageBuilder;
@@ -79,11 +79,10 @@ class MboxParser implements Iterator<EmailMessage>{
      * The local path of the mbox file.
      */
     private String localPath;
-    
-    private Iterator<EmailMessage> emailIterator = null;
-    
 
-    private MboxParser( String localPath) {
+    private Iterator<EmailMessage> emailIterator = null;
+
+    private MboxParser(String localPath) {
         this.localPath = localPath;
         messageBuilder = new DefaultMessageBuilder();
         MimeConfig config = MimeConfig.custom().setMaxLineLen(-1).build();
@@ -95,13 +94,15 @@ class MboxParser implements Iterator<EmailMessage>{
     static boolean isValidMimeTypeMbox(byte[] buffer) {
         return (new String(buffer)).startsWith("From "); //NON-NLS
     }
-    
+
     /**
-     * Returns an instance of MBoxParser that will iterate and return EMailMessage
-     * objects with only the information needed for threading emails.
-     * 
+     * Returns an instance of MBoxParser that will iterate and return
+     * EMailMessage objects with only the information needed for threading
+     * emails.
+     *
      * @param localPath String path to the mboxFile
-     * @param mboxFile The mboxFile to parse
+     * @param mboxFile  The mboxFile to parse
+     *
      * @return Instance of MboxParser
      */
     static MboxParser getThreadInfoIterator(String localPath, File mboxFile) {
@@ -109,40 +110,42 @@ class MboxParser implements Iterator<EmailMessage>{
         parser.createIterator(mboxFile, 0, false);
         return parser;
     }
-    
+
     /**
-     * Returns an instance of MBoxParser that will iterate "whole" EmailMessages.
-     * 
+     * Returns an instance of MBoxParser that will iterate "whole"
+     * EmailMessages.
+     *
      * @param localPath String path to the mboxFile
-     * @param mboxFile The mboxFile to parse
-     * @param fileID The fileID of the abstractFile that mboxFile was found
+     * @param mboxFile  The mboxFile to parse
+     * @param fileID    The fileID of the abstractFile that mboxFile was found
+     *
      * @return Instance of MboxParser
      */
     static MboxParser getEmailIterator(String localPath, File mboxFile, long fileID) {
         MboxParser parser = new MboxParser(localPath);
         parser.createIterator(mboxFile, fileID, true);
-        
+
         return parser;
     }
-    
+
     /**
      * Creates the real Iterator object instance.
-     * 
-     * @param mboxFile  The mboxFile to parse
-     * @param fileID    The fileID of the abstractFile that mboxFile was found
-     * @param wholeMsg  True if EmailMessage should have the whole message, 
-     *                  not just the thread information.
+     *
+     * @param mboxFile The mboxFile to parse
+     * @param fileID   The fileID of the abstractFile that mboxFile was found
+     * @param wholeMsg True if EmailMessage should have the whole message, not
+     *                 just the thread information.
      */
     private void createIterator(File mboxFile, long fileID, boolean wholeMsg) {
         // Detect possible charsets
         List<CharsetEncoder> encoders = getPossibleEncoders(mboxFile);
-        
+
         // Loop through the possible encoders and find the first one that works.
         // That will usually be one of the first ones.
         for (CharsetEncoder encoder : encoders) {
             try {
                 Iterable<CharBufferWrapper> mboxIterable = MboxIterator.fromFile(mboxFile).charset(encoder.charset()).build();
-                if(mboxIterable != null) {
+                if (mboxIterable != null) {
                     emailIterator = new MBoxEmailIterator(mboxIterable.iterator(), encoder, fileID, wholeMsg);
                 }
                 break;
@@ -156,12 +159,12 @@ class MboxParser implements Iterator<EmailMessage>{
             }
         }
     }
-    
+
     @Override
     public boolean hasNext() {
         return emailIterator != null ? emailIterator.hasNext() : false;
     }
-    
+
     @Override
     public EmailMessage next() {
         return emailIterator != null ? emailIterator.next() : null;
@@ -190,7 +193,7 @@ class MboxParser implements Iterator<EmailMessage>{
         email.setSentDate(msg.getDate());
         email.setLocalPath(localPath);
         email.setMessageID(msg.getMessageId());
-        
+
         Field field = msg.getHeader().getField("in-reply-to"); //NON-NLS
         String inReplyTo = null;
 
@@ -219,23 +222,23 @@ class MboxParser implements Iterator<EmailMessage>{
         } else {
             handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
         }
-        
+
         return email;
     }
-    
+
     /**
-     * Extract the subject, inReplyTo, message-ID and references from the Message
-     * object and returns them in a new EmailMessage object.
-     * 
+     * Extract the subject, inReplyTo, message-ID and references from the
+     * Message object and returns them in a new EmailMessage object.
+     *
      * @param msg Message object
-     * 
-     * @return EmailMessage instance with only some of the message information 
+     *
+     * @return EmailMessage instance with only some of the message information
      */
     private EmailMessage extractPartialEmail(Message msg) {
         EmailMessage email = new EmailMessage();
         email.setSubject(msg.getSubject());
         email.setMessageID(msg.getMessageId());
-        
+
         Field field = msg.getHeader().getField("in-reply-to"); //NON-NLS
         String inReplyTo = null;
 
@@ -257,7 +260,7 @@ class MboxParser implements Iterator<EmailMessage>{
 
             email.setReferences(references);
         }
-        
+
         return email;
     }
 
@@ -295,7 +298,7 @@ class MboxParser implements Iterator<EmailMessage>{
      *
      * @param email
      * @param tb
-     * @param type The Mime type of the body.
+     * @param type  The Mime type of the body.
      */
     private void handleTextBody(EmailMessage email, TextBody tb, String type, List<Field> fields) {
         BufferedReader r;
@@ -307,16 +310,16 @@ class MboxParser implements Iterator<EmailMessage>{
             while ((line = r.readLine()) != null) {
                 bodyString.append(line).append("\n");
             }
-            
+
             headersString.append("\n-----HEADERS-----\n");
-            for(Field field: fields) {
+            for (Field field : fields) {
                 String nextLine = field.getName() + ": " + field.getBody();
                 headersString.append("\n").append(nextLine);
             }
             headersString.append("\n\n---END HEADERS--\n\n");
 
             email.setHeaders(headersString.toString());
-            
+
             switch (type) {
                 case ContentTypeField.TYPE_TEXT_PLAIN:
                     email.setTextBody(bodyString.toString());
@@ -340,7 +343,7 @@ class MboxParser implements Iterator<EmailMessage>{
      * @param email
      * @param e
      */
-    @NbBundle.Messages ({"MboxParser.handleAttch.noOpenCase.errMsg=Exception while getting open case."})
+    @NbBundle.Messages({"MboxParser.handleAttch.noOpenCase.errMsg=Exception while getting open case."})
     private void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
         String outputDirPath;
         String relModuleOutputPath;
@@ -350,7 +353,7 @@ class MboxParser implements Iterator<EmailMessage>{
         } catch (NoCurrentCaseException ex) {
             addErrorMessage(Bundle.MboxParser_handleAttch_noOpenCase_errMsg());
             logger.log(Level.SEVERE, Bundle.MboxParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
-            return;       
+            return;
         }
         String filename = e.getFilename();
 
@@ -498,17 +501,17 @@ class MboxParser implements Iterator<EmailMessage>{
     private void addErrorMessage(String msg) {
         errors.append("<li>").append(msg).append("</li>"); //NON-NLS
     }
-    
+
     /**
      * An Interator for mbox email messages.
      */
     final class MBoxEmailIterator implements Iterator<EmailMessage> {
-        
+
         private final Iterator<CharBufferWrapper> mboxIterator;
         private final CharsetEncoder encoder;
         private final long fileID;
         private final boolean wholeMsg;
-        
+
         MBoxEmailIterator(Iterator<CharBufferWrapper> mboxIter, CharsetEncoder encoder, long fileID, boolean wholeMsg) {
             mboxIterator = mboxIter;
             this.encoder = encoder;
@@ -524,12 +527,12 @@ class MboxParser implements Iterator<EmailMessage>{
         @Override
         public EmailMessage next() {
             CharBufferWrapper messageBuffer = mboxIterator.next();
-            
+
             try {
                 Message msg = messageBuilder.parseMessage(messageBuffer.asInputStream(encoder.charset()));
-                if(wholeMsg) {
+                if (wholeMsg) {
                     return extractEmail(msg, fileID);
-                } else {                
+                } else {
                     return extractPartialEmail(msg);
                 }
             } catch (RuntimeException | IOException ex) {
@@ -537,6 +540,6 @@ class MboxParser implements Iterator<EmailMessage>{
             }
             return null;
         }
-        
+
     }
 }

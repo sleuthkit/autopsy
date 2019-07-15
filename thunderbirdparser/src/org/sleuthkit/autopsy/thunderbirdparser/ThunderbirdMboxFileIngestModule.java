@@ -225,13 +225,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
         }
 
-//        String errors = parser.getErrors();
-//        if (errors.isEmpty() == false) {
-//            postErrorMessage(
-//                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg2",
-//                            abstractFile.getName()), errors);
-//        }
-
         return ProcessResult.OK;
     }
 
