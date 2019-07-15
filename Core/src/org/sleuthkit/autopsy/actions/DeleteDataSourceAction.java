@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
-import java.text.MessageFormat;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
@@ -28,6 +27,9 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Instances of this Action allow users to delete the specified data source.
+ */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
     private final Long selectedDataSource;
