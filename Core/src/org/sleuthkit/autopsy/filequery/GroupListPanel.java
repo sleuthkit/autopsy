@@ -45,7 +45,7 @@ class GroupListPanel extends javax.swing.JPanel {
         results = new LinkedHashMap<>();
         groupList.setListData(new String[0]);
     }
-    
+
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
         try {
@@ -53,6 +53,9 @@ class GroupListPanel extends javax.swing.JPanel {
             results = searchCompleteEvent.getSearchResults().toLinkedHashMap();
             Set<String> resultsKeySet = results.keySet();
             groupList.setListData(resultsKeySet.toArray(new String[results.size()]));
+            if (groupList.getModel().getSize() > 0) {
+                groupList.setSelectedIndex(0);
+            }
             validate();
             repaint();
         } catch (FileSearchException ex) {
