@@ -1217,7 +1217,7 @@ public class Server {
     }
 
     /**
-     * Delete a data source fo SOLR.
+     * Delete a data source from SOLR.
      * 
      * @param dataSourceId to delete
      * 
@@ -1232,7 +1232,7 @@ public class Server {
             currentCore.deleteDataSource(dataSourceId);
             currentCore.commit();
         } catch (SolrServerException ex) {
-            logger.log(Level.SEVERE, "Solr delete data dource failed for data source: " + Long.toString(dataSourceId), ex); //NON-NLS
+            logger.log(Level.SEVERE, "Solr delete data dource failed for data source: " + dataSourceId, ex); //NON-NLS
         } finally {
             currentCoreLock.writeLock().unlock();
         }    
