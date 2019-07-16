@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
 final class SearchWorker extends SwingWorker<Void, Void> {
 
@@ -37,10 +38,12 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     private final FileSorter.SortingMethod fileSort;
     private final FileGroup.GroupSortingAlgorithm groupSortAlgorithm;
     private final EamDb centralRepoDb;
+    private final FileType fileType;
 
-    SearchWorker(EamDb centralRepo, JButton searchButton, List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
+    SearchWorker(EamDb centralRepo, JButton searchButton, FileType type, List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
         centralRepoDb = centralRepo;
         searchButtonToEnable = searchButton;
+        fileType = type;
         filters = searchfilters;
         groupingAttr = groupingAttribute;
         groupSortAlgorithm = groupSort;
@@ -71,7 +74,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
                     fileSort,
                     attrsForGroupingAndSorting,
                     Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(results));
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(fileType, results));
         } catch (FileSearchException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
         }

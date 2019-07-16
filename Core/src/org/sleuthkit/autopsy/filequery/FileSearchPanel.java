@@ -20,11 +20,14 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JList;
@@ -93,6 +96,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.values()) {
             orderByCombobox.addItem(method);
         }
+        validateFields();
     }
 
     /**
@@ -119,13 +123,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * Initialize the file type filter
      */
     private void setUpFileTypeFilter() {
-        int count = 0;
-        DefaultListModel<FileType> fileTypeListModel = (DefaultListModel<FileType>) fileTypeList.getModel();
+        DefaultComboBoxModel<FileType> fileTypeComboBoxModel = (DefaultComboBoxModel<FileType>) fileTypeComboBox.getModel();
         for (FileType type : FileType.getOptionsForFiltering()) {
-            fileTypeListModel.add(count, type);
-            count++;
+            fileTypeComboBoxModel.addElement(type);
         }
-        addListeners(null, fileTypeList);
+        fileTypeComboBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                validateFields();
+            }
+        });
     }
 
     /**
@@ -228,7 +235,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         List<FileSearchFiltering.FileFilter> filters = new ArrayList<>();
 
         // There will always be a file type selected
-        filters.add(new FileSearchFiltering.FileTypeFilter(fileTypeList.getSelectedValuesList()));
+        filters.add(new FileSearchFiltering.FileTypeFilter(fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex())));
 
         if (parentCheckbox.isSelected()) {
             // For the parent paths, everything in the box is used (not just the selected entries)
@@ -332,7 +339,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      */
     private void validateFields() {
         // There must be at least one file type selected
-        if (fileTypeList.getSelectedValuesList().isEmpty()) {
+        if (fileTypeComboBox.getSelectedIndex() < 0) {
             setInvalid("At least one file type must be selected");
             return;
         }
@@ -419,16 +426,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         parentList = new javax.swing.JList<>();
         fileTypeLabel = new javax.swing.JLabel();
         searchButton = new javax.swing.JButton();
-        fileTypeScrollPane = new javax.swing.JScrollPane();
-        fileTypeList = new javax.swing.JList<>();
         sortingPanel = new javax.swing.JPanel();
-        groupByCheckbox = new javax.swing.JCheckBox();
         groupByCombobox = new javax.swing.JComboBox<>();
-        orderByCheckbox = new javax.swing.JCheckBox();
         orderByCombobox = new javax.swing.JComboBox<>();
         orderGroupsByLabel = new javax.swing.JLabel();
         attributeRadioButton = new javax.swing.JRadioButton();
         groupSizeRadioButton = new javax.swing.JRadioButton();
+        orderByLabel = new javax.swing.JLabel();
+        groupByLabel = new javax.swing.JLabel();
+        fileTypeComboBox = new javax.swing.JComboBox<>();
+
+        setMinimumSize(new java.awt.Dimension(408, 0));
 
         filtersScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.filtersScrollPane.border.title"))); // NOI18N
         filtersScrollPane.setPreferredSize(new java.awt.Dimension(300, 483));
@@ -671,69 +679,49 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             }
         });
 
-        fileTypeList.setModel(new DefaultListModel<FileType>());
-        fileTypeList.setVisibleRowCount(5);
-        fileTypeScrollPane.setViewportView(fileTypeList);
-
         sortingPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.sortingPanel.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(groupByCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.groupByCheckbox.text")); // NOI18N
-        groupByCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                groupByCheckboxActionPerformed(evt);
-            }
-        });
-
-        groupByCombobox.setEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(orderByCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.orderByCheckbox.text")); // NOI18N
-        orderByCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                orderByCheckboxActionPerformed(evt);
-            }
-        });
-
-        orderByCombobox.setEnabled(false);
-
         org.openide.awt.Mnemonics.setLocalizedText(orderGroupsByLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.orderGroupsByLabel.text")); // NOI18N
-        orderGroupsByLabel.setEnabled(false);
 
         orderGroupsByButtonGroup.add(attributeRadioButton);
         attributeRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(attributeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.attributeRadioButton.text")); // NOI18N
-        attributeRadioButton.setEnabled(false);
 
         orderGroupsByButtonGroup.add(groupSizeRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(groupSizeRadioButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.groupSizeRadioButton.text")); // NOI18N
-        groupSizeRadioButton.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(orderByLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.orderByLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(groupByLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.groupByLabel.text")); // NOI18N
 
         javax.swing.GroupLayout sortingPanelLayout = new javax.swing.GroupLayout(sortingPanel);
         sortingPanel.setLayout(sortingPanelLayout);
         sortingPanelLayout.setHorizontalGroup(
             sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(sortingPanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(sortingPanelLayout.createSequentialGroup()
                         .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(orderByCheckbox)
-                                    .addComponent(groupByCheckbox))
-                                .addGap(39, 39, 39))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, sortingPanelLayout.createSequentialGroup()
-                                .addComponent(attributeRadioButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                                .addGap(47, 47, 47)
+                                .addComponent(attributeRadioButton))
+                            .addGroup(sortingPanelLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(orderByLabel))
+                            .addGroup(sortingPanelLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(groupByLabel)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(groupByCombobox, 0, 260, Short.MAX_VALUE)
                             .addComponent(orderByCombobox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(sortingPanelLayout.createSequentialGroup()
                         .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addGap(21, 21, 21)
+                                .addGap(27, 27, 27)
                                 .addComponent(orderGroupsByLabel))
                             .addGroup(sortingPanelLayout.createSequentialGroup()
-                                .addGap(41, 41, 41)
+                                .addGap(47, 47, 47)
                                 .addComponent(groupSizeRadioButton)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -741,14 +729,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         sortingPanelLayout.setVerticalGroup(
             sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(sortingPanelLayout.createSequentialGroup()
-                .addGap(7, 7, 7)
+                .addGap(8, 8, 8)
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(orderByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(orderByCheckbox))
+                    .addComponent(orderByLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(groupByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(groupByCheckbox))
+                    .addComponent(groupByLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(orderGroupsByLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -757,6 +745,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 .addComponent(groupSizeRadioButton)
                 .addContainerGap())
         );
+
+        fileTypeComboBox.setModel(new DefaultComboBoxModel<FileType>());
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -773,8 +763,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(fileTypeLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(fileTypeScrollPane))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(fileTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(sortingPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addGap(4, 4, 4))
@@ -783,13 +773,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(fileTypeLabel)
-                    .addComponent(fileTypeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(fileTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 313, Short.MAX_VALUE)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 290, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(searchButton)
                 .addContainerGap())
@@ -809,7 +799,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        SearchWorker searchWorker = new SearchWorker(centralRepoDb, searchButton, filters, groupingAttr, groupSortAlgorithm, fileSort);
+        SearchWorker searchWorker = new SearchWorker(centralRepoDb, searchButton, fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex()),filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
 
@@ -864,17 +854,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         dataSourceList.setEnabled(dataSourceCheckbox.isSelected());
     }//GEN-LAST:event_dataSourceCheckboxActionPerformed
 
-    private void groupByCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupByCheckboxActionPerformed
-        groupByCombobox.setEnabled(groupByCheckbox.isSelected());
-        orderGroupsByLabel.setEnabled(groupByCheckbox.isSelected());
-        attributeRadioButton.setEnabled(groupByCheckbox.isSelected());
-        groupSizeRadioButton.setEnabled(groupByCheckbox.isSelected());
-    }//GEN-LAST:event_groupByCheckboxActionPerformed
-
-    private void orderByCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orderByCheckboxActionPerformed
-        orderByCombobox.setEnabled(orderByCheckbox.isSelected());
-    }//GEN-LAST:event_orderByCheckboxActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
@@ -886,20 +865,19 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<DataSourceItem> dataSourceList;
     private javax.swing.JScrollPane dataSourceScrollPane;
     private javax.swing.JButton deleteButton;
+    private javax.swing.JComboBox<FileType> fileTypeComboBox;
     private javax.swing.JLabel fileTypeLabel;
-    private javax.swing.JList<FileSearchData.FileType> fileTypeList;
-    private javax.swing.JScrollPane fileTypeScrollPane;
     private javax.swing.JPanel filtersPanel;
     private javax.swing.JScrollPane filtersScrollPane;
     private javax.swing.JRadioButton fullRadioButton;
-    private javax.swing.JCheckBox groupByCheckbox;
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
+    private javax.swing.JLabel groupByLabel;
     private javax.swing.JRadioButton groupSizeRadioButton;
     private javax.swing.JCheckBox keywordCheckbox;
     private javax.swing.JList<String> keywordList;
     private javax.swing.JScrollPane keywordScrollPane;
-    private javax.swing.JCheckBox orderByCheckbox;
     private javax.swing.JComboBox<SortingMethod> orderByCombobox;
+    private javax.swing.JLabel orderByLabel;
     private javax.swing.ButtonGroup orderGroupsByButtonGroup;
     private javax.swing.JLabel orderGroupsByLabel;
     private javax.swing.ButtonGroup parentButtonGroup;

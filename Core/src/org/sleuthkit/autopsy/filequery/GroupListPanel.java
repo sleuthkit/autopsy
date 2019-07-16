@@ -23,12 +23,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    LinkedHashMap<String, List<AbstractFile>> results = null;
+    private LinkedHashMap<String, List<AbstractFile>> results = null;
+    private FileType resultType = null;
 
     /**
      * Creates new form GroupListPanel
@@ -41,6 +43,7 @@ class GroupListPanel extends javax.swing.JPanel {
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
         System.out.println("EVENT RECEIVED");
         try {
+            resultType = searchCompleteEvent.getFileType();
             results = searchCompleteEvent.getSearchResults().toLinkedHashMap();
             Set<String> resultsKeySet = results.keySet();
             System.out.println("NUMBER OF GROUPS: " + results.size());
@@ -90,7 +93,7 @@ class GroupListPanel extends javax.swing.JPanel {
 
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
         if (results != null) {
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(results.get(jList1.getSelectedValue())));
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, results.get(jList1.getSelectedValue())));
         } else {
             System.out.println("RESULTS NULL");
         }

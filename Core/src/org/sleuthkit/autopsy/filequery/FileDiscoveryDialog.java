@@ -25,9 +25,11 @@ import org.openide.nodes.Node;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 class FileDiscoveryDialog extends javax.swing.JDialog {
@@ -37,6 +39,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
     private final DataResultViewerThumbnail thumbnailViewer;
+    private final DataResultViewerTable tableViewer;
 
     /**
      * Creates new form FileDiscoveryDialog
@@ -51,9 +54,10 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         dataContentPanel = DataContentPanel.createInstance();
         thumbnailViewer = new DataResultViewerThumbnail();
+        tableViewer = new DataResultViewerTable();
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
-        rightSplitPane.setTopComponent(thumbnailViewer);
+        rightSplitPane.setTopComponent(tableViewer);
         rightSplitPane.setBottomComponent(dataContentPanel);
     }
 
@@ -68,19 +72,25 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
 
     @Subscribe
     void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
-        if (groupSelectedEvent.getFiles().size() > 0) {
-            thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChild(groupSelectedEvent.getFiles()))), true));
-            System.out.println("FILES SET");
+        if (groupSelectedEvent.getType() == FileType.IMAGE || groupSelectedEvent.getType() == FileType.VIDEO) {
+            rightSplitPane.setTopComponent(thumbnailViewer);
+            if (groupSelectedEvent.getFiles().size() > 0) {
+                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChild(groupSelectedEvent.getFiles()))), true));
+            } else {
+                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            }
         } else {
-            thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
-            System.out.println("EMPTY NODE SET");
+            rightSplitPane.setTopComponent(tableViewer);
+            if (groupSelectedEvent.getFiles().size() > 0) {
+                tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new SearchChildren(false, groupSelectedEvent.getFiles()))), true));
+            } else {
+                tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            }
         }
-        validate();
-        repaint();
     }
-    
+
     @Override
-    public void dispose(){
+    public void dispose() {
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(this);
         super.dispose();
@@ -100,15 +110,20 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         rightSplitPane = new javax.swing.JSplitPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(1000, 700));
+        setPreferredSize(new java.awt.Dimension(1100, 700));
 
-        mainSplitPane.setDividerLocation(500);
+        mainSplitPane.setDividerLocation(550);
+        mainSplitPane.setResizeWeight(0.2);
 
-        leftSplitPane.setDividerLocation(408);
+        leftSplitPane.setDividerLocation(420);
+        leftSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(FileDiscoveryDialog.class, "FileDiscoveryDialog.leftSplitPane.toolTipText")); // NOI18N
+        leftSplitPane.setLastDividerLocation(420);
+        leftSplitPane.setPreferredSize(new java.awt.Dimension(520, 25));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
-        rightSplitPane.setDividerLocation(300);
+        rightSplitPane.setDividerLocation(400);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        rightSplitPane.setResizeWeight(0.7);
         mainSplitPane.setRightComponent(rightSplitPane);
 
         getContentPane().add(mainSplitPane, java.awt.BorderLayout.CENTER);

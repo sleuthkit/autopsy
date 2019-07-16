@@ -16,14 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.filesearch;
+package org.sleuthkit.autopsy.filequery;
 
 import java.util.List;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
@@ -32,9 +30,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Makes nodes for search results.
  */
-class SearchChildren extends Children.Keys<AbstractFile> {
+public class SearchChildren extends Children.Keys<AbstractFile> {
 
-    SearchChildren(boolean lazy, List<AbstractFile> fileList) {
+    public SearchChildren(boolean lazy, List<AbstractFile> fileList) {
         super(lazy);
         this.setKeys(fileList);
     }

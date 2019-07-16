@@ -429,6 +429,11 @@ class FileSearchFiltering {
             this.categories = categories;
         }
         
+        FileTypeFilter(FileType category){
+            this.categories = new ArrayList<>();
+            this.categories.add(category);
+        }
+        
         @Override
         String getWhereClause() {
             String queryStr = ""; // NON-NLS
