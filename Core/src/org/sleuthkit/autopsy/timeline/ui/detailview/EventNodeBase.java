@@ -84,7 +84,6 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
-import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
 
 /**

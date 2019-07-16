@@ -91,9 +91,9 @@ final public class EventTypeUtils {
             imageFileName = "raw_access_logs.png";
         } else if (typeID == TimelineEventType.USER_CREATED.getTypeID()) {
             imageFileName = "hand_point.png";
-        } else if (typeID == EventType.WEB_FORM_AUTOFILL.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_FORM_AUTOFILL.getTypeID()) {
             imageFileName = "artifact-icon.png";
-        } else if (typeID == EventType.WEB_FORM_ADDRESSES.getTypeID()) {
+        } else if (typeID == TimelineEventType.WEB_FORM_ADDRESSES.getTypeID()) {
             imageFileName = "artifact-icon.png";
         }else {
             imageFileName = "timeline_marker.png";
