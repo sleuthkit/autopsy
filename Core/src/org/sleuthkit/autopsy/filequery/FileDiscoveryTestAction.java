@@ -27,6 +27,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -64,7 +65,7 @@ public final class FileDiscoveryTestAction extends CallableSystemAction {
             }
         }
 
-        FileDiscoveryDialog dialog = new FileDiscoveryDialog(null, false, Case.getCurrentCase().getSleuthkitCase(), crDb);
+        FileDiscoveryDialog dialog = new FileDiscoveryDialog(WindowManager.getDefault().getMainWindow(), false, Case.getCurrentCase().getSleuthkitCase(), crDb);
         DiscoveryEvents.getDiscoveryEventBus().register(dialog);
         // Display the dialog
         dialog.display();
