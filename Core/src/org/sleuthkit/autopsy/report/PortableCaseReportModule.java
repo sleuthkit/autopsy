@@ -983,6 +983,9 @@ class PortableCaseReportModule implements ReportModule {
     enum ChunkSize {
         
         NONE("Do not split", ""), // NON-NLS
+        ONE_HUNDRED_MB("Split into 100 MB chunks", "100m"),
+        CD("Split into 700 MB chunks (CD)", "700m"),
+        ONE_GB("Split into 1 GB chunks", "1000m"),
         DVD("Split into 4.5 GB chunks (DVD)", "4500m"); // NON-NLS
         
         private final String displayName;
