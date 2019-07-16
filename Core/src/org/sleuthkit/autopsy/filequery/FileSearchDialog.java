@@ -53,6 +53,7 @@ import org.sleuthkit.datamodel.TagName;
 /**
  * Dialog to allow the user to choose filtering and grouping options.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class FileSearchDialog extends javax.swing.JDialog implements ActionListener {
 
     private final static Logger logger = Logger.getLogger(FileSearchDialog.class.getName());
@@ -281,6 +282,9 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         addListeners(tagsCheckBox, tagsList);
     }
     
+    /**
+     * TagsListCellRenderer
+     */
     private class TagsListCellRenderer extends DefaultListCellRenderer {
 
         @Override
@@ -290,14 +294,18 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                                        int index,
                                        boolean isSelected,
                                        boolean cellHasFocus) {
+            Object newValue = value;
             if (value instanceof TagName) {
-                value = ((TagName)value).getDisplayName();
+                newValue = ((TagName)value).getDisplayName();
             }
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
             return this;
         }
     }
     
+    /**
+     * Initialize the object filter
+     */
     private void setUpObjectFilter() {
         int count = 0;
         try {

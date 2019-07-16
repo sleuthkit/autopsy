@@ -778,6 +778,7 @@ class FileSearchFiltering {
          * Create the ExifFilter
          */
         ExifFilter() {
+            // Nothing to save
         }
         
         @Override
@@ -807,6 +808,7 @@ class FileSearchFiltering {
          * Create the NotableFilter
          */
         NotableFilter() {
+            // Nothing to save
         }
         
         @Override
