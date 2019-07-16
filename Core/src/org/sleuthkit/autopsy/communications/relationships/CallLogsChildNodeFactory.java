@@ -48,7 +48,7 @@ final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
     
     private SelectionInfo selectionInfo;
     
-    private Map<String, String> deviceIDMap = new HashMap<String,String>();
+    private final Map<String, String> deviceIDMap = new HashMap<>();
     
     CallLogsChildNodeFactory(SelectionInfo selectionInfo) {
         this.selectionInfo = selectionInfo;
@@ -107,6 +107,19 @@ final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
         return new CallLogNode(key.getArtifact(), key.getDeviceID());
     }
     
+    /**
+     * Gets the device ID for the given data source.  
+     * 
+     * To reduce lookup calls to the DB unique dataSourceName\deviceID pairs
+     * are stored in deviceIDMap.
+     * 
+     * @param dataSourceName String name of data source
+     * 
+     * @return device ID for given dataSourceName or empty string if non is found.
+     * 
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException 
+     */
     private String getDeviceIDForDataSource(String dataSourceName) throws NoCurrentCaseException, TskCoreException{
        
         String deviceID = deviceIDMap.get(dataSourceName);
@@ -128,7 +141,7 @@ final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
             // This list should just have 1 item in it
             List<AccountDeviceInstance> adiList = manager.getAccountDeviceInstancesWithRelationships(filter);
             
-            if(adiList != null && adiList.size() > 0) {
+            if( adiList != null && !adiList.isEmpty() ) {
                 deviceID = adiList.get(0).getDeviceId();
             } else {
                 deviceID = "";
@@ -137,9 +150,13 @@ final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
             deviceIDMap.put(dataSourceName, deviceID);
         }
         
-       return deviceID;
+       return (deviceID != null ? deviceID : "");
     }
     
+    /**
+     * ChildFactory key class which contains a BlackboardArtifact and its
+     * data source deviceID
+     */
     final class CallLogNodeKey{
         private final BlackboardArtifact artifact;
         private final String deviceID;
@@ -149,15 +166,28 @@ final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
             this.deviceID = deviceID;
         }
         
+        /**
+         * Get the BlackboardArtifact for this key
+         * 
+         * @return BlackboardArtifact instance
+         */
         BlackboardArtifact getArtifact() {
             return artifact;
         }
         
+        /**
+         * Gets the BlackboardArtifact data source device ID.
+         * 
+         * @return String device id.
+         */
         String getDeviceID() {
             return deviceID;
         }
     }
     
+    /**
+     * A comparator for CallLogNodeKey objects
+     */
     final class CallLogComparator implements Comparator<CallLogNodeKey>{
         
         final BlackboardArtifactDateComparator comparator;

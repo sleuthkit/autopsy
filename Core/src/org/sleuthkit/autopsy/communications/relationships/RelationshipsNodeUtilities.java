@@ -36,6 +36,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class RelationshipsNodeUtilities {
     
     private static final Logger logger = Logger.getLogger(RelationshipsNodeUtilities.class.getName());
+    
+    // Here to make codacy happy
+    private RelationshipsNodeUtilities(){
+    }
+    
      /**
      *
      * Get the display string for the attribute of the given type from the given
