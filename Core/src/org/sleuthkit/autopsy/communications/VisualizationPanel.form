@@ -105,9 +105,9 @@
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="jSeparator2" min="-2" pref="10" max="-2" attributes="0"/>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="zoomLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                          <Component id="zoomPercentLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="zoomOutButton" min="-2" pref="32" max="-2" attributes="0"/>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -134,8 +134,8 @@
                               <Component id="zoomInButton" alignment="2" max="32767" attributes="0"/>
                               <Component id="zoomActualButton" alignment="2" max="32767" attributes="0"/>
                               <Component id="fitZoomButton" alignment="2" max="32767" attributes="0"/>
-                              <Component id="jLabel2" alignment="2" min="-2" max="-2" attributes="0"/>
                               <Component id="zoomLabel" alignment="2" min="-2" max="-2" attributes="0"/>
+                              <Component id="zoomPercentLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                               <Component id="clearVizButton" alignment="2" min="-2" max="-2" attributes="0"/>
                               <Component id="jSeparator2" alignment="2" max="32767" attributes="0"/>
                               <Component id="backButton" alignment="2" min="-2" max="-2" attributes="0"/>
@@ -241,17 +241,17 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fitZoomButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JLabel" name="jLabel2">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/communications/Bundle.properties" key="VisualizationPanel.jLabel2.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                    </Property>
-                  </Properties>
-                </Component>
                 <Component class="javax.swing.JLabel" name="zoomLabel">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/communications/Bundle.properties" key="VisualizationPanel.zoomLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="zoomPercentLabel">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/communications/Bundle.properties" key="VisualizationPanel.zoomPercentLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>
@@ -319,6 +319,9 @@
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/communications/Bundle.properties" key="VisualizationPanel.snapshotButton.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/communications/Bundle.properties" key="VisualizationPanel.snapshotButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
