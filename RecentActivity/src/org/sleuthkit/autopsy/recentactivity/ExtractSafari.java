@@ -291,7 +291,7 @@ final class ExtractSafari extends Extract {
         }
 
         try {
-            postArtifact(getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context));
+            postArtifacts(getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context));
         } finally {
             tempHistoryFile.delete();
         }
@@ -318,7 +318,7 @@ final class ExtractSafari extends Extract {
         File tempFile = createTemporaryFile(context, file);
 
         try {
-            postArtifact( getBookmarkArtifacts(file, tempFile, context));
+            postArtifacts(getBookmarkArtifacts(file, tempFile, context));
         } finally {
             tempFile.delete();
         }

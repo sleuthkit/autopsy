@@ -372,7 +372,7 @@ class Chrome extends Extract {
                                     this.getName(), bookmarkFile.getName()));
                 }
             }
-            postArtifact(bbartifacts);
+            postArtifacts(bbartifacts);
             dbFile.delete();
         }
     }
