@@ -408,37 +408,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * Take the extracted information in the email messages and add the
      * appropriate artifacts and derived files.
      *
-     * @param emails
+     * @param partialEmailsForThreading
+     * @param fileMessageIterator
      * @param abstractFile
      */
-    private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) {
-        List<AbstractFile> derivedFiles = new ArrayList<>();
-
-        // Putting try/catch around this to catch any exception and still allow
-        // the creation of the artifacts to continue.
-        try{
-            EmailMessageThreader.threadMessages(emails, String.format("%d", abstractFile.getId()));
-        } catch(Exception ex) {
-            logger.log(Level.WARNING, String.format("Exception thrown parsing emails from %s", abstractFile.getName()), ex);
-        }
-        
-        for (EmailMessage email : emails) {
-            BlackboardArtifact msgArtifact = addEmailArtifact(email, abstractFile);
-             
-            if ((msgArtifact != null) && (email.hasAttachment()))  {
-                derivedFiles.addAll(handleAttachments(email.getAttachments(), abstractFile, msgArtifact ));
-            }
-        }
-
-        if (derivedFiles.isEmpty() == false) {
-            for (AbstractFile derived : derivedFiles) {
-                services.fireModuleContentEvent(new ModuleContentEvent(derived));
-            }
-        }
-        context.addFilesToJob(derivedFiles);
-        services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
-    }
-    
     private void processEmails(List<EmailMessage> partialEmailsForThreading, Iterator<EmailMessage> fullMessageIterator, AbstractFile abstractFile) {
         // Putting try/catch around this to catch any exception and still allow
         // the creation of the artifacts to continue.

@@ -61,7 +61,7 @@ class PstParser {
      * A map of PSTMessages to their Local path within the file's internal
      * directory structure.
      */
-    private final StringBuilder errors;
+    private String errors;
 
     private final IngestServices services;
 
@@ -71,7 +71,7 @@ class PstParser {
     private int failureCount = 0;
 
     PstParser(IngestServices services) {
-        errors = new StringBuilder();
+        errors = new String();
         this.services = services;
     }
 
@@ -174,7 +174,7 @@ class PstParser {
      * @return String error list, empty string if no errors exist.
      */
     String getErrors() {
-        return errors.toString();
+        return errors;
     }
 
     /**
@@ -480,7 +480,7 @@ class PstParser {
      * @param msg String message to add
      */
     private void addErrorMessage(String msg) {
-        errors.append("<li>").append(msg).append("</li>"); //NON-NLS
+        errors = errors + "<li>" + msg + "</li>"; //NON-NLS
     }
 
     /**
@@ -522,8 +522,8 @@ class PstParser {
     private final class PstEmailIterator implements Iterator<EmailMessage> {
 
         private final PSTFolder folder;
-        private EmailMessage current;
-        private EmailMessage next;
+        private EmailMessage currentMsg;
+        private EmailMessage nextMsg;
 
         private final String currentPath;
         private final long fileID;
@@ -548,9 +548,9 @@ class PstParser {
                     PSTMessage message = (PSTMessage) folder.getNextChild();
                     if (message != null) {
                         if (wholeMsg) {
-                            next = extractEmailMessage(message, currentPath, fileID);
+                            nextMsg = extractEmailMessage(message, currentPath, fileID);
                         } else {
-                            next = extractPartialEmailMessage(message);
+                            nextMsg = extractPartialEmailMessage(message);
                         }
                     }
                 } catch (PSTException | IOException ex) {
@@ -562,32 +562,32 @@ class PstParser {
 
         @Override
         public boolean hasNext() {
-            return next != null;
+            return nextMsg != null;
         }
 
         @Override
         public EmailMessage next() {
 
-            current = next;
+            currentMsg = nextMsg;
 
             try {
                 PSTMessage message = (PSTMessage) folder.getNextChild();
                 if (message != null) {
                     if (wholeMsg) {
-                        next = extractEmailMessage(message, currentPath, fileID);
+                        nextMsg = extractEmailMessage(message, currentPath, fileID);
                     } else {
-                        next = extractPartialEmailMessage(message);
+                        nextMsg = extractPartialEmailMessage(message);
                     }
                 } else {
-                    next = null;
+                    nextMsg = null;
                 }
             } catch (PSTException | IOException ex) {
                 logger.log(Level.WARNING, String.format("Unable to extract emails for path: %s file ID: %d ", currentPath, fileID), ex);
                 failureCount++;
-                next = null;
+                nextMsg = null;
             }
 
-            return current;
+            return currentMsg;
         }
 
         /**
