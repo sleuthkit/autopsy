@@ -297,18 +297,27 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     logger.log(Level.INFO, "File {0} from Plaso output not found in case.  Associating it with the data source instead.", currentFileName);//NON-NLS
                     resolvedFile = image;
                 }
-
+                
+                String description = resultSet.getString("description");
+                EventType eventType = findEventSubtype(currentFileName, resultSet);
+                
+                // If the description is empty use the event type display name
+                // as the description.
+                if( description == null || description.isEmpty() ) {
+                   description = eventType.getDisplayName();
+                }
+               
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
                                 TSK_DATETIME, MODULE_NAME,
                                 resultSet.getLong("epoch_date")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DESCRIPTION, MODULE_NAME,
-                                resultSet.getString("description")),//NON-NLS
+                                description),//NON-NLS
                         new BlackboardAttribute(
                                 TSK_TL_EVENT_TYPE, MODULE_NAME,
-                                findEventSubtype(currentFileName, resultSet)));
-
+                                eventType.getTypeID()));
+                
                 try {
                     BlackboardArtifact bbart = resolvedFile.newArtifact(TSK_TL_EVENT);
                     bbart.addAttributes(bbattributes);
@@ -376,28 +385,28 @@ public class PlasoIngestModule implements DataSourceIngestModule {
      *
      * @throws SQLException
      */
-    private long findEventSubtype(String fileName, ResultSet row) throws SQLException {
+    private EventType findEventSubtype(String fileName, ResultSet row) throws SQLException {
         switch (row.getString("source")) {
             case "WEBHIST":  //These shouldn't actually be present, but keeping the logic just in case...
                 if (fileName.toLowerCase().contains(COOKIE)
                     || row.getString("type").toLowerCase().contains(COOKIE)) {//NON-NLS
-                    return EventType.WEB_COOKIE.getTypeID();
+                    return EventType.WEB_COOKIE;
                 } else {
-                    return EventType.WEB_HISTORY.getTypeID();
+                    return EventType.WEB_HISTORY;
                 }
             case "EVT":
             case "LOG":
-                return EventType.LOG_ENTRY.getTypeID();
+                return EventType.LOG_ENTRY;
             case "REG":
                 switch (row.getString("sourcetype").toLowerCase()) {//NON-NLS
                     case "unknown : usb entries":
                     case "unknown : usbstor entries":
-                        return EventType.DEVICES_ATTACHED.getTypeID();
+                        return EventType.DEVICES_ATTACHED;
                     default:
-                        return EventType.REGISTRY.getTypeID();
+                        return EventType.REGISTRY;
                 }
             default:
-                return EventType.OTHER.getTypeID();
+                return EventType.OTHER;
         }
     }
 
