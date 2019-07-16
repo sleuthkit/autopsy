@@ -41,18 +41,16 @@ class GroupListPanel extends javax.swing.JPanel {
 
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
-        System.out.println("EVENT RECEIVED");
         try {
             resultType = searchCompleteEvent.getFileType();
             results = searchCompleteEvent.getSearchResults().toLinkedHashMap();
             Set<String> resultsKeySet = results.keySet();
-            System.out.println("NUMBER OF GROUPS: " + results.size());
-            jList1.setListData(resultsKeySet.toArray(new String[results.size()]));
+            groupList.setListData(resultsKeySet.toArray(new String[results.size()]));
             validate();
             repaint();
         } catch (FileSearchException ex) {
             Exceptions.printStackTrace(ex);
-            jList1.setListData(new String[0]);
+            groupList.setListData(new String[0]);
         }
     }
 
@@ -65,15 +63,15 @@ class GroupListPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
+        groupListScrollPane = new javax.swing.JScrollPane();
+        groupList = new javax.swing.JList<>();
 
-        jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+        groupList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 groupSelected(evt);
             }
         });
-        jScrollPane1.setViewportView(jList1);
+        groupListScrollPane.setViewportView(groupList);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -81,27 +79,25 @@ class GroupListPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 144, Short.MAX_VALUE)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE))
+                .addComponent(groupListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 300, Short.MAX_VALUE)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
+                .addComponent(groupListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
-        if (results != null) {
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, results.get(jList1.getSelectedValue())));
-        } else {
-            System.out.println("RESULTS NULL");
+        if (!evt.getValueIsAdjusting() && results != null) {
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, results.get(groupList.getSelectedValue())));
         }
     }//GEN-LAST:event_groupSelected
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<String> jList1;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JList<String> groupList;
+    private javax.swing.JScrollPane groupListScrollPane;
     // End of variables declaration//GEN-END:variables
 }
