@@ -81,7 +81,7 @@ public class SampleIngestModuleIngestJobSettingsPanel extends IngestModuleIngest
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(skipKnownFilesCheckBox)
-                .addContainerGap(255, Short.MAX_VALUE))
+                .addContainerGap(155, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

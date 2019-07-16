@@ -123,7 +123,7 @@ final public class CorrelationAttributeNormalizer {
 
     /**
      * Verify there are no slashes or invalid domain name characters (such as
-     * '?' or \: ). Normalize to lower case.
+     * '?'). Normalize to lower case.
      */
     private static String normalizeDomain(String data) throws CorrelationAttributeNormalizationException {
         DomainValidator validator = DomainValidator.getInstance(true);
