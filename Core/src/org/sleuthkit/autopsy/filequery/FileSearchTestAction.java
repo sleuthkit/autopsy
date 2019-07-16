@@ -106,7 +106,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
                 if (groups.size() > 0) {
                     String firstGroupName = groups.keySet().iterator().next();
 
-                    List<AbstractFile> entries0to5 = FileSearch.getGroupEntries(filters, 
+                    List<AbstractFile> entries0to5 = FileSearch.getFilesInGroup(filters, 
                         groupingAttr, 
                         groupSortAlgorithm, 
                         fileSort, 
@@ -119,7 +119,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
                         System.out.println("  " + f.getName());
                     }
 
-                    List<AbstractFile> entries6to106 = FileSearch.getGroupEntries(filters, 
+                    List<AbstractFile> entries6to106 = FileSearch.getFilesInGroup(filters, 
                         groupingAttr, 
                         groupSortAlgorithm, 
                         fileSort, 

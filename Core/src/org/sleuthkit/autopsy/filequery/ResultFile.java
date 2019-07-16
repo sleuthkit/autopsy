@@ -118,7 +118,7 @@ class ResultFile {
     /**
      * Add a hash set name that matched this file.
      * 
-     * @param keywordListName 
+     * @param hashSetName 
      */
     void addHashSetName (String hashSetName) {
         if (! hashSetNames.contains(hashSetName)) {
@@ -139,7 +139,7 @@ class ResultFile {
     }
     
     /**
-     * Add a hash set name that matched this file.
+     * Add a tag name that matched this file.
      * 
      * @param tagName 
      */

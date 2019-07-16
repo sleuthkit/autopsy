@@ -131,7 +131,7 @@ class FileSearch {
     }
     
     /**
-     * Run the file search to get the group names and sizes.
+     * Run the file search to get the files in a given group.
      * 
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
@@ -147,7 +147,7 @@ class FileSearch {
      * 
      * @throws FileSearchException 
      */    
-    static List<AbstractFile> getGroupEntries(
+    static List<AbstractFile> getFilesInGroup(
             List<FileSearchFiltering.FileFilter> filters, 
             AttributeType groupAttributeType, 
             FileGroup.GroupSortingAlgorithm groupSortingType, 
@@ -633,7 +633,7 @@ class FileSearch {
                         
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
             // keyword list hits.
-            String selectQuery = createSetNameQuery(files, caseDb, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
             
             SetKeywordListNamesCallback callback = new SetKeywordListNamesCallback(files);
@@ -850,12 +850,12 @@ class FileSearch {
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
             
-            // Get pairs of (object ID, keyword list name) for all files in the list of files that have
+            // Get pairs of (object ID, hash set name) for all files in the list of files that have
             // hash set hits.
-            String selectQuery = createSetNameQuery(files, caseDb, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
             
-            SetHashSetNamesCallback callback = new SetHashSetNamesCallback(files);
+            HashSetNamesCallback callback = new HashSetNamesCallback(files);
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -865,9 +865,9 @@ class FileSearch {
         
         /**
          * Callback to process the results of the CaseDbAccessManager select query. Will add
-         * the keyword list names to the list of ResultFile objects.
+         * the hash set names to the list of ResultFile objects.
          */
-        private static class SetHashSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+        private static class HashSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
             List<ResultFile> resultFiles;
             
@@ -876,7 +876,7 @@ class FileSearch {
              * 
              * @param resultFiles List of files to add hash set names to
              */
-            SetHashSetNamesCallback(List<ResultFile> resultFiles) {
+            HashSetNamesCallback(List<ResultFile> resultFiles) {
                 this.resultFiles = resultFiles;
             }
             
@@ -988,12 +988,12 @@ class FileSearch {
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
             
-            // Get pairs of (object ID, keyword list name) for all files in the list of files that have
+            // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
             // interesting file set hits.
-            String selectQuery = createSetNameQuery(files, caseDb, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
             
-            SetInterstingFileSetNamesCallback callback = new SetInterstingFileSetNamesCallback(files);
+            InterestingFileSetNamesCallback callback = new InterestingFileSetNamesCallback(files);
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -1005,7 +1005,7 @@ class FileSearch {
          * Callback to process the results of the CaseDbAccessManager select query. Will add
          * the interesting file set names to the list of ResultFile objects.
          */
-        private static class SetInterstingFileSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+        private static class InterestingFileSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
             List<ResultFile> resultFiles;
             
@@ -1014,7 +1014,7 @@ class FileSearch {
              * 
              * @param resultFiles List of files to add interesting file set names to
              */
-            SetInterstingFileSetNamesCallback(List<ResultFile> resultFiles) {
+            InterestingFileSetNamesCallback(List<ResultFile> resultFiles) {
                 this.resultFiles = resultFiles;
             }
             
@@ -1126,12 +1126,12 @@ class FileSearch {
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
             
-            // Get pairs of (object ID, keyword list name) for all files in the list of files that have
+            // Get pairs of (object ID, object type name) for all files in the list of files that have
             // objects detected
-            String selectQuery = createSetNameQuery(files, caseDb, BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID(),
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID());
             
-            SetObjectDetectedNamesCallback callback = new SetObjectDetectedNamesCallback(files);
+            ObjectDetectedNamesCallback callback = new ObjectDetectedNamesCallback(files);
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -1141,9 +1141,9 @@ class FileSearch {
         
         /**
          * Callback to process the results of the CaseDbAccessManager select query. Will add
-         * the interesting file set names to the list of ResultFile objects.
+         * the object type names to the list of ResultFile objects.
          */
-        private static class SetObjectDetectedNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+        private static class ObjectDetectedNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
             List<ResultFile> resultFiles;
             
@@ -1152,7 +1152,7 @@ class FileSearch {
              * 
              * @param resultFiles List of files to add object detected names to
              */
-            SetObjectDetectedNamesCallback(List<ResultFile> resultFiles) {
+            ObjectDetectedNamesCallback(List<ResultFile> resultFiles) {
                 this.resultFiles = resultFiles;
             }
             
@@ -1280,7 +1280,7 @@ class FileSearch {
     }   
 
     /**
-     * Key representing a interesting item set group
+     * Key representing a file tag group
      */    
     private static class FileTagGroupKey extends GroupKey {
         private final List<String> tagNames;
@@ -1404,7 +1404,7 @@ class FileSearch {
         }    
     }      
     
-    private static String createSetNameQuery(List<ResultFile> files, SleuthkitCase caseDb, 
+    private static String createSetNameClause(List<ResultFile> files, 
         int artifactTypeID, int setNameAttrID) throws FileSearchException {
             
         // Concatenate the object IDs in the list of files
