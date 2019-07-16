@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
@@ -269,7 +270,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.event.description=Event Description",
         "PlasoIngestModule.create.artifacts.cancelled=Cancelled Plaso Artifact Creation ",
         "# {0} - file that events are from",
-        "PlasoIngestModule.artifact.progress=Adding events to case: {0}"})
+        "PlasoIngestModule.artifact.progress=Adding events to case: {0}",
+        "PlasoIngestModule.error.empty.database=Error occured while running plaso, plaso database is empty.",
+    })
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
 
@@ -291,6 +294,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             // Check if there is data the db
             if( !resultSet.first() ) {
                 logger.log(Level.WARNING, String.format("PlasoDB was empty: %s", plasoDb));
+                MessageNotifyUtil.Notify.error(MODULE_NAME, Bundle.PlasoIngestModule_error_empty_database());
                 return;
             } else {
                 // There is data, reset the pointer to the correct place for
