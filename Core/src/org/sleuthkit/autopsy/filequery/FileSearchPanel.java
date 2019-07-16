@@ -89,12 +89,16 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.values()) {
-            groupByCombobox.addItem(type);
+            if (type != GroupingAttributeType.FREQUENCY || EamDb.isEnabled()) {
+                groupByCombobox.addItem(type);
+            }
         }
 
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.values()) {
-            orderByCombobox.addItem(method);
+            if (method != SortingMethod.BY_FREQUENCY || EamDb.isEnabled()) {
+                orderByCombobox.addItem(method);
+            }
         }
         validateFields();
     }
