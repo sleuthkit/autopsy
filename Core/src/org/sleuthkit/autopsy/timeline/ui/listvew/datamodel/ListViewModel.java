@@ -107,9 +107,11 @@ public class ListViewModel {
                 List<EventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
                         typesString -> eventManager.getEventType(Integer.valueOf(typesString)).orElseThrow(() -> new TskCoreException("Error mapping event type id " + typesString + ".S")));
                 
+                // We want to merge together file sub-type events that are at 
+                //the same time, but create individual events for other sub 
                 Map<EventType, Long> eventMap = new HashMap<>();
-                
-                if(hasFileTypeEvents(eventTypes)) {
+                if (hasFileTypeEvents(eventTypes)) {
+                    
                     for (int i = 0; i < eventIDs.size(); i++) {
                         eventMap.put(eventTypes.get(i), eventIDs.get(i));
                     }
@@ -118,7 +120,7 @@ public class ListViewModel {
                     for (int i = 0; i < eventIDs.size(); i++) {
                         eventMap.put(eventTypes.get(i), eventIDs.get(i));
                         combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000,   eventMap));
-                        eventMap = new HashMap<>();
+                        eventMap.clear();
                     }
                 }
             }
@@ -132,8 +134,8 @@ public class ListViewModel {
     
     private boolean hasFileTypeEvents(List<EventType> eventTypes) {
 
-        for(EventType type: eventTypes) {
-            if(type.getBaseType() != EventType.FILE_SYSTEM) {
+        for (EventType type: eventTypes) {
+            if (type.getBaseType() != EventType.FILE_SYSTEM) {
                 return false;
             }
         }
