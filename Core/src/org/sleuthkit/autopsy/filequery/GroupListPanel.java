@@ -40,9 +40,16 @@ class GroupListPanel extends javax.swing.JPanel {
     }
 
     @Subscribe
+    void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
+        resultType = searchStartedEvent.getType();
+        results = new LinkedHashMap<>();
+        groupList.setListData(new String[0]);
+    }
+    
+    @Subscribe
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
         try {
-            resultType = searchCompleteEvent.getFileType();
+            resultType = searchCompleteEvent.getType();
             results = searchCompleteEvent.getSearchResults().toLinkedHashMap();
             Set<String> resultsKeySet = results.keySet();
             groupList.setListData(resultsKeySet.toArray(new String[results.size()]));

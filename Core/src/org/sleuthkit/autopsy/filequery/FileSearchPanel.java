@@ -788,6 +788,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         searchButton.setEnabled(false);
+        FileType searchType = fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex());
+        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(searchType));
         // For testing, allow the user to run different searches in loop
 
         // Get the selected filters
@@ -799,7 +801,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        SearchWorker searchWorker = new SearchWorker(centralRepoDb, searchButton, fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex()),filters, groupingAttr, groupSortAlgorithm, fileSort);
+        SearchWorker searchWorker = new SearchWorker(centralRepoDb, searchButton, searchType, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
 

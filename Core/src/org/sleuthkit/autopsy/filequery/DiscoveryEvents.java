@@ -36,6 +36,19 @@ final class DiscoveryEvents {
     private DiscoveryEvents() {
     }
 
+    static final class SearchStartedEvent {
+
+        private final FileType fileType;
+
+        SearchStartedEvent(FileType type) {
+            this.fileType = type;
+        }
+
+        FileType getType() {
+            return fileType;
+        }
+    }
+
     static final class SearchCompleteEvent {
 
         private final SearchResults results;
@@ -49,11 +62,11 @@ final class DiscoveryEvents {
         SearchResults getSearchResults() {
             return results;
         }
-        
-        FileType getFileType(){
+
+        FileType getType() {
             return fileType;
         }
-        
+
     }
 
     static final class GroupSelectedEvent {
@@ -65,8 +78,8 @@ final class DiscoveryEvents {
             this.type = type;
             this.files = files;
         }
-        
-        FileType getType(){
+
+        FileType getType() {
             return type;
         }
 
