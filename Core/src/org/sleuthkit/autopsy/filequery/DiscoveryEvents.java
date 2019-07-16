@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.EventBus;
 import java.util.List;
 import java.util.ArrayList;
+import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -75,19 +76,6 @@ final class DiscoveryEvents {
             } else {
                 return new ArrayList<>();
             }
-        }
-    }
-
-    static final class FileSelectedEvent {
-
-        private final AbstractFile file;
-
-        FileSelectedEvent(AbstractFile file) {
-            this.file = file;
-        }
-
-        AbstractFile getSelectedFile() {
-            return file;
         }
     }
 }

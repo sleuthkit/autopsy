@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import javax.swing.JFrame;
+import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.openide.windows.WindowManager;
@@ -40,6 +41,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     private final DataContentPanel dataContentPanel;
     private final DataResultViewerThumbnail thumbnailViewer;
     private final DataResultViewerTable tableViewer;
+    private final ExplorerManager explorerManager;
 
     /**
      * Creates new form FileDiscoveryDialog
@@ -47,18 +49,36 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     FileDiscoveryDialog(java.awt.Frame parent, boolean modal, SleuthkitCase caseDb, EamDb centralRepoDb) {
         super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.FileSearchPanel_dialogTitle_text(), modal);
         initComponents();
+        explorerManager = new ExplorerManager();
         //create results callback and pass it into the search panel
         fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
-
         groupListPanel = new GroupListPanel();
         DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         dataContentPanel = DataContentPanel.createInstance();
-        thumbnailViewer = new DataResultViewerThumbnail();
-        tableViewer = new DataResultViewerTable();
+        thumbnailViewer = new DataResultViewerThumbnail(explorerManager);
+        tableViewer = new DataResultViewerTable(explorerManager);
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
         rightSplitPane.setTopComponent(tableViewer);
         rightSplitPane.setBottomComponent(dataContentPanel);
+        this.explorerManager.addPropertyChangeListener((evt) -> {
+            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES) && dataContentPanel != null) {
+                /*
+                 * Pass a single node selection in a result viewer to the
+                 * content view. Note that passing null to the content view
+                 * signals that either multiple nodes are selected, or a
+                 * previous selection has been cleared. This is important to the
+                 * content view, since its child content viewers only work for a
+                 * single node.
+                 */
+                Node[] selectedNodes = explorerManager.getSelectedNodes();
+                if (selectedNodes.length == 1) {
+                    dataContentPanel.setNode(selectedNodes[0]);
+                } else {
+                    dataContentPanel.setNode(null);
+                }
+            }
+        });
     }
 
     /**
