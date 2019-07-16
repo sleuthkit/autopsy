@@ -30,12 +30,6 @@ import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 public final class RelationshipBrowser extends JPanel implements Lookup.Provider {
 
     private SelectionInfo currentSelection;
-    
-    private final MessageViewer messagesViewer;
-    private final ContactsViewer contactsViewer;
-    private final SummaryViewer summaryViewer;
-    private final MediaViewer mediaViewer;
-    
     private final ModifiableProxyLookup proxyLookup;
 
     /**
@@ -43,15 +37,18 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
      */
     public RelationshipBrowser() {
         initComponents();
-        messagesViewer = new MessageViewer();
-        contactsViewer = new ContactsViewer();
-        summaryViewer = new SummaryViewer();
-        mediaViewer = new MediaViewer();
+        
+        MessageViewer messagesViewer = new MessageViewer();
+        ContactsViewer contactsViewer = new ContactsViewer();
+        SummaryViewer summaryViewer = new SummaryViewer();
+        MediaViewer mediaViewer = new MediaViewer();
+        CallLogViewer callLogViewer = new CallLogViewer();
         
         proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
  
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
+        tabPane.add(callLogViewer.getDisplayName(), callLogViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
         tabPane.add(mediaViewer.getDisplayName(), mediaViewer);
     }
