@@ -548,7 +548,6 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             }
         });
 
-        parentTextField.setText(org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.parentTextField.text")); // NOI18N
         parentTextField.setEnabled(false);
         parentTextField.setMaximumSize(new java.awt.Dimension(6, 20));
 
@@ -637,7 +636,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
                                     .addComponent(orderSizeRadioButton)
                                     .addComponent(fileOrderComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 25, Short.MAX_VALUE)))
+                        .addGap(0, 32, Short.MAX_VALUE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(

@@ -109,3 +109,4 @@ FileSearchPanel.deleteButton.text=Delete
 FileSearchPanel.orderByLabel.text=Order by:
 FileSearchPanel.groupByLabel.text=Group by:
 FileDiscoveryDialog.leftSplitPane.toolTipText=
+FileSearchDialog.searchButton.text=Search

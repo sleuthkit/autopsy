@@ -92,6 +92,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
 
     @Subscribe
     void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+        thumbnailViewer.resetComponent();
         if (groupSelectedEvent.getType() == FileType.IMAGE || groupSelectedEvent.getType() == FileType.VIDEO) {
             rightSplitPane.setTopComponent(thumbnailViewer);
             if (groupSelectedEvent.getFiles().size() > 0) {
@@ -112,10 +113,10 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
         if (searchStartedEvent.getType() == FileType.IMAGE || searchStartedEvent.getType() == FileType.VIDEO) {
-            thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            thumbnailViewer.setNode(null);
             dataContentPanel.setNode(null);
         } else {
-            tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            tableViewer.setNode(null);
             dataContentPanel.setNode(null);
         }
     }
