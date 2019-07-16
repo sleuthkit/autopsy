@@ -177,7 +177,10 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             // sort the output
             statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ProcessBuilder psortCommand = buildPsortCommand(moduleOutputPath);
-            ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
+            int returnVal = ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
+            
+            // For debugging purposes, logging the psort return value.
+            logger.log(Level.INFO, String.format("PlasoIngestModule - psort ran with a return value of %d", returnVal));
 
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "psort run was canceled"); //NON-NLS
@@ -284,6 +287,17 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + plasoDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
+            
+            // Check if there is data the db
+            if( !resultSet.first() ) {
+                logger.log(Level.WARNING, String.format("PlasoDB was empty: %s", plasoDb));
+                return;
+            } else {
+                // There is data, reset the pointer to the correct place for
+                // the start of processing.
+                resultSet.beforeFirst();
+            }
+            
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled Plaso Artifact Creation."); //NON-NLS
