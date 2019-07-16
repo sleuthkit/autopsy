@@ -73,6 +73,7 @@ class GroupListPanel extends javax.swing.JPanel {
         groupListScrollPane = new javax.swing.JScrollPane();
         groupList = new javax.swing.JList<>();
 
+        groupList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         groupList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 groupSelected(evt);

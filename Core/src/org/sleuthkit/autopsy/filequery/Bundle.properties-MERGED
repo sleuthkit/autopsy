@@ -1,3 +1,4 @@
+CTL_FileDiscoveryTestAction=Test file search
 CTL_FileSearchTestAction=Test file search
 # {0} - Data source name
 # {1} - Data source ID
