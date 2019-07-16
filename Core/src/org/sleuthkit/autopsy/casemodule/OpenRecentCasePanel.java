@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,10 @@ import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -51,6 +54,16 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
      */
     private OpenRecentCasePanel() {
         initComponents();
+        imagesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        imagesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                //enable the ok button when something is selected
+                if (!e.getValueIsAdjusting()){
+                    openButton.setEnabled(imagesTable.getSelectedRowCount() > 0);
+                }
+            }
+        });
     }
 
     /*
@@ -90,9 +103,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         // If there are any images, let's select the first one
         if (imagesTable.getRowCount() > 0) {
             imagesTable.setRowSelectionInterval(0, 0);
-            openButton.setEnabled(true);
-        } else {
-            openButton.setEnabled(false);
         }
     }
 
@@ -251,6 +261,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         cancelButton.setText(org.openide.util.NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.cancelButton.text")); // NOI18N
 
         openButton.setText(org.openide.util.NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.openButton.text")); // NOI18N
+        openButton.setEnabled(false);
         openButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openButtonActionPerformed(evt);
