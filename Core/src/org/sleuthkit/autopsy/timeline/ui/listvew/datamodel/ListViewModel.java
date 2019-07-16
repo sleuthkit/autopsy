@@ -108,7 +108,8 @@ public class ListViewModel {
                         typesString -> eventManager.getEventType(Integer.valueOf(typesString)).orElseThrow(() -> new TskCoreException("Error mapping event type id " + typesString + ".S")));
                 
                 // We want to merge together file sub-type events that are at 
-                //the same time, but create individual events for other sub 
+                //the same time, but create individual events for other event
+                // sub-types
                 Map<EventType, Long> eventMap = new HashMap<>();
                 if (hasFileTypeEvents(eventTypes)) {
                     
