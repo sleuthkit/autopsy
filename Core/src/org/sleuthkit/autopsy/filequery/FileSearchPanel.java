@@ -373,7 +373,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * The settings are valid so enable the Search button
      */
     private void setValid() {
-//        errorLabel.setVisible(false);
+        errorLabel.setText("");
         searchButton.setEnabled(true);
     }
 
@@ -384,8 +384,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param error
      */
     private void setInvalid(String error) {
-//        errorLabel.setText(error);
-//        errorLabel.setVisible(true);
+        errorLabel.setText(error);
         searchButton.setEnabled(false);
     }
 
@@ -435,6 +434,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         orderByLabel = new javax.swing.JLabel();
         groupByLabel = new javax.swing.JLabel();
         fileTypeComboBox = new javax.swing.JComboBox<>();
+        errorLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(408, 0));
 
@@ -748,25 +748,26 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         fileTypeComboBox.setModel(new DefaultComboBoxModel<FileType>());
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(searchButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(4, 4, 4)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addComponent(fileTypeLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(fileTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(sortingPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(fileTypeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(fileTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(sortingPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(4, 4, 4))
         );
         layout.setVerticalGroup(
@@ -781,7 +782,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 290, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(searchButton)
+                    .addComponent(errorLabel))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -867,6 +870,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<DataSourceItem> dataSourceList;
     private javax.swing.JScrollPane dataSourceScrollPane;
     private javax.swing.JButton deleteButton;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JComboBox<FileType> fileTypeComboBox;
     private javax.swing.JLabel fileTypeLabel;
     private javax.swing.JPanel filtersPanel;

@@ -110,17 +110,6 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         }
     }
 
-    @Subscribe
-    void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
-        if (searchStartedEvent.getType() == FileType.IMAGE || searchStartedEvent.getType() == FileType.VIDEO) {
-            thumbnailViewer.setNode(null);
-            dataContentPanel.setNode(null);
-        } else {
-            tableViewer.setNode(null);
-            dataContentPanel.setNode(null);
-        }
-    }
-
     @Override
     public void dispose() {
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
