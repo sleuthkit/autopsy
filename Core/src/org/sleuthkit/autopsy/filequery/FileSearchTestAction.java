@@ -103,7 +103,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
                     System.out.println("  " + name + " : " + groups.get(name));
                 }
                 
-                if (groups.size() > 0) {
+                if (! groups.isEmpty()) {
                     String firstGroupName = groups.keySet().iterator().next();
 
                     List<AbstractFile> entries0to5 = FileSearch.getFilesInGroup(filters, 
