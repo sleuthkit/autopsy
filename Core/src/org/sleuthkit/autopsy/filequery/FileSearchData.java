@@ -34,24 +34,32 @@ class FileSearchData {
      * Enum representing how often the file occurs in the Central Repository.
      */
     @NbBundle.Messages({
-        "FileSearchData.Frequency.unique.displayName=Unique",
-        "FileSearchData.Frequency.rare.displayName=Rare",
+        "FileSearchData.Frequency.unique.displayName=Unique (1)",
+        "FileSearchData.Frequency.rare.displayName=Rare (2-5)",
+        "FileSearchData.Frequency.count_10.displayName=6 - 10",
+        "FileSearchData.Frequency.count_20.displayName=11 - 20",
+        "FileSearchData.Frequency.count_50.displayName=21 - 50",
+        "FileSearchData.Frequency.count_100.displayName=51 - 100",
         "FileSearchData.Frequency.common.displayName=Common",
         "FileSearchData.Frequency.unknown.displayName=Unknown",
     })
     enum Frequency {
-	UNIQUE(0, Bundle.FileSearchData_Frequency_unique_displayName()),
-	RARE(1, Bundle.FileSearchData_Frequency_rare_displayName()),
-	COMMON(2, Bundle.FileSearchData_Frequency_common_displayName()),
-	UNKNOWN(3, Bundle.FileSearchData_Frequency_unknown_displayName());
+	UNIQUE(0, 1, Bundle.FileSearchData_Frequency_unique_displayName()),
+	RARE(1, 5, Bundle.FileSearchData_Frequency_rare_displayName()),
+	COUNT_10(1, 10, Bundle.FileSearchData_Frequency_count_10_displayName()),
+	COUNT_20(1, 10, Bundle.FileSearchData_Frequency_count_20_displayName()),
+	COUNT_50(1, 10, Bundle.FileSearchData_Frequency_count_50_displayName()),
+	COUNT_100(1, 10, Bundle.FileSearchData_Frequency_count_100_displayName()),
+	COMMON(2, 0, Bundle.FileSearchData_Frequency_common_displayName()),
+	UNKNOWN(3, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
         
         private final int ranking;
         private final String displayName;
-        static private final long uniqueMax = 1;
-        static private final long rareMax = 5;
+        private final int maxOccur;
         
-        Frequency(int ranking, String displayName) {
+        Frequency(int ranking, int maxOccur, String displayName) {
             this.ranking = ranking;
+            this.maxOccur = maxOccur;
             this.displayName = displayName;
         }
         
@@ -72,10 +80,18 @@ class FileSearchData {
          * @return the corresponding enum 
          */
         static Frequency fromCount(long count) {
-            if (count <= uniqueMax) {
+            if (count <= UNIQUE.maxOccur) {
                 return UNIQUE;
-            } else if (count < rareMax) {
+            } else if (count <= RARE.maxOccur) {
                 return RARE;
+            } else if (count <= COUNT_10.maxOccur) {
+                return COUNT_10;
+            } else if (count <= COUNT_20.maxOccur) {
+                return COUNT_20;
+            } else if (count <= COUNT_50.maxOccur) {
+                return COUNT_50;
+            } else if (count <= COUNT_100.maxOccur) {
+                return COUNT_100;
             }
             return COMMON;
         }
@@ -86,7 +102,7 @@ class FileSearchData {
          * @return enums that can be used to filter
          */
         static List<Frequency> getOptionsForFiltering() {
-            return Arrays.asList(UNIQUE, RARE, COMMON);
+            return Arrays.asList(UNIQUE, RARE, COUNT_10, COUNT_20, COUNT_50, COUNT_100, COMMON);
         }
         
         @Override
