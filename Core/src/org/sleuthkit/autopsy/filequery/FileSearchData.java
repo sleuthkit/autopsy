@@ -266,6 +266,51 @@ class FileSearchData {
         }
     }
     
+    /**
+     * Enum representing the score of the file.
+     */
+    @NbBundle.Messages({
+        "FileSearchData.Score.notable.displayName=Notable",
+        "FileSearchData.Score.interesting.displayName=Interesting",
+        "FileSearchData.Score.unknown.displayName=Unknown",
+    })
+    enum Score {
+        NOTABLE(0, Bundle.FileSearchData_Score_notable_displayName()),
+        INTERESTING(1, Bundle.FileSearchData_Score_interesting_displayName()),
+        UNKNOWN(2, Bundle.FileSearchData_Score_unknown_displayName());
+        
+        private final int ranking;
+        private final String displayName;
+        
+        Score(int ranking, String displayName) {
+            this.ranking = ranking;
+            this.displayName = displayName;
+        }
+        
+        /**
+         * Get the rank for sorting.
+         * 
+         * @return the rank (lower should be displayed first)
+         */
+        int getRanking() {
+            return ranking;
+        }
+
+        /**
+         * Get the list of enums that are valid for filtering.
+         * 
+         * @return enums that can be used to filter
+         */
+        static List<Score> getOptionsForFiltering() {
+            return Arrays.asList(NOTABLE, INTERESTING);
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }    
+    
     private FileSearchData() {
         // Class should not be instantiated
     }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filequery;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -32,6 +33,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Class to test the file search API. Allows the user to run searches and see results.
@@ -88,21 +90,56 @@ public final class FileSearchTestAction extends CallableSystemAction {
             FileSorter.SortingMethod fileSort = dialog.getFileSortingMethod();
             
             try {
-            
-                // Make a list of attributes that we want to add values for. This ensures the
-                // ResultFile objects will have all needed fields set when it's time to group
-                // and sort them. For example, if we're grouping by central repo frequency, we need
-                // to make sure we've loaded those values before grouping.
-                List<FileSearch.AttributeType> attrsForGroupingAndSorting = new ArrayList<>();
-                attrsForGroupingAndSorting.add(groupingAttr);
-                attrsForGroupingAndSorting.addAll(fileSort.getRequiredAttributes());
+                
+                // Test getting the groups
+                LinkedHashMap<String, Integer> groups = FileSearch.getGroupSizes(filters, 
+                    groupingAttr, 
+                    groupSortAlgorithm, 
+                    fileSort, 
+                    Case.getCurrentCase().getSleuthkitCase(), crDb);
+                
+                System.out.println("Groups: ");
+                for (String name : groups.keySet()) {
+                    System.out.println("  " + name + " : " + groups.get(name));
+                }
+                
+                if (! groups.isEmpty()) {
+                    String firstGroupName = groups.keySet().iterator().next();
 
+                    List<AbstractFile> entries0to5 = FileSearch.getFilesInGroup(filters, 
+                        groupingAttr, 
+                        groupSortAlgorithm, 
+                        fileSort, 
+                        firstGroupName,
+                        0,
+                        5,
+                        Case.getCurrentCase().getSleuthkitCase(), crDb);
+                    System.out.println("First five " + firstGroupName + " : ");
+                    for (AbstractFile f : entries0to5) {
+                        System.out.println("  " + f.getName());
+                    }
+
+                    List<AbstractFile> entries6to106 = FileSearch.getFilesInGroup(filters, 
+                        groupingAttr, 
+                        groupSortAlgorithm, 
+                        fileSort, 
+                        firstGroupName,
+                        5,
+                        100,
+                        Case.getCurrentCase().getSleuthkitCase(), crDb);
+                    System.out.println(firstGroupName + " 6 to 106: ");
+                    for (AbstractFile f : entries6to106) {
+                        System.out.println("  " + f.getName());
+                    }
+                }
+                
+                
+                /////////////////
                 // Run the search
                 SearchResults results = FileSearch.runFileSearchDebug(filters, 
                     groupingAttr, 
                     groupSortAlgorithm, 
                     fileSort, 
-                    attrsForGroupingAndSorting,
                     Case.getCurrentCase().getSleuthkitCase(), crDb);
 
                 // Display the results
