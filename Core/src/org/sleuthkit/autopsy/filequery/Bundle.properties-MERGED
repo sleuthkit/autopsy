@@ -5,15 +5,23 @@ CTL_FileSearchTestAction=Test file search
 FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
 # {0} - Data source ID
 FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
+FileSearch.FileTagGroupKey.noSets=None
 FileSearch.GroupingAttributeType.datasource.displayName=Data source
 FileSearch.GroupingAttributeType.fileType.displayName=File type
 FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences
+FileSearch.GroupingAttributeType.hash.displayName=Hash set
+FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting item set
 FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names
 FileSearch.GroupingAttributeType.none.displayName=None
+FileSearch.GroupingAttributeType.object.displayName=Object detected
 FileSearch.GroupingAttributeType.parent.displayName=Parent folder
 FileSearch.GroupingAttributeType.size.displayName=Size
+FileSearch.GroupingAttributeType.tag.displayName=File tag
+FileSearch.HashHitsGroupKey.noHashHits=None
+FileSearch.InterestingItemGroupKey.noSets=None
 FileSearch.KeywordListGroupKey.noKeywords=None
 FileSearch.NoGroupingGroupKey.allFiles=All Files
+FileSearch.ObjectDetectedGroupKey.noSets=None
 FileSearchData.FileSize.large.displayName=200MB-1GB
 FileSearchData.FileSize.medium.displayName=50-200MB
 FileSearchData.FileSize.small.displayName=1-50MB
@@ -29,6 +37,9 @@ FileSearchData.Frequency.common.displayName=Common
 FileSearchData.Frequency.rare.displayName=Rare
 FileSearchData.Frequency.unique.displayName=Unique
 FileSearchData.Frequency.unknown.displayName=Unknown
+FileSearchData.Score.interesting.displayName=Interesting
+FileSearchData.Score.notable.displayName=Notable
+FileSearchData.Score.unknown.displayName=Unknown
 FileSearchDialog.dialogTitle.text=Test file search
 FileSearchDialog.jLabel1.text=File Type
 FileSearchDialog.dsCheckBox.text=Data source
@@ -47,21 +58,29 @@ FileSearchDialog.orderAttrRadioButton.text=Attribute
 FileSearchDialog.orderSizeRadioButton.text=Group Size
 FileSearchDialog.jLabel5.text=Order files by: 
 FileSearchDialog.parentCheckBox.text=Parent
+FileSearchDialog.searchButton.text=Search
+FileSearchFiltering.concatenateSetNamesForDisplay.comma=, 
 # {0} - Data source name
 # {1} - Data source ID
 FileSearchFiltering.DataSourceFilter.datasource={0}({1})
 # {0} - filters
 FileSearchFiltering.DataSourceFilter.desc=Files in data source(s): {0}
 FileSearchFiltering.DataSourceFilter.or=\ or 
+FileSearchFiltering.ExifFilter.desc=Files that contain EXIF data
 # {0} - filters
 FileSearchFiltering.FileTypeFilter.desc=Files with type: {0}
 FileSearchFiltering.FileTypeFilter.or=\ or 
 # {0} - filters
 FileSearchFiltering.FrequencyFilter.desc=Files with frequency: {0}
 FileSearchFiltering.FrequencyFilter.or=\ or 
-FileSearchFiltering.KeywordListFilter.comma=, 
+# {0} - filters
+FileSearchFiltering.HashSetFilter.desc=Files with hash set hits in set(s): {0}
+# {0} - filters
+FileSearchFiltering.InterestingItemSetFilter.desc=Files with interesting item hits in set(s): {0}
 # {0} - filters
 FileSearchFiltering.KeywordListFilter.desc=Files with keywords in list(s): {0}
+# {0} - filters
+FileSearchFiltering.ObjectDetectionFilter.desc=Files with objects detected in set(s): {0}
 # {0} - filters
 FileSearchFiltering.ParentFilter.desc=Files with paths matching: {0}
 FileSearchFiltering.ParentFilter.exact=(exact match)
@@ -71,6 +90,9 @@ FileSearchFiltering.ParentFilter.substring=(substring)
 FileSearchFiltering.ParentSearchTerm.fullString=\ {0} (exact)
 # {0} - search term
 FileSearchFiltering.ParentSearchTerm.subString=\ {0} (substring)
+FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable
+# {0} - filters
+FileSearchFiltering.ScoreFilter.desc=Files with score(s) of : {0}
 # {0} - filters
 FileSearchFiltering.SizeFilter.desc=Files with size in range(s): {0}
 FileSearchFiltering.SizeFilter.or=\ or 
@@ -78,6 +100,9 @@ FileSearchFiltering.SizeFilter.or=\ or
 # {1} - Maximum bytes
 FileSearchFiltering.SizeFilter.range=({0} to {1})
 FileSearchPanel.dialogTitle.text=Test file search
+# {0} - tag names
+FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}
+FileSearchFiltering.TagsFilter.or=\ or 
 FileSorter.SortingMethod.datasource.displayName=By data source
 FileSorter.SortingMethod.filename.displayName=By file name
 FileSorter.SortingMethod.filesize.displayName=By file size
@@ -109,3 +134,10 @@ FileSearchPanel.deleteButton.text=Delete
 FileSearchPanel.orderByLabel.text=Order by:
 FileSearchPanel.groupByLabel.text=Group by:
 FileSearchDialog.searchButton.text=Search
+FileSearchDialog.hashCheckBox.text=Hash Set
+FileSearchDialog.intCheckBox.text=Interesting Items
+FileSearchDialog.tagsCheckBox.text=Tags
+FileSearchDialog.objCheckBox.text=Objects
+FileSearchDialog.exifCheckBox.text=Must contain EXIF data
+FileSearchDialog.notableCheckBox.text=Must have been tagged as notable
+FileSearchDialog.scoreCheckBox.text=Has score

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -59,7 +61,6 @@ class FileSearch {
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
      * @param fileSortingMethod  The method to use to sort the files within the groups
-     * @param attributesNeededForGroupingOrSorting  Any attributes that will used for grouping or sorting
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if not needed.
      * 
@@ -72,8 +73,15 @@ class FileSearch {
             AttributeType groupAttributeType, 
             FileGroup.GroupSortingAlgorithm groupSortingType, 
             FileSorter.SortingMethod fileSortingMethod, 
-            List<AttributeType> attributesNeededForGroupingOrSorting,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        // Make a list of attributes that we want to add values for. This ensures the
+        // ResultFile objects will have all needed fields set when it's time to group
+        // and sort them. For example, if we're grouping by central repo frequency, we need
+        // to make sure we've loaded those values before grouping.
+        List<AttributeType> attributesNeededForGroupingOrSorting = new ArrayList<>();
+        attributesNeededForGroupingOrSorting.add(groupAttributeType);
+        attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
         
         // Run the queries for each filter
         List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
@@ -92,13 +100,93 @@ class FileSearch {
     }
     
     /**
+     * Run the file search to get the group names and sizes.
+     * 
+     * @param filters            The filters to apply
+     * @param groupAttributeType The attribute to use for grouping
+     * @param groupSortingType   The method to use to sort the groups
+     * @param fileSortingMethod  The method to use to sort the files within the groups
+     * @param caseDb             The case database
+     * @param centralRepoDb      The central repository database. Can be null if not needed.
+     * 
+     * @return A LinkedHashMap grouped and sorted according to the parameters
+     * 
+     * @throws FileSearchException 
+     */    
+    static LinkedHashMap<String, Integer> getGroupSizes(
+            List<FileSearchFiltering.FileFilter> filters, 
+            AttributeType groupAttributeType, 
+            FileGroup.GroupSortingAlgorithm groupSortingType, 
+            FileSorter.SortingMethod fileSortingMethod, 
+            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+                groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+        
+        LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
+        for (String groupName : searchResults.keySet()) {
+            groupSizes.put(groupName, searchResults.get(groupName).size());
+        }
+        return groupSizes;
+    }
+    
+    /**
+     * Run the file search to get the files in a given group.
+     * 
+     * @param filters            The filters to apply
+     * @param groupAttributeType The attribute to use for grouping
+     * @param groupSortingType   The method to use to sort the groups
+     * @param fileSortingMethod  The method to use to sort the files within the groups
+     * @param groupName          Name of the group to get entries from
+     * @param startingEntry      The first entry to return
+     * @param numberOfEntries    The number of entries to return
+     * @param caseDb             The case database
+     * @param centralRepoDb      The central repository database. Can be null if not needed.
+     * 
+     * @return A LinkedHashMap grouped and sorted according to the parameters
+     * 
+     * @throws FileSearchException 
+     */    
+    static List<AbstractFile> getFilesInGroup(
+            List<FileSearchFiltering.FileFilter> filters, 
+            AttributeType groupAttributeType, 
+            FileGroup.GroupSortingAlgorithm groupSortingType, 
+            FileSorter.SortingMethod fileSortingMethod,
+            String groupName,
+            int startingEntry,
+            int numberOfEntries,
+            SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+                groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+        
+        List<AbstractFile> page = new ArrayList<>();
+        
+        // Check that the group exists
+        if (! searchResults.containsKey(groupName)) {
+            return page;
+        }
+        
+        // Check that there is data after the starting point
+        if (searchResults.get(groupName).size() < startingEntry) {
+            return page;
+        }
+        
+        // Add each page in the range
+        for (int i = startingEntry; (i < startingEntry + numberOfEntries) 
+                && (i < searchResults.get(groupName).size());i++) {
+            page.add(searchResults.get(groupName).get(i));
+        }
+        return page;
+    }    
+    
+    /**
      * Run the file search.
      * 
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
      * @param fileSortingMethod  The method to use to sort the files within the groups
-     * @param attributesNeededForGroupingOrSorting  Any attributes that will used for grouping or sorting
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if not needed.
      * 
@@ -111,8 +199,15 @@ class FileSearch {
             AttributeType groupAttributeType, 
             FileGroup.GroupSortingAlgorithm groupSortingType, 
             FileSorter.SortingMethod fileSortingMethod, 
-            List<AttributeType> attributesNeededForGroupingOrSorting,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
+        
+        // Make a list of attributes that we want to add values for. This ensures the
+        // ResultFile objects will have all needed fields set when it's time to group
+        // and sort them. For example, if we're grouping by central repo frequency, we need
+        // to make sure we've loaded those values before grouping.
+        List<AttributeType> attributesNeededForGroupingOrSorting = new ArrayList<>();
+        attributesNeededForGroupingOrSorting.add(groupAttributeType);
+        attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());        
         
         // Run the queries for each filter
         List<ResultFile> resultFiles = FileSearchFiltering.runQueries(filters, caseDb, centralRepoDb);
@@ -157,6 +252,10 @@ class FileSearch {
         "FileSearch.GroupingAttributeType.size.displayName=Size",
         "FileSearch.GroupingAttributeType.datasource.displayName=Data source",
         "FileSearch.GroupingAttributeType.parent.displayName=Parent folder",
+        "FileSearch.GroupingAttributeType.hash.displayName=Hash set",
+        "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting item set",
+        "FileSearch.GroupingAttributeType.tag.displayName=File tag",
+        "FileSearch.GroupingAttributeType.object.displayName=Object detected",
         "FileSearch.GroupingAttributeType.none.displayName=None",
     }) 
     enum GroupingAttributeType {
@@ -166,6 +265,10 @@ class FileSearch {
         FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),
         DATA_SOURCE(new DataSourceAttribute(), Bundle.FileSearch_GroupingAttributeType_datasource_displayName()),
         PARENT_PATH(new ParentPathAttribute(), Bundle.FileSearch_GroupingAttributeType_parent_displayName()),
+        HASH_LIST_NAME(new HashHitsAttribute(), Bundle.FileSearch_GroupingAttributeType_hash_displayName()),
+        INTERESTING_ITEM_SET(new InterestingItemAttribute(), Bundle.FileSearch_GroupingAttributeType_interestingItem_displayName()),
+        FILE_TAG(new FileTagAttribute(), Bundle.FileSearch_GroupingAttributeType_tag_displayName()),
+        OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.FileSearch_GroupingAttributeType_object_displayName()),
         NO_GROUPING(new NoGroupingAttribute(), Bundle.FileSearch_GroupingAttributeType_none_displayName());
         
         private final AttributeType attributeType;
@@ -527,24 +630,11 @@ class FileSearch {
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
-            
-            // Concatenate the object IDs in the list of files
-            String objIdList = ""; // NON-NLS
-            for (ResultFile file : files) {
-                if ( ! objIdList.isEmpty()) {
-                    objIdList += ","; // NON-NLS
-                }
-                objIdList += "\'" + file.getAbstractFile().getId() + "\'"; // NON-NLS
-            }
-            
+                        
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
             // keyword list hits.
-            String selectQuery = "blackboard_artifacts.obj_id AS object_id, blackboard_attributes.value_text AS keyword_list_name " +
-                            "FROM blackboard_artifacts " +
-                            "INNER JOIN blackboard_attributes ON blackboard_artifacts.artifact_id=blackboard_attributes.artifact_id " +
-                            "WHERE blackboard_attributes.artifact_type_id=\'" + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + "\' " +
-                            "AND blackboard_attributes.attribute_type_id=\'" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "\' " +
-                            "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
             
             SetKeywordListNamesCallback callback = new SetKeywordListNamesCallback(files);
             try {
@@ -583,12 +673,12 @@ class FileSearch {
                     while (rs.next()) {
                         try {
                             Long objId = rs.getLong("object_id"); // NON-NLS
-                            String keywordListName = rs.getString("keyword_list_name"); // NON-NLS
+                            String keywordListName = rs.getString("set_name"); // NON-NLS
 
                             tempMap.get(objId).addKeywordListName(keywordListName);
 
                         } catch (SQLException ex) {
-                            logger.log(Level.SEVERE, "Unable to get object_id or keyword_list_name from result set", ex); // NON-NLS
+                            logger.log(Level.SEVERE, "Unable to get object_id or set_name from result set", ex); // NON-NLS
                         }
                     }
                 } catch (SQLException ex) {
@@ -747,6 +837,516 @@ class FileSearch {
     }    
     
     /**
+     * Attribute for grouping/sorting by hash set lists
+     */
+    static class HashHitsAttribute extends AttributeType {
+        
+        @Override
+        GroupKey getGroupKey(ResultFile file) {
+            return new HashHitsGroupKey(file);
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            // Get pairs of (object ID, hash set name) for all files in the list of files that have
+            // hash set hits.
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
+            
+            HashSetNamesCallback callback = new HashSetNamesCallback(files);
+            try {
+                caseDb.getCaseDbAccessManager().select(selectQuery, callback);
+            } catch (TskCoreException ex) {
+                throw new FileSearchException("Error looking up hash set attributes", ex); // NON-NLS
+            }
+        }
+        
+        /**
+         * Callback to process the results of the CaseDbAccessManager select query. Will add
+         * the hash set names to the list of ResultFile objects.
+         */
+        private static class HashSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+            List<ResultFile> resultFiles;
+            
+            /**
+             * Create the callback.
+             * 
+             * @param resultFiles List of files to add hash set names to
+             */
+            HashSetNamesCallback(List<ResultFile> resultFiles) {
+                this.resultFiles = resultFiles;
+            }
+            
+            @Override
+            public void process(ResultSet rs) {
+                try {
+                    // Create a temporary map of object ID to ResultFile
+                    Map<Long, ResultFile> tempMap = new HashMap<>();
+                    for (ResultFile file : resultFiles) {
+                        tempMap.put(file.getAbstractFile().getId(), file);
+                    }
+                    
+                    while (rs.next()) {
+                        try {
+                            Long objId = rs.getLong("object_id"); // NON-NLS
+                            String hashSetName = rs.getString("set_name"); // NON-NLS
+
+                            tempMap.get(objId).addHashSetName(hashSetName);
+
+                        } catch (SQLException ex) {
+                            logger.log(Level.SEVERE, "Unable to get object_id or set_name from result set", ex); // NON-NLS
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get hash set names", ex); // NON-NLS
+                }
+            }   
+        }
+    }   
+
+    /**
+     * Key representing a hash hits group
+     */    
+    private static class HashHitsGroupKey extends GroupKey {
+        private final List<String> hashSetNames;
+        private final String hashSetNamesString;
+                
+        @NbBundle.Messages({
+            "FileSearch.HashHitsGroupKey.noHashHits=None",
+        })
+        HashHitsGroupKey(ResultFile file) {
+            hashSetNames = file.getHashSetNames();
+            
+            if (hashSetNames.isEmpty()) {
+                hashSetNamesString = Bundle.FileSearch_HashHitsGroupKey_noHashHits();
+            } else {
+                hashSetNamesString = String.join(",", hashSetNames); // NON-NLS
+            }
+        }
+        
+        @Override
+        String getDisplayName() {
+            return hashSetNamesString;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof HashHitsGroupKey) {
+                HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey)otherGroupKey;
+                
+                // Put the empty list at the end
+                if (hashSetNames.isEmpty()) {
+                    if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherHashHitsGroupKey.hashSetNames.isEmpty()) {
+                    return -1;
+                }
+                
+                return hashSetNamesString.compareTo(otherHashHitsGroupKey.hashSetNamesString);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof HashHitsGroupKey)) {
+                return false;
+            }
+            
+            HashHitsGroupKey otherHashHitsGroupKey = (HashHitsGroupKey)otherKey;
+            return hashSetNamesString.equals(otherHashHitsGroupKey.hashSetNamesString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(hashSetNamesString);
+        }    
+    }    
+
+    /**
+     * Attribute for grouping/sorting by interesting item set lists
+     */
+    static class InterestingItemAttribute extends AttributeType {
+        
+        @Override
+        GroupKey getGroupKey(ResultFile file) {
+            return new InterestingItemGroupKey(file);
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
+            // interesting file set hits.
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
+            
+            InterestingFileSetNamesCallback callback = new InterestingFileSetNamesCallback(files);
+            try {
+                caseDb.getCaseDbAccessManager().select(selectQuery, callback);
+            } catch (TskCoreException ex) {
+                throw new FileSearchException("Error looking up interesting file set attributes", ex); // NON-NLS
+            }
+        }
+        
+        /**
+         * Callback to process the results of the CaseDbAccessManager select query. Will add
+         * the interesting file set names to the list of ResultFile objects.
+         */
+        private static class InterestingFileSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+            List<ResultFile> resultFiles;
+            
+            /**
+             * Create the callback.
+             * 
+             * @param resultFiles List of files to add interesting file set names to
+             */
+            InterestingFileSetNamesCallback(List<ResultFile> resultFiles) {
+                this.resultFiles = resultFiles;
+            }
+            
+            @Override
+            public void process(ResultSet rs) {
+                try {
+                    // Create a temporary map of object ID to ResultFile
+                    Map<Long, ResultFile> tempMap = new HashMap<>();
+                    for (ResultFile file : resultFiles) {
+                        tempMap.put(file.getAbstractFile().getId(), file);
+                    }
+                    
+                    while (rs.next()) {
+                        try {
+                            Long objId = rs.getLong("object_id"); // NON-NLS
+                            String setName = rs.getString("set_name"); // NON-NLS
+
+                            tempMap.get(objId).addInterestingSetName(setName);
+
+                        } catch (SQLException ex) {
+                            logger.log(Level.SEVERE, "Unable to get object_id or set_name from result set", ex); // NON-NLS
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get interesting file set names", ex); // NON-NLS
+                }
+            }   
+        }
+    }   
+
+    /**
+     * Key representing a interesting item set group
+     */    
+    private static class InterestingItemGroupKey extends GroupKey {
+        private final List<String> interestingItemSetNames;
+        private final String interestingItemSetNamesString;
+                
+        @NbBundle.Messages({
+            "FileSearch.InterestingItemGroupKey.noSets=None",
+        })
+        InterestingItemGroupKey(ResultFile file) {
+            interestingItemSetNames = file.getInterestingSetNames();
+            
+            if (interestingItemSetNames.isEmpty()) {
+                interestingItemSetNamesString = Bundle.FileSearch_InterestingItemGroupKey_noSets();
+            } else {
+                interestingItemSetNamesString = String.join(",", interestingItemSetNames); // NON-NLS
+            }
+        }
+        
+        @Override
+        String getDisplayName() {
+            return interestingItemSetNamesString;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof InterestingItemGroupKey) {
+                InterestingItemGroupKey otherInterestingItemGroupKey = (InterestingItemGroupKey)otherGroupKey;
+                
+                // Put the empty list at the end
+                if (this.interestingItemSetNames.isEmpty()) {
+                    if (otherInterestingItemGroupKey.interestingItemSetNames.isEmpty()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherInterestingItemGroupKey.interestingItemSetNames.isEmpty()) {
+                    return -1;
+                }
+                
+                return interestingItemSetNamesString.compareTo(otherInterestingItemGroupKey.interestingItemSetNamesString);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof InterestingItemGroupKey)) {
+                return false;
+            }
+            
+            InterestingItemGroupKey otherInterestingItemGroupKey = (InterestingItemGroupKey)otherKey;
+            return interestingItemSetNamesString.equals(otherInterestingItemGroupKey.interestingItemSetNamesString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(interestingItemSetNamesString);
+        }    
+    }         
+        
+    /**
+     * Attribute for grouping/sorting by objects detected
+     */
+    static class ObjectDetectedAttribute extends AttributeType {
+        
+        @Override
+        GroupKey getGroupKey(ResultFile file) {
+            return new ObjectDetectedGroupKey(file);
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            // Get pairs of (object ID, object type name) for all files in the list of files that have
+            // objects detected
+            String selectQuery = createSetNameClause(files, BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID(),
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID());
+            
+            ObjectDetectedNamesCallback callback = new ObjectDetectedNamesCallback(files);
+            try {
+                caseDb.getCaseDbAccessManager().select(selectQuery, callback);
+            } catch (TskCoreException ex) {
+                throw new FileSearchException("Error looking up object detected attributes", ex); // NON-NLS
+            }
+        }
+        
+        /**
+         * Callback to process the results of the CaseDbAccessManager select query. Will add
+         * the object type names to the list of ResultFile objects.
+         */
+        private static class ObjectDetectedNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+            List<ResultFile> resultFiles;
+            
+            /**
+             * Create the callback.
+             * 
+             * @param resultFiles List of files to add object detected names to
+             */
+            ObjectDetectedNamesCallback(List<ResultFile> resultFiles) {
+                this.resultFiles = resultFiles;
+            }
+            
+            @Override
+            public void process(ResultSet rs) {
+                try {
+                    // Create a temporary map of object ID to ResultFile
+                    Map<Long, ResultFile> tempMap = new HashMap<>();
+                    for (ResultFile file : resultFiles) {
+                        tempMap.put(file.getAbstractFile().getId(), file);
+                    }
+                    
+                    while (rs.next()) {
+                        try {
+                            Long objId = rs.getLong("object_id"); // NON-NLS
+                            String setName = rs.getString("set_name"); // NON-NLS
+
+                            tempMap.get(objId).addObjectDetectedName(setName);
+
+                        } catch (SQLException ex) {
+                            logger.log(Level.SEVERE, "Unable to get object_id or set_name from result set", ex); // NON-NLS
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get object detected names", ex); // NON-NLS
+                }
+            }   
+        }
+    }   
+
+    /**
+     * Key representing an object detected group
+     */    
+    private static class ObjectDetectedGroupKey extends GroupKey {
+        private final List<String> objectDetectedNames;
+        private final String objectDetectedNamesString;
+                
+        @NbBundle.Messages({
+            "FileSearch.ObjectDetectedGroupKey.noSets=None",
+        })
+        ObjectDetectedGroupKey(ResultFile file) {
+            objectDetectedNames = file.getObjectDetectedNames();
+            
+            if (objectDetectedNames.isEmpty()) {
+                objectDetectedNamesString = Bundle.FileSearch_ObjectDetectedGroupKey_noSets();
+            } else {
+                objectDetectedNamesString = String.join(",", objectDetectedNames); // NON-NLS
+            }
+        }
+        
+        @Override
+        String getDisplayName() {
+            return objectDetectedNamesString;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof ObjectDetectedGroupKey) {
+                ObjectDetectedGroupKey otherObjectDetectedGroupKey = (ObjectDetectedGroupKey)otherGroupKey;
+                
+                // Put the empty list at the end
+                if (this.objectDetectedNames.isEmpty()) {
+                    if (otherObjectDetectedGroupKey.objectDetectedNames.isEmpty()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherObjectDetectedGroupKey.objectDetectedNames.isEmpty()) {
+                    return -1;
+                }
+                
+                return objectDetectedNamesString.compareTo(otherObjectDetectedGroupKey.objectDetectedNamesString);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof ObjectDetectedGroupKey)) {
+                return false;
+            }
+            
+            ObjectDetectedGroupKey otherObjectDetectedGroupKey = (ObjectDetectedGroupKey)otherKey;
+            return objectDetectedNamesString.equals(otherObjectDetectedGroupKey.objectDetectedNamesString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(objectDetectedNamesString);
+        }    
+    }        
+    
+    /**
+     * Attribute for grouping/sorting by tag name
+     */
+    static class FileTagAttribute extends AttributeType {
+        
+        @Override
+        GroupKey getGroupKey(ResultFile file) {
+            return new FileTagGroupKey(file);
+        }
+        
+        @Override
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+                EamDb centralRepoDb) throws FileSearchException {
+            
+            
+            try {
+                for (ResultFile resultFile : files) {
+                    List<ContentTag> contentTags = caseDb.getContentTagsByContent(resultFile.getAbstractFile());
+
+                    for (ContentTag tag : contentTags) {
+                        resultFile.addTagName(tag.getName().getDisplayName());
+                    }
+                }
+            } catch (TskCoreException ex) {
+                throw new FileSearchException("Error looking up file tag attributes", ex); // NON-NLS
+            }
+        }
+    }   
+
+    /**
+     * Key representing a file tag group
+     */    
+    private static class FileTagGroupKey extends GroupKey {
+        private final List<String> tagNames;
+        private final String tagNamesString;
+                
+        @NbBundle.Messages({
+            "FileSearch.FileTagGroupKey.noSets=None",
+        })
+        FileTagGroupKey(ResultFile file) {
+            tagNames = file.getTagNames();
+            
+            if (tagNames.isEmpty()) {
+                tagNamesString = Bundle.FileSearch_FileTagGroupKey_noSets();
+            } else {
+                tagNamesString = String.join(",", tagNames); // NON-NLS
+            }
+        }
+        
+        @Override
+        String getDisplayName() {
+            return tagNamesString;
+        }
+        
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof FileTagGroupKey) {
+                FileTagGroupKey otherFileTagGroupKey = (FileTagGroupKey)otherGroupKey;
+                
+                // Put the empty list at the end
+                if (tagNames.isEmpty()) {
+                    if (otherFileTagGroupKey.tagNames.isEmpty()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else if (otherFileTagGroupKey.tagNames.isEmpty()) {
+                    return -1;
+                }
+                
+                return tagNamesString.compareTo(otherFileTagGroupKey.tagNamesString);
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        } 
+        
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this){
+                return true;
+            }
+            
+            if (!(otherKey instanceof FileTagGroupKey)) {
+                return false;
+            }
+            
+            FileTagGroupKey otherFileTagGroupKey = (FileTagGroupKey)otherKey;
+            return tagNamesString.equals(otherFileTagGroupKey.tagNamesString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tagNamesString);
+        }    
+    }            
+    
+    /**
      * Default attribute used to make one group
      */
     static class NoGroupingAttribute extends AttributeType {
@@ -803,6 +1403,28 @@ class FileSearch {
             return 0;
         }    
     }      
+    
+    private static String createSetNameClause(List<ResultFile> files, 
+        int artifactTypeID, int setNameAttrID) throws FileSearchException {
+            
+        // Concatenate the object IDs in the list of files
+        String objIdList = ""; // NON-NLS
+        for (ResultFile file : files) {
+            if ( ! objIdList.isEmpty()) {
+                objIdList += ","; // NON-NLS
+            }
+            objIdList += "\'" + file.getAbstractFile().getId() + "\'"; // NON-NLS
+        }
+
+        // Get pairs of (object ID, set name) for all files in the list of files that have
+        // the given artifact type.
+        return "blackboard_artifacts.obj_id AS object_id, blackboard_attributes.value_text AS set_name " +
+                        "FROM blackboard_artifacts " +
+                        "INNER JOIN blackboard_attributes ON blackboard_artifacts.artifact_id=blackboard_attributes.artifact_id " +
+                        "WHERE blackboard_attributes.artifact_type_id=\'" + artifactTypeID + "\' " +
+                        "AND blackboard_attributes.attribute_type_id=\'" + setNameAttrID + "\' " +
+                        "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
+    }
     
     private FileSearch() {
         // Class should not be instantiated

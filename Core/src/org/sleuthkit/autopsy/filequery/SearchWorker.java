@@ -73,11 +73,12 @@ final class SearchWorker extends SwingWorker<Void, Void> {
             attrsForGroupingAndSorting.addAll(fileSort.getRequiredAttributes());
 
             // Run the search
+            
+
             SearchResults results = FileSearch.runFileSearchDebug(filters,
                     groupingAttr,
                     groupSortAlgorithm,
                     fileSort,
-                    attrsForGroupingAndSorting,
                     Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
             DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(results));
         } catch (FileSearchException ex) {
