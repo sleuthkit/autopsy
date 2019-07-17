@@ -136,7 +136,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.bad.imageFile=Cannot find image file name and path",
         "PlasoIngestModule.completed=Plaso Processing Completed",
         "PlasoIngestModule.has.run=Plaso Plugin has been run.",
-        "PlasoIngestModule.psort.fail=Plaso error running psort. psort error code: {0}"})
+        "PlasoIngestModule.psort.fail=Plaso returned an error when sorting events.  Results are not complete."})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         assert dataSource.equals(image);
@@ -182,7 +182,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             int result = ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
              if (result != 0) {
                  logger.log(Level.SEVERE, String.format("Error running Psort, error code returned %d", result)); //NON-NLS
-                 MessageNotifyUtil.Notify.error(MODULE_NAME, Bundle.PlasoIngestModule_psort_fail(result));
+                 MessageNotifyUtil.Notify.error(MODULE_NAME, Bundle.PlasoIngestModule_psort_fail());
                  return ProcessResult.ERROR;
              }
 
