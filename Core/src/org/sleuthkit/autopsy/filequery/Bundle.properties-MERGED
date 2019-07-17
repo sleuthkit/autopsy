@@ -1,4 +1,4 @@
-CTL_FileDiscoveryTestAction=Test file search
+CTL_FileDiscoveryTestAction=Test file discovery
 CTL_FileSearchTestAction=Test file search
 # {0} - Data source name
 # {1} - Data source ID
@@ -108,5 +108,4 @@ FileSearchPanel.parentLabel.text=(All will be used)
 FileSearchPanel.deleteButton.text=Delete
 FileSearchPanel.orderByLabel.text=Order by:
 FileSearchPanel.groupByLabel.text=Group by:
-FileDiscoveryDialog.leftSplitPane.toolTipText=
 FileSearchDialog.searchButton.text=Search

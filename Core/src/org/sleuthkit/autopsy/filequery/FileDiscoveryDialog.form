@@ -42,9 +42,7 @@
         <Container class="javax.swing.JSplitPane" name="leftSplitPane">
           <Properties>
             <Property name="dividerLocation" type="int" value="420"/>
-            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/filequery/Bundle.properties" key="FileDiscoveryDialog.leftSplitPane.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
+            <Property name="toolTipText" type="java.lang.String" value=""/>
             <Property name="lastDividerLocation" type="int" value="420"/>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[520, 25]"/>

@@ -143,7 +143,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         mainSplitPane.setResizeWeight(0.2);
 
         leftSplitPane.setDividerLocation(420);
-        leftSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(FileDiscoveryDialog.class, "FileDiscoveryDialog.leftSplitPane.toolTipText")); // NOI18N
+        leftSplitPane.setToolTipText("");
         leftSplitPane.setLastDividerLocation(420);
         leftSplitPane.setPreferredSize(new java.awt.Dimension(520, 25));
         mainSplitPane.setLeftComponent(leftSplitPane);

@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.newpackage.FileDiscoveryTestAction")
 @ActionReference(path = "Menu/Tools", position = 1854, separatorBefore = 1853)
 @ActionRegistration(displayName = "#CTL_FileDiscoveryTestAction", lazy = false)
-@NbBundle.Messages({"CTL_FileDiscoveryTestAction=Test file search"})
+@NbBundle.Messages({"CTL_FileDiscoveryTestAction=Test file discovery"})
 public final class FileDiscoveryTestAction extends CallableSystemAction {
 
     private final static Logger logger = Logger.getLogger(FileDiscoveryTestAction.class.getName());
