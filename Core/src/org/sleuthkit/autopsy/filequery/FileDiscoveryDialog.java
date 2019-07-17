@@ -123,6 +123,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
 
     @Override
     public void dispose() {
+        fileSearchPanel.cancelSearch();
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(this);
         super.dispose();

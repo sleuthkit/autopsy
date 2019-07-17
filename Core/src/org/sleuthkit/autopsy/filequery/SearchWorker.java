@@ -93,5 +93,6 @@ final class SearchWorker extends SwingWorker<Void, Void> {
         if (searchButtonToEnable != null) {
             searchButtonToEnable.setEnabled(true);
         }
+        System.out.println("SEARCH FINISHED");
     }
 }

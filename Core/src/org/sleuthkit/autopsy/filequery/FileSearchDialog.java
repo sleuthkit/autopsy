@@ -745,7 +745,6 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             }
         });
 
-        parentTextField.setText(org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.parentTextField.text")); // NOI18N
         parentTextField.setEnabled(false);
         parentTextField.setMaximumSize(new java.awt.Dimension(6, 20));
 
@@ -775,7 +774,6 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         });
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.errorLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(hashCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.hashCheckBox.text")); // NOI18N
         hashCheckBox.addActionListener(new java.awt.event.ActionListener() {

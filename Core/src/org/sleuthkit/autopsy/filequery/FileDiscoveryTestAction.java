@@ -64,8 +64,8 @@ public final class FileDiscoveryTestAction extends CallableSystemAction {
                 return;
             }
         }
-
-        FileDiscoveryDialog dialog = new FileDiscoveryDialog(WindowManager.getDefault().getMainWindow(), false, Case.getCurrentCase().getSleuthkitCase(), crDb);
+        //modal set to true currently to prevent multiple dialogs being opened because messaging uses a shared eventbus
+        FileDiscoveryDialog dialog = new FileDiscoveryDialog(WindowManager.getDefault().getMainWindow(), true, Case.getCurrentCase().getSleuthkitCase(), crDb);
         //register the dialog with the event bus 
         DiscoveryEvents.getDiscoveryEventBus().register(dialog);
         // Display the dialog
