@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JList;
@@ -40,6 +41,7 @@ import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
+import org.sleuthkit.autopsy.filequery.FileSearchData.Score;
 import org.sleuthkit.autopsy.filequery.FileSearchFiltering.ParentSearchTerm;
 import org.sleuthkit.autopsy.filequery.FileSorter.SortingMethod;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -47,6 +49,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Dialog to allow the user to choose filtering and grouping options.
@@ -86,6 +89,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         setUpSizeFilter();
         setUpKWFilter();
         setUpParentPathFilter();
+        setUpHashFilter();
+        setUpInterestingItemsFilter();
+        setUpTagsFilter();
+        setUpObjectFilter();
+        setUpScoreFilter();
 
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.values()) {
@@ -194,20 +202,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         try {
             DefaultListModel<String> kwListModel = (DefaultListModel<String>) keywordList.getModel();
 
-            // TODO - create case DB query
-            List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            List<String> setNames = new ArrayList<>();
-            for (BlackboardArtifact art : arts) {
-                for (BlackboardAttribute attr : art.getAttributes()) {
-                    if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                        String setName = attr.getValueString();
-                        if (!setNames.contains(setName)) {
-                            setNames.add(setName);
-                        }
-                    }
-                }
-            }
-            Collections.sort(setNames);
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for (String name : setNames) {
                 kwListModel.add(count, name);
             }
@@ -217,6 +213,135 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             keywordList.setEnabled(false);
         }
         addListeners(keywordCheckbox, keywordList);
+    }
+
+    private void setUpHashFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<String> hashListModel = (DefaultListModel<String>) hashSetList.getModel();
+
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+            for (String name : setNames) {
+                hashListModel.add(count, name);
+                count++;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading hash set names", ex);
+            hashSetCheckbox.setEnabled(false);
+            hashSetList.setEnabled(false);
+        }
+        addListeners(hashSetCheckbox, hashSetList);
+    }
+
+    private void setUpInterestingItemsFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<String> intListModel = (DefaultListModel<String>) interestingItemsList.getModel();
+
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+            for (String name : setNames) {
+                intListModel.add(count, name);
+                count++;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading interesting file set names", ex);
+            interestingItemsCheckbox.setEnabled(false);
+            interestingItemsList.setEnabled(false);
+        }
+        addListeners(interestingItemsCheckbox, interestingItemsList);
+    }
+
+    private void setUpTagsFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<TagName> tagsListModel = (DefaultListModel<TagName>) tagsList.getModel();
+
+            List<TagName> tagNames = caseDb.getTagNamesInUse();
+            for (TagName name : tagNames) {
+                tagsListModel.add(count, name);
+                count++;
+            }
+            tagsList.setCellRenderer(new TagsListCellRenderer());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading tag names", ex);
+            tagsCheckbox.setEnabled(false);
+            tagsList.setEnabled(false);
+        }
+        addListeners(tagsCheckbox, tagsList);
+    }
+
+    /**
+     * TagsListCellRenderer
+     */
+    private class TagsListCellRenderer extends DefaultListCellRenderer {
+
+        @Override
+        public java.awt.Component getListCellRendererComponent(
+                JList<?> list,
+                Object value,
+                int index,
+                boolean isSelected,
+                boolean cellHasFocus) {
+            Object newValue = value;
+            if (value instanceof TagName) {
+                newValue = ((TagName) value).getDisplayName();
+            }
+            super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
+            return this;
+        }
+    }
+
+    /**
+     * Initialize the object filter
+     */
+    private void setUpObjectFilter() {
+        int count = 0;
+        try {
+            DefaultListModel<String> objListModel = (DefaultListModel<String>) objectsList.getModel();
+
+            List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
+            for (String name : setNames) {
+                objListModel.add(count, name);
+                count++;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error loading object detected set names", ex);
+            objectsCheckbox.setEnabled(false);
+            objectsList.setEnabled(false);
+        }
+        addListeners(objectsCheckbox, objectsList);
+    }
+
+    /**
+     * Initialize the score filter
+     */
+    private void setUpScoreFilter() {
+
+        int count = 0;
+        DefaultListModel<Score> scoreListModel = (DefaultListModel<Score>) scoreList.getModel();
+        for (Score score : Score.getOptionsForFiltering()) {
+            scoreListModel.add(count, score);
+        }
+        addListeners(scoreCheckbox, scoreList);
+    }
+
+    private List<String> getSetNames(BlackboardArtifact.ARTIFACT_TYPE artifactType, BlackboardAttribute.ATTRIBUTE_TYPE setNameAttribute) throws TskCoreException {
+        List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(artifactType);
+        List<String> setNames = new ArrayList<>();
+        for (BlackboardArtifact art : arts) {
+            for (BlackboardAttribute attr : art.getAttributes()) {
+                if (attr.getAttributeType().getTypeID() == setNameAttribute.getTypeID()) {
+                    String setName = attr.getValueString();
+                    if (!setNames.contains(setName)) {
+                        setNames.add(setName);
+                    }
+                }
+            }
+        }
+        Collections.sort(setNames);
+        return setNames;
     }
 
     /**
@@ -261,6 +386,34 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         if (keywordCheckbox.isSelected()) {
             filters.add(new FileSearchFiltering.KeywordListFilter(keywordList.getSelectedValuesList()));
+        }
+
+        if (hashSetCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.HashSetFilter(hashSetList.getSelectedValuesList()));
+        }
+
+        if (interestingItemsCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.InterestingFileSetFilter(interestingItemsList.getSelectedValuesList()));
+        }
+
+        if (objectsCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.ObjectDetectionFilter(objectsList.getSelectedValuesList()));
+        }
+
+        if (tagsCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.TagsFilter(tagsList.getSelectedValuesList()));
+        }
+
+        if (exifCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.ExifFilter());
+        }
+
+        if (notableCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.NotableFilter());
+        }
+
+        if (scoreCheckbox.isSelected()) {
+            filters.add(new FileSearchFiltering.ScoreFilter(scoreList.getSelectedValuesList()));
         }
 
         return filters;
@@ -370,6 +523,31 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             setInvalid("At least one parent path must be entered");
             return;
         }
+
+        if (hashSetCheckbox.isSelected() && hashSetList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one hash set name must be selected");
+            return;
+        }
+
+        if (interestingItemsCheckbox.isSelected() && interestingItemsList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one interesting file set name must be selected");
+            return;
+        }
+
+        if (objectsCheckbox.isSelected() && objectsList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one object type name must be selected");
+            return;
+        }
+
+        if (tagsCheckbox.isSelected() && tagsList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one tag name must be selected");
+            return;
+        }
+
+        if (scoreCheckbox.isSelected() && scoreList.getSelectedValuesList().isEmpty()) {
+            setInvalid("At least one score must be selected");
+            return;
+        }
         setValid();
     }
 
@@ -427,6 +605,23 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         parentLabel = new javax.swing.JLabel();
         parentScrollPane = new javax.swing.JScrollPane();
         parentList = new javax.swing.JList<>();
+        hashSetCheckbox = new javax.swing.JCheckBox();
+        hashSetScrollPane = new javax.swing.JScrollPane();
+        hashSetList = new javax.swing.JList<>();
+        objectsCheckbox = new javax.swing.JCheckBox();
+        tagsCheckbox = new javax.swing.JCheckBox();
+        interestingItemsCheckbox = new javax.swing.JCheckBox();
+        scoreCheckbox = new javax.swing.JCheckBox();
+        exifCheckbox = new javax.swing.JCheckBox();
+        notableCheckbox = new javax.swing.JCheckBox();
+        objectsScrollPane = new javax.swing.JScrollPane();
+        objectsList = new javax.swing.JList<>();
+        tagsScrollPane = new javax.swing.JScrollPane();
+        tagsList = new javax.swing.JList<>();
+        interestingItemsScrollPane = new javax.swing.JScrollPane();
+        interestingItemsList = new javax.swing.JList<>();
+        scoreScrollPane = new javax.swing.JScrollPane();
+        scoreList = new javax.swing.JList<>();
         fileTypeLabel = new javax.swing.JLabel();
         searchButton = new javax.swing.JButton();
         sortingPanel = new javax.swing.JPanel();
@@ -441,10 +636,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         errorLabel = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
 
-        setMinimumSize(new java.awt.Dimension(408, 0));
+        setMinimumSize(new java.awt.Dimension(416, 0));
+        setPreferredSize(new java.awt.Dimension(416, 533));
 
         filtersScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.filtersScrollPane.border.title"))); // NOI18N
-        filtersScrollPane.setPreferredSize(new java.awt.Dimension(300, 483));
+        filtersScrollPane.setPreferredSize(new java.awt.Dimension(416, 338));
 
         filtersPanel.setLayout(new java.awt.GridBagLayout());
 
@@ -508,7 +704,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 11;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(parentCheckbox, gridBagConstraints);
@@ -535,7 +731,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         fullRadioButton.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
         filtersPanel.add(fullRadioButton, gridBagConstraints);
@@ -545,7 +741,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         substringRadioButton.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
@@ -554,7 +750,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         parentTextField.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -574,7 +770,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 6);
         filtersPanel.add(addButton, gridBagConstraints);
@@ -591,7 +787,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 4, 6);
         filtersPanel.add(deleteButton, gridBagConstraints);
@@ -628,7 +824,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         keywordList.setModel(new DefaultListModel<String>());
         keywordList.setEnabled(false);
-        keywordList.setVisibleRowCount(5);
+        keywordList.setVisibleRowCount(3);
         keywordScrollPane.setViewportView(keywordList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -645,7 +841,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         org.openide.awt.Mnemonics.setLocalizedText(parentLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.parentLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
@@ -653,7 +849,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         parentList.setModel(new DefaultListModel<ParentSearchTerm>());
         parentList.setEnabled(false);
-        parentList.setVisibleRowCount(5);
+        parentList.setVisibleRowCount(3);
         parentList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 parentListValueChanged(evt);
@@ -663,7 +859,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 11;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
@@ -672,6 +868,168 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
         filtersPanel.add(parentScrollPane, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashSetCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.hashSetCheckbox.text")); // NOI18N
+        hashSetCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hashSetCheckboxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
+        filtersPanel.add(hashSetCheckbox, gridBagConstraints);
+
+        hashSetList.setModel(new DefaultListModel<String>());
+        hashSetList.setEnabled(false);
+        hashSetList.setVisibleRowCount(3);
+        hashSetScrollPane.setViewportView(hashSetList);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
+        filtersPanel.add(hashSetScrollPane, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(objectsCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.objectsCheckbox.text")); // NOI18N
+        objectsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                objectsCheckboxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
+        filtersPanel.add(objectsCheckbox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(tagsCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.tagsCheckbox.text")); // NOI18N
+        tagsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tagsCheckboxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
+        filtersPanel.add(tagsCheckbox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(interestingItemsCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.interestingItemsCheckbox.text")); // NOI18N
+        interestingItemsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                interestingItemsCheckboxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
+        filtersPanel.add(interestingItemsCheckbox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(scoreCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.scoreCheckbox.text")); // NOI18N
+        scoreCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                scoreCheckboxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
+        filtersPanel.add(scoreCheckbox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(exifCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.exifCheckbox.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 6);
+        filtersPanel.add(exifCheckbox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(notableCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.notableCheckbox.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 6);
+        filtersPanel.add(notableCheckbox, gridBagConstraints);
+
+        objectsList.setModel(new DefaultListModel<String>());
+        objectsList.setEnabled(false);
+        objectsList.setVisibleRowCount(3);
+        objectsScrollPane.setViewportView(objectsList);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
+        filtersPanel.add(objectsScrollPane, gridBagConstraints);
+
+        tagsList.setModel(new DefaultListModel<TagName>());
+        tagsList.setEnabled(false);
+        tagsList.setVisibleRowCount(3);
+        tagsScrollPane.setViewportView(tagsList);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
+        filtersPanel.add(tagsScrollPane, gridBagConstraints);
+
+        interestingItemsList.setModel(new DefaultListModel<String>());
+        interestingItemsList.setEnabled(false);
+        interestingItemsList.setVisibleRowCount(3);
+        interestingItemsScrollPane.setViewportView(interestingItemsList);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.weighty = 0.1;
+        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
+        filtersPanel.add(interestingItemsScrollPane, gridBagConstraints);
+
+        scoreList.setModel(new DefaultListModel<Score>());
+        scoreList.setEnabled(false);
+        scoreList.setVisibleRowCount(3);
+        scoreScrollPane.setViewportView(scoreList);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 6);
+        filtersPanel.add(scoreScrollPane, gridBagConstraints);
 
         filtersScrollPane.setViewportView(filtersPanel);
 
@@ -718,7 +1076,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                                 .addComponent(groupByLabel)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(groupByCombobox, 0, 260, Short.MAX_VALUE)
+                            .addComponent(groupByCombobox, 0, 268, Short.MAX_VALUE)
                             .addComponent(orderByCombobox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(sortingPanelLayout.createSequentialGroup()
                         .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -781,7 +1139,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(fileTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(sortingPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(filtersScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))
                 .addGap(4, 4, 4))
         );
 
@@ -861,12 +1219,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         }
     }//GEN-LAST:event_addButtonActionPerformed
 
-    void cancelSearch(){
-        if (searchWorker != null){
+    void cancelSearch() {
+        if (searchWorker != null) {
             searchWorker.cancel(true);
         }
     }
-    
+
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         int index = parentList.getSelectedIndex();
         parentListModel.remove(index);
@@ -888,6 +1246,26 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         cancelSearch();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
+    private void hashSetCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashSetCheckboxActionPerformed
+        hashSetList.setEnabled(hashSetCheckbox.isSelected());
+    }//GEN-LAST:event_hashSetCheckboxActionPerformed
+
+    private void objectsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_objectsCheckboxActionPerformed
+        objectsList.setEnabled(objectsCheckbox.isSelected());
+    }//GEN-LAST:event_objectsCheckboxActionPerformed
+
+    private void tagsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tagsCheckboxActionPerformed
+        tagsList.setEnabled(tagsCheckbox.isSelected());
+    }//GEN-LAST:event_tagsCheckboxActionPerformed
+
+    private void interestingItemsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interestingItemsCheckboxActionPerformed
+        interestingItemsList.setEnabled(interestingItemsCheckbox.isSelected());
+    }//GEN-LAST:event_interestingItemsCheckboxActionPerformed
+
+    private void scoreCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scoreCheckboxActionPerformed
+        scoreList.setEnabled(scoreCheckbox.isSelected());
+    }//GEN-LAST:event_scoreCheckboxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
@@ -901,6 +1279,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JScrollPane dataSourceScrollPane;
     private javax.swing.JButton deleteButton;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JCheckBox exifCheckbox;
     private javax.swing.JComboBox<FileType> fileTypeComboBox;
     private javax.swing.JLabel fileTypeLabel;
     private javax.swing.JPanel filtersPanel;
@@ -909,9 +1288,19 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JComboBox<GroupingAttributeType> groupByCombobox;
     private javax.swing.JLabel groupByLabel;
     private javax.swing.JRadioButton groupSizeRadioButton;
+    private javax.swing.JCheckBox hashSetCheckbox;
+    private javax.swing.JList<String> hashSetList;
+    private javax.swing.JScrollPane hashSetScrollPane;
+    private javax.swing.JCheckBox interestingItemsCheckbox;
+    private javax.swing.JList<String> interestingItemsList;
+    private javax.swing.JScrollPane interestingItemsScrollPane;
     private javax.swing.JCheckBox keywordCheckbox;
     private javax.swing.JList<String> keywordList;
     private javax.swing.JScrollPane keywordScrollPane;
+    private javax.swing.JCheckBox notableCheckbox;
+    private javax.swing.JCheckBox objectsCheckbox;
+    private javax.swing.JList<String> objectsList;
+    private javax.swing.JScrollPane objectsScrollPane;
     private javax.swing.JComboBox<SortingMethod> orderByCombobox;
     private javax.swing.JLabel orderByLabel;
     private javax.swing.ButtonGroup orderGroupsByButtonGroup;
@@ -922,12 +1311,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<ParentSearchTerm> parentList;
     private javax.swing.JScrollPane parentScrollPane;
     private javax.swing.JTextField parentTextField;
+    private javax.swing.JCheckBox scoreCheckbox;
+    private javax.swing.JList<Score> scoreList;
+    private javax.swing.JScrollPane scoreScrollPane;
     private javax.swing.JButton searchButton;
     private javax.swing.JCheckBox sizeCheckbox;
     private javax.swing.JList<FileSize> sizeList;
     private javax.swing.JScrollPane sizeScrollPane;
     private javax.swing.JPanel sortingPanel;
     private javax.swing.JRadioButton substringRadioButton;
+    private javax.swing.JCheckBox tagsCheckbox;
+    private javax.swing.JList<TagName> tagsList;
+    private javax.swing.JScrollPane tagsScrollPane;
     // End of variables declaration//GEN-END:variables
 
 }

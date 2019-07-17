@@ -148,15 +148,15 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         mainSplitPane.setDividerLocation(550);
         mainSplitPane.setResizeWeight(0.2);
 
-        leftSplitPane.setDividerLocation(420);
+        leftSplitPane.setDividerLocation(430);
         leftSplitPane.setToolTipText("");
-        leftSplitPane.setLastDividerLocation(420);
-        leftSplitPane.setPreferredSize(new java.awt.Dimension(520, 25));
+        leftSplitPane.setLastDividerLocation(430);
+        leftSplitPane.setPreferredSize(new java.awt.Dimension(530, 25));
         mainSplitPane.setLeftComponent(leftSplitPane);
 
         rightSplitPane.setDividerLocation(400);
         rightSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        rightSplitPane.setResizeWeight(0.7);
+        rightSplitPane.setResizeWeight(0.5);
         mainSplitPane.setRightComponent(rightSplitPane);
 
         getContentPane().add(mainSplitPane, java.awt.BorderLayout.CENTER);
