@@ -140,3 +140,4 @@ FileSearchDialog.objCheckBox.text=Objects
 FileSearchDialog.exifCheckBox.text=Must contain EXIF data
 FileSearchDialog.notableCheckBox.text=Must have been tagged as notable
 FileSearchDialog.scoreCheckBox.text=Has score
+SearchNode.getName.text=Search Result

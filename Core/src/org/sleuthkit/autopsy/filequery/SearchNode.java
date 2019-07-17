@@ -36,6 +36,7 @@ public class SearchNode extends AbstractNode {
         this.children = (SearchChildren) this.getChildren();
     }
 
+    @NbBundle.Messages({"SearchNode.getName.text=Search Result"})
     @Override
     public String getName() {
         return NbBundle.getMessage(this.getClass(), "SearchNode.getName.text");
