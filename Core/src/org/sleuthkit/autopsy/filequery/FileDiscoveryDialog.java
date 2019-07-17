@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
@@ -74,11 +75,13 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
                  * single node.
                  */
                 Node[] selectedNodes = explorerManager.getSelectedNodes();
-                if (selectedNodes.length == 1) {
-                    dataContentPanel.setNode(selectedNodes[0]);
-                } else {
-                    dataContentPanel.setNode(null);
-                }
+                SwingUtilities.invokeLater(() -> {
+                    if (selectedNodes.length == 1) {
+                        dataContentPanel.setNode(selectedNodes[0]);
+                    } else {
+                        dataContentPanel.setNode(null);
+                    }
+                });
             }
         });
     }
@@ -98,22 +101,24 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
      */
     @Subscribe
     void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
-        thumbnailViewer.resetComponent();
-        if (groupSelectedEvent.getType() == FileType.IMAGE || groupSelectedEvent.getType() == FileType.VIDEO) {
-            rightSplitPane.setTopComponent(thumbnailViewer);
-            if (groupSelectedEvent.getFiles().size() > 0) {
-                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(groupSelectedEvent.getFiles()))), true));
+        SwingUtilities.invokeLater(() -> {
+            thumbnailViewer.resetComponent();
+            if (groupSelectedEvent.getType() == FileType.IMAGE || groupSelectedEvent.getType() == FileType.VIDEO) {
+                rightSplitPane.setTopComponent(thumbnailViewer);
+                if (groupSelectedEvent.getFiles().size() > 0) {
+                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(groupSelectedEvent.getFiles()))), true));
+                } else {
+                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+                }
             } else {
-                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+                rightSplitPane.setTopComponent(tableViewer);
+                if (groupSelectedEvent.getFiles().size() > 0) {
+                    tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new SearchChildren(false, groupSelectedEvent.getFiles()))), true));
+                } else {
+                    tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+                }
             }
-        } else {
-            rightSplitPane.setTopComponent(tableViewer);
-            if (groupSelectedEvent.getFiles().size() > 0) {
-                tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new SearchChildren(false, groupSelectedEvent.getFiles()))), true));
-            } else {
-                tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
-            }
-        }
+        });
     }
 
     @Override
