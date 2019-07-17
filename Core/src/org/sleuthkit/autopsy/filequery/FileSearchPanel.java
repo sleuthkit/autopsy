@@ -808,7 +808,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        SearchWorker searchWorker = new SearchWorker(centralRepoDb, searchButton, searchType, filters, groupingAttr, groupSortAlgorithm, fileSort);
+        SearchWorker searchWorker = new SearchWorker(centralRepoDb, searchButton, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
 

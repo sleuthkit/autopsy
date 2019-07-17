@@ -21,14 +21,21 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.EventBus;
 import java.util.List;
 import java.util.ArrayList;
-import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
+/**
+ * Class to handle envent bus and events for file discovery tool
+ */
 final class DiscoveryEvents {
 
     private final static EventBus discoveryEventBus = new EventBus();
 
+    /**
+     * Get the file discovery event bus
+     *
+     * @return the file discovery event bus
+     */
     static EventBus getDiscoveryEventBus() {
         return discoveryEventBus;
     }
@@ -36,53 +43,92 @@ final class DiscoveryEvents {
     private DiscoveryEvents() {
     }
 
+    /**
+     * Event to signal the start of a search being performed
+     */
     static final class SearchStartedEvent {
 
         private final FileType fileType;
 
+        /**
+         * Construct a new SearchStartedEvent
+         *
+         * @param type the type of file the search event is for
+         */
         SearchStartedEvent(FileType type) {
             this.fileType = type;
         }
 
+        /**
+         * Get the type of file the search is being performed for
+         *
+         * @return the type of files being searched for
+         */
         FileType getType() {
             return fileType;
         }
     }
 
+    /**
+     * Event to signal the completion of a search being performed
+     */
     static final class SearchCompleteEvent {
 
         private final SearchResults results;
-        private final FileType fileType;
 
-        SearchCompleteEvent(FileType type, SearchResults results) {
-            this.fileType = type;
+        /**
+         * Construct a new SearchCompleteEvent
+         *
+         * @param results the results which were found by the search
+         */
+        SearchCompleteEvent(SearchResults results) {
             this.results = results;
         }
 
+        /**
+         * Get the results of the search
+         *
+         * @return the results of the search
+         */
         SearchResults getSearchResults() {
             return results;
         }
 
-        FileType getType() {
-            return fileType;
-        }
-
     }
 
+    /**
+     * Event to signal the the selection of a group from the search results
+     */
     static final class GroupSelectedEvent {
 
         private final List<AbstractFile> files;
         private final FileType type;
 
+        /**
+         * Construct a new GroupSelectedEvent
+         *
+         * @param type  the type of files which exist in the group
+         * @param files the files in the group
+         */
         GroupSelectedEvent(FileType type, List<AbstractFile> files) {
             this.type = type;
             this.files = files;
         }
 
+        /**
+         * Get the type of files which exist in the group
+         *
+         * @return the type of files in the group
+         */
         FileType getType() {
             return type;
         }
 
+        /**
+         * Get the files in the group selected
+         *
+         * @return the list of AbstractFiles in the group selected
+         */
         List<AbstractFile> getFiles() {
             if (files != null && !files.isEmpty()) {
                 return files;

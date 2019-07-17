@@ -22,12 +22,17 @@ import com.google.common.eventbus.Subscribe;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
-import org.openide.util.Exceptions;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
+/**
+ * Panel to display the list of groups which are provided by a search
+ */
 class GroupListPanel extends javax.swing.JPanel {
 
+    private final static Logger logger = Logger.getLogger(GroupListPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private LinkedHashMap<String, List<AbstractFile>> results = null;
     private FileType resultType = null;
@@ -39,6 +44,11 @@ class GroupListPanel extends javax.swing.JPanel {
         initComponents();
     }
 
+    /**
+     * Subscribe to and reset the panel in response to SearchStartedEvents
+     *
+     * @param searchStartedEvent the SearchStartedEvent which was received
+     */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
         resultType = searchStartedEvent.getType();
@@ -46,10 +56,15 @@ class GroupListPanel extends javax.swing.JPanel {
         groupList.setListData(new String[0]);
     }
 
+    /**
+     * Subscribe to and update list of groups in response to
+     * SearchCompleteEvents
+     *
+     * @param searchCompleteEvent the SearchCompleteEvent which was recieved
+     */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
         try {
-            resultType = searchCompleteEvent.getType();
             results = searchCompleteEvent.getSearchResults().toLinkedHashMap();
             Set<String> resultsKeySet = results.keySet();
             groupList.setListData(resultsKeySet.toArray(new String[results.size()]));
@@ -59,7 +74,7 @@ class GroupListPanel extends javax.swing.JPanel {
             validate();
             repaint();
         } catch (FileSearchException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error handling completed search results for file discovery, no results displayed", ex);
             groupList.setListData(new String[0]);
         }
     }
@@ -100,6 +115,11 @@ class GroupListPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Respond to a group being selected by sending a GroupSelectedEvent
+     *
+     * @param evt the event which indicates a selection occurs in the list
+     */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
         if (!evt.getValueIsAdjusting() && results != null) {
             DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, results.get(groupList.getSelectedValue())));

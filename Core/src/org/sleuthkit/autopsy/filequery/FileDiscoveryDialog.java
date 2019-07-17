@@ -33,6 +33,9 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
+/**
+ * Create a dialog for displaying the file discovery tool
+ */
 class FileDiscoveryDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -50,7 +53,6 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.FileSearchPanel_dialogTitle_text(), modal);
         initComponents();
         explorerManager = new ExplorerManager();
-        //create results callback and pass it into the search panel
         fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
         groupListPanel = new GroupListPanel();
         DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
@@ -86,17 +88,21 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
      */
     void display() {
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-//        runAnotherSearch = false;
         setVisible(true);
     }
 
+    /**
+     * Subscribe to GroupSelectedEvents and respond to them
+     *
+     * @param groupSelectedEvent the GroupSelectedEvent received
+     */
     @Subscribe
     void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
         thumbnailViewer.resetComponent();
         if (groupSelectedEvent.getType() == FileType.IMAGE || groupSelectedEvent.getType() == FileType.VIDEO) {
             rightSplitPane.setTopComponent(thumbnailViewer);
             if (groupSelectedEvent.getFiles().size() > 0) {
-                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChild(groupSelectedEvent.getFiles()))), true));
+                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(groupSelectedEvent.getFiles()))), true));
             } else {
                 thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
             }

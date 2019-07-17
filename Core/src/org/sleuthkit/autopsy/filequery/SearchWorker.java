@@ -26,24 +26,34 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
+/**
+ * SwingWorker to perform search on a background thread
+ */
 final class SearchWorker extends SwingWorker<Void, Void> {
 
     private final static Logger logger = Logger.getLogger(SearchWorker.class.getName());
-    private boolean runAnotherSearch = false;
     private final JButton searchButtonToEnable;
     private final List<FileSearchFiltering.FileFilter> filters;
     private final FileSearch.AttributeType groupingAttr;
     private final FileSorter.SortingMethod fileSort;
     private final FileGroup.GroupSortingAlgorithm groupSortAlgorithm;
     private final EamDb centralRepoDb;
-    private final FileType fileType;
 
-    SearchWorker(EamDb centralRepo, JButton searchButton, FileType type, List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
+    /**
+     * Create a SwingWorker which performs a search
+     *
+     * @param centralRepo       the central repository being used for the search
+     * @param searchButton      the search button to renable when the search is
+     *                          complete
+     * @param searchfilters     the FileFilters to use for the search
+     * @param groupingAttribute the AttributeType to group by
+     * @param groupSort         the Algorithm to sort groups by
+     * @param fileSortMethod    the SortingMethod to use for files
+     */
+    SearchWorker(EamDb centralRepo, JButton searchButton, List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod) {
         centralRepoDb = centralRepo;
         searchButtonToEnable = searchButton;
-        fileType = type;
         filters = searchfilters;
         groupingAttr = groupingAttribute;
         groupSortAlgorithm = groupSort;
@@ -52,11 +62,6 @@ final class SearchWorker extends SwingWorker<Void, Void> {
 
     @Override
     protected Void doInBackground() throws Exception {
-        runAnotherSearch = true;
-        // For testing, allow the user to run different searches in loop
-        if (searchCancelled()) {
-            return null;
-        }
 
         try {
             // Make a list of attributes that we want to add values for. This ensures the
@@ -74,7 +79,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
                     fileSort,
                     attrsForGroupingAndSorting,
                     Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(fileType, results));
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(results));
         } catch (FileSearchException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
         }
@@ -82,19 +87,10 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     }
 
     @Override
-    protected void done() { 
+    protected void done() {
+        //If a search button was provided re-enable it
         if (searchButtonToEnable != null) {
             searchButtonToEnable.setEnabled(true);
         }
     }
-
-    /**
-     * Check whether the user chose to run the search or cancel
-     *
-     * @return true if the search was cancelled, false otherwise
-     */
-    boolean searchCancelled() {
-        return (!runAnotherSearch);
-    }
-
 }

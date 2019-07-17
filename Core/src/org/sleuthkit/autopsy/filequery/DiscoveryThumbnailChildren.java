@@ -31,18 +31,18 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
 
-public class DiscoveryThumbnailChild extends Children.Keys<AbstractFile> {
+/**
+ * Create a node containing the children for the to display in the
+ * DataResultViewerThumbnail
+ */
+class DiscoveryThumbnailChildren extends Children.Keys<AbstractFile> {
 
     private final List<AbstractFile> files;
 
     /*
-     * Creates the list of thumbnails from the given list of
-     * BlackboardArtifacts.
-     *
-     * The thumbnails will be initialls sorted by size, then name so that they
-     * appear sorted by size by default.
+     * Creates the list of thumbnails from the given list of AbstractFiles.
      */
-    DiscoveryThumbnailChild(List<AbstractFile> files) {
+    DiscoveryThumbnailChildren(List<AbstractFile> files) {
         super(false);
 
         this.files = files;
@@ -51,7 +51,7 @@ public class DiscoveryThumbnailChild extends Children.Keys<AbstractFile> {
 
     @Override
     protected Node[] createNodes(AbstractFile t) {
-        return new Node[]{new AttachementNode(t)};
+        return new Node[]{new ThumbnailNode(t)};
     }
 
     @Override
@@ -73,9 +73,9 @@ public class DiscoveryThumbnailChild extends Children.Keys<AbstractFile> {
     /**
      * A node for representing a thumbnail.
      */
-    static class AttachementNode extends FileNode {
+    static class ThumbnailNode extends FileNode {
 
-        AttachementNode(AbstractFile file) {
+        ThumbnailNode(AbstractFile file) {
             super(file, false);
         }
 
