@@ -256,13 +256,13 @@ class FileSearch {
         "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting item set",
         "FileSearch.GroupingAttributeType.tag.displayName=File tag",
         "FileSearch.GroupingAttributeType.object.displayName=Object detected",
-        "FileSearch.GroupingAttributeType.none.displayName=None",
+        "FileSearch.GroupingAttributeType.none.displayName=None"
     }) 
     enum GroupingAttributeType {
-        FILE_TYPE(new FileTypeAttribute(), Bundle.FileSearch_GroupingAttributeType_fileType_displayName()),
+        FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),
         FREQUENCY(new FrequencyAttribute(), Bundle.FileSearch_GroupingAttributeType_frequency_displayName()),
         KEYWORD_LIST_NAME(new KeywordListAttribute(), Bundle.FileSearch_GroupingAttributeType_keywordList_displayName()),
-        FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),
+       
         DATA_SOURCE(new DataSourceAttribute(), Bundle.FileSearch_GroupingAttributeType_datasource_displayName()),
         PARENT_PATH(new ParentPathAttribute(), Bundle.FileSearch_GroupingAttributeType_parent_displayName()),
         HASH_LIST_NAME(new HashHitsAttribute(), Bundle.FileSearch_GroupingAttributeType_hash_displayName()),
@@ -501,7 +501,7 @@ class FileSearch {
             "# {1} - Data source ID",
             "FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})",
             "# {0} - Data source ID",
-            "FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})",
+            "FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})"
         })        
         DataSourceGroupKey(ResultFile file) {
             dataSourceID = file.getAbstractFile().getDataSourceObjectId();
@@ -696,7 +696,7 @@ class FileSearch {
         private final String keywordListNamesString;
                 
         @NbBundle.Messages({
-            "FileSearch.KeywordListGroupKey.noKeywords=None",
+            "FileSearch.KeywordListGroupKey.noKeywords=None"
         })
         KeywordListGroupKey(ResultFile file) {
             keywordListNames = file.getKeywordListNames();
@@ -915,7 +915,7 @@ class FileSearch {
         private final String hashSetNamesString;
                 
         @NbBundle.Messages({
-            "FileSearch.HashHitsGroupKey.noHashHits=None",
+            "FileSearch.HashHitsGroupKey.noHashHits=None"
         })
         HashHitsGroupKey(ResultFile file) {
             hashSetNames = file.getHashSetNames();
@@ -1053,7 +1053,7 @@ class FileSearch {
         private final String interestingItemSetNamesString;
                 
         @NbBundle.Messages({
-            "FileSearch.InterestingItemGroupKey.noSets=None",
+            "FileSearch.InterestingItemGroupKey.noSets=None"
         })
         InterestingItemGroupKey(ResultFile file) {
             interestingItemSetNames = file.getInterestingSetNames();
@@ -1191,7 +1191,7 @@ class FileSearch {
         private final String objectDetectedNamesString;
                 
         @NbBundle.Messages({
-            "FileSearch.ObjectDetectedGroupKey.noSets=None",
+            "FileSearch.ObjectDetectedGroupKey.noSets=None"
         })
         ObjectDetectedGroupKey(ResultFile file) {
             objectDetectedNames = file.getObjectDetectedNames();
@@ -1287,7 +1287,7 @@ class FileSearch {
         private final String tagNamesString;
                 
         @NbBundle.Messages({
-            "FileSearch.FileTagGroupKey.noSets=None",
+            "FileSearch.FileTagGroupKey.noSets=None"
         })
         FileTagGroupKey(ResultFile file) {
             tagNames = file.getTagNames();
@@ -1367,7 +1367,7 @@ class FileSearch {
         }
         
         @NbBundle.Messages({
-            "FileSearch.NoGroupingGroupKey.allFiles=All Files",
+            "FileSearch.NoGroupingGroupKey.allFiles=All Files"
         })
         @Override
         String getDisplayName() {
