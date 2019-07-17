@@ -16,9 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.filesearch;
+package org.sleuthkit.autopsy.filequery;
 
-import org.sleuthkit.autopsy.filequery.SearchChildren;
 import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.util.NbBundle;
@@ -28,11 +27,11 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  * @author jantonius
  */
-class SearchNode extends AbstractNode {
+public class SearchNode extends AbstractNode {
 
     private SearchChildren children;
 
-    SearchNode(List<AbstractFile> keys) {
+    public SearchNode(List<AbstractFile> keys) {
         super(new SearchChildren(true, keys));
         this.children = (SearchChildren) this.getChildren();
     }

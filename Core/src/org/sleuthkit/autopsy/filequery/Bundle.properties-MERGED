@@ -58,7 +58,6 @@ FileSearchDialog.orderAttrRadioButton.text=Attribute
 FileSearchDialog.orderSizeRadioButton.text=Group Size
 FileSearchDialog.jLabel5.text=Order files by: 
 FileSearchDialog.parentCheckBox.text=Parent
-FileSearchDialog.searchButton.text=Search
 FileSearchFiltering.concatenateSetNamesForDisplay.comma=, 
 # {0} - Data source name
 # {1} - Data source ID
@@ -99,10 +98,10 @@ FileSearchFiltering.SizeFilter.or=\ or
 # {0} - Minimum bytes
 # {1} - Maximum bytes
 FileSearchFiltering.SizeFilter.range=({0} to {1})
-FileSearchPanel.dialogTitle.text=Test file search
 # {0} - tag names
 FileSearchFiltering.TagsFilter.desc=Files that have been tagged {0}
 FileSearchFiltering.TagsFilter.or=\ or 
+FileSearchPanel.dialogTitle.text=Test file search
 FileSorter.SortingMethod.datasource.displayName=By data source
 FileSorter.SortingMethod.filename.displayName=By file name
 FileSorter.SortingMethod.filesize.displayName=By file size

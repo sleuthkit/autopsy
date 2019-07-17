@@ -113,7 +113,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
             } else {
                 rightSplitPane.setTopComponent(tableViewer);
                 if (groupSelectedEvent.getFiles().size() > 0) {
-                    tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new SearchChildren(false, groupSelectedEvent.getFiles()))), true));
+                    tableViewer.setNode(new TableFilterNode(new SearchNode(groupSelectedEvent.getFiles()), true));
                 } else {
                     tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
                 }
