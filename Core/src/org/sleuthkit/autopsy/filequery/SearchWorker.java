@@ -73,8 +73,6 @@ final class SearchWorker extends SwingWorker<Void, Void> {
             attrsForGroupingAndSorting.addAll(fileSort.getRequiredAttributes());
 
             // Run the search
-            
-
             SearchResults results = FileSearch.runFileSearchDebug(filters,
                     groupingAttr,
                     groupSortAlgorithm,
@@ -93,6 +91,5 @@ final class SearchWorker extends SwingWorker<Void, Void> {
         if (searchButtonToEnable != null) {
             searchButtonToEnable.setEnabled(true);
         }
-        System.out.println("SEARCH FINISHED");
     }
 }
