@@ -135,7 +135,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.psort.cancelled=psort run was canceled",
         "PlasoIngestModule.bad.imageFile=Cannot find image file name and path",
         "PlasoIngestModule.completed=Plaso Processing Completed",
-        "PlasoIngestModule.has.run=Plaso Plugin has been run."})
+        "PlasoIngestModule.has.run=Plaso Plugin has been run.",
+        "PlasoIngestModule.psort.fail=Plaso error running psort. psort error code: {0}"})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         assert dataSource.equals(image);
@@ -178,10 +179,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             // sort the output
             statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ProcessBuilder psortCommand = buildPsortCommand(moduleOutputPath);
-            int returnVal = ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
-            
-            // For debugging purposes, logging the psort return value.
-            logger.log(Level.INFO, String.format("PlasoIngestModule - psort ran with a return value of %d", returnVal));
+            int result = ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
+             if (result != 0) {
+                 logger.log(Level.SEVERE, String.format("Error running Psort, error code returned %d", result)); //NON-NLS
+                 MessageNotifyUtil.Notify.error(MODULE_NAME, Bundle.PlasoIngestModule_psort_fail(result));
+                 return ProcessResult.ERROR;
+             }
 
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "psort run was canceled"); //NON-NLS
@@ -271,7 +274,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.create.artifacts.cancelled=Cancelled Plaso Artifact Creation ",
         "# {0} - file that events are from",
         "PlasoIngestModule.artifact.progress=Adding events to case: {0}",
-        "PlasoIngestModule.error.empty.database=Error occured while running plaso, plaso database is empty.",
+        "PlasoIngestModule.info.empty.database=Plaso database was empty.",
     })
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
@@ -293,8 +296,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             
             // Check if there is data the db
             if( !resultSet.first() ) {
-                logger.log(Level.WARNING, String.format("PlasoDB was empty: %s", plasoDb));
-                MessageNotifyUtil.Notify.error(MODULE_NAME, Bundle.PlasoIngestModule_error_empty_database());
+                logger.log(Level.INFO, String.format("PlasoDB was empty: %s", plasoDb));
+                MessageNotifyUtil.Notify.info(MODULE_NAME, Bundle.PlasoIngestModule_info_empty_database());
                 return;
             } else {
                 // There is data, reset the pointer to the correct place for
