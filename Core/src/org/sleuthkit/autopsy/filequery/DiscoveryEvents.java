@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.EventBus;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -131,7 +132,7 @@ final class DiscoveryEvents {
          */
         List<AbstractFile> getFiles() {
             if (files != null && !files.isEmpty()) {
-                return files;
+                return Collections.unmodifiableList(files);
             } else {
                 return new ArrayList<>();
             }
