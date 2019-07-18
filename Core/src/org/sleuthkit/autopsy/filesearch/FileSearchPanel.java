@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import org.sleuthkit.autopsy.filequery.SearchNode;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.GridLayout;

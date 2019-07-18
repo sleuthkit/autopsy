@@ -64,14 +64,6 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
 
         try {
-            // Make a list of attributes that we want to add values for. This ensures the
-            // ResultFile objects will have all needed fields set when it's time to group
-            // and sort them. For example, if we're grouping by central repo frequency, we need
-            // to make sure we've loaded those values before grouping.
-            List<FileSearch.AttributeType> attrsForGroupingAndSorting = new ArrayList<>();
-            attrsForGroupingAndSorting.add(groupingAttr);
-            attrsForGroupingAndSorting.addAll(fileSort.getRequiredAttributes());
-
             // Run the search
             SearchResults results = FileSearch.runFileSearchDebug(filters,
                     groupingAttr,
