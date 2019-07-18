@@ -97,7 +97,6 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
         deviceID = ds.getDeviceId()
         deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
         uuid = UUID.randomUUID().toString()
-        print("Text Message Hello world!")
 
         resultSet = None
         try:
@@ -142,12 +141,12 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error parsing text messages to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
-            print("End of Text")
+
             if bbartifacts:
                 Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, general.MODULE_NAME)
 
             try:
-                print("End of Text Try")
+
                 if resultSet is not None:
                     resultSet.close()
                 statement.close()
