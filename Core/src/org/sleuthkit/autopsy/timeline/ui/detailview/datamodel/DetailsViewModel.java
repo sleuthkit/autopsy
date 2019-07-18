@@ -157,14 +157,8 @@ final public class DetailsViewModel {
         //unpack params
         Interval timeRange = zoom.getTimeRange();
         TimelineFilter.RootFilter activeFilter = zoom.getFilterState().getActiveFilter();
-
-        long start = timeRange.getStartMillis() / 1000;
-        long end = timeRange.getEndMillis() / 1000;
-
-        //ensure length of querried interval is not 0
-        end = Math.max(end, start + 1);
         
-        return eventManager.getEventsForFilter(start, end, activeFilter);
+        return eventManager.getEvents(timeRange, activeFilter);
     }
 
     /**
