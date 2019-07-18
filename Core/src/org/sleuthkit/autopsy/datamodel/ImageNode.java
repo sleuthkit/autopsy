@@ -205,23 +205,20 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     private Boolean checkSchemaVersion() {
-        String sqlStatement = "SELECT a.value AS creationMajorVersion, b.value AS creationMinorVersion FROM tsk_db_info_extended a, tsk_db_info_extended b " +
-                              " WHERE a.name = 'CREATION_SCHEMA_MAJOR_VERSION' and b.name = 'CREATION_SCHEMA_MINOR_VERSION';";
-        try (CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(sqlStatement);) {
-            ResultSet schemaVersion = query.getResultSet();
-            while (schemaVersion.next()) {
-                int creationMajorVersion = schemaVersion.getInt("creationMajorVersion");
-                int creationMinorVersion = schemaVersion.getInt("creationMinorVersion");
-                if ((creationMajorVersion == 8 && creationMinorVersion >= 3) || creationMajorVersion > 8) {
-                    return true;
-                }
+        try {
+            int creationMajorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBCreationSchemaVersion().getMajor();
+            int creationMinorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBCreationSchemaVersion().getMinor();
+        
+            if ((creationMajorVersion == 8 && creationMinorVersion >= 3) || creationMajorVersion > 8) {
+                        return true;
             }
-        } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to get the Create Major and Minor Schema Versions", ex);
-        }
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Failed to get creation schema version: ", ex);
+        } 
         
         return false;
-    }
+        
+    }   
      
     /*
      * This property change listener refreshes the tree when a new file is
