@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import org.sleuthkit.autopsy.filesearch.*;
 import java.util.List;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;

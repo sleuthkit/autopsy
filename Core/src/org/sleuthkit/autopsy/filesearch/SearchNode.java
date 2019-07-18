@@ -29,11 +29,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 class SearchNode extends AbstractNode {
 
-    private SearchChildren children;
-
     SearchNode(List<AbstractFile> keys) {
         super(new SearchChildren(true, keys));
-        this.children = (SearchChildren) this.getChildren();
     }
 
     @NbBundle.Messages({"SearchNode.getName.text=Search Result"})

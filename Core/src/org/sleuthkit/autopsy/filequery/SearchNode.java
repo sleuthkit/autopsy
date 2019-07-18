@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,23 +18,15 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import org.sleuthkit.autopsy.filesearch.*;
 import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
-/**
- *
- * @author jantonius
- */
 class SearchNode extends AbstractNode {
-
-    private SearchChildren children;
 
     SearchNode(List<AbstractFile> keys) {
         super(new SearchChildren(true, keys));
-        this.children = (SearchChildren) this.getChildren();
     }
 
     @NbBundle.Messages({"SearchNode.getName.text=Search Result"})
