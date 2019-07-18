@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.filequery;
 
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
