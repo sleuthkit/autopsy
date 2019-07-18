@@ -1218,6 +1218,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 searchTerm = new ParentSearchTerm(parentTextField.getText(), false);
             }
             parentListModel.add(parentListModel.size(), searchTerm);
+            validateFields();
         }
     }//GEN-LAST:event_addButtonActionPerformed
 
@@ -1230,6 +1231,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         int index = parentList.getSelectedIndex();
         parentListModel.remove(index);
+        validateFields();
     }//GEN-LAST:event_deleteButtonActionPerformed
 
     private void parentListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_parentListValueChanged
