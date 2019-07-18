@@ -420,6 +420,16 @@ class FileSearchFiltering {
             this.categories = categories;
         }
         
+        /**
+         * Create the FileTypeFilter
+         *
+         * @param category the file type to filter on
+         */
+        FileTypeFilter(FileType category) {
+            this.categories = new ArrayList<>();
+            this.categories.add(category);
+        }
+
         @Override
         String getWhereClause() {
             String queryStr = ""; // NON-NLS

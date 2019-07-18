@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.filesearch;
+package org.sleuthkit.autopsy.filequery;
 
 import java.util.List;
 import org.openide.nodes.Children;

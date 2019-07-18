@@ -745,7 +745,6 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
             }
         });
 
-        parentTextField.setText(org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.parentTextField.text")); // NOI18N
         parentTextField.setEnabled(false);
         parentTextField.setMaximumSize(new java.awt.Dimension(6, 20));
 
@@ -775,7 +774,70 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         });
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.errorLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.hashCheckBox.text")); // NOI18N
+        hashCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hashCheckBoxActionPerformed(evt);
+            }
+        });
+
+        hashList.setModel(new DefaultListModel<String>());
+        hashList.setEnabled(false);
+        jScrollPane7.setViewportView(hashList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(intCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.intCheckBox.text")); // NOI18N
+        intCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                intCheckBoxActionPerformed(evt);
+            }
+        });
+
+        intList.setModel(new DefaultListModel<String>());
+        intList.setEnabled(false);
+        jScrollPane8.setViewportView(intList);
+
+        tagsList.setModel(new DefaultListModel<TagName>());
+        tagsList.setEnabled(false);
+        jScrollPane9.setViewportView(tagsList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(tagsCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.tagsCheckBox.text")); // NOI18N
+        tagsCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tagsCheckBoxActionPerformed(evt);
+            }
+        });
+
+        objList.setModel(new DefaultListModel<String>());
+        objList.setEnabled(false);
+        jScrollPane10.setViewportView(objList);
+
+        org.openide.awt.Mnemonics.setLocalizedText(objCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.objCheckBox.text")); // NOI18N
+        objCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                objCheckBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(exifCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.exifCheckBox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(notableCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.notableCheckBox.text")); // NOI18N
+        notableCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                notableCheckBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(scoreCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.scoreCheckBox.text")); // NOI18N
+        scoreCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                scoreCheckBoxActionPerformed(evt);
+            }
+        });
+
+        scoreList.setModel(new DefaultListModel<Score>());
+        scoreList.setEnabled(false);
+        jScrollPane11.setViewportView(scoreList);
 
         org.openide.awt.Mnemonics.setLocalizedText(hashCheckBox, org.openide.util.NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.hashCheckBox.text")); // NOI18N
         hashCheckBox.addActionListener(new java.awt.event.ActionListener() {
