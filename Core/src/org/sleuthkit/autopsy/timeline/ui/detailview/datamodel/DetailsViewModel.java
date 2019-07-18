@@ -162,42 +162,6 @@ final public class DetailsViewModel {
     }
 
     /**
-     * Map a single row in a ResultSet to an EventCluster
-     *
-     * @param resultSet      the result set whose current row should be mapped
-     * @param typeColumn     The type column (sub_type or base_type) to use as
-     *                       the type of the event cluster
-     * @param descriptionLOD the description level of detail for this event
-     *                       cluster
-     *
-     * @return an EventCluster corresponding to the current row in the given
-     *         result set
-     *
-     * @throws SQLException
-     */
-//    private TimelineEvent eventHelper(ResultSet resultSet) throws SQLException, TskCoreException {
-//
-//        //the event tyepe to use to get the description.
-//        int eventTypeID = resultSet.getInt("event_type_id");
-//        EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
-//                -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
-//
-//        return new TimelineEvent(
-//                resultSet.getLong("event_id"), // NON-NLS
-//                resultSet.getLong("data_source_obj_id"), // NON-NLS
-//                resultSet.getLong("file_obj_id"), // NON-NLS
-//                resultSet.getLong("artifact_id"), // NON-NLS
-//                resultSet.getLong("time"), // NON-NLS
-//                eventType,
-//                resultSet.getString("full_description"), // NON-NLS
-//                resultSet.getString("med_description"), // NON-NLS
-//                resultSet.getString("short_description"), // NON-NLS
-//                resultSet.getInt("hash_hit") != 0, //NON-NLS
-//                resultSet.getInt("tagged") != 0);
-//
-//    }
-
-    /**
      * Merge the events in the given list if they are within the same period
      * General algorithm is as follows:
      *
