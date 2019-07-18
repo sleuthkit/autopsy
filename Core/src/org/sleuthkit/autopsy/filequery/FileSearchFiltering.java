@@ -506,21 +506,15 @@ class FileSearchFiltering {
                 throw new FileSearchException("Can not run on empty list"); // NON-NLS
             }
 
-            // We can try to make this more efficient later - for now, check the frequency of each file individually
+            // Set the frequency for each file
+            FileSearch.FrequencyAttribute freqAttr = new FileSearch.FrequencyAttribute();
+            freqAttr.addAttributeToResultFiles(currentResults, caseDb, centralRepoDb);
+
+            // If the frequency matches the filter, add the file to the results
             List<ResultFile> frequencyResults = new ArrayList<>();
             for (ResultFile file : currentResults) {
-                try {
-                    if (file.getAbstractFile().getMd5Hash() != null && ! file.getAbstractFile().getMd5Hash().isEmpty()) {
-                        CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
-                        long count = centralRepoDb.getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, file.getAbstractFile().getMd5Hash());
-                        file.setFrequency(Frequency.fromCount(count));
-                    }
-
-                    if (frequencies.contains(file.getFrequency())) {
-                        frequencyResults.add(file);
-                    }
-                } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
-                    throw new FileSearchException("Error querying central repository", ex); // NON-NLS
+                if (frequencies.contains(file.getFrequency())) {
+                    frequencyResults.add(file);
                 }
             }
             return frequencyResults;
