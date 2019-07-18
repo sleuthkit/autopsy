@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel.utils;
+package org.sleuthkit.autopsy.coreutils;
 
 import com.google.common.collect.ImmutableSet;
 import static java.util.Arrays.asList;
