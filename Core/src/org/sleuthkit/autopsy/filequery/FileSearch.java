@@ -21,18 +21,31 @@ package org.sleuthkit.autopsy.filequery;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
+import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeInstance;
+import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstance;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValue;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
@@ -44,6 +57,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -772,6 +786,8 @@ class FileSearch {
      * Attribute for grouping/sorting by frequency in the central repository
      */
     static class FrequencyAttribute extends AttributeType {
+        
+        static final int BATCH_SIZE = 50; // Number of hashes to look up at one time
 
         @Override
         GroupKey getGroupKey(ResultFile file) {
@@ -779,31 +795,101 @@ class FileSearch {
         }
 
         @Override
-        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
                 EamDb centralRepoDb) throws FileSearchException {
-
+            
             if (centralRepoDb == null) {
                 throw new FileSearchException("Central Repository is not enabled - can not add frequency data"); // NON-NLS
             }
-
-            // We'll make this more efficient later - for now, add the frequency of each file individually
+            
+            // Set frequency in batches
+            Set<String> hashesToLookUp = new HashSet<>();
+            List<ResultFile> currentFiles = new ArrayList<>();
             for (ResultFile file : files) {
-                if (file.getFrequency() == Frequency.UNKNOWN) {
-                    try {
-                        if (file.getAbstractFile().getMd5Hash() != null && !file.getAbstractFile().getMd5Hash().isEmpty()) {
-                            CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
-                            long count = centralRepoDb.getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, file.getAbstractFile().getMd5Hash());
+                if (file.getFrequency() == Frequency.UNKNOWN
+                        && file.getAbstractFile().getMd5Hash() != null
+                        && !file.getAbstractFile().getMd5Hash().isEmpty()) {
+                    hashesToLookUp.add(file.getAbstractFile().getMd5Hash());
+                    currentFiles.add(file);
+                }
+                
+                if (hashesToLookUp.size() >= BATCH_SIZE) {
+                    computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+                    
+                    hashesToLookUp.clear();
+                    currentFiles.clear();
+                }
+            }
+            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+        }        
+    }
+    
+    /**
+     * Computes the CR frequency of all the given hashes and updates the list of files.
+     * 
+     * @param hashesToLookUp Hashes to find the frequency of
+     * @param currentFiles   List of files to update with frequencies
+     */
+    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, EamDb centralRepoDb) {
+        
+        if (hashesToLookUp.isEmpty()) {
+            return;
+        }
+        
+        String hashes = String.join("','", hashesToLookUp);
+        hashes = "'" + hashes + "'";
+        try {
+            CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
+            String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
+            
+            String selectClause = " value, COUNT(value) FROM "
+                    + "(SELECT DISTINCT case_id, data_source_id, value FROM " + tableName
+                    + " WHERE value IN ("
+                    + hashes
+                    + ")) AS foo GROUP BY value";
+            
+            FrequencyCallback callback = new FrequencyCallback(currentFiles);
+            centralRepoDb.processSelectClause(selectClause, callback);
+            
+        } catch (EamDbException ex) {
+            logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
+        }
+        
+    }
+
+    /**
+     * Callback to use with findInterCaseValuesByCount which generates a list of
+     * values for common property search
+     */
+    private static class FrequencyCallback implements InstanceTableCallback {
+
+        private final List<ResultFile> files;
+
+        private FrequencyCallback(List<ResultFile> files) {
+            this.files = files;
+        }
+
+        @Override
+        public void process(ResultSet resultSet) {
+            try {
+
+                while (resultSet.next()) {
+                    String hash = resultSet.getString(1);
+                    int count = resultSet.getInt(2);
+                    for (Iterator<ResultFile> iterator = files.iterator(); iterator.hasNext();) {
+                        ResultFile file = iterator.next();
+                        if (file.getAbstractFile().getMd5Hash().equalsIgnoreCase(hash)) {
                             file.setFrequency(Frequency.fromCount(count));
+                            iterator.remove();
                         }
-                    } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
-                        throw new FileSearchException("Error looking up central repository frequency for file with ID "
-                                + file.getAbstractFile().getId(), ex); // NON-NLS
                     }
                 }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
             }
         }
     }
-
+    
     /**
      * Key representing a central repository frequency group
      */

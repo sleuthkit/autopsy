@@ -805,6 +805,24 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
+     * Process a SELECT query
+     *
+     * @param selectClause          query string to execute
+     * @param instanceTableCallback callback to process the instance
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        try {
+            acquireSharedLock();
+            super.processSelectClause(selectClause, instanceTableCallback);
+        } finally {
+            releaseSharedLock();
+        }        
+    }      
+
+    /**
      * Check whether a reference set with the given name/version is in the
      * central repo. Used to check for name collisions when creating reference
      * sets.
