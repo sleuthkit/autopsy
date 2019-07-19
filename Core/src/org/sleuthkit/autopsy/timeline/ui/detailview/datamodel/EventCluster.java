@@ -29,7 +29,7 @@ import java.util.SortedSet;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.TimelineEvent;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
@@ -49,7 +49,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
     /**
      * the type of all the clustered events
      */
-    final private EventType type;
+    final private TimelineEventType type;
 
     /**
      * the common description of all the clustered events
@@ -125,7 +125,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
                 cluster1.getDescription(), cluster1.lod);
     }
 
-    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+    private EventCluster(Interval spanningInterval, TimelineEventType type, Set<Long> eventIDs,
                          Set<Long> hashHits, Set<Long> tagged, String description, TimelineEvent.DescriptionLevel lod,
                          EventStripe parent) {
 
@@ -140,13 +140,13 @@ public class EventCluster implements MultiEvent<EventStripe> {
         this.parent = parent;
     }
 
-    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+    public EventCluster(Interval spanningInterval, TimelineEventType type, Set<Long> eventIDs,
                         Set<Long> hashHits, Set<Long> tagged, String description, TimelineEvent.DescriptionLevel lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
 
-    public EventCluster(TimelineEvent event, EventType type, TimelineEvent.DescriptionLevel lod) {
+    public EventCluster(TimelineEvent event, TimelineEventType type, TimelineEvent.DescriptionLevel lod) {
         this.span = new Interval(event.getStartMillis(), event.getEndMillis());
         this.type = type;
 
@@ -217,7 +217,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    public EventType getEventType() {
+    public TimelineEventType getEventType() {
         return type;
     }
 

@@ -33,7 +33,7 @@ import static org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils.unGroupConcat
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Model for the ListView. Uses FilteredEventsModel as underlying datamodel and
@@ -104,13 +104,13 @@ public class ListViewModel {
 
                 //make a map from event type to event ID
                 List<Long> eventIDs = unGroupConcat(resultSet.getString("eventIDs"), Long::valueOf);
-                List<EventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
+                List<TimelineEventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
                         typesString -> eventManager.getEventType(Integer.valueOf(typesString)).orElseThrow(() -> new TskCoreException("Error mapping event type id " + typesString + ".S")));
                 
                 // We want to merge together file sub-type events that are at 
                 //the same time, but create individual events for other event
                 // sub-types
-                Map<EventType, Long> eventMap = new HashMap<>();
+                Map<TimelineEventType, Long> eventMap = new HashMap<>();
                 if (hasFileTypeEvents(eventTypes)) {
                     
                     for (int i = 0; i < eventIDs.size(); i++) {
@@ -133,10 +133,10 @@ public class ListViewModel {
         return combinedEvents;
     }
     
-    private boolean hasFileTypeEvents(List<EventType> eventTypes) {
+    private boolean hasFileTypeEvents(List<TimelineEventType> eventTypes) {
 
-        for (EventType type: eventTypes) {
-            if (type.getBaseType() != EventType.FILE_SYSTEM) {
+        for (TimelineEventType type: eventTypes) {
+            if (type.getBaseType() != TimelineEventType.FILE_SYSTEM) {
                 return false;
             }
         }

@@ -67,7 +67,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
@@ -99,7 +99,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     private TableView<TimelineEvent> eventTable;
 
     @FXML
-    private TableColumn<TimelineEvent, EventType> typeColumn;
+    private TableColumn<TimelineEvent, TimelineEventType> typeColumn;
 
     @FXML
     private TableColumn<TimelineEvent, Long> dateTimeColumn;
@@ -349,14 +349,14 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     }
 
     /**
-     * TableCell that shows a EventType including the associated icon.
+     * TableCell that shows a TimelineEventType including the associated icon.
      *
      * @param <X> Anything
      */
-    static private class TypeTableCell<X> extends TableCell<X, EventType> {
+    static private class TypeTableCell<X> extends TableCell<X, TimelineEventType> {
 
         @Override
-        protected void updateItem(EventType item, boolean empty) {
+        protected void updateItem(TimelineEventType item, boolean empty) {
             super.updateItem(item, empty);
 
             if (item == null || empty) {

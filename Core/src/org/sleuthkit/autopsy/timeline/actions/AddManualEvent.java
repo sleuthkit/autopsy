@@ -65,7 +65,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TL_
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Action that allows the user the manually create timeline events. It prompts
@@ -146,7 +146,7 @@ public class AddManualEvent extends Action {
             artifact.addAttributes(asList(
                     new BlackboardAttribute(
                             TSK_TL_EVENT_TYPE, source,
-                            EventType.USER_CREATED.getTypeID()),
+                            TimelineEventType.USER_CREATED.getTypeID()),
                     new BlackboardAttribute(
                             TSK_DESCRIPTION, source,
                             eventInfo.description),

@@ -26,7 +26,7 @@ import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * A node in the nav tree. Manages inserts and resorts. Has parents and
@@ -103,7 +103,7 @@ abstract class EventsTreeItem extends TreeItem<DetailViewEvent> {
      *
      * @return the EventType of this tree item.
      */
-    abstract EventType getEventType();
+    abstract TimelineEventType getEventType();
 
     /**
      * Remove the event represented by the given path from this tree item and

@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * A Panel that acts as a view for a given
@@ -93,12 +93,12 @@ public class ZoomSettingsPane extends TitledPane {
         zoomLabel.setText(Bundle.ZoomSettingsPane_zoomLabel_text());
 
         typeZoomSlider.setMin(1); //don't show ROOT_TYPE
-        typeZoomSlider.setMax(EventType.TypeLevel.values().length - 1);
+        typeZoomSlider.setMax(TimelineEventType.TypeLevel.values().length - 1);
         configureSliderListeners(typeZoomSlider,
                 controller::pushEventTypeZoom,
                 filteredEvents.eventTypeZoomProperty(),
-                EventType.TypeLevel.class,
-                EventType.TypeLevel::ordinal,
+                TimelineEventType.TypeLevel.class,
+                TimelineEventType.TypeLevel::ordinal,
                 Function.identity());
         typeZoomLabel.setText(Bundle.ZoomSettingsPane_typeZoomLabel_text());
 

@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
@@ -78,7 +78,7 @@ public class EventNode extends DisplayableItemNode {
     EventNode(@Nonnull TimelineEvent event, @Nonnull Content file, @Nonnull BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(event, file, artifact));
         this.event = event;
-        EventType evenType = event.getEventType();
+        TimelineEventType evenType = event.getEventType();
         this.setIconBaseWithExtension(EventTypeUtils.getImagePath(evenType));
     }
 
@@ -91,7 +91,7 @@ public class EventNode extends DisplayableItemNode {
     EventNode(@Nonnull TimelineEvent event, @Nonnull Content file) {
         super(Children.LEAF, Lookups.fixed(event, file));
         this.event = event;
-        EventType evenType = event.getEventType();
+        TimelineEventType evenType = event.getEventType();
         this.setIconBaseWithExtension(EventTypeUtils.getImagePath(evenType));
     }
 

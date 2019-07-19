@@ -54,7 +54,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Abstract base class for TimeLineChart based views.
@@ -102,7 +102,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * Access to chart data via series
      */
     protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
-    protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
+    protected final Map<TimelineEventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
 
     private ChartType chart;
 
@@ -229,7 +229,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * Make a series for each event type in a consistent order.
      */
     protected final void createSeries() {
-        for (EventType eventType : getController().getEventsModel().getEventTypes()) {
+        for (TimelineEventType eventType : getController().getEventsModel().getEventTypes()) {
             XYChart.Series<X, Y> series = new XYChart.Series<>();
             series.setName(eventType.getDisplayName());
             eventTypeToSeriesMap.put(eventType, series);
@@ -245,7 +245,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * @return A Series object to contain all the events with the given
      *         EventType
      */
-    protected final XYChart.Series<X, Y> getSeries(final EventType eventType) {
+    protected final XYChart.Series<X, Y> getSeries(final TimelineEventType eventType) {
         return eventTypeToSeriesMap.get(eventType);
     }
 

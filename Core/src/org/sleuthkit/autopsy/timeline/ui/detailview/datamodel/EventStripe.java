@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import org.sleuthkit.datamodel.TimelineEvent;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * A 'collection' of {@link EventCluster}s, all having the same type,
@@ -42,7 +42,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     /**
      * the type of all the events
      */
-    private final EventType type;
+    private final TimelineEventType type;
 
     /**
      * the common description of all the events
@@ -87,7 +87,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         return new EventStripe(parent, this.type, this.description, this.lod, clusters, eventIDs, tagged, hashHits);
     }
 
-    private EventStripe(EventCluster parent, EventType type, String description,
+    private EventStripe(EventCluster parent, TimelineEventType type, String description,
                         TimelineEvent.DescriptionLevel lod, SortedSet<EventCluster> clusters,
                         Set<Long> eventIDs, Set<Long> tagged, Set<Long> hashHits) {
         this.parent = parent;
@@ -146,7 +146,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     @Override
-    public EventType getEventType() {
+    public TimelineEventType getEventType() {
         return type;
     }
 

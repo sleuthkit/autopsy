@@ -27,8 +27,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import org.joda.time.Interval;
 import org.sleuthkit.datamodel.TimelineEvent;
-import org.sleuthkit.datamodel.EventType;
-import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * A single event.
@@ -60,7 +59,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     /**
      * The type of this event.
      */
-    private final EventType type;
+    private final TimelineEventType type;
 
     /**
      * The three descriptions (full, med, short) stored in a map, keyed by
@@ -100,7 +99,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * @param hashHit
      * @param tagged
      */
-    public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, boolean hashHit, boolean tagged) {
+    public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, TimelineEventType type, String fullDescription, String medDescription, String shortDescription, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.dataSourceObjId = dataSourceObjId;
         this.fileObjId = fileObjId;
@@ -203,7 +202,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     }
 
     @Override
-    public EventType getEventType() {
+    public TimelineEventType getEventType() {
         return type;
     }
 

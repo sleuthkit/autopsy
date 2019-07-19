@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 
@@ -104,7 +104,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
         }
     }
 
-    private void setLegendColor(EventTypeFilter filter, Rectangle rect, EventType.TypeLevel eventTypeZoom) {
+    private void setLegendColor(EventTypeFilter filter, Rectangle rect, TimelineEventType.TypeLevel eventTypeZoom) {
         //only show legend color if filter is of the same zoomlevel as requested in filteredEvents
         if (eventTypeZoom.equals(filter.getEventType().getTypeLevel())) {
             Platform.runLater(() -> {

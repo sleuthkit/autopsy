@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * A container for several events that have the same timestamp and description
@@ -38,7 +38,7 @@ public class CombinedEvent {
     /**
      * A map from EventType to event ID.
      */
-    private final Map<EventType, Long> eventTypeMap = new HashMap<>();
+    private final Map<TimelineEventType, Long> eventTypeMap = new HashMap<>();
 
     /**
      * Constructor
@@ -48,7 +48,7 @@ public class CombinedEvent {
      * @param fileID      The ID of the file shared by all the combined events.
      * @param eventMap    A map from EventType to event ID.
      */
-    public CombinedEvent(long epochMillis, Map<EventType, Long> eventMap) {
+    public CombinedEvent(long epochMillis, Map<TimelineEventType, Long> eventMap) {
         this.epochMillis = epochMillis;
         eventTypeMap.putAll(eventMap);
 
@@ -68,7 +68,7 @@ public class CombinedEvent {
      *
      * @return The types of the combined events.
      */
-    public Set<EventType> getEventTypes() {
+    public Set<TimelineEventType> getEventTypes() {
         return eventTypeMap.keySet();
     }
 
