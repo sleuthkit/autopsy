@@ -281,7 +281,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      * Node for a specific file type / extension. Children of it will be the
      * files of that type.
      */
-    class FileExtensionNode extends FileTypes.BGCountUpdatingNode {
+    final class FileExtensionNode extends FileTypes.BGCountUpdatingNode {
 
         private final FileTypesByExtension.SearchFilterInterface filter;
 
@@ -495,7 +495,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
         @Override
         public List<String> getFilter() {
-            return this.filter;
+            return Collections.unmodifiableList(this.filter);
         }
     }
 
@@ -552,7 +552,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
         @Override
         public List<String> getFilter() {
-            return this.filter;
+            return Collections.unmodifiableList(this.filter);
         }
     }
 
@@ -599,7 +599,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
         @Override
         public List<String> getFilter() {
-            return this.filter;
+            return Collections.unmodifiableList(this.filter);
         }
     }
 

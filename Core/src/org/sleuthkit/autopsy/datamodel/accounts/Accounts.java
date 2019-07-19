@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -193,6 +193,7 @@ final public class Accounts implements AutopsyVisitableItem {
          * Create of keys used by this Children object to represent the child
          * nodes.
          */
+        @Override
         abstract protected boolean createKeys(List<X> list);
 
         /**
@@ -1174,7 +1175,7 @@ final public class Accounts implements AutopsyVisitableItem {
          * @return the artifact ids of the account artifacts from this file.
          */
         public List<Long> getArtifactIDs() {
-            return artifactIDs;
+            return Collections.unmodifiableList(artifactIDs);
         }
 
         /**
@@ -1192,7 +1193,7 @@ final public class Accounts implements AutopsyVisitableItem {
          * @return the status(s) of the account artifacts from this file.
          */
         public Set<BlackboardArtifact.ReviewStatus> getStatuses() {
-            return statuses;
+            return Collections.unmodifiableSet(statuses);
         }
     }
 

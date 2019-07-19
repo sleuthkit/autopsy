@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Hash set hits node support. Inner classes have all of the nodes in the tree.
@@ -152,7 +151,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                         String setName = resultSet.getString("value_text"); //NON-NLS
                         long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                         if (!hashSetHitsMap.containsKey(setName)) {
-                            hashSetHitsMap.put(setName, new HashSet<Long>());
+                            hashSetHitsMap.put(setName, new HashSet<>());
                         }
                         hashSetHitsMap.get(setName).add(artifactId);
                     }
@@ -378,8 +377,8 @@ public class HashsetHits implements AutopsyVisitableItem {
      */
     private class HitFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
 
-        private String hashsetName;
-        private Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
+        private final String hashsetName;
+        private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
 
         private HitFactory(String hashsetName) {
             super(hashsetName);
@@ -416,7 +415,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                             BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                             artifactHits.put(id, art);
                         }
-                    } catch (TskException ex) {
+                    } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                     }
                 });

@@ -370,7 +370,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * Node which represents the media sub type in the By MIME type tree, the
      * media subtype is the portion of the MIME type following the /.
      */
-    class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
+    final class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
 
         @NbBundle.Messages({"FileTypesByMimeTypeNode.createSheet.mediaSubtype.name=Subtype",
             "FileTypesByMimeTypeNode.createSheet.mediaSubtype.displayName=Subtype",

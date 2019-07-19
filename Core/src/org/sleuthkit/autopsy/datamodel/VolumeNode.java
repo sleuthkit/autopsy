@@ -161,7 +161,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                 NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
 
-        return actionsList.toArray(new Action[0]);
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     @Override

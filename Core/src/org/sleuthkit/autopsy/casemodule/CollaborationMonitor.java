@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,11 +24,10 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -541,7 +540,7 @@ final class CollaborationMonitor {
          * @return A mapping of task IDs to current tasks
          */
         Map<Long, Task> getCurrentTasks() {
-            return currentTasks;
+            return Collections.unmodifiableMap(currentTasks);
         }
 
     }

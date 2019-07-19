@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2018 Basis Technology Corp.
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -833,7 +833,7 @@ final public class FiltersPanel extends JPanel {
      *
      * @return an instance of CommunicationsFilter
      */
-    protected CommunicationsFilter getFilter() {
+    private CommunicationsFilter getFilter() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
@@ -1088,6 +1088,8 @@ final public class FiltersPanel extends JPanel {
      * label.
      */
     final class CheckBoxIconPanel extends JPanel {
+
+        private static final long serialVersionUID = 1L;
 
         private final JCheckBox checkbox;
         private final JLabel label;

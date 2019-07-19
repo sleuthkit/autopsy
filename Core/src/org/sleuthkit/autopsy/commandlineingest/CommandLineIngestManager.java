@@ -103,6 +103,7 @@ public class CommandLineIngestManager {
             }
         }
 
+        @Override
         public void run() {
             LOGGER.log(Level.INFO, "Job processing task started");
 

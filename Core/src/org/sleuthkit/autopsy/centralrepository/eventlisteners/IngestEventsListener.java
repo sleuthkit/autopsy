@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -365,7 +366,7 @@ public class IngestEventsListener {
             String dataSourceName = "";
             long dataSourceObjectId = -1;
             try {
-                dataSource = ((DataSourceAnalysisCompletedEvent) event).getDataSource();
+                dataSource = ((DataSourceAnalysisEvent) event).getDataSource();
 
                 /*
                  * We only care about Images for the purpose of updating hash

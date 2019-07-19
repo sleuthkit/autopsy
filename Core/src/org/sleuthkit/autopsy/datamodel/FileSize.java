@@ -269,7 +269,7 @@ public class FileSize implements AutopsyVisitableItem {
          */
         public class FileSizeNode extends DisplayableItemNode {
 
-            private FileSizeFilter filter;
+            private final FileSizeFilter filter;
             private final long datasourceObjId;
 
             // use version with observer instead so that it updates
@@ -364,11 +364,11 @@ public class FileSize implements AutopsyVisitableItem {
          */
         static class FileSizeChildren extends BaseChildFactory<AbstractFile> {
 
+            private static final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
             private final SleuthkitCase skCase;
             private final FileSizeFilter filter;
             private final Observable notifier;
             private final long datasourceObjId;
-            private static final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
 
             /**
              *
