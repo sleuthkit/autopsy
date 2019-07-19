@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.listvew.datamodel;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,13 +31,11 @@ import static java.util.stream.Collectors.groupingBy;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils;
-import static org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils.unGroupConcat;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
 import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Model for the ListView. Uses FilteredEventsModel as underlying datamodel and
@@ -100,7 +96,7 @@ public class ListViewModel {
             List<TimelineEvent> groupedEvents = entry.getValue();
             CombinedEventGroup group = entry.getKey();
             
-            Map<EventType, Long> eventMap = new HashMap<>();
+            Map<TimelineEventType, Long> eventMap = new HashMap<>();
             for(TimelineEvent event: groupedEvents) {
                 eventMap.put(event.getEventType(), event.getEventID());
             }
@@ -111,8 +107,8 @@ public class ListViewModel {
             if (hasFileTypeEvents(eventMap.keySet()) || eventMap.size() == 1) {
                  combinedEvents.add(new CombinedEvent(group.time * 1000,   eventMap));
             } else {
-                for(Entry<EventType, Long> singleEntry: eventMap.entrySet()) {
-                     Map<EventType, Long> singleEventMap = new HashMap<>();
+                for(Entry<TimelineEventType, Long> singleEntry: eventMap.entrySet()) {
+                     Map<TimelineEventType, Long> singleEventMap = new HashMap<>();
                      singleEventMap.put(singleEntry.getKey(), singleEntry.getValue());
                      combinedEvents.add(new CombinedEvent(group.time * 1000,   singleEventMap));
                 }
@@ -124,10 +120,9 @@ public class ListViewModel {
         return combinedEvents;
     }
     
-    private boolean hasFileTypeEvents(Collection<EventType> eventTypes) {
-
-        for (EventType type: eventTypes) {
-            if (type.getBaseType() != EventType.FILE_SYSTEM) {
+    private boolean hasFileTypeEvents(Collection<TimelineEventType> eventTypes) {
+        for (TimelineEventType type: eventTypes) {
+            if (type.getBaseType() != TimelineEventType.FILE_SYSTEM) {
                 return false;
             }
         }

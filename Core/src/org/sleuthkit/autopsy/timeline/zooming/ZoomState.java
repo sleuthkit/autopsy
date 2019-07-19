@@ -22,7 +22,7 @@ import java.util.Objects;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.TimelineEvent;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * This class encapsulates all the zoom(and filter) parameters into one object
@@ -32,7 +32,7 @@ final public class ZoomState {
 
     private final Interval timeRange;
 
-    private final EventType.TypeLevel typeZoomLevel;
+    private final TimelineEventType.TypeLevel typeZoomLevel;
 
     private final RootFilterState filter;
 
@@ -42,7 +42,7 @@ final public class ZoomState {
         return timeRange;
     }
 
-    public EventType.TypeLevel getTypeZoomLevel() {
+    public TimelineEventType.TypeLevel getTypeZoomLevel() {
         return typeZoomLevel;
     }
 
@@ -54,18 +54,18 @@ final public class ZoomState {
         return descrLOD;
     }
 
-    public ZoomState(Interval timeRange, EventType.TypeLevel zoomLevel, RootFilterState filter, TimelineEvent.DescriptionLevel descrLOD) {
+    public ZoomState(Interval timeRange, TimelineEventType.TypeLevel zoomLevel, RootFilterState filter, TimelineEvent.DescriptionLevel descrLOD) {
         this.timeRange = timeRange;
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
         this.descrLOD = descrLOD;
     }
 
-    public ZoomState withTimeAndType(Interval timeRange, EventType.TypeLevel zoomLevel) {
+    public ZoomState withTimeAndType(Interval timeRange, TimelineEventType.TypeLevel zoomLevel) {
         return new ZoomState(timeRange, zoomLevel, filter, descrLOD);
     }
 
-    public ZoomState withTypeZoomLevel(EventType.TypeLevel zoomLevel) {
+    public ZoomState withTypeZoomLevel(TimelineEventType.TypeLevel zoomLevel) {
         return new ZoomState(timeRange, zoomLevel, filter, descrLOD);
     }
 
@@ -85,7 +85,7 @@ final public class ZoomState {
         return this.filter.equals(filterSet);
     }
 
-    public boolean hasTypeZoomLevel(EventType.TypeLevel typeZoom) {
+    public boolean hasTypeZoomLevel(TimelineEventType.TypeLevel typeZoom) {
         return this.typeZoomLevel.equals(typeZoom);
     }
 

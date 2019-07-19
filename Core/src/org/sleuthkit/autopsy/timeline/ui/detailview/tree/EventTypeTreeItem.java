@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * abstract EventTreeItem for event types
@@ -31,7 +31,7 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
     /**
      * The event type for this tree item.
      */
-    private final EventType eventType;
+    private final TimelineEventType eventType;
 
     /**
      * Constructor
@@ -40,7 +40,7 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    EventTypeTreeItem(EventType eventType, Comparator<TreeItem<DetailViewEvent>> comparator) {
+    EventTypeTreeItem(TimelineEventType eventType, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(comparator);
         this.eventType = eventType;
     }
@@ -62,7 +62,7 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
     }
 
     @Override
-    EventType getEventType() {
+    TimelineEventType getEventType() {
         return eventType;
     }
 }

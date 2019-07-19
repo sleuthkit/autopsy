@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import org.sleuthkit.datamodel.TimelineEvent;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * An event of the timeline. Concrete implementations may represent single
@@ -87,7 +87,7 @@ public interface DetailViewEvent {
      *
      * @return the EventType of this event.
      */
-    EventType getEventType();
+    TimelineEventType getEventType();
 
     /**
      * Get the start time of this event as milliseconds from the Unix Epoch.
