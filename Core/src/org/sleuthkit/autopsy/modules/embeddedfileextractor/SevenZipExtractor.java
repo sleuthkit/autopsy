@@ -1283,7 +1283,10 @@ class SevenZipExtractor {
                     names += name;
                 }
                 String correctCharset = detectFilenamesCharset(names);
-
+                if (correctCharset != null) {
+                    logger.warning("Detected " + correctCharset + " for the "
+                            + "following joining of filenames:\n" + names);
+                }
                 // If a charset was detected, transcode filenames accordingly
                 if (correctCharset != null) {
                     for (UnpackedNode child : node.getChildren()) {
