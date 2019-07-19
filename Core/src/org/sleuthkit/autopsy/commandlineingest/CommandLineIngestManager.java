@@ -275,32 +275,10 @@ public class CommandLineIngestManager {
          *
          * @throws
          * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException if
-         *                                                                    there
-         *                                                                    was
-         *                                                                    a
-         *                                                                    DSP
-         *                                                                    processing
-         *                                                                    error
+         * there was a DSP processing error
          *
-         * @throws InterruptedException                                                 if
-         *                                                                              the
-         *                                                                              thread
-         *                                                                              running
-         *                                                                              the
-         *                                                                              job
-         *                                                                              processing
-         *                                                                              task
-         *                                                                              is
-         *                                                                              interrupted
-         *                                                                              while
-         *                                                                              blocked,
-         *                                                                              i.e.,
-         *                                                                              if
-         *                                                                              auto
-         *                                                                              ingest
-         *                                                                              is
-         *                                                                              shutting
-         *                                                                              down.
+         * @throws InterruptedException  if the thread running the job processing 
+         * task is interrupted while blocked, i.e., if auto ingest is shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
@@ -402,11 +380,10 @@ public class CommandLineIngestManager {
          * @param dataSource The data source to analyze.
          *
          * @throws AnalysisStartupException if there is an error analyzing the
-         *                                  data source.
-         * @throws InterruptedException     if the thread running the job
-         *                                  processing task is interrupted while
-         *                                  blocked, i.e., if auto ingest is
-         *                                  shutting down.
+         * data source.
+         * @throws InterruptedException if the thread running the job processing
+         * task is interrupted while blocked, i.e., if auto ingest is shutting
+         * down.
          */
         private void analyze(AutoIngestDataSource dataSource) throws AnalysisStartupException, InterruptedException {
 

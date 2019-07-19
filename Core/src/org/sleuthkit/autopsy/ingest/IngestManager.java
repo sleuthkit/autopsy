@@ -367,6 +367,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
     private IngestJobStartResult startIngestJob(IngestJob job) {
+        List<IngestModuleError> errors = null;
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
@@ -403,7 +404,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             ingestJobsById.put(job.getId(), job);
         }
         IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
-        List<IngestModuleError> errors = job.start();
+        errors = job.start();
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
         } else {
