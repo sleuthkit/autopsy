@@ -133,10 +133,10 @@ public class ListViewModel {
         return combinedEvents;
     }
     
-    private boolean hasFileTypeEvents(List<EventType> eventTypes) {
+    private boolean hasFileTypeEvents(List<TimelineEventType> eventTypes) {
 
-        for (EventType type: eventTypes) {
-            if (type.getBaseType() != EventType.FILE_SYSTEM) {
+        for (TimelineEventType type: eventTypes) {
+            if (type.getBaseType() != TimelineEventType.FILE_SYSTEM) {
                 return false;
             }
         }
