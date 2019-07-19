@@ -53,6 +53,8 @@ import org.sleuthkit.datamodel.TskData;
 public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     private final static Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
     private final SleuthkitCase skCase;
     private final FileTypes typesRoot;
 
@@ -72,8 +74,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     long filteringDataSourceObjId() {
         return typesRoot.filteringDataSourceObjId();
-    } 
-    
+    }
+
     /**
      * Listens for case and ingest invest. Updates observers when events are
      * fired. FileType and FileTypes nodes are all listening to this.
@@ -115,8 +117,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 }
             };
 
-            IngestManager.getInstance().addIngestJobEventListener(pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
             Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         }
 
@@ -365,11 +367,11 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 ? " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")"
                 : " ")
                 + (filteringDataSourceObjId() > 0
-                ? " AND data_source_obj_id = " + filteringDataSourceObjId()
-                : " ")
+                        ? " AND data_source_obj_id = " + filteringDataSourceObjId()
+                        : " ")
                 + " AND (extension IN (" + filter.getFilter().stream()
                         .map(String::toLowerCase)
-                        .map(s -> "'"+StringUtils.substringAfter(s, ".")+"'")
+                        .map(s -> "'" + StringUtils.substringAfter(s, ".") + "'")
                         .collect(Collectors.joining(", ")) + "))";
     }
 
@@ -384,10 +386,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
         /**
          *
-         * @param filter Extensions to display
+         * @param filter   Extensions to display
          * @param skCase
-         * @param o      Observable that will notify when there could be new
-         *               data to display
+         * @param o        Observable that will notify when there could be new
+         *                 data to display
          * @param nodeName
          */
         private FileExtensionNodeChildren(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o, String nodeName) {

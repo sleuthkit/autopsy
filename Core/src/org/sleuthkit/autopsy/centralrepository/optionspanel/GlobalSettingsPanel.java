@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
+import java.util.Set;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -49,7 +50,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GlobalSettingsPanel.class.getName());
-
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
     /**
@@ -72,7 +73,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     private void addIngestJobEventsListener() {
-        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
         ingestStateUpdated(Case.isCaseOpen());
     }
 

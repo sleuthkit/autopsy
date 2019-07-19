@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,28 +61,29 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final String HASHSET_HITS = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel();
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName();
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     private SleuthkitCase skCase;
     private final HashsetResults hashsetResults;
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
-    
-    
+
     /**
      * Constructor
-     * 
-     * @param skCase  Case DB
-     * 
-     */ 
+     *
+     * @param skCase Case DB
+     *
+     */
     public HashsetHits(SleuthkitCase skCase) {
         this(skCase, 0);
     }
-    
+
     /**
      * Constructor
-     * 
-     * @param skCase  Case DB
-     * @param objId  Object id of the data source 
-     * 
-     */ 
+     *
+     * @param skCase Case DB
+     * @param objId  Object id of the data source
+     *
+     */
     public HashsetHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
         this.filteringDSObjId = objId;
@@ -118,7 +119,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         Set<Long> getArtifactIds(String hashSetName) {
-            synchronized (hashSetHitsMap) {            
+            synchronized (hashSetHitsMap) {
                 return hashSetHitsMap.get(hashSetName);
             }
         }
@@ -141,9 +142,9 @@ public class HashsetHits implements AutopsyVisitableItem {
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
             if (filteringDSObjId > 0) {
-                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
+                query += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
-            
+
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 synchronized (hashSetHitsMap) {
@@ -275,8 +276,8 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
             hashsetResults.update();
             hashsetResults.addObserver(this);
@@ -379,7 +380,7 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         private String hashsetName;
         private Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
- 
+
         private HitFactory(String hashsetName) {
             super(hashsetName);
             this.hashsetName = hashsetName;
@@ -396,7 +397,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact key) {     
+        protected Node createNodeForKey(BlackboardArtifact key) {
             return new BlackboardArtifactNode(key);
         }
 

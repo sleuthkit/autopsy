@@ -27,7 +27,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
@@ -65,6 +67,7 @@ import org.sleuthkit.datamodel.Content;
 public class CommandLineIngestManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private Path rootOutputDirectory;
 
     public CommandLineIngestManager() {
@@ -198,10 +201,11 @@ public class CommandLineIngestManager {
                     System.out.println("Unable to ingest data source " + dataSourcePath + ". Exiting...");
                 } catch (Throwable ex) {
                     /*
-                    * Unexpected runtime exceptions firewall. This task is designed to
-                    * be able to be run in an executor service thread pool without
-                    * calling get() on the task's Future<Void>, so this ensures that
-                    * such errors get logged.
+                     * Unexpected runtime exceptions firewall. This task is
+                     * designed to be able to be run in an executor service
+                     * thread pool without calling get() on the task's
+                     * Future<Void>, so this ensures that such errors get
+                     * logged.
                      */
                     LOGGER.log(Level.SEVERE, "Unexpected error while ingesting data source " + dataSourcePath, ex);
                     System.out.println("Unexpected error while ingesting data source " + dataSourcePath + ". Exiting...");
@@ -229,6 +233,7 @@ public class CommandLineIngestManager {
          * object.
          *
          * @param dataSource DataSource object
+         *
          * @return object ID
          */
         private Long getDataSourceId(AutoIngestDataSource dataSource) {
@@ -268,12 +273,33 @@ public class CommandLineIngestManager {
          * @param dataSource The data source.
          *
          * @throws
-         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
-         * if there was a DSP processing error
+         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException if
+         *                                                                    there
+         *                                                                    was
+         *                                                                    a
+         *                                                                    DSP
+         *                                                                    processing
+         *                                                                    error
          *
-         * @throws InterruptedException if the thread running the job processing
-         * task is interrupted while blocked, i.e., if auto ingest is shutting
-         * down.
+         * @throws InterruptedException                                                 if
+         *                                                                              the
+         *                                                                              thread
+         *                                                                              running
+         *                                                                              the
+         *                                                                              job
+         *                                                                              processing
+         *                                                                              task
+         *                                                                              is
+         *                                                                              interrupted
+         *                                                                              while
+         *                                                                              blocked,
+         *                                                                              i.e.,
+         *                                                                              if
+         *                                                                              auto
+         *                                                                              ingest
+         *                                                                              is
+         *                                                                              shutting
+         *                                                                              down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
@@ -295,7 +321,7 @@ public class CommandLineIngestManager {
                 LOGGER.log(Level.SEVERE, "Unsupported data source {0}", dataSource.getPath());  // NON-NLS
                 return;
             }
-            
+
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             synchronized (ingestLock) {
                 // Try each DSP in decreasing order of confidence
@@ -375,16 +401,17 @@ public class CommandLineIngestManager {
          * @param dataSource The data source to analyze.
          *
          * @throws AnalysisStartupException if there is an error analyzing the
-         * data source.
-         * @throws InterruptedException if the thread running the job processing
-         * task is interrupted while blocked, i.e., if auto ingest is shutting
-         * down.
+         *                                  data source.
+         * @throws InterruptedException     if the thread running the job
+         *                                  processing task is interrupted while
+         *                                  blocked, i.e., if auto ingest is
+         *                                  shutting down.
          */
         private void analyze(AutoIngestDataSource dataSource) throws AnalysisStartupException, InterruptedException {
 
             LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", dataSource.getPath());
             IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
-            IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
                     IngestJobSettings ingestJobSettings = new IngestJobSettings(UserPreferences.getCommandLineModeIngestModuleContextString());
@@ -447,7 +474,7 @@ public class CommandLineIngestManager {
          * the path.
          *
          * @param caseFoldersPath The root case folders path.
-         * @param caseName The name of the case.
+         * @param caseName        The name of the case.
          *
          * @return A case folder path with a time stamp suffix.
          */
@@ -461,8 +488,8 @@ public class CommandLineIngestManager {
          * for a case.
          *
          * @param folderToSearch The folder to be searched.
-         * @param caseName The name of the case for which a case folder is to be
-         * found.
+         * @param caseName       The name of the case for which a case folder is
+         *                       to be found.
          *
          * @return The path of the case folder, or null if it is not found.
          */

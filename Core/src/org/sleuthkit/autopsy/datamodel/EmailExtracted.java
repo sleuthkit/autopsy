@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.CONTENT_CHANGED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -63,6 +64,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private static final String MAIL_ACCOUNT = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailAccount.text");
     private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
     private static final String MAIL_PATH_SEPARATOR = "/";
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
+
     /**
      * Parse the path of the email msg to get the account name and folder in
      * which the email is contained.
@@ -88,37 +92,35 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private final EmailResults emailResults;
     private final long filteringDSObjId;    // 0 if not filtering/grouping by data source
 
-
-
     /**
      * Constructor
-     * 
+     *
      * @param skCase Case DB
      */
     public EmailExtracted(SleuthkitCase skCase) {
         this(skCase, 0);
     }
-    
+
     /**
      * Constructor
-     * 
-     * @param skCase  Case DB
-     * @param objId  Object id of the data source 
-     * 
-     */ 
+     *
+     * @param skCase Case DB
+     * @param objId  Object id of the data source
+     *
+     */
     public EmailExtracted(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
         this.filteringDSObjId = objId;
         emailResults = new EmailResults();
     }
 
-
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
     }
+
     private final class EmailResults extends Observable {
-        
+
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 
@@ -161,7 +163,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
             if (filteringDSObjId > 0) {
-                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
+                query += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
@@ -307,8 +309,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
             emailResults.update();
             emailResults.addObserver(this);

@@ -26,8 +26,10 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -117,7 +119,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public class TimeLineController {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
-
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED, IngestManager.IngestModuleEvent.CONTENT_CHANGED);
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
     public static ZoneId getTimeZoneID() {
@@ -454,8 +457,8 @@ public class TimeLineController {
                             TimeLineController.this.showFullRange();
                         } else {
                             //prompt user to pick specific event and time range
-                            ShowInTimelineDialog showInTimelineDilaog =
-                                    (file == null)
+                            ShowInTimelineDialog showInTimelineDilaog
+                                    = (file == null)
                                             ? new ShowInTimelineDialog(TimeLineController.this, artifact)
                                             : new ShowInTimelineDialog(TimeLineController.this, file);
                             Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
@@ -571,8 +574,8 @@ public class TimeLineController {
     void showTimeLine(AbstractFile file, BlackboardArtifact artifact) {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
-            IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
-            IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, ingestModuleListener);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobListener);
             Case.addPropertyChangeListener(caseListener);
             listeningToAutopsy = true;
         }
@@ -962,7 +965,7 @@ public class TimeLineController {
                     //since black board artifacts or new derived content have been added, the DB is stale.
                     Platform.runLater(() -> setEventsDBStale(true));
                     break;
-                case FILE_DONE:
+                default:
                     /*
                      * Do nothing, since we have captured all new results in
                      * CONTENT_CHANGED and DATA_ADDED or the IngestJob listener,
@@ -986,10 +989,7 @@ public class TimeLineController {
                     Platform.runLater(() -> setEventsDBStale(true));
                     filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
-                case DATA_SOURCE_ANALYSIS_STARTED:
-                case CANCELLED:
-                case COMPLETED:
-                case STARTED:
+                default:
                     break;
             }
         }

@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 class DropdownListSearchPanel extends AdHocSearchPanel {
 
     private static final Logger logger = Logger.getLogger(DropdownListSearchPanel.class.getName());
+    
     private static DropdownListSearchPanel instance;
     private XmlKeywordSearchList loader;
     private final KeywordListsTableModel listsTableModel;
