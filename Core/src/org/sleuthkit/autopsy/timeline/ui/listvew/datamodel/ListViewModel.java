@@ -21,10 +21,15 @@ package org.sleuthkit.autopsy.timeline.ui.listvew.datamodel;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import static java.util.stream.Collectors.groupingBy;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
@@ -34,6 +39,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * Model for the ListView. Uses FilteredEventsModel as underlying datamodel and
@@ -79,61 +85,46 @@ public class ListViewModel {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
+    
     public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterState filterState) throws TskCoreException {
-        Long startTime = timeRange.getStartMillis() / 1000;
-        Long endTime = timeRange.getEndMillis() / 1000;
-
-        if (Objects.equals(startTime, endTime)) {
-            endTime++; //make sure end is at least 1 millisecond after start
-        }
-
+        List<TimelineEvent> events = eventManager.getEvents(timeRange, filterState.getActiveFilter());
+        
+        if(events == null || events.isEmpty())
+            return Collections.EMPTY_LIST;
+        
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
-
-        TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
-        final String querySql = "SELECT time, "
-                                + dbUtils.csvAggFunction("CAST(tsk_events.event_id AS VARCHAR)") + " AS eventIDs, "
-                                + dbUtils.csvAggFunction("CAST(event_type_id AS VARCHAR)") + " AS eventTypes"
-                                + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(filterState.getActiveFilter())
-                                + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter())
-                                + " GROUP BY time, full_description, file_obj_id ORDER BY time ASC, full_description";
-
-        try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
-                ResultSet resultSet = dbQuery.getResultSet();) {
-
-            while (resultSet.next()) {
-
-                //make a map from event type to event ID
-                List<Long> eventIDs = unGroupConcat(resultSet.getString("eventIDs"), Long::valueOf);
-                List<EventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
-                        typesString -> eventManager.getEventType(Integer.valueOf(typesString)).orElseThrow(() -> new TskCoreException("Error mapping event type id " + typesString + ".S")));
-                
-                // We want to merge together file sub-type events that are at 
-                //the same time, but create individual events for other event
-                // sub-types
-                Map<EventType, Long> eventMap = new HashMap<>();
-                if (hasFileTypeEvents(eventTypes)) {
-                    
-                    for (int i = 0; i < eventIDs.size(); i++) {
-                        eventMap.put(eventTypes.get(i), eventIDs.get(i));
-                    }
-                    combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000,   eventMap));
-                } else {
-                    for (int i = 0; i < eventIDs.size(); i++) {
-                        eventMap.put(eventTypes.get(i), eventIDs.get(i));
-                        combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000,   eventMap));
-                        eventMap.clear();
-                    }
+        
+        Map<CombinedEventGroup, List<TimelineEvent>> groupedEventList = events.stream().collect(groupingBy(event -> new CombinedEventGroup(event.getTime(), event.getFileObjID(), event.getFullDescription())));
+        
+        for(Entry<CombinedEventGroup, List<TimelineEvent>> entry: groupedEventList.entrySet()){
+            List<TimelineEvent> groupedEvents = entry.getValue();
+            CombinedEventGroup group = entry.getKey();
+            
+            Map<EventType, Long> eventMap = new HashMap<>();
+            for(TimelineEvent event: groupedEvents) {
+                eventMap.put(event.getEventType(), event.getEventID());
+            }
+            
+            // We want to merge together file sub-type events that are at 
+            //the same time, but create individual events for other event
+            // sub-types
+            if (hasFileTypeEvents(eventMap.keySet()) || eventMap.size() == 1) {
+                 combinedEvents.add(new CombinedEvent(group.time * 1000,   eventMap));
+            } else {
+                for(Entry<EventType, Long> singleEntry: eventMap.entrySet()) {
+                     Map<EventType, Long> singleEventMap = new HashMap<>();
+                     singleEventMap.put(singleEntry.getKey(), singleEntry.getValue());
+                     combinedEvents.add(new CombinedEvent(group.time * 1000,   singleEventMap));
                 }
             }
-
-        } catch (SQLException sqlEx) {
-            throw new TskCoreException("Failed to execute query for combined events: \n" + querySql, sqlEx); // NON-NLS
         }
-
+        
+        Collections.sort(combinedEvents, new SortEventByTime());
+        
         return combinedEvents;
     }
     
-    private boolean hasFileTypeEvents(List<EventType> eventTypes) {
+    private boolean hasFileTypeEvents(Collection<EventType> eventTypes) {
 
         for (EventType type: eventTypes) {
             if (type.getBaseType() != EventType.FILE_SYSTEM) {
@@ -142,5 +133,49 @@ public class ListViewModel {
         }
         
         return true;
+    }
+    
+    final class CombinedEventGroup {
+        String description;
+        long time;
+        long fileID;
+        
+        CombinedEventGroup(long time, long fileID, String description) {
+            this.description = description;
+            this.time = time;
+            this.fileID = fileID;
+        }
+        
+        @Override
+        public boolean equals (Object obj) {
+            if ( !(obj instanceof CombinedEventGroup)) {
+                return false;
+            }
+            
+            CombinedEventGroup group = (CombinedEventGroup)obj;
+            
+            return description.equals(group.description) 
+                    && time == group.time 
+                    && fileID == group.fileID;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 31 * hash + Objects.hashCode(this.description);
+            hash = 31 * hash + (int) (this.time ^ (this.time >>> 32));
+            hash = 31 * hash + (int) (this.fileID ^ (this.fileID >>> 32));
+            return hash;
+        }
+        
+    }
+    
+    class SortEventByTime implements Comparator<CombinedEvent> {
+
+        @Override
+        public int compare(CombinedEvent o1, CombinedEvent o2) {
+            return Long.compare(o1.getStartMillis(), o2.getStartMillis());
+        }
+        
     }
 }
