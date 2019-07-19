@@ -164,15 +164,6 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
                 bbartifacts.append(artifact)
 
-                try:
-                    # index the artifact for keyword search
-                    blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, MODULE_NAME)
-                except Blackboard.BlackboardException as ex:
-                    self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
-                    MessageNotifyUtil.Notify.error("Failed to index contact artifact for keyword search.", artifact.getDisplayName())
-
         except SQLException as ex:
             # Unable to execute contacts SQL query against database.
             pass
@@ -180,6 +171,8 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error posting to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
+            if bbartifacts:
+                Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, general.MODULE_NAME)
 
             try:
                 if resultSet is not None:
