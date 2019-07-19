@@ -157,75 +157,8 @@ final public class DetailsViewModel {
         //unpack params
         Interval timeRange = zoom.getTimeRange();
         TimelineFilter.RootFilter activeFilter = zoom.getFilterState().getActiveFilter();
-
-        long start = timeRange.getStartMillis() / 1000;
-        long end = timeRange.getEndMillis() / 1000;
-
-        //ensure length of querried interval is not 0
-        end = Math.max(end, start + 1);
-
-        //build dynamic parts of query
-        String querySql = "SELECT time, file_obj_id, data_source_obj_id, artifact_id, " // NON-NLS
-                          + "  event_id, " //NON-NLS
-                          + " hash_hit, " //NON-NLS
-                          + " tagged, " //NON-NLS
-                          + " event_type_id, super_type_id, "
-                          + " full_description, med_description, short_description " // NON-NLS
-                          + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(activeFilter) // NON-NLS
-                          + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(activeFilter) // NON-NLS
-                          + " ORDER BY time"; // NON-NLS
-
-        List<TimelineEvent> events = new ArrayList<>();
-
-        try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
-                ResultSet resultSet = dbQuery.getResultSet();) {
-            while (resultSet.next()) {
-                events.add(eventHelper(resultSet));
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
-            throw ex;
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
-            throw new TskCoreException("Failed to get events with query: " + querySql, ex);
-        }
-        return events;
-    }
-
-    /**
-     * Map a single row in a ResultSet to an EventCluster
-     *
-     * @param resultSet      the result set whose current row should be mapped
-     * @param typeColumn     The type column (sub_type or base_type) to use as
-     *                       the type of the event cluster
-     * @param descriptionLOD the description level of detail for this event
-     *                       cluster
-     *
-     * @return an EventCluster corresponding to the current row in the given
-     *         result set
-     *
-     * @throws SQLException
-     */
-    private TimelineEvent eventHelper(ResultSet resultSet) throws SQLException, TskCoreException {
-
-        //the event tyepe to use to get the description.
-        int eventTypeID = resultSet.getInt("event_type_id");
-        EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
-                -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
-
-        return new TimelineEvent(
-                resultSet.getLong("event_id"), // NON-NLS
-                resultSet.getLong("data_source_obj_id"), // NON-NLS
-                resultSet.getLong("file_obj_id"), // NON-NLS
-                resultSet.getLong("artifact_id"), // NON-NLS
-                resultSet.getLong("time"), // NON-NLS
-                eventType,
-                resultSet.getString("full_description"), // NON-NLS
-                resultSet.getString("med_description"), // NON-NLS
-                resultSet.getString("short_description"), // NON-NLS
-                resultSet.getInt("hash_hit") != 0, //NON-NLS
-                resultSet.getInt("tagged") != 0);
-
+        
+        return eventManager.getEvents(timeRange, activeFilter);
     }
 
     /**
