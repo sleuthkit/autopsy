@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2014-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,6 +91,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class TimeLineTopComponent extends TopComponent implements ExplorerManager.Provider {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(TimeLineTopComponent.class.getName());
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -102,7 +103,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final ExplorerManager explorerManager = new ExplorerManager();
 
-    private final TimeLineController controller;
+    private TimeLineController controller;
 
     /**
      * Lookup that will be exposed through the (Global Actions Context)
@@ -252,11 +253,13 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     }
 
     /**
-     * Constructor
+     * Constructs a "shell" version of the top component for this Timeline feature
+     * which has only Swing components, no controller, and no listeners.
+     * This constructor conforms to the NetBeans window system requirements that
+     * all top components have a public, no argument constructor.
      *
-     * @param controller The TimeLineController for this topcomponent.
      */
-    public TimeLineTopComponent(TimeLineController controller) {
+    public TimeLineTopComponent() {
         initComponents();
         associateLookup(proxyLookup);
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
@@ -265,7 +268,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(ExternalViewerShortcutAction.EXTERNAL_VIEWER_SHORTCUT, "useExternalViewer"); //NON-NLS 
         getActionMap().put("useExternalViewer", ExternalViewerShortcutAction.getInstance()); //NON-NLS
-        this.controller = controller;
 
         //create linked result and content views
         contentViewerPanel = new DataContentExplorerPanel();
@@ -277,7 +279,18 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
         dataResultPanel.open(); //get the explorermanager
         contentViewerPanel.initialize();
-
+    }
+    
+    /**
+     * Constructs a full functional top component for the Timeline feature.
+     * 
+     * @param controller The TimeLineController for ths top compenent.
+     */
+    public TimeLineTopComponent(TimeLineController controller) {
+        this();
+        
+        this.controller = controller;
+        
         Platform.runLater(this::initFXComponents);
 
         //set up listeners 
