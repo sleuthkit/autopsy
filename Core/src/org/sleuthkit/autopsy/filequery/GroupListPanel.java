@@ -34,7 +34,7 @@ class GroupListPanel extends javax.swing.JPanel {
 
     private final static Logger logger = Logger.getLogger(GroupListPanel.class.getName());
     private static final long serialVersionUID = 1L;
-    private LinkedHashMap<String, List<AbstractFile>> results = null;
+    private SearchResults results = null;
     private FileType resultType = null;
 
     /**
@@ -52,7 +52,7 @@ class GroupListPanel extends javax.swing.JPanel {
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
         resultType = searchStartedEvent.getType();
-        results = new LinkedHashMap<>();
+        results = new SearchResults();
         groupList.setListData(new String[0]);
     }
 
@@ -64,19 +64,15 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
-        try {
-            results = searchCompleteEvent.getSearchResults().toLinkedHashMap();
-            Set<String> resultsKeySet = results.keySet();
-            groupList.setListData(resultsKeySet.toArray(new String[results.size()]));
-            if (groupList.getModel().getSize() > 0) {
-                groupList.setSelectedIndex(0);
-            }
-            validate();
-            repaint();
-        } catch (FileSearchException ex) {
-            logger.log(Level.WARNING, "Error handling completed search results for file discovery, no results displayed", ex);
-            groupList.setListData(new String[0]);
+
+        results = searchCompleteEvent.getSearchResults();
+        List<String> groupNames = results.getGroupNamesWithCounts();
+        groupList.setListData(groupNames.toArray(new String[groupNames.size()]));
+        if (groupList.getModel().getSize() > 0) {
+            groupList.setSelectedIndex(0);
         }
+        validate();
+        repaint();
     }
 
     /**
@@ -122,7 +118,7 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
         if (!evt.getValueIsAdjusting() && results != null) {
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, results.get(groupList.getSelectedValue())));
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, results.getAbstractFilesInGroup(groupList.getSelectedValue())));
         }
     }//GEN-LAST:event_groupSelected
 

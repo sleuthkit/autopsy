@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -36,7 +38,7 @@ class SearchResults {
     private final FileSorter fileSorter;
     
     private final Map<FileSearch.GroupKey, FileGroup> groupMap = new HashMap<>();
-    private List<FileGroup> groupList = null;
+    private List<FileGroup> groupList = new ArrayList<>();
     
     private final long MAX_OUTPUT_FILES = 2000; // For debug UI - maximum number of lines to print
     
@@ -53,6 +55,15 @@ class SearchResults {
         this.attrType = attrType;
         this.fileSorter = new FileSorter(fileSortingMethod);
     }
+    
+    /**
+     * Create an dummy SearchResults object that can be used in the UI before the search is finished.
+     */
+    SearchResults() {
+        this.groupSortingType = FileGroup.GroupSortingAlgorithm.BY_GROUP_KEY;
+        this.attrType = new FileSearch.FileSizeAttribute();
+        this.fileSorter = new FileSorter(FileSorter.SortingMethod.BY_FILE_NAME);
+    }   
     
     /**
      * Add a list of ResultFile to the results
@@ -74,7 +85,7 @@ class SearchResults {
     /**
      * Run after all files have been added to sortGroupsAndFiles the groups and files.
      */
-    private void sortGroupsAndFiles() {
+    void sortGroupsAndFiles() {
         
         // First sortGroupsAndFiles the files
         for (FileGroup group : groupMap.values()) {
@@ -107,6 +118,33 @@ class SearchResults {
             }
         }
         return result;
+    }
+    
+    /**
+     * Get the names of the groups with counts
+     * 
+     * @return the group names
+     */
+    List<String> getGroupNamesWithCounts() {
+        return groupList.stream().map(p -> p.getDisplayName() + " (" + p.getResultFiles().size() + ")").collect(Collectors.toList());
+    }
+    
+    /**
+     * Get the abstract files for the selected group
+     * 
+     * @param groupName The name of the group. Can have the size appended.
+     * @return the list of abstract files
+     */
+    List<AbstractFile> getAbstractFilesInGroup(String groupName) {
+        if (groupName != null) {
+            final String modifiedGroupName = groupName.replaceAll(" \\([0-9]+\\)$", "");
+
+            java.util.Optional<FileGroup> fileGroup = groupList.stream().filter(p -> p.getDisplayName().equals(modifiedGroupName)).findFirst();
+            if (fileGroup.isPresent()) {
+                return fileGroup.get().getAbstractFiles();
+            }
+        }
+        return new ArrayList<>();       
     }
     
     /**

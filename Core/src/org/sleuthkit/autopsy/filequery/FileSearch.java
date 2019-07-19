@@ -109,8 +109,8 @@ class FileSearch {
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         searchResults.add(resultFiles);
 
-        // We don't need the linked hash map, but this also does the sorting and grouping
-        searchResults.toLinkedHashMap();
+        // Sort and group the results
+        searchResults.sortGroupsAndFiles();
 
         return searchResults;
     }
