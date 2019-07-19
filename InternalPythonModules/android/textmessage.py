@@ -29,6 +29,7 @@ from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
 from java.util import ArrayList
+from java.util import UUID
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.coreutils import Logger
@@ -95,6 +96,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
         ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
         deviceID = ds.getDeviceId()
         deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
+        uuid = UUID.randomUUID().toString()
 
         resultSet = None
         try:
@@ -106,7 +108,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 read = resultSet.getInt("read") # may be unread = 0, read = 1
                 subject = resultSet.getString("subject") # message subject
                 body = resultSet.getString("body") # message body
-                thread_id = "{0}_{1}".format(abstractFile.getId(), resultSet.getInt("thread_id"))
+                thread_id = "{0}-{1}".format(uuid, resultSet.getInt("thread_id"))
                 attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); #create Message artifact and then add attributes from result set.
                 if resultSet.getString("type") == "1":
@@ -131,14 +133,6 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact,Relationship.Type.MESSAGE, date);
 
                 bbartifacts.append(artifact)
-                try:
-                    # index the artifact for keyword search
-                    blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, MODULE_NAME)
-                except Blackboard.BlackboardException as ex:
-                    self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
-                    MessageNotifyUtil.Notify.error("Failed to index text message artifact for keyword search.", artifact.getDisplayName())
 
         except SQLException as ex:
             # Unable to execute text messages SQL query against database.
@@ -147,8 +141,12 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error parsing text messages to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
-   
+
+            if bbartifacts:
+                Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, general.MODULE_NAME)
+
             try:
+
                 if resultSet is not None:
                     resultSet.close()
                 statement.close()
