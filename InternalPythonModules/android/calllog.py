@@ -152,15 +152,6 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
 
                             bbartifacts.append(artifact)
 
-                            try:
-                                # index the artifact for keyword search
-                                blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                                blackboard.postArtifact(artifact, MODULE_NAME)
-                            except Blackboard.BlackboardException as ex:
-                                self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
-                                self._logger.log(Level.SEVERE, traceback.format_exc())
-                                MessageNotifyUtil.Notify.error("Failed to index call log artifact for keyword search.", artifact.getDisplayName())
-
                         except TskCoreException as ex:
                             self._logger.log(Level.SEVERE, "Error posting call log record to the blackboard", ex)
                             self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -172,12 +163,6 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
             # Could not parse call log; error connecting to db.
             pass
         finally:
-            try:
-                if resultSet is not None:
-                    resultSet.close()
-                statement.close()
-                connection.close()
-            except Exception as ex:
-                # Error closing database.
-                pass
+            if bbartifacts:
+                Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, general.MODULE_NAME)
 

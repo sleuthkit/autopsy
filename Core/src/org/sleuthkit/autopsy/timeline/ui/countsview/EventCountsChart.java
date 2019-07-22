@@ -60,7 +60,7 @@ import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Customized StackedBarChart<String, Number> used to display the event counts
@@ -199,7 +199,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     @Override
     protected void dataItemAdded(Series<String, Number> series, int itemIndex, Data<String, Number> item) {
         ExtraData extraValue = (ExtraData) item.getExtraValue();
-        EventType eventType = extraValue.getEventType();
+        TimelineEventType eventType = extraValue.getEventType();
         Interval interval = extraValue.getInterval();
         long count = extraValue.getRawCount();
 
@@ -296,7 +296,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
 
         private final Interval interval;
 
-        private final EventType type;
+        private final TimelineEventType type;
 
         private final Node node;
 
@@ -318,7 +318,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 super(Bundle.Timeline_ui_countsview_menuItem_selectTimeRange());
                 setEventHandler(action -> {
                     try {
-                        controller.selectTimeAndType(interval, EventType.ROOT_EVENT_TYPE);
+                        controller.selectTimeAndType(interval, TimelineEventType.ROOT_EVENT_TYPE);
 
                     } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
@@ -474,10 +474,10 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
     static class ExtraData {
 
         private final Interval interval;
-        private final EventType eventType;
+        private final TimelineEventType eventType;
         private final long rawCount;
 
-        ExtraData(Interval interval, EventType eventType, long rawCount) {
+        ExtraData(Interval interval, TimelineEventType eventType, long rawCount) {
             this.interval = interval;
             this.eventType = eventType;
             this.rawCount = rawCount;
@@ -491,7 +491,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             return interval;
         }
 
-        public EventType getEventType() {
+        public TimelineEventType getEventType() {
             return eventType;
         }
     }

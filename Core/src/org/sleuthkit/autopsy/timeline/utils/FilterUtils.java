@@ -18,15 +18,14 @@
  */
 package org.sleuthkit.autopsy.timeline.utils;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import org.openide.util.NbBundle;
 import static org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory.DOCUMENTS;
 import static org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory.EXECUTABLE;
 import static org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory.MEDIA;
-import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TimelineFilter.FileTypeFilter;
+import org.sleuthkit.datamodel.TimelineFilter.InverseFileTypeFilter;
 import org.sleuthkit.datamodel.TimelineFilter.FileTypesFilter;
 
 /**
@@ -62,26 +61,5 @@ public final class FilterUtils {
         fileTypesFilter.addSubFilter(new InverseFileTypeFilter(Bundle.FilterUtils_otherFilter_displayName(), NON_OTHER_MIME_TYPES));
 
         return fileTypesFilter;
-    }
-
-    /**
-     * Subclass of FileTypeFilter that excludes rather than includes the given
-     * MediaTypes.
-     */
-    private static class InverseFileTypeFilter extends FileTypeFilter {
-
-        InverseFileTypeFilter(String displayName, Collection<String> mediaTypes) {
-            super(displayName, mediaTypes);
-        }
-
-        @Override
-        public InverseFileTypeFilter copyOf() {
-            return new InverseFileTypeFilter("Other", NON_OTHER_MIME_TYPES);
-        }
-
-        @Override
-        public String getSQLWhere(TimelineManager manager) {
-            return " NOT " + super.getSQLWhere(manager);
-        }
     }
 }

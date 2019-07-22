@@ -49,7 +49,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -68,7 +67,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -93,13 +91,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TimelineEvent;
-import org.sleuthkit.datamodel.EventType;
-import static org.sleuthkit.datamodel.EventType.FILE_ACCESSED;
-import static org.sleuthkit.datamodel.EventType.FILE_CHANGED;
-import static org.sleuthkit.datamodel.EventType.FILE_CREATED;
-import static org.sleuthkit.datamodel.EventType.FILE_MODIFIED;
-import static org.sleuthkit.datamodel.EventType.FILE_SYSTEM;
+import org.sleuthkit.datamodel.TimelineEventType;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_ACCESSED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_CHANGED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_CREATED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_MODIFIED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_SYSTEM;
 import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
@@ -412,11 +409,11 @@ class ListTimeline extends BorderPane {
                 setGraphic(null);
                 setTooltip(null);
             } else {
-                if (item.getEventTypes().stream().allMatch(EventType.FILE_SYSTEM.getSubTypes()::contains)) {
+                if (item.getEventTypes().stream().allMatch(TimelineEventType.FILE_SYSTEM.getSubTypes()::contains)) {
                     String typeString = ""; //NON-NLS
                     VBox toolTipVbox = new VBox(5);
 
-                    for (EventType type : EventType.FILE_SYSTEM.getSubTypes()) {
+                    for (TimelineEventType type : TimelineEventType.FILE_SYSTEM.getSubTypes()) {
                         if (item.getEventTypes().contains(type)) {
                             if (type.equals(FILE_MODIFIED)) {
                                 typeString += "M"; //NON-NLS
@@ -446,7 +443,7 @@ class ListTimeline extends BorderPane {
                     setTooltip(tooltip);
 
                 } else {
-                    EventType eventType = Iterables.getOnlyElement(item.getEventTypes());
+                    TimelineEventType eventType = Iterables.getOnlyElement(item.getEventTypes());
                     setText(eventType.getDisplayName());
                     setGraphic(new ImageView(getImagePath(eventType)));
                     setTooltip(new Tooltip(eventType.getDisplayName()));

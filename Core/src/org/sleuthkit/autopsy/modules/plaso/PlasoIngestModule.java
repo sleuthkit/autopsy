@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
@@ -64,7 +65,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TL_
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Data source ingest module that runs Plaso against the image.
@@ -134,7 +135,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.psort.cancelled=psort run was canceled",
         "PlasoIngestModule.bad.imageFile=Cannot find image file name and path",
         "PlasoIngestModule.completed=Plaso Processing Completed",
-        "PlasoIngestModule.has.run=Plaso Plugin has been run."})
+        "PlasoIngestModule.has.run=Plaso Plugin has been run.",
+        "PlasoIngestModule.psort.fail=Plaso returned an error when sorting events.  Results are not complete."})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         assert dataSource.equals(image);
@@ -177,7 +179,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             // sort the output
             statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ProcessBuilder psortCommand = buildPsortCommand(moduleOutputPath);
-            ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
+            int result = ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
+             if (result != 0) {
+                 logger.log(Level.SEVERE, String.format("Error running Psort, error code returned %d", result)); //NON-NLS
+                 MessageNotifyUtil.Notify.error(MODULE_NAME, Bundle.PlasoIngestModule_psort_fail());
+                 return ProcessResult.ERROR;
+             }
 
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "psort run was canceled"); //NON-NLS
@@ -266,7 +273,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.event.description=Event Description",
         "PlasoIngestModule.create.artifacts.cancelled=Cancelled Plaso Artifact Creation ",
         "# {0} - file that events are from",
-        "PlasoIngestModule.artifact.progress=Adding events to case: {0}"})
+        "PlasoIngestModule.artifact.progress=Adding events to case: {0}",
+        "PlasoIngestModule.info.empty.database=Plaso database was empty.",
+    })
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
 
@@ -284,6 +293,18 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + plasoDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
+            
+            // Check if there is data the db
+            if( !resultSet.first() ) {
+                logger.log(Level.INFO, String.format("PlasoDB was empty: %s", plasoDb));
+                MessageNotifyUtil.Notify.info(MODULE_NAME, Bundle.PlasoIngestModule_info_empty_database());
+                return;
+            } else {
+                // There is data, reset the pointer to the correct place for
+                // the start of processing.
+                resultSet.beforeFirst();
+            }
+            
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled Plaso Artifact Creation."); //NON-NLS
@@ -299,12 +320,16 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 }
                 
                 String description = resultSet.getString("description");
-                EventType eventType = findEventSubtype(currentFileName, resultSet);
+                TimelineEventType eventType = findEventSubtype(currentFileName, resultSet);
                 
                 // If the description is empty use the event type display name
                 // as the description.
-                if( description == null || description.isEmpty() ) {
-                   description = eventType.getDisplayName();
+                if ( description == null || description.isEmpty() ) {
+                    if (eventType != TimelineEventType.OTHER) {
+                        description = eventType.getDisplayName();
+                    } else {
+                        continue;
+                    }
                 }
                
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
@@ -385,28 +410,29 @@ public class PlasoIngestModule implements DataSourceIngestModule {
      *
      * @throws SQLException
      */
-    private EventType findEventSubtype(String fileName, ResultSet row) throws SQLException {
+    private TimelineEventType findEventSubtype(String fileName, ResultSet row) throws SQLException {
         switch (row.getString("source")) {
             case "WEBHIST":  //These shouldn't actually be present, but keeping the logic just in case...
                 if (fileName.toLowerCase().contains(COOKIE)
                     || row.getString("type").toLowerCase().contains(COOKIE)) {//NON-NLS
-                    return EventType.WEB_COOKIE;
+
+                    return TimelineEventType.WEB_COOKIE;
                 } else {
-                    return EventType.WEB_HISTORY;
+                    return TimelineEventType.WEB_HISTORY;
                 }
             case "EVT":
             case "LOG":
-                return EventType.LOG_ENTRY;
+                return TimelineEventType.LOG_ENTRY;
             case "REG":
                 switch (row.getString("sourcetype").toLowerCase()) {//NON-NLS
                     case "unknown : usb entries":
                     case "unknown : usbstor entries":
-                        return EventType.DEVICES_ATTACHED;
+                        return TimelineEventType.DEVICES_ATTACHED;
                     default:
-                        return EventType.REGISTRY;
+                        return TimelineEventType.REGISTRY;
                 }
             default:
-                return EventType.OTHER;
+                return TimelineEventType.OTHER;
         }
     }
 

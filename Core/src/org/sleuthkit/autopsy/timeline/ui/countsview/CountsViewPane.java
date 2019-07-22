@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
-import org.sleuthkit.datamodel.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * FXML Controller class for a StackedBarChart<String,Number> based
@@ -403,10 +403,10 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
                 int maxPerInterval = 0;
 
                 //query for current interval
-                Map<EventType, Long> eventCounts = eventsModel.getEventCounts(interval);
+                Map<TimelineEventType, Long> eventCounts = eventsModel.getEventCounts(interval);
 
                 //for each type add data to graph
-                for (final EventType eventType : eventCounts.keySet()) {
+                for (final TimelineEventType eventType : eventCounts.keySet()) {
                     if (isCancelled()) {
                         return null;
                     }
