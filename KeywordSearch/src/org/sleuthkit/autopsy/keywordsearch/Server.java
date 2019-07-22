@@ -45,6 +45,8 @@ import java.util.Random;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -123,6 +125,24 @@ public class Server {
                 return "content_ws"; //NON-NLS
             }
         },
+        CONTENT_GENERAL {
+            @Override
+            public String toString() {
+                return "content_general"; //NON-NLS
+            }
+        },
+        CONTENT_JA {
+            @Override
+            public String toString() {
+                return "content_ja"; //NON-NLS
+            }
+        },
+        LANGUAGE {
+            @Override
+            public String toString() {
+                return "language"; //NON-NLS
+            }
+        },
         FILE_NAME {
             @Override
             public String toString() {
@@ -167,6 +187,12 @@ public class Server {
             @Override
             public String toString() {
                 return "chunk_size"; //NON-NLS
+            }
+        },
+        TERMFREQ {
+            @Override
+            public String toString() {
+                return "termfreq"; //NON-NLS
             }
         }
     };
@@ -1317,6 +1343,35 @@ public class Server {
     }
 
     /**
+     * Return a language specific content field corresponding to the given Server#Schema#LANGUAGE field value
+     * @param language Server#Schema#LANGUAGE field value
+     * @return language specific content field
+     */
+    public static Server.Schema getContentFieldName(String language) {
+        if (language == null) {
+            return Schema.CONTENT_GENERAL;
+        }
+        switch (language) {
+            case "ja":
+                return Server.Schema.CONTENT_JA;
+            default:
+                return Server.Schema.CONTENT_GENERAL;
+        }
+    }
+
+    public Schema getFieldForContent() throws NoOpenCoreException {
+        currentCoreLock.readLock().lock();
+        try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            return currentCore.getFieldForContent();
+        } finally {
+            currentCoreLock.readLock().unlock();
+        }
+    }
+
+    /**
      * Attempts to connect to the given Solr server.
      *
      * @param solrServer
@@ -1418,6 +1473,15 @@ public class Server {
             return name;
         }
 
+        Schema getFieldForContent() {
+            double indexSchemaVersion = NumberUtils.toDouble(getIndexInfo().getSchemaVersion());
+            if (indexSchemaVersion < 2.2) {
+                return Schema.TEXT;
+            } else {
+                return Schema.CONTENT_STR;
+            }
+        }
+
         private Index getIndexInfo() {
             return this.textIndex;
         }
@@ -1487,7 +1551,7 @@ public class Server {
                 filterQuery = filterQuery + Server.CHUNK_ID_SEPARATOR + chunkID;
             }
             q.addFilterQuery(filterQuery);
-            q.setFields(Schema.TEXT.toString());
+            q.setFields(getFieldForContent().toString());
             try {
                 // Get the first result. 
                 SolrDocumentList solrDocuments = solrCore.query(q).getResults();
@@ -1495,7 +1559,7 @@ public class Server {
                 if (!solrDocuments.isEmpty()) {
                     SolrDocument solrDocument = solrDocuments.get(0);
                     if (solrDocument != null) {
-                        Collection<Object> fieldValues = solrDocument.getFieldValues(Schema.TEXT.toString());
+                        Collection<Object> fieldValues = solrDocument.getFieldValues(getFieldForContent().toString());
                         if (fieldValues.size() == 1) // The indexed text field for artifacts will only have a single value.
                         {
                             return fieldValues.toArray(new String[0])[0];
@@ -1595,7 +1659,7 @@ public class Server {
         }
 
         /**
-         * Execute query that gets number of indexed file chunks for a file
+         * Execute query that gets number of indexed file chunks (excluding mini-chunks) for a file
          *
          * @param contentID file id of the original file broken into chunks and
          *                  indexed
@@ -1608,7 +1672,9 @@ public class Server {
         private int queryNumFileChunks(long contentID) throws SolrServerException, IOException {
             String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q
-                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*");
+                    = new SolrQuery(
+                        Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*"
+                            + " NOT " + Server.Schema.ID + ":*" + MiniChunks.SUFFIX);
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
         }

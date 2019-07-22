@@ -243,6 +243,18 @@
       </analyzer>
     </fieldType>
 
+    <fieldType name="text_ja" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="false">
+      <analyzer>
+        <tokenizer class="solr.JapaneseTokenizerFactory" mode="search"/>
+        <filter class="solr.JapaneseBaseFormFilterFactory"/>
+        <filter class="solr.JapanesePartOfSpeechStopFilterFactory" tags="lang/stoptags_ja.txt" />
+        <filter class="solr.CJKWidthFilterFactory"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_ja.txt" />
+        <filter class="solr.JapaneseKatakanaStemFilterFactory" minimumLength="4"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
     <!-- A text field with defaults appropriate for English: it
          tokenizes with StandardTokenizer, removes English stop words
          (stopwords_en.txt), down cases, protects words from protwords.txt, and
@@ -557,14 +569,19 @@
         via copyField further on in this schema  -->
    <field name="text" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
 
+   <!-- Store language detection result. Only parents of text documents have this -->
+   <field name="language" type="string" indexed="false" stored="true" required="false"/>
+
+   <field name="content_ja" type="text_ja" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
+   <field name="content_general" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
+
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
    <!--<field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>-->
    
    <!-- field with white-space tokenized words for TermsComponent regex search (useful for fast search of IP addresses, URLs, certain phone numbers)
 		also be useful for Lucene based queries containing special characters-->
-   <!-- populated via copyField -->
-   <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true" /> 
+   <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true" />
    <field name="content_str" type="string" indexed="true" stored="true" multiValued="true" />
    
    <!-- Uncommenting the following will create a "timestamp" field using
@@ -642,11 +659,11 @@
 
    <copyField source="content" dest="text"/>
    <copyField source="file_name" dest="text"/>
-   
+
 <!--
     Version 1.8 uses the content_str field for regular expression
     searches so we no longer need to copy into content_ws.
-    
+
    <copyField source="content" dest="content_ws"/>
    <copyField source="file_name" dest="content_ws"/>
  -->

@@ -19,10 +19,14 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -30,7 +34,6 @@ import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CursorMarkParams;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -58,7 +61,10 @@ class LuceneQuery implements KeywordSearchQuery {
     private String field = null;
     private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
     static final int SNIPPET_LENGTH = 50;
-    static final String HIGHLIGHT_FIELD = Server.Schema.TEXT.toString();
+    // field for highlighting in schema version 2.1 or earlier
+    static final String HIGHLIGHT_FIELD_2_1 = Server.Schema.TEXT.toString();
+    public static List<Server.Schema> CONTENT_FIELDS = Collections.unmodifiableList(Arrays.asList(
+        Server.Schema.CONTENT_GENERAL, Server.Schema.CONTENT_JA));
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
@@ -122,54 +128,75 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException {
+    public org.sleuthkit.autopsy.keywordsearch.QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException {
 
-        final Server solrServer = KeywordSearch.getServer();
+        Server solrServer = KeywordSearch.getServer();
         double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
 
-        SolrQuery solrQuery = createAndConfigureSolrQuery(KeywordSearchSettings.getShowSnippets());
+        QueryResults queryResults = doQuery();
 
-        final String strippedQueryString = StringUtils.strip(getQueryString(), "\"");
+        List<KeywordHit> matches = new ArrayList<>();
+        for (SolrDocument document : queryResults.chunks) {
+            String docId = (String) document.getFieldValue(Server.Schema.ID.toString());
+
+            try {
+                if (indexSchemaVersion < 2.0) {
+                    //old schema versions don't support chunk_size or the content_str fields, so just accept hits
+                    matches.add(createKeywordtHit(queryResults.highlighting, docId));
+                } else {
+                    int hitCountInChunk = ((Float) document.getFieldValue(Server.Schema.TERMFREQ.toString())).intValue();
+                    SolrDocument miniChunk = queryResults.miniChunks.get(docId);
+                    if (miniChunk == null) {
+                        // last chunk does not have mini chunk because there's no overlapped region with next one
+                        matches.add(createKeywordtHit(queryResults.highlighting, docId));
+                    } else {
+                        int hitCountInMiniChunk = ((Float) miniChunk.getFieldValue(Server.Schema.TERMFREQ.toString())).intValue();
+                        if (hitCountInMiniChunk < hitCountInChunk) {
+                            // there are at least one hit in base chunk
+                            matches.add(createKeywordtHit(queryResults.highlighting, docId));
+                        }
+                    }
+                }
+            } catch (TskException ex) {
+                throw new KeywordSearchModuleException(ex);
+            }
+        }
+
+        org.sleuthkit.autopsy.keywordsearch.QueryResults results = new org.sleuthkit.autopsy.keywordsearch.QueryResults(this);
+        //in case of single term literal query there is only 1 term
+        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), matches);
+
+        return results;
+    }
+
+    static class QueryResults {
+        List<SolrDocument> chunks = new ArrayList<>();
+        Map</* ID */ String, SolrDocument> miniChunks = new HashMap<>();
+        // objectId_chunk -> "text" -> List of previews
+        Map<String, Map<String, List<String>>> highlighting = new HashMap<>();
+    }
+
+    private QueryResults doQuery() throws KeywordSearchModuleException, NoOpenCoreException {
+        QueryResults results = new QueryResults();
+
+        Server solrServer = KeywordSearch.getServer();
 
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;
         boolean allResultsProcessed = false;
-        List<KeywordHit> matches = new ArrayList<>();
+
         while (!allResultsProcessed) {
+            SolrQuery solrQuery = createAndConfigureSolrQuery(KeywordSearchSettings.getShowSnippets());
             solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, cursorMark);
             QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
-            SolrDocumentList resultList = response.getResults();
-            // objectId_chunk -> "text" -> List of previews
-            Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
 
-            for (SolrDocument resultDoc : resultList) {
-                try {
-                    /*
-                     * for each result doc, check that the first occurence of
-                     * that term is before the window. if all the ocurences
-                     * start within the window, don't record them for this
-                     * chunk, they will get picked up in the next one.
-                     */
-                    final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
-                    final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
-                    final Collection<Object> content = resultDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
+            results.highlighting.putAll(response.getHighlighting());
 
-                    if (indexSchemaVersion < 2.0) {
-                        //old schema versions don't support chunk_size or the content_str fields, so just accept hits
-                        matches.add(createKeywordtHit(highlightResponse, docId));
-                    } else {
-                        //check against file name and actual content seperately.
-                        for (Object content_obj : content) {
-                            String content_str = (String) content_obj;
-                            //for new schemas, check that the hit is before the chunk/window boundary.
-                            int firstOccurence = StringUtils.indexOfIgnoreCase(content_str, strippedQueryString);
-                            //there is no chunksize field for "parent" entries in the index
-                            if (chunkSize == null || chunkSize == 0 || (firstOccurence > -1 && firstOccurence < chunkSize)) {
-                                matches.add(createKeywordtHit(highlightResponse, docId));
-                            }
-                        }
-                    }
-                } catch (TskException ex) {
-                    throw new KeywordSearchModuleException(ex);
+            for (SolrDocument document : response.getResults()) {
+                String id = (String) document.getFieldValue(Server.Schema.ID.toString());
+                if (MiniChunks.isMiniChunkID(id)) {
+                    results.miniChunks.put(MiniChunks.getBaseChunkID(id), document);
+                } else {
+                    results.chunks.add(document);
                 }
             }
             String nextCursorMark = response.getNextCursorMark();
@@ -178,10 +205,6 @@ class LuceneQuery implements KeywordSearchQuery {
             }
             cursorMark = nextCursorMark;
         }
-
-        QueryResults results = new QueryResults(this);
-        //in case of single term literal query there is only 1 term
-        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), matches);
 
         return results;
     }
@@ -254,7 +277,6 @@ class LuceneQuery implements KeywordSearchQuery {
         }
     }
 
-
     /*
      * Create the query object for the stored keyword
      *
@@ -273,6 +295,9 @@ class LuceneQuery implements KeywordSearchQuery {
         if (field != null) {
             //use the optional field
             queryStr = field + ":" + queryStr;
+        } else {
+            String finalQueryStr = queryStr;
+            queryStr = CONTENT_FIELDS.stream().map(field -> field.toString() + ":" + finalQueryStr).collect(Collectors.joining(" OR "));
         }
         q.setQuery(queryStr);
         q.setRows(MAX_RESULTS_PER_CURSOR_MARK);
@@ -282,6 +307,11 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setFields(Server.Schema.ID.toString(),
                 Server.Schema.CHUNK_SIZE.toString(),
                 Server.Schema.CONTENT_STR.toString());
+
+        // sum of all language specific query fields.
+        // only one of these fields could be non-zero.
+        q.addField(String.format("termfreq:sum(%s)", CONTENT_FIELDS.stream().map(field1 ->
+            String.format("termfreq('%s','%s')", field1.toString(), keywordStringEscaped)).collect(Collectors.joining(","))));
 
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
@@ -301,7 +331,9 @@ class LuceneQuery implements KeywordSearchQuery {
      * @param q The SolrQuery to configure.
      */
     private static void configurwQueryForHighlighting(SolrQuery q) {
-        q.addHighlightField(HIGHLIGHT_FIELD);
+        for (Server.Schema field : CONTENT_FIELDS) {
+            q.addHighlightField(field.toString());
+        }
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
 
@@ -319,6 +351,16 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
     }
 
+    // TODO: merge with HighlightedText#getHighlightFieldValue
+    private static List<String> getHighlightFieldValue(Map<String, List<String>> highlight) {
+        for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
+            if (highlight.containsKey(field.toString())) {
+                return highlight.get(field.toString());
+            }
+        }
+        return Collections.emptyList();
+    }
+
     private KeywordHit createKeywordtHit(Map<String, Map<String, List<String>>> highlightResponse, String docId) throws TskException {
         /**
          * Get the first snippet from the document if keyword search is
@@ -326,7 +368,7 @@ class LuceneQuery implements KeywordSearchQuery {
          */
         String snippet = "";
         if (KeywordSearchSettings.getShowSnippets()) {
-            List<String> snippetList = highlightResponse.get(docId).get(Server.Schema.TEXT.toString());
+            List<String> snippetList = getHighlightFieldValue(highlightResponse.get(docId));
             // list is null if there wasn't a snippet
             if (snippetList != null) {
                 snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
@@ -370,12 +412,13 @@ class LuceneQuery implements KeywordSearchQuery {
      * @return
      */
     static String querySnippet(String query, long solrObjectId, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
+        Server solrServer = KeywordSearch.getServer();
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
 
         String queryStr;
         if (isRegex) {
-            queryStr = HIGHLIGHT_FIELD + ":"
+            queryStr = solrServer.getFieldForContent().toString() + ":"
                     + (group ? KeywordSearchUtil.quoteQuery(query)
                             : query);
         } else {
@@ -395,8 +438,6 @@ class LuceneQuery implements KeywordSearchQuery {
 
         configurwQueryForHighlighting(q);
 
-        Server solrServer = KeywordSearch.getServer();
-
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
@@ -404,7 +445,12 @@ class LuceneQuery implements KeywordSearchQuery {
             if (responseHighlightID == null) {
                 return "";
             }
-            List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
+            List<String> contentHighlights;
+            if (isRegex) {
+                contentHighlights = responseHighlightID.get(solrServer.getFieldForContent().toString());
+            } else {
+                contentHighlights = getHighlightFieldValue(responseHighlightID);
+            }
             if (contentHighlights == null) {
                 return "";
             } else {

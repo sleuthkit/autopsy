@@ -23,10 +23,12 @@ import com.google.common.collect.Range;
 import com.google.common.collect.TreeRangeSet;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -38,6 +40,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -243,13 +246,29 @@ class HighlightedText implements IndexedText {
     /**
      * Constructs a complete, escaped Solr query that is ready to be used.
      *
+     * Works with 2.1 or earlier.
+     *
      * @param query         keyword term to be searched for
      * @param literal_query flag whether query is literal or regex
      *
      * @return Solr query string
      */
-    static private String constructEscapedSolrQuery(String query) {
-        return LuceneQuery.HIGHLIGHT_FIELD + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
+    static private String constructEscapedSolrQuery_2_1(String query) {
+        return LuceneQuery.HIGHLIGHT_FIELD_2_1 + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
+    }
+
+    /**
+     * Constructs a complete, escaped Solr query that is ready to be used.
+     *
+     * @param query         keyword term to be searched for
+     * @param fields field to query
+     *
+     * @return Solr query string
+     */
+    static private String constructEscapedSolrQuery(String query, List<Server.Schema> fields) {
+        return fields.stream().map(f ->
+            f.toString() + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\""
+        ).collect(Collectors.joining(" OR "));
     }
 
     private int getIndexOfCurrentPage() {
@@ -341,8 +360,7 @@ class HighlightedText implements IndexedText {
         return currentHitPerPage.get(currentPage);
     }
 
-    @Override
-    public String getText() {
+    private String getText_2_1() {
         String chunkID = "";
         String highlightField = "";
         try {
@@ -357,12 +375,12 @@ class HighlightedText implements IndexedText {
             }
             final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
-            highlightField = LuceneQuery.HIGHLIGHT_FIELD;
+            highlightField = LuceneQuery.HIGHLIGHT_FIELD_2_1;
             if (isLiteral) {
                 //if the query is literal try to get solr to do the highlighting
                 final String highlightQuery = keywords.stream()
-                        .map(HighlightedText::constructEscapedSolrQuery)
-                        .collect(Collectors.joining(" "));
+                    .map(HighlightedText::constructEscapedSolrQuery_2_1)
+                    .collect(Collectors.joining(" "));
 
                 q.setQuery(highlightQuery);
                 q.addField(highlightField);
@@ -389,7 +407,7 @@ class HighlightedText implements IndexedText {
 
             QueryResponse response = solrServer.query(q, METHOD.POST);
 
-            // There should never be more than one document since there will 
+            // There should never be more than one document since there will
             // either be a single chunk containing hits or we narrow our
             // query down to the current page/chunk.
             if (response.getResults().size() > 1) {
@@ -406,7 +424,7 @@ class HighlightedText implements IndexedText {
                 if (responseHighlightID == null) {
                     highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
                 } else {
-                    List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
+                    List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD_2_1);
                     if (contentHighlights == null) {
                         highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
                     } else {
@@ -420,6 +438,112 @@ class HighlightedText implements IndexedText {
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
+            return Bundle.IndexedText_errorMessage_errorGettingText();
+        }
+    }
+
+    private String getText_2_2() {
+        String chunkID = "";
+        try {
+            loadPageInfo(); //inits once
+            SolrQuery q = new SolrQuery();
+            q.setShowDebugInfo(DEBUG); //debug
+
+            String contentIdStr = Long.toString(this.solrObjectId);
+            if (numberPages != 0) {
+                chunkID = Integer.toString(this.currentPage);
+                contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
+            }
+            final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
+
+            if (isLiteral) {
+                //if the query is literal try to get solr to do the highlighting
+                String highlightQuery = keywords.stream()
+                    .map(s -> constructEscapedSolrQuery(s, LuceneQuery.CONTENT_FIELDS))
+                    .collect(Collectors.joining(" "));
+                q.setQuery(highlightQuery);
+                for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
+                    q.addField(field.toString());
+                }
+                q.addFilterQuery(filterQuery);
+                for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
+                    q.addHighlightField(field.toString());
+                }
+
+                q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
+
+                //tune the highlighter
+                q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+                q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+
+                //docs says makes sense for the original Highlighter only, but not really
+                q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
+            } else {
+                /*
+                 * if the query is not literal just pull back the text. We will
+                 * do the highlighting in autopsy.
+                 */
+                q.setQuery(filterQuery);
+                for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
+                    q.addField(field.toString());
+                }
+            }
+
+            QueryResponse response = solrServer.query(q, METHOD.POST);
+
+            // There should never be more than one document since there will 
+            // either be a single chunk containing hits or we narrow our
+            // query down to the current page/chunk.
+            if (response.getResults().size() > 1) {
+                logger.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", q); //NON-NLS
+            }
+            String highlightedContent;
+            Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
+
+            // even if not found, we need field name here. so use CONTENT_GENERAL as a default value.
+            // attemptManualHighlighting will use empty string for its field value.
+            String highlightField = getContentFieldName(response.getResults().get(0)).map(Server.Schema::toString)
+                .orElse(Server.Schema.CONTENT_GENERAL.toString());
+
+            if (responseHighlight == null) {
+                highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
+            } else {
+                Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
+
+                if (responseHighlightID == null) {
+                    highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
+                } else {
+                    List<String> contentHighlights = getHighlightResult(responseHighlightID);
+                    if (contentHighlights == null) {
+                        highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
+                    } else {
+                        // extracted content (minus highlight tags) is HTML-escaped
+                        highlightedContent = contentHighlights.get(0).trim();
+                    }
+                }
+            }
+            highlightedContent = insertAnchors(highlightedContent);
+
+            return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
+        } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID, ex); //NON-NLS
+            return Bundle.IndexedText_errorMessage_errorGettingText();
+        }
+    }
+
+    @Override
+    public String getText() {
+        try {
+            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
+            if (indexSchemaVersion < 2.2) {
+                return getText_2_1();
+            } else {
+                return getText_2_2();
+            }
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId, ex); //NON-NLS
             return Bundle.IndexedText_errorMessage_errorGettingText();
         }
     }
@@ -446,6 +570,24 @@ class HighlightedText implements IndexedText {
         }
         return this.numberOfHitsPerPage.get(this.currentPage);
 
+    }
+
+    private static Optional<Server.Schema> getContentFieldName(SolrDocument document) {
+        for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
+            if (document.containsKey(field.toString())) {
+                return Optional.of(field);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static List<String> getHighlightResult(Map<String, List<String>> highlight) {
+        for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
+            if (highlight.containsKey(field.toString())) {
+                return highlight.get(field.toString());
+            }
+        }
+        return Collections.emptyList();
     }
 
     /**

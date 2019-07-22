@@ -59,6 +59,7 @@ class Ingester {
     private final Server solrServer = KeywordSearch.getServer();
     private static final SolrFieldsVisitor SOLR_FIELDS_VISITOR = new SolrFieldsVisitor();
     private static Ingester instance;
+    private final LanguageDetector languageDetector = new LanguageDetector();
 
     private Ingester() {
     }
@@ -93,7 +94,7 @@ class Ingester {
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        indexChunk("", file.getName().toLowerCase(), getContentFields(file));
+        indexChunk("", file.getName().toLowerCase(), getContentFields(file), null);
     }
 
     /**
@@ -107,7 +108,7 @@ class Ingester {
      *                           artifact, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(BlackboardArtifact artifact, String sourceName) throws IngesterException {
-        indexChunk("", sourceName, getContentFields(artifact));
+        indexChunk("", sourceName, getContentFields(artifact), null);
     }
 
     /**
@@ -142,26 +143,41 @@ class Ingester {
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
     < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
-        
+
         Map<String, String> fields = getContentFields(source);
+        boolean isFirstChunk = true;
+        LanguageDetector.Language language = null;
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
+            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
             Chunker chunker = new Chunker(reader);
-            for (Chunk chunk : chunker) {
+
+            while (chunker.hasNext()) {
+                Chunk chunk = chunker.next();
                 if (context != null && context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
+                if (isFirstChunk) {
+                    isFirstChunk = false;
+                    language = languageDetector.detect(chunk.toString()).orElse(null);
+                }
+
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
                 try {
                     //add the chunk text to Solr index
-                    indexChunk(chunk.toString(), sourceName, fields);
+                    indexChunk(chunk.toString(), sourceName, fields, language);
                     numChunks++;
+                    // except the last chunk have mini-chunks
+                    if (indexSchemaVersion >= 2.2 && chunker.hasNext()) {
+                        indexMiniChunk(chunk.toString().substring(chunk.getBaseChunkLength()), Long.toString(sourceID),
+                            fields, chunkId, language);
+                    }
                 } catch (Ingester.IngesterException ingEx) {
                     logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
-                            + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
+                        + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
 
                     throw ingEx; //need to rethrow to signal error and move on
                 }
@@ -183,10 +199,25 @@ class Ingester {
                 fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
                 //"parent" docs don't have chunk_size
                 fields.remove(Server.Schema.CHUNK_SIZE.toString());
-                indexChunk(null, sourceName, fields);
+                if (language != null) {
+                    fields.put(Server.Schema.LANGUAGE.toString(), toFieldValue(language));
+                }
+                indexChunk(null, sourceName, fields, language);
             }
         }
         return true;
+    }
+
+    private String toFieldValue(LanguageDetector.Language language) {
+        if (language == null) {
+            return null;
+        }
+        switch (language) {
+            case JAPANESE: return "ja";
+            case ENGLISH: return "en";
+            default:
+                throw new IllegalStateException("Not happen because cases are exhaustive.");
+        }
     }
 
     /**
@@ -198,11 +229,11 @@ class Ingester {
      *
      * @param chunk  The chunk content as a string, or null for metadata only
      * @param fields
-     * @param size
+     * @param language The result of language detection. Can be null.
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    private void indexChunk(String chunk, String sourceName, Map<String, String> fields) throws IngesterException {
+    private void indexChunk(String chunk, String sourceName, Map<String, String> fields, LanguageDetector.Language language) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //JMTODO: actually if the we couldn't get the image id it is set to -1,
             // but does this really mean we don't want to index it?
@@ -222,14 +253,19 @@ class Ingester {
 
         try {
             //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
+            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
 
-            //add the content to the SolrInputDocument
-            //JMTODO: can we just add it to the field map before passing that in?
-            updateDoc.addField(Server.Schema.CONTENT.toString(), chunk);
+            if (indexSchemaVersion >= 2.2) {
+                // index the chunk to a language specific field
+                updateDoc.addField(Server.getContentFieldName(toFieldValue(language)).toString(), chunk);
+            } else {
+                //add the content to the SolrInputDocument
+                //JMTODO: can we just add it to the field map before passing that in?
+                updateDoc.addField(Server.Schema.CONTENT.toString(), chunk);
+            }
 
             // We also add the content (if present) in lowercase form to facilitate case
             // insensitive substring/regular expression search.
-            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
             if (indexSchemaVersion >= 2.1) {
                 updateDoc.addField(Server.Schema.CONTENT_STR.toString(), ((chunk == null) ? "" : chunk.toLowerCase()));
             }
@@ -244,6 +280,45 @@ class Ingester {
             //JMTODO: does this need to be internationalized?
             throw new IngesterException(
                     NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
+        }
+    }
+
+    // TODO: need to be polished
+    private void indexMiniChunk(String chunk, String sourceName, Map<String, String> fields, String baseChunkID,
+                                LanguageDetector.Language language) throws IngesterException {
+        if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
+            //JMTODO: actually if the we couldn't get the image id it is set to -1,
+            // but does this really mean we don't want to index it?
+
+            //skip the file, image id unknown
+            String msg = NbBundle.getMessage(Ingester.class,
+                "Ingester.ingest.exception.unknownImgId.msg", sourceName); //JMTODO: does this need to ne internationalized?
+            logger.log(Level.SEVERE, msg);
+            throw new IngesterException(msg);
+        }
+
+        //Make a SolrInputDocument out of the field map
+        SolrInputDocument updateDoc = new SolrInputDocument();
+        for (String key : fields.keySet()) {
+            updateDoc.addField(key, fields.get(key));
+        }
+
+        try {
+            updateDoc.setField(Server.Schema.ID.toString(), MiniChunks.getChunkIdString(baseChunkID));
+
+            // index the chunk to a language specific field
+            updateDoc.addField(Server.getContentFieldName(toFieldValue(language)).toString(), chunk);
+
+            TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
+
+            solrServer.addDocument(updateDoc);
+            HealthMonitor.submitTimingMetric(metric);
+            uncommitedIngests = true;
+
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            //JMTODO: does this need to be internationalized?
+            throw new IngesterException(
+                NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
         }
     }
 
