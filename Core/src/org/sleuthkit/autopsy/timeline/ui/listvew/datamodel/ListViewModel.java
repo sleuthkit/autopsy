@@ -31,7 +31,6 @@ import static java.util.stream.Collectors.groupingBy;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEvent;
@@ -46,12 +45,10 @@ public class ListViewModel {
 
     private final FilteredEventsModel eventsModel;
     private final TimelineManager eventManager;
-    private final SleuthkitCase sleuthkitCase;
 
     public ListViewModel(FilteredEventsModel eventsModel) {
         this.eventsModel = eventsModel;
         this.eventManager = eventsModel.getEventManager();
-        this.sleuthkitCase = eventsModel.getSleuthkitCase();
     }
 
     /**
@@ -85,8 +82,9 @@ public class ListViewModel {
     public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterState filterState) throws TskCoreException {
         List<TimelineEvent> events = eventManager.getEvents(timeRange, filterState.getActiveFilter());
         
-        if(events == null || events.isEmpty())
+        if (events == null || events.isEmpty()) {
             return Collections.EMPTY_LIST;
+        }
         
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
         
@@ -105,12 +103,12 @@ public class ListViewModel {
             //the same time, but create individual events for other event
             // sub-types
             if (hasFileTypeEvents(eventMap.keySet()) || eventMap.size() == 1) {
-                 combinedEvents.add(new CombinedEvent(group.time * 1000,   eventMap));
+                 combinedEvents.add(new CombinedEvent(group.getTime() * 1000,   eventMap));
             } else {
                 for(Entry<TimelineEventType, Long> singleEntry: eventMap.entrySet()) {
                      Map<TimelineEventType, Long> singleEventMap = new HashMap<>();
                      singleEventMap.put(singleEntry.getKey(), singleEntry.getValue());
-                     combinedEvents.add(new CombinedEvent(group.time * 1000,   singleEventMap));
+                     combinedEvents.add(new CombinedEvent(group.getTime() * 1000,   singleEventMap));
                 }
             }
         }
@@ -130,15 +128,35 @@ public class ListViewModel {
         return true;
     }
     
+    /**
+     * This class for use with the groupingBy and stores the three parameters
+     * that the Events are grouped by to make "CombinedEvents".
+     */
     final class CombinedEventGroup {
-        String description;
-        long time;
-        long fileID;
+        private final String description;
+        private final long time;
+        private final long fileID;
         
+        /**
+         * Construct a new CombinedEventGroup.
+         * 
+         * @param time
+         * @param fileID
+         * @param description 
+         */
         CombinedEventGroup(long time, long fileID, String description) {
             this.description = description;
             this.time = time;
             this.fileID = fileID;
+        }
+        
+        /**
+         * Get the value of the time parameter.
+         * 
+         * @return long time value
+         */
+        long getTime() {
+            return time;
         }
         
         @Override
@@ -165,6 +183,9 @@ public class ListViewModel {
         
     }
     
+    /**
+     * A Comparator for sorting CombinedEvents by start time.
+     */
     class SortEventByTime implements Comparator<CombinedEvent> {
 
         @Override
