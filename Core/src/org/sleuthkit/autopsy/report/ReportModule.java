@@ -45,8 +45,9 @@ interface ReportModule {
      * module. The path should be relative to the location that gets passed in
      * to generateReport() (or similar).
      *
-     * @return Relative path to where report will be stored. May be null if the
-     *         module does not produce a report file.
+     * @return Relative path to where report will be stored. Return an empty string
+     * if the location passed to generateReport() is the output location. Return null
+     * to indicate that there is no report file.
      */
     public String getRelativeFilePath();
 
