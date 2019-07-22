@@ -68,7 +68,7 @@ class MboxParser implements Iterator<EmailMessage> {
 
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
     private final DefaultMessageBuilder messageBuilder;
-    private String errors;
+    private List<String> errorList = new ArrayList<>();
 
     /**
      * The mime type string for html text.
@@ -88,7 +88,6 @@ class MboxParser implements Iterator<EmailMessage> {
         MimeConfig config = MimeConfig.custom().setMaxLineLen(-1).build();
         // disable line length checks.
         messageBuilder.setMimeEntityConfig(config);
-        errors = new String();
     }
 
     static boolean isValidMimeTypeMbox(byte[] buffer) {
@@ -171,7 +170,11 @@ class MboxParser implements Iterator<EmailMessage> {
     }
 
     String getErrors() {
-        return errors;
+        String result = "";
+        for (String msg: errorList) {
+            result += "<li>" + msg + "</li>"; 
+        }
+        return result;
     }
 
     /**
@@ -499,7 +502,7 @@ class MboxParser implements Iterator<EmailMessage> {
     }
 
     private void addErrorMessage(String msg) {
-        errors = errors + "<li>" + msg + "</li>"; //NON-NLS
+        errorList.add(msg);
     }
 
     /**

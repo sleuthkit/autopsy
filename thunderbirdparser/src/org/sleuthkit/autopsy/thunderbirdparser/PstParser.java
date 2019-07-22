@@ -57,11 +57,6 @@ class PstParser {
      * First four bytes of a pst file.
      */
     private static int PST_HEADER = 0x2142444E;
-    /**
-     * A map of PSTMessages to their Local path within the file's internal
-     * directory structure.
-     */
-    private String errors;
 
     private final IngestServices services;
 
@@ -69,9 +64,10 @@ class PstParser {
     private long fileID;
 
     private int failureCount = 0;
+    
+    private List<String> errorList = new ArrayList<>();
 
     PstParser(IngestServices services) {
-        errors = new String();
         this.services = services;
     }
 
@@ -174,7 +170,11 @@ class PstParser {
      * @return String error list, empty string if no errors exist.
      */
     String getErrors() {
-        return errors;
+        String result = "";
+        for (String msg: errorList) {
+            result += "<li>" + msg + "</li>"; 
+        }
+        return result;
     }
 
     /**
@@ -480,7 +480,7 @@ class PstParser {
      * @param msg String message to add
      */
     private void addErrorMessage(String msg) {
-        errors = errors + "<li>" + msg + "</li>"; //NON-NLS
+        errorList.add(msg);
     }
 
     /**
