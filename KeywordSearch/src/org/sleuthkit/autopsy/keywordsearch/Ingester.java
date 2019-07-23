@@ -256,8 +256,14 @@ class Ingester {
             double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
 
             if (indexSchemaVersion >= 2.2) {
+                Server.Schema contentFieldName = Server.getContentFieldName(toFieldValue(language));
                 // index the chunk to a language specific field
-                updateDoc.addField(Server.getContentFieldName(toFieldValue(language)).toString(), chunk);
+                updateDoc.addField(contentFieldName.toString(), chunk);
+                // TODO: filename search works without this because METADATA section has a file name.
+                // index the filename to the content field for search
+                if (fields.containsKey(Server.Schema.FILE_NAME.toString())) {
+                    updateDoc.addField(contentFieldName.toString(), fields.get(Server.Schema.FILE_NAME.toString()));
+                }
             } else {
                 //add the content to the SolrInputDocument
                 //JMTODO: can we just add it to the field map before passing that in?
@@ -307,7 +313,13 @@ class Ingester {
             updateDoc.setField(Server.Schema.ID.toString(), MiniChunks.getChunkIdString(baseChunkID));
 
             // index the chunk to a language specific field
-            updateDoc.addField(Server.getContentFieldName(toFieldValue(language)).toString(), chunk);
+            Server.Schema contentFieldName = Server.getContentFieldName(toFieldValue(language));
+            updateDoc.addField(contentFieldName.toString(), chunk);
+            // TODO: filename search works without this because METADATA section has a file name.
+            // index the filename to the content field for search
+            if (fields.containsKey(Server.Schema.FILE_NAME.toString())) {
+                updateDoc.addField(contentFieldName.toString(), fields.get(Server.Schema.FILE_NAME.toString()));
+            }
 
             TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
 
