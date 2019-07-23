@@ -44,6 +44,7 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
         winRegCheckBox = new javax.swing.JCheckBox();
         peCheckBox = new javax.swing.JCheckBox();
         plasoParserInfoTextArea = new javax.swing.JTextArea();
+        noteLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(winRegCheckBox, org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.winRegCheckBox.text")); // NOI18N
         winRegCheckBox.addActionListener(new java.awt.event.ActionListener() {
@@ -68,6 +69,8 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
         plasoParserInfoTextArea.setWrapStyleWord(true);
         plasoParserInfoTextArea.setBorder(null);
 
+        org.openide.awt.Mnemonics.setLocalizedText(noteLabel, org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.noteLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -77,15 +80,18 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(plasoParserInfoTextArea)
                     .addComponent(peCheckBox)
-                    .addComponent(winRegCheckBox))
+                    .addComponent(winRegCheckBox)
+                    .addComponent(noteLabel))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(plasoParserInfoTextArea, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
+                .addComponent(plasoParserInfoTextArea, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
+                .addComponent(noteLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addComponent(winRegCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(peCheckBox)
@@ -108,6 +114,7 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel noteLabel;
     private javax.swing.JCheckBox peCheckBox;
     private javax.swing.JTextArea plasoParserInfoTextArea;
     private javax.swing.JCheckBox winRegCheckBox;

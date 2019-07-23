@@ -329,14 +329,30 @@ public final class IngestJobSettings {
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
         }
+        
+        /**
+         * Hardcoding Plaso to be disabled by default.  Loaded modules is passed
+         * below as the list default list of enabled modules so briefly 
+         * remove Plaso from loaded modules to get the list of enabled and 
+         * disabled modules.  Then put Plaso back into loadedModulesNames to let
+         * the rest of the code continue as before.
+         */
+        HashSet<String> hardCodedDisabledModules = new HashSet<>();
+        if(loadedModuleNames.contains("Plaso")) {
+            loadedModuleNames.remove("Plaso");
+            hardCodedDisabledModules.add("Plaso");
+        }
 
         /**
          * Get the enabled/disabled ingest modules settings for this context. By
          * default, all loaded modules are enabled.
          */
         HashSet<String> enabledModuleNames = getModulesNames(executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(loadedModuleNames));
-        HashSet<String> disabledModuleNames = getModulesNames(executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, ""); //NON-NLS
+        HashSet<String> disabledModuleNames = getModulesNames(executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, hardCodedDisabledModules.isEmpty() ? "" : makeCsvList(hardCodedDisabledModules)); //NON-NLS
 
+        //Put plaso back into loadedModuleNames
+        loadedModuleNames.addAll(hardCodedDisabledModules);
+        
         /**
          * Check for missing modules and create warnings if any are found.
          */
