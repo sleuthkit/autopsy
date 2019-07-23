@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,8 @@ class ReportGenerator {
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
 
     /**
-     * Progress reportGenerationPanel that can be used to check for cancellation.
+     * Progress reportGenerationPanel that can be used to check for
+     * cancellation.
      */
     private ReportProgressPanel progressPanel;
 
@@ -88,7 +89,6 @@ class ReportGenerator {
     ReportGenerator() {
         this.errorList = new ArrayList<>();
     }
-
 
     /**
      * Display the progress panels to the user, and add actions to close the
@@ -138,9 +138,9 @@ class ReportGenerator {
      * Run the TableReportModules using a SwingWorker.
      *
      * @param artifactTypeSelections the enabled/disabled state of the artifact
-     *                               types to be included in the report
-     * @param tagSelections          the enabled/disabled state of the tag names
-     *                               to be included in the report
+     * types to be included in the report
+     * @param tagSelections the enabled/disabled state of the tag names to be
+     * included in the report
      */
     void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) throws IOException {
         if (tableReport != null && null != artifactTypeSelections) {
@@ -164,7 +164,7 @@ class ReportGenerator {
      * Run the FileReportModules using a SwingWorker.
      *
      * @param enabledInfo the Information that should be included about each
-     *                    file in the report.
+     * file in the report.
      */
     void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) throws IOException {
         if (fileReportModule != null && null != enabledInfo) {
@@ -219,7 +219,7 @@ class ReportGenerator {
             displayProgressPanel();
         }
     }
-    
+
     /**
      * Run the Portable Case Report Module
      */
@@ -258,10 +258,12 @@ class ReportGenerator {
 
     private void setupProgressPanel(ReportModule module, String reportDir) {
         String reportFilePath = module.getRelativeFilePath();
-        if (!reportFilePath.isEmpty()) {
-            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
-        } else {
+        if (reportFilePath == null) {
             this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
+        } else if (reportFilePath.isEmpty()) {
+            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir);
+        } else {
+            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
         }
     }
 
@@ -283,9 +285,9 @@ class ReportGenerator {
         } catch (IOException ex) {
             throw new IOException("Failed to make report folder, unable to generate reports.", ex);
         }
-        return reportPath;    
+        return reportPath;
     }
-    
+
     private class ReportWorker extends SwingWorker<Void, Void> {
 
         private final Runnable doInBackground;

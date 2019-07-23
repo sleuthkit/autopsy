@@ -65,7 +65,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "";
+        return null;
     }
 
     @Messages({
