@@ -26,7 +26,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -55,7 +55,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
-            Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
             artifactType = blackboard.getOrAddArtifactType(INT_ARTIFACT_TYPE_NAME, INT_ARTIFACT_DISPLAY_NAME);
          } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.InterestingArtifactCreatorIngestModule_exceptionMessage_errorCreatingCustomType(), ex);
@@ -77,7 +77,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
              * type.
              */
             int randomArtIndex = (int) (Math.random() * 3);
-            Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
             BlackboardArtifact.Type artifactTypeBase = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAMES[randomArtIndex], ARTIFACT_DISPLAY_NAMES[randomArtIndex]);
             BlackboardArtifact artifactBase = file.newArtifact(artifactTypeBase.getTypeID());
             Collection<BlackboardAttribute> baseAttributes = new ArrayList<>();
