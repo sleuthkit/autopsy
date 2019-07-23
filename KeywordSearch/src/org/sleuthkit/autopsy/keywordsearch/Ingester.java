@@ -289,7 +289,6 @@ class Ingester {
         }
     }
 
-    // TODO: need to be polished
     private void indexMiniChunk(String chunk, String sourceName, Map<String, String> fields, String baseChunkID,
                                 LanguageDetector.Language language) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {

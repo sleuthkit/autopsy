@@ -117,18 +117,22 @@ public class ExtractedTextViewer implements TextViewer {
          */
         IndexedText highlightedHitText = null;
         if (adHocQueryResult != null) {
-            /*
-             * The node is an ad hoc search result node.
-             */
-            highlightedHitText = new HighlightedText(adHocQueryResult.getSolrObjectId(), adHocQueryResult.getResults());
+            try {
+                /*
+                 * The node is an ad hoc search result node.
+                 */
+                highlightedHitText = HighlightedTextFactory.create(adHocQueryResult.getSolrObjectId(), adHocQueryResult.getResults());
+            } catch (NoOpenCoreException e) {
+                logger.log(Level.SEVERE, "Failed to get index schema version", e); //NON-NLS
+            }
         } else if (artifact != null) {
             if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
                 /*
                  * The node is a keyword hit artifact node.
                  */
                 try {
-                    highlightedHitText = new HighlightedText(artifact);
-                } catch (TskCoreException ex) {
+                    highlightedHitText = HighlightedTextFactory.create(artifact);
+                } catch (TskCoreException | NoOpenCoreException ex) {
                     logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
                 }
             } else if (artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID() && file != null) {

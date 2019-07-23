@@ -20,12 +20,10 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.Iterators;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -35,7 +33,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -48,9 +45,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Highlights hits for a given document. Knows about pages and such for the
  * content viewer.
  */
-class HighlightedText implements IndexedText {
+class HighlightedText_2_1 implements IndexedText {
 
-    private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
+    private static final Logger logger = Logger.getLogger(HighlightedText_2_1.class.getName());
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
@@ -59,9 +56,7 @@ class HighlightedText implements IndexedText {
     static private final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
     static private final BlackboardAttribute.Type TSK_KEYWORD_REGEXP = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP);
 
-    private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
-    private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
-    private static final String ANCHOR_PREFIX = HighlightedText.class.getName() + "_"; //NON-NLS
+    private static final String ANCHOR_PREFIX = HighlightedText_2_1.class.getName() + "_"; //NON-NLS
 
     final private Server solrServer = KeywordSearch.getServer();
 
@@ -107,7 +102,7 @@ class HighlightedText implements IndexedText {
      *                     results a selection was made leading to this
      *                     HighlightedText.
      */
-    HighlightedText(long solrObjectId, QueryResults hits) {
+    HighlightedText_2_1(long solrObjectId, QueryResults hits) {
         this.solrObjectId = solrObjectId;
         this.hits = hits;
     }
@@ -120,7 +115,7 @@ class HighlightedText implements IndexedText {
      *
      * @param artifact The artifact that was selected.
      */
-    HighlightedText(BlackboardArtifact artifact) throws TskCoreException {
+    HighlightedText_2_1(BlackboardArtifact artifact) throws TskCoreException {
         this.artifact = artifact;
         BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT);
         if (attribute != null) {
@@ -240,29 +235,13 @@ class HighlightedText implements IndexedText {
     /**
      * Constructs a complete, escaped Solr query that is ready to be used.
      *
-     * Works with 2.1 or earlier.
-     *
      * @param query         keyword term to be searched for
      * @param literal_query flag whether query is literal or regex
      *
      * @return Solr query string
      */
-    static private String constructEscapedSolrQuery_2_1(String query) {
+    static private String constructEscapedSolrQuery(String query) {
         return LuceneQuery_2_1.HIGHLIGHT_FIELD + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
-    }
-
-    /**
-     * Constructs a complete, escaped Solr query that is ready to be used.
-     *
-     * @param query         keyword term to be searched for
-     * @param fields field to query
-     *
-     * @return Solr query string
-     */
-    static private String constructEscapedSolrQuery(String query, List<Server.Schema> fields) {
-        return fields.stream().map(f ->
-            f.toString() + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\""
-        ).collect(Collectors.joining(" OR "));
     }
 
     private int getIndexOfCurrentPage() {
@@ -357,6 +336,7 @@ class HighlightedText implements IndexedText {
     @Override
     public String getText() {
         String chunkID = "";
+        String highlightField = "";
         try {
             loadPageInfo(); //inits once
             SolrQuery q = new SolrQuery();
@@ -369,26 +349,23 @@ class HighlightedText implements IndexedText {
             }
             final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
+            highlightField = LuceneQuery_2_1.HIGHLIGHT_FIELD;
             if (isLiteral) {
                 //if the query is literal try to get solr to do the highlighting
-                String highlightQuery = keywords.stream()
-                    .map(s -> constructEscapedSolrQuery(s, LuceneQuery.CONTENT_FIELDS))
-                    .collect(Collectors.joining(" "));
-                q.setQuery(highlightQuery);
-                for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
-                    q.addField(field.toString());
-                }
-                q.addFilterQuery(filterQuery);
-                for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
-                    q.addHighlightField(field.toString());
-                }
+                final String highlightQuery = keywords.stream()
+                        .map(HighlightedText_2_1::constructEscapedSolrQuery)
+                        .collect(Collectors.joining(" "));
 
+                q.setQuery(highlightQuery);
+                q.addField(highlightField);
+                q.addFilterQuery(filterQuery);
+                q.addHighlightField(highlightField);
                 q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
                 //tune the highlighter
                 q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
-                q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-                q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.tag.pre", HighlightedTextUtil.HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.tag.post", HighlightedTextUtil.HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
                 q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
 
                 //docs says makes sense for the original Highlighter only, but not really
@@ -399,9 +376,7 @@ class HighlightedText implements IndexedText {
                  * do the highlighting in autopsy.
                  */
                 q.setQuery(filterQuery);
-                for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
-                    q.addField(field.toString());
-                }
+                q.addField(highlightField);
             }
 
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -415,11 +390,6 @@ class HighlightedText implements IndexedText {
             String highlightedContent;
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
 
-            // even if not found, we need field name here. so use CONTENT_GENERAL as a default value.
-            // attemptManualHighlighting will use empty string for its field value.
-            String highlightField = getContentFieldName(response.getResults().get(0)).map(Server.Schema::toString)
-                .orElse(Server.Schema.CONTENT_GENERAL.toString());
-
             if (responseHighlight == null) {
                 highlightedContent = HighlightedTextUtil.attemptManualHighlighting(response.getResults(), highlightField, keywords);
             } else {
@@ -428,7 +398,7 @@ class HighlightedText implements IndexedText {
                 if (responseHighlightID == null) {
                     highlightedContent = HighlightedTextUtil.attemptManualHighlighting(response.getResults(), highlightField, keywords);
                 } else {
-                    List<String> contentHighlights = getHighlightResult(responseHighlightID);
+                    List<String> contentHighlights = responseHighlightID.get(LuceneQuery_2_1.HIGHLIGHT_FIELD);
                     if (contentHighlights == null) {
                         highlightedContent = HighlightedTextUtil.attemptManualHighlighting(response.getResults(), highlightField, keywords);
                     } else {
@@ -441,7 +411,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
             return Bundle.IndexedText_errorMessage_errorGettingText();
         }
     }
@@ -470,24 +440,6 @@ class HighlightedText implements IndexedText {
 
     }
 
-    private static Optional<Server.Schema> getContentFieldName(SolrDocument document) {
-        for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
-            if (document.containsKey(field.toString())) {
-                return Optional.of(field);
-            }
-        }
-        return Optional.empty();
-    }
-
-    private static List<String> getHighlightResult(Map<String, List<String>> highlight) {
-        for (Server.Schema field : LuceneQuery.CONTENT_FIELDS) {
-            if (highlight.containsKey(field.toString())) {
-                return highlight.get(field.toString());
-            }
-        }
-        return Collections.emptyList();
-    }
-
     /**
      * Anchors are used to navigate back and forth between hits on the same page
      * and to navigate to hits on the next/previous page.
@@ -498,7 +450,7 @@ class HighlightedText implements IndexedText {
      */
     private String insertAnchors(String searchableContent) {
         StringBuilder buf = new StringBuilder(searchableContent);
-        final String searchToken = HIGHLIGHT_PRE;
+        final String searchToken = HighlightedTextUtil.HIGHLIGHT_PRE;
         final int indexSearchTokLen = searchToken.length();
         final String insertPre = "<a name='" + ANCHOR_PREFIX; //NON-NLS
         final String insertPost = "'></a>"; //NON-NLS

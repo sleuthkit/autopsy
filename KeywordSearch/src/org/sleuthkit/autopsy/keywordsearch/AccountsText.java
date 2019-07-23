@@ -300,7 +300,7 @@ class AccountsText implements IndexedText {
             QueryResponse queryResponse = solrServer.query(q, METHOD.POST);
 
             String highlightedText =
-                    HighlightedText.attemptManualHighlighting(
+                    HighlightedTextUtil.attemptManualHighlighting(
                             queryResponse.getResults(),
                             Server.Schema.CONTENT_STR.toString(),
                             accountNumbers

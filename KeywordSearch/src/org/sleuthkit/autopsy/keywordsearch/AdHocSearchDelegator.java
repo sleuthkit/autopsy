@@ -58,15 +58,18 @@ class AdHocSearchDelegator {
 
         for (KeywordList keywordList : keywordLists) {
             for (Keyword keyword : keywordList.getKeywords()) {
-                KeywordSearchQuery query = KeywordSearchUtil.getQueryForKeyword(keyword, keywordList);
+                try {
+                    KeywordSearchQuery query = KeywordSearchUtil.getQueryForKeyword(keyword, keywordList);
+                    //Limit search to a set of data sources
+                    if (dataSourceIds != null && !dataSourceIds.isEmpty()) {
+                        final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, dataSourceIds);
+                        query.addFilter(dataSourceFilter);
+                    }
 
-                //Limit search to a set of data sources
-                if (dataSourceIds != null && !dataSourceIds.isEmpty()) {
-                    final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, dataSourceIds);
-                    query.addFilter(dataSourceFilter);
+                    queryDelegates.add(query);
+                } catch (NoOpenCoreException e) {
+                    logger.log(Level.WARNING, "Failed to get KeywordSearchQuery", e); //NON-NLS
                 }
-
-                queryDelegates.add(query);
             }
         }
     }

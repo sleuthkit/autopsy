@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
 import java.io.File;
+
+import org.apache.commons.lang3.math.NumberUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.openide.windows.WindowManager;
@@ -127,11 +129,16 @@ class KeywordSearchUtil {
         }
     }
     
-    static KeywordSearchQuery getQueryForKeyword(Keyword keyword, KeywordList keywordList) {
-        KeywordSearchQuery query = null;
+    static KeywordSearchQuery getQueryForKeyword(Keyword keyword, KeywordList keywordList) throws NoOpenCoreException {
+        double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
+        KeywordSearchQuery query;
         if (keyword.searchTermIsLiteral() && keyword.searchTermIsWholeWord()) {
             // literal, exact match
-            query = new LuceneQuery(keywordList, keyword);
+            if (indexSchemaVersion >= 2.2) {
+                query = new LuceneQuery(keywordList, keyword);
+            } else {
+                query = new LuceneQuery_2_1(keywordList, keyword);
+            }
             query.escape();
         } // regexp and literal substring match
         else {
