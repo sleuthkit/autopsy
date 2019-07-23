@@ -314,7 +314,7 @@ class MboxParser {
         filename = filename.replaceAll("\"", "_");
         filename = filename.replaceAll("/", "_");
         filename = filename.replaceAll("\\\\", "_");
-        filename = filename.replaceAll("|", "_");
+        filename = filename.replaceAll("\\|", "_");
         filename = filename.replaceAll("\\*", "_");
 
         // also had some crazy long names, so make random one if we get those.
