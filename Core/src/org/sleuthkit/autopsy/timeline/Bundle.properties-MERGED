@@ -27,6 +27,7 @@ ShowInTimelineDialog.fileTitle=View {0} in timeline.
 ShowInTimelineDialog.showTimelineButtonType.text=Show Timeline
 Timeline.dialogs.title=\ Timeline
 Timeline.frameName.text={0} - Autopsy Timeline
+Timeline.old.version=\ This Case was created with an older version of Autopsy.\nThe Timeline with not show events from data sources added with the older version of Autopsy
 Timeline.resultsPanel.title=Timeline Results
 Timeline.runJavaFxThread.progress.creating=Creating timeline . . .
 Timeline.zoomOutButton.text=Zoom Out
