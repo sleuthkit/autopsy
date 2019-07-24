@@ -240,20 +240,6 @@ class HighlightedText implements IndexedText {
     /**
      * Constructs a complete, escaped Solr query that is ready to be used.
      *
-     * Works with 2.1 or earlier.
-     *
-     * @param query         keyword term to be searched for
-     * @param literal_query flag whether query is literal or regex
-     *
-     * @return Solr query string
-     */
-    static private String constructEscapedSolrQuery_2_1(String query) {
-        return LuceneQuery_2_1.HIGHLIGHT_FIELD + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
-    }
-
-    /**
-     * Constructs a complete, escaped Solr query that is ready to be used.
-     *
      * @param query         keyword term to be searched for
      * @param fields field to query
      *
