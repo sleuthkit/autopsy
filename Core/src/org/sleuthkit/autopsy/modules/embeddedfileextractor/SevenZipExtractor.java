@@ -185,7 +185,11 @@ class SevenZipExtractor {
         //As a result, many corrupted files have wonky compression ratios and could flood the UI
         //with false zip bomb notifications. The decision was made to skip compression ratio checks 
         //for unallocated zip files. Instead, we let the depth be an indicator of a zip bomb.
-        if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+        //Gzip archives compress a single file. They may have a sparse file,
+        //and that file could be much larger, however it won't be the exponential growth seen with more dangerous zip bombs.
+        //In addition a fair number of browser cache files will be gzip archives,
+        //and their file sizes are frequently retrieved incorrectly so ignoring gzip files is a reasonable decision.
+        if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC) || archiveFile.getMIMEType().equalsIgnoreCase(SupportedArchiveExtractionFormats.XGZIP.toString())) {
             return false;
         }
 

@@ -29,6 +29,7 @@ from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
 from java.util import ArrayList
+from java.util import UUID
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -95,6 +96,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
         ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
         deviceID = ds.getDeviceId()
         deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
+        uuid = UUID.randomUUID().toString()
 
         resultSet = None
         try:
@@ -106,7 +108,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 read = resultSet.getInt("read") # may be unread = 0, read = 1
                 subject = resultSet.getString("subject") # message subject
                 body = resultSet.getString("body") # message body
-                thread_id = "{0}_{1}".format(abstractFile.getId(), resultSet.getInt("thread_id"))
+                thread_id = "{0}-{1}".format(uuid, resultSet.getInt("thread_id"))
                 attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); #create Message artifact and then add attributes from result set.
                 if resultSet.getString("type") == "1":

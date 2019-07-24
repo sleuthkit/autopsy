@@ -48,6 +48,7 @@ LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been
 LogicalImagerDSProcessor.noCurrentCase=No current case
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
 LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
+LogicalImagerPanel.imageTable.columnModel.title2=Path
 # {0} - sparseImageDirectory
 LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
 # {0} - invalidFormatDirectory
@@ -60,10 +61,7 @@ LogicalImagerPanel.selectAcquisitionFromDriveLabel.text=Select acquisition from 
 LogicalImagerPanel.selectFromDriveLabel.text=Select Acquisition From Drive
 LogicalImagerPanel.selectDriveLabel.text=Select Drive
 LogicalImagerPanel.selectFolderLabel.text=Selected Folder:
-LogicalImagerPanel.messageTextArea.text=
-LogicalImagerPanel.pathTextField.text=
 LogicalImagerPanel.manualRadioButton.text=Manually Choose Folder
-LogicalImagerPanel.importRadioButton.toolTipText=
 LogicalImagerPanel.importRadioButton.text=Import From External Drive
 LogicalImagerPanel.browseButton.text=Browse
 LogicalImagerPanel.refreshButton.text=Refresh

@@ -27,6 +27,7 @@ class GroupTreeNode {
 
     private final String path;
     private DrawableGroup group;
+    private final String dispName;
 
     public String getPath() {
         return path;
@@ -36,9 +37,20 @@ class GroupTreeNode {
         return group;
     }
 
-    GroupTreeNode(String path, DrawableGroup group) {
+    public String getDisplayName() {
+        return dispName;
+    }
+    
+    GroupTreeNode(String path, DrawableGroup group) {  
         this.path = path;
         this.group = group;
+        
+        // If the path has a obj id, strip it for display purpose.
+        if (path.toLowerCase().contains(("(Id: ").toLowerCase())) {
+            dispName = path.substring(0, path.indexOf("(Id: ")); 
+        } else {
+            dispName = path;
+        }
     }
 
     void setGroup(DrawableGroup g) {
