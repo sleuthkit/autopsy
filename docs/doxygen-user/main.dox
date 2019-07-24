@@ -17,7 +17,7 @@ The following topics are available here:
  - \subpage cases_page
  - \subpage ds_page
  - \subpage uilayout_page
-- Automated Analysis (Modules)
+- Ingest Modules
  - \subpage ingest_page "Ingest Modules"
  - \subpage recent_activity_page
  - \subpage hash_db_page 
@@ -34,7 +34,7 @@ The following topics are available here:
  - \subpage cr_ingest_module
  - \subpage encryption_page
  - \subpage vm_extractor_page
-- Manual Analysis
+- Reviewing the Results
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
  - \subpage content_viewer_page
@@ -55,20 +55,20 @@ The following topics are available here:
  - \subpage reporting_page
 - \subpage module_install_page
 - \subpage performance_page
-- Multi-user Collaborative Deployments
+- Multi-user Cluster 
  - \subpage install_multiuser_page
-  - \subpage install_activemq
-  - \subpage install_postgresql
-  - \subpage install_solr
-  - \subpage windows_authentication
  - \subpage multiuser_sec_page
  - \subpage multiuser_page
 - Triage
  - \subpage triage_page
  - \subpage live_triage_page
-- \subpage advanced_page
-- \subpage experimental_page
+- Experimental Module
+  - \subpage experimental_page
+  - \ref auto_ingest_page
+  - \ref object_detection_page
+  - \ref volatility_dsp_page
 - \subpage command_line_ingest_page
+- \subpage logical_imager_page
 - \subpage translations_page
 
 If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.

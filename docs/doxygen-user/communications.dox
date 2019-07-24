@@ -14,15 +14,38 @@ The Communications Visualization Tool is loaded through the Tools->Communication
 
 \image html cvt_main.png
 
-From the left hand column, you can choose which devices to display, which types of data to display, and optionally select a time range. After any changes to the filters, use the Apply button to update the tables.
+From the left hand column, you can choose which devices to display, which types of data to display, and optionally select a time range. You can also choose to limit the display to only the most recent communications. After any changes to the filters, use the Apply button to update the tables.
 
-The middle column displays each account, its device and type, and the number of associated messages (emails, call logs, etc.). By default it will be sorted in descending order of frequency.
+The middle column displays each account, its device and type, and the number of associated messages (emails, call logs, etc.). By default it will be sorted in descending order of frequency. The middle column and the right hand column both have a \ref ui_quick_search feature which can be used to quickly find a visible item in their section's table. 
 
-Selecting an account in the middle column will bring up the messages for that account in the right hand column. Here data about each message is displayed in the top section, and the messages itself can be seen in the bottom section (if applicable).
+Selecting an account in the middle column will bring up the data for that account in the right hand column. There are four tabs that show information about the selected account.
 
-\image html cvt_messages.png
+<ul>
+<li> The <b>Summary</b> tab displays counts of how many times the account has appeared in different data types in the top section. In the middle it displays the files this account was found in. If the \ref central_repo_page is enabled, the bottom section will show any other cases that contained this account.
 
-The middle column and the right hand column both have a \ref ui_quick_search feature which can be used to quickly find a visible item in their section's table. 
+\image html cvt_summary_tab.png
+
+<li> The <b>Messages</b> tab displays any messages or call logs associated with the account. The Messages will either be in a thread, or listed under a node called "Unthreaded". Clicking on the "Unthreaded" node will show all the messages that are not "Threaded". Call logs will all be under a node named "Call Logs".
+
+\image html cvt_messages_threaded.png
+
+You can use the "All Messages" button at the bottom of the panel to show all messages. Clicking on a threaded message will show you all messages in that thread. You can click on an individual message to view it in the lower panel. Click the "Threads" button to return to the original screen.
+
+\image html cvt_message_email.png
+
+If the message has attachments, you can view them on the Attachments tab. If you select an attachment you can choose to open it in a new window, or you can look at it in the Thumbnails tab.
+
+\image html cvt_message_attach.png
+
+<li> The <b>Contacts</b> tab shows any information on this account that was found in a contacts file.
+
+\image html cvt_contacts.png
+
+<li> The <b>Media</b> tab shows thumbnails of any media files in messages for that account. If you click on one, it will show the message the media file came from.
+
+\image html cvt_media.png
+
+</ul>
 
 \section cvt_viz Visualization
 
@@ -42,8 +65,12 @@ After selecting either option, the middle tab will switch to the Visualize view 
 
 \image html cvt_visualize.png
 
-The options at the top allow you to clear the graph, try different graph layouts, and resize the graph. The nodes in the graph can be dragged around and nodes and edges can be selected to display their messages or relationships in the right side tab. For example, in the image below the link between two email addresses has been selected so the Messages viewer is displaying the single email between those two email addresses.
+The options at the top allow you to clear the graph and resize the graph. The nodes in the graph can be dragged around and nodes and edges can be selected to display their messages or relationships in the right side tab. For example, in the image below only one node has been selected so the Messages viewer is displaying only messages involving that email address.
 
 \image html cvt_links.png
+
+If you click the "Snapshot Report" button, you can generate a report similar to the HTML \ref reporting_page "report module". Select a name for your report, which will be saved to the "Reports" folder in the current case. The Snapshot Report will contain two pages. The first will have a summary of the case, and second will contain the current graph along with your filter settings.
+
+\image html cvt_snapshot.png
 
 */

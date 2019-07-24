@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -36,6 +37,8 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBU
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.communications.Utils;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Extends BlackboardArtifactNode to override createSheet to create a contact
@@ -111,6 +114,25 @@ final class ContactNode extends BlackboardArtifactNode {
 
             for (BlackboardAttribute bba : otherMap.values()) {
                 sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+            }
+            
+            // Don't need these values to appear in the Contact property sheet.
+            sheetSet.remove("S");
+            sheetSet.remove("C");
+            
+            List<Content> children = artifact.getChildren();
+            if(children != null) {
+                int count = 0;
+                String imageLabelPrefix = "Image";
+                for(Content child: children) {
+                    if(child instanceof AbstractFile) {
+                        String imageLabel = imageLabelPrefix;
+                        if(count > 0) {
+                            imageLabel = imageLabelPrefix + "-" + count;
+                        }
+                        sheetSet.put(new NodeProperty<>(imageLabel, imageLabel, imageLabel, child.getName()));
+                    }
+                }
             }
 
         } catch (TskCoreException ex) {

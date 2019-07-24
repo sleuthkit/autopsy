@@ -189,7 +189,7 @@ class GroupCellFactory {
         @Override
         public String getGroupName() {
             return Optional.ofNullable(getItem())
-                    .map(treeNode -> StringUtils.defaultIfBlank(treeNode.getPath(), DrawableGroup.getBlankGroupName()))
+                    .map(treeNode -> StringUtils.defaultIfBlank(treeNode.getDisplayName(), DrawableGroup.getBlankGroupName()))
                     .orElse("");
         }
 

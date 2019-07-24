@@ -29,7 +29,7 @@ These columns display the following information:
 <li> (O)ther occurrences column - indicates how many data sources in the Central Repository contain this item. The count will include the selected item.
 </ul>
 
-To display more information about why an icon has appeared, you can hover over it. The Comment and Other occurrences columns query the Central Repository. If this seems to be having a performance impact, it can be disabled through the \ref view_options_page. This will remove the Other occurrences column entirely and the Comment column will be based only on tags.
+To display more information about why an icon has appeared, you can hover over it. These columns query the Central Repository as well as the case database. If this seems to be having a performance impact, you can disable them through the \ref view_options_page. This will remove the Other occurrences column entirely, the Comment column will be based only on tags, and the Score column will no longer be able to reflect Notable items.
 
 \subsection export_csv Exporting to CSV
 

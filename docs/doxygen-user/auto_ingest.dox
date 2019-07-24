@@ -71,7 +71,7 @@ When auto ingest mode is enabled, Autopsy will open with a different UI than nor
 
 \image html AutoIngest/auto_ingest_in_progress.png
 
-The user must press the "Start" button to being the auto ingest process. Note that if the computer running Autopsy in auto ingest mode is restarted, someone must log into it to restart Autopsy.  It does not start by itself. When "Start" is pressed, the node will scan through the Shared Images folder looking for manifest files. This scan happens periodically when ingest is running. It can also be started manually using the "Refresh" button.
+The user must press the "Start" button to begin the auto ingest process. Note that if the computer running Autopsy in auto ingest mode is restarted, someone must log into it to restart Autopsy.  It does not start by itself. When "Start" is pressed, the node will scan through the Shared Images folder looking for manifest files. This scan happens periodically when ingest is running. It can also be started manually using the "Refresh" button.
 
 The UI for the auto ingest node will display what images are scheduled for analysis, what is currently running, and what has been completed.  If a newly added image should be the highest priority, then you can select it and choose "Prioritize Case".  This will prioritize all images within the same case to be top priority.  You may also prioritize only a single data source (job) using the "Prioritize Job" button in the same manner. If you have prioritized something by mistake, the "Deprioritize" buttons will undo it.
 

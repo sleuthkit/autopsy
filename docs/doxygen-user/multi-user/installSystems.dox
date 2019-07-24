@@ -1,0 +1,47 @@
+/*! \page install_multiuser_systems_page Pick Your Hardware / VM Configuration
+
+\section multiuser_system Overview
+
+The first step in setting up a multi-user cluster is picking how many computers or VMs you'll use to run the various services. 
+
+From a service perspective, you'll need to run:
+- PostgeSQL database server
+- Apache Solr text indexing server
+- ActiveMQ messaging server
+- Network storage
+
+You can run each of these on their own dedicated VM, but that is not necessary.  
+
+Apache Solr uses a lot of memory, so we recommend keeping it by itself. The exception is if you are using Windows File Sharing for shared storage.  You can get better Solr performance if it is writing to local storage instead of over the network.  So, you can consider using the same computer for both Solr and shared storage. 
+
+Also note that because all computers need to access the shared storage at the same path, you cannot mix operating systems. A Linux system running Solr will not be able to access the shared storage at the same path as a Windows Autopsy client. 
+
+
+
+We recommend:
+
+- Server 1: PostgreSQL and ActiveMQ 
+ - Both of these are low overhead services. 
+- Server 2: Apache Solr and Shared Storage (if you are using Windows File Sharing).
+
+
+\subsection multiuser_system_hw Suggested Hardware
+
+TODO
+
+- PostgreSQL/ActiveMQ (server 1):
+ - RAM: 
+ - Local Storage: Enough for databases
+- Solr (server 2):
+ - RAM: 
+ - Local Storage: Minimal 
+
+\subsection multiuser_system_back Backups
+
+You will have lots of important data on the system.  Ensure that the following are regularly backed up:
+- Shared storage (which contains case data and text indexes)
+- Databases on the PostgreSQL server  (see \ref install_post_backup)
+- Zookeeper data on the Solr server (see \ref install_solr_backup)
+
+
+*/

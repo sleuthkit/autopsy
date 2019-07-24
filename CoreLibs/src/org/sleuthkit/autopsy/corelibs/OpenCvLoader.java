@@ -22,57 +22,73 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.opencv.core.Core;
 
+/**
+ * A utility class that loads the core OpenCV library and allows clients to
+ * verify that the library was loaded.
+ */
 public final class OpenCvLoader {
 
-    private static final Logger LOGGER = Logger.getLogger(OpenCvLoader.class.getName());
+    private static final Logger logger = Logger.getLogger(OpenCvLoader.class.getName());
     private static boolean openCvLoaded;
-    private static UnsatisfiedLinkError exception = null;
+    private static UnsatisfiedLinkError exception = null; // Deprecated
 
     static {
+        openCvLoaded = false;
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
             openCvLoaded = true;
         } catch (UnsatisfiedLinkError ex) {
-            LOGGER.log(Level.WARNING, "Unable to load OpenCV", ex);
-            exception = ex;  //save relevant error for throwing at appropriate time
-            openCvLoaded = false;
-        } catch (SecurityException ex) {
-            LOGGER.log(Level.WARNING, "Unable to load OpenCV", ex);
-            openCvLoaded = false;
+            logger.log(Level.WARNING, "Failed to load core OpenCV library", ex);
+            /*
+             * Save exception to rethrow later (deprecated).
+             */
+            exception = ex;
+        } catch (Exception ex) {
+            /*
+             * Exception firewall to ensure that runtime exceptions do not cause
+             * the loading of this class by the Java class loader to fail.
+             */
+            logger.log(Level.WARNING, "Failed to load core OpenCV library", ex);
         }
-        
+
     }
 
     /**
-     * Return whether or not the OpenCV library has been loaded.
+     * Indicates whether or not the core OpenCV library has been loaded.
      *
-     * @return - true if the opencv library is loaded or false if it is not
-     * @throws UnsatisfiedLinkError - A COPY of the exception that prevented
-     * OpenCV from loading. Note that the stack trace in the exception can be
-     * confusing because it refers to a past invocation.
+     * @return True or false.
+     */
+    public static boolean hasOpenCvLoaded() {
+        return openCvLoaded;
+    }
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private OpenCvLoader() {
+    }
+
+    /**
+     * Indicates whether or not the core OpenCV library has been loaded.
+     *
+     * @return True or false.
+     *
+     * @throws UnsatisfiedLinkError if this error was thrown during the loading
+     *                              of the core OpenCV library during static
+     *                              initialization of this class.
      *
      * @deprecated Use hasOpenCvLoaded instead.
      */
     @Deprecated
     public static boolean isOpenCvLoaded() throws UnsatisfiedLinkError {
         if (!openCvLoaded) {
-            //exception should never be null if the open cv isn't loaded but just in case
             if (exception != null) {
                 throw exception;
             } else {
                 throw new UnsatisfiedLinkError("OpenCV native library failed to load");
             }
-
         }
         return openCvLoaded;
     }
 
-    /**
-     * Return whether OpenCV library has been loaded.
-     *
-     * @return true if OpenCV library was loaded, false if not.
-     */
-    public static boolean hasOpenCvLoaded() {
-        return openCvLoaded;
-    }
 }

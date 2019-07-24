@@ -88,7 +88,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             // Copy directory failed
             String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
             errorList.add(msg);
-            logger.log(Level.SEVERE, String.format("Failed to copy directory {0} to {1}", src.toString(), dest.toString()));
+            logger.log(Level.SEVERE, String.format("Failed to copy directory %s to %s", src.toString(), dest.toString()), ex);
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
@@ -136,7 +136,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             return null;
         } catch (TskCoreException ex) {
             String msg = Bundle.AddLogicalImageTask_failedToAddReport(reportPath.toString(), ex.getMessage());
-            logger.log(Level.SEVERE, String.format("Failed to add report {0}. Reason= {1}", reportPath.toString(), ex.getMessage()));
+            logger.log(Level.SEVERE, String.format("Failed to add report %s. Reason= %s", reportPath.toString(), ex.getMessage()), ex);
             return msg;
         }
     }
