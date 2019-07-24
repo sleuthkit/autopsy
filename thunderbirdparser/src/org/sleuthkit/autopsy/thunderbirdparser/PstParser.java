@@ -65,7 +65,7 @@ class PstParser {
 
     private int failureCount = 0;
     
-    private List<String> errorList = new ArrayList<>();
+    private final List<String> errorList = new ArrayList<>();
 
     PstParser(IngestServices services) {
         this.services = services;

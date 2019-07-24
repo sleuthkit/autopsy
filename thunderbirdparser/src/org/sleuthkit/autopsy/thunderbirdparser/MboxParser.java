@@ -68,7 +68,7 @@ class MboxParser implements Iterator<EmailMessage> {
 
     private static final Logger logger = Logger.getLogger(MboxParser.class.getName());
     private final DefaultMessageBuilder messageBuilder;
-    private List<String> errorList = new ArrayList<>();
+    private final List<String> errorList = new ArrayList<>();
 
     /**
      * The mime type string for html text.
