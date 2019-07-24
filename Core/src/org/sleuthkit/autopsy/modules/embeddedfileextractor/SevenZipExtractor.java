@@ -37,13 +37,13 @@ import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
 import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
+import net.sf.sevenzipjbinding.IInArchive;
 import net.sf.sevenzipjbinding.PropID;
 import org.mozilla.universalchardet.UniversalDetector;
 import org.netbeans.api.progress.ProgressHandle;
@@ -183,7 +183,7 @@ class SevenZipExtractor {
      *
      * @return true if potential zip bomb, false otherwise
      */
-    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISevenZipInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
+    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, IInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
         //If a file is corrupted as a result of reconstructing it from unallocated space, then
         //7zip does a poor job estimating the original uncompressed file size. 
         //As a result, many corrupted files have wonky compression ratios and could flood the UI
@@ -403,7 +403,7 @@ class SevenZipExtractor {
      *
      * @throws SevenZipException
      */
-    private String getPathInArchive(ISevenZipInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
+    private String getPathInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
         String pathInArchive = (String) archive.getProperty(
                 inArchiveItemIndex, PropID.PATH);
 
@@ -502,7 +502,7 @@ class SevenZipExtractor {
         final String escapedArchiveFilePath = FileUtil.escapeFileName(archiveFilePath);
         HashMap<String, ZipFileStatusWrapper> statusMap = new HashMap<>();
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
-        ISevenZipInArchive inArchive = null;
+        IInArchive inArchive = null;
         currentArchiveName = archiveFile.getName();
 
         SevenZipContentReadStream stream = null;
@@ -923,7 +923,7 @@ class SevenZipExtractor {
             implements IArchiveExtractCallback, ICryptoGetTextPassword {
 
         private final AbstractFile archiveFile;
-        private final ISevenZipInArchive inArchive;
+        private final IInArchive inArchive;
         private UnpackStream unpackStream = null;
         private final Map<Integer, InArchiveItemDetails> archiveDetailsMap;
         private final ProgressHandle progressHandle;
@@ -939,7 +939,7 @@ class SevenZipExtractor {
 
         private boolean unpackSuccessful = true;
 
-        public StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
+        public StandardIArchiveExtractCallback(IInArchive inArchive,
                 AbstractFile archiveFile, ProgressHandle progressHandle,
                 Map<Integer, InArchiveItemDetails> archiveDetailsMap,
                 String password, long freeDiskSpace) {
@@ -1015,7 +1015,7 @@ class SevenZipExtractor {
             final Date accessTime = (Date) inArchive.getProperty(
                     inArchiveItemIndex, PropID.LAST_ACCESS_TIME);
             final Date writeTime = (Date) inArchive.getProperty(
-                    inArchiveItemIndex, PropID.LAST_WRITE_TIME);
+                    inArchiveItemIndex, PropID.LAST_MODIFICATION_TIME);
 
             createTimeInSeconds = createTime == null ? 0L
                     : createTime.getTime() / 1000;
