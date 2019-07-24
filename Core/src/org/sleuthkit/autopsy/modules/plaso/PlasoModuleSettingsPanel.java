@@ -41,10 +41,12 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jFileChooser1 = new javax.swing.JFileChooser();
         winRegCheckBox = new javax.swing.JCheckBox();
         peCheckBox = new javax.swing.JCheckBox();
         plasoParserInfoTextArea = new javax.swing.JTextArea();
         noteLabel = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(winRegCheckBox, org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.winRegCheckBox.text")); // NOI18N
         winRegCheckBox.addActionListener(new java.awt.event.ActionListener() {
@@ -71,6 +73,8 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
 
         org.openide.awt.Mnemonics.setLocalizedText(noteLabel, org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.noteLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -79,22 +83,28 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(plasoParserInfoTextArea)
-                    .addComponent(peCheckBox)
-                    .addComponent(winRegCheckBox)
-                    .addComponent(noteLabel))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(noteLabel)
+                            .addComponent(peCheckBox)
+                            .addComponent(winRegCheckBox)
+                            .addComponent(jLabel1))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(plasoParserInfoTextArea, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
                 .addComponent(noteLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(plasoParserInfoTextArea, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(winRegCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(peCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 73, Short.MAX_VALUE)
+                .addComponent(jLabel1)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -114,6 +124,8 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JFileChooser jFileChooser1;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel noteLabel;
     private javax.swing.JCheckBox peCheckBox;
     private javax.swing.JTextArea plasoParserInfoTextArea;
