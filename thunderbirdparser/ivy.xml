@@ -13,5 +13,6 @@
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.0"/>
         <dependency conf="autopsy->default" org="com.googlecode.ez-vcard" name="ez-vcard" rev="0.10.5"/>
         <dependency conf="autopsy->default" org="com.github.mangstadt" name="vinnie" rev="2.0.2"/>
+        <dependency org="com.google.guava" name="guava" rev="19.0"/>
     </dependencies>
 </ivy-module>

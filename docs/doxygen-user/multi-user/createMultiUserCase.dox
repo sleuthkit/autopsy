@@ -7,7 +7,7 @@ Multi-user cases allow multiple instances of Autopsy to have the same case open 
 \image html case-newcase.PNG
 
 To create a multi-user case, the following must occur:
-- The network services must be installed, configured, and running.  See \ref multiuser_install_services.
+- The network services must be installed, configured, and running.  See \ref multiuser_install_install.
 - The Case folder needs to be in a shared folder that all other clients can also access at the same path (UNC or drive letter). 
 - The data sources that are added with the Add Data Source wizard must be in a shared folder that all clients can access at the same path.
 
