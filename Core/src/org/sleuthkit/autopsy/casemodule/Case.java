@@ -122,6 +122,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCaseAdmin;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
@@ -707,6 +708,7 @@ public class Case {
      * Deletes the selected data source.
      *
      * @param dataSourceId id of the data source to delete.
+     *
      * @throws CaseActionException If there is a problem deleting the case. The
      *                             exception will have a user-friendly message
      *                             and may be a wrapper for a lower-level
@@ -716,8 +718,7 @@ public class Case {
         "Case.progressIndicatorTitle_deletingDataSource=Deleting Data Source from the case.",
         "Case.progressIndicatorStatus_closingCase=Closing Case to Deleting Data Source.",
         "Case.progressIndicatorStatus_openingCase=Opening Case to Deleting Data Source.",
-        "Case.progressIndicatorStatus_deletingDataSource=Deleting Data Source.",        
-    })
+        "Case.progressIndicatorStatus_deletingDataSource=Deleting Data Source.",})
     public static void deleteDataSourceFromCurrentCase(Long dataSourceId) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
             if (null == currentCase) {
@@ -731,45 +732,68 @@ public class Case {
             } catch (CaseMetadataException ex) {
                 logger.log(Level.WARNING, String.format("Error Getting Case Dir %s", caseDir), ex);
             }
+            if (CaseType.MULTI_USER_CASE == metadata.getCaseType()) {
+                CoordinationService coordinationService;
+                try {
+                    coordinationService = CoordinationService.getInstance();
+                } catch (CoordinationServiceException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to connect to coordination service when attempting to delete datasource with id %s", dataSourceId), ex); //NON-NLS
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_failedToConnectToCoordSvc(ex.getLocalizedMessage()));
+                }
+                try (CoordinationService.Lock dirLock = coordinationService.tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
+                    if (dirLock == null) {
+                        logger.log(Level.INFO, String.format("Could not delete datasource id (%s) because a case directory lock was held by another host", dataSourceId)); //NON-NLS
+                        throw new CaseActionException(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase());
+                    }
+                } catch (CoordinationServiceException ex) {
+                    logger.log(Level.INFO, String.format("Could not delete datasource id (%s) because a case directory lock was held by another host", dataSourceId)); //NON-NLS
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase());
+                }
+            }
             ProgressIndicator progressIndicator;
             if (RuntimeProperties.runningWithGUI()) {
                 progressIndicator = new ModalDialogProgressIndicator(mainFrame, Bundle.Case_progressIndicatorTitle_deletingDataSource());
             } else {
                 progressIndicator = new LoggingProgressIndicator();
             }
-            progressIndicator.start(Bundle.Case_progressIndicatorStatus_closingCase());
             closeCurrentCase();
-            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_openingCase());
-            openAsCurrentCase(new Case(newMetadata), false);
-            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_deletingDataSource());
-            deleteDataSource(dataSourceId, progressIndicator);
-            progressIndicator.start(Bundle.Case_progressIndicatorStatus_closingCase());
-            closeCurrentCase();
-            progressIndicator.progress(Bundle.Case_progressIndicatorStatus_openingCase());
-            openAsCurrentCase(new Case(newMetadata), false);
+            progressIndicator.switchToIndeterminate(Bundle.Case_progressIndicatorStatus_openingCase());
+            progressIndicator.start(Bundle.Case_progressIndicatorStatus_deletingDataSource());
+            deleteDataSource(dataSourceId, progressIndicator, metadata);
             progressIndicator.finish();
+            openAsCurrentCase(new Case(newMetadata), false);
         }
-
     }
 
     /**
      * Delete a data source from the current case.
-     * 
-     * @param dataSourceId id of the data source to delete.
-     * @param progressIndicator 
+     *
+     * @param dataSourceId      id of the data source to delete.
+     * @param progressIndicator
      */
     @Messages({
         "Case.DeletingDataSourceFromCase=Deleting the Data Source from the case.",
         "Case.ErrorDeletingDataSource.name.text=Error Deleting Data Source"
     })
-    private static void deleteDataSource(Long dataSourceId, ProgressIndicator progressIndicator) {
-            progressIndicator.progress(Bundle.Case_DeletingDataSourceFromCase());
-            try {
-                Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceId);
-                eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));    
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.WARNING, String.format("Error Deleting Data Source %s", dataSourceId), ex);                
+    private static void deleteDataSource(Long dataSourceId, ProgressIndicator progressIndicator,
+            CaseMetadata metadata) throws CaseActionException {
+        progressIndicator.progress(Bundle.Case_DeletingDataSourceFromCase());
+        SleuthkitCaseAdmin skCaseAdmin = null;
+        try {
+            if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
+                String caseDbPath = metadata.getCaseDirectory() + File.separator + metadata.getCaseDatabaseName();
+                skCaseAdmin = new SleuthkitCaseAdmin(caseDbPath);
+            } else {
+                CaseDbConnectionInfo caseDbConnectionInfo = UserPreferences.getDatabaseConnectionInfo();
+                skCaseAdmin = new SleuthkitCaseAdmin(metadata.getCaseDatabaseName(), caseDbConnectionInfo, metadata.getCaseDirectory());
             }
+            if (skCaseAdmin != null) {
+                skCaseAdmin.deleteDataSource(dataSourceId);
+                eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));
+            }
+        } catch (TskCoreException | UserPreferencesException ex) {
+            logger.log(Level.WARNING, String.format("Error Deleting Data Source %s", dataSourceId), ex);
+        }
     }
 
     /**

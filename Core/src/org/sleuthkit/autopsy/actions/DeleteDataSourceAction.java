@@ -33,21 +33,23 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 
-
+/**
+ * Instances of this Action allow users to delete the specified data source.
+ */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private final Long selectDataSource;
+    private final Long selectedDataSource;
     
     @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
     public DeleteDataSourceAction(Long selectedDataSource) {
         super(Bundle.DeleteDataSourceAction_name_text());
-        selectDataSource = selectedDataSource;
-        
-
+        this.selectedDataSource = selectedDataSource;
     }
+    
     @NbBundle.Messages({"ErrorDeletingDataSource.name.text=Error Deleting Data Source",
                         "DeleteDataSourceConfirmationDialog_message=Are you sure you want to delete the data source?",
                         "DeleteDataSourceConfirmationDialog_title=Delete Data Source?"})
@@ -67,11 +69,11 @@ public final class DeleteDataSourceAction extends AbstractAction {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
-                        Case.deleteDataSourceFromCurrentCase(selectDataSource);
-                        deleteDataSource(selectDataSource);
+                        Case.deleteDataSourceFromCurrentCase(selectedDataSource);
+                        deleteDataSource(selectedDataSource);
                     } catch (CaseActionException | KeywordSearchServiceException ex) {
-                        String msg = MessageFormat.format(Bundle.ErrorDeletingDataSource_name_text(), selectDataSource);
-                        logger.log(Level.WARNING, msg, ex);
+                        logger.log(Level.WARNING, Bundle.ErrorDeletingDataSource_name_text(), ex);
+                        MessageNotifyUtil.Message.info(Bundle.ErrorDeletingDataSource_name_text());
                     }
                     return null;
                 }
@@ -89,7 +91,6 @@ public final class DeleteDataSourceAction extends AbstractAction {
             kwsService.deleteDataSource(dataSourceId);
         } catch (KeywordSearchServiceException ex) {
             logger.log(Level.WARNING, "KWS Error", ex);
-        }
-        
+        } 
     }
 }
