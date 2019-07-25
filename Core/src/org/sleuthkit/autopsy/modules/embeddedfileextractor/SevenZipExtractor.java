@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -404,8 +405,7 @@ class SevenZipExtractor {
      * @throws SevenZipException
      */
     private String getPathInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
-        String pathInArchive = (String) archive.getProperty(
-                inArchiveItemIndex, PropID.PATH);
+        String pathInArchive = (String) archive.getProperty(inArchiveItemIndex, PropID.PATH);
 
         if (pathInArchive == null || pathInArchive.isEmpty()) {
             //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
@@ -448,6 +448,40 @@ class SevenZipExtractor {
             logger.log(Level.WARNING, msg);
         }
         return pathInArchive;
+    }
+    
+    private byte[] formatBytes(byte[] src) {
+        byte[] ret = new byte[src.length / 4];
+        for (int i = 0; i < src.length; i += 4) {
+            ret[i / 4] = src[i];
+        }
+        return ret;
+    }
+    
+    private byte[] getPathBytesInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
+        byte[] pathBytes = (byte[]) archive.getProperty(inArchiveItemIndex, PropID.PATH_BYTES);
+        pathBytes = formatBytes(pathBytes);
+        
+        char separator = File.separatorChar;
+        
+        int pathSepLoc = -1;
+        for (int i = pathBytes.length - 1; i > 0; i--) {
+            if (pathBytes[i] == separator && pathSepLoc == -1) {
+                pathSepLoc = i;
+                break;
+            }
+        }
+        
+        if (pathSepLoc != -1) {
+            int len = pathBytes.length - pathSepLoc;
+            byte[] ret = new byte[len];
+            for (int i = 0; i < len - 1; i++) {
+                ret[i] = pathBytes[i + pathSepLoc + 1];
+            }
+            return ret;
+        } else {
+            return pathBytes;
+        }
     }
 
     /*
@@ -597,7 +631,9 @@ class SevenZipExtractor {
                 }
 
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
+                byte[] fileNameBytes = getPathBytesInArchive(inArchive, inArchiveItemIndex, archiveFile);
                 UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
+                unpackedNode.setFileNameBytes(fileNameBytes);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
 
@@ -795,22 +831,20 @@ class SevenZipExtractor {
         return unpackSuccessful;
     }
 
-    private String detectFilenamesCharset(String filenames) {
-        byte[] latinBytes = filenames.getBytes(StandardCharsets.ISO_8859_1);
-
+    private String detectFilenamesCharset(Collection<byte[]> byteDatas) {
         universalDetector.reset();
-        universalDetector.handleData(latinBytes, 0, latinBytes.length);
+        for (byte[] byteData : byteDatas) {
+            universalDetector.handleData(byteData, 0, byteData.length);
+        }
         universalDetector.dataEnd();
         return universalDetector.getDetectedCharset();
     }
 
-    private String decodeFilename(String name, String charset) {
-        byte[] latinBytes = name.getBytes(StandardCharsets.ISO_8859_1);
+    private String decodeFilename(byte[] nameBytes, String charset) {
         String decodedName = null;
-
         if (charset != null) {
             try {
-                decodedName = new String(latinBytes, charset);
+                decodedName = new String(nameBytes, charset);
             } catch (UnsupportedEncodingException ex) {
                 logger.log(Level.WARNING, "Error decoding filename. ", ex); //NON-NLS
             }
@@ -1274,27 +1308,23 @@ class SevenZipExtractor {
             // Determine encoding of children
             if (node.getChildren().size() > 0) {
                 String names = "";
+                ArrayList<byte[]> byteDatas = new ArrayList<>();
                 for (UnpackedNode child : node.getChildren()) {
-                    String name = child.getFileName();
-                    int extIndex = name.lastIndexOf(".");
-                    if (extIndex != -1) {
-                        name = name.substring(0, extIndex);
+                    if (child.getFileNameBytes() != null) {
+                        byteDatas.add(child.getFileNameBytes());
                     }
-                    names += name;
+                    names += child.getFileName();
                 }
-                String correctCharset = detectFilenamesCharset(names);
-                if (correctCharset != null) {
-                    logger.warning("Detected " + correctCharset + " for the "
-                            + "following joining of filenames:\n" + names);
-                }
+                String detectedCharset = detectFilenamesCharset(byteDatas);
                 // If a charset was detected, transcode filenames accordingly
-                if (correctCharset != null) {
+                if (detectedCharset != null) {
                     for (UnpackedNode child : node.getChildren()) {
-                        String originalName = child.getFileName();
-                        String decodedName = decodeFilename(originalName, correctCharset);
+                        if (child.getFileNameBytes() != null) {
+                            String decodedName = decodeFilename(child.getFileNameBytes(), detectedCharset);
 
-                        if (decodedName != null) {
-                            child.setFileName(decodedName);
+                            if (decodedName != null) {
+                                child.setFileName(decodedName);
+                            }
                         }
                     }
                 }
@@ -1312,6 +1342,7 @@ class SevenZipExtractor {
         private class UnpackedNode {
 
             private String fileName;
+            private byte[] fileNameBytes;
             private AbstractFile file;
             private final List<UnpackedNode> children = new ArrayList<>();
             private String localRelPath = "";
@@ -1441,6 +1472,14 @@ class SevenZipExtractor {
 
             boolean isIsFile() {
                 return isFile;
+            }
+
+            void setFileNameBytes(byte[] fileNameBytes) {
+                this.fileNameBytes = fileNameBytes;
+            }
+            
+            byte[] getFileNameBytes() {
+                return fileNameBytes;
             }
         }
     }
