@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -39,6 +40,7 @@ public class Services implements Closeable {
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
+    @SuppressWarnings("deprecation")
     private final Blackboard blackboard;
 
     /**
@@ -47,6 +49,7 @@ public class Services implements Closeable {
      *
      * @param caseDb The case database for the current case.
      */
+    @SuppressWarnings("deprecation")
     public Services(SleuthkitCase caseDb) {
         fileManager = new FileManager(caseDb);
         services.add(fileManager);
@@ -95,9 +98,21 @@ public class Services implements Closeable {
      * Gets the blackboard service for the current case.
      *
      * @return The blackboard service for the current case.
+     * 
+     * @deprecated Use org.sleuthkit.autopsy.casemodule.getCaseBlackboard instead
      */
+    @Deprecated
     public Blackboard getBlackboard() {
         return blackboard;
+    }
+    
+    /**
+     * Gets the TSK Blackboard for the current case.
+     * 
+     * @return @org.sleuthkit.datamodel.Blackboard Blackboard for the current case.
+     */
+    public org.sleuthkit.datamodel.Blackboard getCaseBlackboard() {
+        return Case.getCurrentCase().getSleuthkitCase().getBlackboard();
     }
 
     /**
