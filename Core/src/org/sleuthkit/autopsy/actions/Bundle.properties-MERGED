@@ -34,6 +34,7 @@ DeleteFileBlackboardArtifactTagAction.deleteTags.alert=Unable to untag artifact 
 DeleteFileContentTagAction.deleteTag=Remove File Tag
 # {0} - fileID
 DeleteFileContentTagAction.deleteTag.alert=Unable to untag file {0}.
+ErrorDeletingDataSource.ingest.running=Cannot delete a Data Source when ingest is running.
 ErrorDeletingDataSource.name.text=Error Deleting Data Source
 ExitAction.confirmationDialog.message=Ingest is running, are you sure you want to exit?
 ExitAction.confirmationDialog.title=Ingest is Running
