@@ -48,13 +48,20 @@ public interface KeywordSearchService extends Closeable {
      * all of its attributes.
      *
      * @param artifact The artifact to index.
+     * 
+     * @deprecated Call org.sleuthkit.datamodel.Blackboard.postArtifact 
+     * instead.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
+    @Deprecated 
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
 
     /**
-     * Add the given Content object to the text index.
+     * Add the given Content object to the text index.  This message should only
+     * be used in atypical cases, such as indexing a report.  Artifacts are indexed 
+     * when org.sleuthkit.datamodel.Blackboard.postArtifact 
+     * is called and files are indexed during ingest.
      *
      * @param content The content to index.
      *
