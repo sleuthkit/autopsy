@@ -49,8 +49,8 @@ public interface KeywordSearchService extends Closeable {
      *
      * @param artifact The artifact to index.
      * 
-     * @deprecated postArtifact org.sleuthkit.autopsy.datamodel.Blackboard will
-     * take care of this functionality at ingest
+     * @deprecated Call org.sleuthkit.datamodel.Blackboard.postArtifact 
+     * instead.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
@@ -60,7 +60,7 @@ public interface KeywordSearchService extends Closeable {
     /**
      * Add the given Content object to the text index.  This message should only
      * be used in atypical cases, such as indexing a report.  Artifacts are indexed 
-     * when postArtifact called and files are indexed during ingest.
+     * when postArtifact is called and files are indexed during ingest.
      *
      * @param content The content to index.
      *
