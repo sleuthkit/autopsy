@@ -60,7 +60,8 @@ public interface KeywordSearchService extends Closeable {
     /**
      * Add the given Content object to the text index.  This message should only
      * be used in atypical cases, such as indexing a report.  Artifacts are indexed 
-     * when postArtifact is called and files are indexed during ingest.
+     * when org.sleuthkit.datamodel.Blackboard.postArtifact 
+     * is called and files are indexed during ingest.
      *
      * @param content The content to index.
      *
