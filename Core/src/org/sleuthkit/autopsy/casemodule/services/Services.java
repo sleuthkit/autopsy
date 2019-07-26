@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * A collection of case-level services (e.g., file manager, tags manager,
  * keyword search, blackboard).
  */
+@SuppressWarnings("deprecation")
 public class Services implements Closeable {
 
     private final List<Closeable> services = new ArrayList<>();
@@ -93,10 +94,23 @@ public class Services implements Closeable {
 
     /**
      * Gets the blackboard service for the current case.
+     * 
+     * @deprecated use org.sleuthkit.autopsy.casemodule.services.getCaseBlackboard()
+     * instead
      *
      * @return The blackboard service for the current case.
      */
+    @Deprecated
     public Blackboard getBlackboard() {
+        return blackboard;
+    }
+    
+     /**
+     * Gets the case blackboard service for the current case.
+     *
+     * @return The blackboard service for the current case.
+     */
+    public Blackboard getCaseBlackboard() {
         return blackboard;
     }
 

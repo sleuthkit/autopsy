@@ -82,11 +82,11 @@ public class ListViewModel {
     public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterState filterState) throws TskCoreException {
         List<TimelineEvent> events = eventManager.getEvents(timeRange, filterState.getActiveFilter());
         
-        if (events == null || events.isEmpty()) {
-            return Collections.EMPTY_LIST;
-        }
-        
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
+        
+        if (events == null || events.isEmpty()) {
+            return combinedEvents; //return an empty list;
+        }
         
         Map<CombinedEventGroup, List<TimelineEvent>> groupedEventList = events.stream().collect(groupingBy(event -> new CombinedEventGroup(event.getTime(), event.getFileObjID(), event.getFullDescription())));
         
