@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.texttranslation.ui;
+package org.sleuthkit.autopsy.texttranslation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,8 +27,6 @@ import java.util.logging.Level;
 import javax.swing.JLabel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
-import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -172,7 +170,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
                         .addGap(10, 10, 10)
                         .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(translationOptionsDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 462, Short.MAX_VALUE))
+                    .addComponent(translationOptionsDescription, javax.swing.GroupLayout.PREFERRED_SIZE, 462, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

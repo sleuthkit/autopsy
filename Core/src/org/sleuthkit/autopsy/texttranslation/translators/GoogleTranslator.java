@@ -180,7 +180,7 @@ public final class GoogleTranslator implements TextTranslator {
     }
 
     @Override
-    public int getMaxPayloadSize() {
+    public int getMaxTextChars() {
         return MAX_PAYLOAD_SIZE;
     }
 }

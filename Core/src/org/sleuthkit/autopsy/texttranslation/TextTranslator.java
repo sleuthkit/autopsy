@@ -58,9 +58,9 @@ public interface TextTranslator {
     void saveSettings();
 
     /**
-     * Returns the hard limit for translation request sizes.
+     * Gets the maximum number of characters allowed in a translation request.
      *
-     * @return
+     * @return The maximum character count.
      */
-    int getMaxPayloadSize();
+    int getMaxTextChars();
 }

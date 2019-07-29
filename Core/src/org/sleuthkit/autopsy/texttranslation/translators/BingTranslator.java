@@ -173,7 +173,7 @@ public class BingTranslator implements TextTranslator {
     }
 
     @Override
-    public int getMaxPayloadSize() {
+    public int getMaxTextChars() {
         return MAX_STRING_LENGTH;
     }
 }

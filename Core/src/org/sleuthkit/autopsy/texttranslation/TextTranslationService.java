@@ -50,7 +50,7 @@ public final class TextTranslationService {
      * Update the translator currently in use to match the one saved to the user
      * preferences
      */
-    public void updateSelectedTranslator() {
+    void updateSelectedTranslator() {
         String translatorName = UserPreferences.getTextTranslatorName();
         for (TextTranslator translator : translators) {
             if (translator.getName().equals(translatorName)) {
@@ -92,7 +92,7 @@ public final class TextTranslationService {
      *
      * @throws NoServiceProviderException
      */
-    public TextTranslator getTranslatorByName(String translatorName) throws NoServiceProviderException {
+    TextTranslator getTranslatorByName(String translatorName) throws NoServiceProviderException {
         for (TextTranslator translator : translators) {
             if (translator.getName().equals(translatorName)) {
                 return translator;
@@ -107,7 +107,7 @@ public final class TextTranslationService {
      *
      * @return an unmodifiable collection of TextTranslators
      */
-    public Collection<? extends TextTranslator> getTranslators() {
+    Collection<? extends TextTranslator> getTranslators() {
         return Collections.unmodifiableCollection(translators);
     }
 
@@ -120,13 +120,13 @@ public final class TextTranslationService {
     public boolean hasProvider() {
         return selectedTranslator.isPresent();
     }
-    
+
     /**
-     * Returns the hard limit for translation request sizes.
-     * 
-     * @return 
+     * Gets the maximum number of characters allowed in a translation request.
+     *
+     * @return The maximum character count.
      */
-    public int getMaxPayloadSize() {
-        return selectedTranslator.get().getMaxPayloadSize();
+    public int getMaxTextChars() {
+        return selectedTranslator.get().getMaxTextChars();
     }
 }
