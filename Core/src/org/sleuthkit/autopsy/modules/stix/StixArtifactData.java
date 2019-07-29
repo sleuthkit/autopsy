@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,13 +43,13 @@ class StixArtifactData {
     private final String objType;
     private static final Logger logger = Logger.getLogger(StixArtifactData.class.getName());
 
-    public StixArtifactData(AbstractFile a_file, String a_observableId, String a_objType) {
+    StixArtifactData(AbstractFile a_file, String a_observableId, String a_objType) {
         file = a_file;
         observableId = a_observableId;
         objType = a_objType;
     }
 
-    public StixArtifactData(long a_objId, String a_observableId, String a_objType) {
+    StixArtifactData(long a_objId, String a_observableId, String a_objType) {
         try {
             Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
@@ -63,7 +63,7 @@ class StixArtifactData {
 
     @Messages({"StixArtifactData.indexError.message=Failed to index STIX interesting file hit artifact for keyword search.",
             "StixArtifactData.noOpenCase.errMsg=No open case available."})
-    public void createArtifact(String a_title) throws TskCoreException {
+    void createArtifact(String a_title) throws TskCoreException {
         Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -100,9 +100,5 @@ class StixArtifactData {
                 MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
             }
         }
-    }
-
-    public void print() {
-        System.out.println("  " + observableId + " " + file.getName());
     }
 }

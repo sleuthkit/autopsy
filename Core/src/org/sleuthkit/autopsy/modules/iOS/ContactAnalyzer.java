@@ -216,7 +216,6 @@ final class ContactAnalyzer {
         try {
             while ((length = is.read(buffer)) != -1) {
                 os.write(buffer, 0, length);
-                System.out.println(length);
                 os.flush();
 
             }
@@ -239,13 +238,13 @@ final class ContactAnalyzer {
                 ostream.write(c);
             }
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage()); //NON-NLS
+            logger.log(Level.WARNING, "Error copying file", e);
         } finally {
             try {
                 istream.close();
                 ostream.close();
             } catch (IOException e) {
-                System.out.println("File did not close"); //NON-NLS
+                logger.log(Level.WARNING, "File did not close", e);
             }
         }
     }

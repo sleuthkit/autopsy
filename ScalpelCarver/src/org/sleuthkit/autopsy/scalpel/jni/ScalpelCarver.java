@@ -79,11 +79,9 @@ public class ScalpelCarver {
             success = true;
         } catch (UnsatisfiedLinkError ex) {
             String msg = NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.loadLib.errMsg.cannotLoadLib", id);
-            System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         } catch (Exception ex) {
             String msg = NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.loadLib.errMsg.cannotLoadLib2", id);
-            System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         }
 

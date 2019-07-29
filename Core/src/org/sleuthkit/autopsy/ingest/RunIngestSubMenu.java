@@ -22,12 +22,14 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -37,6 +39,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
 
+    private static final Logger logger = Logger.getLogger(RunIngestSubMenu.class.getName());
+    
     /**
      * Creates main menu/popup menu items. It's called each time a popup menu is
      * constructed and just once for the main menu. Main menu updates happen
@@ -54,7 +58,7 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
             // No open Cases, create a disabled empty menu
             return getEmpty();
         } catch (TskCoreException | NoCurrentCaseException e) {
-            System.out.println("Exception getting images: " + e.getMessage()); //NON-NLS
+            logger.log(Level.WARNING, "Exception getting images.", e);
         }
         JComponent[] comps = new JComponent[dataSources.size()];
 
