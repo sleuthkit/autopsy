@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public final class InterCasePanel extends javax.swing.JPanel {
 
-        private final static Logger logger = Logger.getLogger(InterCasePanel.class.getName());
+    private final static Logger logger = Logger.getLogger(InterCasePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final Observable fileTypeFilterObservable;
     static final int NO_CASE_SELECTED = -1;

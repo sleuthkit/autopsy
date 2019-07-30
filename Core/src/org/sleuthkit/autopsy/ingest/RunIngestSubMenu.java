@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
 
     private static final Logger logger = Logger.getLogger(RunIngestSubMenu.class.getName());
-    
+
     /**
      * Creates main menu/popup menu items. It's called each time a popup menu is
      * constructed and just once for the main menu. Main menu updates happen
@@ -58,7 +58,7 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
             // No open Cases, create a disabled empty menu
             return getEmpty();
         } catch (TskCoreException | NoCurrentCaseException e) {
-            logger.log(Level.INFO, "Exception getting images: "+ e.getMessage());
+            logger.log(Level.INFO, "Exception getting images: " + e.getMessage());
         }
         JComponent[] comps = new JComponent[dataSources.size()];
 
