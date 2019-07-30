@@ -450,38 +450,8 @@ class SevenZipExtractor {
         return pathInArchive;
     }
     
-    private byte[] formatBytes(byte[] src) {
-        byte[] ret = new byte[src.length / 4];
-        for (int i = 0; i < src.length; i += 4) {
-            ret[i / 4] = src[i];
-        }
-        return ret;
-    }
-    
     private byte[] getPathBytesInArchive(IInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
-        byte[] pathBytes = (byte[]) archive.getProperty(inArchiveItemIndex, PropID.PATH_BYTES);
-        pathBytes = formatBytes(pathBytes);
-        
-        char separator = File.separatorChar;
-        
-        int pathSepLoc = -1;
-        for (int i = pathBytes.length - 1; i > 0; i--) {
-            if (pathBytes[i] == separator && pathSepLoc == -1) {
-                pathSepLoc = i;
-                break;
-            }
-        }
-        
-        if (pathSepLoc != -1) {
-            int len = pathBytes.length - pathSepLoc;
-            byte[] ret = new byte[len];
-            for (int i = 0; i < len - 1; i++) {
-                ret[i] = pathBytes[i + pathSepLoc + 1];
-            }
-            return ret;
-        } else {
-            return pathBytes;
-        }
+        return (byte[]) archive.getProperty(inArchiveItemIndex, PropID.PATH_BYTES);
     }
 
     /*
@@ -631,9 +601,8 @@ class SevenZipExtractor {
                 }
 
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
-                byte[] fileNameBytes = getPathBytesInArchive(inArchive, inArchiveItemIndex, archiveFile);
-                UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
-                unpackedNode.setFileNameBytes(fileNameBytes);
+                byte[] pathBytesInArchive = getPathBytesInArchive(inArchive, inArchiveItemIndex, archiveFile);
+                UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive, pathBytesInArchive);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
 
@@ -1168,7 +1137,7 @@ class SevenZipExtractor {
          *
          * @return child node for the last file token in the filePath
          */
-        UnpackedNode addNode(String filePath) {
+        UnpackedNode addNode(String filePath, byte[] filePathBytes) {
             String[] toks = filePath.split("[\\/\\\\]");
             List<String> tokens = new ArrayList<>();
             for (int i = 0; i < toks.length; ++i) {
@@ -1176,7 +1145,30 @@ class SevenZipExtractor {
                     tokens.add(toks[i]);
                 }
             }
-            return addNode(rootNode, tokens);
+            
+            List<byte[]> byteTokens = new ArrayList<>(tokens.size());
+            int last = 0;
+            for (int i = 0; i < filePathBytes.length; i++) {
+                if (filePathBytes[i] == File.separatorChar) {
+                    int len = i - last;
+                    byte[] arr = new byte[len];
+                    System.arraycopy(filePathBytes, last, arr, 0, len);
+                    byteTokens.add(arr);
+                    last = i + 1;
+                }
+            }
+            int len = filePathBytes.length - last;
+            if (len > 0) {
+                byte[] arr = new byte[len];
+                System.arraycopy(filePathBytes, last, arr, 0, len);
+                byteTokens.add(arr);
+            }
+            
+            if (tokens.size() != byteTokens.size()) {
+                logger.log(Level.WARNING, "TODO BETTER ERROR MSG");
+            }
+            
+            return addNode(rootNode, tokens, byteTokens);
         }
 
         /**
@@ -1187,7 +1179,8 @@ class SevenZipExtractor {
          *
          * @return
          */
-        private UnpackedNode addNode(UnpackedNode parent, List<String> tokenPath) {
+        private UnpackedNode addNode(UnpackedNode parent, 
+                List<String> tokenPath, List<byte[]> tokenPathBytes) {
             // we found all of the tokens
             if (tokenPath.isEmpty()) {
                 return parent;
@@ -1195,15 +1188,17 @@ class SevenZipExtractor {
 
             // get the next name in the path and look it up
             String childName = tokenPath.remove(0);
+            byte[] childNameBytes = tokenPathBytes.remove(0);
             UnpackedNode child = parent.getChild(childName);
             // create new node
             if (child == null) {
                 child = new UnpackedNode(childName, parent);
+                child.setFileNameBytes(childNameBytes);
                 parent.addChild(child);
             }
 
             // go down one more level
-            return addNode(child, tokenPath);
+            return addNode(child, tokenPath, tokenPathBytes);
         }
 
         /**
