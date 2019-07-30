@@ -171,27 +171,57 @@ public class EamDbUtil {
      * upgrade fails, the Central Repository will be disabled and the current
      * settings will be cleared.
      */
-    @Messages({"EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled."})
+    @Messages({"EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled.",
+        "EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to central repository. It has been disabled.",
+        "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for central repository. It has been disabled."})
     public static void upgradeDatabase() throws EamDbException {
         if (!EamDb.isEnabled()) {
             return;
         }
-
+        EamDb db = null;
         CoordinationService.Lock lock = null;
+        String messageForDialog = "";
+        //get connection
         try {
-            EamDb db = EamDb.getInstance();
-
-            // This may return null if locking isn't supported, which is fine. It will
-            // throw an exception if locking is supported but we can't get the lock
-            // (meaning the database is in use by another user)
-            lock = db.getExclusiveMultiUserDbLock();
-
-            db.upgradeSchema();
-
-        } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-
-            // Disable the central repo and clear the current settings.
+            db = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
+            messageForDialog = Bundle.EamDbUtil_centralRepoConnectionFailed_message();
+        }
+        //get lock necessary for upgrade
+        if (db != null) {
+            try {
+                // This may return null if locking isn't supported, which is fine. It will
+                // throw an exception if locking is supported but we can't get the lock
+                // (meaning the database is in use by another user)
+                lock = db.getExclusiveMultiUserDbLock();
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
+                messageForDialog = Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message();
+            }
+            //perform upgrade
+            try {
+                if (lock != null) {
+                    db.upgradeSchema();
+                }
+            } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
+                LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
+                messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message();
+                if (ex instanceof IncompatibleCentralRepoException) {
+                    messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
+                }
+            } finally {
+                if (lock != null) {
+                    try {
+                        lock.release();
+                    } catch (CoordinationServiceException ex) {
+                        LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
+                    }
+                }
+            }
+        }
+        // Disable the central repo and clear the current settings.
+        if (!messageForDialog.isEmpty()) {
             try {
                 if (null != EamDb.getInstance()) {
                     EamDb.getInstance().shutdownConnections();
@@ -201,19 +231,8 @@ public class EamDbUtil {
             }
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-            String messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message();
-            if (ex instanceof IncompatibleCentralRepoException) {
-                messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
-            }
+
             throw new EamDbException(messageForDialog);
-        } finally {
-            if (lock != null) {
-                try {
-                    lock.release();
-                } catch (CoordinationServiceException ex) {
-                    LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
-                }
-            }
         }
     }
 
