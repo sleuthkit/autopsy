@@ -62,7 +62,6 @@ public class StartupWindowProvider implements StartupWindowInterface {
             if (isRunningFromCommandLine()) {
                 // Autopsy is running from command line
                 logger.log(Level.INFO, "Running from command line"); //NON-NLS
-                System.out.println("Running from command line");
                 startupWindowToUse = new CommandLineStartupWindow();
                 // kick off command line processing
                 new CommandLineIngestManager().start();

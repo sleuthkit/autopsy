@@ -74,7 +74,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
             correlationTypes.clear();
             correlationTypes.addAll(dbManager.getDefinedCorrelationTypes());
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.WARNING, "Error loading data", ex);
         }
 
         correlationTypes.forEach((aType) -> {

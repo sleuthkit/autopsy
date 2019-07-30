@@ -128,7 +128,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;
         } catch (Blackboard.BlackboardException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Blackboard Exception processing file with obj_id = ", ex);
         }
         return ProcessResult.OK;
     }

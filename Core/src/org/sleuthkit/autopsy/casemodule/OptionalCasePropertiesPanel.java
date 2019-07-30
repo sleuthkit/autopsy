@@ -573,7 +573,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                         examinerTextField.getText(), tfExaminerPhoneText.getText(),
                         tfExaminerEmailText.getText(), taNotesText.getText()));
             } catch (CaseActionException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error updating case details", ex);
             }
         }
     }

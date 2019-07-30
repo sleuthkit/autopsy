@@ -658,7 +658,7 @@ public class GroupManager {
                 
                 updateCurrentPathGroup(pathGroupKey);
             } catch (TskCoreException | TskDataException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error getting drawabledb for fileId " + fileId, ex);
             }   
                     
             // Update all the groups that this file belongs to
@@ -986,7 +986,7 @@ public class GroupManager {
                                         .findAny().ifPresent(obj_id -> types.add(mimeType));
                             }
                         } catch (SQLException | TskCoreException ex) {
-                            Exceptions.printStackTrace(ex);
+                            logger.log(Level.WARNING, "Error getting group by MIME type", ex);
                         }
                         results.putAll(null, types);
 

@@ -397,7 +397,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         try {
             rootTablePane.getExplorerManager().setSelectedNodes(new Node[0]);
         } catch (PropertyVetoException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error setting selected nodes", ex);
         }
         showThreadsPane();
     }//GEN-LAST:event_backButtonActionPerformed

@@ -454,7 +454,6 @@ final class StringsTextExtractor implements TextExtractor {
                             convertBuffRemain = bytesInConvertBuff - convertBuffOffset;
                         }
                     } catch (TskCoreException ex) {
-                        //Exceptions.printStackTrace(ex);
                         fileEOF = true;
                     }
                 }

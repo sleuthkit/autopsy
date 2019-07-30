@@ -78,7 +78,7 @@ public final class ManageOrganizationsDialog extends JDialog {
             setButtonsEnabled(organizationList.getSelectedValue());
             newOrg = null;
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error getting Central Repo for Organizations dialog", ex);
         }
         display();
     }
