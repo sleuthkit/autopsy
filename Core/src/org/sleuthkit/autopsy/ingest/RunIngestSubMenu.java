@@ -58,7 +58,7 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
             // No open Cases, create a disabled empty menu
             return getEmpty();
         } catch (TskCoreException | NoCurrentCaseException e) {
-            logger.log(Level.WARNING, "Exception getting images.", e);
+            logger.log(Level.INFO, "Exception getting images: "+ e.getMessage());
         }
         JComponent[] comps = new JComponent[dataSources.size()];
 

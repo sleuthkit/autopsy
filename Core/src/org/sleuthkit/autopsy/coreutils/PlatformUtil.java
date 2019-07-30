@@ -35,7 +35,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.commons.io.FilenameUtils;
 import org.hyperic.sigar.Sigar;
@@ -56,7 +55,6 @@ public class PlatformUtil {
     private static final String CLASSIFIERS_SUBDIRECTORY = "object_detection_classifiers"; //NON-NLS
     private static final String OCR_LANGUAGE_SUBDIRECTORY = "ocr_language_packs"; //NON-NLS
     private static final String OCR_LANGUAGE_PACK_EXT = "traineddata";
-    private static final Logger logger = Logger.getLogger(PlatformUtil.class.getName());
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -174,7 +172,10 @@ public class PlatformUtil {
 
         File jrePath = new File(getInstallPath() + File.separator + "jre");
         if (jrePath.exists() && jrePath.isDirectory()) {
-            logger.log(Level.INFO, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.jrePath.jreDir.msg", jrePath.getAbsolutePath()));
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class,
+                            "PlatformUtil.jrePath.jreDir.msg",
+                            jrePath.getAbsolutePath()));
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java"; //NON-NLS
         } else {
             //else use system installed java in PATH env variable
@@ -182,7 +183,7 @@ public class PlatformUtil {
 
         }
 
-        logger.log(Level.INFO, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.jrePath.usingJavaPath.msg", javaPath));
+        System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.jrePath.usingJavaPath.msg", javaPath));
 
         return javaPath;
     }
@@ -503,10 +504,10 @@ public class PlatformUtil {
             if (sigar != null) {
                 pid = sigar.getPid();
             } else {
-                logger.log(Level.WARNING, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.sigarNotInit.msg"));
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.sigarNotInit.msg"));
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.gen.msg"), e);
+            System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.gen.msg", e.toString()));
         }
         return pid;
 
@@ -533,10 +534,11 @@ public class PlatformUtil {
                 ProcessFinder finder = new ProcessFinder(sigar);
                 jpid = finder.findSingleProcess(sigarQuery);
             } else {
-                logger.log(Level.WARNING, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.sigarNotInit.msg"));
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.sigarNotInit.msg"));
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.gen.msg", sigarQuery), e);
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.gen.msg", sigarQuery, e.toString()));
         }
         return jpid;
 
@@ -564,10 +566,11 @@ public class PlatformUtil {
                 ProcessFinder finder = new ProcessFinder(sigar);
                 jpids = finder.find(sigarQuery);
             } else {
-                logger.log(Level.WARNING, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.sigarNotInit"));
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.sigarNotInit"));
             }
         } catch (Exception e) {
-           logger.log(Level.SEVERE, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.gen.msg", sigarQuery), e);
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.gen.msg", sigarQuery, e.toString()));
         }
         return jpids;
 
@@ -586,10 +589,11 @@ public class PlatformUtil {
             if (sigar != null) {
                 sigar.kill(pid, 9);
             } else {
-                logger.log(Level.WARNING, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.sigarNotInit.msg"));
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.sigarNotInit.msg"));
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.gen.msg", pid), e);
+            System.out.println(
+                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.gen.msg", pid, e.toString()));
         }
 
     }
@@ -608,12 +612,12 @@ public class PlatformUtil {
             }
 
             if (sigar == null || getPID() == -1) {
-                logger.log(Level.WARNING, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.sigarNotInit.msg"));
+                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.sigarNotInit.msg"));
                 return -1;
             }
             virtMem = sigar.getProcMem(getPID()).getSize();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.gen.msg"), e);
+            System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.gen.msg", e.toString()));
         }
 
         return virtMem;
