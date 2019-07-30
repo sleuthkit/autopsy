@@ -40,7 +40,9 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
      * @param filter
      */
     public SqlFilterState(FilterType filter) {
-        this(filter, false);
+        // Setting the intial state to all filters to "selected" except
+        // the "Hide Known Filters".
+        this(filter, !(filter instanceof TimelineFilter.HideKnownFilter));
     }
 
     /**
@@ -53,10 +55,10 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
         super(filter, selected);
     }
 
-    protected SqlFilterState(FilterType filter, boolean selected, boolean disabled) {
-        super(filter, selected);
-        setDisabled(disabled);
-    }
+//    protected SqlFilterState(FilterType filter, boolean selected, boolean disabled) {
+//        super(filter, selected);
+//        setDisabled(disabled);
+//    }
 
     @Override
     public String getDisplayName() {
