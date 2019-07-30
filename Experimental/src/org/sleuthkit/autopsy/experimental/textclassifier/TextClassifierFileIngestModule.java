@@ -109,7 +109,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
             try {
                 BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                 artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
-                                                              "TextClassifierFileIngestModule",
+                                                              Bundle.TextClassifierModuleFactory_moduleName_text(),
                                                               "Possible notable text"));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage());
