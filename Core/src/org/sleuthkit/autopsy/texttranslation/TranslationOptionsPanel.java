@@ -43,7 +43,7 @@ final class TranslationOptionsPanel extends javax.swing.JPanel {
      * Creates new form TranslationOptionsPanel
      */
     @Messages({"TranslationOptionsPanel.translationDisabled.text=Translation disabled"})
-    public TranslationOptionsPanel(TranslationOptionsPanelController theController) {
+    TranslationOptionsPanel(TranslationOptionsPanelController theController) {
         initComponents();
         controller = theController;
         translatorComboBox.addItem(Bundle.TranslationOptionsPanel_translationDisabled_text());
