@@ -276,6 +276,7 @@ public class CorrelationAttributeInstance implements Serializable {
          * @param supported   Is this Type currently supported
          * @param enabled     Is this Type currently enabled.
          */
+        @Messages({"CorrelationAttributeInstance.nullName.message=Database name is null."})
         public Type(int typeId, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             if (dbTableName == null) {
                 throw new EamDbException("dbTableName is null");

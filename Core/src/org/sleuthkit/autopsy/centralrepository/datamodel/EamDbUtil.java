@@ -171,9 +171,10 @@ public class EamDbUtil {
      * upgrade fails, the Central Repository will be disabled and the current
      * settings will be cleared.
      */
-    @Messages({"EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled.",
-        "EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to central repository. It has been disabled.",
-        "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for central repository. It has been disabled."})
+    @Messages({"EamDbUtil.centralRepoDisabled.message= The Central Repository has been disabled.",
+        "EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.",
+        "EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to Central Repository.",
+        "EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository."})
     public static void upgradeDatabase() throws EamDbException {
         if (!EamDb.isEnabled()) {
             return;
@@ -186,7 +187,7 @@ public class EamDbUtil {
             db = EamDb.getInstance();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
-            messageForDialog = Bundle.EamDbUtil_centralRepoConnectionFailed_message();
+            messageForDialog = Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
         }
         //get lock necessary for upgrade
         if (db != null) {
@@ -197,18 +198,18 @@ public class EamDbUtil {
                 lock = db.getExclusiveMultiUserDbLock();
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
-                messageForDialog = Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message();
+                messageForDialog = Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
             }
             //perform upgrade
             try {
-                if (lock != null) {
-                    db.upgradeSchema();
-                }
+                db.upgradeSchema();
             } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message();
+                messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
                 if (ex instanceof IncompatibleCentralRepoException) {
                     messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
+                } else if (ex instanceof EamDbException) {
+                    messageForDialog = ex.getMessage() + Bundle.EamDbUtil_centralRepoDisabled_message();
                 }
             } finally {
                 if (lock != null) {
@@ -219,6 +220,8 @@ public class EamDbUtil {
                     }
                 }
             }
+        } else {
+            messageForDialog = Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
         }
         // Disable the central repo and clear the current settings.
         if (!messageForDialog.isEmpty()) {
