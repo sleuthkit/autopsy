@@ -59,6 +59,8 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -78,6 +80,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.filtering.FilterSetPanel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomSettingsPane;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.VersionNumber;
 
 /**
  * TopComponent for the Timeline feature.
@@ -459,6 +462,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     private javax.swing.JSplitPane splitYPane;
     // End of variables declaration//GEN-END:variables
 
+    @NbBundle.Messages ({
+        "Timeline.old.version= This Case was created with an older version of Autopsy.\nThe Timeline with not show events from data sources added with the older version of Autopsy"
+    })
     @Override
     public void componentOpened() {
         super.componentOpened();
@@ -467,6 +473,18 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         //add listener that maintains correct selection in the Global Actions Context
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener);
+        
+        VersionNumber version = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
+        int major = version.getMajor();
+        int minor = version.getMinor();
+
+        if(major < 8 || (major == 8 && minor <= 2)) {
+            Platform.runLater(() -> {
+                Notifications.create()
+                        .owner(jFXViewPanel.getScene().getWindow())
+                        .text(Bundle.Timeline_old_version()).showInformation();
+            });
+        }
     }
 
     @Override
