@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.SimpleBooleanProperty;
 import org.sleuthkit.datamodel.TimelineFilter;
 
 /**
@@ -29,33 +26,26 @@ import org.sleuthkit.datamodel.TimelineFilter;
  * @param <FilterType>
  */
 public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractFilterState<FilterType> {
-
-    private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
-    private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
-    private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
-
     /**
      * Selected = false, Disabled = false
      *
      * @param filter
      */
     public SqlFilterState(FilterType filter) {
-        this(filter, false);
+        // Setting the intial state to all filters to "selected" except
+        // the "Hide Known Filters", "Tags", "Hashsets" and "Text".
+        // There are better ways to do this, but this works in a pinch
+        this(filter, !(filter instanceof TimelineFilter.HideKnownFilter || filter instanceof TimelineFilter.TagsFilter || filter instanceof TimelineFilter.HashHitsFilter || filter instanceof TimelineFilter.TextFilter));
     }
 
     /**
      * Disabled = false
      *
      * @param filter
-     * @param selected True to select this filter initialy.
+     * @param selected True to select this filter initially.
      */
     public SqlFilterState(FilterType filter, boolean selected) {
         super(filter, selected);
-    }
-
-    protected SqlFilterState(FilterType filter, boolean selected, boolean disabled) {
-        super(filter, selected);
-        setDisabled(disabled);
     }
 
     @Override
@@ -74,7 +64,6 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
 
     @Override
     public String toString() {
-        activeProp.get();
         return "TimelineFilterState{"
                + " filter=" + getFilter().toString()
                + ", selected=" + isSelected()
