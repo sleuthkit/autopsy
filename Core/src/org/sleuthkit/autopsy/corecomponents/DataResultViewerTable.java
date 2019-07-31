@@ -579,7 +579,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     int columnWidth = columnWidths.get(column);
                     
                     if(cntMaxSizeColumns > 0) {
-                        if(columnWidth >= 300) {
+                        if(columnWidth >= ((column == 0) ? 350 : 300)) {
                             columnWidth += extraWidth;
                         }
                     } else {
