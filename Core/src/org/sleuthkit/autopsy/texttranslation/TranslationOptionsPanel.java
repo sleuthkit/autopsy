@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.texttranslation.ui;
+package org.sleuthkit.autopsy.texttranslation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,14 +27,12 @@ import java.util.logging.Level;
 import javax.swing.JLabel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
-import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Options panel to display translation options
  */
-public class TranslationOptionsPanel extends javax.swing.JPanel {
+final class TranslationOptionsPanel extends javax.swing.JPanel {
 
     private final static Logger logger = Logger.getLogger(TranslationOptionsPanel.class.getName());
     private static final long serialVersionUID = 1L;
@@ -45,7 +43,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
      * Creates new form TranslationOptionsPanel
      */
     @Messages({"TranslationOptionsPanel.translationDisabled.text=Translation disabled"})
-    public TranslationOptionsPanel(TranslationOptionsPanelController theController) {
+    TranslationOptionsPanel(TranslationOptionsPanelController theController) {
         initComponents();
         controller = theController;
         translatorComboBox.addItem(Bundle.TranslationOptionsPanel_translationDisabled_text());
@@ -78,7 +76,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         translationServicePanel.removeAll();
         if (translatorComboBox.getSelectedItem() != null && !translatorComboBox.getSelectedItem().toString().equals(Bundle.TranslationOptionsPanel_translationDisabled_text())) {
             try {
-                Component panel = TextTranslationService.getInstance().getTranslatorByName(translatorComboBox.getSelectedItem().toString()).getComponent();
+                Component panel = TextTranslationService.getInstance().getTranslatorByName(translatorComboBox.getSelectedItem().toString()).getSettingsPanel();
                 panel.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
@@ -126,7 +124,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         if (currentSelection != null && !currentSelection.equals(Bundle.TranslationOptionsPanel_translationDisabled_text())) {
             try {
                 TextTranslationService.getInstance().getTranslatorByName(currentSelection).saveSettings();
-            } catch (NoServiceProviderException ex) {
+            } catch (NoServiceProviderException | TranslationConfigException ex) {
                 logger.log(Level.WARNING, "Unable to save settings for TextTranslator named: " + currentSelection, ex);
             }
         }
@@ -172,7 +170,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
                         .addGap(10, 10, 10)
                         .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(translationOptionsDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 462, Short.MAX_VALUE))
+                    .addComponent(translationOptionsDescription, javax.swing.GroupLayout.PREFERRED_SIZE, 462, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
