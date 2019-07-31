@@ -461,21 +461,17 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .addPropertyChangeListener("focusOwner", focusPropertyListener);
         
-        try{
-            VersionNumber version = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion();
-            int major = version.getMajor();
-            int minor = version.getMinor();
-            
-            if(major < 8 || (major == 8 && minor <= 2)) {
-                Platform.runLater(() -> {
-                            Notifications.create()
-                                    .owner(jFXViewPanel.getScene().getWindow())
-                                    .text(Bundle.Timeline_old_version()).showInformation();
-                        });
-            }
-        } catch(NoCurrentCaseException ex) {
-            // No case, don't popup dialog.
-        } 
+        VersionNumber version = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
+        int major = version.getMajor();
+        int minor = version.getMinor();
+
+        if(major < 8 || (major == 8 && minor <= 2)) {
+            Platform.runLater(() -> {
+                Notifications.create()
+                        .owner(jFXViewPanel.getScene().getWindow())
+                        .text(Bundle.Timeline_old_version()).showInformation();
+            });
+        }
     }
 
     @Override
