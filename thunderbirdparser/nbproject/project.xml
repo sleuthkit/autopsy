@@ -55,24 +55,28 @@
                 <binary-origin>release/modules/ext/commons-lang3-3.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/apache-mime4j-dom-0.8.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/apache-mime4j-dom-0.8.0-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/java-libpst-1.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/java-libpst-1.0-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-mbox-iterator-0.8.0-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-mbox-iterator-0.8.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/ez-vcard-0.10.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/ez-vcard-0.10.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/java-libpst-1.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/java-libpst-1.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/apache-mime4j-dom-0.8.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/apache-mime4j-dom-0.8.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vinnie-2.0.2.jar</runtime-relative-path>

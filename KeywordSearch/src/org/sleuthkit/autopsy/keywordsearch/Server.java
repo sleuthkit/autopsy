@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -428,6 +429,8 @@ public class Server {
      * immediately (probably before the server is ready) and doesn't check
      * whether it was successful.
      */
+    @NbBundle.Messages({
+        "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
         if (isRunning()) {
             // If a Solr server is running we stop it.
@@ -469,16 +472,27 @@ public class Server {
                         Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                 "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
 
-                try {
-                    //block for 10 seconds, give time to fully start the process
-                    //so if it's restarted solr operations can be resumed seamlessly
-                    Thread.sleep(10 * 1000);
-                } catch (InterruptedException ex) {
-                    logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
+                // Wait for the Solr server to start and respond to a status request.
+                for (int numRetries = 0; numRetries < 6; numRetries++) {
+                    if (isRunning()) {
+                        final List<Long> pids = this.getSolrPIDs();
+                        logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
+                        return;
+                    }
+
+                    // Local Solr server did not respond so we sleep for
+                    // 5 seconds before trying again.
+                    try {
+                        TimeUnit.SECONDS.sleep(5);
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
+                    }
                 }
 
-                final List<Long> pids = this.getSolrPIDs();
-                logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
+                // If we get here the Solr server has not responded to connection
+                // attempts in a timely fashion.
+                logger.log(Level.WARNING, "Local Solr server failed to respond to status requests.");
+                throw new KeywordSearchModuleException(Bundle.Server_status_failed_msg());
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Could not start Solr process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(

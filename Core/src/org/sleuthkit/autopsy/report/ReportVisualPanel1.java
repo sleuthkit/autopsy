@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -147,8 +147,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
     // Make sure that the report module has a valid non-null name.
     private boolean moduleIsValid(ReportModule module) {
-        return module.getName() != null && !module.getName().isEmpty()
-                && module.getRelativeFilePath() != null;
+        return module.getName() != null && !module.getName().isEmpty();
     }
 
     private void popupWarning(ReportModule module) {

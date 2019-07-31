@@ -294,18 +294,11 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + plasoDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
             
-            // Check if there is data the db
-            if( !resultSet.first() ) {
-                logger.log(Level.INFO, String.format("PlasoDB was empty: %s", plasoDb));
-                MessageNotifyUtil.Notify.info(MODULE_NAME, Bundle.PlasoIngestModule_info_empty_database());
-                return;
-            } else {
-                // There is data, reset the pointer to the correct place for
-                // the start of processing.
-                resultSet.beforeFirst();
-            }
+            boolean dbHasData = false;
             
             while (resultSet.next()) {
+                dbHasData = true;
+                
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled Plaso Artifact Creation."); //NON-NLS
                     return;
@@ -358,6 +351,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
                 }
             }
+            
+            // Check if there is data the db
+            if( !dbHasData ) {
+                logger.log(Level.INFO, String.format("PlasoDB was empty: %s", plasoDb));
+                MessageNotifyUtil.Notify.info(MODULE_NAME, Bundle.PlasoIngestModule_info_empty_database());
+            } 
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }

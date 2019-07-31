@@ -26,7 +26,7 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="1" attributes="0">
                       <Component id="newRuleButton" linkSize="3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="editRuleButton" linkSize="3" min="-2" max="-2" attributes="0"/>
@@ -41,42 +41,19 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="flagEncryptionProgramsCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="finalizeImageWriter" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="shouldSaveCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
                                   <Component id="extensionsLabel" min="-2" max="-2" attributes="0"/>
                                   <Component id="filenamesLabel" min="-2" max="-2" attributes="0"/>
                                   <Component id="descriptionLabel" min="-2" max="-2" attributes="0"/>
                                   <Component id="ruleNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="modifiedDateLabel" alignment="0" min="-2" pref="79" max="-2" attributes="0"/>
-                                          <Component id="fileSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="fullPathsLabel" min="-2" max="-2" attributes="0"/>
-                                          <Component id="folderNamesLabel" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                                      <Component id="minSizeLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="minSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
-                                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                                      <Component id="maxSizeLabel" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="maxSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
-                                  </Group>
+                                  <Component id="fullPathsLabel" min="-2" max="-2" attributes="0"/>
+                                  <Component id="folderNamesLabel" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace min="-2" pref="107" max="-2" attributes="0"/>
+                              <EmptySpace min="369" max="32767" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="129" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Component id="modifiedWithinTextField" min="-2" pref="54" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="daysIncludedLabel" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Group type="102" alignment="1" attributes="0">
+                                      <EmptySpace min="-2" pref="129" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="1" attributes="0">
                                           <Component id="ruleNameEditTextField" alignment="0" max="32767" attributes="0"/>
                                           <Component id="descriptionEditTextField" alignment="0" max="32767" attributes="0"/>
@@ -85,15 +62,52 @@
                                           <Component id="filenamesScrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
                                           <Component id="folderNamesScrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
-                                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="shouldSaveCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Component id="modifiedDateLabel" alignment="0" min="-2" pref="79" max="-2" attributes="0"/>
+                                                  <Component id="fileSizeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
+                                              <Component id="minSizeLabel" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="minSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
+                                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                                              <Component id="maxSizeLabel" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="maxSizeTextField" min="-2" pref="63" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <EmptySpace min="-2" pref="129" max="-2" attributes="0"/>
+                                              <Component id="modifiedWithinTextField" min="-2" pref="54" max="-2" attributes="0"/>
+                                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                              <Component id="daysIncludedLabel" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
+                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jSeparator1" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="flagEncryptionProgramsCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="finalizeImageWriter" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="promptBeforeExit" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="jSeparator1" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
               </Group>
           </Group>
@@ -107,16 +121,17 @@
                   <Component id="configFileTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="ruleSetFileLabel" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="rulesScrollPane" pref="479" max="32767" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="rulesScrollPane" pref="478" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="newRuleButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="editRuleButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="deleteRuleButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -140,30 +155,19 @@
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="filenamesScrollPane" pref="0" max="32767" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <Component id="filenamesLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
+                          <Component id="filenamesLabel" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="folderNamesScrollPane" pref="0" max="32767" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <Component id="folderNamesLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
+                          <Component id="folderNamesLabel" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="fullPathsLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="1" attributes="0">
-                              <Component id="fullPathsScrollPane" pref="0" max="32767" attributes="0"/>
-                              <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="fullPathsLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="fullPathsScrollPane" alignment="0" pref="0" max="32767" attributes="0"/>
                       </Group>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="2" attributes="0">
                           <Component id="minSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="minSizeTextField" alignment="2" min="-2" max="-2" attributes="0"/>
@@ -171,25 +175,27 @@
                           <Component id="maxSizeTextField" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="fileSizeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="2" attributes="0">
                           <Component id="modifiedDateLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="modifiedWithinTextField" alignment="2" min="-2" max="-2" attributes="0"/>
                           <Component id="daysIncludedLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Component id="shouldSaveCheckBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Component id="shouldAlertCheckBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="jSeparator1" min="-2" pref="2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Component id="flagEncryptionProgramsCheckBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Component id="finalizeImageWriter" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                      <Component id="promptBeforeExit" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="21" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -220,7 +226,6 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="ConfigVisualPanel2.daysIncludedLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
-        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="fullPathsLabel">
@@ -562,6 +567,20 @@
         </Property>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="promptBeforeExit">
+      <Properties>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="ConfigVisualPanel2.promptBeforeExit.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="ConfigVisualPanel2.promptBeforeExit.actionCommand" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="promptBeforeExitActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

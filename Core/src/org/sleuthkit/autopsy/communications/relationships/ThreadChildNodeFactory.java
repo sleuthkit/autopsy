@@ -118,19 +118,13 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
             if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
-                    || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
                     || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
 
                 // We want email and message artifacts that do not have "threadIDs" to appear as one thread in the UI
                 // To achive this assign any artifact that does not have a threadID
                 // the "UNTHREADED_ID"
-                // All call logs will default to a single call logs thread
-                String threadID;
-                if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) {
-                    threadID = MessageNode.CALL_LOG_ID;
-                } else {
-                    threadID = MessageNode.UNTHREADED_ID;
-                }
+                String threadID = MessageNode.UNTHREADED_ID;
+                
                 BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
                 if(attribute != null) {
@@ -202,42 +196,9 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
         if (attribute != null) {
             return new ThreadNode(bba, attribute.getValueString(), preferredAction);
         } else {
-            if (bba.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
-                return new CallLogNode();
-            } else {
-                // Only one of these should occur.
-                return new UnthreadedNode();
-            }
+            // Only one of these should occur.
+            return new UnthreadedNode();
         }         
-    }
-    
-    /**
-     * This node represents the "call log" thread.
-     */
-    final class CallLogNode extends AbstractNode {
-        /**
-         * Construct an instance of a CallLogNode.
-         */
-        CallLogNode() {
-            super(Children.LEAF);
-            setDisplayName("Call Logs");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/unthreaded.png" );
-        }
-        
-         @Override
-        protected Sheet createSheet() {
-            Sheet sheet = super.createSheet();
-            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            if (sheetSet == null) {
-                sheetSet = Sheet.createPropertiesSet();
-                sheet.put(sheetSet);
-            }
-            
-            // Give this node a threadID of "CALL_LOG_ID"
-            sheetSet.put(new NodeProperty<>("ThreadID", "ThreadID","",MessageNode.CALL_LOG_ID));
-            
-            return sheet;
-        }
     }
     
     /**
