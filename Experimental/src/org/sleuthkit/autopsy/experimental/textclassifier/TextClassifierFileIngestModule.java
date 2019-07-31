@@ -34,8 +34,9 @@ import opennlp.tools.doccat.DocumentSample;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
-import opennlp.tools.util.ObjectStream;
+import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
+import opennlp.tools.util.ObjectStream;
 import org.apache.commons.io.IOUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -63,17 +64,17 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     Tokenizer tokenizer;
     
     public TextClassifierFileIngestModule() {
-        model = null;
-        categorizer = null;
-        tokenizer = null;
-        
-        //TODO:
-        //TextClassifierFileIngestModule(null, null);
+        this(new File("C:\\Users\\Brian Kjersten\\Documents\\Story-specific\\5332\\model11314.txt"), SimpleTokenizer.INSTANCE);
     }
     
     //TODO: Constructor. I suppose the constructor needs a model
-    public TextClassifierFileIngestModule(File inputFile, Tokenizer tokenizer) throws IOException {
-        this.model = deserializeModel(inputFile);
+    public TextClassifierFileIngestModule(File modelFile, Tokenizer tokenizer) {
+        try {
+            this.model = deserializeModel(modelFile);
+        } catch (IOException ex) {
+            //TODO: RuntimeException is unacceptable in production
+            throw new RuntimeException("Cannot deserialize model file: " + ex.getMessage());
+        }
         DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE,
                                                   model,
                                                   new HashMap<>(),
@@ -121,16 +122,13 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     private boolean isInteresting(AbstractFile file) throws InitReaderException, IOException, NoTextExtractorFound {
         boolean isInteresting = true;
 
-        //TODO: Run the classifier here. The below code hasn't been tested.
-        /*
         String text;
         Reader reader = TextExtractorFactory.getExtractor(file, null).getReader();
         text = IOUtils.toString(reader);
         String[] tokens = tokenizer.tokenize(text);
         String category = categorizer.getBestCategory(categorizer.categorize(tokens));
         isInteresting = "interesting".equalsIgnoreCase(category);
-        */
-        
+       
         return isInteresting;
     }
 
@@ -159,9 +157,5 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         double duration = (System.nanoTime() - startTime) / 1.0e9;
         System.out.println(duration + "\ttest time");
         System.out.println(evaluator.getAccuracy() + "\taccuracy");
-    }
-    
-    public static void main(String[] args) {
-        
     }
 }
