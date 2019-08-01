@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
+import com.google.common.collect.Iterables;
 import com.pff.PSTAttachment;
 import com.pff.PSTException;
 import com.pff.PSTFile;
@@ -29,12 +30,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
@@ -55,18 +58,18 @@ class PstParser {
      * First four bytes of a pst file.
      */
     private static int PST_HEADER = 0x2142444E;
-    private IngestServices services;
-    /**
-     * A map of PSTMessages to their Local path within the file's internal
-     * directory structure.
-     */
-    private List<EmailMessage> results;
-    private StringBuilder errors;
+
+    private final IngestServices services;
+
+    private PSTFile pstFile;
+    private long fileID;
+
+    private int failureCount = 0;
+    
+    private final List<String> errorList = new ArrayList<>();
 
     PstParser(IngestServices services) {
-        results = new ArrayList<>();
         this.services = services;
-        errors = new StringBuilder();
     }
 
     enum ParseResult {
@@ -75,99 +78,191 @@ class PstParser {
     }
 
     /**
-     * Parse and extract email messages from the pst/ost file.
+     * Create an instance of PSTFile for the given File object.
      *
-     * @param file A pst or ost file.
+     * The constructor for PSTFile object will throw a generic PSTException if
+     * the file is encrypted.
+     * <a href=https://github.com/rjohnsondev/java-libpst/blob/5436a7abc8ac8c1622bf5dba0f4f9428fdbcd634/src/main/java/com/pff/PSTFile.java>
+     * PSTFile.java</a>
      *
-     * @return ParseResult: OK on success, ERROR on an error, ENCRYPT if failed
-     *         because the file is encrypted.
+     * @param file   File to open
+     * @param fileID File id for use when creating the EmailMessage objects
+     *
+     * @return ParserResult value OK if the PSTFile was successfully created,
+     *         ENCRYPT will be returned for PSTExceptions that matches at
+     *         specific message or IllegalArgumentExceptions
      */
-    ParseResult parse(File file, long fileID) {
-        PSTFile pstFile;
-        long failures;
+    ParseResult open(File file, long fileID) {
+        if (file == null) {
+            return ParseResult.ERROR;
+        }
+
         try {
             pstFile = new PSTFile(file);
-            failures = processFolder(pstFile.getRootFolder(), "\\", true, fileID);
-            if (failures > 0) {
-                addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "PstParser.parse.errMsg.failedToParseNMsgs", failures));
+        } catch (PSTException ex) {
+            // This is the message thrown from the PSTFile constructor if it
+            // detects that the file is encrypted. 
+            if (ex.getMessage().equals("Only unencrypted and compressable PST files are supported at this time")) { //NON-NLS
+                logger.log(Level.INFO, "Found encrypted PST file."); //NON-NLS
+                return ParseResult.ENCRYPT;
             }
-            return ParseResult.OK;
-        } catch (PSTException | IOException ex) {
             String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage(); //NON-NLS
-            logger.log(Level.WARNING, msg);
+            logger.log(Level.WARNING, msg, ex);
             return ParseResult.ERROR;
-        } catch (IllegalArgumentException ex) {
+        } catch (IOException ex) {
+            String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage(); //NON-NLS
+            logger.log(Level.WARNING, msg, ex);
+            return ParseResult.ERROR;
+        } catch (IllegalArgumentException ex) { // Not sure if this is true, was in previous version of code.
             logger.log(Level.INFO, "Found encrypted PST file."); //NON-NLS
             return ParseResult.ENCRYPT;
         }
+
+        return ParseResult.OK;
     }
 
     /**
-     * Get the results of the parsing.
+     * Creates an EmailMessage iterator for pstFile. These Email objects will be
+     * complete and with all available information.
      *
-     * @return
+     * @return A instance of an EmailMessage Iterator
      */
-    List<EmailMessage> getResults() {
-        return results;
-    }
+    Iterator<EmailMessage> getEmailMessageIterator() {
+        if (pstFile == null) {
+            return null;
+        }
 
-    String getErrors() {
-        return errors.toString();
+        Iterable<EmailMessage> iterable = null;
+
+        try {
+            iterable = getEmaiMessageIterator(pstFile.getRootFolder(), "\\", fileID, true);
+        } catch (PSTException | IOException ex) {
+            logger.log(Level.WARNING, String.format("Exception thrown while parsing fileID: %d", fileID), ex);
+        }
+
+        if (iterable == null) {
+            return null;
+        }
+
+        return iterable.iterator();
     }
 
     /**
-     * Process this folder and all subfolders, adding every email found to
-     * results. Accumulates the folder hierarchy path as it navigates the folder
-     * structure.
+     * Get a List of EmailMessages which contain only the information needed for
+     * threading the emails.
      *
-     * @param folder The folder to navigate and process
-     * @param path   The path to the folder within the pst/ost file's directory
-     *               structure
+     * @return A list of EmailMessage or an empty list if non were found.
+     */
+    List<EmailMessage> getPartialEmailMessages() {
+        List<EmailMessage> messages = new ArrayList<>();
+        Iterator<EmailMessage> iterator = getPartialEmailMessageIterator();
+        if (iterator != null) {
+            while (iterator.hasNext()) {
+                messages.add(iterator.next());
+            }
+        }
+
+        return messages;
+    }
+
+    /**
+     * Returns string containing the list of the current parse errors
+     *
+     * @return String error list, empty string if no errors exist.
+     */
+    String getErrors() {
+        String result = "";
+        for (String msg: errorList) {
+            result += "<li>" + msg + "</li>"; 
+        }
+        return result;
+    }
+
+    /**
+     * Returns the count of parse errors.
+     *
+     * @return Integer count of parse errors.
+     */
+    int getFailureCount() {
+        return failureCount;
+    }
+
+    /**
+     * Get an Iterator which will iterate over the PSTFile, but return
+     * EmailMessages with only the information needed for putting the emails
+     * into threads.
+     *
+     * @return A EmailMessage iterator or null if no messages where found
+     */
+    private Iterator<EmailMessage> getPartialEmailMessageIterator() {
+        if (pstFile == null) {
+            return null;
+        }
+
+        Iterable<EmailMessage> iterable = null;
+
+        try {
+            iterable = getEmaiMessageIterator(pstFile.getRootFolder(), "\\", fileID, false);
+        } catch (PSTException | IOException ex) {
+            logger.log(Level.WARNING, String.format("Exception thrown while parsing fileID: %d", fileID), ex);
+        }
+
+        if (iterable == null) {
+            return null;
+        }
+
+        return iterable.iterator();
+    }
+
+    /**
+     * Creates an Iterable object of Email messages for the given folder.
+     *
+     * @param folder       PSTFolder to process
+     * @param path         String path to folder
+     * @param fileID       FileID of the AbstractFile folder was found in
+     * @param partialEmail Whether or not fill the EMailMessage with all data
+     *
+     * @return An Iterable for iterating email message, or null if there were no
+     *         messages or children in folder.
      *
      * @throws PSTException
      * @throws IOException
      */
-    private long processFolder(PSTFolder folder, String path, boolean root, long fileID) {
-        String newPath = (root ? path : path + "\\" + folder.getDisplayName());
-        long failCount = 0L; // Number of emails that failed
+    private Iterable<EmailMessage> getEmaiMessageIterator(PSTFolder folder, String path, long fileID, boolean wholeMsg) throws PSTException, IOException {
+        Iterable<EmailMessage> iterable = null;
+
+        if (folder.getContentCount() > 0) {
+            iterable = new PstEmailIterator(folder, path, fileID, wholeMsg).getIterable();
+        }
+
         if (folder.hasSubfolders()) {
-            List<PSTFolder> subFolders;
-            try {
-                subFolders = folder.getSubFolders();
-            } catch (PSTException | IOException ex) {
-                subFolders = new ArrayList<>();
-                logger.log(Level.INFO, "java-libpst exception while getting subfolders: {0}", ex.getMessage()); //NON-NLS
-            }
-
-            for (PSTFolder f : subFolders) {
-                failCount += processFolder(f, newPath, false, fileID);
-            }
-        }
-
-        if (folder.getContentCount() != 0) {
-            PSTMessage email;
-            // A folder's children are always emails, never other folders.
-            try {
-                while ((email = (PSTMessage) folder.getNextChild()) != null) {
-                    results.add(extractEmailMessage(email, newPath, fileID));
+            List<PSTFolder> subFolders = folder.getSubFolders();
+            for (PSTFolder subFolder : subFolders) {
+                String newpath = path + "\\" + subFolder.getDisplayName();
+                Iterable<EmailMessage> subIterable = getEmaiMessageIterator(subFolder, newpath, fileID, wholeMsg);
+                if (subIterable == null) {
+                    continue;
                 }
-            } catch (PSTException | IOException ex) {
-                failCount++;
-                logger.log(Level.INFO, "java-libpst exception while getting emails from a folder: {0}", ex.getMessage()); //NON-NLS
+
+                if (iterable != null) {
+                    iterable = Iterables.concat(iterable, subIterable);
+                } else {
+                    iterable = subIterable;
+                }
+
             }
         }
 
-        return failCount;
+        return iterable;
     }
 
     /**
      * Create an EmailMessage from a PSTMessage.
      *
-     * @param msg
-     * @param localPath
+     * @param msg       PSTMessage object to parse
+     * @param localPath Path to local file
      *
-     * @return
+     * @return EmailMessage object.
      */
     private EmailMessage extractEmailMessage(PSTMessage msg, String localPath, long fileID) {
         EmailMessage email = new EmailMessage();
@@ -177,10 +272,10 @@ class PstParser {
         email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
         email.setSentDate(msg.getMessageDeliveryTime());
         email.setTextBody(msg.getBody());
-        if(false == msg.getTransportMessageHeaders().isEmpty()) {
+        if (false == msg.getTransportMessageHeaders().isEmpty()) {
             email.setHeaders("\n-----HEADERS-----\n\n" + msg.getTransportMessageHeaders() + "\n\n---END HEADERS--\n\n");
-        } 
-        
+        }
+
         email.setHtmlBody(msg.getBodyHTML());
         String rtf = "";
         try {
@@ -193,14 +288,42 @@ class PstParser {
         email.setSubject(msg.getSubject());
         email.setId(msg.getDescriptorNodeId());
         email.setMessageID(msg.getInternetMessageId());
-        
+
         String inReplyToID = msg.getInReplyToId();
         email.setInReplyToID(inReplyToID);
 
         if (msg.hasAttachments()) {
             extractAttachments(email, msg, fileID);
         }
-        
+
+        List<String> references = extractReferences(msg.getTransportMessageHeaders());
+        if (inReplyToID != null && !inReplyToID.isEmpty()) {
+            if (references == null) {
+                references = new ArrayList<>();
+                references.add(inReplyToID);
+            } else if (!references.contains(inReplyToID)) {
+                references.add(inReplyToID);
+            }
+        }
+        email.setReferences(references);
+
+        return email;
+    }
+
+    /**
+     * Create an EmailMessage from a PSTMessage with only the information needed
+     * for threading emails.
+     *
+     * @return EmailMessage object with only some information, not all of the
+     *         msg.
+     */
+    private EmailMessage extractPartialEmailMessage(PSTMessage msg) {
+        EmailMessage email = new EmailMessage();
+        email.setSubject(msg.getSubject());
+        email.setId(msg.getDescriptorNodeId());
+        email.setMessageID(msg.getInternetMessageId());
+        String inReplyToID = msg.getInReplyToId();
+        email.setInReplyToID(inReplyToID);
         List<String> references = extractReferences(msg.getTransportMessageHeaders());
         if (inReplyToID != null && !inReplyToID.isEmpty()) {
             if (references == null) {
@@ -218,8 +341,8 @@ class PstParser {
     /**
      * Add the attachments within the PSTMessage to the EmailMessage.
      *
-     * @param email
-     * @param msg
+     * @param email EmailMessage object to have attachment added
+     * @param msg   PSTMessage object with the attachments
      */
     @NbBundle.Messages({"PstParser.noOpenCase.errMsg=Exception while getting open case."})
     private void extractAttachments(EmailMessage email, PSTMessage msg, long fileID) {
@@ -228,8 +351,8 @@ class PstParser {
         try {
             outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-                return;
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
         }
         for (int x = 0; x < numberOfAttachments; x++) {
             String filename = "";
@@ -245,7 +368,7 @@ class PstParser {
                 if (filename.isEmpty()) {
                     filename = attach.getFilename();
                 }
-                String uniqueFilename = fileID + "-" + msg.getDescriptorNodeId() + "-" + attach.getContentId() + "-" + filename;
+                String uniqueFilename = fileID + "-" + msg.getDescriptorNodeId() + "-" + attach.getContentId() + "-" + FileUtil.escapeFileName(filename);
                 String outPath = outputDirPath + uniqueFilename;
                 saveAttachmentToDisk(attach, outPath);
 
@@ -280,16 +403,14 @@ class PstParser {
     /**
      * Extracts a PSTAttachment to the module output directory.
      *
-     * @param attach
-     * @param outPath
-     *
-     * @return
+     * @param attach  PSTAttachment object to be parsed
+     * @param outPath Location to write attachments
      *
      * @throws IOException
      * @throws PSTException
      */
     private void saveAttachmentToDisk(PSTAttachment attach, String outPath) throws IOException, PSTException {
-        try (InputStream attachmentStream = attach.getFileInputStream(); 
+        try (InputStream attachmentStream = attach.getFileInputStream();
                 EncodedFileOutputStream out = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1)) {
             // 8176 is the block size used internally and should give the best performance
             int bufferSize = 8176;
@@ -354,10 +475,15 @@ class PstParser {
         }
     }
 
+    /**
+     * Adds passed in string to the error message with formatting.
+     *
+     * @param msg String message to add
+     */
     private void addErrorMessage(String msg) {
-        errors.append("<li>").append(msg).append("</li>"); //NON-NLS
+        errorList.add(msg);
     }
-    
+
     /**
      * Returns the references value from the email header.
      *
@@ -388,5 +514,96 @@ class PstParser {
         }
 
         return null;
-    }    
+    }
+
+    /**
+     * A iterator for processing the PST email folder structure and returning
+     * instances of the EmailMessage object.
+     */
+    private final class PstEmailIterator implements Iterator<EmailMessage> {
+
+        private final PSTFolder folder;
+        private EmailMessage currentMsg;
+        private EmailMessage nextMsg;
+
+        private final String currentPath;
+        private final long fileID;
+        private final boolean wholeMsg;
+
+        /**
+         * Class constructor, initializes the "next" message;
+         *
+         * @param folder PSTFolder object to iterate across
+         * @param path   String path value to the location of folder
+         * @param fileID Long fileID of the abstract file this PSTFolder was
+         *               found
+         */
+        PstEmailIterator(PSTFolder folder, String path, long fileID, boolean wholeMsg) {
+            this.folder = folder;
+            this.fileID = fileID;
+            this.currentPath = path;
+            this.wholeMsg = wholeMsg;
+
+            if (folder.getContentCount() > 0) {
+                try {
+                    PSTMessage message = (PSTMessage) folder.getNextChild();
+                    if (message != null) {
+                        if (wholeMsg) {
+                            nextMsg = extractEmailMessage(message, currentPath, fileID);
+                        } else {
+                            nextMsg = extractPartialEmailMessage(message);
+                        }
+                    }
+                } catch (PSTException | IOException ex) {
+                    failureCount++;
+                    logger.log(Level.WARNING, String.format("Unable to extract emails for path: %s file ID: %d ", path, fileID), ex);
+                }
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return nextMsg != null;
+        }
+
+        @Override
+        public EmailMessage next() {
+
+            currentMsg = nextMsg;
+
+            try {
+                PSTMessage message = (PSTMessage) folder.getNextChild();
+                if (message != null) {
+                    if (wholeMsg) {
+                        nextMsg = extractEmailMessage(message, currentPath, fileID);
+                    } else {
+                        nextMsg = extractPartialEmailMessage(message);
+                    }
+                } else {
+                    nextMsg = null;
+                }
+            } catch (PSTException | IOException ex) {
+                logger.log(Level.WARNING, String.format("Unable to extract emails for path: %s file ID: %d ", currentPath, fileID), ex);
+                failureCount++;
+                nextMsg = null;
+            }
+
+            return currentMsg;
+        }
+
+        /**
+         * Get a wrapped Iterable version of PstEmailIterator
+         *
+         * @return Iterable wrapping this class
+         */
+        Iterable<EmailMessage> getIterable() {
+            return new Iterable<EmailMessage>() {
+                @Override
+                public Iterator<EmailMessage> iterator() {
+                    return PstEmailIterator.this;
+                }
+            };
+        }
+
+    }
 }
