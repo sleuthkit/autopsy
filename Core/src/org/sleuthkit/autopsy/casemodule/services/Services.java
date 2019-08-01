@@ -40,8 +40,6 @@ public class Services implements Closeable {
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
-    @SuppressWarnings("deprecation")
-    private final Blackboard blackboard;
 
     /**
      * Constructs a collection of case-level services (e.g., file manager, tags
@@ -49,7 +47,6 @@ public class Services implements Closeable {
      *
      * @param caseDb The case database for the current case.
      */
-    @SuppressWarnings("deprecation")
     public Services(SleuthkitCase caseDb) {
         fileManager = new FileManager(caseDb);
         services.add(fileManager);
@@ -62,9 +59,6 @@ public class Services implements Closeable {
         //null safe so that the functional tests run with no issues.
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
-
-        blackboard = new Blackboard(caseDb);
-        services.add(blackboard);
     }
 
     /**
@@ -103,7 +97,7 @@ public class Services implements Closeable {
      */
     @Deprecated
     public Blackboard getBlackboard() {
-        return blackboard;
+        return new Blackboard();
     }
     
     /**
