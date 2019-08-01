@@ -843,7 +843,7 @@ class FileSearch {
             String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
             
             String selectClause = " value, COUNT(value) FROM "
-                    + "(SELECT DISTINCT case_id, data_source_id, value FROM " + tableName
+                    + "(SELECT DISTINCT case_id, value FROM " + tableName
                     + " WHERE value IN ("
                     + hashes
                     + ")) AS foo GROUP BY value";
