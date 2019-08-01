@@ -1,9 +1,0 @@
-/*! \page advanced_page Advanced Settings
-
-If you are behind a proxy and need access to a network with Autopsy or one of the modules, you may set your proxy information in the _Tools_, _Options_, _General_ tab as shown in the screenshot below.
-
-<br><br>
-\image html proxySettings.PNG
-<br><br>
-
-*/

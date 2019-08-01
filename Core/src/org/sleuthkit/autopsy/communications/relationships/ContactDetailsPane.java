@@ -18,24 +18,40 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Displays the propertied of a ContactNode in a PropertySheet.
  */
 public final class ContactDetailsPane extends javax.swing.JPanel implements ExplorerManager.Provider {
 
-    final private ExplorerManager explorerManager = new ExplorerManager();
+    private static final Logger logger = Logger.getLogger(ContactDetailsPane.class.getName());
+    
+    private final static String DEFAULT_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images/defaultContact.png";
+    
+    private final ExplorerManager explorerManager = new ExplorerManager();
+    private final ImageIcon defaultImage;
 
     /**
      * Displays the propertied of a ContactNode in a PropertySheet.
      */
     public ContactDetailsPane() {
         initComponents();
-        this.setEnabled(false);
-        
         nameLabel.setText("");
+        
+        defaultImage = new ImageIcon(ContactDetailsPane.class.getResource(DEFAULT_IMAGE_PATH));
     }
 
     /**
@@ -46,9 +62,16 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     public void setNode(Node[] nodes) {
         if (nodes != null && nodes.length == 1) {
             nameLabel.setText(nodes[0].getDisplayName());
+            nameLabel.setIcon(null);
             propertySheet.setNodes(nodes);
+            
+            BlackboardArtifact n = nodes[0].getLookup().lookup(BlackboardArtifact.class);
+            if(n != null) {
+                nameLabel.setIcon(getImageFromArtifact(n));
+            }
         } else {
             nameLabel.setText("");
+            nameLabel.setIcon(null);
             propertySheet.setNodes(null);
         }
     }
@@ -57,12 +80,40 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     public ExplorerManager getExplorerManager() {
         return explorerManager;
     }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        nameLabel.setEnabled(enabled);
-        propertySheet.setEnabled(enabled);
+    
+    public ImageIcon getImageFromArtifact(BlackboardArtifact artifact){
+        ImageIcon imageIcon = defaultImage;
+        
+        if(artifact == null) {
+            return imageIcon;
+        }
+        
+        BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
+        if(artifactType != BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT) {
+            return imageIcon;
+        }
+        
+        try {
+            for(Content content: artifact.getChildren()) {
+                if(content instanceof AbstractFile) {
+                    AbstractFile file = (AbstractFile)content;
+                    
+                    try {
+                        BufferedImage image = ImageIO.read(new File(file.getLocalAbsPath()));
+                        imageIcon = new ImageIcon(image);
+                        break;
+                    } catch (IOException ex) {
+                       // ImageIO.read will through an IOException if file is not an image
+                       // therefore we don't need to report this exception just try
+                       // the next file.
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Unable to load image for contact: %d", artifact.getId()), ex);
+        }
+        
+        return imageIcon;
     }
 
     /**
@@ -75,7 +126,6 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        messageContentViewer1 = new org.sleuthkit.autopsy.contentviewers.MessageContentViewer();
         nameLabel = new javax.swing.JLabel();
         propertySheet = new org.openide.explorer.propertysheet.PropertySheet();
 
@@ -107,7 +157,6 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.contentviewers.MessageContentViewer messageContentViewer1;
     private javax.swing.JLabel nameLabel;
     private org.openide.explorer.propertysheet.PropertySheet propertySheet;
     // End of variables declaration//GEN-END:variables

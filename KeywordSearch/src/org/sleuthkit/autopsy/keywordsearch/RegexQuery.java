@@ -356,6 +356,13 @@ final class RegexQuery implements KeywordSearchQuery {
 
                     String hit = hitMatcher.group();
 
+                    /**
+                     * No need to continue on if the the string is "" nothing to find or do.
+                     */
+                    if ("".equals(hit)) {
+                        break;
+                    }
+
                     offset = hitMatcher.end();
                     final ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 

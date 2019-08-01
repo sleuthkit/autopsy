@@ -163,8 +163,6 @@ final class VcardParser {
     private BlackboardArtifact addContactArtifact(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
         List<AccountFileInstance> accountInstances = new ArrayList<>();
-        
-        extractPhotos(vcard, abstractFile);
        
         String name = "";
         if (vcard.getFormattedName() != null) {
@@ -228,6 +226,8 @@ final class VcardParser {
                 List<BlackboardArtifact> blackboardArtifacts = new ArrayList<>();
                 blackboardArtifacts.add(artifact);
                 
+                 extractPhotos(vcard, abstractFile, artifact);
+                
                 // Add account relationships.
                 if (deviceAccountInstance != null) {
                     try {
@@ -263,7 +263,7 @@ final class VcardParser {
      * 
      * @throws NoCurrentCaseException if there is no open case.
      */
-    private void extractPhotos(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
+    private void extractPhotos(VCard vcard, AbstractFile abstractFile, BlackboardArtifact artifact) throws NoCurrentCaseException {
         String parentFileName = getUniqueName(abstractFile);
         // Skip files that already have been extracted.
         try {
@@ -300,7 +300,7 @@ final class VcardParser {
                         writeExtractedImage(extractedFilePath, data);
                         derivedFilesCreated.add(fileManager.addDerivedFile(extractedFileName, getFileRelativePath(parentFileName, extractedFileName), data.length,
                                 abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getAtime(),
-                                true, abstractFile, null, EmailParserModuleFactory.getModuleName(), null, null, TskData.EncodingType.NONE));
+                                true, artifact, null, EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "", TskData.EncodingType.NONE));
                     } catch (IOException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Could not write image to '%s' (id=%d).", extractedFilePath, abstractFile.getId()), ex); //NON-NLS
                     }
