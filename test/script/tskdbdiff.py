@@ -564,7 +564,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         return newLine
     # remove all timing dependent columns from events table
     elif events_index:
-        newLine = ('INSERT INTO "tsk_events" VALUES(' + ','.join(fields_list[1:1]) + ');') 
+        newLine = ('INSERT INTO "tsk_events" VALUES(' + ','.join(fields_list[1:2]) + ');') 
         return newLine
     # remove object ids from event description table
     elif event_description_index:
