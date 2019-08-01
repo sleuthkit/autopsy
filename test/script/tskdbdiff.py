@@ -562,18 +562,20 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         fields_list[1] = "{examiner_name}"
         newLine = ('INSERT INTO "tsk_examiners" VALUES(' + ','.join(fields_list) + ');')
         return newLine
-    # remove event id which is order/timing dependent
+    # remove all timing dependent columns from events table
     elif events_index:
-        fields_list[0] = "0"
-        newLine = ('INSERT INTO "tsk_events" VALUES(' + ','.join(fields_list) + ');')
+        newLine = ('INSERT INTO "tsk_events" VALUES(' + ','.join(fields_list[1:1]) + ');') 
         return newLine
+    # remove object ids from event description table
     elif event_description_index:
         # replace object ids with information that is deterministic 
-        ds_obj_id = int(fields_list[4])
         file_obj_id = int(fields_list[5])
-        fields_list[4] = files_table[ds_obj_id]
-        fields_list[5] = files_table[file_obj_id]
-        newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list) + ');')
+        object_id = int(fields_list[4])
+        if file_obj_id != 'NULL' and file_obj_id in files_table.keys():
+            fields_list[5] = files_table[file_obj_id]
+        if object_id != 'NULL' and object_id in files_table.keys():
+            fields_list[4] = files_table[object_id]
+        newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
     else:
         return line
