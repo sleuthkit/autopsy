@@ -331,16 +331,16 @@ public final class IngestJobSettings {
         }
         
         /**
-         * Hard coding Plaso to be disabled by default.  loadedModuleNames is passed
-         * below as the default list of enabled modules so briefly 
-         * remove Plaso from loaded modules to get the list of enabled and 
-         * disabled modules names.  Then put Plaso back into loadedModulesNames to let
-         * the rest of the code continue as before.
+         * Hard coding Plaso to be disabled by default. loadedModuleNames is
+         * passed below as the default list of enabled modules so briefly remove
+         * Plaso from loaded modules to get the list of enabled and disabled
+         * modules names. Then put Plaso back into loadedModulesNames to let the
+         * rest of the code continue as before.
          */
         final String plasoModuleName = "Plaso";
         boolean plasoLoaded = loadedModuleNames.contains(plasoModuleName);
         if (plasoLoaded) {
-           loadedModuleNames.remove(plasoModuleName);
+            loadedModuleNames.remove(plasoModuleName);
         }
 
         /**
@@ -349,7 +349,7 @@ public final class IngestJobSettings {
          */
         HashSet<String> enabledModuleNames = getModulesNames(executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(loadedModuleNames));
         HashSet<String> disabledModuleNames = getModulesNames(executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, plasoModuleName); //NON-NLS
-        
+
         // If plaso was loaded, but appears in neither the enabled nor the 
         // disabled list, add it to the disabled list.
         if (!enabledModuleNames.contains(plasoModuleName) && !disabledModuleNames.contains(plasoModuleName)) {
