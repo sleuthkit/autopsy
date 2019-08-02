@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractorFound;
@@ -90,6 +91,11 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
+        try {
+            this.fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetectorInitException ex) {
+            throw new IngestModule.IngestModuleException("Exception while constructing FileTypeDector.", ex);
+        }
         this.tokenizer = SimpleTokenizer.INSTANCE;
         
         jobId = context.getJobId();
@@ -97,7 +103,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         try {
             loadModel();
         } catch (IOException ex) {
-            throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.");
+            throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.", ex);
         }
                 
         try {
@@ -120,7 +126,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         
         boolean isInteresting;
         try {
-            isInteresting = isInteresting(file);
+            isInteresting = classify(file);
         } catch (TextExtractorFactory.NoTextExtractorFound ex) {
             logger.log(Level.SEVERE, "NoTextExtractorFound in categorizing : " + ex.getMessage());
             return ProcessResult.ERROR;
@@ -144,7 +150,6 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         }
         return ProcessResult.OK;
     }
-    
     private boolean isSupported(AbstractFile abstractFile) {
         String fileMimeType;
         if (fileTypeDetector != null) {
@@ -155,12 +160,11 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         return fileMimeType != null && SupportedFormats.contains(fileMimeType);    
     }
     
-    private boolean isInteresting(AbstractFile file) throws InitReaderException, IOException, NoTextExtractorFound {
+    private boolean classify(AbstractFile file) throws InitReaderException, IOException, NoTextExtractorFound {
         boolean isInteresting = true;
 
-        String text;
         Reader reader = TextExtractorFactory.getExtractor(file, null).getReader();
-        text = IOUtils.toString(reader);
+        String text = IOUtils.toString(reader);
         String[] tokens = tokenizer.tokenize(text);
         String category = categorizer.getBestCategory(categorizer.categorize(tokens));
         isInteresting = "interesting".equalsIgnoreCase(category);
