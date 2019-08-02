@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -51,15 +52,17 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 
 /**
- * Shows all EventBundles from the assigned DetailViewPane in a
- * tree organized by type and then description. Hidden bundles are shown grayed
- * out. Right clicking on a item in the tree shows a context menu to show/hide
- * it.
+ * Shows all EventBundles from the assigned DetailViewPane in a tree organized
+ * by type and then description. Hidden bundles are shown grayed out. Right
+ * clicking on a item in the tree shows a context menu to show/hide it.
  */
 final public class EventsTree extends BorderPane {
 
@@ -68,14 +71,14 @@ final public class EventsTree extends BorderPane {
     private DetailViewPane detailViewPane;
 
     @FXML
-    private TreeView<TimeLineEvent> eventsTree;
+    private TreeView<DetailViewEvent> eventsTree;
 
     @FXML
     private Label eventsTreeLabel;
 
     @FXML
     private ComboBox<TreeComparator> sortByBox;
-    private final ObservableList<TimeLineEvent> selectedEvents = FXCollections.observableArrayList();
+    private final ObservableList<DetailViewEvent> selectedEvents = FXCollections.observableArrayList();
 
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
@@ -85,11 +88,11 @@ final public class EventsTree extends BorderPane {
     public void setDetailViewPane(DetailViewPane detailViewPane) {
         this.detailViewPane = detailViewPane;
 
-        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends TimeLineEvent> c) -> {
+        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends DetailViewEvent> change) -> {
             //on jfx thread
-            while (c.next()) {
-                c.getRemoved().forEach(getRoot()::remove);
-                c.getAddedSubList().forEach(getRoot()::insert);
+            while (change.next()) {
+                change.getRemoved().forEach(getRoot()::remove);
+                change.getAddedSubList().forEach(getRoot()::insert);
             }
         });
 
@@ -132,25 +135,33 @@ final public class EventsTree extends BorderPane {
         eventsTree.setCellFactory(treeView -> new EventTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        eventsTree.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends TreeItem<TimeLineEvent>> change) -> {
+        eventsTree.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends TreeItem<DetailViewEvent>> change) -> {
             while (change.next()) {
-                change.getRemoved().stream().map(TreeItem<TimeLineEvent>::getValue).forEach(selectedEvents::remove);
-                change.getAddedSubList().stream().map(TreeItem<TimeLineEvent>::getValue).filter(Objects::nonNull).forEach(selectedEvents::add);
+                change.getRemoved().stream()
+                        .filter(Objects::nonNull)
+                        .map(TreeItem<DetailViewEvent>::getValue)
+                        .filter(Objects::nonNull)
+                        .forEach(selectedEvents::remove);
+                change.getAddedSubList().stream()
+                        .filter(Objects::nonNull)
+                        .map(TreeItem<DetailViewEvent>::getValue)
+                        .filter(Objects::nonNull)
+                        .forEach(selectedEvents::add);
             }
         });
 
         eventsTreeLabel.setText(Bundle.EventsTree_Label_text());
     }
 
-    public ObservableList<TimeLineEvent> getSelectedEvents() {
+    public ObservableList<DetailViewEvent> getSelectedEvents() {
         return selectedEvents;
     }
 
     /**
-     * A tree cell to display TimeLineEvents. Shows the description, and count,
-     * as well a a "legend icon" for the event type.
+     * A tree cell to display DetailViewEvents. Shows the description, and
+     * count, as well a a "legend icon" for the event type.
      */
-    private class EventTreeCell extends TreeCell<TimeLineEvent> {
+    private class EventTreeCell extends TreeCell<DetailViewEvent> {
 
         private static final double HIDDEN_MULTIPLIER = .6;
         private final Rectangle rect = new Rectangle(24, 24);
@@ -165,7 +176,7 @@ final public class EventsTree extends BorderPane {
         }
 
         @Override
-        protected void updateItem(TimeLineEvent item, boolean empty) {
+        protected void updateItem(DetailViewEvent item, boolean empty) {
             super.updateItem(item, empty);
             if (empty) {
                 setText(null);
@@ -178,14 +189,14 @@ final public class EventsTree extends BorderPane {
                 setText(text);
                 setTooltip(new Tooltip(text));
 
-                imageView.setImage(treeItem.getEventType().getFXImage());
+                imageView.setImage(new Image(getImagePath(treeItem.getEventType())));
                 setGraphic(new StackPane(rect, imageView));
                 updateHiddenState(treeItem);
                 deRegisterListeners(controller.getQuickHideFilters());
 
                 if (item != null) {
                     filterStateChangeListener = (filterState) -> updateHiddenState(treeItem);
-                    controller.getQuickHideFilters().addListener((ListChangeListener.Change<? extends DescriptionFilter> listChange) -> {
+                    controller.getQuickHideFilters().addListener((ListChangeListener.Change<? extends FilterState<DescriptionFilter>> listChange) -> {
                         while (listChange.next()) {
                             deRegisterListeners(listChange.getRemoved());
                             registerListeners(listChange.getAddedSubList(), item);
@@ -196,8 +207,8 @@ final public class EventsTree extends BorderPane {
                     setOnMouseClicked((MouseEvent event) -> {
                         if (event.getButton() == MouseButton.SECONDARY) {
                             Action action = hidden.get()
-                                    ? detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLoD())
-                                    : detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLoD());
+                                    ? detailViewPane.newUnhideDescriptionAction(item.getDescription(), item.getDescriptionLevel())
+                                    : detailViewPane.newHideDescriptionAction(item.getDescription(), item.getDescriptionLevel());
 
                             ActionUtils.createContextMenu(ImmutableList.of(action))
                                     .show(this, event.getScreenX(), event.getScreenY());
@@ -209,42 +220,46 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void registerListeners(Collection<? extends DescriptionFilter> filters, TimeLineEvent item) {
-            for (DescriptionFilter filter : filters) {
-                if (filter.getDescription().equals(item.getDescription())) {
+        private void registerListeners(Collection<? extends FilterState<DescriptionFilter>> filters, DetailViewEvent item) {
+            for (FilterState<DescriptionFilter> filter : filters) {
+                if (filter.getFilter().getDescription().equals(item.getDescription())) {
                     filter.activeProperty().addListener(filterStateChangeListener);
                 }
             }
         }
 
-        private void deRegisterListeners(Collection<? extends DescriptionFilter> filters) {
+        private void deRegisterListeners(Collection<? extends FilterState<DescriptionFilter>> filters) {
             if (Objects.nonNull(filterStateChangeListener)) {
-                for (DescriptionFilter filter : filters) {
+                for (FilterState<DescriptionFilter> filter : filters) {
                     filter.activeProperty().removeListener(filterStateChangeListener);
                 }
             }
         }
 
         private void updateHiddenState(EventsTreeItem treeItem) {
-            TimeLineEvent event = treeItem.getValue();
+            DetailViewEvent event = treeItem.getValue();
             hidden.set(event != null && controller.getQuickHideFilters().stream().
-                    filter(DescriptionFilter::isActive)
-                    .anyMatch(filter -> StringUtils.equalsIgnoreCase(filter.getDescription(), event.getDescription())));
+                    filter(FilterState<DescriptionFilter>::isActive)
+                    .anyMatch(filter -> StringUtils.equalsIgnoreCase(filter.getFilter().getDescription(), event.getDescription())));
+            Color color = getColor(treeItem.getEventType());
             if (hidden.get()) {
                 treeItem.setExpanded(false);
                 setTextFill(Color.gray(0, HIDDEN_MULTIPLIER));
                 imageView.setOpacity(HIDDEN_MULTIPLIER);
-                rect.setStroke(treeItem.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
-                rect.setFill(treeItem.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
+                rect.setStroke(color.deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
+                rect.setFill(color.deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
             } else {
                 setTextFill(Color.BLACK);
                 imageView.setOpacity(1);
-                rect.setStroke(treeItem.getEventType().getColor());
-                rect.setFill(treeItem.getEventType().getColor().deriveColor(0, 1, 1, 0.1));
+                rect.setStroke(color);
+                rect.setFill(color.deriveColor(0, 1, 1, 0.1));
             }
         }
     }
 
+    /**
+     * A ListCell for showing TreeComparators
+     */
     static private class TreeComparatorCell extends ListCell<TreeComparator> {
 
         @Override

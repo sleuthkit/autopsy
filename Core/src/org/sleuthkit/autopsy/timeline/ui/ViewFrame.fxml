@@ -17,7 +17,7 @@
 <?import jfxtras.scene.control.LocalDateTimeTextField?>
 <?import org.controlsfx.control.SegmentedButton?>
 
-<fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <top>
         <ToolBar fx:id="toolBar" HBox.hgrow="ALWAYS">
             <items>
@@ -83,6 +83,7 @@
                 </HBox>
                 <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
                 <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" HBox.hgrow="ALWAYS" />
+            <Button fx:id="addEventButton" mnemonicParsing="false" text="Add Event" />
                 <Button fx:id="snapShotButton" mnemonicParsing="false" text="Snapshot Report">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
@@ -98,15 +99,6 @@
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                             <image>
                                 <Image url="@../images/arrow-circle-double-135.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button fx:id="updateDBButton" mnemonicParsing="false" text="Update DB">
-                    <graphic>
-                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@../images/database_refresh.png" />
                             </image>
                         </ImageView>
                     </graphic>

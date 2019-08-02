@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -30,24 +31,26 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.appservices.AutopsyService;
-import org.sleuthkit.autopsy.progress.ProgressIndicator;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -78,8 +81,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * 1) Indexing an artifact created during while either the file level ingest
      * module pipeline or the first stage data source level ingest module
      * pipeline of an ingest job is running.
-     * 
-     * 2) Indexing a report.  
+     *
+     * 2) Indexing a report.
      *
      * @param content The content to index.
      *
@@ -389,6 +392,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
         }
+        if (context.cancelRequested()) {
+            return;
+        }
+
+        theCase.getSleuthkitCase().registerForEvents(this);
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }
@@ -420,6 +428,29 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             KeywordSearch.getServer().closeCore();
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
+        }
+
+        context.getCase().getSleuthkitCase().unregisterForEvents(this);
+    }
+
+    /**
+     * Event handler for ArtifactsPostedEvents from SleuthkitCase.
+     *
+     * @param event The ArtifactsPostedEvent to handle.
+     */
+    @NbBundle.Messages("SolrSearchService.indexingError=Unable to index blackboard artifact.")
+    @Subscribe
+    void handleNewArtifacts(Blackboard.ArtifactsPostedEvent event) {
+        for (BlackboardArtifact artifact : event.getArtifacts()) {
+            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) { //don't index KWH artifacts.
+                try {
+                    index(artifact);
+                } catch (TskCoreException ex) {
+                    //TODO: is this the right error handling?
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(Bundle.SolrSearchService_indexingError(), artifact.getDisplayName());
+                }
+            }
         }
     }
 
