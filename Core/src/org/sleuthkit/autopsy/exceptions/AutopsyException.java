@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.exceptions;
 
+/*
+ * An exception to be thrown which can contain a user friendly message.
+ */
 public abstract class AutopsyException extends Exception {
 
     private static final long serialVersionUID = 1L;
@@ -71,7 +74,8 @@ public abstract class AutopsyException extends Exception {
     /**
      * Get the user friendly message if one exists.
      *
-     * @return the user friendly message if one exists, otherwise returns the exceptions normal message
+     * @return the user friendly message if one exists, otherwise returns the
+     *         exceptions normal message
      */
     public String getUserMessage() {
         return userMessage;
