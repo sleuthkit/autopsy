@@ -11,6 +11,13 @@
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
 
+    <target name="get-internal-dependencies" description="get internal ddependencies">
+        <!--Copy text classifier model to release-->
+        <copy todir="${basedir}/release/text_classifier_model">
+            <fileset dir="${basedir}/src/resources/org/sleuthkit/autopsy/experimental/textclassifier/text_classifier_model"/>
+        </copy>
+    </target>
+    
     <target name="resolve">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve file="ivy.xml" conf="experimental" log="quiet"/>
@@ -24,7 +31,7 @@
         <ivy:retrieve conf="*"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
     
-    <target name="init" depends="retrieve-all, harness.init" />
+    <target name="init" depends="retrieve-all, get-deps, harness.init" />
       
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  
@@ -48,4 +55,6 @@
             <globmapper from="*" to="*-MERGED"/>
         </copy>
     </target>
+    
+    <target name="get-deps" depends="get-internal-dependencies"/>
 </project>
