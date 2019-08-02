@@ -30,6 +30,8 @@ import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
  */
 class FileSearchData {
     
+    private final static long BYTES_PER_MB = 1000000;
+    
     /**
      * Enum representing how often the file occurs in the Central Repository.
      */
@@ -115,31 +117,32 @@ class FileSearchData {
      * Enum representing the file size
      */
     @NbBundle.Messages({
-        "FileSearchData.FileSize.XL.displayName=1GB+",
-        "FileSearchData.FileSize.large.displayName=200MB-1GB",
-        "FileSearchData.FileSize.medium.displayName=50-200MB",
-        "FileSearchData.FileSize.small.displayName=1-50MB",
-        "FileSearchData.FileSize.XS.displayName=Under 1MB",
+        "FileSearchData.FileSize.OVER_1GB.displayName=1 GB+",
+        "FileSearchData.FileSize.OVER_200MB.displayName=200 MB - 1 GB",
+        "FileSearchData.FileSize.OVER_50MB.displayName=50 - 200 MB",
+        "FileSearchData.FileSize.OVER_1MB.displayName=1 - 50 MB",
+        "FileSearchData.FileSize.OVER_100KB.displayName=100 KB - 1 MB",
+        "FileSearchData.FileSize.UNDER_100KB.displayName=Under 100 KB",
     })
     enum FileSize {
-        XL(0, 1000, -1, Bundle.FileSearchData_FileSize_XL_displayName()),
-        LARGE(1, 200, 1000, Bundle.FileSearchData_FileSize_large_displayName()),
-        MEDIUM(2, 50, 200, Bundle.FileSearchData_FileSize_medium_displayName()),
-        SMALL(3, 1, 50, Bundle.FileSearchData_FileSize_small_displayName()),
-        XS(4, 0, 1, Bundle.FileSearchData_FileSize_XS_displayName());
+        OVER_1GB(0, 1000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_OVER_1GB_displayName()),
+        OVER_200MB(1, 200 * BYTES_PER_MB, 1000, Bundle.FileSearchData_FileSize_OVER_200MB_displayName()),
+        OVER_50MB(2, 50 * BYTES_PER_MB, 200, Bundle.FileSearchData_FileSize_OVER_50MB_displayName()),
+        OVER_1MB(3, 1 * BYTES_PER_MB, 50, Bundle.FileSearchData_FileSize_OVER_1MB_displayName()),
+        OVER_100KB(4, 1000, 1 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_100KB_displayName()),
+        UNDER_100KB(5, 0, 1000, Bundle.FileSearchData_FileSize_UNDER_100KB_displayName());
 
         private final int ranking;   // Must be unique for each value
         private final long minBytes; // Note that the size must be strictly greater than this to match
         private final long maxBytes;
         private final String displayName;  
-        private final static long BYTES_PER_MB = 1048576;
         final static long NO_MAXIMUM = -1;
         
         FileSize(int ranking, long minMB, long maxMB, String displayName) {
             this.ranking = ranking;
-            this.minBytes = minMB * BYTES_PER_MB ;
+            this.minBytes = minMB;
             if (maxMB >= 0) {
-                this.maxBytes = maxMB * BYTES_PER_MB;
+                this.maxBytes = maxMB;
             } else {
                 this.maxBytes = NO_MAXIMUM;
             }
@@ -155,16 +158,18 @@ class FileSearchData {
          * @return the enum whose range contains the file size
          */
         static FileSize fromSize(long size) {
-            if (size > XL.minBytes) {
-                return XL;
-            } else if (size > LARGE.minBytes) {
-                return LARGE;
-            } else if (size > MEDIUM.minBytes) {
-                return MEDIUM;
-            } else if (size > SMALL.minBytes) {
-                return SMALL;
+            if (size > OVER_1GB.minBytes) {
+                return OVER_1GB;
+            } else if (size > OVER_200MB.minBytes) {
+                return OVER_200MB;
+            } else if (size > OVER_50MB.minBytes) {
+                return OVER_50MB;
+            } else if (size > OVER_1MB.minBytes) {
+                return OVER_1MB;
+            } else if (size > OVER_100KB.minBytes) {
+                return OVER_100KB;
             } else {
-                return XS;
+                return UNDER_100KB;
             }
         }
         
