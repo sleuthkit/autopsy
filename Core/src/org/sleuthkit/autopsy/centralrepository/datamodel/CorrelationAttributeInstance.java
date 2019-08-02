@@ -288,7 +288,7 @@ public class CorrelationAttributeInstance implements Serializable {
             this.supported = supported;
             this.enabled = enabled;
             if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
-                throw new EamDbException(Bundle.CorrelationAttributeInstance_nullName_message()); // NON-NLS
+                throw new EamDbException(Bundle.CorrelationAttributeInstance_invalidName_message()); // NON-NLS
             }
         }
 
