@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Coordinatio
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import org.sleuthkit.autopsy.exceptions.AutopsyException;
 
 /**
  *
@@ -181,32 +182,39 @@ public class EamDbUtil {
         }
         EamDb db = null;
         CoordinationService.Lock lock = null;
-        String messageForDialog = "";
+
         //get connection
         try {
-            db = EamDb.getInstance();
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
-            messageForDialog = Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
-        }
-        //get lock necessary for upgrade
-        if (db != null) {
             try {
-                // This may return null if locking isn't supported, which is fine. It will
-                // throw an exception if locking is supported but we can't get the lock
-                // (meaning the database is in use by another user)
-                lock = db.getExclusiveMultiUserDbLock();
-                //perform upgrade
+                db = EamDb.getInstance();
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Error updating central repository, unable to make connection", ex);
+                throw new EamDbException("Error updating central repository, unable to make connection", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+            }
+            //get lock necessary for upgrade
+            if (db != null) {
+                try {
+                    // This may return null if locking isn't supported, which is fine. It will
+                    // throw an exception if locking is supported but we can't get the lock
+                    // (meaning the database is in use by another user)
+                    lock = db.getExclusiveMultiUserDbLock();
+                    //perform upgrade         
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
+                    throw new EamDbException("Error updating central repository, unable to acquire exclusive lock", Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                }
+
                 try {
                     db.upgradeSchema();
-                } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
+                } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                    messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
-                    if (ex instanceof IncompatibleCentralRepoException) {
-                        messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
-                    } else if (ex instanceof EamDbException) {
-                        messageForDialog = ex.getMessage() + Bundle.EamDbUtil_centralRepoDisabled_message();
-                    }
+                    throw new EamDbException("Error updating central repository", ex.getUserMessage() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
+                    throw new EamDbException("Error updating central repository", Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
+                } catch (IncompatibleCentralRepoException ex) {
+                    LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
+                    throw new EamDbException("Error updating central repository", ex.getMessage() + "\n\n" + Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message(), ex);
                 } finally {
                     if (lock != null) {
                         try {
@@ -216,16 +224,11 @@ public class EamDbUtil {
                         }
                     }
                 }
-            } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
-                messageForDialog = Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
+            } else {
+                throw new EamDbException("Unable to connect to database", Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message());
             }
-
-        } else {
-            messageForDialog = Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
-        }
-        // Disable the central repo and clear the current settings.
-        if (!messageForDialog.isEmpty()) {
+        } catch (EamDbException ex) {
+            // Disable the central repo and clear the current settings.
             try {
                 if (null != EamDb.getInstance()) {
                     EamDb.getInstance().shutdownConnections();
@@ -235,8 +238,7 @@ public class EamDbUtil {
             }
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-
-            throw new EamDbException(messageForDialog, messageForDialog);
+            throw ex;
         }
     }
 

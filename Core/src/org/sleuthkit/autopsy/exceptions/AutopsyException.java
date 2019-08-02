@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.exceptions;
 
-public class AutopsyException extends Exception {
+public abstract class AutopsyException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
