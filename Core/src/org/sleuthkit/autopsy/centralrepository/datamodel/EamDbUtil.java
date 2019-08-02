@@ -236,7 +236,7 @@ public class EamDbUtil {
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
 
-            throw new EamDbException(messageForDialog);
+            throw new EamDbException(messageForDialog, messageForDialog);
         }
     }
 
