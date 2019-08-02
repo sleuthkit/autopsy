@@ -196,30 +196,31 @@ public class EamDbUtil {
                 // throw an exception if locking is supported but we can't get the lock
                 // (meaning the database is in use by another user)
                 lock = db.getExclusiveMultiUserDbLock();
+                //perform upgrade
+                try {
+                    db.upgradeSchema();
+                } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
+                    LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
+                    messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
+                    if (ex instanceof IncompatibleCentralRepoException) {
+                        messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
+                    } else if (ex instanceof EamDbException) {
+                        messageForDialog = ex.getMessage() + Bundle.EamDbUtil_centralRepoDisabled_message();
+                    }
+                } finally {
+                    if (lock != null) {
+                        try {
+                            lock.release();
+                        } catch (CoordinationServiceException ex) {
+                            LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
+                        }
+                    }
+                }
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error updating central repository, unable to acquire exclusive lock", ex);
                 messageForDialog = Bundle.EamDbUtil_exclusiveLockAquisitionFailure_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
             }
-            //perform upgrade
-            try {
-                db.upgradeSchema();
-            } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
-                LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
-                messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
-                if (ex instanceof IncompatibleCentralRepoException) {
-                    messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
-                } else if (ex instanceof EamDbException) {
-                    messageForDialog = ex.getMessage() + Bundle.EamDbUtil_centralRepoDisabled_message();
-                }
-            } finally {
-                if (lock != null) {
-                    try {
-                        lock.release();
-                    } catch (CoordinationServiceException ex) {
-                        LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
-                    }
-                }
-            }
+
         } else {
             messageForDialog = Bundle.EamDbUtil_centralRepoConnectionFailed_message() + Bundle.EamDbUtil_centralRepoDisabled_message();
         }
