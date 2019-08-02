@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.texttranslation;
 
-import java.awt.Component;
+import javax.swing.JPanel;
 
 /**
  * Interface for creating text translators. Implementing classes will be picked
@@ -45,22 +45,24 @@ public interface TextTranslator {
     String getName();
 
     /**
-     * Get the component to display on the settings options panel when this
+     * Get the JPanel to display on the settings options panel when this
      * TextTranslator is selected
      *
-     * @return the component which displays the settings options
+     * @return the panel which displays the settings options
      */
-    Component getComponent();
+    JPanel getSettingsPanel();
 
     /**
-     * Save the settings as they have been modified in the component.
-     */
-    void saveSettings();
-
-    /**
-     * Returns the hard limit for translation request sizes.
+     * Saves the current state of the settings in the settings panel.
      *
-     * @return
+     * @throws TranslationConfigException
      */
-    int getMaxPayloadSize();
+    void saveSettings() throws TranslationConfigException;
+
+    /**
+     * Gets the maximum number of characters allowed in a translation request.
+     *
+     * @return The maximum character count.
+     */
+    int getMaxTextChars();
 }
