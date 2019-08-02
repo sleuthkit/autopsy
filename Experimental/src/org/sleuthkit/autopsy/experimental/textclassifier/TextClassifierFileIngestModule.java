@@ -38,10 +38,19 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.util.ObjectStream;
 import org.apache.commons.io.IOUtils;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractorFound;
@@ -58,33 +67,50 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     private final static Logger logger = Logger.getLogger(TextClassifierFileIngestModule.class.getName());
     private final static String LANGUAGE_CODE = "en";
     private final static int MAX_FILE_SIZE = 100000000;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     
-    NaiveBayesModel model;
-    DocumentCategorizerME categorizer;
-    Tokenizer tokenizer;
+    private Blackboard blackboard;
+    private long jobId;
+    private NaiveBayesModel model;
+    private DocumentCategorizerME categorizer;
+    private Tokenizer tokenizer;
+    private FileTypeDetector fileTypeDetector;
     
-    public TextClassifierFileIngestModule() {
-        this(new File("C:\\Users\\Brian Kjersten\\Documents\\Story-specific\\5332\\model11314.txt"), SimpleTokenizer.INSTANCE);
-    }
-    
-    //TODO: Constructor. I suppose the constructor needs a model
-    public TextClassifierFileIngestModule(File modelFile, Tokenizer tokenizer) {
-        try {
-            this.model = deserializeModel(modelFile);
-        } catch (IOException ex) {
-            //TODO: RuntimeException is unacceptable in production
-            throw new RuntimeException("Cannot deserialize model file: " + ex.getMessage());
-        }
+    private void loadModel()  throws IOException {
+        File modelFile = InstalledFileLocator.getDefault().locate("text_classifier_model/model.txt", TextClassifierFileIngestModule.class.getPackage().getName(), false);
+        this.model = deserializeModel(modelFile);
         DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE,
                                                   model,
                                                   new HashMap<>(),
                                                   new DoccatFactory());
         this.categorizer = new DocumentCategorizerME(doccatModel);
-        this.tokenizer = tokenizer;
+    }
+    
+    @Messages({"ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found.",
+        "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
+    @Override
+    public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
+        this.tokenizer = SimpleTokenizer.INSTANCE;
+        
+        jobId = context.getJobId();
+       
+        try {
+            loadModel();
+        } catch (IOException ex) {
+            throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.");
+        }
+                
+        try {
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException("Exception while getting open case.", ex);
+        }
     }
     
     @Override
     public ProcessResult process(AbstractFile file) {
+        isSupported(file);
+        
         if (file.getSize() > MAX_FILE_SIZE) {
             //prevent it from allocating gigabytes of memory for extremely large files
             logger.log(Level.INFO, "Encountered file " + file.getParentPath() + file.getName() + " with object id of "
@@ -119,6 +145,16 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         return ProcessResult.OK;
     }
     
+    private boolean isSupported(AbstractFile abstractFile) {
+        String fileMimeType;
+        if (fileTypeDetector != null) {
+            fileMimeType = fileTypeDetector.getMIMEType(abstractFile);
+        } else {
+            fileMimeType = abstractFile.getMIMEType();
+        }
+        return fileMimeType != null && SupportedFormats.contains(fileMimeType);    
+    }
+    
     private boolean isInteresting(AbstractFile file) throws InitReaderException, IOException, NoTextExtractorFound {
         boolean isInteresting = true;
 
@@ -139,23 +175,5 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         NaiveBayesModel model = (NaiveBayesModel)reader.constructModel();
         fr.close();
         return model;
-    }
-    
-    
-    public void test(DoccatModel model, ObjectStream<DocumentSample> sampleStream) throws IOException {
-        long startTime = System.nanoTime();
-
-        DocumentCategorizerME myCategorizer = new DocumentCategorizerME(model);
-
-        DocumentCategorizerEvaluator evaluator = new DocumentCategorizerEvaluator(myCategorizer);
-        DocumentSample sample = sampleStream.read();
-        while (sample != null) {
-            evaluator.processSample(sample);
-            sample = sampleStream.read();
-        }
-
-        double duration = (System.nanoTime() - startTime) / 1.0e9;
-        System.out.println(duration + "\ttest time");
-        System.out.println(evaluator.getAccuracy() + "\taccuracy");
     }
 }
