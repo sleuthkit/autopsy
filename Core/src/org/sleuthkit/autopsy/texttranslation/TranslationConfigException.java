@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2018 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,28 +19,30 @@
 package org.sleuthkit.autopsy.texttranslation;
 
 /**
- * Provides a system exception for Text Translation errors
+ * Instances of this exception class are thrown when there is an error
+ * configuring text translation.
  */
-public class TranslationException extends Exception {
+public class TranslationConfigException extends Exception {
 
     private static final long serialVersionUID = 1L;
-        
+
     /**
      * Constructs a new exception with the specified message.
      *
      * @param message The message.
      */
-    public TranslationException(String message) {
-         super(message);   
+    public TranslationConfigException(String message) {
+        super(message);
     }
-    
+
     /**
      * Constructs a new exception with the specified message and cause.
      *
      * @param message The message.
      * @param cause   The cause.
      */
-    public TranslationException(String message, Throwable cause) {
+    public TranslationConfigException(String message, Throwable cause) {
         super(message, cause);
     }
+
 }
