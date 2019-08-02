@@ -48,12 +48,12 @@ class FileSearchData {
     enum Frequency {
 	UNIQUE(0, 1, Bundle.FileSearchData_Frequency_unique_displayName()),
 	RARE(1, 5, Bundle.FileSearchData_Frequency_rare_displayName()),
-	COUNT_10(1, 10, Bundle.FileSearchData_Frequency_count_10_displayName()),
-	COUNT_20(1, 10, Bundle.FileSearchData_Frequency_count_20_displayName()),
-	COUNT_50(1, 10, Bundle.FileSearchData_Frequency_count_50_displayName()),
-	COUNT_100(1, 10, Bundle.FileSearchData_Frequency_count_100_displayName()),
-	COMMON(2, 0, Bundle.FileSearchData_Frequency_common_displayName()),
-	UNKNOWN(3, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
+	COUNT_10(2, 10, Bundle.FileSearchData_Frequency_count_10_displayName()),
+	COUNT_20(3, 20, Bundle.FileSearchData_Frequency_count_20_displayName()),
+	COUNT_50(4, 50, Bundle.FileSearchData_Frequency_count_50_displayName()),
+	COUNT_100(5, 100, Bundle.FileSearchData_Frequency_count_100_displayName()),
+	COMMON(6, 0, Bundle.FileSearchData_Frequency_common_displayName()),
+	UNKNOWN(7, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
         
         private final int ranking;
         private final String displayName;

@@ -843,7 +843,7 @@ class FileSearch {
             String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
             
             String selectClause = " value, COUNT(value) FROM "
-                    + "(SELECT DISTINCT case_id, data_source_id, value FROM " + tableName
+                    + "(SELECT DISTINCT case_id, value FROM " + tableName
                     + " WHERE value IN ("
                     + hashes
                     + ")) AS foo GROUP BY value";
@@ -866,13 +866,13 @@ class FileSearch {
         private final List<ResultFile> files;
 
         private FrequencyCallback(List<ResultFile> files) {
-            this.files = files;
+            this.files = new ArrayList<>(files);
         }
 
         @Override
         public void process(ResultSet resultSet) {
             try {
-
+                
                 while (resultSet.next()) {
                     String hash = resultSet.getString(1);
                     int count = resultSet.getInt(2);
@@ -883,6 +883,11 @@ class FileSearch {
                             iterator.remove();
                         }
                     }
+                }
+                
+                // The files left had no matching entries in the CR, so mark them as unique
+                for (ResultFile file : files) {
+                    file.setFrequency(Frequency.UNIQUE);
                 }
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
