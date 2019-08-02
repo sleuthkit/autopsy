@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.coreutils;
+package org.sleuthkit.autopsy.exceptions;
 
 import java.util.logging.Filter;
 import java.util.logging.Handler;
@@ -26,6 +26,9 @@ import java.util.logging.SimpleFormatter;
 import javax.swing.JOptionPane;
 import org.openide.util.lookup.ServiceProvider;
 import org.netbeans.core.NbErrorManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Replaces default NetBeans exception handler. Displays messages in a dialog.
