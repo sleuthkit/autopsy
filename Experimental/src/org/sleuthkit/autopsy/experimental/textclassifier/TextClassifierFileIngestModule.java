@@ -144,6 +144,12 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
                 artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
                                                               Bundle.TextClassifierModuleFactory_moduleName_text(),
                                                               "Possible notable text"));
+                try {
+                    //Index the artifact for keyword search
+                    blackboard.indexArtifact(artifact);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NL
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage());
             }
