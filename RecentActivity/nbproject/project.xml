@@ -60,7 +60,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.15</specification-version>
+                        <specification-version>10.16</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
