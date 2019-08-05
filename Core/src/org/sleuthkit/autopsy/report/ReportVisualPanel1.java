@@ -21,9 +21,7 @@ package org.sleuthkit.autopsy.report;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.ArrayList;
-import java.util.Collections;
 import static java.util.Collections.swap;
-import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JList;
@@ -35,10 +33,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
  * Display reports modules.
@@ -49,9 +45,9 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
     private final ReportWizardPanel1 wizPanel;
     private final List<ReportModule> modules = new ArrayList<>();
-    private final List<GeneralReportModule> generalModules = new ArrayList<>();
-    private final List<TableReportModule> tableModules = new ArrayList<>();
-    private final List<FileReportModule> fileModules = new ArrayList<>();
+    private List<GeneralReportModule> generalModules = new ArrayList<>();
+    private List<TableReportModule> tableModules = new ArrayList<>();
+    private List<FileReportModule> fileModules = new ArrayList<>();
     private PortableCaseReportModule portableCaseModule;
     private Integer selectedIndex;
 
@@ -68,41 +64,35 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
     // Initialize the list of ReportModules
     private void initModules() {
-        for (TableReportModule module : Lookup.getDefault().lookupAll(TableReportModule.class)) {
-            if (moduleIsValid(module)) {
-                tableModules.add(module);
-                modules.add(module);
-            } else {
+        tableModules = ReportModuleLoader.getTableReportModules();
+        generalModules = ReportModuleLoader.getGeneralReportModules();
+        fileModules = ReportModuleLoader.getFileReportModules();
+        
+        for (TableReportModule module : tableModules) {
+            if (!moduleIsValid(module)) {
                 popupWarning(module);
+                tableModules.remove(module);                
+            }
+        }
+        
+        for (GeneralReportModule module : generalModules) {
+            if (!moduleIsValid(module)) {
+                popupWarning(module);
+                generalModules.remove(module);
             }
         }
 
-        for (GeneralReportModule module : Lookup.getDefault().lookupAll(GeneralReportModule.class)) {
-            if (moduleIsValid(module)) {
-                generalModules.add(module);
-                modules.add(module);
-            } else {
+        for (FileReportModule module : fileModules) {
+            if (!moduleIsValid(module)) {
                 popupWarning(module);
+                fileModules.remove(module);                
             }
         }
-
-        for (GeneralReportModule module : JythonModuleLoader.getGeneralReportModules()) {
-            if (moduleIsValid(module)) {
-                generalModules.add(module);
-                modules.add(module);
-            } else {
-                popupWarning(module);
-            }
-        }
-
-        for (FileReportModule module : Lookup.getDefault().lookupAll(FileReportModule.class)) {
-            if (moduleIsValid(module)) {
-                fileModules.add(module);
-                modules.add(module);
-            } else {
-                popupWarning(module);
-            }
-        }
+        
+        // our theory is that the report table modules are more common, so they go on top
+        modules.addAll(tableModules);
+        modules.addAll(fileModules);
+        modules.addAll(generalModules);
         
         portableCaseModule = new PortableCaseReportModule();
         if (moduleIsValid(portableCaseModule)) {
@@ -110,23 +100,6 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         } else {
             popupWarning(portableCaseModule);
         }
-
-        Collections.sort(modules, new Comparator<ReportModule>() {
-            @Override
-            public int compare(ReportModule rm1, ReportModule rm2) {
-                // our theory is that the report table modules are more common, so they go on top
-                boolean rm1isTable = (rm1 instanceof TableReportModule);
-                boolean rm2isTable = (rm2 instanceof TableReportModule);
-                if (rm1isTable && !rm2isTable) {
-                    return -1;
-                }
-                if (!rm1isTable && rm2isTable) {
-                    return 1;
-                }
-
-                return rm1.getName().compareTo(rm2.getName());
-            }
-        });
 
         // Results-HTML should always be first in the list of Report Modules.
         int indexOfHTMLReportModule = 0;
