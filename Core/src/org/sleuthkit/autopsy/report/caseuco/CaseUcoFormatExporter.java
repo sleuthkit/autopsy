@@ -58,7 +58,7 @@ public final class CaseUcoFormatExporter {
      * @param selectedDataSourceId Object ID of the data source
      * @param reportOutputPath Full path to directory where to save CASE-UCO
      * report file
-     * @param progressPanel ReportProgressDialog to update progress
+     * @param progressPanel ReportProgressPanel to update progress
      */
     @NbBundle.Messages({
         "ReportCaseUco.noCaseOpen=Unable to open currect case",
