@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import org.sleuthkit.autopsy.exceptions.AutopsyException;
 
-/*
+/**
  * An exception to be thrown by an artifact manager.
  */
 public class EamDbException extends AutopsyException {

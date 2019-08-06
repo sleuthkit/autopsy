@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.exceptions;
 
-/*
+/**
  * An exception to be thrown which can contain a user-friendly message.
  */
 public abstract class AutopsyException extends Exception {

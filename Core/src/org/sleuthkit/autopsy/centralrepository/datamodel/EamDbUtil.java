@@ -31,7 +31,6 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Coordinatio
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
-import org.sleuthkit.autopsy.exceptions.AutopsyException;
 
 /**
  *
