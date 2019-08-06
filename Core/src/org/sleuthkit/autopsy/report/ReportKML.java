@@ -184,7 +184,7 @@ class ReportKML implements GeneralReportModule {
         document.addContent(gpsSearchesFolder);
         document.addContent(gpsTrackpointsFolder);
 
-        ReportProgressDialog.ReportStatus result = ReportProgressDialog.ReportStatus.COMPLETE;
+        ReportProgressDialog.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
 
         /**
          * In the following code, nulls are okay, and are handled when we go to
@@ -233,12 +233,12 @@ class ReportKML implements GeneralReportModule {
                     logger.log(Level.WARNING, String.format("Error reading file '%s' (id=%d).", fileName, fileId), ex);
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Could not extract photo information.", ex); //NON-NLS
-                    result = ReportProgressDialog.ReportStatus.ERROR;
+                    result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Could not extract photos with EXIF metadata.", ex); //NON-NLS
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         try {
@@ -254,12 +254,12 @@ class ReportKML implements GeneralReportModule {
                     gpsBookmarksFolder.addContent(makePlacemark(bookmarkName, FeatureColor.BLUE, desc, timestamp, point, formattedCoordinates));
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Could not extract Bookmark information.", ex); //NON-NLS
-                    result = ReportProgressDialog.ReportStatus.ERROR;
+                    result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Could not get GPS Bookmarks from database.", ex); //NON-NLS
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         try {
@@ -275,12 +275,12 @@ class ReportKML implements GeneralReportModule {
                     gpsLastKnownLocationFolder.addContent(makePlacemark("Last Known Location", FeatureColor.PURPLE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Could not extract Last Known Location information.", ex); //NON-NLS
-                    result = ReportProgressDialog.ReportStatus.ERROR;
+                    result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Could not get GPS Last Known Location from database.", ex); //NON-NLS
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         try {
@@ -308,12 +308,12 @@ class ReportKML implements GeneralReportModule {
                     gpsRouteFolder.addContent(makePlacemark("End", FeatureColor.GREEN, desc, timestamp, endingPoint, formattedCoordinates)); //NON-NLS
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Could not extract GPS Route information.", ex); //NON-NLS
-                    result = ReportProgressDialog.ReportStatus.ERROR;
+                    result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Could not get GPS Routes from database.", ex); //NON-NLS
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         try {
@@ -336,7 +336,7 @@ class ReportKML implements GeneralReportModule {
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Could not get GPS Searches from database.", ex); //NON-NLS
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         try {
@@ -362,12 +362,12 @@ class ReportKML implements GeneralReportModule {
                     gpsTrackpointsFolder.addContent(makePlacemark(trackName, FeatureColor.YELLOW, desc, timestamp, point, formattedCoordinates));
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Could not extract Trackpoint information.", ex); //NON-NLS
-                    result = ReportProgressDialog.ReportStatus.ERROR;
+                    result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Could not get GPS Trackpoints from database.", ex); //NON-NLS
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         // Copy the style sheet
@@ -377,14 +377,14 @@ class ReportKML implements GeneralReportModule {
             FileUtil.copy(input, output);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error placing KML stylesheet. The .KML file will not function properly.", ex); //NON-NLS
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         try (FileOutputStream writer = new FileOutputStream(kmlFileFullPath)) {
             XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
             outputter.output(kmlDocument, writer);
             String prependedStatus = "";
-            if (result == ReportProgressDialog.ReportStatus.ERROR) {
+            if (result == ReportProgressPanel.ReportStatus.ERROR) {
                 prependedStatus = "Incomplete ";
             }
             Case.getCurrentCaseThrows().addReport(kmlFileFullPath,
@@ -392,14 +392,14 @@ class ReportKML implements GeneralReportModule {
                     prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Could not write the KML file.", ex); //NON-NLS
-            progressPanel.complete(ReportProgressDialog.ReportStatus.ERROR);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
         } catch (TskCoreException ex) {
             String errorMessage = String.format("Error adding %s to case as a report", kmlFileFullPath); //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            result = ReportProgressDialog.ReportStatus.ERROR;
+            result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
         progressPanel.complete(result);
