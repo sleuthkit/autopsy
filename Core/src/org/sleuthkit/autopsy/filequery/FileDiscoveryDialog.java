@@ -22,16 +22,10 @@ import com.google.common.eventbus.Subscribe;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
-import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -43,8 +37,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
-    private final DataResultViewerThumbnail thumbnailViewer;
-    private final DataResultViewerTable tableViewer;
+    private final ResultsPanel resultsPanel;
     private final ExplorerManager explorerManager;
 
     /**
@@ -58,11 +51,10 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         groupListPanel = new GroupListPanel();
         DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         dataContentPanel = DataContentPanel.createInstance();
-        thumbnailViewer = new DataResultViewerThumbnail(explorerManager);
-        tableViewer = new DataResultViewerTable(explorerManager);
+        resultsPanel = new ResultsPanel(explorerManager);
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
-        rightSplitPane.setTopComponent(tableViewer);
+        rightSplitPane.setTopComponent(resultsPanel);
         rightSplitPane.setBottomComponent(dataContentPanel);
         this.explorerManager.addPropertyChangeListener((evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES) && dataContentPanel != null) {
@@ -102,22 +94,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     @Subscribe
     void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
         SwingUtilities.invokeLater(() -> {
-            thumbnailViewer.resetComponent();
-            if (groupSelectedEvent.getType() == FileType.IMAGE || groupSelectedEvent.getType() == FileType.VIDEO) {
-                rightSplitPane.setTopComponent(thumbnailViewer);
-                if (groupSelectedEvent.getFiles().size() > 0) {
-                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(groupSelectedEvent.getFiles()))), true));
-                } else {
-                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
-                }
-            } else {
-                rightSplitPane.setTopComponent(tableViewer);
-                if (groupSelectedEvent.getFiles().size() > 0) {
-                    tableViewer.setNode(new TableFilterNode(new SearchNode(groupSelectedEvent.getFiles()), true));
-                } else {
-                    tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
-                }
-            }
+            resultsPanel.resetComponent(groupSelectedEvent);
         });
     }
 
