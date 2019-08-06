@@ -726,7 +726,7 @@ class TableReportGenerator {
             String currentList = "";
             while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
-                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                if (progressPanel.getStatus() == ReportProgressDialog.ReportStatus.CANCELED) {
                     break;
                 }
 
@@ -884,7 +884,7 @@ class TableReportGenerator {
             String currentSet = "";
             while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
-                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                if (progressPanel.getStatus() == ReportProgressDialog.ReportStatus.CANCELED) {
                     break;
                 }
 
