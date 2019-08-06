@@ -53,7 +53,7 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
         reportLabel.setText(reportName);
-        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.progress.queuing"));
+        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.progress.queuing"));
         status = ReportStatus.QUEUING;
         if (null != reportPath) {
             pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>"); //NON-NLS
@@ -99,7 +99,7 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
                 }
             });
         } else {
-            pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.initPathLabel.noFile"));
+            pathLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.initPathLabel.noFile"));
         }
     }
 
@@ -119,7 +119,7 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
     @Override
     public void start() {
         EventQueue.invokeLater(() -> {
-            statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
+            statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.start.progress.text"));
             status = ReportStatus.RUNNING;
         });
     }
@@ -213,7 +213,7 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
                         ReportStatus oldValue = status;
                         status = ReportStatus.COMPLETE;
                         statusMessageLabel.setForeground(Color.BLACK);
-                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLbl.text"));
+                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.complete.processLbl.text"));
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(GREEN);
@@ -225,7 +225,7 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
                         ReportStatus oldValue = status;
                         status = ReportStatus.ERROR;
                         statusMessageLabel.setForeground(RED);
-                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.complete.processLb2.text"));
+                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.complete.processLb2.text"));
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(RED);
@@ -263,7 +263,7 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
                 reportProgressBar.setString("Cancelled"); //NON-NLS
                 firePropertyChange(ReportStatus.CANCELED.toString(), oldValue, status);
                 statusMessageLabel.setForeground(RED);
-                statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
+                statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.cancel.procLbl.text"));
                 break;
         }
     }
