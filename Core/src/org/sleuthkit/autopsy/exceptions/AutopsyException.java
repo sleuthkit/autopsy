@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.exceptions;
 
 /*
- * An exception to be thrown which can contain a user friendly message.
+ * An exception to be thrown which can contain a user-friendly message.
  */
 public abstract class AutopsyException extends Exception {
 
@@ -28,7 +28,8 @@ public abstract class AutopsyException extends Exception {
     private final String userMessage;
 
     /**
-     * Constructs an exception to be thrown by a autopsy without a user message.
+     * Constructs an AutopsyException with identical exception and user-friendly
+     * messages.
      *
      * @param message Exception message.
      */
@@ -38,10 +39,11 @@ public abstract class AutopsyException extends Exception {
     }
 
     /**
-     * Constructs an exception to be thrown by a autopsy with a user exception.
+     * Constructs an AutopsyException with an exception message and user-friendly message.
      *
      * @param message     Exception message.
-     * @param userMessage the user friendly message to include in this exception
+     * @param userMessage The user-friendly message to include in this
+     *                    exception.
      */
     public AutopsyException(String message, String userMessage) {
         super(message);
@@ -49,7 +51,8 @@ public abstract class AutopsyException extends Exception {
     }
 
     /**
-     * Constructs an exception to be thrown by a autopsy without a user message.
+     * Constructs an AutopsyException with identical exception and user-friendly
+     * messages.
      *
      * @param message Exception message.
      * @param cause   Exception cause.
@@ -60,10 +63,11 @@ public abstract class AutopsyException extends Exception {
     }
 
     /**
-     * Constructs an exception to be thrown by a autopsy with a user exception.
+     * Constructs an AutopsyException with an exception message, a user-friendly messages, and a cause.
      *
      * @param message     Exception message.
-     * @param userMessage the user friendly message to include in this exception
+     * @param userMessage The user-friendly message to include in this
+     *                    exception.
      * @param cause       Exception cause.
      */
     public AutopsyException(String message, String userMessage, Throwable cause) {
@@ -72,10 +76,10 @@ public abstract class AutopsyException extends Exception {
     }
 
     /**
-     * Get the user friendly message if one exists.
+     * Get the user-friendly message if one exists.
      *
-     * @return the user friendly message if one exists, otherwise returns the
-     *         exceptions normal message
+     * @return The user-friendly message if one was explicitly set, otherwise
+     *         returns the exception message.
      */
     public String getUserMessage() {
         return userMessage;
