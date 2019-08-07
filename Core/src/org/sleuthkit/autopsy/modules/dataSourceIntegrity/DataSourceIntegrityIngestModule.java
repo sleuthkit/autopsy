@@ -303,7 +303,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error creating verification failed artifact", ex);
                 } catch (Blackboard.BlackboardException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.SEVERE, "Error posting verification failed artifact", ex);
                 } 
             }
 
