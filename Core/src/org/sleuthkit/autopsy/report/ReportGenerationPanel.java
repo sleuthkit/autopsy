@@ -24,7 +24,6 @@ import java.beans.PropertyChangeEvent;
 import javax.swing.Box;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 
@@ -39,7 +38,7 @@ class ReportGenerationPanel extends javax.swing.JPanel {
     private final GridBagConstraints constraints;
     private final Component glue;
     private ActionListener actionListener;
-    ReportProgressPanel progressPanel;
+    ReportProgressDialog progressPanel;
 
     /**
      * Constructs a panel that displays a panel used by a report generation
@@ -65,13 +64,13 @@ class ReportGenerationPanel extends javax.swing.JPanel {
      *
      * @return The report generation progress panel.
      */
-    ReportProgressPanel addReport(String reportName, String reportPath) {
+    ReportProgressDialog addReport(String reportName, String reportPath) {
         /*
          * Remove the "glue."
          */
         reportPanel.remove(glue);
 
-        progressPanel = new ReportProgressPanel(reportName, reportPath);
+        progressPanel = new ReportProgressDialog(reportName, reportPath);
         constraints.weighty = 0.0;
         constraints.anchor = GridBagConstraints.NORTH;
         reportPanel.add(progressPanel, constraints);
