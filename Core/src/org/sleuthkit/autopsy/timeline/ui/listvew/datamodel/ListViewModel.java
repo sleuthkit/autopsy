@@ -83,7 +83,7 @@ public class ListViewModel {
         List<TimelineEvent> events = eventManager.getEvents(timeRange, filterState.getActiveFilter());
         
         if (events == null || events.isEmpty()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();

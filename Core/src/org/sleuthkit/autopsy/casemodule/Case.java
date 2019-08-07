@@ -415,6 +415,7 @@ public class Case {
             eventPublisher.publish(new TimelineEventAddedEvent(event));
         }
 
+        @SuppressWarnings("deprecation")
         @Subscribe
         public void rebroadcastArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
             for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {

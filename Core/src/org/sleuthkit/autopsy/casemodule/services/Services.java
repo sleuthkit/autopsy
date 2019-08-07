@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -39,7 +40,6 @@ public class Services implements Closeable {
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
-    private final Blackboard blackboard;
 
     /**
      * Constructs a collection of case-level services (e.g., file manager, tags
@@ -59,9 +59,6 @@ public class Services implements Closeable {
         //null safe so that the functional tests run with no issues.
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
-
-        blackboard = new Blackboard(caseDb);
-        services.add(blackboard);
     }
 
     /**
@@ -95,9 +92,21 @@ public class Services implements Closeable {
      * Gets the blackboard service for the current case.
      *
      * @return The blackboard service for the current case.
+     * 
+     * @deprecated Use org.sleuthkit.autopsy.casemodule.getCaseBlackboard instead
      */
+    @Deprecated
     public Blackboard getBlackboard() {
-        return blackboard;
+        return new Blackboard();
+    }
+    
+    /**
+     * Gets the TSK Blackboard for the current case.
+     * 
+     * @return @org.sleuthkit.datamodel.Blackboard Blackboard for the current case.
+     */
+    public org.sleuthkit.datamodel.Blackboard getCaseBlackboard() {
+        return Case.getCurrentCase().getSleuthkitCase().getBlackboard();
     }
 
     /**
