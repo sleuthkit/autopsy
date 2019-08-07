@@ -142,13 +142,13 @@ class ReportGenerator {
      * @param tagSelections the enabled/disabled state of the tag names to be
      * included in the report
      */
-    void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) throws IOException {
-        if (tableReport != null && null != artifactTypeSelections) {
+    void generateTableReport(TableReportModule tableReport, TableReportSettings tableReportSettings) throws IOException {
+        if (tableReport != null && tableReportSettings != null && null != tableReportSettings.getArtifactSelections()) {
             String reportDir = createReportDirectory(tableReport);
             setupProgressPanel(tableReport, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
                 tableReport.startReport(reportDir);
-                TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
+                TableReportGenerator generator = new TableReportGenerator(tableReportSettings, progressPanel, tableReport);
                 generator.execute();
                 tableReport.endReport();
                 // finish progress, wrap up

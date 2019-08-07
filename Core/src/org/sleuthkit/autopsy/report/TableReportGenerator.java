@@ -72,22 +72,24 @@ class TableReportGenerator {
 
     private final List<String> errorList;
 
-    TableReportGenerator(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, ReportProgressPanel progressPanel, TableReportModule tableReport) {
+    TableReportGenerator(TableReportSettings settings, ReportProgressPanel progressPanel, TableReportModule tableReport) {
 
+        // ELTODO Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections
+        
         this.progressPanel = progressPanel;
         this.tableReport = tableReport;
         this.columnHeaderMap = new HashMap<>();
         errorList = new ArrayList<>();
         // Get the artifact types selected by the user.
-        for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
+        for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : settings.getArtifactSelections().entrySet()) {
             if (entry.getValue()) {
                 artifactTypes.add(entry.getKey());
             }
         }
 
         // Get the tag names selected by the user and make a tag names filter.
-        if (null != tagNameSelections) {
-            for (Map.Entry<String, Boolean> entry : tagNameSelections.entrySet()) {
+        if (null != settings.getTagSelections()) {
+            for (Map.Entry<String, Boolean> entry : settings.getTagSelections().entrySet()) {
                 if (entry.getValue() == true) {
                     tagNamesFilter.add(entry.getKey());
                 }

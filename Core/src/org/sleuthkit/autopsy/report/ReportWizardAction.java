@@ -75,7 +75,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             PortableCaseReportModule portableCaseReport = (PortableCaseReportModule) wiz.getProperty("portableCaseModule");  // NON-NLS
             try {
                 if (tableReport != null) {
-                    generator.generateTableReport(tableReport, (Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
+                    generator.generateTableReport(tableReport, new TableReportSettings((Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates"))); //NON-NLS
                 } else if (generalReport != null) {
                     generator.generateGeneralReport(generalReport);
                 } else if (fileReport != null) {

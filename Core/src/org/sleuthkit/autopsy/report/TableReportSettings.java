@@ -18,6 +18,10 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+
 /**
  * Class for persisting the selection of the tag types and artifact types used
  * by the TableReportGenerator class to drive report generation by
@@ -25,4 +29,19 @@ package org.sleuthkit.autopsy.report;
  */
 class TableReportSettings {
 
+    private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
+    private Map<String, Boolean> tagNameSelections = new HashMap<>();
+
+    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+        this.artifactTypeSelections = artifactTypeSelections;
+        this.tagNameSelections = tagNameSelections;
+    }
+    
+    Map<BlackboardArtifact.Type, Boolean> getArtifactSelections(){
+        return artifactTypeSelections;
+    }
+    
+    Map<String, Boolean> getTagSelections() {
+        return tagNameSelections;
+    }
 }
