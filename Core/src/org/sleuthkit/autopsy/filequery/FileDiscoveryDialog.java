@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import com.google.common.eventbus.Subscribe;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
@@ -48,10 +47,10 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         initComponents();
         explorerManager = new ExplorerManager();
         fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
-
         dataContentPanel = DataContentPanel.createInstance();
-        resultsPanel = new ResultsPanel(explorerManager);
-        groupListPanel = new GroupListPanel(centralRepoDb, resultsPanel);
+        resultsPanel = new ResultsPanel(explorerManager, centralRepoDb);
+        DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
+        groupListPanel = new GroupListPanel();
         DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
@@ -87,23 +86,12 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         setVisible(true);
     }
 
-    /**
-     * Subscribe to PageRetrievedEvents and respond to them
-     *
-     * @param pageRetrievedEvent the PageRetrievedEvent received
-     */
-    @Subscribe
-    void handlePageRetrievedEvent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
-        SwingUtilities.invokeLater(() -> {
-            resultsPanel.resetComponent(pageRetrievedEvent);
-        });
-    }
 
     @Override
     public void dispose() {
         fileSearchPanel.cancelSearch();
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
-        DiscoveryEvents.getDiscoveryEventBus().unregister(this);
+        DiscoveryEvents.getDiscoveryEventBus().unregister(resultsPanel);
         super.dispose();
     }
 

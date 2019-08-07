@@ -143,10 +143,10 @@ final class DiscoveryEvents {
             return results;
         }
 
-        
-        int getPageNumber(){
+        int getPageNumber() {
             return page;
         }
+
         /**
          * Get the type of files which exist in the group
          *
@@ -157,22 +157,55 @@ final class DiscoveryEvents {
         }
     }
 
-    static final class PageChangedEvent {
+    static final class GroupSelectedEvent {
 
-        private final int startingEntry;
-        private final int pageSize;
+        private final FileType resultType;
+        private final String groupName;
+        private final int groupSize;
+        private final List<FileSearchFiltering.FileFilter> searchfilters;
+        private final FileSearch.AttributeType groupingAttribute;
+        private final FileGroup.GroupSortingAlgorithm groupSort;
+        private final FileSorter.SortingMethod fileSortMethod;
 
-        PageChangedEvent(int startingEntry, int pageSize) {
-            this.startingEntry = startingEntry;
-            this.pageSize = pageSize;
+        GroupSelectedEvent(FileType resultType, String groupName, int groupSize, List<FileSearchFiltering.FileFilter> searchfilters,
+                FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
+                FileSorter.SortingMethod fileSortMethod) {
+            this.resultType = resultType;
+            this.groupName = groupName;
+            this.groupSize = groupSize;
+            this.searchfilters = searchfilters;
+            this.groupingAttribute = groupingAttribute;
+            this.groupSort = groupSort;
+            this.fileSortMethod = fileSortMethod;
+        }
+
+        FileType getResultType() {
+            return resultType;
         }
         
-        int getStartingEntry(){
-            return startingEntry;
+        String getGroupName() {
+            return groupName;
+        }
+
+        int getGroupSize(){
+            return groupSize;
         }
         
-        int getPageSize(){
-            return pageSize;
+        FileGroup.GroupSortingAlgorithm getGroupSort() {
+            return groupSort;
         }
+
+        FileSorter.SortingMethod getFileSort() {
+            return fileSortMethod;
+        }
+
+        List<FileSearchFiltering.FileFilter> getFilters() {
+            return searchfilters;
+        }
+
+        FileSearch.AttributeType getGroupingAttr() {
+            return groupingAttribute;
+        }
+
     }
 }

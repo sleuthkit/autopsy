@@ -22,7 +22,6 @@ import com.google.common.eventbus.Subscribe;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
 /**
@@ -31,8 +30,6 @@ import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private final ResultsPanel resultsPanel;
-    private final EamDb centralRepo;
     private FileType resultType = null;
     private LinkedHashMap<String, Integer> groupMap = null;
     private List<FileSearchFiltering.FileFilter> searchfilters;
@@ -40,15 +37,13 @@ class GroupListPanel extends javax.swing.JPanel {
     private FileGroup.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
     private String selectedGroupName;
-    private PageWorker pageWorker;
+
 
     /**
      * Creates new form GroupListPanel
      */
-    GroupListPanel(EamDb centralRepoDb, ResultsPanel resultsPanel) {
+    GroupListPanel() {
         initComponents();
-        this.centralRepo = centralRepoDb;
-        this.resultsPanel = resultsPanel;
     }
 
     /**
@@ -82,17 +77,6 @@ class GroupListPanel extends javax.swing.JPanel {
         }
         validate();
         repaint();
-    }
-
-    @Subscribe
-    void handlePageChangedEvent(DiscoveryEvents.PageChangedEvent pageChangedEvent) {
-        synchronized (this) {
-            if (pageWorker != null && !pageWorker.isDone()) {
-                pageWorker.cancel(true);
-            }
-            pageWorker = new PageWorker(resultType, centralRepo, searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, pageChangedEvent.getStartingEntry(), pageChangedEvent.getPageSize());
-            pageWorker.execute();
-        }
     }
 
     /**
@@ -142,14 +126,7 @@ class GroupListPanel extends javax.swing.JPanel {
             for (String groupName : groupMap.keySet()) {
                 if (selectedGroup.startsWith(groupName)) {
                     selectedGroupName = groupName;
-                    synchronized (this) {
-                        if (pageWorker != null && !pageWorker.isDone()) {
-                            pageWorker.cancel(true);
-                        }
-                        pageWorker = new PageWorker(resultType, centralRepo, searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, 0, resultsPanel.getPageSize());
-                        pageWorker.execute();
-                        break;
-                    }
+                    DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, selectedGroupName, groupMap.get(selectedGroupName), searchfilters,groupingAttribute, groupSort, fileSortMethod));
                 }
             }
 

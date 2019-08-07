@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.common.eventbus.Subscribe;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -38,50 +42,94 @@ public class ResultsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private final DataResultViewerThumbnail thumbnailViewer;
     private final DataResultViewerTable tableViewer;
+    private final EamDb centralRepo;
+    private FileSearchData.FileType resultType;
+    private List<FileSearchFiltering.FileFilter> searchFilters;
+    private FileSearch.AttributeType groupingAttribute;
+    private FileGroup.GroupSortingAlgorithm groupSort;
+    private FileSorter.SortingMethod fileSortMethod;
+    private String selectedGroupName;
     private int currentPage = 0;
     private int previousPageSize = 10;
+    private int groupSize = 0;
+    private PageWorker pageWorker;
 
     /**
      * Creates new form ResultsPanel
      */
-    public ResultsPanel(ExplorerManager explorerManager) {
+    public ResultsPanel(ExplorerManager explorerManager, EamDb centralRepo) {
         initComponents();
+        this.centralRepo = centralRepo;
         thumbnailViewer = new DataResultViewerThumbnail(explorerManager);
         tableViewer = new DataResultViewerTable(explorerManager);
         // Disable manual editing of page size spinner
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
 
-    void resetComponent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
-        currentPage = pageRetrievedEvent.getPageNumber();
-        updateControls();
-        thumbnailViewer.resetComponent();
-        resultsViewerPanel.remove(thumbnailViewer);
-        resultsViewerPanel.remove(tableViewer);
-        if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE || pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
-            resultsViewerPanel.add(thumbnailViewer);
-            if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(pageRetrievedEvent.getSearchResults()))), true));
+    /**
+     * Subscribe to PageRetrievedEvents and respond to them
+     *
+     * @param pageRetrievedEvent the PageRetrievedEvent received
+     */
+    @Subscribe
+    void handlePageRetrievedEvent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
+        SwingUtilities.invokeLater(() -> {
+            currentPage = pageRetrievedEvent.getPageNumber();
+            updateControls();
+            thumbnailViewer.resetComponent();
+            resultsViewerPanel.remove(thumbnailViewer);
+            resultsViewerPanel.remove(tableViewer);
+            if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE || pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
+                resultsViewerPanel.add(thumbnailViewer);
+                if (pageRetrievedEvent.getSearchResults().size() > 0) {
+                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(pageRetrievedEvent.getSearchResults()))), true));
+                } else {
+                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+                }
             } else {
-                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+                resultsViewerPanel.add(tableViewer);
+                if (pageRetrievedEvent.getSearchResults().size() > 0) {
+                    tableViewer.setNode(new TableFilterNode(new SearchNode(pageRetrievedEvent.getSearchResults()), true));
+                } else {
+                    tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+                }
             }
-        } else {
-            resultsViewerPanel.add(tableViewer);
-            if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                tableViewer.setNode(new TableFilterNode(new SearchNode(pageRetrievedEvent.getSearchResults()), true));
-            } else {
-                tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            resultsViewerPanel.validate();
+        });
+    }
+
+    @Subscribe
+    void handlePageChangedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+        SwingUtilities.invokeLater(() -> {
+            resultType = groupSelectedEvent.getResultType();
+            searchFilters = groupSelectedEvent.getFilters();
+            groupingAttribute = groupSelectedEvent.getGroupingAttr();
+            groupSort = groupSelectedEvent.getGroupSort();
+            fileSortMethod = groupSelectedEvent.getFileSort();
+            selectedGroupName = groupSelectedEvent.getGroupName();
+            groupSize = groupSelectedEvent.getGroupSize();
+            setPage(0);
+        });
+    }
+
+    private void setPage(int startingEntry) {
+        int pageSize = (int) pageSizeSpinner.getValue();
+        synchronized (this) {
+            if (pageWorker != null && !pageWorker.isDone()) {
+                pageWorker.cancel(true);
             }
+            pageWorker = new PageWorker(resultType, centralRepo, searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, startingEntry, pageSize);
+            pageWorker.execute();
         }
-        resultsViewerPanel.validate();
     }
 
     private void updateControls() {
         previousPageSize = (int) pageSizeSpinner.getValue();
         currentPageLabel.setText(Bundle.ResultsPanel_currentPage_displayValue(currentPage));
         previousPageButton.setEnabled(currentPage != 0);
-        nextPageButton.setEnabled(true);
-        gotoPageField.setEnabled(true);
+        int pageSize = (int) pageSizeSpinner.getValue();
+        nextPageButton.setEnabled(groupSize > ((currentPage + 1) * pageSize));
+        gotoPageField.setEnabled(groupSize > pageSize);
         pageSizeSpinner.setEnabled(true);
     }
 
@@ -108,8 +156,10 @@ public class ResultsPanel extends javax.swing.JPanel {
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         previousPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        previousPageButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+        previousPageButton.setBorder(null);
+        previousPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
         previousPageButton.setEnabled(false);
+        previousPageButton.setFocusable(false);
         previousPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
         previousPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
         previousPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
@@ -126,8 +176,10 @@ public class ResultsPanel extends javax.swing.JPanel {
         currentPageLabel.setPreferredSize(new java.awt.Dimension(90, 23));
 
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+        nextPageButton.setBorder(null);
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
         nextPageButton.setEnabled(false);
+        nextPageButton.setFocusable(false);
         nextPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
         nextPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
         nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
@@ -234,14 +286,9 @@ public class ResultsPanel extends javax.swing.JPanel {
             if (previousPageSize != pageSize) {
                 previousPage = 0;
             }
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageChangedEvent(previousPage * pageSize, pageSize));
+            setPage(previousPage * pageSize);
         }
-
     }//GEN-LAST:event_previousPageButtonActionPerformed
-
-    int getPageSize() {
-        return (int) pageSizeSpinner.getValue();
-    }
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         disablePagingControls();
@@ -250,31 +297,30 @@ public class ResultsPanel extends javax.swing.JPanel {
         if (previousPageSize != pageSize) {
             nextPage = 0;
         }
-        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageChangedEvent(nextPage * pageSize, pageSize));
+        setPage(nextPage * pageSize);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     @Messages({"ResultsPanel.invalidPageNumber.message=The selected page number does not exist",
         "ResultsPanel.invalidPageNumber.title=Invalid Page Number"})
     private void gotoPageFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageFieldActionPerformed
         int newPage;
-
         try {
             newPage = Integer.parseInt(gotoPageField.getText());
         } catch (NumberFormatException e) {
             //ignore input
             return;
         }
-        if (newPage < 0) {
+        int pageSize = (int) pageSizeSpinner.getValue();
+        if (newPage < 0 || groupSize < (newPage * pageSize)) {
             JOptionPane.showMessageDialog(this,
                     Bundle.ResultsPanel_invalidPageNumber_message(),
                     Bundle.ResultsPanel_invalidPageNumber_title(),
                     JOptionPane.WARNING_MESSAGE);
             return;
-
         }
         disablePagingControls();
-        int pageSize = (int) pageSizeSpinner.getValue();
-        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageChangedEvent(newPage * pageSize, pageSize));
+        
+        setPage(newPage * pageSize);
     }//GEN-LAST:event_gotoPageFieldActionPerformed
 
     private void disablePagingControls() {
