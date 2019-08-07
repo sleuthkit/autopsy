@@ -32,15 +32,23 @@ class TableReportSettings {
     private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
     private Map<String, Boolean> tagNameSelections = new HashMap<>();
 
+    /**
+     * Creates TableReportSettings object.
+     *
+     * @param artifactTypeSelections the enabled/disabled state of the artifact
+     * types to be included in the report
+     * @param tagNameSelections the enabled/disabled state of the tag names to
+     * be included in the report
+     */
     TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         this.artifactTypeSelections = artifactTypeSelections;
         this.tagNameSelections = tagNameSelections;
     }
-    
-    Map<BlackboardArtifact.Type, Boolean> getArtifactSelections(){
+
+    Map<BlackboardArtifact.Type, Boolean> getArtifactSelections() {
         return artifactTypeSelections;
     }
-    
+
     Map<String, Boolean> getTagSelections() {
         return tagNameSelections;
     }

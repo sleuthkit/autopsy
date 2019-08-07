@@ -79,7 +79,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
                 } else if (generalReport != null) {
                     generator.generateGeneralReport(generalReport);
                 } else if (fileReport != null) {
-                    generator.generateFileListReport(fileReport, (Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
+                    generator.generateFileListReport(fileReport, new FileReportSettings((Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions"))); //NON-NLS
                 } else if (portableCaseReport != null) {
                     generator.generatePortableCaseReport(portableCaseReport, (PortableCaseReportModule.PortableCaseOptions) wiz.getProperty("portableCaseReportOptions"));
                 }

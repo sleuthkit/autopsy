@@ -18,10 +18,28 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Class for persisting the file properties used by FileReportGenerator to drive
  * report generation by FileReportModules.
  */
 class FileReportSettings {
+    
+    private Map<FileReportDataTypes, Boolean> filePropertiesInfo = new HashMap<>();
 
+    /**
+     * Creates FileReportSettings object.
+     * 
+     * @param info the Information that should be included about each
+     * file in the report.
+     */
+    FileReportSettings(Map<FileReportDataTypes, Boolean> info) {
+        this.filePropertiesInfo = info;
+    }
+    
+    Map<FileReportDataTypes, Boolean> getFileProperties() {
+        return filePropertiesInfo;
+    }
 }
