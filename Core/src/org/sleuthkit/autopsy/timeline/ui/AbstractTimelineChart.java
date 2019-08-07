@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * Abstract base class for TimeLineChart based views.
@@ -72,7 +72,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
  */
 public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends AbstractTimeLineView {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractTimelineChart.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractTimelineChart.class.getName());
 
     @NbBundle.Messages("AbstractTimelineChart.defaultTooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractTimelineChart_defaultTooltip_text());
@@ -102,7 +102,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * Access to chart data via series
      */
     protected final ObservableList<XYChart.Series<X, Y>> dataSeries = FXCollections.<XYChart.Series<X, Y>>observableArrayList();
-    protected final Map<EventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
+    protected final Map<TimelineEventType, XYChart.Series<X, Y>> eventTypeToSeriesMap = new HashMap<>();
 
     private ChartType chart;
 
@@ -229,7 +229,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * Make a series for each event type in a consistent order.
      */
     protected final void createSeries() {
-        for (EventType eventType : EventType.allTypes) {
+        for (TimelineEventType eventType : getController().getEventsModel().getEventTypes()) {
             XYChart.Series<X, Y> series = new XYChart.Series<>();
             series.setName(eventType.getDisplayName());
             eventTypeToSeriesMap.put(eventType, series);
@@ -240,13 +240,13 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     /**
      * Get the series for the given EventType.
      *
-     * @param et The EventType to get the series for
+     * @param eventType The EventType to get the series for
      *
      * @return A Series object to contain all the events with the given
      *         EventType
      */
-    protected final XYChart.Series<X, Y> getSeries(final EventType et) {
-        return eventTypeToSeriesMap.get(et);
+    protected final XYChart.Series<X, Y> getSeries(final TimelineEventType eventType) {
+        return eventTypeToSeriesMap.get(eventType);
     }
 
     /**
@@ -256,16 +256,19 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      */
     protected AbstractTimelineChart(TimeLineController controller) {
         super(controller);
-        Platform.runLater(() -> {
-            VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
-            vBox.setFillWidth(false);
-            HBox hBox = new HBox(getSpacer(), vBox);
-            hBox.setFillHeight(false);
-            setBottom(hBox);
-            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
-            getSpacer().minWidthProperty().bind(spacerSize);
-            getSpacer().prefWidthProperty().bind(spacerSize);
-            getSpacer().maxWidthProperty().bind(spacerSize);
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
+                vBox.setFillWidth(false);
+                HBox hBox = new HBox(getSpacer(), vBox);
+                hBox.setFillHeight(false);
+                setBottom(hBox);
+                DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
+                getSpacer().minWidthProperty().bind(spacerSize);
+                getSpacer().prefWidthProperty().bind(spacerSize);
+                getSpacer().maxWidthProperty().bind(spacerSize);
+            }
         });
 
         createSeries();

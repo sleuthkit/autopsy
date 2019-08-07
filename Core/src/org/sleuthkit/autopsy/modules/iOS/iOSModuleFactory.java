@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.modules.iOS;
 
-import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;

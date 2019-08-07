@@ -36,8 +36,6 @@ import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -368,7 +366,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
-                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
+                    postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes));
                     se.increment();
                     ++totalQueries;
                 }
@@ -379,9 +377,6 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 logger.info("Operation terminated by user."); //NON-NLS
             }
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                    NbBundle.getMessage(this.getClass(), "SearchEngineURLQueryAnalyzer.parentModuleName.noSpace"),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
             logger.log(Level.INFO, "Extracted {0} queries from the blackboard", totalQueries); //NON-NLS
         }
     }
