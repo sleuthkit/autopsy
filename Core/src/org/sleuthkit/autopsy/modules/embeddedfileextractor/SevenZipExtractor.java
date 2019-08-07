@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,15 +35,15 @@ import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
 import net.sf.sevenzipjbinding.ExtractAskMode;
-import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.SevenZip;
-import net.sf.sevenzipjbinding.SevenZipException;
-import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
 import net.sf.sevenzipjbinding.IInArchive;
+import net.sf.sevenzipjbinding.ISequentialOutStream;
 import net.sf.sevenzipjbinding.PropID;
+import net.sf.sevenzipjbinding.SevenZip;
+import net.sf.sevenzipjbinding.SevenZipException;
+import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.mozilla.universalchardet.UniversalDetector;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
@@ -1149,7 +1147,7 @@ class SevenZipExtractor {
             List<byte[]> byteTokens = new ArrayList<>(tokens.size());
             int last = 0;
             for (int i = 0; i < filePathBytes.length; i++) {
-                if (filePathBytes[i] == 47 // '/') {
+                if (filePathBytes[i] == '/') {
                     int len = i - last;
                     byte[] arr = new byte[len];
                     System.arraycopy(filePathBytes, last, arr, 0, len);
@@ -1189,14 +1187,12 @@ class SevenZipExtractor {
 
             // get the next name in the path and look it up
             String childName = tokenPath.remove(0);
+            byte[] childNameBytes = tokenPathBytes.remove(0);
             UnpackedNode child = parent.getChild(childName);
             // create new node
             if (child == null) {
                 child = new UnpackedNode(childName, parent);
-                if (tokenPathBytes.size() > 0) {
-                    byte[] childNameBytes = tokenPathBytes.remove(0);
-                    child.setFileNameBytes(childNameBytes);
-                }
+                child.setFileNameBytes(childNameBytes);
                 parent.addChild(child);
             }
 
