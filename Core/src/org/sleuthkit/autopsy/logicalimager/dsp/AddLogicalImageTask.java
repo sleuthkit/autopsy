@@ -57,7 +57,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
     private final static String USERS_TXT = "users.txt"; //NON-NLS
-    private final static String MODULE_NAME = "LogicalImager"; //NON-NLS
+    private final static String MODULE_NAME = "Logical Imager"; //NON-NLS
     private final File src;
     private final File dest;
     private final DataSourceProcessorCallback callback;

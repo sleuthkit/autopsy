@@ -2,7 +2,7 @@
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
 
-AddLogicalImageTask.addingInterestingFiles=Adding search results as intersting files
+AddLogicalImageTask.addingInterestingFiles=Adding search results as interesting files
 # {0} - file
 AddLogicalImageTask.addingToReport=Adding {0} to report
 # {0} - target image path
@@ -14,7 +14,7 @@ AddLogicalImageTask.cannotFindFiles=Cannot find {0} or {1} in {2}
 # {0} - src
 # {1} - dest
 AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
-AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as intersting files
+AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as interesting files
 # {0} - file
 AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
 AddLogicalImageTask.doneCopying=Done copying
