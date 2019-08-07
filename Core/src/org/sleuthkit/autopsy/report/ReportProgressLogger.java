@@ -95,7 +95,7 @@ class ReportProgressLogger implements ReportProgressPanel {
     @Override
     public void updateStatusLabel(String statusMessage) {
         if (status != ReportStatus.CANCELED) {
-            logger.log(Level.INFO, "Report Progress Logger status update: {0}", statusMessage);
+            logger.log(Level.INFO, "Status update: {0}", statusMessage);
         }
     }
 
