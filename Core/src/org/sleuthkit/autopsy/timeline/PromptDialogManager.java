@@ -152,7 +152,7 @@ public final class PromptDialogManager {
      * @return True if they want to continue anyways.
      */
     @NbBundle.Messages({
-        "PromptDialogManager.confirmDuringIngest.headerText=You are trying to update the Timeline DB before ingest has been completed.  The Timeline DB may be incomplete.",
+        "PromptDialogManager.confirmDuringIngest.headerText=Ingest is still going, and the Timeline may be incomplete.",
         "PromptDialogManager.confirmDuringIngest.contentText=Do you want to continue?"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmDuringIngest() {
@@ -235,5 +235,4 @@ public final class PromptDialogManager {
         dialog.setHeaderText(Bundle.PromptDialogManager_showTimeLineDisabledMessage_headerText());
         dialog.showAndWait();
     }
-
 }

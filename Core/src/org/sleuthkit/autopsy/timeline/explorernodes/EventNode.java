@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.timeline.explorernodes;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
+import javax.annotation.Nonnull;
 import javax.swing.Action;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -31,54 +34,72 @@ import org.openide.nodes.Children;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
- * * Explorer Node for a SingleEvent.
+ * * Explorer Node for a TimelineEvent.
  */
 public class EventNode extends DisplayableItemNode {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(EventNode.class.getName());
 
-    private static final Logger LOGGER = Logger.getLogger(EventNode.class.getName());
+    private final TimelineEvent event;
 
-    private final SingleEvent event;
-
-    EventNode(SingleEvent event, AbstractFile file, BlackboardArtifact artifact) {
+    /**
+     * Construct an EvetNode for an event with a Content and a
+     * BlackboardArtifact in its lookup.
+     *
+     * @param event    The event this node is for.
+     * @param file     The Content the artifact for this event is derived form.
+     *                 Not Null.
+     * @param artifact The artifact this event is derived from. Not Null.
+     */
+    EventNode(@Nonnull TimelineEvent event, @Nonnull Content file, @Nonnull BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(event, file, artifact));
         this.event = event;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
+        TimelineEventType evenType = event.getEventType();
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(evenType));
     }
 
-    EventNode(SingleEvent event, AbstractFile file) {
+    /**
+     * Construct an EvetNode for an event with a Content in its lookup.
+     *
+     * @param event The event this node is for.
+     * @param file  The Content this event is derived directly from. Not Null.
+     */
+    EventNode(@Nonnull TimelineEvent event, @Nonnull Content file) {
         super(Children.LEAF, Lookups.fixed(event, file));
         this.event = event;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
+        TimelineEventType evenType = event.getEventType();
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(evenType));
     }
 
     @Override
     @NbBundle.Messages({
         "NodeProperty.displayName.icon=Icon",
         "NodeProperty.displayName.description=Description",
-        "NodeProperty.displayName.baseType=Base Type",
-        "NodeProperty.displayName.subType=Sub Type",
+        "NodeProperty.displayName.eventType=Event Type",
         "NodeProperty.displayName.known=Known",
         "NodeProperty.displayName.dateTime=Date/Time"})
     protected Sheet createSheet() {
@@ -92,9 +113,7 @@ public class EventNode extends DisplayableItemNode {
         properties.put(new NodeProperty<>("icon", Bundle.NodeProperty_displayName_icon(), "icon", true)); // NON-NLS //gets overridden with icon
         properties.put(new TimeProperty("time", Bundle.NodeProperty_displayName_dateTime(), "time ", getDateTimeString()));// NON-NLS
         properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getFullDescription())); // NON-NLS
-        properties.put(new NodeProperty<>("eventBaseType", Bundle.NodeProperty_displayName_baseType(), "base type", event.getEventType().getSuperType().getDisplayName())); // NON-NLS
-        properties.put(new NodeProperty<>("eventSubType", Bundle.NodeProperty_displayName_subType(), "sub type", event.getEventType().getDisplayName())); // NON-NLS
-        properties.put(new NodeProperty<>("Known", Bundle.NodeProperty_displayName_known(), "known", event.getKnown().toString())); // NON-NLS
+        properties.put(new NodeProperty<>("eventType", Bundle.NodeProperty_displayName_eventType(), "event type", event.getEventType().getDisplayName())); // NON-NLS
 
         return sheet;
     }
@@ -116,38 +135,43 @@ public class EventNode extends DisplayableItemNode {
         "EventNode.getAction.linkedFileMessage=There was a problem getting actions for the selected result. "
         + " The 'View File in Timeline' action will not be available."})
     public Action[] getActions(boolean context) {
-        Action[] superActions = super.getActions(context);
         List<Action> actionsList = new ArrayList<>();
-        actionsList.addAll(Arrays.asList(superActions));
-
-        final AbstractFile sourceFile = getLookup().lookup(AbstractFile.class);
+        Collections.addAll(actionsList, super.getActions(context));
 
         /*
-         * if this event is derived from an artifact, add actions to view the
+         * If this event is derived from an artifact, add actions to view the
          * source file and a "linked" file, if present.
          */
         final BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
+        final Content sourceFile = getLookup().lookup(Content.class);
         if (artifact != null) {
             try {
+                //find a linked file such as a downloaded file.
                 AbstractFile linkedfile = findLinked(artifact);
                 if (linkedfile != null) {
                     actionsList.add(ViewFileInTimelineAction.createViewFileAction(linkedfile));
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.EventNode_getAction_errorTitle(), Bundle.EventNode_getAction_linkedFileMessage());
             }
 
-            //if this event  has associated content, add the action to view the content in the timeline
-            if (null != sourceFile) {
-                actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(sourceFile));
+            //add the action to view the content in the timeline, only for abstract files ( ie with times)
+            if (sourceFile instanceof AbstractFile) {
+                actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction((AbstractFile) sourceFile));
             }
         }
 
         //get default actions for the source file
-        final List<Action> factoryActions = DataModelActionsFactory.getActions(sourceFile, artifact != null);
-
+        List<Action> factoryActions = DataModelActionsFactory.getActions(sourceFile, artifact != null);
         actionsList.addAll(factoryActions);
+        if (factoryActions.isEmpty()) { // if there were no factory supplied actions, at least add the tagging actions.
+            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+            if (isExactlyOneArtifactSelected()) {
+                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
+            }
+            actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        }
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
@@ -183,11 +207,11 @@ public class EventNode extends DisplayableItemNode {
             super(name, String.class, displayName, shortDescription);
             setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button NON-NLS
             this.value = value;
-            TimeLineController.getTimeZone().addListener(timeZone -> {
+            TimeLineController.timeZoneProperty().addListener(timeZone -> {
                 try {
                     setValue(getDateTimeString());
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected error setting date/time property on EventNode explorer node", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unexpected error setting date/time property on EventNode explorer node", ex); //NON-NLS
                 }
             });
 
@@ -199,10 +223,10 @@ public class EventNode extends DisplayableItemNode {
         }
 
         @Override
-        public void setValue(String t) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        public void setValue(String newValue) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
             String oldValue = getValue();
-            value = t;
-            firePropertyChange("time", oldValue, t); // NON-NLS
+            value = newValue;
+            firePropertyChange("time", oldValue, newValue); // NON-NLS
         }
     }
 
@@ -213,18 +237,19 @@ public class EventNode extends DisplayableItemNode {
      * @param eventID     The ID of the event this node is for.
      * @param eventsModel The model that provides access to the events DB.
      *
-     * @return An EventNode with the file (and artifact) backing this event in
-     *         its lookup.
+     * @return An EventNode with the content (and possible artifact) backing
+     *         this event in its lookup.
      */
-    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException, NoCurrentCaseException {
+    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException {
+
+        SleuthkitCase sleuthkitCase = eventsModel.getSleuthkitCase();
+
         /*
          * Look up the event by id and creata an EventNode with the appropriate
          * data in the lookup.
          */
-        final SingleEvent eventById = eventsModel.getEventById(eventID);
-
-        SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+            final TimelineEvent eventById = eventsModel.getEventById(eventID);
+        Content file = sleuthkitCase.getContentById(eventById.getFileObjID());
 
         if (eventById.getArtifactID().isPresent()) {
             BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
@@ -234,29 +259,9 @@ public class EventNode extends DisplayableItemNode {
         }
     }
 
-    /**
-     * this code started as a cut and past of
-     * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
-     * ba)
-     *
-     * It is now in DisplayableItemNode too, but is not accesible across
-     * packages
-     *
-     * @param artifact
-     *
-     * @return
-     */
-    static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
-
-        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
-
-        if (pathIDAttribute != null) {
-            long contentID = pathIDAttribute.getValueLong();
-            if (contentID != -1) {
-                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
-            }
-        }
-
-        return null;
+    private static boolean isExactlyOneArtifactSelected() {
+        final Collection<BlackboardArtifact> selectedArtifactsList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+        return selectedArtifactsList.size() == 1;
     }
 }

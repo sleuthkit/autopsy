@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -38,6 +39,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskDataException;
@@ -297,11 +299,12 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                     BlackboardArtifact verificationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED, img.getId());
                     verificationFailedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                         DataSourceIntegrityModuleFactory.getModuleName(), artifactComment));
-                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(DataSourceIntegrityModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED));
+                    Case.getCurrentCase().getServices().getCaseBlackboard().postArtifact(verificationFailedArtifact, DataSourceIntegrityModuleFactory.getModuleName());
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error creating verification failed artifact", ex);
-                }
+                } catch (Blackboard.BlackboardException ex) {
+                    Exceptions.printStackTrace(ex);
+                } 
             }
 
             services.postMessage(IngestMessage.createMessage(messageType, DataSourceIntegrityModuleFactory.getModuleName(), 
