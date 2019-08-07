@@ -153,7 +153,8 @@ FileSearchPanel.exifCheckbox.text=Must contain EXIF data
 FileSearchPanel.notableCheckbox.text=Must have been tagged as notable
 FileSearchPanel.objectsCheckbox.text=Objects:
 # {0} - currentPage
-ResultsPanel.currentPage.displayValue=Page: {0}
+# {1} - totalPages
+ResultsPanel.currentPage.displayValue=Page: {0} of {1}
 ResultsPanel.currentPageLabel.text=Page: -
 ResultsPanel.invalidPageNumber.message=The selected page number does not exist
 ResultsPanel.invalidPageNumber.title=Invalid Page Number

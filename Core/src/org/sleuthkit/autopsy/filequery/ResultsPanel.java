@@ -123,11 +123,14 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
+    @Messages({"# {0} - currentPage",
+        "# {1} - totalPages",
+        "ResultsPanel.currentPage.displayValue=Page: {0} of {1}"})
     private void updateControls() {
         previousPageSize = (int) pageSizeSpinner.getValue();
-        currentPageLabel.setText(Bundle.ResultsPanel_currentPage_displayValue(currentPage));
-        previousPageButton.setEnabled(currentPage != 0);
         int pageSize = (int) pageSizeSpinner.getValue();
+        currentPageLabel.setText(Bundle.ResultsPanel_currentPage_displayValue(currentPage + 1, (groupSize / pageSize) + 1));
+        previousPageButton.setEnabled(currentPage != 0);
         nextPageButton.setEnabled(groupSize > ((currentPage + 1) * pageSize));
         gotoPageField.setEnabled(groupSize > pageSize);
         pageSizeSpinner.setEnabled(true);
@@ -276,8 +279,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    @Messages({"# {0} - currentPage",
-        "ResultsPanel.currentPage.displayValue=Page: {0}"})
     private void previousPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousPageButtonActionPerformed
         if (currentPage > 0) {
             disablePagingControls();
@@ -310,6 +311,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             //ignore input
             return;
         }
+        newPage -= 1;
         int pageSize = (int) pageSizeSpinner.getValue();
         if (newPage < 0 || groupSize < (newPage * pageSize)) {
             JOptionPane.showMessageDialog(this,
@@ -319,7 +321,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             return;
         }
         disablePagingControls();
-        
+
         setPage(newPage * pageSize);
     }//GEN-LAST:event_gotoPageFieldActionPerformed
 
