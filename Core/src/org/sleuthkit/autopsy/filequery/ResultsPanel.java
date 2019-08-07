@@ -1,13 +1,29 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.filequery;
 
+import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -22,6 +38,8 @@ public class ResultsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private final DataResultViewerThumbnail thumbnailViewer;
     private final DataResultViewerTable tableViewer;
+    private int currentPage = 0;
+    private int previousPageSize = 10;
 
     /**
      * Creates new form ResultsPanel
@@ -30,28 +48,41 @@ public class ResultsPanel extends javax.swing.JPanel {
         initComponents();
         thumbnailViewer = new DataResultViewerThumbnail(explorerManager);
         tableViewer = new DataResultViewerTable(explorerManager);
+        // Disable manual editing of page size spinner
+        ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
 
-    void resetComponent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+    void resetComponent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
+        currentPage = pageRetrievedEvent.getPageNumber();
+        updateControls();
         thumbnailViewer.resetComponent();
-        jPanel2.remove(thumbnailViewer);
-        jPanel2.remove(tableViewer);
-        if (groupSelectedEvent.getType() == FileSearchData.FileType.IMAGE || groupSelectedEvent.getType() == FileSearchData.FileType.VIDEO) {
-            jPanel2.add(thumbnailViewer);
-            if (groupSelectedEvent.getFiles().size() > 0) {
-                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(groupSelectedEvent.getFiles()))), true));
+        resultsViewerPanel.remove(thumbnailViewer);
+        resultsViewerPanel.remove(tableViewer);
+        if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE || pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
+            resultsViewerPanel.add(thumbnailViewer);
+            if (pageRetrievedEvent.getSearchResults().size() > 0) {
+                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(pageRetrievedEvent.getSearchResults()))), true));
             } else {
                 thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
             }
         } else {
-            jPanel2.add(tableViewer);
-            if (groupSelectedEvent.getFiles().size() > 0) {
-                tableViewer.setNode(new TableFilterNode(new SearchNode(groupSelectedEvent.getFiles()), true));
+            resultsViewerPanel.add(tableViewer);
+            if (pageRetrievedEvent.getSearchResults().size() > 0) {
+                tableViewer.setNode(new TableFilterNode(new SearchNode(pageRetrievedEvent.getSearchResults()), true));
             } else {
                 tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
             }
         }
-        jPanel2.validate();
+        resultsViewerPanel.validate();
+    }
+
+    private void updateControls() {
+        previousPageSize = (int) pageSizeSpinner.getValue();
+        currentPageLabel.setText(Bundle.ResultsPanel_currentPage_displayValue(currentPage));
+        previousPageButton.setEnabled(currentPage != 0);
+        nextPageButton.setEnabled(true);
+        gotoPageField.setEnabled(true);
+        pageSizeSpinner.setEnabled(true);
     }
 
     /**
@@ -63,76 +94,206 @@ public class ResultsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
-        jSpinner1 = new javax.swing.JSpinner();
-        jPanel2 = new javax.swing.JPanel();
+        pagingPanel = new javax.swing.JPanel();
+        previousPageButton = new javax.swing.JButton();
+        currentPageLabel = new javax.swing.JLabel();
+        nextPageButton = new javax.swing.JButton();
+        pageSizeSpinner = new javax.swing.JSpinner();
+        pageControlsLabel = new javax.swing.JLabel();
+        gotoPageLabel = new javax.swing.JLabel();
+        gotoPageField = new javax.swing.JTextField();
+        pageSizeLabel = new javax.swing.JLabel();
+        resultsViewerPanel = new javax.swing.JPanel();
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.jButton1.text")); // NOI18N
+        previousPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
+        previousPageButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+        previousPageButton.setEnabled(false);
+        previousPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
+        previousPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
+        previousPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        previousPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
+        previousPageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                previousPageButtonActionPerformed(evt);
+            }
+        });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(currentPageLabel, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.currentPageLabel.text")); // NOI18N
+        currentPageLabel.setMaximumSize(new java.awt.Dimension(90, 23));
+        currentPageLabel.setMinimumSize(new java.awt.Dimension(90, 23));
+        currentPageLabel.setPreferredSize(new java.awt.Dimension(90, 23));
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton2, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.jButton2.text")); // NOI18N
+        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+        nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+        nextPageButton.setEnabled(false);
+        nextPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
+        nextPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
+        nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
+        nextPageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nextPageButtonActionPerformed(evt);
+            }
+        });
 
-        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(10, 10, 200, 10));
-        jSpinner1.setEditor(new javax.swing.JSpinner.NumberEditor(jSpinner1, ""));
-        jSpinner1.setFocusable(false);
+        pageSizeSpinner.setModel(new javax.swing.SpinnerNumberModel(10, 10, 200, 10));
+        pageSizeSpinner.setEditor(new javax.swing.JSpinner.NumberEditor(pageSizeSpinner, ""));
+        pageSizeSpinner.setEnabled(false);
+        pageSizeSpinner.setFocusable(false);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        org.openide.awt.Mnemonics.setLocalizedText(pageControlsLabel, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.pageControlsLabel.text")); // NOI18N
+        pageControlsLabel.setMaximumSize(new java.awt.Dimension(33, 23));
+        pageControlsLabel.setMinimumSize(new java.awt.Dimension(33, 23));
+        pageControlsLabel.setPreferredSize(new java.awt.Dimension(33, 23));
+
+        org.openide.awt.Mnemonics.setLocalizedText(gotoPageLabel, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.gotoPageLabel.text")); // NOI18N
+        gotoPageLabel.setMaximumSize(new java.awt.Dimension(70, 23));
+        gotoPageLabel.setMinimumSize(new java.awt.Dimension(70, 23));
+        gotoPageLabel.setPreferredSize(new java.awt.Dimension(70, 23));
+
+        gotoPageField.setEnabled(false);
+        gotoPageField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                gotoPageFieldActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(pageSizeLabel, org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.pageSizeLabel.text")); // NOI18N
+        pageSizeLabel.setMaximumSize(new java.awt.Dimension(60, 23));
+        pageSizeLabel.setMinimumSize(new java.awt.Dimension(60, 23));
+        pageSizeLabel.setPreferredSize(new java.awt.Dimension(60, 23));
+
+        javax.swing.GroupLayout pagingPanelLayout = new javax.swing.GroupLayout(pagingPanel);
+        pagingPanel.setLayout(pagingPanelLayout);
+        pagingPanelLayout.setHorizontalGroup(
+            pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pagingPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jButton1)
+                .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(pageControlsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(previousPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(gotoPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton2)
-                .addGap(4, 4, 4)
-                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(240, Short.MAX_VALUE))
+                .addComponent(gotoPageField, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(pageSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(pageSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(81, Short.MAX_VALUE))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        pagingPanelLayout.setVerticalGroup(
+            pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pagingPanelLayout.createSequentialGroup()
                 .addGap(4, 4, 4)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
-                    .addComponent(jButton2)
-                    .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
+                .addGroup(pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(nextPageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(previousPageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(pageControlsLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(pageSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(gotoPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(gotoPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(pageSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(4, 4, 4))
         );
 
-        jPanel2.setLayout(new java.awt.BorderLayout());
+        resultsViewerPanel.setLayout(new java.awt.BorderLayout());
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(pagingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"# {0} - currentPage",
+        "ResultsPanel.currentPage.displayValue=Page: {0}"})
+    private void previousPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousPageButtonActionPerformed
+        if (currentPage > 0) {
+            disablePagingControls();
+            int previousPage = currentPage - 1;
+            int pageSize = (int) pageSizeSpinner.getValue();
+            if (previousPageSize != pageSize) {
+                previousPage = 0;
+            }
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageChangedEvent(previousPage * pageSize, pageSize));
+        }
+
+    }//GEN-LAST:event_previousPageButtonActionPerformed
+
+    int getPageSize() {
+        return (int) pageSizeSpinner.getValue();
+    }
+
+    private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
+        disablePagingControls();
+        int nextPage = currentPage + 1;
+        int pageSize = (int) pageSizeSpinner.getValue();
+        if (previousPageSize != pageSize) {
+            nextPage = 0;
+        }
+        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageChangedEvent(nextPage * pageSize, pageSize));
+    }//GEN-LAST:event_nextPageButtonActionPerformed
+
+    @Messages({"ResultsPanel.invalidPageNumber.message=The selected page number does not exist",
+        "ResultsPanel.invalidPageNumber.title=Invalid Page Number"})
+    private void gotoPageFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageFieldActionPerformed
+        int newPage;
+
+        try {
+            newPage = Integer.parseInt(gotoPageField.getText());
+        } catch (NumberFormatException e) {
+            //ignore input
+            return;
+        }
+        if (newPage < 0) {
+            JOptionPane.showMessageDialog(this,
+                    Bundle.ResultsPanel_invalidPageNumber_message(),
+                    Bundle.ResultsPanel_invalidPageNumber_title(),
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+
+        }
+        disablePagingControls();
+        int pageSize = (int) pageSizeSpinner.getValue();
+        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageChangedEvent(newPage * pageSize, pageSize));
+    }//GEN-LAST:event_gotoPageFieldActionPerformed
+
+    private void disablePagingControls() {
+        nextPageButton.setEnabled(false);
+        previousPageButton.setEnabled(false);
+        gotoPageField.setEnabled(false);
+        pageSizeSpinner.setEnabled(false);
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JSpinner jSpinner1;
+    private javax.swing.JLabel currentPageLabel;
+    private javax.swing.JTextField gotoPageField;
+    private javax.swing.JLabel gotoPageLabel;
+    private javax.swing.JButton nextPageButton;
+    private javax.swing.JLabel pageControlsLabel;
+    private javax.swing.JLabel pageSizeLabel;
+    private javax.swing.JSpinner pageSizeSpinner;
+    private javax.swing.JPanel pagingPanel;
+    private javax.swing.JButton previousPageButton;
+    private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
 }

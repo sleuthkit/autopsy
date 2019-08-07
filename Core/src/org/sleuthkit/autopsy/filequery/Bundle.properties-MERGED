@@ -152,7 +152,12 @@ FileSearchPanel.scoreCheckbox.text=Has Score:
 FileSearchPanel.exifCheckbox.text=Must contain EXIF data
 FileSearchPanel.notableCheckbox.text=Must have been tagged as notable
 FileSearchPanel.objectsCheckbox.text=Objects:
-ResultsPanel.jButton1.text=previous page
-ResultsPanel.jButton2.text=next page
-ResultsPanel.jLabel1.text=Page X of Y
+# {0} - currentPage
+ResultsPanel.currentPage.displayValue=Page: {0}
+ResultsPanel.currentPageLabel.text=Page: -
+ResultsPanel.invalidPageNumber.message=The selected page number does not exist
+ResultsPanel.invalidPageNumber.title=Invalid Page Number
+ResultsPanel.pageControlsLabel.text=Pages:
+ResultsPanel.gotoPageLabel.text=Go to Page:
+ResultsPanel.pageSizeLabel.text=Page size:
 SearchNode.getName.text=Search Result

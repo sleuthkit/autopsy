@@ -21,27 +21,34 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.Subscribe;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Panel to display the list of groups which are provided by a search
  */
 class GroupListPanel extends javax.swing.JPanel {
 
-    private final static Logger logger = Logger.getLogger(GroupListPanel.class.getName());
     private static final long serialVersionUID = 1L;
-    private SearchResults results = null;
+    private final ResultsPanel resultsPanel;
+    private final EamDb centralRepo;
     private FileType resultType = null;
+    private LinkedHashMap<String, Integer> groupMap = null;
+    private List<FileSearchFiltering.FileFilter> searchfilters;
+    private FileSearch.AttributeType groupingAttribute;
+    private FileGroup.GroupSortingAlgorithm groupSort;
+    private FileSorter.SortingMethod fileSortMethod;
+    private String selectedGroupName;
+    private PageWorker pageWorker;
 
     /**
      * Creates new form GroupListPanel
      */
-    GroupListPanel() {
+    GroupListPanel(EamDb centralRepoDb, ResultsPanel resultsPanel) {
         initComponents();
+        this.centralRepo = centralRepoDb;
+        this.resultsPanel = resultsPanel;
     }
 
     /**
@@ -52,7 +59,6 @@ class GroupListPanel extends javax.swing.JPanel {
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
         resultType = searchStartedEvent.getType();
-        results = new SearchResults();
         groupList.setListData(new String[0]);
     }
 
@@ -64,15 +70,29 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     @Subscribe
     void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
-
-        results = searchCompleteEvent.getSearchResults();
-        List<String> groupNames = results.getGroupNamesWithCounts();
+        groupMap = searchCompleteEvent.getGroupMap();
+        searchfilters = searchCompleteEvent.getFilters();
+        groupingAttribute = searchCompleteEvent.getGroupingAttr();
+        groupSort = searchCompleteEvent.getGroupSort();
+        fileSortMethod = searchCompleteEvent.getFileSort();
+        List<String> groupNames = groupMap.entrySet().stream().map(e -> e.getKey() + " (" + e.getValue() + ")").collect(Collectors.toList());
         groupList.setListData(groupNames.toArray(new String[groupNames.size()]));
         if (groupList.getModel().getSize() > 0) {
             groupList.setSelectedIndex(0);
         }
         validate();
         repaint();
+    }
+
+    @Subscribe
+    void handlePageChangedEvent(DiscoveryEvents.PageChangedEvent pageChangedEvent) {
+        synchronized (this) {
+            if (pageWorker != null && !pageWorker.isDone()) {
+                pageWorker.cancel(true);
+            }
+            pageWorker = new PageWorker(resultType, centralRepo, searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, pageChangedEvent.getStartingEntry(), pageChangedEvent.getPageSize());
+            pageWorker.execute();
+        }
     }
 
     /**
@@ -112,13 +132,27 @@ class GroupListPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Respond to a group being selected by sending a GroupSelectedEvent
+     * Respond to a group being selected by sending a PageRetrievedEvent
      *
      * @param evt the event which indicates a selection occurs in the list
      */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
-        if (!evt.getValueIsAdjusting() && results != null) {
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, results.getAbstractFilesInGroup(groupList.getSelectedValue())));
+        if (!evt.getValueIsAdjusting()) {
+            String selectedGroup = groupList.getSelectedValue();
+            for (String groupName : groupMap.keySet()) {
+                if (selectedGroup.startsWith(groupName)) {
+                    selectedGroupName = groupName;
+                    synchronized (this) {
+                        if (pageWorker != null && !pageWorker.isDone()) {
+                            pageWorker.cancel(true);
+                        }
+                        pageWorker = new PageWorker(resultType, centralRepo, searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, 0, resultsPanel.getPageSize());
+                        pageWorker.execute();
+                        break;
+                    }
+                }
+            }
+
         }
     }//GEN-LAST:event_groupSelected
 

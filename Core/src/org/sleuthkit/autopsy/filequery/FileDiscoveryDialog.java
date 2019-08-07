@@ -48,10 +48,11 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         initComponents();
         explorerManager = new ExplorerManager();
         fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
-        groupListPanel = new GroupListPanel();
-        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
+
         dataContentPanel = DataContentPanel.createInstance();
         resultsPanel = new ResultsPanel(explorerManager);
+        groupListPanel = new GroupListPanel(centralRepoDb, resultsPanel);
+        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
@@ -87,14 +88,14 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Subscribe to GroupSelectedEvents and respond to them
+     * Subscribe to PageRetrievedEvents and respond to them
      *
-     * @param groupSelectedEvent the GroupSelectedEvent received
+     * @param pageRetrievedEvent the PageRetrievedEvent received
      */
     @Subscribe
-    void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+    void handlePageRetrievedEvent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
-            resultsPanel.resetComponent(groupSelectedEvent);
+            resultsPanel.resetComponent(pageRetrievedEvent);
         });
     }
 

@@ -20,8 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.EventBus;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -75,67 +74,105 @@ final class DiscoveryEvents {
      */
     static final class SearchCompleteEvent {
 
-        private final SearchResults results;
+        private final LinkedHashMap<String, Integer> groupMap;
+        private final List<FileSearchFiltering.FileFilter> searchfilters;
+        private final FileSearch.AttributeType groupingAttribute;
+        private final FileGroup.GroupSortingAlgorithm groupSort;
+        private final FileSorter.SortingMethod fileSortMethod;
 
         /**
          * Construct a new SearchCompleteEvent
          *
-         * @param results the results which were found by the search
+         * @param results the groupMap which were found by the search
          */
-        SearchCompleteEvent(SearchResults results) {
-            this.results = results;
+        SearchCompleteEvent(LinkedHashMap<String, Integer> groupMap, List<FileSearchFiltering.FileFilter> searchfilters,
+                FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
+                FileSorter.SortingMethod fileSortMethod) {
+            this.groupMap = groupMap;
+            this.searchfilters = searchfilters;
+            this.groupingAttribute = groupingAttribute;
+            this.groupSort = groupSort;
+            this.fileSortMethod = fileSortMethod;
         }
 
         /**
-         * Get the results of the search
+         * Get the groupMap of the search
          *
-         * @return the results of the search
+         * @return the groupMap of the search
          */
-        SearchResults getSearchResults() {
-            return results;
+        LinkedHashMap<String, Integer> getGroupMap() {
+            return groupMap;
+        }
+
+        List<FileSearchFiltering.FileFilter> getFilters() {
+            return searchfilters;
+        }
+
+        FileSearch.AttributeType getGroupingAttr() {
+            return groupingAttribute;
+        }
+
+        FileGroup.GroupSortingAlgorithm getGroupSort() {
+            return groupSort;
+        }
+
+        FileSorter.SortingMethod getFileSort() {
+            return fileSortMethod;
         }
 
     }
 
-    /**
-     * Event to signal the the selection of a group from the search results
-     */
-    static final class GroupSelectedEvent {
+    static final class PageRetrievedEvent {
 
-        private final List<AbstractFile> files;
-        private final FileType type;
+        private final List<AbstractFile> results;
+        private final int page;
+        private final FileType resultType;
 
-        /**
-         * Construct a new GroupSelectedEvent
-         *
-         * @param type  the type of files which exist in the group
-         * @param files the files in the group
-         */
-        GroupSelectedEvent(FileType type, List<AbstractFile> files) {
-            this.type = type;
-            this.files = files;
+        PageRetrievedEvent(FileType resultType, int page, List<AbstractFile> results) {
+            this.results = results;
+            this.page = page;
+            this.resultType = resultType;
         }
 
+        /**
+         * Get the groupMap of the search
+         *
+         * @return the groupMap of the search
+         */
+        List<AbstractFile> getSearchResults() {
+            return results;
+        }
+
+        
+        int getPageNumber(){
+            return page;
+        }
         /**
          * Get the type of files which exist in the group
          *
          * @return the type of files in the group
          */
         FileType getType() {
-            return type;
+            return resultType;
         }
+    }
 
-        /**
-         * Get the files in the group selected
-         *
-         * @return the list of AbstractFiles in the group selected
-         */
-        List<AbstractFile> getFiles() {
-            if (files != null && !files.isEmpty()) {
-                return Collections.unmodifiableList(files);
-            } else {
-                return new ArrayList<>();
-            }
+    static final class PageChangedEvent {
+
+        private final int startingEntry;
+        private final int pageSize;
+
+        PageChangedEvent(int startingEntry, int pageSize) {
+            this.startingEntry = startingEntry;
+            this.pageSize = pageSize;
+        }
+        
+        int getStartingEntry(){
+            return startingEntry;
+        }
+        
+        int getPageSize(){
+            return pageSize;
         }
     }
 }
