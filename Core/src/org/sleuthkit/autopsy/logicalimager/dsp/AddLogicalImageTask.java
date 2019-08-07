@@ -57,6 +57,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
     private final static String USERS_TXT = "users.txt"; //NON-NLS
+    private final static String MODULE_NAME = "LogicalImager"; //NON-NLS
     private final File src;
     private final File dest;
     private final DataSourceProcessorCallback callback;
@@ -90,8 +91,8 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         "# {0} - src", "# {1} - dest", "AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}",
         "# {0} - file", "AddLogicalImageTask.addingToReport=Adding {0} to report",
         "# {0} - file", "AddLogicalImageTask.doneAddingToReport=Done adding {0} to report",
-        "AddLogicalImageTask.addingInterestingFiles=Adding search results as intersting files",
-        "AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as intersting files",
+        "AddLogicalImageTask.addingInterestingFiles=Adding search results as interesting files",
+        "AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as interesting files",
         "# {0} - searchResults.txt", "# {1} - alert.txt", "# {2} - directory", "AddLogicalImageTask.cannotFindFiles=Cannot find {0} or {1} in {2}",
         "# {0} - reason", "AddLogicalImageTask.failedToAddInterestingFiles=Failed to add interesting files: {0}"
     })
@@ -237,8 +238,10 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
 
     private void addInterestingFile(AbstractFile file, String ruleSetName, String ruleName) throws TskCoreException {
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, ruleSetName, ruleName);
+        BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName);
         attributes.add(setNameAttribute);
+        BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName);
+        attributes.add(ruleNameAttribute);
         org.sleuthkit.datamodel.Blackboard tskBlackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
         if (!tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
             BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
@@ -249,7 +252,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             } catch (Blackboard.BlackboardException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("LogicalImager", // NON-NLS
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME,
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
         }
     }
