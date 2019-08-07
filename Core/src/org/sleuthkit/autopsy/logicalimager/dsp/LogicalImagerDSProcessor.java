@@ -194,7 +194,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
             errorList.add(msg);
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
         }
     }
 

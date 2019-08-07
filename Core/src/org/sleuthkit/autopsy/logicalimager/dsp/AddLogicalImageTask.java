@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class AddLogicalImageTask extends AddMultipleImageTask {
 
-    private final static Logger logger = Logger.getLogger(AddLogicalImageTask.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String ALERT_TXT = "alert.txt"; //NON-NLS
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
     private final static String USERS_TXT = "users.txt"; //NON-NLS
@@ -61,8 +61,8 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
     private final File dest;
     private final DataSourceProcessorCallback callback;
     private final DataSourceProcessorProgressMonitor progressMonitor;
-    private Blackboard blackboard;
-    private Case currentCase;
+    private final Blackboard blackboard;
+    private final Case currentCase;
 
     AddLogicalImageTask(String deviceId,
             List<String> imagePaths,
@@ -89,7 +89,11 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         "AddLogicalImageTask.doneCopying=Done copying",
         "# {0} - src", "# {1} - dest", "AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}",
         "# {0} - file", "AddLogicalImageTask.addingToReport=Adding {0} to report",
-        "# {0} - file", "AddLogicalImageTask.doneAddingToReport=Done adding {0} to report"
+        "# {0} - file", "AddLogicalImageTask.doneAddingToReport=Done adding {0} to report",
+        "AddLogicalImageTask.addingInterestingFiles=Adding search results as intersting files",
+        "AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as intersting files",
+        "# {0} - searchResults.txt", "# {1} - alert.txt", "# {2} - directory", "AddLogicalImageTask.cannotFindFiles=Cannot find {0} or {1} in {2}",
+        "# {0} - reason", "AddLogicalImageTask.failedToAddInterestingFiles=Failed to add interesting files: {0}"
     })
     @Override
     public void run() {
@@ -104,7 +108,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             // Copy directory failed
             String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
             errorList.add(msg);
-            logger.log(Level.SEVERE, String.format("Failed to copy directory %s to %s", src.toString(), dest.toString()), ex);
+            LOGGER.log(Level.SEVERE, String.format("Failed to copy directory %s to %s", src.toString(), dest.toString()), ex); // NON-NLS
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
@@ -116,7 +120,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         } else if (Paths.get(dest.toString(), ALERT_TXT).toFile().exists()) {
             resultsFilename = ALERT_TXT;
         } else {
-            errorList.add("Cannot find " + SEARCH_RESULTS_TXT + " or " + ALERT_TXT + " in " + dest.toString());
+            errorList.add(Bundle.AddLogicalImageTask_cannotFindFiles(SEARCH_RESULTS_TXT, ALERT_TXT, dest.toString()));
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;            
         }
@@ -141,11 +145,13 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         super.run();
         
         try {
+            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFiles());
             addInterestingFiles(src, Paths.get(dest.toString(), resultsFilename));
+            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingInterestingFiles());
         } catch (IOException | TskCoreException ex) {
-            errorList.add("Failed to add interesting files");
-            logger.log(Level.SEVERE, "Failed to add interesting files", ex);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            errorList.add(Bundle.AddLogicalImageTask_failedToAddInterestingFiles(ex.getMessage()));
+            LOGGER.log(Level.SEVERE, "Failed to add interesting files", ex); // NON-NLS
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS, errorList, emptyDataSources);
         }
     }
 
@@ -170,21 +176,23 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             return null;
         } catch (TskCoreException ex) {
             String msg = Bundle.AddLogicalImageTask_failedToAddReport(reportPath.toString(), ex.getMessage());
-            logger.log(Level.SEVERE, String.format("Failed to add report %s. Reason= %s", reportPath.toString(), ex.getMessage()), ex);
+            LOGGER.log(Level.SEVERE, String.format("Failed to add report %s. Reason= %s", reportPath.toString(), ex.getMessage()), ex); // NON-NLS
             return msg;
         }
     }
 
+    @Messages({
+        "# {0} - line number", "# {1} - fields length", "# {2} - expected length", "AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}"
+    })
     private void addInterestingFiles(File src, Path resultsPath) throws IOException, TskCoreException {
-        logger.log(Level.INFO, "Adding " + resultsPath.toString() + " to interesting files");
         try (BufferedReader br = new BufferedReader(new FileReader(resultsPath.toFile()))) {
             String line;
             br.readLine(); // skip the header line
-            int lineNumber = 1;
+            int lineNumber = 2;
             while ((line = br.readLine()) != null) {
-                String[] fields = line.split("\t");
+                String[] fields = line.split("\t", -1); // NON-NLS
                 if (fields.length != 9) {
-                    throw new IOException(String.format("File does not contain enough fields at line %d", lineNumber));
+                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
                 }
                 String vhdFilename = fields[0];
 //                String fileSystemOffsetStr = fields[1];
@@ -198,7 +206,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
                 
                 String dataSourceObjId = findDataSourceObjId(src, vhdFilename);
                 
-                String query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'",
+                String query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
                         dataSourceObjId, fileMetaAddressStr, filename);
                 List<AbstractFile> matchedFiles = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(query);
                 for (AbstractFile file : matchedFiles) {
@@ -209,6 +217,9 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         }
     }
 
+    @Messages({
+        "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}"
+    })
     private String findDataSourceObjId(File src, String vhdFilename) throws TskCoreException {
         String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
         Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
@@ -221,7 +232,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
                 }
             }
         }
-        throw new TskCoreException("Cannot find obj_id in tsk_image_names for " + targetImagePath);
+        throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
     }
 
     private void addInterestingFile(AbstractFile file, String ruleSetName, String ruleName) throws TskCoreException {
@@ -236,11 +247,10 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
                 // index the artifact for keyword search
                 blackboard.indexArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
-            
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("Logical Imager", BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
-
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent("LogicalImager", // NON-NLS
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
         }
     }
 }
