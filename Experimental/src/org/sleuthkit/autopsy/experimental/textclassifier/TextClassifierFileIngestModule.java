@@ -87,8 +87,8 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         this.categorizer = new DocumentCategorizerME(doccatModel);
     }
     
-    @Messages({"ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found.",
-        "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
+    @Messages({"TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.",
+        "# {0} - classifierDir", "TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
