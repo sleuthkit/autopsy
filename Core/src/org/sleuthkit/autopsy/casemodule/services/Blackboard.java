@@ -42,7 +42,7 @@ public final class Blackboard {
     }
 
     /**
-     * Indexes the text associated withF an artifact.
+     * Indexes the text associated with an artifact.
      *
      * @param artifact The artifact to be indexed.
      *
