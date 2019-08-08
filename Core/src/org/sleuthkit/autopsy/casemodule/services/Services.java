@@ -103,7 +103,7 @@ public class Services implements Closeable {
      *
      * @return The blackboard service for the current case.
      *
-     * @deprecated Use org.sleuthkit.autopsy.casemodule.getCaseBlackboard
+     * @deprecated Use org.sleuthkit.autopsy.casemodule.getArtifactsBlackboard
      * instead
      */
     @Deprecated
