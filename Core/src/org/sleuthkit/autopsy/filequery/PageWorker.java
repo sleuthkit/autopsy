@@ -27,8 +27,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- *
- * @author wschaefer
+ * SwingWorker to retrieve the contents of a page.
  */
 final class PageWorker extends SwingWorker<Void, Void> {
 
@@ -43,6 +42,21 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final int startingEntry;
     private final int pageSize;
 
+    /**
+     * Construct a new PageWorker.
+     *
+     * @param resultType        The type of files which exist in the group.
+     * @param centralRepo       The central repository to be used.
+     * @param searchfilters     The search filters which were used by the
+     *                          search.
+     * @param groupingAttribute The grouping attribute used by the search.
+     * @param groupSort         The sorting algorithm used for groups.
+     * @param fileSortMethod    The sorting method used for files.
+     * @param groupName         The name of the group which was selected.
+     * @param startingEntry     The first entry in the group to include in this
+     *                          page.
+     * @param pageSize          The number of files to include in this page.
+     */
     PageWorker(FileSearchData.FileType resultType, EamDb centralRepo, List<FileSearchFiltering.FileFilter> searchfilters,
             FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
             FileSorter.SortingMethod fileSortMethod, String groupName, int startingEntry, int pageSize) {

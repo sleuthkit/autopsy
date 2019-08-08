@@ -34,8 +34,8 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
- *
- * @author wschaefer
+ * Panel for displaying of file discovery results and handling the paging of
+ * those results.
  */
 public class ResultsPanel extends javax.swing.JPanel {
 
@@ -55,7 +55,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private PageWorker pageWorker;
 
     /**
-     * Creates new form ResultsPanel
+     * Creates new form ResultsPanel.
      */
     public ResultsPanel(ExplorerManager explorerManager, EamDb centralRepo) {
         initComponents();
@@ -67,9 +67,9 @@ public class ResultsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Subscribe to PageRetrievedEvents and respond to them
+     * Subscribe and respond to PageRetrievedEvents.
      *
-     * @param pageRetrievedEvent the PageRetrievedEvent received
+     * @param pageRetrievedEvent The PageRetrievedEvent received.
      */
     @Subscribe
     void handlePageRetrievedEvent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
@@ -98,6 +98,11 @@ public class ResultsPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Subscribe and respond to GroupSelectedEvents.
+     *
+     * @param groupSelectedEvent The GroupSelectedEvent received.
+     */
     @Subscribe
     void handlePageChangedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
         SwingUtilities.invokeLater(() -> {
@@ -112,6 +117,12 @@ public class ResultsPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Set the page number and retrieve its contents.
+     *
+     * @param startingEntry The index of the first file in the group to include
+     *                      in this page.
+     */
     private void setPage(int startingEntry) {
         int pageSize = (int) pageSizeSpinner.getValue();
         synchronized (this) {
@@ -123,6 +134,9 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Enable the paging controls based on what exists in the page.
+     */
     @Messages({"# {0} - currentPage",
         "# {1} - totalPages",
         "ResultsPanel.currentPage.displayValue=Page: {0} of {1}"})
@@ -279,6 +293,11 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Action to perform when previous button is clicked.
+     *
+     * @param evt Event which occurs when button is clicked.
+     */
     private void previousPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_previousPageButtonActionPerformed
         if (currentPage > 0) {
             disablePagingControls();
@@ -291,6 +310,11 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_previousPageButtonActionPerformed
 
+    /**
+     * Action to perform when next button is clicked.
+     *
+     * @param evt Event which occurs when button is clicked.
+     */
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         disablePagingControls();
         int nextPage = currentPage + 1;
@@ -301,7 +325,14 @@ public class ResultsPanel extends javax.swing.JPanel {
         setPage(nextPage * pageSize);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
-    @Messages({"ResultsPanel.invalidPageNumber.message=The selected page number does not exist",
+    /**
+     * Navigate to the page number specified in the field
+     *
+     * @param evt The event which happens to field is used.
+     */
+    @Messages({"# {0} - selectedPage",
+        "# {1} - maxPage",
+        "ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value of at least 1 and at most {1}",
         "ResultsPanel.invalidPageNumber.title=Invalid Page Number"})
     private void gotoPageFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageFieldActionPerformed
         int newPage;
@@ -311,20 +342,21 @@ public class ResultsPanel extends javax.swing.JPanel {
             //ignore input
             return;
         }
-        newPage -= 1;
         int pageSize = (int) pageSizeSpinner.getValue();
-        if (newPage < 0 || groupSize < (newPage * pageSize)) {
+        if ((newPage - 1) < 0 || groupSize < ((newPage - 1) * pageSize)) {
             JOptionPane.showMessageDialog(this,
-                    Bundle.ResultsPanel_invalidPageNumber_message(),
+                    Bundle.ResultsPanel_invalidPageNumber_message(newPage, ((groupSize / pageSize) + 1)),
                     Bundle.ResultsPanel_invalidPageNumber_title(),
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
         disablePagingControls();
-
-        setPage(newPage * pageSize);
+        setPage((newPage - 1) * pageSize);
     }//GEN-LAST:event_gotoPageFieldActionPerformed
 
+    /**
+     * Disable all the paging controls.
+     */
     private void disablePagingControls() {
         nextPageButton.setEnabled(false);
         previousPageButton.setEnabled(false);

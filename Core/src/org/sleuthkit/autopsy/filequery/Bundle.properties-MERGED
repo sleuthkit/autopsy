@@ -156,7 +156,9 @@ FileSearchPanel.objectsCheckbox.text=Objects:
 # {1} - totalPages
 ResultsPanel.currentPage.displayValue=Page: {0} of {1}
 ResultsPanel.currentPageLabel.text=Page: -
-ResultsPanel.invalidPageNumber.message=The selected page number does not exist
+# {0} - selectedPage
+# {1} - maxPage
+ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value of at least 1 and at most {1}
 ResultsPanel.invalidPageNumber.title=Invalid Page Number
 ResultsPanel.pageControlsLabel.text=Pages:
 ResultsPanel.gotoPageLabel.text=Go to Page:

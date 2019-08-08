@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
@@ -31,7 +31,7 @@ class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private FileType resultType = null;
-    private LinkedHashMap<String, Integer> groupMap = null;
+    private Map<String, Integer> groupMap = null;
     private List<FileSearchFiltering.FileFilter> searchfilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
