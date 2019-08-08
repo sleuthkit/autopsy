@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -31,8 +31,8 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * A collection of case-level services (e.g., file manager, tags manager,
- * keyword search, blackboard).
+ * A collection of case-level services: file manager, tags manager, keyword
+ * search service, artifacts blackboard.
  */
 public class Services implements Closeable {
 
@@ -42,8 +42,8 @@ public class Services implements Closeable {
     private final KeywordSearchService keywordSearchService;
 
     /**
-     * Constructs a collection of case-level services (e.g., file manager, tags
-     * manager, keyword search, blackboard).
+     * Constructs a collection of case-level services: file manager, tags
+     * manager, keyword search service, artifacts blackboard.
      *
      * @param caseDb The case database for the current case.
      */
@@ -62,7 +62,7 @@ public class Services implements Closeable {
     }
 
     /**
-     * Gets the file manager service for the current case.
+     * Gets the file manager for the current case.
      *
      * @return The file manager service for the current case.
      */
@@ -71,7 +71,7 @@ public class Services implements Closeable {
     }
 
     /**
-     * Gets the tags manager service for the current case.
+     * Gets the tags manager for the current case.
      *
      * @return The tags manager service for the current case.
      */
@@ -89,24 +89,26 @@ public class Services implements Closeable {
     }
 
     /**
-     * Gets the blackboard service for the current case.
+     * Gets the artifacts blackboard for the current case.
+     *
+     * @return @org.sleuthkit.datamodel.Blackboard Blackboard for the current
+     *         case.
+     */
+    public org.sleuthkit.datamodel.Blackboard getArtifactsBlackboard() {
+        return Case.getCurrentCase().getSleuthkitCase().getBlackboard();
+    }
+
+    /**
+     * Gets the artifacts blackboard for the current case.
      *
      * @return The blackboard service for the current case.
-     * 
-     * @deprecated Use org.sleuthkit.autopsy.casemodule.getCaseBlackboard instead
+     *
+     * @deprecated Use org.sleuthkit.autopsy.casemodule.getCaseBlackboard
+     * instead
      */
     @Deprecated
     public Blackboard getBlackboard() {
         return new Blackboard();
-    }
-    
-    /**
-     * Gets the TSK Blackboard for the current case.
-     * 
-     * @return @org.sleuthkit.datamodel.Blackboard Blackboard for the current case.
-     */
-    public org.sleuthkit.datamodel.Blackboard getCaseBlackboard() {
-        return Case.getCurrentCase().getSleuthkitCase().getBlackboard();
     }
 
     /**
@@ -117,9 +119,9 @@ public class Services implements Closeable {
     @Override
     public void close() throws IOException {
         for (Closeable service : services) {
-            if(service != null) {
-                 service.close();
-             }
+            if (service != null) {
+                service.close();
+            }
         }
     }
 

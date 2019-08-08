@@ -297,7 +297,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                     BlackboardArtifact verificationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED, img.getId());
                     verificationFailedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                         DataSourceIntegrityModuleFactory.getModuleName(), artifactComment));
-                    Case.getCurrentCase().getServices().getCaseBlackboard().postArtifact(verificationFailedArtifact, DataSourceIntegrityModuleFactory.getModuleName());
+                    Case.getCurrentCase().getServices().getArtifactsBlackboard().postArtifact(verificationFailedArtifact, DataSourceIntegrityModuleFactory.getModuleName());
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error creating verification failed artifact", ex);
                 } catch (Blackboard.BlackboardException ex) {
