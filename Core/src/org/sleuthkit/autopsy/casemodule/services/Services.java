@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -87,6 +87,15 @@ public class Services implements Closeable {
     public KeywordSearchService getKeywordSearchService() {
         return keywordSearchService;
     }
+    
+    /**
+     * Gets the TSK Blackboard for the current case.
+     * 
+     * @return @org.sleuthkit.datamodel.Blackboard Blackboard for the current case.
+     */
+    public org.sleuthkit.datamodel.Blackboard getArtifactsBlackboard() {
+        return Case.getCurrentCase().getSleuthkitCase().getBlackboard();
+    }
 
     /**
      * Gets the blackboard service for the current case.
@@ -98,17 +107,8 @@ public class Services implements Closeable {
     @Deprecated
     public Blackboard getBlackboard() {
         return new Blackboard();
-    }
+    }    
     
-    /**
-     * Gets the TSK Blackboard for the current case.
-     * 
-     * @return @org.sleuthkit.datamodel.Blackboard Blackboard for the current case.
-     */
-    public org.sleuthkit.datamodel.Blackboard getCaseBlackboard() {
-        return Case.getCurrentCase().getSleuthkitCase().getBlackboard();
-    }
-
     /**
      * Closes the services for the current case.
      *

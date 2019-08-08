@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
-import java.io.Closeable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -30,26 +29,31 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * @deprecated Use org.sleuthkit.datamodel.Blackboard instead.
  */
 @Deprecated
-public final class Blackboard implements Closeable {
-    
+public final class Blackboard {
+
     /**
      * Constructs a representation of the blackboard, a place where artifacts
      * and their attributes are posted.
+     *
+     * @deprecated Do not use.
      */
+    @Deprecated
     Blackboard() {
     }
 
     /**
-     * Indexes the text associated with an artifact.
+     * Indexes the text associated withF an artifact.
      *
      * @param artifact The artifact to be indexed.
      *
      * @throws BlackboardException If there is a problem indexing the artifact.
+     * @deprecated Use org.sleuthkit.datamodel.Blackboard.postArtifact instead.
      */
+    @Deprecated
     public synchronized void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
-        try{
-             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(artifact, "");
-        } catch(org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
+        try {
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(artifact, "");
+        } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
             throw new BlackboardException(ex.getMessage(), ex);
         }
     }
@@ -65,7 +69,10 @@ public final class Blackboard implements Closeable {
      *
      * @throws BlackboardException If there is a problem getting or adding the
      *                             artifact type.
+     * @deprecated Use org.sleuthkit.datamodel.Blackboard.getOrAddArtifactType
+     * instead.
      */
+    @Deprecated
     public synchronized BlackboardArtifact.Type getOrAddArtifactType(String typeName, String displayName) throws BlackboardException {
         try {
             return Case.getCurrentCase().getSleuthkitCase().getBlackboard().getOrAddArtifactType(typeName, displayName);
@@ -86,27 +93,22 @@ public final class Blackboard implements Closeable {
      *
      * @throws BlackboardException If there is a problem getting or adding the
      *                             attribute type.
+     * @deprecated Use org.sleuthkit.datamodel.Blackboard.getOrAddArtifactType
+     * instead.
      */
+    @Deprecated
     public synchronized BlackboardAttribute.Type getOrAddAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
         try {
-            return  Case.getCurrentCase().getSleuthkitCase().getBlackboard().getOrAddAttributeType(typeName, valueType, displayName);
+            return Case.getCurrentCase().getSleuthkitCase().getBlackboard().getOrAddAttributeType(typeName, valueType, displayName);
         } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
             throw new BlackboardException(ex.getMessage(), ex);
         }
     }
 
     /**
-     * Closes the blackboard.
-     *
-     */
-    @Override
-    public synchronized void close() {
-     
-    }
-
-    /**
      * A blackboard exception.
      */
+    @Deprecated
     public static final class BlackboardException extends Exception {
 
         private static final long serialVersionUID = 1L;
@@ -115,7 +117,10 @@ public final class Blackboard implements Closeable {
          * Constructs a blackboard exception with the specified message.
          *
          * @param message The message.
+         *
+         * @deprecated Do not use.
          */
+        @Deprecated
         public BlackboardException(String message) {
             super(message);
         }
@@ -126,9 +131,13 @@ public final class Blackboard implements Closeable {
          *
          * @param message The message.
          * @param cause   The cause.
+         *
+         * @deprecated Do not use.
          */
+        @Deprecated
         public BlackboardException(String message, Throwable cause) {
             super(message, cause);
         }
     }
+
 }
