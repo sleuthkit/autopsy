@@ -107,6 +107,9 @@ public final class Blackboard {
 
     /**
      * A blackboard exception.
+     *
+     * @deprecated Use org.sleuthkit.datamodel.Blackboard.BlackboardException
+     * instead.
      */
     @Deprecated
     public static final class BlackboardException extends Exception {
