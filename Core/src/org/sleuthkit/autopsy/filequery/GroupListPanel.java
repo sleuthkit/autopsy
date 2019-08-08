@@ -22,7 +22,6 @@ import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
 /**
@@ -54,7 +53,7 @@ class GroupListPanel extends javax.swing.JPanel {
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
         resultType = searchStartedEvent.getType();
-        groupList.setListData(new String[0]);
+        groupDisplayNameList.setListData(new String[0]);
     }
 
     /**
@@ -71,9 +70,9 @@ class GroupListPanel extends javax.swing.JPanel {
         groupSort = searchCompleteEvent.getGroupSort();
         fileSortMethod = searchCompleteEvent.getFileSort();
         List<String> groupNames = groupMap.entrySet().stream().map(e -> e.getKey() + " (" + e.getValue() + ")").collect(Collectors.toList());
-        groupList.setListData(groupNames.toArray(new String[groupNames.size()]));
-        if (groupList.getModel().getSize() > 0) {
-            groupList.setSelectedIndex(0);
+        groupDisplayNameList.setListData(groupNames.toArray(new String[groupNames.size()]));
+        if (groupDisplayNameList.getModel().getSize() > 0) {
+            groupDisplayNameList.setSelectedIndex(0);
         }
         validate();
         repaint();
@@ -89,15 +88,15 @@ class GroupListPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         groupListScrollPane = new javax.swing.JScrollPane();
-        groupList = new javax.swing.JList<>();
+        groupDisplayNameList = new javax.swing.JList<>();
 
-        groupList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        groupList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+        groupDisplayNameList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        groupDisplayNameList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 groupSelected(evt);
             }
         });
-        groupListScrollPane.setViewportView(groupList);
+        groupListScrollPane.setViewportView(groupDisplayNameList);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -122,9 +121,9 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
         if (!evt.getValueIsAdjusting()) {
-            String selectedGroup = groupList.getSelectedValue();
+            String selectedGroup = groupDisplayNameList.getSelectedValue().replaceAll(" ([0-9]+)$", ""); 
             for (String groupName : groupMap.keySet()) {
-                if (selectedGroup.startsWith(groupName)) {
+                if (selectedGroup.equalsIgnoreCase(groupName)) {
                     selectedGroupName = groupName;
                     DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(
                             searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, groupMap.get(selectedGroupName), resultType));
@@ -135,7 +134,7 @@ class GroupListPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_groupSelected
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<String> groupList;
+    private javax.swing.JList<String> groupDisplayNameList;
     private javax.swing.JScrollPane groupListScrollPane;
     // End of variables declaration//GEN-END:variables
 }

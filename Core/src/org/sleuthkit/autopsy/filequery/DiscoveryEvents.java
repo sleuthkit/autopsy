@@ -290,7 +290,7 @@ final class DiscoveryEvents {
          * @return The search filters which were used by the search.
          */
         List<FileSearchFiltering.FileFilter> getFilters() {
-            return searchfilters;
+            return Collections.unmodifiableList(searchfilters);
         }
 
         /**
