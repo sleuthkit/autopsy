@@ -323,6 +323,9 @@ class FileSearch {
                 + "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
     }
 
+    /**
+     * Clear the cache used to store search results by group.
+     */
     synchronized static void clearCache() {
         groupCache.invalidateAll();
     }
