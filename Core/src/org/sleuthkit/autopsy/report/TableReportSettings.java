@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -27,8 +28,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * by the TableReportGenerator class to drive report generation by
  * TableReportModules.
  */
-class TableReportSettings {
+class TableReportSettings implements Serializable  {
 
+    private static final long serialVersionUID = 1L;
     private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
     private Map<String, Boolean> tagNameSelections = new HashMap<>();
 

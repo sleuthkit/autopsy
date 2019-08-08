@@ -18,20 +18,27 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A bundling of all the settings objects that define a report configuration.
  */
-class ReportingConfig {
-    
+class ReportingConfig implements Serializable {
+
+    private static final long serialVersionUID = 1L;
     private String configName;
     private List<ModuleStatus> moduleStatuses = new ArrayList<>();
     private List<ReportModuleSettings> moduleSettings = new ArrayList<>();
     private TableReportSettings tableReportSettings;
     private FileReportSettings fileReportSettings;
 
+    /**
+     * Creates ReportingConfig object.
+     *
+     * @param configName Name of the reporting configuration
+     */
     ReportingConfig(String configName) {
         this.configName = configName;
     }

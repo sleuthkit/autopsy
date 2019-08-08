@@ -18,30 +18,30 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * Class for persisting the file properties used by FileReportGenerator to drive
- * report generation by FileReportModules.
+ * Instances of this exception class are thrown when there is an error during
+ * serialization and deserialization of reporting configuration.
  */
-class FileReportSettings implements Serializable  {
-    
+class ReportConfigException extends Exception {
+
     private static final long serialVersionUID = 1L;
-    private Map<FileReportDataTypes, Boolean> filePropertiesInfo = new HashMap<>();
 
     /**
-     * Creates FileReportSettings object.
-     * 
-     * @param info the Information that should be included about each
-     * file in the report.
+     * Constructs a new exception with the specified message.
+     *
+     * @param message The message.
      */
-    FileReportSettings(Map<FileReportDataTypes, Boolean> info) {
-        this.filePropertiesInfo = info;
+    public ReportConfigException(String message) {
+        super(message);
     }
-    
-    Map<FileReportDataTypes, Boolean> getFileProperties() {
-        return filePropertiesInfo;
+
+    /**
+     * Constructs a new exception with the specified message and cause.
+     *
+     * @param message The message.
+     * @param cause The cause.
+     */
+    public ReportConfigException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
