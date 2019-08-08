@@ -60,8 +60,8 @@ class AddMultipleImageTask implements Runnable {
     private boolean criticalErrorOccurred;
     private volatile boolean cancelled;
     
-    private List<Content> newDataSources = new ArrayList<>();
-    private List<String> errorMessages = new ArrayList<>();
+    private List<Content> newDataSources;
+    private List<String> errorMessages;
     private DataSourceProcessorResult result;
 
     /**
@@ -94,14 +94,15 @@ class AddMultipleImageTask implements Runnable {
         this.callback = callback;
         this.progressMonitor = progressMonitor;
         currentCase = Case.getCurrentCaseThrows();
-        this.newDataSources = new ArrayList<>();
-        this.errorMessages = new ArrayList<>();
         this.criticalErrorOccurred = false;
         this.result = DataSourceProcessorResult.NO_ERRORS;
     }
 
     @Override
     public void run() {
+        newDataSources = new ArrayList<>();
+        errorMessages = new ArrayList<>();
+        
         /*
          * Try to add the input image files as images.
          */
@@ -176,7 +177,6 @@ class AddMultipleImageTask implements Runnable {
         } else {
             result = DataSourceProcessorResult.NO_ERRORS;
         }
-//        callback.done(result, errorMessages, newDataSources);
     }
 
     /**

@@ -199,6 +199,13 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
                     throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
                 }
                 String vhdFilename = fields[0];
+                
+                String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
+                Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
+                if (dataSourceObjId == null) {
+                    throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
+                }
+
 //                String fileSystemOffsetStr = fields[1];
                 String fileMetaAddressStr = fields[2];
 //                String extractStatusStr = fields[3];
@@ -207,12 +214,6 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
 //                String description = fields[6];
                 String filename = fields[7];
 //                String parentPath = fields[8];
-                
-                String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
-                Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
-                if (dataSourceObjId == null) {
-                    throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
-                }
                 
                 String query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
                         dataSourceObjId.toString(), fileMetaAddressStr, filename);
