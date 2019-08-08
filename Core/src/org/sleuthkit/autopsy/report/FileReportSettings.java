@@ -34,11 +34,11 @@ class FileReportSettings implements Serializable  {
     /**
      * Creates FileReportSettings object.
      * 
-     * @param info the Information that should be included about each
+     * @param fileReportInfo the Information that should be included about each
      * file in the report.
      */
-    FileReportSettings(Map<FileReportDataTypes, Boolean> info) {
-        this.filePropertiesInfo = info;
+    FileReportSettings(Map<FileReportDataTypes, Boolean> fileReportInfo) {
+        this.filePropertiesInfo = fileReportInfo;
     }
     
     Map<FileReportDataTypes, Boolean> getFileProperties() {

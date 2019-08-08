@@ -22,7 +22,9 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.ArrayList;
 import static java.util.Collections.swap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -33,6 +35,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -110,7 +113,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             indexOfHTMLReportModule++;
         }
         swap(modules, indexOfHTMLReportModule, 0);
-
+        
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
         modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));

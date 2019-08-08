@@ -74,8 +74,6 @@ class TableReportGenerator {
 
     TableReportGenerator(TableReportSettings settings, ReportProgressPanel progressPanel, TableReportModule tableReport) {
 
-        // ELTODO Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections
-        
         this.progressPanel = progressPanel;
         this.tableReport = tableReport;
         this.columnHeaderMap = new HashMap<>();

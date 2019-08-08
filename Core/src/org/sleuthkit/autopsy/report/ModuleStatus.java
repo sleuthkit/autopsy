@@ -37,7 +37,6 @@ class ModuleStatus implements Serializable {
      * @param enabled boolean flag whether the module is enabled
      */
     ModuleStatus(ReportModule module, boolean enabled) {
-        // ELTODO verify that this is fully qualified class name of a report module
         this.moduleName = module.getClass().getCanonicalName();
         this.enabled = enabled;
     }

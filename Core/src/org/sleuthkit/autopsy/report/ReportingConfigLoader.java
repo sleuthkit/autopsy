@@ -38,6 +38,7 @@ class ReportingConfigLoader {
 
     private static final String REPORT_CONFIG_FOLDER = "ReportingConfigs"; //NON-NLS
     private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ReportingConfigLoader.REPORT_CONFIG_FOLDER).toAbsolutePath().toString();
+    private static final String REPORT_CONFIG_FILE_NAME = "ReportingConfiguration.properties";
 
     /**
      * Deserialize all of the settings that make up a reporting configuration in
@@ -52,24 +53,24 @@ class ReportingConfigLoader {
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
         // construct the file path
-        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
-        File reportDir = pathToConfigDir.toFile();
+        Path reportFilePath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName, REPORT_CONFIG_FILE_NAME);
+        File reportFile = reportFilePath.toFile();
 
         // Return null if a reporting configuration for the given name does not exist.
-        if (!reportDir.exists()) {
+        if (!reportFile.exists()) {
             return null;
         }
 
-        if (!reportDir.isDirectory() || !reportDir.canRead()) {
-            throw new ReportConfigException("Unable to read reporting configuration directory " + pathToConfigDir.toString());
+        if (!reportFile.isFile()|| !reportFile.canRead()) {
+            throw new ReportConfigException("Unable to read reporting configuration file " + reportFilePath.toString());
         }
 
         // read in the confuguration
         ReportingConfig config = null;
-        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(pathToConfigDir.toString()))) {
+        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(reportFilePath.toString()))) {
             config = (ReportingConfig) in.readObject();
         } catch (IOException | ClassNotFoundException ex) {
-            throw new ReportConfigException("Unable to read reporting configuration " + pathToConfigDir.toString(), ex);
+            throw new ReportConfigException("Unable to read reporting configuration " + reportFilePath.toString(), ex);
         }
 
         return config;
@@ -85,7 +86,7 @@ class ReportingConfigLoader {
      */
     static synchronized void saveConfig(ReportingConfig config) throws ReportConfigException {
 
-        // construct the file path
+        // construct the configuration directory path
         Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, config.getName());
 
         // create configuration directory 
@@ -94,9 +95,10 @@ class ReportingConfigLoader {
         } catch (IOException | SecurityException ex) {
             throw new ReportConfigException("Failed to create reporting configuration directory " + pathToConfigDir.toString(), ex);
         }
-
+        
         // save the configuration
-        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(pathToConfigDir.toString()))) {
+        String filePath = pathToConfigDir.toString() + File.separator + REPORT_CONFIG_FILE_NAME;
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             out.writeObject(config);
         } catch (IOException ex) {
             throw new ReportConfigException("Unable to save reporting configuration " + pathToConfigDir.toString(), ex);
