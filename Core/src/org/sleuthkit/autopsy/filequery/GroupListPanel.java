@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
 /**
@@ -37,7 +38,6 @@ class GroupListPanel extends javax.swing.JPanel {
     private FileGroup.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
     private String selectedGroupName;
-
 
     /**
      * Creates new form GroupListPanel
@@ -126,13 +126,13 @@ class GroupListPanel extends javax.swing.JPanel {
             for (String groupName : groupMap.keySet()) {
                 if (selectedGroup.startsWith(groupName)) {
                     selectedGroupName = groupName;
-                    DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(resultType, selectedGroupName, groupMap.get(selectedGroupName), searchfilters,groupingAttribute, groupSort, fileSortMethod));
+                    DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(
+                            searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, groupMap.get(selectedGroupName), resultType));
                 }
             }
 
         }
     }//GEN-LAST:event_groupSelected
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JList<String> groupList;

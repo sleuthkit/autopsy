@@ -32,8 +32,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 final class PageWorker extends SwingWorker<Void, Void> {
 
     private final static Logger logger = Logger.getLogger(PageWorker.class.getName());
-    private final FileSearchData.FileType resultType;
-    private final EamDb centralRepo;
     private final List<FileSearchFiltering.FileFilter> searchfilters;
     private final FileSearch.AttributeType groupingAttribute;
     private final FileGroup.GroupSortingAlgorithm groupSort;
@@ -41,12 +39,12 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final String groupName;
     private final int startingEntry;
     private final int pageSize;
+    private final FileSearchData.FileType resultType;
+    private final EamDb centralRepo;
 
     /**
      * Construct a new PageWorker.
      *
-     * @param resultType        The type of files which exist in the group.
-     * @param centralRepo       The central repository to be used.
      * @param searchfilters     The search filters which were used by the
      *                          search.
      * @param groupingAttribute The grouping attribute used by the search.
@@ -56,12 +54,12 @@ final class PageWorker extends SwingWorker<Void, Void> {
      * @param startingEntry     The first entry in the group to include in this
      *                          page.
      * @param pageSize          The number of files to include in this page.
+     * @param resultType        The type of files which exist in the group.
+     * @param centralRepo       The central repository to be used.
      */
-    PageWorker(FileSearchData.FileType resultType, EamDb centralRepo, List<FileSearchFiltering.FileFilter> searchfilters,
-            FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
-            FileSorter.SortingMethod fileSortMethod, String groupName, int startingEntry, int pageSize) {
-        this.resultType = resultType;
-        this.centralRepo = centralRepo;
+    PageWorker(List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute,
+            FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, String groupName,
+            int startingEntry, int pageSize, FileSearchData.FileType resultType, EamDb centralRepo) {
         this.searchfilters = searchfilters;
         this.groupingAttribute = groupingAttribute;
         this.groupSort = groupSort;
@@ -69,6 +67,8 @@ final class PageWorker extends SwingWorker<Void, Void> {
         this.groupName = groupName;
         this.startingEntry = startingEntry;
         this.pageSize = pageSize;
+        this.resultType = resultType;
+        this.centralRepo = centralRepo;
     }
 
     @Override

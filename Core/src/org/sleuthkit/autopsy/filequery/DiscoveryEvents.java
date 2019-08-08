@@ -217,26 +217,26 @@ final class DiscoveryEvents {
         /**
          * Construct a new GroupSelectedEvent.
          *
-         * @param resultType        The type of files which exist in the group.
-         * @param groupName         The name of the group which was selected.
-         * @param groupSize         The number of files in the group which was
-         *                          selected.
          * @param searchfilters     The search filters which were used by the
          *                          search.
          * @param groupingAttribute The grouping attribute used by the search.
          * @param groupSort         The sorting algorithm used for groups.
          * @param fileSortMethod    The sorting method used for files.
+         * @param groupName         The name of the group which was selected.
+         * @param groupSize         The number of files in the group which was
+         *                          selected.
+         * @param resultType        The type of files which exist in the group.
          */
-        GroupSelectedEvent(FileType resultType, String groupName, int groupSize, List<FileSearchFiltering.FileFilter> searchfilters,
+        GroupSelectedEvent(List<FileSearchFiltering.FileFilter> searchfilters,
                 FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
-                FileSorter.SortingMethod fileSortMethod) {
-            this.resultType = resultType;
-            this.groupName = groupName;
-            this.groupSize = groupSize;
+                FileSorter.SortingMethod fileSortMethod, String groupName, int groupSize, FileType resultType) {
             this.searchfilters = searchfilters;
             this.groupingAttribute = groupingAttribute;
             this.groupSort = groupSort;
             this.fileSortMethod = fileSortMethod;
+            this.groupName = groupName;
+            this.groupSize = groupSize;
+            this.resultType = resultType;
         }
 
         /**

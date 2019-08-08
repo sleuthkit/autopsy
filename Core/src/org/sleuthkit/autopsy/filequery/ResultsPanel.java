@@ -42,8 +42,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private final DataResultViewerThumbnail thumbnailViewer;
     private final DataResultViewerTable tableViewer;
-    private final EamDb centralRepo;
-    private FileSearchData.FileType resultType;
     private List<FileSearchFiltering.FileFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
@@ -51,6 +49,8 @@ public class ResultsPanel extends javax.swing.JPanel {
     private String selectedGroupName;
     private int currentPage = 0;
     private int previousPageSize = 10;
+    private FileSearchData.FileType resultType;
+    private final EamDb centralRepo;
     private int groupSize = 0;
     private PageWorker pageWorker;
 
@@ -106,12 +106,12 @@ public class ResultsPanel extends javax.swing.JPanel {
     @Subscribe
     void handlePageChangedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
         SwingUtilities.invokeLater(() -> {
-            resultType = groupSelectedEvent.getResultType();
             searchFilters = groupSelectedEvent.getFilters();
             groupingAttribute = groupSelectedEvent.getGroupingAttr();
             groupSort = groupSelectedEvent.getGroupSort();
             fileSortMethod = groupSelectedEvent.getFileSort();
             selectedGroupName = groupSelectedEvent.getGroupName();
+            resultType = groupSelectedEvent.getResultType();
             groupSize = groupSelectedEvent.getGroupSize();
             setPage(0);
         });
@@ -129,7 +129,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             if (pageWorker != null && !pageWorker.isDone()) {
                 pageWorker.cancel(true);
             }
-            pageWorker = new PageWorker(resultType, centralRepo, searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, startingEntry, pageSize);
+            pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, startingEntry, pageSize, resultType, centralRepo);
             pageWorker.execute();
         }
     }
