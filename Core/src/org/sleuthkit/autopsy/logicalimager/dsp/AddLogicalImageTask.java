@@ -20,8 +20,9 @@ package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -189,7 +190,8 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
         Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
         
-        try (BufferedReader br = new BufferedReader(new FileReader(resultsPath.toFile()))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                      new FileInputStream(resultsPath.toFile()), "UTF8"))) {
             String line;
             br.readLine(); // skip the header line
             int lineNumber = 2;
