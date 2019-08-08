@@ -184,14 +184,15 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
     }
     
     @Messages({
-        "# {0} - line number", "# {1} - fields length", "# {2} - expected length", "AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}"
+        "# {0} - line number", "# {1} - fields length", "# {2} - expected length", "AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}",
+        "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}"
     })
     private void addInterestingFiles(File src, Path resultsPath) throws IOException, TskCoreException {
         Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
         Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
         
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                      new FileInputStream(resultsPath.toFile()), "UTF8"))) {
+                      new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
             String line;
             br.readLine(); // skip the header line
             int lineNumber = 2;
