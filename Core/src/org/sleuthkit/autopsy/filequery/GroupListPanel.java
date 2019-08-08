@@ -121,7 +121,7 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
         if (!evt.getValueIsAdjusting()) {
-            String selectedGroup = groupDisplayNameList.getSelectedValue().replaceAll(" ([0-9]+)$", ""); 
+            String selectedGroup = groupDisplayNameList.getSelectedValue().replaceAll(" \\([0-9]+\\)$", ""); 
             for (String groupName : groupMap.keySet()) {
                 if (selectedGroup.equalsIgnoreCase(groupName)) {
                     selectedGroupName = groupName;
