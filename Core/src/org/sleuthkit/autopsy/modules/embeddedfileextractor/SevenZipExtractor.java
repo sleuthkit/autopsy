@@ -403,10 +403,9 @@ class SevenZipExtractor {
     /**
      * Get the path in the archive of the specified item
      *
-     * @param item        - the item to get the path for
-     * @param itemNumber  - the item number to help provide uniqueness to the
-     *                    path
-     * @param archiveFile - the archive file the item exists in
+     * @param archive            - the archive to get the path for
+     * @param inArchiveItemIndex - the item index to help provide uniqueness to the path
+     * @param archiveFile        - the archive file the item exists in
      *
      * @return a string representing the path to the item in the archive
      *
@@ -1128,7 +1127,6 @@ class SevenZipExtractor {
          * @param localPathRoot Path in module output folder that files will be
          *                      saved to
          * @param archiveFile   Archive file being extracted
-         * @param fileManager
          */
         UnpackedTree(String localPathRoot, AbstractFile archiveFile) {
             this.rootNode = new UnpackedNode();
