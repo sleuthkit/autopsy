@@ -512,7 +512,7 @@ class SevenZipExtractor {
         final String escapedArchiveFilePath = FileUtil.escapeFileName(archiveFilePath);
         HashMap<String, ZipFileStatusWrapper> statusMap = new HashMap<>();
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
-        IInArchive inArchive = null;
+
         currentArchiveName = archiveFile.getName();
 
         SevenZipContentReadStream stream = null;
@@ -527,7 +527,6 @@ class SevenZipExtractor {
             return unpackSuccessful;
         }
         try {
-
             List<AbstractFile> existingFiles = getAlreadyExtractedFiles(archiveFile, archiveFilePath);
             for (AbstractFile file : existingFiles) {
                 statusMap.put(getKeyAbstractFile(file), new ZipFileStatusWrapper(file, ZipFileStatus.EXISTS));
@@ -560,6 +559,7 @@ class SevenZipExtractor {
                 return unpackSuccessful;
             }
         }
+        IInArchive inArchive = null;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
             // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
@@ -1480,11 +1480,11 @@ class SevenZipExtractor {
             }
 
             void setFileNameBytes(byte[] fileNameBytes) {
-                this.fileNameBytes = fileNameBytes;
+                this.fileNameBytes = Arrays.copyOf(fileNameBytes, fileNameBytes.length);
             }
             
             byte[] getFileNameBytes() {
-                return fileNameBytes;
+                return Arrays.copyOf(fileNameBytes, fileNameBytes.length);
             }
         }
     }
