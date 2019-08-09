@@ -29,17 +29,17 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Class for storing files that belong to a particular group.
  */
 class FileGroup implements Comparable<FileGroup> {
-    
+
     private final FileGroup.GroupSortingAlgorithm groupSortingType;
     private final FileSearch.GroupKey groupKey;
     private final List<ResultFile> files;
     private final String displayName;
-    
+
     /**
      * Create a FileGroup object with its first file.
-     * 
-     * @param groupSortingType  The method for sorting the group
-     * @param groupKey          The GroupKey for this group
+     *
+     * @param groupSortingType The method for sorting the group
+     * @param groupKey         The GroupKey for this group
      */
     FileGroup(FileGroup.GroupSortingAlgorithm groupSortingType, FileSearch.GroupKey groupKey) {
         this.groupSortingType = groupSortingType;
@@ -47,63 +47,68 @@ class FileGroup implements Comparable<FileGroup> {
         files = new ArrayList<>();
         this.displayName = groupKey.getDisplayName();
     }
-    
+
     /**
-     * Add a ResultFile to the group.
-     * Will not be sorted at this time.
-     * 
+     * Add a ResultFile to the group. Will not be sorted at this time.
+     *
      * @param file The ResultFile to add to the FileGroup
      */
     void addFile(ResultFile file) {
-        files.add(file);
+        if (files.contains(file)) {
+            ResultFile existingCopy = files.get(files.indexOf(file)); //get the copy of this which exists in the list
+            existingCopy.addDuplicate(file.getAbstractFile());
+        }
+        else {
+            files.add(file);
+        }
     }
-    
+
     /**
-     * Get the display name for this group.
-     * This must be unique for each group.
-     * 
+     * Get the display name for this group. This must be unique for each group.
+     *
      * @return the display name
      */
     String getDisplayName() {
         return displayName; // NON-NLS
     }
-    
+
     /**
      * Pull the AbstractFile objects out of the ResultFile objects.
-     * 
+     *
      * @return List of abstract files
      */
     List<AbstractFile> getAbstractFiles() {
         return files.stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
     }
-    
+
     /**
      * Sort all the files in the group
      */
     void sortFiles(FileSorter sorter) {
         Collections.sort(files, sorter);
     }
-    
+
     /**
      * Get the list of ResultFile objects in the group
-     * 
+     *
      * @return List of ResultFile objects
      */
     List<ResultFile> getResultFiles() {
-        return files;
+        return Collections.unmodifiableList(files);
     }
-    
+
     /**
-     * Compare this group to another group for sorting.
-     * Uses the algorithm specified in groupSortingType.
-     * 
+     * Compare this group to another group for sorting. Uses the algorithm
+     * specified in groupSortingType.
+     *
      * @param otherGroup the group to compare this one to
-     * 
-     * @return -1 if this group should be displayed before the other group, 1 otherwise
+     *
+     * @return -1 if this group should be displayed before the other group, 1
+     *         otherwise
      */
     @Override
     public int compareTo(FileGroup otherGroup) {
-        
+
         switch (groupSortingType) {
             case BY_GROUP_SIZE:
                 return compareGroupsBySize(this, otherGroup);
@@ -112,26 +117,26 @@ class FileGroup implements Comparable<FileGroup> {
                 return compareGroupsByGroupKey(this, otherGroup);
         }
     }
-    
+
     /**
      * Compare two groups based on the group key
-     * 
+     *
      * @param group1
      * @param group2
-     * 
+     *
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
     private static int compareGroupsByGroupKey(FileGroup group1, FileGroup group2) {
         return group1.groupKey.compareTo(group2.groupKey);
     }
-    
+
     /**
-     * Compare two groups based on the group size.
-     * Falls back on the group key if the groups are the same size.
-     * 
+     * Compare two groups based on the group size. Falls back on the group key
+     * if the groups are the same size.
+     *
      * @param group1
      * @param group2
-     * 
+     *
      * @return -1 if group1 should be displayed before group2, 1 otherwise
      */
     private static int compareGroupsBySize(FileGroup group1, FileGroup group2) {
@@ -142,13 +147,13 @@ class FileGroup implements Comparable<FileGroup> {
             return compareGroupsByGroupKey(group1, group2);
         }
     }
-    
+
     /**
      * Enum to specify how to sort the group.
      */
     enum GroupSortingAlgorithm {
-	BY_GROUP_SIZE, // Sort from largest to smallest group
-	BY_GROUP_KEY   // Sort using the group key (for example, if grouping by size sort from largest to smallest value)
+        BY_GROUP_SIZE, // Sort from largest to smallest group
+        BY_GROUP_KEY   // Sort using the group key (for example, if grouping by size sort from largest to smallest value)
     }
 
 }
