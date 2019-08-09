@@ -229,11 +229,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
             if (!subject.isEmpty()) {
                 threadNameLabel.setText(subject);
             } else {
-                if (threadIDList.contains(MessageNode.CALL_LOG_ID)) {
-                    threadNameLabel.setText(Bundle.MessageViewer_viewMessage_calllogs());
-                } else {
-                    threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
-                }
+                threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
             }
             
            showMessagesPane();
