@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -33,7 +32,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Class to test the file search API. Allows the user to run searches and see results.
@@ -106,7 +104,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
                 if (! groups.isEmpty()) {
                     String firstGroupName = groups.keySet().iterator().next();
 
-                    List<AbstractFile> entries0to5 = FileSearch.getFilesInGroup(filters, 
+                    List<ResultFile> entries0to5 = FileSearch.getFilesInGroup(filters, 
                         groupingAttr, 
                         groupSortAlgorithm, 
                         fileSort, 
@@ -115,11 +113,11 @@ public final class FileSearchTestAction extends CallableSystemAction {
                         5,
                         Case.getCurrentCase().getSleuthkitCase(), crDb);
                     System.out.println("First five " + firstGroupName + " : ");
-                    for (AbstractFile f : entries0to5) {
-                        System.out.println("  " + f.getName());
+                    for (ResultFile f : entries0to5) {
+                        System.out.println("  " + f.getAbstractFile().getName());
                     }
 
-                    List<AbstractFile> entries6to106 = FileSearch.getFilesInGroup(filters, 
+                    List<ResultFile> entries6to106 = FileSearch.getFilesInGroup(filters, 
                         groupingAttr, 
                         groupSortAlgorithm, 
                         fileSort, 
@@ -128,8 +126,8 @@ public final class FileSearchTestAction extends CallableSystemAction {
                         100,
                         Case.getCurrentCase().getSleuthkitCase(), crDb);
                     System.out.println(firstGroupName + " 6 to 106: ");
-                    for (AbstractFile f : entries6to106) {
-                        System.out.println("  " + f.getName());
+                    for (ResultFile f : entries6to106) {
+                        System.out.println("  " + f.getAbstractFile().getName());
                     }
                 }
                 

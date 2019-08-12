@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Image;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
@@ -32,6 +34,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Panel for displaying of file discovery results and handling the paging of
@@ -42,6 +45,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private final DataResultViewerThumbnail thumbnailViewer;
     private final DataResultViewerTable tableViewer;
+    private final VideoThumbnailViewer videoThumbnailViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
@@ -62,6 +66,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         this.centralRepo = centralRepo;
         thumbnailViewer = new DataResultViewerThumbnail(explorerManager);
         tableViewer = new DataResultViewerTable(explorerManager);
+        videoThumbnailViewer = new VideoThumbnailViewer();
         // Disable manual editing of page size spinner
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
@@ -79,23 +84,42 @@ public class ResultsPanel extends javax.swing.JPanel {
             thumbnailViewer.resetComponent();
             resultsViewerPanel.remove(thumbnailViewer);
             resultsViewerPanel.remove(tableViewer);
-            if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE || pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
+            if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
                 resultsViewerPanel.add(thumbnailViewer);
                 if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(pageRetrievedEvent.getSearchResults()))), true));
+                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(filesList))), true));
                 } else {
                     thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
                 }
+            } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
+                populateVideoViewer(pageRetrievedEvent.getSearchResults());
+                resultsViewerPanel.add(videoThumbnailViewer);
+
             } else {
                 resultsViewerPanel.add(tableViewer);
                 if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                    tableViewer.setNode(new TableFilterNode(new SearchNode(pageRetrievedEvent.getSearchResults()), true));
+                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+                    tableViewer.setNode(new TableFilterNode(new SearchNode(filesList), true));
                 } else {
                     tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
                 }
             }
             resultsViewerPanel.validate();
         });
+    }
+
+    void populateVideoViewer(List<ResultFile> files) {
+        System.out.println("POPULATE VIEWER");
+        videoThumbnailViewer.clearViewer();
+        for (ResultFile file : files) {
+            System.out.println("NEW THREAD");
+            new Thread(() -> {      
+                System.out.println("ON NEW THREAD");
+                videoThumbnailViewer.addRow(file.getThumbnails(resultType), file.getAbstractFile().getParentPath());
+                System.out.println("END NEW THREAD");
+            }).start();
+        }
     }
 
     /**
@@ -168,6 +192,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         gotoPageLabel = new javax.swing.JLabel();
         gotoPageField = new javax.swing.JTextField();
         pageSizeLabel = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
         resultsViewerPanel = new javax.swing.JPanel();
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -177,9 +202,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         previousPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
         previousPageButton.setEnabled(false);
         previousPageButton.setFocusable(false);
-        previousPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
-        previousPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
-        previousPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
         previousPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
         previousPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -197,9 +219,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
         nextPageButton.setEnabled(false);
         nextPageButton.setFocusable(false);
-        nextPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
-        nextPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
-        nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
         nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
         nextPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -244,9 +263,9 @@ public class ResultsPanel extends javax.swing.JPanel {
                 .addGap(18, 18, 18)
                 .addComponent(pageControlsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(previousPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(previousPageButton)
                 .addGap(0, 0, 0)
-                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(nextPageButton)
                 .addGap(18, 18, 18)
                 .addComponent(gotoPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -262,9 +281,9 @@ public class ResultsPanel extends javax.swing.JPanel {
             .addGroup(pagingPanelLayout.createSequentialGroup()
                 .addGap(4, 4, 4)
                 .addGroup(pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(nextPageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(nextPageButton, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(previousPageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(previousPageButton, javax.swing.GroupLayout.Alignment.TRAILING)
                         .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(pageControlsLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -276,20 +295,21 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
 
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
+        jScrollPane1.setViewportView(resultsViewerPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(pagingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jScrollPane1))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -368,6 +388,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JTextField gotoPageField;
     private javax.swing.JLabel gotoPageLabel;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel pageControlsLabel;
     private javax.swing.JLabel pageSizeLabel;

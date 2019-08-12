@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
-    private static final Cache<String, List<AbstractFile>> groupCache = CacheBuilder.newBuilder().build();
+    private static final Cache<String, List<ResultFile>> groupCache = CacheBuilder.newBuilder().build();
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -104,7 +104,7 @@ class FileSearch {
 
         // Sort and group the results
         searchResults.sortGroupsAndFiles();
-        LinkedHashMap<String, List<AbstractFile>> resultHashMap = searchResults.toLinkedHashMap();
+        LinkedHashMap<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
         for (String groupName : resultHashMap.keySet()) {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
@@ -134,7 +134,7 @@ class FileSearch {
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+        LinkedHashMap<String, List<ResultFile>> searchResults = runFileSearch(filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
         for (String groupName : searchResults.keySet()) {
@@ -163,7 +163,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static synchronized List<AbstractFile> getFilesInGroup(
+    static synchronized List<ResultFile> getFilesInGroup(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -173,8 +173,8 @@ class FileSearch {
             int numberOfEntries,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
         //the group should be in the cache at this point
-        List<AbstractFile> filesInGroup = groupCache.getIfPresent(groupName);
-        List<AbstractFile> page = new ArrayList<>();
+        List<ResultFile> filesInGroup = groupCache.getIfPresent(groupName);
+        List<ResultFile> page = new ArrayList<>();
         if (filesInGroup == null) {
             logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupName);
             runFileSearch(filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
@@ -214,7 +214,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private synchronized static LinkedHashMap<String, List<AbstractFile>> runFileSearch(
+    private synchronized static LinkedHashMap<String, List<ResultFile>> runFileSearch(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -239,7 +239,7 @@ class FileSearch {
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         searchResults.add(resultFiles);
-        LinkedHashMap<String, List<AbstractFile>> resultHashMap = searchResults.toLinkedHashMap();
+        LinkedHashMap<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
         for (String groupName : resultHashMap.keySet()) {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
@@ -361,6 +361,7 @@ class FileSearch {
          */
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
             // Default is to do nothing
+            System.out.println("DEFAULT IMPLE ");
         }
     }
 

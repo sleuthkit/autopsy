@@ -76,7 +76,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            List<AbstractFile> results = FileSearch.getFilesInGroup(searchfilters,
+            List<ResultFile> results = FileSearch.getFilesInGroup(searchfilters,
                     groupingAttribute,
                     groupSort,
                     fileSortMethod, groupName, startingEntry, pageSize,

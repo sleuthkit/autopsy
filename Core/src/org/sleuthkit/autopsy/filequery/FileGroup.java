@@ -77,8 +77,8 @@ class FileGroup implements Comparable<FileGroup> {
      *
      * @return List of abstract files
      */
-    List<AbstractFile> getAbstractFiles() {
-        return files.stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+    List<ResultFile> getAbstractFiles() {
+        return Collections.unmodifiableList(files);
     }
 
     /**

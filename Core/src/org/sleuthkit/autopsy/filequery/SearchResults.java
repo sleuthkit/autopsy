@@ -135,7 +135,7 @@ class SearchResults {
      * @param groupName The name of the group. Can have the size appended.
      * @return the list of abstract files
      */
-    List<AbstractFile> getAbstractFilesInGroup(String groupName) {
+    List<ResultFile> getAbstractFilesInGroup(String groupName) {
         if (groupName != null) {
             final String modifiedGroupName = groupName.replaceAll(" \\([0-9]+\\)$", "");
 
@@ -152,8 +152,8 @@ class SearchResults {
      * 
      * @return the grouped and sorted results
      */
-    LinkedHashMap<String, List<AbstractFile>> toLinkedHashMap() throws FileSearchException {
-        LinkedHashMap<String, List<AbstractFile>> map = new LinkedHashMap<>();
+    LinkedHashMap<String, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
+        LinkedHashMap<String, List<ResultFile>> map = new LinkedHashMap<>();
         
         // Sort the groups and files
         sortGroupsAndFiles();
