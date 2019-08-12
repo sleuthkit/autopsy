@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,7 +35,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -2413,7 +2411,6 @@ public class Case {
     @Messages({
         "Case.progressMessage.shuttingDownNetworkCommunications=Shutting down network communications...",
         "Case.progressMessage.closingApplicationServiceResources=Closing case-specific application service resources...",
-        "Case.progressMessage.closingCaseLevelServices=Closing case-level services...",
         "Case.progressMessage.closingCaseDatabase=Closing case database..."
     })
     private void close(ProgressIndicator progressIndicator) {
@@ -2439,19 +2436,7 @@ public class Case {
         closeAppServiceCaseResources();
 
         /*
-         * Close the case-level services.
-         */
-        if (null != caseServices) {
-            progressIndicator.progress(Bundle.Case_progressMessage_closingCaseLevelServices());
-            try {
-                this.caseServices.close();
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error closing internal case services for %s at %s", this.getName(), this.getCaseDirectory()), ex);
-            }
-        }
-
-        /*
-         * Close the case database
+         * Close the case database.
          */
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());

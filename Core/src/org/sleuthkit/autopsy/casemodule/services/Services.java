@@ -33,10 +33,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * A collection of case-level services: file manager, tags manager, keyword
  * search service, artifacts blackboard.
+ * 
+ * TODO (AUT-2158): This interface should not extend Closeable.
  */
 public class Services implements Closeable {
 
-    private final List<Closeable> services = new ArrayList<>();
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
@@ -49,16 +50,8 @@ public class Services implements Closeable {
      */
     public Services(SleuthkitCase caseDb) {
         fileManager = new FileManager(caseDb);
-        services.add(fileManager);
-
         tagsManager = new TagsManager(caseDb);
-        services.add(tagsManager);
-
-        //This lookup fails in the functional test code. See JIRA-4571 for details.
-        //For the time being, the closing of this service at line 108 will be made
-        //null safe so that the functional tests run with no issues.
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        services.add(keywordSearchService);
     }
 
     /**
@@ -115,14 +108,15 @@ public class Services implements Closeable {
      * Closes the services for the current case.
      *
      * @throws IOException if there is a problem closing the services.
+     * @deprecated Do not use.
      */
+    @Deprecated
     @Override
     public void close() throws IOException {
-        for (Closeable service : services) {
-            if (service != null) {
-                service.close();
-            }
-        }
+        /*
+         * No-op maintained for backwards compatibility. Clients should not
+         * attempt to close case services.
+         */
     }
 
 }

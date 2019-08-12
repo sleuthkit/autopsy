@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,8 +62,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProviders(value = {
     @ServiceProvider(service = KeywordSearchService.class)
     ,
-    @ServiceProvider(service = AutopsyService.class)}
-)
+    @ServiceProvider(service = AutopsyService.class)
+})
 public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
@@ -136,7 +136,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // Try the StringsTextExtractor if Tika extractions fails.
                     TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(content, null);
                     Reader stringsExtractedTextReader = stringsExtractor.getReader();
-                    ingester.indexText(stringsExtractedTextReader,content.getId(),content.getName(), content, null);
+                    ingester.indexText(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
                 } catch (Ingester.IngesterException | TextExtractor.InitReaderException ex1) {
                     throw new TskCoreException("Error indexing content", ex1);
                 }
@@ -236,10 +236,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
         throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
                 "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
-    }
-
-    @Override
-    public void close() throws IOException {
     }
 
     @Override
