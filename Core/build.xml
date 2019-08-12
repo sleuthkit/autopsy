@@ -39,13 +39,17 @@
         <copy todir="${basedir}/release/Tesseract-OCR" >
             <fileset dir="${thirdparty.dir}/Tesseract-OCR"/>
         </copy>
-            
+        
+        <!--Copy Plaso to release-->
+        <copy todir="${basedir}/release/plaso" >
+            <fileset dir="${thirdparty.dir}/plaso"/>
+        </copy>     
         <!--Copy GStreamer to release-->
         <copy todir="${basedir}/release/gstreamer" >
             <fileset dir="${thirdparty.dir}/gstreamer"/>
         </copy>
 		
-		<!--Copy 7-Zip to release-->
+        <!--Copy 7-Zip to release-->
         <copy todir="${basedir}/release/7-Zip" >
             <fileset dir="${thirdparty.dir}/7-Zip"/>
         </copy>
@@ -64,7 +68,7 @@
         <delete file="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip" />
 
         <!--Copy other jars-->
-        <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/rejistry/Rejistry-1.1-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
@@ -96,8 +100,8 @@
               tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.jar"/>
-		<copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
-              tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	  
+        <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
+                      tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	  
     </target>
 
     <target name="download-binlist">
@@ -109,27 +113,27 @@
 
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
-	<get src="https://drive.google.com/uc?id=1FkinvA7EFqP4nOSOyTAOli5KefM67ufA" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1zPlIn1xmOeC1VYKmV3fJHl5qE6E_M7K-" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1brQqmX8MJnBPUFEbsdUvZ1X81PmQNVCY" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>	    
-        <get src="https://drive.google.com/uc?id=1bghoSm7z7nhmGIxlllyY1MMlbLntxm7n" dest="${test-input}/IngestFilters_local1_v1.zip" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1Ovyv_xVty8xMYgsc3C45pvphfhbdKg1x" dest="${test-input}/PasswordDetection_img1_v1.img" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1HD8s4rculgHV1qZT5g80Kg7j4m1qccrN" dest="${test-input}/VeracryptDetection_img1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1mr9waEDG5H8GBBn_yXwMUQ6senwC1goL" dest="${test-input}/CommonFiles_img1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1-vmbmAAb2HBLbf58GpAA97ozGUFiYHbN" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1ghDjm0NhI3ShMQ38E-4o7XrGeexpjdJb" dest="${test-input}/CommonFiles_img3_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1SJYJFjiumKEtQmeMPsQ6G3xmABarbKm_" dest="${test-input}/CommonFiles_img4_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1HwpDlMa1J7h9AmEd1JhLYGnzihslZJUj" dest="${test-input}/c1ds1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1Z7mWChlLIpIlScD-DVNGFik5A_rnwS_9" dest="${test-input}/c1ds2_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=14ZxYGyng_eKPe2yaiKDkJLoNcKHIHhW5" dest="${test-input}/c2ds1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1xv3Lz9m2QLq35ofDfHQNe9aHVtVzHUsj" dest="${test-input}/c2ds2_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1sg-znklB9yJAWq8i1cF2W-QLOM4FjZyv" dest="${test-input}/c3ds1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1qXyaSlm3hMhv0jl6JkZEficknKjYNOlt" dest="${test-input}/c3ds2_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1gW-SvduRwwoHmOheQypaRZ3ig-bezRre" dest="${test-input}/CommonFilesAttrs_img4_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=14vx83MZcd5PJadOesQz7tja-4a-Hz7eD" dest="${test-input}/CommonFilesAttrs_img3_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1ZIYca4CWxyDcfF5Vf2uWkXeI83mR8L9B" dest="${test-input}/CommonFilesAttrs_img2_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1RvLNhuKzqHURqeVml_o4lpv6jPCJJ9sv" dest="${test-input}/CommonFilesAttrs_img1_v1.vhd" skipexisting="true"/>
+	<get src="https://drive.google.com/uc?id=1gyKzqJHtaBjFBqeB29N5vSpf1oH9N0bV" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1gvvV797dKczkwpWII4hIryBXCc0w5zL-" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1lYzd--9YUB7yDccM7NPOo8PC1xxuOiKs" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1QRNKs824kksiJLZ4qcs59Nytw0fJKEjb" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>  
+        <get src="https://drive.google.com/uc?id=1OMTB5gD4_VuaFkLWu2I33FN8VAHoRQbW" dest="${test-input}/IngestFilters_local1_v1.zip" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1WGMkivlDi_I_vB1aYY6puAPktbmlNSL-" dest="${test-input}/PasswordDetection_img1_v1.img" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1X2DzJOJ1SjUkAtZXJ3oQHXkjF0NX_jOz" dest="${test-input}/VeracryptDetection_img1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=19gRepVVvLsDHtBwIkX2VVjsBWIub7aIV" dest="${test-input}/CommonFiles_img1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1chUMtA0CNyPBZ0yuTl9F_O103R21Ox0p" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1TmdjSjV7MLwVEmgWGJLOYnWDiZeqOgmd" dest="${test-input}/CommonFiles_img3_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=10u8ocYv6KKDVox6SRv_0fQeVqJjWAFJr" dest="${test-input}/CommonFiles_img4_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1pcYsYB1tTzg63kgTG52u40osbZ-rUHwr" dest="${test-input}/c1ds1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=11F_Kjht23aFfbdHN1Ryl2fLFv3A76E6O" dest="${test-input}/c1ds2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1gVnHJEzUmCGVVqhcpI9UHB9zHY2zY5VL" dest="${test-input}/c2ds1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1RodtAXWXrDvwuMVQYBM_QaOi3XR2B41F" dest="${test-input}/c2ds2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1t4RKK375nKFAh2iGuu5Nttdy4EFyUqlv" dest="${test-input}/c3ds1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1be6Szhb57duDkfCc_EGeyHCrAzrIDjs3" dest="${test-input}/c3ds2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=13YJ6nNXiAxRjNKwzcN9ohwvnVupxPvXc" dest="${test-input}/CommonFilesAttrs_img4_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1UczQeY5ZZiQaql_ErnPRxVyX6qMgbvil" dest="${test-input}/CommonFilesAttrs_img3_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1c2egfrKDQqFD04EqhGIDfs82Uub-fGlx" dest="${test-input}/CommonFilesAttrs_img2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1ns2olaWsBu_c4EoE4Seh8t_B3U5RnLKd" dest="${test-input}/CommonFilesAttrs_img1_v1.vhd" skipexisting="true"/>
 
     </target>
 
@@ -139,11 +143,11 @@
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
-     </target>
+    </target>
 
-     <target name="init" depends="get-deps,harness.init"/>
+    <target name="init" depends="get-deps,harness.init"/>
   
-     <target name="clean" depends="projectized-common.clean">
+    <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy, 
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
@@ -156,8 +160,8 @@
 
     <target name="copy-bundle">
         <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
-          The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
-          in and used as a basis for translation efforts -->
+        The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
+        in and used as a basis for translation efforts -->
         <copy todir="src">
             <fileset dir="build/classes">
                 <include name="**/Bundle.properties"/>

@@ -1,20 +1,20 @@
 /*! \page content_viewer_page Content Viewer
 
-The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is enabled when you select an entry in the \ref ui_results.
+The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is populated when you select an entry in the \ref ui_results.
 
 The Content Viewer is context-aware, meaning different tabs will be enabled depending on the type of content selected and which ingest modules have been run. It will default to what it considers the "most specific" tab. For example, selecting a JPG will cause the Content Viewer to automatically select the "Application" tab and will display the image there. If you instead would like the Content Viewer to stay on the previously selected tab when you change to a different content object, go to the \ref view_options_page panel through Tools->Options->Application Tab and select the "Stay on the same file viewer" option.
 
 \image html content_viewer_options_panel.png
 
-When a Result type is selected in the Result Viewer (as opposed to a file), most of the tabs will correspond to the file associated with the result and not the result itself. For example, when selecting a Keyword Hit, the "Hex", "Strings", and "File Metadata" tabs will show data from the file where the keyword was found. The descriptions below will generally assume a file has been selected, but most also apply when we have a file associated with a selected result.
+When a result item is selected in the Result Viewer (as opposed to a file), most of the tabs will correspond to the file associated with the result and not the result itself. For example, when selecting a keyword hit, the "Hex", "Strings", and "File Metadata" tabs will show data from the file where the keyword was found. The descriptions below will generally assume a file has been selected, but most also apply when we have a file associated with a selected result.
 
 \section cv_hex Hex
 
-The Hex Content Viewer is nearly always available and shows you the raw and exact contents of a file.  In this content viewer, the data of the file is represented as hexadecimal values grouped in 2 groups of 8 bytes, followed by one group of 16 ASCII characters which are derived from each pair of hex values (each byte). Non-printable ASCII characters and characters that would take more than one character space are typically represented by a dot (".") in the following ASCII field.
+The Hex tab is nearly always available and shows you the raw and exact contents of a file.  In this tab, the data of the file is represented as hexadecimal values grouped in 2 groups of 8 bytes, followed by one group of 16 ASCII characters which are derived from each pair of hex values (each byte). Non-printable ASCII characters and characters that would take more than one character space are typically represented by a dot (".") in the following ASCII field.
 
 \image html content_viewer_hex.png
 
-If desired, you can open the file in an external hex editor. This is configured through the "External Viewer" tab on the options panel. HxD has been tested to work, but alternate hex editors may also be compatible. 
+If desired, you can open the file in an external hex editor. This is configured through the "External Viewer" tab on the options panel. HxD has been verified to work with Autopsy, but alternate hex editors may also be compatible. 
 
 \image html content_viewer_hex_editor_setup.png
 
@@ -22,11 +22,29 @@ Note that this process saves the file to disk before launching the hex editor. A
 
 \image html content_viewer_hxd_progress.png
 
-\section cv_strings Strings
+\section cv_text Text
 
-The Strings tab shows all text strings found in the file. Different scripts can be chosen from the drop-down menu to display results for non-Latin alphabets. 
+The Text tab has three sub tabs for displaying the text contained in the selected item.
+
+\subsection cv_strings Strings
+
+The Strings tab shows all text strings found in the file for the given script selected in the upper right. By default Latin text is used.
+
+\image html content_viewer_strings_latin.png
+
+Different scripts can be chosen from the drop-down menu to display results for non-Latin alphabets. 
 
 \image html content_viewer_strings_cyrillic.png
+
+\subsection cv_indexed_text Indexed Text
+
+The Indexed Text tab shows the text that has been indexed by the \ref keyword_search_page. You can switch the "Text Source" field to "Result Text" to see the text that has been indexed for the results associated with a file.
+
+\image html content_viewer_indexed_text.png
+
+\subsection cv_translation Translation
+
+If you have a translation service enabled, the Translation tab allows you to translate the text. See the \ref machine_translation_page page for more information.
 
 \section cv_app Application
 
@@ -48,11 +66,9 @@ HTML files can be displayed closer to their original form:
 
 \image html content_viewer_html.png
 
-\section cv_indexed_text Indexed Text
+Registry hive files can be viewed in a format similar to a registry editor.
 
-The Indexed Text tab shows the text that has been indexed by the Keyword Search module. You can switch the "Text Source" Field to "Result Text" to see which text has been indexed for associated results.
-
-\image html content_viewer_indexed_text.png
+\image html content_viewer_registry.png
 
 \section cv_message Message
 
@@ -68,7 +84,7 @@ The File Metadata tab displays basic information about the file, such as type, s
 
 \section cv_results Results
 
-The Results tab is active when selecting entries that are part of the Results tree, such as keyword hits, call logs, and messages. It is also active when looking at a file that has results associated with it. The exact fields displayed depend on the type of entry. The two images below show the Results tab for a call log and a web bookmark.
+The Results tab is active when selecting items with associated results such as keyword hits, call logs, and messages. The exact fields displayed depend on the type of result. The two images below show the Results tab for a call log and a web bookmark.
 
 \image html content_viewer_results_call.png
 <br>

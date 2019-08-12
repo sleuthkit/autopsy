@@ -73,8 +73,7 @@ public class TextExtractorFactory {
 
         throw new NoTextExtractorFound(
                 String.format("Could not find a suitable reader for "
-                        + "content with name [%s] and id=[%d]. Try using "
-                        + "the strings extractor instead.",
+                        + "content with name [%s] and id=[%d].",
                         content.getName(), content.getId())
         );
     }

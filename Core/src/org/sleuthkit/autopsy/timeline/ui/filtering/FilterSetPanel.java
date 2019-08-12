@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import java.util.Arrays;
 import javafx.application.Platform;
-import javafx.beans.Observable;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
@@ -40,19 +40,18 @@ import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 
 /**
  * The FXML controller for the filter ui.
  *
- * This also implements TimeLineView since it dynamically updates its
- * filters based on the contents of a FilteredEventsModel
+ * This also implements TimeLineView since it dynamically updates its filters
+ * based on the contents of a FilteredEventsModel
  */
 final public class FilterSetPanel extends BorderPane {
 
@@ -65,16 +64,16 @@ final public class FilterSetPanel extends BorderPane {
     private Button defaultButton;
 
     @FXML
-    private TreeTableView<Filter> filterTreeTable;
+    private TreeTableView<FilterState<?>> filterTreeTable;
 
     @FXML
-    private TreeTableColumn<AbstractFilter, AbstractFilter> treeColumn;
+    private TreeTableColumn< FilterState< ?>, FilterState<?>> treeColumn;
 
     @FXML
-    private TreeTableColumn<AbstractFilter, AbstractFilter> legendColumn;
+    private TreeTableColumn<FilterState<?>, FilterState<?>> legendColumn;
 
     @FXML
-    private ListView<DescriptionFilter> hiddenDescriptionsListView;
+    private ListView<DescriptionFilterState> hiddenDescriptionsListView;
     @FXML
     private TitledPane hiddenDescriptionsPane;
     @FXML
@@ -84,10 +83,10 @@ final public class FilterSetPanel extends BorderPane {
     private final TimeLineController controller;
 
     /**
-     * map from filter to its expansion state in the ui, used to restore the
+     * Map from filter to its expansion state in the ui, used to restore the
      * expansion state as we navigate back and forward in the history
      */
-    private final ObservableMap<Filter, Boolean> expansionMap = FXCollections.observableHashMap();
+    private final ObservableMap< Object, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
     @NbBundle.Messages({
@@ -116,21 +115,23 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
         //type is the only filter expanded initialy
-        expansionMap.put(controller.getEventsModel().getFilter().getTypeFilter(), true);
+        expansionMap.put(filteredEvents.getFilterState().getFilter(), true);
+        expansionMap.put(filteredEvents.getFilterState().getEventTypeFilterState().getFilter(), true);
 
-        this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
-        this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());
-        this.filteredEvents.timeRangeProperty().addListener((Observable observable2) -> applyFilters());
+        InvalidationListener applyFiltersListener = observable -> applyFilters();
 
-        this.filteredEvents.filterProperty().addListener((Observable o) -> refresh());
-        refresh();
+        filteredEvents.eventTypeZoomProperty().addListener(applyFiltersListener);
+        filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
+        filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
+
+        filteredEvents.filterProperty().addListener(observable -> refreshFilterUI());
+        refreshFilterUI();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
         hiddenDescriptionsListView.setCellFactory(listView -> getNewDiscriptionFilterListCell());
 
         //show and hide the "hidden descriptions" panel depending on the current view mode
         controller.viewModeProperty().addListener(observable -> {
-            applyFilters();
             switch (controller.getViewMode()) {
                 case COUNTS:
                 case LIST:
@@ -161,20 +162,19 @@ final public class FilterSetPanel extends BorderPane {
         FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
     }
 
-    private void refresh() {
-        Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilter().copyOf(), expansionMap));
-        });
+    private void refreshFilterUI() {
+        Platform.runLater(()
+                -> filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap)));
     }
 
     private void applyFilters() {
         Platform.runLater(() -> {
-            controller.pushFilters((RootFilter) filterTreeTable.getRoot().getValue());
+            controller.pushFilters(((RootFilterState) filterTreeTable.getRoot().getValue().copyOf()));
         });
     }
 
-    private ListCell<DescriptionFilter> getNewDiscriptionFilterListCell() {
-        final ListCell<DescriptionFilter> cell = new FilterCheckBoxCellFactory<DescriptionFilter>().forList();
+    private ListCell<DescriptionFilterState> getNewDiscriptionFilterListCell() {
+        final ListCell<DescriptionFilterState> cell = new FilterCheckBoxCellFactory< DescriptionFilterState>().forList();
         cell.itemProperty().addListener(itemProperty -> {
             if (cell.getItem() == null) {
                 cell.setContextMenu(null);
@@ -206,13 +206,13 @@ final public class FilterSetPanel extends BorderPane {
 
         private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
 
-        RemoveDescriptionFilterAction(TimeLineController controller, Cell<DescriptionFilter> cell) {
+        RemoveDescriptionFilterAction(TimeLineController controller, Cell<DescriptionFilterState> cell) {
             super(actionEvent -> controller.getQuickHideFilters().remove(cell.getItem()));
             setGraphic(new ImageView(SHOW));
             textProperty().bind(
                     Bindings.when(cell.getItem().selectedProperty())
-                    .then(Bundle.FilterSetPanel_hiddenDescriptionsListView_unhideAndRemove())
-                    .otherwise(Bundle.FilterSetPanel_hiddenDescriptionsListView_remove()));
+                            .then(Bundle.FilterSetPanel_hiddenDescriptionsListView_unhideAndRemove())
+                            .otherwise(Bundle.FilterSetPanel_hiddenDescriptionsListView_remove()));
         }
     }
 }

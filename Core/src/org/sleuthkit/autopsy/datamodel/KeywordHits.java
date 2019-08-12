@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,17 +24,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -44,9 +44,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -76,7 +74,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
-    private final long datasourceObjId;
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
     /**
      * String used in the instance MAP so that exact matches and substring can
@@ -85,7 +83,6 @@ public class KeywordHits implements AutopsyVisitableItem {
      */
     private static final String DEFAULT_INSTANCE_NAME = "DEFAULT_INSTANCE_NAME";
 
-    
     /**
      * query attributes table for the ones that we need for the tree
      */
@@ -108,23 +105,23 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     /**
      * Constructor
-     * 
-     * @param skCase  Case DB
-     */ 
+     *
+     * @param skCase Case DB
+     */
     KeywordHits(SleuthkitCase skCase) {
         this(skCase, 0);
     }
-    
+
     /**
      * Constructor
-     * 
-     * @param skCase  Case DB
-     * @param objId  Object id of the data source 
-     * 
-     */ 
+     *
+     * @param skCase Case DB
+     * @param objId  Object id of the data source
+     *
+     */
     public KeywordHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.datasourceObjId = objId;
+        this.filteringDSObjId = objId;
         keywordResults = new KeywordResults();
     }
 
@@ -152,9 +149,31 @@ public class KeywordHits implements AutopsyVisitableItem {
         List<String> getListNames() {
             synchronized (topLevelMap) {
                 List<String> names = new ArrayList<>(topLevelMap.keySet());
-                // this causes the "Single ..." terms to be in the middle of the results, 
-                // which is wierd.  Make a custom comparator or do something else to maek them on top
-                //Collections.sort(names);
+
+                // sort the list names, but ensure that the special lists
+                // stay at the top. 
+                Collections.sort(names, new Comparator<String>() {
+
+                    @Override
+                    public int compare(String o1, String o2) {  
+                        // ideally, they would not be hard coded, but this module
+                        // doesn't know about Keyword Search NBM
+                        if (o1.startsWith("Single Literal Keyword Search")) {
+                            return -1;
+                        }
+                        else if (o2.startsWith("Single Literal Keyword Search")) {
+                            return 1;
+                        }
+                        else if (o1.startsWith("Single Regular Expression Search")) {
+                            return -1;
+                        }
+                        else if (o2.startsWith("Single Regular Expression Search")) {
+                            return 1;
+                        }
+                        return o1.compareTo(o2);
+                    }
+                });
+                
                 return names;
             }
         }
@@ -323,10 +342,10 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             String queryStr = KEYWORD_HIT_ATTRIBUTES_QUERY;
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                queryStr +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            if (filteringDSObjId > 0) {
+                queryStr += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
-            
+
             try (CaseDbQuery dbQuery = skCase.executeQuery(queryStr)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
@@ -510,9 +529,11 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     private abstract class KWHitsNodeBase extends DisplayableItemNode implements Observer {
-
-        private KWHitsNodeBase(Children children, Lookup lookup) {
+        private String displayName;
+        
+        private KWHitsNodeBase(Children children, Lookup lookup, String displayName) {
             super(children, lookup);
+            this.displayName = displayName;
         }
 
         private KWHitsNodeBase(Children children) {
@@ -530,7 +551,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         final void updateDisplayName() {
-            super.setDisplayName(getName() + " (" + countTotalDescendants() + ")");
+            super.setDisplayName(displayName + " (" + countTotalDescendants() + ")");
         }
 
         abstract int countTotalDescendants();
@@ -545,7 +566,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String listName;
 
         private ListNode(String listName) {
-            super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName));
+            super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName), listName);
             super.setName(listName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             this.listName = listName;
@@ -632,6 +653,24 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     /**
+     * Create a ChildFactory object for the given set name and keyword.
+     *
+     * The type of ChildFactory we create is based on whether the node
+     * represents a regular expression keyword search or not. For regular
+     * expression keyword searches there will be an extra layer in the tree that
+     * represents each of the individual terms found by the regular expression.
+     * E.g., for an email regular expression search there will be a node in the
+     * tree for every email address hit.
+     */
+    ChildFactory<?> createChildFactory(String setName, String keyword) {
+        if (isOnlyDefaultInstance(keywordResults.getKeywordInstances(setName, keyword))) {
+            return new HitsFactory(setName, keyword, DEFAULT_INSTANCE_NAME);
+        } else {
+            return new RegExpInstancesFactory(setName, keyword);
+        }
+    }
+
+    /**
      * Represents the search term or regexp that user searched for
      */
     class TermNode extends KWHitsNodeBase {
@@ -640,8 +679,16 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String keyword;
 
         private TermNode(String setName, String keyword) {
-            super(Children.create(new RegExpInstancesFactory(setName, keyword), true), Lookups.singleton(keyword));
-            super.setName(keyword);
+            super(Children.create(createChildFactory(setName, keyword), true), Lookups.singleton(keyword), keyword);
+
+            /**
+             * We differentiate between the programmatic name and the display
+             * name. The programmatic name is used to create an association with
+             * an event bus and must be the same as the node name passed by our
+             * ChildFactory to it's parent constructor. See the HitsFactory
+             * constructor for an example.
+             */
+            super.setName(setName + "_" + keyword);
             this.setName = setName;
             this.keyword = keyword;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
@@ -695,44 +742,10 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     /**
-     * Allows us to pass in either longs or strings as they keys for different
-     * types of nodes at the same level. Probably a better way to do this, but
-     * it works.
-     */
-    private class RegExpInstanceKey {
-
-        private final boolean isRegExp;
-        private String strKey;
-        private Long longKey;
-
-        RegExpInstanceKey(String key) {
-            isRegExp = true;
-            strKey = key;
-        }
-
-        RegExpInstanceKey(Long key) {
-            isRegExp = false;
-            longKey = key;
-        }
-
-        boolean isRegExp() {
-            return isRegExp;
-        }
-
-        Long getIdKey() {
-            return longKey;
-        }
-
-        String getRegExpKey() {
-            return strKey;
-        }
-    }
-
-    /**
      * Creates the nodes for a given regexp that represent the specific terms
      * that were found
      */
-    private class RegExpInstancesFactory extends DetachableObserverChildFactory<RegExpInstanceKey> {
+    private class RegExpInstancesFactory extends DetachableObserverChildFactory<String> {
 
         private final String keyword;
         private final String setName;
@@ -744,33 +757,15 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<RegExpInstanceKey> list) {
-            List<String> instances = keywordResults.getKeywordInstances(setName, keyword);
-            // The keys are different depending on what we are displaying.
-            // regexp get another layer to show instances.  
-            // Exact/substring matches don't. 
-            if (isOnlyDefaultInstance(instances)) {
-                list.addAll(keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME).stream()
-                        .map(RegExpInstanceKey::new)
-                        .collect(Collectors.toList()));
-            } else {
-                list.addAll(instances.stream()
-                        .map(RegExpInstanceKey::new)
-                        .collect(Collectors.toList()));
-            }
+        protected boolean createKeys(List<String> list) {
+            list.addAll(keywordResults.getKeywordInstances(setName, keyword));
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(RegExpInstanceKey key) {
-            if (key.isRegExp()) {
-                return new RegExpInstanceNode(setName, keyword, key.getRegExpKey());
-            } else {
-                // if it isn't a regexp, then skip the 'instance' layer of the tree
-                return createBlackboardArtifactNode(key.getIdKey());
-            }
+        protected Node createNodeForKey(String key) {
+            return new RegExpInstanceNode(setName, keyword, key);
         }
-
     }
 
     /**
@@ -783,8 +778,16 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String instance;
 
         private RegExpInstanceNode(String setName, String keyword, String instance) {
-            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(instance));
-            super.setName(instance);  //the instance represents the name of the keyword hit at this point as the keyword is the regex
+            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(instance), instance);
+
+            /**
+             * We differentiate between the programmatic name and the display
+             * name. The programmatic name is used to create an association with
+             * an event bus and must be the same as the node name passed by our
+             * ChildFactory to it's parent constructor. See the HitsFactory
+             * constructor for an example.
+             */
+            super.setName(setName + "_" + keyword + "_" + instance);
             this.setName = setName;
             this.keyword = keyword;
             this.instance = instance;
@@ -837,7 +840,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     /**
      * Create a blackboard node for the given Keyword Hit artifact
      *
-     * @param artifactId
+     * @param art
      *
      * @return Node or null on error
      */
@@ -850,81 +853,110 @@ public class KeywordHits implements AutopsyVisitableItem {
         "KeywordHits.createNodeForKey.chgTime.name=ChangeTime",
         "KeywordHits.createNodeForKey.chgTime.displayName=Change Time",
         "KeywordHits.createNodeForKey.chgTime.desc=Change Time"})
-    private BlackboardArtifactNode createBlackboardArtifactNode(Long artifactId) {
+    private BlackboardArtifactNode createBlackboardArtifactNode(BlackboardArtifact art) {
         if (skCase == null) {
             return null;
         }
 
-        try {
-            BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
-            BlackboardArtifactNode n = new BlackboardArtifactNode(art);
-            // The associated file should be available through the Lookup that
-            // gets created when the BlackboardArtifactNode is constructed.
-            AbstractFile file = n.getLookup().lookup(AbstractFile.class);
-            if (file == null) {
-                try {
-                    file = skCase.getAbstractFileById(art.getObjectID());
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren", ex); //NON-NLS
-                    return n;
-                }
-            }
-            /*
-             * It is possible to get a keyword hit on artifacts generated for
-             * the underlying image in which case MAC times are not
-             * available/applicable/useful.
-             */
-            if (file == null) {
+        BlackboardArtifactNode n = new BlackboardArtifactNode(art); //NON-NLS
+
+        // The associated file should be available through the Lookup that
+        // gets created when the BlackboardArtifactNode is constructed.
+        AbstractFile file = n.getLookup().lookup(AbstractFile.class);
+        if (file == null) {
+            try {
+                file = skCase.getAbstractFileById(art.getObjectID());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren", ex); //NON-NLS
                 return n;
             }
-
-            n.addNodeProperty(new NodeProperty<>(
-                    KeywordHits_createNodeForKey_modTime_name(),
-                    KeywordHits_createNodeForKey_modTime_displayName(),
-                    KeywordHits_createNodeForKey_modTime_desc(),
-                    ContentUtils.getStringTime(file.getMtime(), file)));
-            n.addNodeProperty(new NodeProperty<>(
-                    KeywordHits_createNodeForKey_accessTime_name(),
-                    KeywordHits_createNodeForKey_accessTime_displayName(),
-                    KeywordHits_createNodeForKey_accessTime_desc(),
-                    ContentUtils.getStringTime(file.getAtime(), file)));
-            n.addNodeProperty(new NodeProperty<>(
-                    KeywordHits_createNodeForKey_chgTime_name(),
-                    KeywordHits_createNodeForKey_chgTime_displayName(),
-                    KeywordHits_createNodeForKey_chgTime_desc(),
-                    ContentUtils.getStringTime(file.getCtime(), file)));
-            return n;
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
         }
-        return null;
+        /*
+         * It is possible to get a keyword hit on artifacts generated for the
+         * underlying image in which case MAC times are not
+         * available/applicable/useful.
+         */
+        if (file == null) {
+            return n;
+        }
+        n.addNodeProperty(new NodeProperty<>(
+                KeywordHits_createNodeForKey_modTime_name(),
+                KeywordHits_createNodeForKey_modTime_displayName(),
+                KeywordHits_createNodeForKey_modTime_desc(),
+                ContentUtils.getStringTime(file.getMtime(), file)));
+        n.addNodeProperty(new NodeProperty<>(
+                KeywordHits_createNodeForKey_accessTime_name(),
+                KeywordHits_createNodeForKey_accessTime_displayName(),
+                KeywordHits_createNodeForKey_accessTime_desc(),
+                ContentUtils.getStringTime(file.getAtime(), file)));
+        n.addNodeProperty(new NodeProperty<>(
+                KeywordHits_createNodeForKey_chgTime_name(),
+                KeywordHits_createNodeForKey_chgTime_displayName(),
+                KeywordHits_createNodeForKey_chgTime_desc(),
+                ContentUtils.getStringTime(file.getCtime(), file)));
+        return n;
     }
 
     /**
      * Creates nodes for individual files that had hits
      */
-    private class HitsFactory extends DetachableObserverChildFactory<Long> {
+    private class HitsFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
 
         private final String keyword;
         private final String setName;
         private final String instance;
+        private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
 
         private HitsFactory(String setName, String keyword, String instance) {
-            super();
+            /**
+             * The node name passed to the parent constructor will consist of
+             * the set name, keyword and optionally the instance name (in the
+             * case of regular expression hits. This name must match the name
+             * set in the TermNode or RegExpInstanceNode constructors.
+             */
+            super(setName + "_" + keyword + (DEFAULT_INSTANCE_NAME.equals(instance) ? "" : "_" + instance));
             this.setName = setName;
             this.keyword = keyword;
             this.instance = instance;
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {
-            list.addAll(keywordResults.getArtifactIds(setName, keyword, instance));
-            return true;
+        protected List<BlackboardArtifact> makeKeys() {
+            if (skCase != null) {
+                keywordResults.getArtifactIds(setName, keyword, instance).forEach((id) -> {
+                    try {
+                        if (!artifactHits.containsKey(id)) {
+                            BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                            artifactHits.put(id, art);
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
+                    }
+                });
+
+                return new ArrayList<>(artifactHits.values());
+            }
+            return Collections.emptyList();
         }
 
         @Override
-        protected Node createNodeForKey(Long artifactId) {
-            return createBlackboardArtifactNode(artifactId);
+        protected Node createNodeForKey(BlackboardArtifact art) {
+            return createBlackboardArtifactNode(art);
+        }
+
+        @Override
+        protected void onAdd() {
+            keywordResults.addObserver(this);
+        }
+
+        @Override
+        protected void onRemove() {
+            keywordResults.deleteObserver(this);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
         }
     }
 }

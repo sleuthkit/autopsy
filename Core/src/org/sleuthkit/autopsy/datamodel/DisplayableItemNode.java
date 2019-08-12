@@ -51,7 +51,7 @@ public abstract class DisplayableItemNode extends AbstractNode {
      *
      * @throws TskCoreException
      */
-    static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
+    protected static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
         BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         if (pathIDAttribute != null) {
             long contentID = pathIDAttribute.getValueLong();

@@ -45,9 +45,9 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_TabTitle=Summary",
         "SummaryViewer_FileRefNameColumn_Title=Path",
         "SummaryViewer_CaseRefNameColumn_Title=Case Name",
-        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Case References>",
-        "SummaryViewer_Creation_Date_Title=Creation Date"
-    })
+        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other Occurrences>",
+        "SummaryViewer_Creation_Date_Title=Creation Date",
+        "SummeryViewer_FileRef_Message=<Select one Accout to see File References>",})
 
     /**
      * Creates new form SummaryViewer
@@ -70,6 +70,9 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.SummaryViewer_CaseRefNameColumn_Title());
 
         clearControls();
+
+        caseReferencesPanel.hideOutlineView(Bundle.SummaryViewer_CentralRepository_Message());
+        fileReferencesPanel.hideOutlineView(Bundle.SummeryViewer_FileRef_Message());
     }
 
     @Override
@@ -97,14 +100,16 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             setEnabled(false);
             clearControls();
 
+            fileReferencesPanel.hideOutlineView(Bundle.SummeryViewer_FileRef_Message());
         } else {
             SelectionSummary summaryDetails = info.getSummary();
 
             attachmentsDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
             callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
             contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
-            emailDataLabel.setText(Integer.toString(summaryDetails.getEmailCnt()));
-            messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt()));
+            messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
+
+            fileReferencesPanel.showOutlineView();
 
             fileReferencesPanel.setNode(new AbstractNode(Children.create(new AccountSourceContentChildNodeFactory(info.getAccounts()), true)));
             caseReferencesPanel.setNode(new AbstractNode(Children.create(new CorrelationCaseChildNodeFactory(info.getAccounts()), true)));
@@ -129,7 +134,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         attachmentsLabel.setEnabled(enabled);
         callLogsLabel.setEnabled(enabled);
         contactsLabel.setEnabled(enabled);
-        emailLabel.setEnabled(enabled);
         messagesLabel.setEnabled(enabled);
         caseReferencesPanel.setEnabled(enabled);
         fileReferencesPanel.setEnabled(enabled);
@@ -143,7 +147,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         attachmentsDataLabel.setText("");
         callLogsDataLabel.setText("");
         contactsDataLabel.setText("");
-        emailDataLabel.setText("");
         messagesDataLabel.setText("");
 
         fileReferencesPanel.setNode(new AbstractNode(Children.LEAF));
@@ -178,9 +181,9 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         countsPanel = new javax.swing.JPanel();
-        emailLabel = new javax.swing.JLabel();
         contactsLabel = new javax.swing.JLabel();
         messagesLabel = new javax.swing.JLabel();
         callLogsLabel = new javax.swing.JLabel();
@@ -189,13 +192,12 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         messagesDataLabel = new javax.swing.JLabel();
         callLogsDataLabel = new javax.swing.JLabel();
         contactsDataLabel = new javax.swing.JLabel();
-        emailDataLabel = new javax.swing.JLabel();
         fileReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
         caseReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
-        countsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.countsPanel.border.title"))); // NOI18N
+        setLayout(new java.awt.GridBagLayout());
 
-        org.openide.awt.Mnemonics.setLocalizedText(emailLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.emailLabel.text")); // NOI18N
+        countsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.countsPanel.border.title"))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(contactsLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.contactsLabel.text")); // NOI18N
 
@@ -213,8 +215,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
         org.openide.awt.Mnemonics.setLocalizedText(contactsDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.contactsDataLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(emailDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.emailDataLabel.text")); // NOI18N
-
         javax.swing.GroupLayout countsPanelLayout = new javax.swing.GroupLayout(countsPanel);
         countsPanel.setLayout(countsPanelLayout);
         countsPanelLayout.setHorizontalGroup(
@@ -222,28 +222,22 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             .addGroup(countsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(attachmentsLabel)
                     .addComponent(messagesLabel)
                     .addComponent(callLogsLabel)
                     .addComponent(contactsLabel)
-                    .addComponent(emailLabel))
+                    .addComponent(attachmentsLabel))
                 .addGap(18, 18, 18)
                 .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(emailDataLabel)
+                    .addComponent(attachmentsDataLabel)
                     .addComponent(contactsDataLabel)
                     .addComponent(callLogsDataLabel)
-                    .addComponent(messagesDataLabel)
-                    .addComponent(attachmentsDataLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(messagesDataLabel))
+                .addContainerGap(959, Short.MAX_VALUE))
         );
         countsPanelLayout.setVerticalGroup(
             countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(countsPanelLayout.createSequentialGroup()
                 .addGap(7, 7, 7)
-                .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(attachmentsLabel)
-                    .addComponent(attachmentsDataLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(messagesLabel)
                     .addComponent(messagesDataLabel))
@@ -257,40 +251,38 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                     .addComponent(contactsDataLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(emailLabel)
-                    .addComponent(emailDataLabel))
+                    .addComponent(attachmentsLabel)
+                    .addComponent(attachmentsDataLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        add(countsPanel, gridBagConstraints);
 
         fileReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.fileReferencesPanel.border.title"))); // NOI18N
-        fileReferencesPanel.setPreferredSize(new java.awt.Dimension(472, 300));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(fileReferencesPanel, gridBagConstraints);
 
         caseReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.caseReferencesPanel.border.title"))); // NOI18N
-        caseReferencesPanel.setPreferredSize(new java.awt.Dimension(472, 300));
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(countsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(fileReferencesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE)
-                    .addComponent(caseReferencesPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(countsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fileReferencesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(caseReferencesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(caseReferencesPanel, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
@@ -303,8 +295,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private javax.swing.JLabel contactsDataLabel;
     private javax.swing.JLabel contactsLabel;
     private javax.swing.JPanel countsPanel;
-    private javax.swing.JLabel emailDataLabel;
-    private javax.swing.JLabel emailLabel;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel fileReferencesPanel;
     private javax.swing.JLabel messagesDataLabel;
     private javax.swing.JLabel messagesLabel;

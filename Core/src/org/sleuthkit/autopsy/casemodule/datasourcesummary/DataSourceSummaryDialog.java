@@ -19,14 +19,18 @@
 package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.Frame;
+import java.beans.PropertyChangeEvent;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.logging.Logger;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
 
 /**
  * Dialog for displaying the Data Sources Summary information
@@ -38,7 +42,6 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     private final DataSourceSummaryDetailsPanel detailsPanel;
     private final DataSourceBrowser dataSourcesPanel;
     private final IngestJobInfoPanel ingestHistoryPanel;
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
 
     /**
      * Creates new form DataSourceSummaryDialog for displaying a summary of the
@@ -71,6 +74,17 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
                 ingestHistoryPanel.setDataSource(selectedDataSource);
                 this.repaint();
+            }
+        });
+        //add listener to refresh jobs with Started status when they complete
+        IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
+            if (evt instanceof DataSourceAnalysisCompletedEvent) {
+                DataSourceAnalysisCompletedEvent dsEvent = (DataSourceAnalysisCompletedEvent) evt;
+                if (dsEvent.getResult() == Reason.ANALYSIS_COMPLETED) {
+                    dataSourcesPanel.refresh(dsEvent.getDataSource().getId(), IngestJobInfo.IngestJobStatusType.COMPLETED);
+                } else if (dsEvent.getResult() == Reason.ANALYSIS_CANCELLED) {
+                    dataSourcesPanel.refresh(dsEvent.getDataSource().getId(), null);
+                }
             }
         });
         this.pack();

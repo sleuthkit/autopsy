@@ -10,10 +10,4 @@ To start, go to Tools->Plugins and select the "Installed" tab, then check the bo
 
 \image html experimental_plugins_menu.png
 
-\section exp_features Current Experimental Features
-
-- \ref auto_ingest_page
-- \ref object_detection_page
-- \ref volatility_dsp_page
-
 */

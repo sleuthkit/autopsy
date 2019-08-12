@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,6 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -50,7 +49,6 @@ import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -75,6 +73,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenAction.class.getName());
     private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
 
@@ -141,7 +140,10 @@ public final class OpenAction extends CallableSystemAction {
         "OpenAction.multiUserDialog.ContentText=The Image Gallery updates itself differently for multi-user cases than single user cases. Notably:\n\n"
         + "If your computer is analyzing a data source, then you will get real-time Image Gallery updates as files are analyzed (hashed, EXIF, etc.). This is the same behavior as a single-user case.\n\n"
         + "If another computer in your multi-user cluster is analyzing a data source, you will get updates about files on that data source only when you launch Image Gallery, which will cause the local database to be rebuilt based on results from other nodes.",
-        "OpenAction.multiUserDialog.checkBox.text=Don't show this message again."})
+        "OpenAction.multiUserDialog.checkBox.text=Don't show this message again.",
+        "OpenAction.noControllerDialog.header=Cannot open Image Gallery",        
+        "OpenAction.noControllerDialog.text=An initialization error ocurred.\nPlease see the log for details.",
+    })
     public void performAction() {
         //check case
         final Case currentCase;
@@ -153,10 +155,20 @@ public final class OpenAction extends CallableSystemAction {
         }
         Platform.runLater(() -> {
             ImageGalleryController controller;
-            try {
-                controller = ImageGalleryModule.getController();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get ImageGalleryController", ex);
+            controller = ImageGalleryController.getController(currentCase);
+            if (controller == null) {
+                Alert errorDIalog = new Alert(Alert.AlertType.ERROR);
+                errorDIalog.initModality(Modality.APPLICATION_MODAL);
+                errorDIalog.setResizable(true);
+                errorDIalog.setTitle(Bundle.OpenAction_dialogTitle());
+                errorDIalog.setHeaderText(Bundle.OpenAction_noControllerDialog_header());
+                Label errorLabel = new Label(Bundle.OpenAction_noControllerDialog_text());
+                errorLabel.setMaxWidth(450);
+                errorLabel.setWrapText(true);
+                errorDIalog.getDialogPane().setContent(new VBox(10, errorLabel));
+                GuiUtils.setDialogIcons(errorDIalog);
+                errorDIalog.showAndWait();
+                logger.log(Level.SEVERE, "No Image Gallery controller for the current case");  
                 return;
             }
 
@@ -192,7 +204,7 @@ public final class OpenAction extends CallableSystemAction {
                 .submit(controller::getAllDataSourcesDrawableDBStatus);
 
         addFXCallback(dataSourceStatusMapFuture,
-                dataSourceStatusMap -> {                   
+                dataSourceStatusMap -> {
                     int numStale = 0;
                     int numNoAnalysis = 0;
                     // NOTE: There is some overlapping code here with Controller.getStaleDataSourceIds().  We could possibly just use
@@ -204,28 +216,26 @@ public final class OpenAction extends CallableSystemAction {
                                 // likely a data source analyzed on a remote node in multi-user case OR single-user case with listening off
                                 if (controller.hasFilesWithMimeType(entry.getKey())) {
                                     numStale++;
-                                // likely a data source (local or remote) that has no analysis yet (note there is also IN_PROGRESS state)
+                                    // likely a data source (local or remote) that has no analysis yet (note there is also IN_PROGRESS state)
                                 } else {
                                     numNoAnalysis++;
                                 }
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error querying case database", ex);
                             }
-                        } 
-                        // was already rebuilt, but wasn't complete at the end
+                        } // was already rebuilt, but wasn't complete at the end
                         else if (DrawableDbBuildStatusEnum.REBUILT_STALE == status) {
                             numStale++;
                         }
-                    }               
-             
-                    // NOTE: we are running on the fx thread.
+                    }
 
+                    // NOTE: we are running on the fx thread.
                     // If there are any that are STALE, give them a prompt to do so. 
                     if (numStale > 0) {
                         // See if user wants to rebuild, cancel out, or open as is
                         Alert alert = new Alert(Alert.AlertType.WARNING,
-                        Bundle.OpenAction_stale_confDlg_msg(),
-                        ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+                                Bundle.OpenAction_stale_confDlg_msg(),
+                                ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
                         alert.initModality(Modality.APPLICATION_MODAL);
                         alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
                         GuiUtils.setDialogIcons(alert);
@@ -238,7 +248,7 @@ public final class OpenAction extends CallableSystemAction {
                             // They don't want to rebuild. Just open the UI as is.
                             // NOTE: There could be no data....
                         } else if (answer == ButtonType.YES) {
-                            if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                            if (controller.getCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
                                 /*
                                  * For a single-user case, we favor user
                                  * experience, and rebuild the database as soon
@@ -258,13 +268,13 @@ public final class OpenAction extends CallableSystemAction {
                                  * the database only when a user launches Image
                                  * Gallery.
                                  */
-                                controller.rebuildDB();
+                                controller.rebuildDrawablesDb();
                             }
                         }
                         openTopComponent();
                         return;
                     }
-                    
+
                     // if there is no data to display, then let them know
                     if (numNoAnalysis == dataSourceStatusMap.size()) {
                         // give them a dialog to enable modules if no data sources have been analyzed
@@ -274,7 +284,7 @@ public final class OpenAction extends CallableSystemAction {
                         alert.showAndWait();
                         return;
                     }
-                                 
+
                     // otherwise, lets open the UI
                     openTopComponent();
                 },
@@ -288,7 +298,7 @@ public final class OpenAction extends CallableSystemAction {
                 ImageGalleryTopComponent.openTopComponent();
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to open Image Gallery top component", ex); //NON-NLS}
-                // RJCTODO: Give the user some feedback here
+                // TODO (JIRA-5217): Give the user some feedback here
             }
         });
     }

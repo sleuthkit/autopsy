@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,37 +19,41 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import java.util.function.Supplier;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.IndexedCell;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractFXCellFactory;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 
-class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCellFactory<X, X> {
+class FilterCheckBoxCellFactory< X extends FilterState< ?>> extends AbstractFXCellFactory<X, X> {
 
     private final CheckBox checkBox = new CheckBox();
-    private SimpleBooleanProperty selectedProperty;
-    private ObservableBooleanValue disabledProperty;
+    private Property<Boolean> selectedProperty;
+    private ReadOnlyBooleanProperty disabledProperty;
 
     @Override
     protected void configureCell(IndexedCell<? extends X> cell, X item, boolean empty, Supplier<X> supplier) {
         if (selectedProperty != null) {
             checkBox.selectedProperty().unbindBidirectional(selectedProperty);
+            selectedProperty = null;
         }
         if (disabledProperty != null) {
             checkBox.disableProperty().unbind();
+            disabledProperty = null;
         }
 
         if (item == null) {
             cell.setGraphic(null);
         } else {
             checkBox.setText(item.getDisplayName());
-//            cell.setText(item.getDisplayName());
-            selectedProperty = item.selectedProperty();
-            checkBox.selectedProperty().bindBidirectional(selectedProperty);
             disabledProperty = item.disabledProperty();
             checkBox.disableProperty().bind(disabledProperty);
+            if (item.selectedProperty() instanceof Property<?>) {
+                selectedProperty = item.selectedProperty();
+                checkBox.selectedProperty().bindBidirectional(selectedProperty);
+            }
+
             cell.setGraphic(checkBox);
         }
     }

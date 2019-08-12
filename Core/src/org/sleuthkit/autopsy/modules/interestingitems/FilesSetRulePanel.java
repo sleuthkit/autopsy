@@ -57,7 +57,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.NoPathError=Path cannot be empty",
         "FilesSetRulePanel.DaysIncludedEmptyError=Number of days included cannot be empty.",
         "FilesSetRulePanel.DaysIncludedInvalidError=Number of days included must be a positive integer.",
-        "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected)."
+        "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected).",
+        "# {0} - regex",
+        "FilesSetRulePanel.CommaInRegexWarning=Warning: Comma(s) in the file extension field will be interpreted as part of a regex and will not split the entry into multiple extensions (Entered: \"{0}\")",
     })
 
     private static final long serialVersionUID = 1L;
@@ -130,6 +132,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.setButtons(okButton, cancelButton);
         
         updateNameTextFieldPrompt();
+        setComponentsForSearchType();
     }
     
     /**
@@ -358,6 +361,16 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 return false;
             }
             if (this.nameRegexCheckbox.isSelected()) {
+                
+                // If extension is also selected and the regex contains a comma, display a warning
+                // since it is unclear whether the comma is part of a regex or is separating extensions.
+                if (this.extensionRadioButton.isSelected() && this.nameTextField.getText().contains(",")) {
+                    NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                            Bundle.FilesSetRulePanel_CommaInRegexWarning(this.nameTextField.getText()),
+                            NotifyDescriptor.WARNING_MESSAGE);
+                    DialogDisplayer.getDefault().notify(notifyDesc);
+                }
+                
                 try {
                     Pattern.compile(this.nameTextField.getText());
                 } catch (PatternSyntaxException ex) {

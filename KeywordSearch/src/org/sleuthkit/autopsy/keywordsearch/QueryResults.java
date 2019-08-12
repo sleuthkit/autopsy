@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
@@ -36,9 +35,9 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestServices;;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -60,7 +59,7 @@ class QueryResults {
 
     /**
      * Constructs a object that stores and processes the results of a keyword
-     * search query. Processing includes posting keyword hit artifacts to the
+     * search query. Processing includes adding keyword hit artifacts to the
      * blackboard, sending messages about the search hits to the ingest inbox,
      * and publishing an event to notify subscribers of the blackboard posts.
      *
@@ -116,7 +115,7 @@ class QueryResults {
     }
 
     /**
-     * Processes the keyword hits stored in this object by osting keyword hit
+     * Processes the keyword hits stored in this object by adding keyword hit
      * artifacts to the blackboard, sending messages about the search hits to
      * the ingest inbox, and publishing an event to notify subscribers of the
      * blackboard posts.
@@ -217,14 +216,14 @@ class QueryResults {
                     SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                     content = tskCase.getContentById(hit.getContentID());
                 } catch (TskCoreException | NoCurrentCaseException tskCoreException) {
-                    logger.log(Level.SEVERE, "Failed to get text source object for ", tskCoreException); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to get text source object for keyword hit", tskCoreException); //NON-NLS
                 }
                 
-                if (saveResults) {
+                if ((content != null) && saveResults) {
                     /*
                     * Post an artifact for the hit to the blackboard.
                      */
-                    BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
+                    BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName());
 
                     /*
                     * Send an ingest inbox message for the hit.
@@ -246,19 +245,18 @@ class QueryResults {
         }
 
         /*
-         * Publish an event to notify subscribers of the blackboard posts. The
-         * artifacts are grouped by type, since they may contain both
-         * TSK_KEYWORD_HIT artifacts and TSK_ACCOUNT artifacts (for credit card
-         * account number hits).
+         * Post the artifacts to the blackboard which will publish an event to
+         * notify subscribers of the new artifacts.
          */
         if (!hitArtifacts.isEmpty()) {
-            hitArtifacts.stream()
-                    // Group artifacts by type
-                    .collect(Collectors.groupingBy(BlackboardArtifact::getArtifactTypeID))
-                    // For each type send an event
-                    .forEach((typeID, artifacts)
-                            -> IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
+            try {
+                SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                Blackboard blackboard = tskCase.getBlackboard();
 
+                blackboard.postArtifacts(hitArtifacts, MODULE_NAME);
+            } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
+            }
         }
     }
 

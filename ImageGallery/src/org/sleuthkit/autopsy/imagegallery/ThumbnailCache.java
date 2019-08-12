@@ -42,7 +42,6 @@ import javax.imageio.ImageIO;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;

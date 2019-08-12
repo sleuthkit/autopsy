@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
@@ -56,7 +57,7 @@ public class DataSourcesNode extends DisplayableItemNode {
     }
 
     public DataSourcesNode(long dsObjId) {
-        super(new DataSourcesNodeChildren(dsObjId), Lookups.singleton(NAME));
+        super(Children.create(new DataSourcesNodeChildren(dsObjId), false), Lookups.singleton(NAME));
         displayName = (dsObjId > 0) ?  NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.group_by_datasource.name") : NAME;
         init();
     }
@@ -87,7 +88,7 @@ public class DataSourcesNode extends DisplayableItemNode {
         }
 
         public DataSourcesNodeChildren(long dsObjId) {
-            super();
+            super("ds_" + Long.toString(dsObjId));
             this.currentKeys = new ArrayList<>();
             this.datasourceObjId = dsObjId;
         }
@@ -97,25 +98,24 @@ public class DataSourcesNode extends DisplayableItemNode {
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                    reloadKeys();
+                    refresh(true);
                 }
             }
         };
 
         @Override
-        protected void addNotify() {
+        protected void onAdd() {
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-            reloadKeys();
         }
 
         @Override
-        protected void removeNotify() {
+        protected void onRemove() {
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
             currentKeys.clear();
-            setKeys(Collections.<Content>emptySet());
         }
 
-        private void reloadKeys() {
+        @Override
+        protected List<Content> makeKeys() {
             try {
                 if (datasourceObjId == 0) {
                     currentKeys = Case.getCurrentCaseThrows().getDataSources();
@@ -135,20 +135,11 @@ public class DataSourcesNode extends DisplayableItemNode {
 
                 });
                 
-                setKeys(currentKeys);
             } catch (TskCoreException | NoCurrentCaseException | TskDataException ex) {
                 logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
-                setKeys(Collections.<Content>emptySet());
             }
-        }
-
-        /**
-         * Refresh all content keys This creates new nodes of keys have changed.
-         */
-        public void refreshContentKeys() {
-            for (Content key : currentKeys) {
-                refreshKey(key);
-            }
+            
+            return currentKeys;
         }
     }
 

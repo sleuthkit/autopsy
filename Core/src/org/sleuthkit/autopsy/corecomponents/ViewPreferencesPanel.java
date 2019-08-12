@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.TimeZone;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 /**
  * Panel for configuring view preferences.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
     private final boolean immediateUpdates;
@@ -54,6 +56,9 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             groupByDataSourceCheckbox.setEnabled(evt.getNewValue() != null);
         });
         this.timeZoneList.setListData(TimeZoneUtils.createTimeZoneList().stream().toArray(String[]::new));
+
+        // Disable manual editing of max results spinner
+        ((JSpinner.DefaultEditor)maxResultsSpinner.getEditor()).getTextField().setEditable(false);
     }
 
     @Override
@@ -75,15 +80,15 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         dataSourcesHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInDataSourcesTree());
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
 
-        commentsOccurencesColumnsCheckbox.setEnabled(EamDb.isEnabled());
-        commentsOccurencesColumnWrapAroundText.setEnabled(EamDb.isEnabled());
-        commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
+        scoColumnsCheckbox.setSelected(UserPreferences.getHideSCOColumns());
         
         hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
         fileNameTranslationColumnCheckbox.setSelected(UserPreferences.displayTranslatedFileNames());
         
         TextTranslationService tts = TextTranslationService.getInstance();
         fileNameTranslationColumnCheckbox.setEnabled(tts.hasProvider());
+
+        maxResultsSpinner.setValue(UserPreferences.getResultsTablePageSize());
 
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
@@ -112,8 +117,9 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCheckbox.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
-        UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
+        UserPreferences.setHideSCOColumns(scoColumnsCheckbox.isSelected());
         UserPreferences.setDisplayTranslatedFileNames(fileNameTranslationColumnCheckbox.isSelected());
+        UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -160,13 +166,15 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         useAnotherTimeRadioButton = new javax.swing.JRadioButton();
         hideOtherUsersTagsCheckbox = new javax.swing.JCheckBox();
         hideOtherUsersTagsLabel = new javax.swing.JLabel();
-        centralRepoLabel = new javax.swing.JLabel();
-        commentsOccurencesColumnsCheckbox = new javax.swing.JCheckBox();
+        scoColumnsLabel = new javax.swing.JLabel();
+        scoColumnsCheckbox = new javax.swing.JCheckBox();
         jScrollPane1 = new javax.swing.JScrollPane();
         timeZoneList = new javax.swing.JList<>();
         translateTextLabel = new javax.swing.JLabel();
-        commentsOccurencesColumnWrapAroundText = new javax.swing.JLabel();
+        scoColumnsWrapAroundText = new javax.swing.JLabel();
         fileNameTranslationColumnCheckbox = new javax.swing.JCheckBox();
+        maxResultsLabel = new javax.swing.JLabel();
+        maxResultsSpinner = new javax.swing.JSpinner();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -256,13 +264,13 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(hideOtherUsersTagsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.hideOtherUsersTagsLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(centralRepoLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.centralRepoLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(scoColumnsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.scoColumnsLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(commentsOccurencesColumnsCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.commentsOccurencesColumnsCheckbox.text")); // NOI18N
-        commentsOccurencesColumnsCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        commentsOccurencesColumnsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(scoColumnsCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.scoColumnsCheckbox.text")); // NOI18N
+        scoColumnsCheckbox.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        scoColumnsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                commentsOccurencesColumnsCheckboxActionPerformed(evt);
+                scoColumnsCheckboxActionPerformed(evt);
             }
         });
 
@@ -275,12 +283,22 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(translateTextLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translateTextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(commentsOccurencesColumnWrapAroundText, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.commentsOccurencesColumnWrapAroundText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(scoColumnsWrapAroundText, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.scoColumnsWrapAroundText.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(fileNameTranslationColumnCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.fileNameTranslationColumnCheckbox.text")); // NOI18N
         fileNameTranslationColumnCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileNameTranslationColumnCheckboxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(maxResultsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.text")); // NOI18N
+        maxResultsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.toolTipText")); // NOI18N
+
+        maxResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50000, 10000));
+        maxResultsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                maxResultsSpinnerStateChanged(evt);
             }
         });
 
@@ -295,7 +313,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addGap(10, 10, 10)
                         .addComponent(hideOtherUsersTagsCheckbox))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addComponent(centralRepoLabel)
+                        .addComponent(scoColumnsLabel)
                         .addGap(135, 135, 135)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(hideOtherUsersTagsLabel)
@@ -317,10 +335,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                         .addComponent(viewsHideKnownCheckbox))))
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(commentsOccurencesColumnsCheckbox))
+                                .addComponent(scoColumnsCheckbox))
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGap(32, 32, 32)
-                                .addComponent(commentsOccurencesColumnWrapAroundText)))
+                                .addComponent(scoColumnsWrapAroundText)))
                         .addGap(18, 18, 18)
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(displayTimeLabel)
@@ -333,7 +351,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                     .addComponent(keepCurrentViewerRadioButton)
                                     .addComponent(useBestViewerRadioButton)
                                     .addComponent(useLocalTimeRadioButton)
-                                    .addComponent(useAnotherTimeRadioButton))))))
+                                    .addComponent(useAnotherTimeRadioButton)))))
+                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                        .addComponent(maxResultsLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(maxResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
@@ -358,11 +380,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(hideOtherUsersTagsCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(centralRepoLabel)
+                        .addComponent(scoColumnsLabel)
                         .addGap(3, 3, 3)
-                        .addComponent(commentsOccurencesColumnsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(scoColumnsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(commentsOccurencesColumnWrapAroundText))
+                        .addComponent(scoColumnsWrapAroundText))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addComponent(selectFileLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -381,6 +403,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addComponent(translateTextLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(fileNameTranslationColumnCheckbox)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(maxResultsLabel)
+                    .addComponent(maxResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -495,13 +521,13 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_timeZoneListValueChanged
 
-    private void commentsOccurencesColumnsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_commentsOccurencesColumnsCheckboxActionPerformed
+    private void scoColumnsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scoColumnsCheckboxActionPerformed
         if (immediateUpdates) {
-            UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
+            UserPreferences.setHideSCOColumns(scoColumnsCheckbox.isSelected());
         } else {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
-    }//GEN-LAST:event_commentsOccurencesColumnsCheckboxActionPerformed
+    }//GEN-LAST:event_scoColumnsCheckboxActionPerformed
 
     private void hideOtherUsersTagsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideOtherUsersTagsCheckboxActionPerformed
         if (immediateUpdates) {
@@ -593,11 +619,16 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_fileNameTranslationColumnCheckboxActionPerformed
 
+    private void maxResultsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_maxResultsSpinnerStateChanged
+        if (immediateUpdates) {
+            UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_maxResultsSpinnerStateChanged
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel centralRepoLabel;
-    private javax.swing.JLabel commentsOccurencesColumnWrapAroundText;
-    private javax.swing.JCheckBox commentsOccurencesColumnsCheckbox;
     private javax.swing.JPanel currentCaseSettingsPanel;
     private javax.swing.JPanel currentSessionSettingsPanel;
     private javax.swing.JCheckBox dataSourcesHideKnownCheckbox;
@@ -613,6 +644,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel hideSlackFilesLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
+    private javax.swing.JLabel maxResultsLabel;
+    private javax.swing.JSpinner maxResultsSpinner;
+    private javax.swing.JCheckBox scoColumnsCheckbox;
+    private javax.swing.JLabel scoColumnsLabel;
+    private javax.swing.JLabel scoColumnsWrapAroundText;
     private javax.swing.JLabel selectFileLabel;
     private javax.swing.JList<String> timeZoneList;
     private javax.swing.JLabel translateTextLabel;

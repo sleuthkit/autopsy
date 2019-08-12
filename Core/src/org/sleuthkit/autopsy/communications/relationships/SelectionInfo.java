@@ -40,7 +40,8 @@ public final class SelectionInfo {
     
     private static final Logger logger = Logger.getLogger(SelectionInfo.class.getName());
 
-    private final Set<AccountDeviceInstance> accountDeviceInstances;
+    private final Set<AccountDeviceInstance> selectedNodes;
+    private final Set<GraphEdge> selectedEdges;
     private final CommunicationsFilter communicationFilter;
     private final Set<Account> accounts;
     
@@ -50,26 +51,38 @@ public final class SelectionInfo {
     /**
      * Wraps the details of the currently selected accounts.
      *
-     * @param accountDeviceInstances Selected accountDecivedInstances
+     * @param selectedNodes Selected AccountDeviceInstances
+     * @param selectedEdges Selected pairs of AccountDeviceInstances
      * @param communicationFilter    Currently selected communications filters
      */
-    public SelectionInfo(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter communicationFilter) {
-        this.accountDeviceInstances = accountDeviceInstances;
+    public SelectionInfo(Set<AccountDeviceInstance> selectedNodes, Set<GraphEdge> selectedEdges, 
+            CommunicationsFilter communicationFilter) {
+        this.selectedNodes = selectedNodes;
+        this.selectedEdges = selectedEdges;
         this.communicationFilter = communicationFilter;
         
         accounts = new HashSet<>();
-        accountDeviceInstances.forEach((instance) -> {
+        selectedNodes.forEach((instance) -> {
             accounts.add(instance.getAccount());
         });
     }
 
     /**
-     * Returns the currently selected accountDeviceInstances
+     * Returns the currently selected nodes
      *
      * @return Set of AccountDeviceInstance
      */
-    public Set<AccountDeviceInstance> getAccountDevicesInstances() {
-        return accountDeviceInstances;
+    public Set<AccountDeviceInstance> getSelectedNodes() {
+        return selectedNodes;
+    }
+    
+    /**
+     * Returns the currently selected edges
+     * 
+     * @return Set of GraphEdge objects
+     */
+    public Set<GraphEdge> getSelectedEdges() {
+        return selectedEdges;
     }
 
     /**
@@ -85,28 +98,50 @@ public final class SelectionInfo {
         return accounts;
     }
     
+    /**
+     * Get the set of relationship sources from the case database
+     * 
+     * @return the relationship sources (may be empty)
+     * @throws TskCoreException 
+     */
+    Set<Content> getRelationshipSources() throws TskCoreException {
+
+        CommunicationsManager communicationManager;
+        try {
+            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+        } catch (NoCurrentCaseException ex) {
+            throw new TskCoreException("Failed to get current case", ex);
+        }
+        
+        Set<Content> relationshipSources = new HashSet<>();
+        try {
+            // Add all nodes
+            relationshipSources.addAll(communicationManager.getRelationshipSources(getSelectedNodes(), getCommunicationsFilter()));
+            
+            // Add all edges. For edges, the relationship has to include both endpoints
+            for (SelectionInfo.GraphEdge edge : getSelectedEdges()) {
+                relationshipSources.addAll(communicationManager.getRelationshipSources(edge.getStartNode(), 
+                        edge.getEndNode(), getCommunicationsFilter()));
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get relationships from case database.", ex); //NON-NLS
+            
+        }
+        return relationshipSources;
+    }
+    
     public Set<BlackboardArtifact> getArtifacts() {
         if(accountArtifacts == null) {
             accountArtifacts = new HashSet<>();
-            CommunicationsManager communicationManager;
+            
             try {
-                communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get communications manager from case.", ex); //NON-NLS
-                return null;
-            }
-
-            final Set<Content> relationshipSources;
-
-            try {
-                relationshipSources = communicationManager.getRelationshipSources(getAccountDevicesInstances(), getCommunicationsFilter());
-
+                final Set<Content> relationshipSources = getRelationshipSources();
                 relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
                     accountArtifacts.add((BlackboardArtifact) content);
                 });
-
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get relationship sources.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Failed to load relationship sources.", ex); //NON-NLS
+                return accountArtifacts;
             }
         }
         
@@ -182,4 +217,24 @@ public final class SelectionInfo {
         }
     }
 
+    /**
+     * Utility class to represent an edge from the graph visualization.
+     */
+    public static class GraphEdge {
+        AccountDeviceInstance startNode;
+        AccountDeviceInstance endNode;
+        
+        public GraphEdge(AccountDeviceInstance startNode, AccountDeviceInstance endNode) {
+            this.startNode = startNode;
+            this.endNode = endNode;
+        }
+        
+        public AccountDeviceInstance getStartNode() {
+            return startNode;
+        }
+        
+        public AccountDeviceInstance getEndNode() {
+            return endNode;
+        }
+    }
 }

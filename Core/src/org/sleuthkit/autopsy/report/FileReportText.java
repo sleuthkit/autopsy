@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -63,9 +64,12 @@ class FileReportText implements FileReportModule {
     public void startReport(String baseReportDir) {
         this.reportPath = baseReportDir + FILE_NAME;
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath), StandardCharsets.UTF_8));
+            out.write('\ufeff');
         } catch (FileNotFoundException ex) {
             logger.log(Level.WARNING, "Failed to create report text file", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to write BOM to report text file", ex); //NON-NLS
         }
     }
 

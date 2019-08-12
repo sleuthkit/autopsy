@@ -1,0 +1,68 @@
+name: ntfs
+type: format
+description: New Technologies File System (NTFS) formats
+urls: ["https://github.com/libyal/libfsntfs/blob/master/documentation/New%20Technologies%20File%20System%20(NTFS).asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: usn_record_v2
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: size
+  data_type: uint32
+- name: major_version
+  data_type: uint16
+- name: minor_version
+  data_type: uint16
+- name: file_reference
+  data_type: uint64
+- name: parent_file_reference
+  data_type: uint64
+- name: update_sequence_number
+  data_type: uint64
+- name: update_date_time
+  data_type: uint64
+- name: update_reason_flags
+  data_type: uint32
+- name: update_source_flags
+  data_type: uint32
+- name: security_descriptor_identifier
+  data_type: uint32
+- name: file_attribute_flags
+  data_type: uint32
+- name: name_size
+  data_type: uint16
+- name: name_offset
+  data_type: uint16
+- name: name
+  type: stream
+  element_data_type: byte
+  elements_data_size: usn_record_v2.size - 60

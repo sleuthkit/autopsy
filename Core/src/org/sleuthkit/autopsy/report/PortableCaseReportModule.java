@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -983,7 +983,10 @@ class PortableCaseReportModule implements ReportModule {
     enum ChunkSize {
         
         NONE("Do not split", ""), // NON-NLS
-        DVD("4.5 GB (DVD)", "4500m"); // NON-NLS
+        ONE_HUNDRED_MB("Split into 100 MB chunks", "100m"),
+        CD("Split into 700 MB chunks (CD)", "700m"),
+        ONE_GB("Split into 1 GB chunks", "1000m"),
+        DVD("Split into 4.5 GB chunks (DVD)", "4500m"); // NON-NLS
         
         private final String displayName;
         private final String sevenZipParam;
