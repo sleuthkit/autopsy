@@ -20,9 +20,9 @@ package org.sleuthkit.autopsy.report;
 
 /**
  * Instances of this exception class are thrown when there is an error during
- * serialization and deserialization of reporting configuration.
+ * serialization and deserialization of a reporting configuration.
  */
-class ReportConfigException extends Exception {
+final class ReportConfigException extends Exception {
 
     private static final long serialVersionUID = 1L;
 

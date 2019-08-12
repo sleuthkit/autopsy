@@ -26,21 +26,26 @@ import java.util.Map;
  * Class for persisting the file properties used by FileReportGenerator to drive
  * report generation by FileReportModules.
  */
-class FileReportSettings implements Serializable  {
-    
+final class FileReportSettings implements Serializable {
+
     private static final long serialVersionUID = 1L;
     private Map<FileReportDataTypes, Boolean> filePropertiesInfo = new HashMap<>();
 
     /**
      * Creates FileReportSettings object.
-     * 
-     * @param fileReportInfo the Information that should be included about each
+     *
+     * @param fileReportInfo The information that should be included about each
      * file in the report.
      */
     FileReportSettings(Map<FileReportDataTypes, Boolean> fileReportInfo) {
         this.filePropertiesInfo = fileReportInfo;
     }
-    
+
+    /**
+     * Gets file report settings.
+     *
+     * @return File report settings
+     */
     Map<FileReportDataTypes, Boolean> getFileProperties() {
         return filePropertiesInfo;
     }

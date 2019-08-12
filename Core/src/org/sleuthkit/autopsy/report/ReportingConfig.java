@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * A bundling of all the settings objects that define a report configuration.
  */
-class ReportingConfig implements Serializable {
+final class ReportingConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String configName;
@@ -79,7 +79,7 @@ class ReportingConfig implements Serializable {
         this.fileReportSettings = settings;
     }
 
-    FileReportSettings getFileReportModuleSettings() {
+    FileReportSettings getFileReportSettings() {
         return this.fileReportSettings;
     }
 

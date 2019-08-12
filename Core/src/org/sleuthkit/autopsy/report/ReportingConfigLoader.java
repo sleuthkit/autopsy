@@ -34,11 +34,11 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * all of the settings that make up a reporting configuration in an atomic,
  * thread safe way.
  */
-class ReportingConfigLoader {
+final class ReportingConfigLoader {
 
     private static final String REPORT_CONFIG_FOLDER = "ReportingConfigs"; //NON-NLS
     private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ReportingConfigLoader.REPORT_CONFIG_FOLDER).toAbsolutePath().toString();
-    private static final String REPORT_CONFIG_FILE_NAME = "ReportingConfiguration.properties";
+    private static final String REPORT_CONFIG_FILE_EXTENSION = ".settings";
 
     /**
      * Deserialize all of the settings that make up a reporting configuration in
@@ -53,7 +53,7 @@ class ReportingConfigLoader {
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
         // construct the file path
-        Path reportFilePath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName, REPORT_CONFIG_FILE_NAME);
+        Path reportFilePath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName + REPORT_CONFIG_FILE_EXTENSION);
         File reportFile = reportFilePath.toFile();
 
         // Return null if a reporting configuration for the given name does not exist.
@@ -65,7 +65,7 @@ class ReportingConfigLoader {
             throw new ReportConfigException("Unable to read reporting configuration file " + reportFilePath.toString());
         }
 
-        // read in the confuguration
+        // read in the configuration
         ReportingConfig config = null;
         try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(reportFilePath.toString()))) {
             config = (ReportingConfig) in.readObject();
@@ -87,7 +87,7 @@ class ReportingConfigLoader {
     static synchronized void saveConfig(ReportingConfig config) throws ReportConfigException {
 
         // construct the configuration directory path
-        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, config.getName());
+        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH);
 
         // create configuration directory 
         try {
@@ -97,11 +97,11 @@ class ReportingConfigLoader {
         }
         
         // save the configuration
-        String filePath = pathToConfigDir.toString() + File.separator + REPORT_CONFIG_FILE_NAME;
+        String filePath = pathToConfigDir.toString() + File.separator + config.getName() + REPORT_CONFIG_FILE_EXTENSION;
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             out.writeObject(config);
         } catch (IOException ex) {
-            throw new ReportConfigException("Unable to save reporting configuration " + pathToConfigDir.toString(), ex);
+            throw new ReportConfigException("Unable to save reporting configuration " + filePath, ex);
         }
     }
 

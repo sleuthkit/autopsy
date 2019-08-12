@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.report;
 import java.io.Serializable;
 
 /**
- * Class for persisting information about ReportModule (e.g. whether the report
+ * Class for persisting information about a report module (e.g. whether the report
  * module is enabled).
  */
-class ModuleStatus implements Serializable {
+final class ModuleStatus implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String moduleName;
@@ -33,8 +33,8 @@ class ModuleStatus implements Serializable {
     /**
      * Creates ModuleStatus object.
      *
-     * @param module implementation of a ReportModule interface
-     * @param enabled boolean flag whether the module is enabled
+     * @param module Implementation of a ReportModule interface
+     * @param enabled Boolean flag whether the module is enabled
      */
     ModuleStatus(ReportModule module, boolean enabled) {
         this.moduleName = module.getClass().getCanonicalName();

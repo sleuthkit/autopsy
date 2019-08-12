@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * by the TableReportGenerator class to drive report generation by
  * TableReportModules.
  */
-class TableReportSettings implements Serializable  {
+final class TableReportSettings implements Serializable  {
 
     private static final long serialVersionUID = 1L;
     private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
@@ -37,9 +37,9 @@ class TableReportSettings implements Serializable  {
     /**
      * Creates TableReportSettings object.
      *
-     * @param artifactTypeSelections the enabled/disabled state of the artifact
+     * @param artifactTypeSelections The enabled/disabled state of the artifact
      * types to be included in the report
-     * @param tagNameSelections the enabled/disabled state of the tag names to
+     * @param tagNameSelections The enabled/disabled state of the tag names to
      * be included in the report
      */
     TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {

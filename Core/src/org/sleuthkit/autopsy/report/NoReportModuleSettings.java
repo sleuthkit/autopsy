@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.report;
 
 /**
  * Implementation of the ReportModuleSettings interface for use by report
- * modules that do not have per report job options.
+ * modules that do not have settings.
  */
 public final class NoReportModuleSettings implements ReportModuleSettings {
 

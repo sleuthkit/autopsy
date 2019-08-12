@@ -22,9 +22,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.ArrayList;
 import static java.util.Collections.swap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -35,7 +33,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -70,14 +67,14 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         tableModules = ReportModuleLoader.getTableReportModules();
         generalModules = ReportModuleLoader.getGeneralReportModules();
         fileModules = ReportModuleLoader.getFileReportModules();
-        
+
         for (TableReportModule module : tableModules) {
             if (!moduleIsValid(module)) {
                 popupWarning(module);
-                tableModules.remove(module);                
+                tableModules.remove(module);
             }
         }
-        
+
         for (GeneralReportModule module : generalModules) {
             if (!moduleIsValid(module)) {
                 popupWarning(module);
@@ -88,15 +85,15 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         for (FileReportModule module : fileModules) {
             if (!moduleIsValid(module)) {
                 popupWarning(module);
-                fileModules.remove(module);                
+                fileModules.remove(module);
             }
         }
-        
+
         // our theory is that the report table modules are more common, so they go on top
         modules.addAll(tableModules);
         modules.addAll(fileModules);
         modules.addAll(generalModules);
-        
+
         portableCaseModule = new PortableCaseReportModule();
         if (moduleIsValid(portableCaseModule)) {
             modules.add(portableCaseModule);
@@ -113,7 +110,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             indexOfHTMLReportModule++;
         }
         swap(modules, indexOfHTMLReportModule, 0);
-        
+
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
         modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));
@@ -181,7 +178,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         }
         return null;
     }
-    
+
     /**
      * Get the selection status of the Portable Case report module.
      *
@@ -303,7 +300,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         configurationPanel.add(panel, BorderLayout.CENTER);
         configurationPanel.revalidate();
         configurationPanel.repaint();
-        
+
         boolean generalModuleSelected = (module instanceof GeneralReportModule);
 
         wizPanel.setNext(!generalModuleSelected);
