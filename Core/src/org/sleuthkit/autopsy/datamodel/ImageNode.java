@@ -210,8 +210,8 @@ public class ImageNode extends AbstractContentNode<Image> {
 
     private Boolean checkSchemaVersion() {
         try {
-            int creationMajorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBCreationSchemaVersion().getMajor();
-            int creationMinorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBCreationSchemaVersion().getMinor();
+            int creationMajorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion().getMajor();
+            int creationMinorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion().getMinor();
         
             if ((creationMajorVersion == 8 && creationMinorVersion >= 3) || creationMajorVersion > 8) {
                         return true;
