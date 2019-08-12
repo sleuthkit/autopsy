@@ -1,3 +1,5 @@
+BarClickHandler.selectTimeAndType.errorMessage=Error selecting time and type.
+BarClickHandler_zoomIn_errorMessage=Error zooming in.
 CountsViewPane.detailSwitchMessage=There is no temporal resolution smaller than Seconds.\nWould you like to switch to the Details view instead?
 CountsViewPane.detailSwitchTitle="Switch to Details View?
 CountsViewPane.linearRadio.text=Linear
@@ -19,7 +21,11 @@ CountsViewPane.scaleLabel.text=Scale:
 CountsViewPane.tooltip.text={0} {1} events\nbetween {2}\nand     {3}
 ScaleType.Linear=Linear
 ScaleType.Logarithmic=Logarithmic
+SelectIntervalAction.errorMessage=Error selecting interval.
+SelectIntervalAndTypeAction.errorMessage=Error selecting interval and type.
+SelectTypeAction.errorMessage=Error selecting type.
 Timeline.ui.countsview.menuItem.selectEventType=Select Event Type
 Timeline.ui.countsview.menuItem.selectTimeandType=Select Time and Type
 Timeline.ui.countsview.menuItem.selectTimeRange=Select Time Range
 Timeline.ui.countsview.menuItem.zoomIntoTimeRange=Zoom into Time Range
+ZoomToIntervalAction.errorMessage=Error zooming to interval.

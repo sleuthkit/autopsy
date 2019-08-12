@@ -22,6 +22,7 @@ import java.util.Set;
 
 /**
  * A TagsUpdatedEvent for tags that have been removed from events.
+ * NOTE: This event is internal to timeline components
  */
 public class TagsDeletedEvent extends TagsUpdatedEvent {
 

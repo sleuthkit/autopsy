@@ -1,0 +1,54 @@
+name: pls_recall
+type: format
+description: PL/SQL Recall file (PLSRecall.dat) format
+---
+name: char
+type: integer
+attributes:
+  format: signed
+  size: 1
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: float64
+type: floating-point
+attributes:
+  size: 8
+  units: bytes
+---
+name: pls_recall_record
+type: structure
+aliases: [TRecallRecord]
+attributes:
+  byte_order: little-endian
+members:
+- name: sequence_number
+  aliases: [Sequence]
+  data_type: uint32
+- name: last_written_time
+  aliases: [TimeStamp]
+  data_type: float64
+- name: username
+  aliases: [Username]
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: 31
+- name: database_name
+  aliases: [Database]
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: 81
+- name: query
+  aliases: [Text]
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: 4001

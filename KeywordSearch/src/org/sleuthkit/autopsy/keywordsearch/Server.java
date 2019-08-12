@@ -64,11 +64,13 @@ import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
@@ -492,7 +494,14 @@ public class Server {
                 // If we get here the Solr server has not responded to connection
                 // attempts in a timely fashion.
                 logger.log(Level.WARNING, "Local Solr server failed to respond to status requests.");
-                throw new KeywordSearchModuleException(Bundle.Server_status_failed_msg());
+                WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+                    @Override
+                    public void run() {
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), 
+                                Bundle.Server_status_failed_msg());
+                    }
+                });
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Could not start Solr process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(

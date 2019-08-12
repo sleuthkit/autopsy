@@ -29,7 +29,6 @@ from java.sql import Statement
 from java.util.logging import Level
 from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
@@ -38,6 +37,7 @@ from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.autopsy.ingest import IngestServices
 from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.datamodel import AbstractFile
+from org.sleuthkit.datamodel import Blackboard
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
@@ -164,15 +164,6 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
                 bbartifacts.append(artifact)
 
-                try:
-                    # index the artifact for keyword search
-                    blackboard = Case.getCurrentCase().getServices().getBlackboard()
-                    blackboard.indexArtifact(artifact)
-                except Blackboard.BlackboardException as ex:
-                    self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
-                    MessageNotifyUtil.Notify.error("Failed to index contact artifact for keyword search.", artifact.getDisplayName())
-
         except SQLException as ex:
             # Unable to execute contacts SQL query against database.
             pass
@@ -181,7 +172,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             if bbartifacts:
-                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts))
+                Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, general.MODULE_NAME)
 
             try:
                 if resultSet is not None:

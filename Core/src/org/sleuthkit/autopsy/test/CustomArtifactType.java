@@ -23,7 +23,7 @@ import java.util.List;
 import javax.xml.bind.DatatypeConverter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -65,7 +65,7 @@ final class CustomArtifactType {
      * @throws BlackboardException If there is an error adding any of the types.
      */
     static void addToCaseDatabase() throws Blackboard.BlackboardException, NoCurrentCaseException {
-        Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+        Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getArtifactsBlackboard();
         artifactType = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAME, ARTIFACT_DISPLAY_NAME);
         intAttrType = blackboard.getOrAddAttributeType(INT_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, INT_ATTR_DISPLAY_NAME);
         doubleAttrType = blackboard.getOrAddAttributeType(DOUBLE_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE, DOUBLE_ATTR_DISPLAY_NAME);

@@ -25,13 +25,11 @@ import com.healthmarketscience.jackcess.InvalidCredentialsException;
 import com.healthmarketscience.jackcess.impl.CodecProvider;
 import com.healthmarketscience.jackcess.impl.UnsupportedCodecException;
 import com.healthmarketscience.jackcess.util.MemFileChannel;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.logging.Level;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
+import java.util.logging.Level;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -41,18 +39,18 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -93,9 +91,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     /**
      * Create a EncryptionDetectionFileIngestModule object that will detect
      * files that are either encrypted or password protected and create
-     * blackboard artifacts as appropriate. The supplied
-     * EncryptionDetectionIngestJobSettings object is used to configure the
-     * module.
+     * blackboard artifacts as appropriate.
+     *
+     * @param settings The settings used to configure the module.
      */
     EncryptionDetectionFileIngestModule(EncryptionDetectionIngestJobSettings settings) {
         minimumEntropy = settings.getMinimumEntropy();
@@ -108,8 +106,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
             validateSettings();
-            this.context = context;
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+	    this.context = context;
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
+
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);
@@ -131,12 +130,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
              * verify the file hasn't been deleted.
              */
             if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
-                    && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
-                    && !file.getKnown().equals(TskData.FileKnown.KNOWN)
-                    && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
+                && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
+                && !file.getKnown().equals(TskData.FileKnown.KNOWN)
+                && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
                 /*
                  * Is the file in FILE_IGNORE_LIST?
                  */
@@ -206,17 +205,13 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
             try {
                 /*
-                 * Index the artifact for keyword search.
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
                  */
-                blackboard.indexArtifact(artifact);
+                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
-
-            /*
-             * Send an event to update the view with the new result.
-             */
-            services.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), artifactType, Collections.singletonList(artifact)));
 
             /*
              * Make an ingest inbox message.
