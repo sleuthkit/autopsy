@@ -51,18 +51,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  * publicly exposing the keyword search module settings fails due to a circular
  * dependency.
  */
-public class CommonAttributeSearchInterCaseTests extends NbTestCase {
+public class CommonAttributeSearchInterCaseTest extends NbTestCase {
 
     private final InterCaseTestUtils utils;
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(CommonAttributeSearchInterCaseTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(CommonAttributeSearchInterCaseTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    public CommonAttributeSearchInterCaseTests(String name) {
+    public CommonAttributeSearchInterCaseTest(String name) {
         super(name);
         this.utils = new InterCaseTestUtils(this);
     }
