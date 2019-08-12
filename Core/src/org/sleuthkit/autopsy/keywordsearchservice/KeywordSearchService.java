@@ -89,6 +89,7 @@ public interface KeywordSearchService extends Closeable {
      * @throws IOException If there is a problem closing the file manager.
      * @deprecated Do not use.
      */
+    @Deprecated
     default public void close() throws IOException {
         /*
          * No-op maintained for backwards compatibility. Clients should not

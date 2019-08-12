@@ -23,8 +23,6 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -34,13 +32,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * A collection of case-level services: file manager, tags manager, keyword
  * search service, artifacts blackboard.
  * 
- * TODO (AUT-2158): This interface should not extend Closeable.
+ * TODO (AUT-2158): This class should not extend Closeable.
  */
 public class Services implements Closeable {
 
     private final FileManager fileManager;
     private final TagsManager tagsManager;
-    private final KeywordSearchService keywordSearchService;
 
     /**
      * Constructs a collection of case-level services: file manager, tags
@@ -51,7 +48,6 @@ public class Services implements Closeable {
     public Services(SleuthkitCase caseDb) {
         fileManager = new FileManager(caseDb);
         tagsManager = new TagsManager(caseDb);
-        keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
     }
 
     /**
@@ -78,7 +74,7 @@ public class Services implements Closeable {
      * @return The keyword search service for the current case.
      */
     public KeywordSearchService getKeywordSearchService() {
-        return keywordSearchService;
+        return Lookup.getDefault().lookup(KeywordSearchService.class);
     }
 
     /**
