@@ -19,12 +19,13 @@
 package org.sleuthkit.autopsy.experimental.volatilityDSP;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import static java.util.Collections.singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,17 +34,16 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -56,22 +56,22 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  */
 class VolatilityProcessor {
 
-    private final static Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
+    private static final Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
     private static final String VOLATILITY = "Volatility"; //NON-NLS
     private static final String VOLATILITY_EXECUTABLE = "volatility_2.6_win64_standalone.exe"; //NON-NLS
-    private final IngestServices services = IngestServices.getInstance();
     private final List<String> errorMsgs = new ArrayList<>();
     private final String memoryImagePath;
     private final Image dataSource;
     private final List<String> pluginsToRun;
     private final DataSourceProcessorProgressMonitor progressMonitor;
-    private Case currentCase;
     private File executableFile;
     private String moduleOutputPath;
     private FileManager fileManager;
     private volatile boolean isCancelled;
     private Content outputVirtDir;
     private String profile;
+    private Blackboard blackboard;
+    private String caseDirectory;
 
     /**
      * Constructs a processor that runs Volatility on a given memory image file
@@ -79,15 +79,16 @@ class VolatilityProcessor {
      *
      * @param memoryImagePath Path to memory image file.
      * @param dataSource      The memory image data source.
-     * @param profile         Volatility profile to run or empty string to autodetect
-     * @param plugInToRuns    Volatility plugins to run.
+     * @param profile         Volatility profile to run or empty string to
+     *                        autodetect
+     * @param pluginsToRun    Volatility plugins to run.
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      */
-    VolatilityProcessor(String memoryImagePath, Image dataSource, String profile, List<String> plugInToRun, DataSourceProcessorProgressMonitor progressMonitor) {
+    VolatilityProcessor(String memoryImagePath, Image dataSource, String profile, List<String> pluginsToRun, DataSourceProcessorProgressMonitor progressMonitor) {
         this.profile = profile;
         this.memoryImagePath = memoryImagePath;
-        this.pluginsToRun = plugInToRun;
+        this.pluginsToRun = pluginsToRun;
         this.dataSource = dataSource;
         this.progressMonitor = progressMonitor;
     }
@@ -107,13 +108,16 @@ class VolatilityProcessor {
     })
     void run() throws VolatilityProcessorException {
         this.errorMsgs.clear();
-
+        Case currentCase;
         try {
-            this.currentCase = Case.getCurrentCaseThrows();
+
+            currentCase = Case.getCurrentCaseThrows();
+
         } catch (NoCurrentCaseException ex) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_progressMessage_noCurrentCase(), ex);
         }
-
+        blackboard = currentCase.getSleuthkitCase().getBlackboard();
+        caseDirectory = currentCase.getCaseDirectory();
         executableFile = locateVolatilityExecutable();
         if (executableFile == null) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_volatilityExeNotFound());
@@ -125,9 +129,9 @@ class VolatilityProcessor {
             // make a virtual directory to store the reports
             outputVirtDir = currentCase.getSleuthkitCase().addVirtualDirectory(dataSource.getId(), "ModuleOutput");
         } catch (TskCoreException ex) {
-           throw new VolatilityProcessorException("Error creating virtual directory", ex);
+            throw new VolatilityProcessorException("Error creating virtual directory", ex);
         }
-        
+
         /*
          * Make an output folder unique to this data source.
          */
@@ -135,11 +139,11 @@ class VolatilityProcessor {
         moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), VOLATILITY, dataSourceId.toString()).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
-            directory.mkdirs();   
+            directory.mkdirs();
         }
-        
+
         // if they did not specify a profile, then run imageinfo to get one
-        if (profile.isEmpty() ) {
+        if (profile.isEmpty()) {
             progressMonitor.setProgressText(Bundle.VolatilityProcessor_progressMessage_runningImageInfo("imageinfo")); //NON-NLS
             runVolatilityPlugin("imageinfo"); //NON-NLS
             profile = getProfileFromImageInfoOutput();
@@ -188,7 +192,7 @@ class VolatilityProcessor {
     })
     private void runVolatilityPlugin(String pluginToRun) throws VolatilityProcessorException {
         progressMonitor.setProgressText("Running module " + pluginToRun);
-        
+
         List<String> commandLine = new ArrayList<>();
         commandLine.add("\"" + executableFile + "\""); //NON-NLS
         File memoryImage = new File(memoryImagePath);
@@ -203,18 +207,18 @@ class VolatilityProcessor {
             case "moddump":
             case "procdump":
             case "dumpregistry":
-            case "dumpfiles":      
+            case "dumpfiles":
                 String outputDir = moduleOutputPath + File.separator + pluginToRun;
                 File directory = new File(outputDir);
                 if (!directory.exists()) {
-                    directory.mkdirs();   
+                    directory.mkdirs();
                 }
                 commandLine.add("--dump-dir=" + outputDir); //NON-NLS
                 break;
             default:
                 break;
         }
-        
+
         String outputFileAsString = moduleOutputPath + File.separator + pluginToRun + ".txt"; //NON-NLS
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
@@ -224,7 +228,7 @@ class VolatilityProcessor {
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
         File outputFile = new File(outputFileAsString);
         processBuilder.redirectOutput(outputFile);
-        processBuilder.redirectError(new File(moduleOutputPath + File.separator +  "Volatility_err.txt"));  //NON-NLS
+        processBuilder.redirectError(new File(moduleOutputPath + File.separator + "Volatility_err.txt"));  //NON-NLS
         processBuilder.directory(new File(memoryImage.getParent()));
 
         try {
@@ -240,15 +244,15 @@ class VolatilityProcessor {
         if (isCancelled) {
             return;
         }
-        
+
         try {
-            String relativePath = new File(currentCase.getCaseDirectory()).toURI().relativize(new File(outputFileAsString).toURI()).getPath();
+            String relativePath = new File(caseDirectory).toURI().relativize(new File(outputFileAsString).toURI()).getPath();
             fileManager.addDerivedFile(pluginToRun, relativePath, outputFile.length(), 0, 0, 0, 0, true, outputVirtDir, null, null, null, null, EncodingType.NONE);
         } catch (TskCoreException ex) {
-            errorMsgs.add("Error adding " + pluginToRun + " volatility report as a file");        
+            errorMsgs.add("Error adding " + pluginToRun + " volatility report as a file");
             logger.log(Level.WARNING, "Error adding report as derived file", ex);
         }
-        
+
         createArtifactsFromPluginOutput(pluginToRun, new File(outputFileAsString));
     }
 
@@ -286,8 +290,7 @@ class VolatilityProcessor {
                 String[] profileLine = fileRead.split(":");  //NON-NLS
                 String[] memProfile = profileLine[1].split(",|\\("); //NON-NLS
                 return memProfile[0].replaceAll("\\s+", ""); //NON-NLS
-            }
-            else {
+            } else {
                 throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_failedToParseImageInfo());
             }
         } catch (IOException ex) {
@@ -317,7 +320,6 @@ class VolatilityProcessor {
         "VolatilityProcessor_errorMessage_failedToIndexArtifact=Error indexing artifact from output of {0} plugin"
     })
     private void flagFiles(Set<String> fileSet, String pluginName) throws VolatilityProcessorException {
-        Blackboard blackboard = currentCase.getServices().getBlackboard();
         for (String file : fileSet) {
             if (isCancelled) {
                 return;
@@ -326,7 +328,7 @@ class VolatilityProcessor {
             if (file.isEmpty()) {
                 continue;
             }
-            
+
             File volfile = new File(file);
             String fileName = volfile.getName().trim();
             if (fileName.length() < 1) {
@@ -335,8 +337,8 @@ class VolatilityProcessor {
 
             String filePath = volfile.getParent();
 
-            logger.log(Level.INFO, "Looking up file " + fileName + " at path " + filePath);
-            
+            logger.log(Level.INFO, "Looking up file {0} at path {1}", new Object[]{fileName, filePath});
+
             try {
                 List<AbstractFile> resolvedFiles;
                 if (filePath == null) {
@@ -348,7 +350,7 @@ class VolatilityProcessor {
                 }
 
                 // if we didn't get anything, then try adding a wildcard for extension
-                if ((resolvedFiles.isEmpty()) && (fileName.contains(".") == false)) { //NON-NLS
+                if (resolvedFiles.isEmpty() && (fileName.contains(".") == false)) { //NON-NLS
 
                     // if there is already the same entry with ".exe" in the set, just use that one
                     if (fileSet.contains(file + ".exe")) { //NON-NLS
@@ -356,13 +358,11 @@ class VolatilityProcessor {
                     }
 
                     fileName += ".%"; //NON-NLS
-                    logger.log(Level.INFO, "Looking up file (extension wildcard) " + fileName + " at path " + filePath);
-            
-                    if (filePath == null) {
-                        resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
-                    } else {
-                        resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
-                    }
+                    logger.log(Level.INFO, "Looking up file (extension wildcard) {0} at path {1}", new Object[]{fileName, filePath});
+
+                    resolvedFiles = filePath == null
+                            ? fileManager.findFiles(fileName)
+                            : fileManager.findFiles(fileName, filePath);
                 }
 
                 if (resolvedFiles.isEmpty()) {
@@ -375,31 +375,30 @@ class VolatilityProcessor {
                         continue;
                     }
                     try {
-                        Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                        attributes.add(new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, VOLATILITY, Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName)));
-                        
-                        org.sleuthkit.datamodel.Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
+
+                        Collection<BlackboardAttribute> attributes = singleton(
+                                new BlackboardAttribute(
+                                        TSK_SET_NAME, VOLATILITY,
+                                        Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName))
+                        );
+
                         // Create artifact if it doesn't already exist.
-                        if (!tskBlackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                        if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
                             BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                             volArtifact.addAttributes(attributes);
 
                             try {
                                 // index the artifact for keyword search
-                                blackboard.indexArtifact(volArtifact);
+                                blackboard.postArtifact(volArtifact, VOLATILITY);
                             } catch (Blackboard.BlackboardException ex) {
                                 errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
                                 /*
-                                 * Log the exception as well as add it to the error
-                                 * messages, to ensure that the stack trace is not
-                                 * lost.
+                                 * Log the exception as well as add it to the
+                                 * error messages, to ensure that the stack
+                                 * trace is not lost.
                                  */
                                 logger.log(Level.SEVERE, String.format("Failed to index artifact (artifactId=%d) for for output of %s plugin", volArtifact.getArtifactID(), pluginName), ex);
                             }
-
-                            // fire event to notify UI of this new artifact
-                            services.fireModuleDataEvent(new ModuleDataEvent(VOLATILITY, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
                         }
                     } catch (TskCoreException ex) {
                         throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorCreatingArtifact(pluginName), ex);
@@ -476,19 +475,20 @@ class VolatilityProcessor {
         // change slash direction
         path = path.replaceAll("\\\\", "/"); //NON-NLS
         path = path.toLowerCase();
-        
+
         // \??\c:\windows ...
         if ((path.length() > 4) && (path.startsWith("/??/"))) { //NON-NLS
             path = path.substring(4);
         }
-        
+
         // strip C: 
         if (path.contains(":")) { //NON-NLS
             int index = path.indexOf(":");
-            if (index+1 < path.length())
+            if (index + 1 < path.length()) {
                 path = path.substring(index + 1);
+            }
         }
-                
+
         path = path.replaceAll("/systemroot/", "/windows/");
 
         // catches 1 type of file in cmdline
@@ -499,7 +499,7 @@ class VolatilityProcessor {
         if (path.contains("/harddiskvolume")) { //NON-NLS
             // 16 advances beyond harddiskvolume and the number
             int index = path.indexOf("/harddiskvolume"); //NON-NLS
-            if (index+16 < path.length()) {
+            if (index + 16 < path.length()) {
                 path = path.substring(index + 16);
             }
         }
@@ -562,10 +562,10 @@ class VolatilityProcessor {
         // read the first line from the text file
         try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
             String line;
-            while ((line = br.readLine()) != null) {                 
+            while ((line = br.readLine()) != null) {
                 // we skip the Command Line entries because that data
                 // is also in the 0x lines (and is more likely to have a full path there.
-                
+
                 // 0x4a680000     0x5000     0xffff \??\C:\WINDOWS\system32\csrss.exe
                 // 0x7c900000    0xb2000     0xffff C:\WINDOWS\system32\ntdll.dll
                 if (line.startsWith("0x") && line.length() > 33) {
@@ -668,8 +668,7 @@ class VolatilityProcessor {
                 // 0x000000000969a020 notepad.exe        3604   3300 0x16d40340 2018-01-12 14:41:16 UTC+0000  
                 if (line.startsWith("0x") == false) { //NON-NLS
                     continue;
-                }
-                else if (line.length() < 37) {
+                } else if (line.length() < 37) {
                     continue;
                 }
 
@@ -704,8 +703,9 @@ class VolatilityProcessor {
                 }
 
                 // 0x89cfb998 csrss.exe               704    640     14      532      0      0 2017-12-07 14:05:34 UTC+0000
-                if (line.length() < 34)
+                if (line.length() < 34) {
                     continue;
+                }
                 String file_path = line.substring(10, 34);
                 file_path = normalizePath(file_path);
 
@@ -738,7 +738,7 @@ class VolatilityProcessor {
                 if (line.startsWith("0x") == false) { //NON-NLS
                     continue;
                 }
-              
+
                 if (line.length() < 34) {
                     continue;
                 }
@@ -801,23 +801,21 @@ class VolatilityProcessor {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
+            BufferedReader br = new BufferedReader(new FileReader(PluginFile));
+            // read the first line from the text file
+            while ((line = br.readLine()) != null) {
                 String file_path;
                 String TAG = "Binary Path: ";
-                if (line.startsWith(TAG) && line.length() > TAG.length()+1) {
+                if (line.startsWith(TAG) && line.length() > TAG.length() + 1) {
                     if (line.charAt(TAG.length()) == '\"') {
-                        file_path = line.substring(TAG.length()+1);
+                        file_path = line.substring(TAG.length() + 1);
                         if (file_path.contains("\"")) {
                             file_path = file_path.substring(0, file_path.indexOf('\"'));
                         }
-                    }
-                    // Binary Path: -
+                    } // Binary Path: -
                     else if (line.charAt(TAG.length()) == '-') {
                         continue;
-                    }
-                    // Command line : C:\Windows\System32\svchost.exe -k LocalSystemNetworkRestricted
+                    } // Command line : C:\Windows\System32\svchost.exe -k LocalSystemNetworkRestricted
                     else {
                         file_path = line.substring(TAG.length());
                         if (file_path.contains(" ")) {
@@ -826,21 +824,20 @@ class VolatilityProcessor {
                         // We can't do anything with driver entries
                         if (file_path.startsWith("\\Driver\\")) {
                             continue;
-                        }
-                        else if (file_path.startsWith("\\FileSystem\\")) {
+                        } else if (file_path.startsWith("\\FileSystem\\")) {
                             continue;
                         }
                     }
                     fileSet.add(normalizePath(file_path));
                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
+            }
+            br.close();
+        } catch (IOException ex) {
             String msg = "Error parsing svcscan output";
             logger.log(Level.SEVERE, msg, ex);
             errorMsgs.add(msg);
-        } 
-        return fileSet;     
+        }
+        return fileSet;
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Sleuth Kit Data Model
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,10 @@ import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 /**
  *
  */
-public class IntervalUtils {
+public final class IntervalUtils {
+
+    private IntervalUtils() {
+    }
 
     static public Interval getSpanningInterval(Collection<DateTime> times) {
         Interval trange = null;
@@ -57,7 +60,7 @@ public class IntervalUtils {
     }
 
     public static Interval getAdjustedInterval(Interval oldInterval, TimeUnits requestedUnit) {
-        return getIntervalAround(middleOf(oldInterval), requestedUnit.getPeriod());
+        return getIntervalAround(middleOf(oldInterval), requestedUnit.toUnitPeriod());
     }
 
     static public Interval getIntervalAround(DateTime aroundInstant, ReadablePeriod period) {
@@ -66,15 +69,13 @@ public class IntervalUtils {
         Interval range = new Interval(start, end);
         DateTime middleOf = IntervalUtils.middleOf(range);
         long halfRange = range.toDurationMillis() / 4;
-        final Interval newInterval = new Interval(middleOf.minus(halfRange), middleOf.plus(halfRange));
-        return newInterval;
+        return new Interval(middleOf.minus(halfRange), middleOf.plus(halfRange));
     }
 
     static public Interval getIntervalAround(Instant aroundInstant, TemporalAmount temporalAmount) {
         long start = aroundInstant.minus(temporalAmount).toEpochMilli();
         long end = aroundInstant.plusMillis(1).plus(temporalAmount).toEpochMilli();
-        final Interval newInterval = new Interval(start, Math.max(start + 1, end));
-        return newInterval;
+        return new Interval(start, Math.max(start + 1, end));
     }
 
     /**

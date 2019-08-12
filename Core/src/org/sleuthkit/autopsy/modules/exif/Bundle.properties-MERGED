@@ -1,5 +1,5 @@
 CannotRunFileTypeDetection=Cannot run file type detection.
-ExifParserFileIngestModule.indexError.message=Failed to index EXIF Metadata artifact for keyword search.
+ExifParserFileIngestModule.indexError.message=Failed to post EXIF Metadata artifact(s).
 OpenIDE-Module-Display-Category=Ingest Module
 OpenIDE-Module-Long-Description=\
     Exif metadata ingest module.  \n\n\

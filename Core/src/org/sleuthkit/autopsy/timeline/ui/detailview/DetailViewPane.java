@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -52,15 +53,17 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Controller class for a DetailsChart based implementation of a timeline view.
@@ -76,9 +79,9 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  * grouped EventStripes, etc, etc. The leaves of the trees are EventClusters or
  * SingleEvents.
  */
-public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
+final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
 
-    private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
+    private final static Logger logger = Logger.getLogger(DetailViewPane.class.getName());
 
     private final DateAxis detailsChartDateAxis = new DateAxis();
     private final DateAxis pinnedDateAxis = new DateAxis();
@@ -90,25 +93,27 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      * ObservableList of events selected in this detail view. It is
      * automatically mapped from the list of nodes selected in this view.
      */
-    private final MappedList<TimeLineEvent, EventNodeBase<?>> selectedEvents;
+    private final MappedList<DetailViewEvent, EventNodeBase<?>> selectedEvents;
 
     /**
-     * Local copy of the zoomParams. Used to backout of a zoomParam change
+     * Local copy of the zoomState. Used to backout of a zoomState change
      * without needing to requery/redraw the view.
      */
-    private ZoomParams currentZoomParams;
+    private ZoomState currentZoom;
+    private final DetailsViewModel detailsViewModel;
 
     /**
      * Constructor for a DetailViewPane
      *
-     * @param controller       the Controller to use
+     * @param controller the Controller to use
      */
     public DetailViewPane(TimeLineController controller) {
         super(controller);
+        this.detailsViewModel = new DetailsViewModel(getEventsModel());
         this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase<?>::getEvent);
 
         //initialize chart;
-        setChart(new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
+        setChart(new DetailsChart(detailsViewModel, controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
 
         //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
@@ -119,10 +124,15 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
             //update selected nodes highlight
             getChart().setHighlightPredicate(getSelectedNodes()::contains);
 
-            //update controllers list of selected event ids when view's selection changes.
-            getController().selectEventIDs(getSelectedNodes().stream()
-                    .flatMap(detailNode -> detailNode.getEventIDs().stream())
-                    .collect(Collectors.toList()));
+            try {
+                //update controllers list of selected event ids when view's selection changes.
+                getController().selectEventIDs(getSelectedNodes().stream()
+                        .flatMap(detailNode -> detailNode.getEventIDs().stream())
+                        .collect(Collectors.toList()));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error selecting nodes.", ex);
+                new Alert(Alert.AlertType.ERROR, "Error selecting nodes").showAndWait();
+            }
         });
     }
 
@@ -131,14 +141,14 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      * including EventStripes and any leaf SingleEvents, since, EventClusters
      * contain no interesting non-time related information.
      */
-    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+    public ObservableList<DetailViewEvent> getAllNestedEvents() {
         return getChart().getAllNestedEvents();
     }
 
     /*
      * Get a list of the events that are selected in thes view.
      */
-    public ObservableList<TimeLineEvent> getSelectedEvents() {
+    public ObservableList<DetailViewEvent> getSelectedEvents() {
         return selectedEvents;
     }
 
@@ -149,22 +159,22 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      * @param highlightedEvents the ObservableList of events that should be
      *                          highlighted in this view.
      */
-    public void setHighLightedEvents(ObservableList<TimeLineEvent> highlightedEvents) {
+    public void setHighLightedEvents(ObservableList<DetailViewEvent> highlightedEvents) {
         highlightedEvents.addListener((Observable observable) -> {
             /*
              * build a predicate that matches events with the same description
              * as any of the events in highlightedEvents or which are selected
              */
-            Predicate<EventNodeBase<?>> highlightPredicate =
-                    highlightedEvents.stream() // => events
-                    .map(TimeLineEvent::getDescription)// => event descriptions 
-                    .map(new Function<String, Predicate<EventNodeBase<?>>>() {
-                        @Override
-                        public Predicate<EventNodeBase<?>> apply(String description) {
-                            return eventNode -> StringUtils.equalsIgnoreCase(eventNode.getDescription(), description);
-                        }
-                    })// => predicates that match strings agains the descriptions of the events in highlightedEvents
-                    .reduce(getSelectedNodes()::contains, Predicate::or); // => predicate that matches an of the descriptions or selected nodes
+            Predicate<EventNodeBase<?>> highlightPredicate
+                    = highlightedEvents.stream() // => events
+                            .map(DetailViewEvent::getDescription)// => event descriptions 
+                            .map(new Function<String, Predicate<EventNodeBase<?>>>() {
+                                @Override
+                                public Predicate<EventNodeBase<?>> apply(String description) {
+                                    return eventNode -> StringUtils.equalsIgnoreCase(eventNode.getDescription(), description);
+                                }
+                            })// => predicates that match strings agains the descriptions of the events in highlightedEvents
+                            .reduce(getSelectedNodes()::contains, Predicate::or); // => predicate that matches an of the descriptions or selected nodes
             getChart().setHighlightPredicate(highlightPredicate); //use this predicate to highlight nodes
         });
     }
@@ -182,7 +192,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      *
      * @return a new Action that will unhide events with the given description.
      */
-    public Action newUnhideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+    public Action newUnhideDescriptionAction(String description, TimelineEvent.DescriptionLevel descriptionLoD) {
         return new UnhideDescriptionAction(description, descriptionLoD, getChart());
     }
 
@@ -194,7 +204,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      *
      * @return a new Action that will hide events with the given description.
      */
-    public Action newHideDescriptionAction(String description, DescriptionLoD descriptionLoD) {
+    public Action newHideDescriptionAction(String description, TimelineEvent.DescriptionLevel descriptionLoD) {
         return new HideDescriptionAction(description, descriptionLoD, getChart());
     }
 
@@ -382,17 +392,17 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
                 return null;
             }
             FilteredEventsModel eventsModel = getEventsModel();
-            ZoomParams newZoomParams = eventsModel.getZoomParamaters();
+            ZoomState newZoom = eventsModel.getZoomState();
 
-            //if the zoomParams haven't actually changed, just bail
-            if (Objects.equals(currentZoomParams, newZoomParams)) {
+            //If the view doesn't need refreshing or if the ZoomState hasn't actually changed, just bail
+            if (needsRefresh() == false && Objects.equals(currentZoom, newZoom)) {
                 return true;
             }
 
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
 
             //get the event stripes to be displayed
-            List<EventStripe> eventStripes = eventsModel.getEventStripes();
+            List<EventStripe> eventStripes = detailsViewModel.getEventStripes(newZoom);
             final int size = eventStripes.size();
             //if there are too many stipes show a confirmation dialog
             if (size > 2000) {
@@ -420,8 +430,8 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
             if (isCancelled()) {
                 return null;
             }
-            //we are going to accept the new zoomParams
-            currentZoomParams = newZoomParams;
+            //we are going to accept the new zoom
+            currentZoom = newZoom;
 
             //clear the chart and set the horixontal axis
             resetView(eventsModel.getTimeRange());

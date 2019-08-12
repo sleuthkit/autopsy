@@ -509,7 +509,7 @@ class ExtractRegistry extends Extract {
                                 bbart.addAttributes(bbattributes);
 
                                 // index the artifact for keyword search
-                                this.indexArtifact(bbart);
+                                postArtifact(bbart);
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -560,7 +560,7 @@ class ExtractRegistry extends Extract {
                                 bbart.addAttributes(bbattributes);
 
                                 // index the artifact for keyword search
-                                this.indexArtifact(bbart);
+                                postArtifact(bbart);
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -599,7 +599,7 @@ class ExtractRegistry extends Extract {
                                 bbart.addAttributes(bbattributes);
 
                                 // index the artifact for keyword search
-                                this.indexArtifact(bbart);
+                                postArtifact(bbart);
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -651,7 +651,7 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
 
                                             // index the artifact for keyword search
-                                            this.indexArtifact(bbart);
+                                            postArtifact(bbart);
                                             // add to collection for ModuleDataEvent
                                             usbBBartifacts.add(bbart);
                                         } catch (TskCoreException ex) {
@@ -677,7 +677,7 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
 
                                             // index the artifact for keyword search
-                                            this.indexArtifact(bbart);
+                                            postArtifact(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
                                         }
@@ -697,7 +697,7 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
 
                                             // index the artifact for keyword search
-                                            this.indexArtifact(bbart);
+                                            postArtifact(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard."); //NON-NLS
                                         }
@@ -764,7 +764,7 @@ class ExtractRegistry extends Extract {
                                             }
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
-                                            this.indexArtifact(bbart);
+                                            postArtifact(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding account artifact to blackboard."); //NON-NLS
                                         }
@@ -781,7 +781,7 @@ class ExtractRegistry extends Extract {
                                                     parentModuleName, remoteName));
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
-                                            this.indexArtifact(bbart);
+                                            postArtifact(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding network artifact to blackboard."); //NON-NLS
                                         }
@@ -797,7 +797,7 @@ class ExtractRegistry extends Extract {
                                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_WIFI_NETWORK);
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
-                                            this.indexArtifact(bbart);
+                                            postArtifact(bbart);
                                             wifiBBartifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard."); //NON-NLS
@@ -818,12 +818,9 @@ class ExtractRegistry extends Extract {
                         break;
                 }
             } // for
-            if (!usbBBartifacts.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, usbBBartifacts));
-            }
-            if (!wifiBBartifacts.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK, wifiBBartifacts));
-            }
+            
+            postArtifacts(usbBBartifacts);
+            postArtifacts(wifiBBartifacts);
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
@@ -924,7 +921,7 @@ class ExtractRegistry extends Extract {
                         parentModuleName, userInfo.getLoginCount()));
                 bbart.addAttributes(bbattributes);
                 // index the artifact for keyword search
-                this.indexArtifact(bbart);
+                postArtifact(bbart);
             }
             //store set of attributes to make artifact for later in collection of artifact like objects
             return true;
