@@ -47,18 +47,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  * all data sources: One node for Hash C (3_1_C.jpg, 3_2_C.jpg)
  *
  */
-public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
+public class IngestedWithHashAndFileTypeInterCaseTest extends NbTestCase {
 
     private final InterCaseTestUtils utils;
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileTypeInterCaseTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileTypeInterCaseTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    public IngestedWithHashAndFileTypeInterCaseTests(String name) {
+    public IngestedWithHashAndFileTypeInterCaseTest(String name) {
         super(name);
         this.utils = new InterCaseTestUtils(this);
     }

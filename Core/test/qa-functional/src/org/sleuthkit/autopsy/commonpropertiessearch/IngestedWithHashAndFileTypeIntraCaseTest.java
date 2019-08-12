@@ -48,10 +48,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Add set 1, set 2, set 3, and set 4 to case and ingest with hash algorithm.
  */
-public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
+public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileTypeIntraCaseTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileTypeIntraCaseTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
@@ -59,7 +59,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
     private final IntraCaseTestUtils utils;
 
-    public IngestedWithHashAndFileTypeIntraCaseTests(String name) {
+    public IngestedWithHashAndFileTypeIntraCaseTest(String name) {
         super(name);
 
         this.utils = new IntraCaseTestUtils(this, "IngestedWithHashAndFileTypeTests");
@@ -76,7 +76,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
         templates.add(hashLookupTemplate);
         templates.add(mimeTypeLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileTypeIntraCaseTests.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileTypeIntraCaseTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
