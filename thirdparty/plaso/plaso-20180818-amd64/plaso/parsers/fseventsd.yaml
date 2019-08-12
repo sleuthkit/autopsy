@@ -1,0 +1,72 @@
+name: fseventsd
+type: format
+description: MacOS file system events disk log stream format
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/MacOS%20File%20System%20Events%20Disk%20Log%20Stream%20format.asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  size: 1
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: dls_page_header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: signature
+  type: stream
+  element_data_type: byte
+  number_of_elements: 4
+- name: padding
+  type: stream
+  element_data_type: byte
+  number_of_elements: 4
+- name: page_size
+  data_type: uint32
+---
+name: dls_record_v1
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: path
+  type: string
+  element_data_type: byte
+  encoding: utf8
+  elements_terminator: "\x00"
+- name: event_identifier
+  data_type: uint64
+- name: event_flags
+  data_type: uint32
+---
+name: dls_record_v2
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: path
+  type: string
+  encoding: utf8
+  element_data_type: byte
+  elements_terminator: "\x00"
+- name: event_identifier
+  data_type: uint64
+- name: event_flags
+  data_type: uint32
+- name: node_identifier
+  data_type: uint64

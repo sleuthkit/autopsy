@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Sleuth Kit Data Model
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,77 +19,67 @@
 package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.time.temporal.ChronoUnit;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeFieldType;
 import org.joda.time.Days;
 import org.joda.time.Hours;
 import org.joda.time.Minutes;
 import org.joda.time.Months;
 import org.joda.time.Period;
+import org.joda.time.ReadablePeriod;
 import org.joda.time.Seconds;
 import org.joda.time.Years;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 /**
- * predefined units of time for use in choosing axis labels and sub intervals.
+ * Predefined units of time for use in choosing axis labels and sub intervals.
  */
-public enum TimeUnits implements DisplayNameProvider {
+public enum TimeUnits {
 
-    FOREVER(null, ChronoUnit.FOREVER),
-    YEARS(Years.ONE.toPeriod(), ChronoUnit.YEARS),
-    MONTHS(Months.ONE.toPeriod(), ChronoUnit.MONTHS),
-    DAYS(Days.ONE.toPeriod(), ChronoUnit.DAYS),
-    HOURS(Hours.ONE.toPeriod(), ChronoUnit.HOURS),
-    MINUTES(Minutes.ONE.toPeriod(), ChronoUnit.MINUTES),
-    SECONDS(Seconds.ONE.toPeriod(), ChronoUnit.SECONDS);
+    FOREVER(null, null, ChronoUnit.FOREVER, null),
+    YEARS(DateTimeFieldType.year(), Years.ONE, ChronoUnit.YEARS, ISODateTimeFormat.year()),
+    MONTHS(DateTimeFieldType.monthOfYear(), Months.ONE, ChronoUnit.MONTHS, DateTimeFormat.forPattern("YYYY'-'MMMM")),
+    DAYS(DateTimeFieldType.dayOfMonth(), Days.ONE, ChronoUnit.DAYS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd")),
+    HOURS(DateTimeFieldType.hourOfDay(), Hours.ONE, ChronoUnit.HOURS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH")),
+    MINUTES(DateTimeFieldType.minuteOfHour(), Minutes.ONE, ChronoUnit.MINUTES, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm")),
+    SECONDS(DateTimeFieldType.secondOfMinute(), Seconds.ONE, ChronoUnit.SECONDS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm':'ss"));
 
-    public static TimeUnits fromChronoUnit(ChronoUnit chronoUnit) {
-        switch (chronoUnit) {
+    private final DateTimeFieldType fieldType;
+    private final Period period;
+    private final ChronoUnit chronoUnit;
+    private final DateTimeFormatter tickFormatter;
 
-            case FOREVER:
-                return FOREVER;
-            case ERAS:
-            case MILLENNIA:
-            case CENTURIES:
-            case DECADES:
-            case YEARS:
-                return YEARS;
-            case MONTHS:
-                return MONTHS;
-            case WEEKS:
-            case DAYS:
-                return DAYS;
-            case HOURS:
-            case HALF_DAYS:
-                return HOURS;
-            case MINUTES:
-                return MINUTES;
-            case SECONDS:
-            case MILLIS:
-            case MICROS:
-            case NANOS:
-                return SECONDS;
-            default:
-                return YEARS;
+    public DateTimeFormatter getTickFormatter() {
+        return tickFormatter;
+    }
+
+    private TimeUnits(DateTimeFieldType fieldType, ReadablePeriod period, ChronoUnit chronoUnit, DateTimeFormatter tickFormatter) {
+        this.fieldType = fieldType;
+        if (period != null) {
+            this.period = period.toPeriod();
+        } else {
+            this.period = null;
         }
+        this.chronoUnit = chronoUnit;
+        this.tickFormatter = tickFormatter;
     }
 
-    private final Period p;
-
-    private final ChronoUnit cu;
-
-    public Period getPeriod() {
-        return p;
+    public DateTime.Property propertyOf(DateTime dateTime) {
+        return dateTime.property(fieldType);
     }
 
-    public ChronoUnit getChronoUnit() {
-        return cu;
+    public Period toUnitPeriod() {
+        return period;
     }
 
-    private TimeUnits(Period p, ChronoUnit cu) {
-        this.p = p;
-        this.cu = cu;
+    public ChronoUnit toChronoUnit() {
+        return chronoUnit;
     }
 
-    @Override
     public String getDisplayName() {
-        return toString();
+        return StringUtils.capitalize(toString().toLowerCase());
     }
 }

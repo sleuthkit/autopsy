@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
- * Copyright 2012 Basis Technology Corp.
- * 
+ *
+ * Copyright 2012-2018 Basis Technology Corp.
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,12 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Level;
 
 /**
- * Database connection class & utilities *
+ * Database connection class & utilities.
  */
-public class SQLiteDBConnect {
+public class SQLiteDBConnect implements AutoCloseable {
 
     public String sDriver = "";
     public String sUrl = null;
@@ -52,7 +52,7 @@ public class SQLiteDBConnect {
      * quick and dirty constructor to test the database passing the
      * DriverManager name and the fully loaded url to handle
      */
-    /*
+ /*
      * NB this will typically be available if you make this class concrete and
      * not abstract
      */
@@ -104,9 +104,13 @@ public class SQLiteDBConnect {
         statement.executeUpdate(instruction);
     }
 
-// processes an array of instructions e.g. a set of SQL command strings passed from a file
-//NB you should ensure you either handle empty lines in files by either removing them or parsing them out 
-// since they will generate spurious SQLExceptions when they are encountered during the iteration....
+    /** processes an array of instructions e.g. a set of SQL command strings
+     * passed from a file
+     *
+     * NB you should ensure you either handle empty lines in files by either
+     * removing them or parsing them out since they will generate spurious
+     * SQLExceptions when they are encountered during the iteration....
+     */
     public void executeStmt(String[] instructionSet) throws SQLException {
         for (int i = 0; i < instructionSet.length; i++) {
             executeStmt(instructionSet[i]);
@@ -120,7 +124,14 @@ public class SQLiteDBConnect {
     public void closeConnection() {
         try {
             conn.close();
-        } catch (Exception ignore) {
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "Unable to close connection to SQLite DB at " + sUrl, ex);
         }
+        //Implementing Autoclosable.close() allows this class to be used in try-with-resources.
+    }
+
+    @Override
+    public void close() {
+        closeConnection();
     }
 }

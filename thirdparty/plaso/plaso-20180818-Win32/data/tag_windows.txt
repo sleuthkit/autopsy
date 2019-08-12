@@ -1,0 +1,92 @@
+application_execution
+  data_type is 'windows:prefetch'
+  data_type is 'windows:lnk:link' and filename contains 'Recent' and (local_path contains '.exe' or network_path contains '.exe' or relative_path contains '.exe')
+  data_type is 'windows:registry:key_value' AND (plugin contains 'userassist' or plugin contains 'mru') AND regvalue.__all__ contains '.exe'
+  data_type is 'windows:evtx:record' and strings contains 'user mode service' and strings contains 'demand start'
+  data_type is 'fs:stat' and filename contains 'Windows/Tasks/At'
+  data_type is 'windows:tasks:job'
+  data_type is 'windows:evt:record' and source_name is 'Security' and event_identifier is 592
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Security-Auditing' and event_identifier is 4688
+  data_type is 'windows:registry:appcompatcache'
+
+application_install
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Application-Experience' and event_identifier is 903
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Application-Experience' and event_identifier is 904
+
+application_update
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Application-Experience' and event_identifier is 905
+
+application_removal
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Application-Experience' and event_identifier is 907
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Application-Experience' and event_identifier is 908
+
+document_open
+  data_type is 'windows:registry:key_value' AND plugin contains 'mru' AND regvalue.__all__ notcontains '.exe' AND timestamp > 0
+
+login_failed
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Security-Auditing' and event_identifier is 4625
+
+login_attempt
+  data_type is 'windows:evt:record' and source_name is 'Security' and event_identifier is 540
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Security-Auditing' and event_identifier is 4624
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 21
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 1101
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Winlogon' and event_identifier is 7001
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-RemoteConnectionManager' and event_identifier is 1147
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-RemoteConnectionManager' and event_identifier is 1149
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-User Profiles Service' and event_identifier is 2
+
+logoff
+  data_type is 'windows:evt:record' and source_name is 'Security' and event_identifier is 538
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Security-Auditing' and event_identifier is 4634
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Winlogon' and event_identifier is 7002
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 23
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 1103
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-User Profiles Service' and event_identifier is 4
+
+session_disconnection
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 24
+
+session_reconnection
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 25
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 1105
+
+shell_start
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 22
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TerminalServices-LocalSessionManager' and event_identifier is 1102
+
+task_schedule
+  data_type is 'windows:evt:record' and source_name is 'Security' and event_identifier is 602
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Security-Auditing' and event_identifier is 4698
+
+job_success
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TaskScheduler' and event_identifier is 102
+
+action_success
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-TaskScheduler' and event_identifier is 201
+
+name_resolution_timeout
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-DNS-Client' and event_identifier is 1014
+
+time_change
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Kernel-General' and event_identifier is 1
+
+shutdown
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Kernel-General' and event_identifier is 13
+
+system_start
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Kernel-General' and event_identifier is 13
+
+system_sleep
+  data_type is 'windows:evtx:record' and source_name is 'Microsoft-Windows-Kernel-Power' and event_identifier is 42
+
+autorun
+  data_type is 'windows:registry:key_value' and plugin contains 'Run'
+  data_type is 'windows:registry:key_value' AND (plugin contains 'run' or plugin contains 'lfu') AND (regvalue.__all__ contains '.exe' OR regvalue.__all__ contains '.dll')
+
+file_download
+  data_type is 'chrome:history:file_downloaded'
+  timestamp_desc is 'File Downloaded'
+
+document_print
+  (data_type is 'metadata:hachoir' OR data_type is 'olecf:summary_info') AND timestamp_desc contains 'Printed'

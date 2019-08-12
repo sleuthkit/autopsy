@@ -428,6 +428,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     report_index = line.find('INSERT INTO "reports"') > -1 or line.find('INSERT INTO reports ') > -1
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
+    event_description_index = line.find('INSERT INTO "tsk_event_descriptions"') > -1 or line.find('INSERT INTO data_source_info ') > -1
+    events_index = line.find('INSERT INTO "tsk_events"') > -1 or line.find('INSERT INTO data_source_info ') > -1
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
     examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
     ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
@@ -559,6 +561,21 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     elif examiners_index:
         fields_list[1] = "{examiner_name}"
         newLine = ('INSERT INTO "tsk_examiners" VALUES(' + ','.join(fields_list) + ');')
+        return newLine
+    # remove all timing dependent columns from events table
+    elif events_index:
+        newLine = ('INSERT INTO "tsk_events" VALUES(' + ','.join(fields_list[1:2]) + ');') 
+        return newLine
+    # remove object ids from event description table
+    elif event_description_index:
+        # replace object ids with information that is deterministic 
+        file_obj_id = int(fields_list[5])
+        object_id = int(fields_list[4])
+        if file_obj_id != 'NULL' and file_obj_id in files_table.keys():
+            fields_list[5] = files_table[file_obj_id]
+        if object_id != 'NULL' and object_id in files_table.keys():
+            fields_list[4] = files_table[object_id]
+        newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
     else:
         return line

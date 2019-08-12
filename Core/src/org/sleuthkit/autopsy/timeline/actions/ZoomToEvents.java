@@ -18,29 +18,40 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
+import java.util.logging.Level;
 import javafx.beans.binding.BooleanBinding;
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 public class ZoomToEvents extends Action {
 
+    private static final Logger logger = Logger.getLogger(ZoomToEvents.class.getName());
     private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png", 16, 16, true, true); //NOI18N NON-NLS
 
     @NbBundle.Messages({"ZoomToEvents.action.text=Zoom to events",
-        "ZoomToEvents.longText=Zoom out to show the nearest events."})
+        "ZoomToEvents.longText=Zoom out to show the nearest events.",
+        "ZoomToEvents.disabledProperty.errorMessage=Error getting spanning interval."})
     public ZoomToEvents(final TimeLineController controller) {
         super(Bundle.ZoomToEvents_action_text());
         setLongText(Bundle.ZoomToEvents_longText());
         setGraphic(new ImageView(MAGNIFIER_OUT));
         setEventHandler(actionEvent -> {
-            controller.zoomOutToActivity();
+            try {
+                controller.zoomOutToActivity();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error invoking ZoomToEvents action", ex);
+                new Alert(Alert.AlertType.ERROR, "Error zomming").showAndWait();
+            }
         });
 
         //disable action when the current time range already encompases the entire case.
@@ -48,13 +59,19 @@ public class ZoomToEvents extends Action {
             private final FilteredEventsModel eventsModel = controller.getEventsModel();
 
             {
-                bind(eventsModel.zoomParametersProperty());
+                bind(eventsModel.zoomStateProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                //TODO: do a db query to see if using this action will actually result in viewable events
-                return eventsModel.zoomParametersProperty().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
+                try {
+                    //TODO: do a db query to see if using this action will actually result in viewable events
+                    return eventsModel.getTimeRange().contains(eventsModel.getSpanningInterval());
+                } catch (TskCoreException ex) {
+                    new Alert(Alert.AlertType.ERROR, Bundle.ZoomToEvents_disabledProperty_errorMessage()).showAndWait();
+                    logger.log(Level.SEVERE, "Error getting spanning interval.", ex);
+                    return true;
+                }
             }
         });
     }
