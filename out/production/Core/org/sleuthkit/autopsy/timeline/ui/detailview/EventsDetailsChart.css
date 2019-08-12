@@ -1,7 +1,0 @@
-.guide-line{
-    -fx-opacity: .5;
-    -fx-stroke: red;
-    -fx-stroke-dash-array: 5 5;
-    -fx-stroke-width: 3;
-    -fx-cursor: h-resize;
-}
