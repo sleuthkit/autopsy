@@ -104,10 +104,11 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         } else {
             SelectionSummary summaryDetails = info.getSummary();
 
-            attachmentsDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
+            thumbnailsDataLabel.setText(Integer.toString(summaryDetails.getThumbnailCnt()));
             callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
             contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
             messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
+            attachmentDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
 
             fileReferencesPanel.showOutlineView();
 
@@ -131,7 +132,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        attachmentsLabel.setEnabled(enabled);
+        thumbnailCntLabel.setEnabled(enabled);
         callLogsLabel.setEnabled(enabled);
         contactsLabel.setEnabled(enabled);
         messagesLabel.setEnabled(enabled);
@@ -144,10 +145,11 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
      * Clears the text fields and OutlookViews.
      */
     private void clearControls() {
-        attachmentsDataLabel.setText("");
+        thumbnailsDataLabel.setText("");
         callLogsDataLabel.setText("");
         contactsDataLabel.setText("");
         messagesDataLabel.setText("");
+        attachmentDataLabel.setText("");
 
         fileReferencesPanel.setNode(new AbstractNode(Children.LEAF));
         caseReferencesPanel.setNode(new AbstractNode(Children.LEAF));
@@ -187,11 +189,13 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         contactsLabel = new javax.swing.JLabel();
         messagesLabel = new javax.swing.JLabel();
         callLogsLabel = new javax.swing.JLabel();
-        attachmentsLabel = new javax.swing.JLabel();
-        attachmentsDataLabel = new javax.swing.JLabel();
+        thumbnailCntLabel = new javax.swing.JLabel();
+        thumbnailsDataLabel = new javax.swing.JLabel();
         messagesDataLabel = new javax.swing.JLabel();
         callLogsDataLabel = new javax.swing.JLabel();
         contactsDataLabel = new javax.swing.JLabel();
+        attachmentsLable = new javax.swing.JLabel();
+        attachmentDataLabel = new javax.swing.JLabel();
         fileReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
         caseReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
@@ -205,15 +209,19 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
         org.openide.awt.Mnemonics.setLocalizedText(callLogsLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.callLogsLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(attachmentsLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.attachmentsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(thumbnailCntLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.thumbnailCntLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(attachmentsDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.attachmentsDataLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(thumbnailsDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.thumbnailsDataLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(messagesDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.messagesDataLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(callLogsDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.callLogsDataLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(contactsDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.contactsDataLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(attachmentsLable, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.attachmentsLable.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(attachmentDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.attachmentDataLabel.text")); // NOI18N
 
         javax.swing.GroupLayout countsPanelLayout = new javax.swing.GroupLayout(countsPanel);
         countsPanel.setLayout(countsPanelLayout);
@@ -225,14 +233,16 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                     .addComponent(messagesLabel)
                     .addComponent(callLogsLabel)
                     .addComponent(contactsLabel)
-                    .addComponent(attachmentsLabel))
+                    .addComponent(thumbnailCntLabel)
+                    .addComponent(attachmentsLable))
                 .addGap(18, 18, 18)
                 .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(attachmentsDataLabel)
+                    .addComponent(attachmentDataLabel)
+                    .addComponent(thumbnailsDataLabel)
                     .addComponent(contactsDataLabel)
                     .addComponent(callLogsDataLabel)
                     .addComponent(messagesDataLabel))
-                .addContainerGap(959, Short.MAX_VALUE))
+                .addContainerGap(845, Short.MAX_VALUE))
         );
         countsPanelLayout.setVerticalGroup(
             countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -251,9 +261,12 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                     .addComponent(contactsDataLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(attachmentsLabel)
-                    .addComponent(attachmentsDataLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(thumbnailCntLabel)
+                    .addComponent(thumbnailsDataLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(countsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(attachmentsLable)
+                    .addComponent(attachmentDataLabel)))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -287,8 +300,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel attachmentsDataLabel;
-    private javax.swing.JLabel attachmentsLabel;
+    private javax.swing.JLabel attachmentDataLabel;
+    private javax.swing.JLabel attachmentsLable;
     private javax.swing.JLabel callLogsDataLabel;
     private javax.swing.JLabel callLogsLabel;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel caseReferencesPanel;
@@ -298,6 +311,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel fileReferencesPanel;
     private javax.swing.JLabel messagesDataLabel;
     private javax.swing.JLabel messagesLabel;
+    private javax.swing.JLabel thumbnailCntLabel;
+    private javax.swing.JLabel thumbnailsDataLabel;
     // End of variables declaration//GEN-END:variables
 
 }
