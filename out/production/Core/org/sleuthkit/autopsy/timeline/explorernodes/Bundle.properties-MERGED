@@ -1,0 +1,10 @@
+EventNode.getAction.errorTitle=Error getting actions
+EventNode.getAction.linkedFileMessage=There was a problem getting actions for the selected result.  The 'View File in Timeline' action will not be available.
+# {0} - maximum number of events to display
+# {1} - the number of events that is too many
+EventRoodNode.tooManyNode.displayName=Too many events to display.  Maximum = {0}. But there are {1} to display.
+NodeProperty.displayName.dateTime=Date/Time
+NodeProperty.displayName.description=Description
+NodeProperty.displayName.eventType=Event Type
+NodeProperty.displayName.icon=Icon
+NodeProperty.displayName.known=Known

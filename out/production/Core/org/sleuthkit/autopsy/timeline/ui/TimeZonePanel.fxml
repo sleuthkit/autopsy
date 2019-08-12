@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root alignment="TOP_LEFT" animated="false" collapsible="false" contentDisplay="RIGHT" minHeight="-Infinity" minWidth="-Infinity" type="TitledPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<graphic>
+<HBox spacing="5.0">
+<children><RadioButton fx:id="localRadio" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" selected="true">
+<HBox.margin>
+<Insets />
+</HBox.margin>
+<toggleGroup>
+<ToggleGroup fx:id="localOtherGroup" />
+</toggleGroup></RadioButton><RadioButton fx:id="otherRadio" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" toggleGroup="$localOtherGroup">
+<HBox.margin>
+<Insets />
+</HBox.margin></RadioButton>
+</children>
+<padding>
+<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+</padding>
+</HBox>
+</graphic>
+</fx:root>

@@ -1,0 +1,2 @@
+AbstractFileTikaTextExtract.index.tikaParseTimeout.text=Exception: Tika parse timeout for content: {0}, {1}
+AbstractFileTikaTextExtract.index.exception.tikaParse.msg=Exception: Unexpected exception from Tika parse task execution for file: {0}, {1}

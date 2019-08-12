@@ -1,0 +1,59 @@
+CTL_MakeTimeline=Timeline
+CTL_TimeLineTopComponentAction=TimeLineTopComponent
+CTL_TimeLineTopComponent=Timeline
+
+FilteredEventsModel.timeRangeProperty.errorMessage=Error getting spanning interval.
+FilteredEventsModel.timeRangeProperty.errorTitle=Timeline
+OpenTimelineAction.displayName=Timeline
+OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources.
+OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.
+PrompDialogManager.buttonType.continueNoUpdate=Continue Without Updating
+PrompDialogManager.buttonType.showTimeline=Continue
+PrompDialogManager.buttonType.update=Update DB
+PromptDialogManager.confirmDuringIngest.contentText=Do you want to continue?
+PromptDialogManager.confirmDuringIngest.headerText=Ingest is still going, and the Timeline may be incomplete.
+PromptDialogManager.progressDialog.title=Populating Timeline Data
+PromptDialogManager.rebuildPrompt.details=Details
+PromptDialogManager.rebuildPrompt.headerText=The Timeline DB is incomplete and/or out of date.  Some events may be missing or inaccurate and some features may be unavailable.
+PromptDialogManager.showTimeLineDisabledMessage.contentText=Timeline functionality is not available yet.  Timeline will be disabled. 
+PromptDialogManager.showTimeLineDisabledMessage.headerText=
+PromptDialogManager.showTooManyFiles.contentText=There are too many files in the DB to ensure reasonable performance.  Timeline will be disabled. 
+PromptDialogManager.showTooManyFiles.headerText=
+ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits.
+ShowInTimelineDialog.artifactTitle=View Result in Timeline.
+ShowInTimelineDialog.eventSelectionValidator.message=You must select an event.
+# {0} - file path
+ShowInTimelineDialog.fileTitle=View {0} in timeline.
+ShowInTimelineDialog.showTimelineButtonType.text=Show Timeline
+Timeline.dialogs.title=\ Timeline
+Timeline.frameName.text={0} - Autopsy Timeline
+Timeline.old.version=\ This Case was created with an older version of Autopsy.\nThe Timeline with not show events from data sources added with the older version of Autopsy
+Timeline.resultsPanel.title=Timeline Results
+Timeline.runJavaFxThread.progress.creating=Creating timeline . . .
+Timeline.zoomOutButton.text=Zoom Out
+Timeline.goToButton.text=Go To:
+Timeline.yearBarChart.x.years=Years
+Timeline.resultPanel.loading=Loading...
+
+TimeLinecontroller.updateNowQuestion=Do you want to update the events database now?
+TimelineFrame.title=Timeline
+TimelinePanel.jButton1.text=6m
+TimelinePanel.jButton13.text=all
+TimelinePanel.jButton10.text=1h
+TimelinePanel.jButton9.text=12h
+TimelinePanel.jButton11.text=5y
+TimelinePanel.jButton12.text=10y
+TimelinePanel.jButton6.text=1w
+TimelinePanel.jButton5.text=1y
+TimelinePanel.jButton8.text=1d
+TimelinePanel.jButton7.text=3d
+TimelinePanel.jButton2.text=1m
+TimelinePanel.jButton3.text=3m
+TimelinePanel.jButton4.text=2w
+ProgressWindow.progressHeader.text=\ 
+# {0} - start of date range
+# {1} - end of date range
+TimeLineResultView.startDateToEndDate.text={0} to {1}
+TimeLineTopComponent.eventsTab.name=Events
+TimeLineTopComponent.filterTab.name=Filters
+TimelineTopComponent.selectedEventListener.errorMsg=There was a problem getting the content for the selected event.

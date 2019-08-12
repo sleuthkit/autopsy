@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="ToolBar" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+    <items>
+        <Label fx:id="statusLabel" layoutX="10.0" layoutY="11.0" HBox.hgrow="ALWAYS">
+            <graphic>
+                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/information-white.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+        </Label>
+        <Separator halignment="RIGHT" orientation="VERTICAL" />
+        <Label fx:id="taskLabel" contentDisplay="RIGHT">
+            <graphic>
+                <StackPane>
+                    <children>
+                        <ProgressBar fx:id="progressBar" progress="0.0" />
+                        <Label fx:id="messageLabel" />
+                    </children>
+                </StackPane>
+            </graphic>
+        </Label>
+    </items>
+</fx:root>

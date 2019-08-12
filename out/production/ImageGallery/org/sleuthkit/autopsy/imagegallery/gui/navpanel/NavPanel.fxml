@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+
+<fx:root closable="false" type="Tab" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+    <content>
+        <BorderPane fx:id="borderPane">
+            <top>
+                <ToolBar fx:id="toolBar" minWidth="-Infinity" BorderPane.alignment="CENTER" />
+            </top>
+        </BorderPane>
+    </content>
+</fx:root>

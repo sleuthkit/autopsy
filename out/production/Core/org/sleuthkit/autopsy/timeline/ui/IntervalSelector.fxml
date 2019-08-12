@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" pickOnBounds="false" prefHeight="400.0" prefWidth="600.0" styleClass="intervalSelector" stylesheets="@IntervalSelector.css" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+      <Button fx:id="closeButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" opacity="0.5" prefHeight="16.0" prefWidth="16.0" styleClass="closeButton" BorderPane.alignment="CENTER_RIGHT">
+         <graphic>
+            <ImageView opacity="0.5" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../images/cross-script.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+   </top>
+   <padding>
+      <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+   </padding>
+   <bottom>
+      <BorderPane fx:id="bottomBorder" minHeight="32.0" pickOnBounds="false" BorderPane.alignment="BOTTOM_CENTER">
+         <left>
+            <HBox alignment="BOTTOM_LEFT" BorderPane.alignment="BOTTOM_LEFT">
+               <children>
+                  <Label fx:id="startLabel" alignment="BOTTOM_LEFT" minWidth="0.0" text="Label" />
+                  <Region HBox.hgrow="ALWAYS" />
+               </children>
+            </HBox>
+         </left>
+         <right>
+            <HBox alignment="BOTTOM_RIGHT" BorderPane.alignment="CENTER">
+               <children>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label fx:id="endLabel" minWidth="0.0" text="Label" />
+               </children>
+            </HBox>
+         </right>
+         <center>
+            <Button fx:id="zoomButton" alignment="CENTER" mnemonicParsing="false" opacity="0.66" styleClass="zoomButton" text="Zoom" BorderPane.alignment="CENTER">
+               <graphic>
+                  <ImageView pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../images/magnifier-zoom-fit.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
+         </center>
+      </BorderPane>
+   </bottom>
+</fx:root>

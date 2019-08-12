@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root maxHeight="-1.0" maxWidth="-1.0" minHeight="-Infinity" minWidth="-Infinity" opacity="1.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: linear-gradient(to bottom, derive(-fx-base,-30%), derive(-fx-base,-60%)),        linear-gradient(to bottom, derive(-fx-base,65%) 2%, derive(-fx-base,-20%) 95%); -fx-background-radius: 2;" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <BorderPane maxHeight="-1.0" maxWidth="-1.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" snapToPixel="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <bottom>
+                <BorderPane maxHeight="-Infinity" maxWidth="-1.0" minHeight="-Infinity" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER">
+                    <center>
+                        <Label id="pathLabel" fx:id="nameLabel" alignment="CENTER" contentDisplay="TEXT_ONLY" maxHeight="16.0" minHeight="16.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" text="file name" textAlignment="CENTER">
+                            <labelFor>
+                                <ImageView fx:id="imageView" fitHeight="200.0" fitWidth="200.0" opacity="1.0" pickOnBounds="true" preserveRatio="true" style="-fx-border-radius : 5;&#10;-fx-border-width : 5;&#10;-fx-border-color : blue;" BorderPane.alignment="CENTER" />
+                            </labelFor>
+                        </Label>
+                    </center>
+                    <left>
+                        <HBox maxHeight="-Infinity" prefHeight="-1.0" prefWidth="-1.0" spacing="2.0" BorderPane.alignment="CENTER_LEFT">
+                            <children>
+                                <ImageView fx:id="fileTypeImageView" fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" scaleX="1.0" scaleY="1.0">
+                                    <image>
+                                        <Image url="@../../images/video-file.png" />
+                                    </image>
+                                </ImageView>
+                                <ImageView fx:id="hashHitImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true" style="">
+                                    <image>
+                                        <Image url="@../../images/hashset_hits.png" />
+                                    </image>
+                                    <HBox.margin>
+                                        <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" fx:id="x1" />
+                                    </HBox.margin>
+                                </ImageView>
+                            </children>
+                            <padding>
+                                <Insets bottom="2.0" right="2.0" top="2.0" />
+                            </padding>
+                        </HBox>
+                    </left>
+                    <right>
+                        <ToggleButton fx:id="followUpToggle" minWidth="24.0" mnemonicParsing="false" prefWidth="24.0" selected="false" text="">
+                            <graphic>
+                                <ImageView id="followUpImageview" fx:id="followUpImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../../images/flag_gray.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                        </ToggleButton>
+                    </right>
+                </BorderPane>
+            </bottom>
+            <center>
+                <BorderPane fx:id="imageBorder" center="$imageView" maxHeight="-1.0" maxWidth="-1.0" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER">
+                    <center>
+                        <ImageView fx:id="imageView" fitHeight="100.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+                    </center>
+                </BorderPane>
+            </center>
+        </BorderPane>
+    </children>
+    <padding>
+        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+    </padding>
+</fx:root>

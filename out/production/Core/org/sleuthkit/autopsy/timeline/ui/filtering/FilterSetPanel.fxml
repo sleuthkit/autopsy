@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import org.controlsfx.control.*?>
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <top>
+        <ToolBar prefWidth="200.0" BorderPane.alignment="CENTER">
+            <items>
+                <Button fx:id="applyButton" mnemonicParsing="false">
+                    <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </HBox.margin>
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../../images/tick.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button fx:id="defaultButton" mnemonicParsing="false">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../../images/arrow-circle-double-135.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </items>
+        </ToolBar>
+    </top>
+    <center>
+        <SplitPane fx:id="splitPane" dividerPositions="0.5" orientation="VERTICAL">
+            <items>
+                <TreeTableView fx:id="filterTreeTable" editable="true" minHeight="50.0" showRoot="false" BorderPane.alignment="CENTER">
+                    <columns>
+                        <TreeTableColumn fx:id="treeColumn" minWidth="100.0" prefWidth="200.0" sortable="false" />
+                        <TreeTableColumn fx:id="legendColumn" editable="false" minWidth="50.0" prefWidth="50.0" sortable="false" />
+                    </columns>
+                    <columnResizePolicy>
+                        <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                    </columnResizePolicy>
+                </TreeTableView>
+                <TitledPane fx:id="hiddenDescriptionsPane" collapsible="false" disable="true" expanded="false" minHeight="25.0" text="Hidden Descriptions">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <Image url="@../../images/eye_close.png" />
+                        </ImageView>
+                    </graphic>
+                    <content>
+                        <ListView fx:id="hiddenDescriptionsListView" />
+                    </content>
+                </TitledPane>
+            </items>
+        </SplitPane>
+    </center>
+</fx:root>

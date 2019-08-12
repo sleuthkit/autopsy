@@ -1,0 +1,17 @@
+/**
+
+
+\package org.sleuthkit.autopsy.ingest
+
+The package provides the ingest module framework.  Ingest modules perform data analysis in a multi-threaded approach. 
+
+Refer to \ref mod_ingest_page for details on developing ingest modules.
+
+\section ingestmodule_contents Package Contents
+
+The following are important classes in this package:
+- IngestManager
+- IngestServices
+- IngestMessageTopComponent
+
+*/

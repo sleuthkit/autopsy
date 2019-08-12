@@ -18,10 +18,19 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
+import com.ethteck.decodetect.core.Decodetect;
+import com.ethteck.decodetect.core.Model;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.util.Lookup;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extracts the text out of Content instances and exposes them as a Reader.
@@ -89,5 +98,37 @@ public interface TextExtractor {
         public InitReaderException(String msg) {
             super(msg);
         }
+    }
+
+    static Charset getDecodetectCharset(AbstractFile aFile) {
+        String mimeType = aFile.getMIMEType();
+        if (mimeType == null) {
+            if (!aFile.getNameExtension().equals("txt")) {
+                return null;
+            }
+        } else {
+            if (!mimeType.equals("text/plain") &&
+                    !mimeType.equals("application/octet-stream")) {
+                return null;
+            }
+        }
+
+        InputStream stream = new BufferedInputStream(new ReadContentInputStream(aFile));
+        Charset detectedCharset = null;
+
+        try {
+            int maxBytes = 100000;
+            int numBytes = Math.min(stream.available(), maxBytes);
+            byte[] targetArray = new byte[numBytes];
+            stream.read(targetArray);
+            LinkedHashMap<Model, Double> detectedCharsets = Decodetect.getResults(targetArray);
+            Map.Entry<Model, Double> bestCharset = detectedCharsets.entrySet().iterator().next();
+            if (bestCharset.getValue() > 0.4) {
+                detectedCharset = bestCharset.getKey().getEncoding();
+            }
+            stream.reset();
+        } catch (IOException ignored) {
+        }
+        return detectedCharset;
     }
 }

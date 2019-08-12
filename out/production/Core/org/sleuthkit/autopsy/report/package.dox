@@ -1,0 +1,9 @@
+/**
+\package org.sleuthkit.autopsy.report
+
+This package provides the reporting framework.  Reporting modules allow you to get output from Autopsy in the form of an HTML webpage, an Excel document, etc.
+
+Refer to \ref mod_report_page for details on building a report module. 
+
+*/
+

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    
+    <!-- ======================================================
+    Menu hidden
+    =========================================================== -->
+    <folder name="Menu">        
+        <folder name="Help">
+            <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow_hidden"/>
+        </folder>    
+    </folder>       
+    
+    <folder name="Windows2">
+        <folder name="Modes">
+            <file name="dashboard.wsmode" url="dashboardWsmode.xml"/>
+        </folder>
+    </folder>
+
+</filesystem>

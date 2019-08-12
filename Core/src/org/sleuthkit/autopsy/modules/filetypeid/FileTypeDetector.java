@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MimeTypes;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -215,6 +217,17 @@ public class FileTypeDetector {
          */
         if (null == mimeType) {
             mimeType = detectAutopsyDefinedType(file);
+        }
+
+        /*
+         * If the file does not match an Autopsy-defined type, try to detect a
+         * text encoding with Decodetect.
+         */
+        if (null == mimeType) {
+            Charset detectedCharset = TextExtractor.getDecodetectCharset(file);
+            if (detectedCharset != null) {
+                mimeType = MimeTypes.PLAIN_TEXT;
+            }
         }
 
         /*

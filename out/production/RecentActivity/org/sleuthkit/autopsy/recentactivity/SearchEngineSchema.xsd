@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- 
+This file describes the schema definition for its twin, SEUQAMappings.xml
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<!-- definition of simple elements -->
+<xs:attribute name="engine" type="xs:string"/>
+<xs:attribute name="domainSubstring" type="xs:string"/>
+<xs:attribute name="plainToken" type="xs:string"/>
+<xs:attribute name="regexToken" type="xs:string"/>
+
+<!-- definition of complex elements -->
+<xs:element name="splitToken">
+    <xs:complexType>
+        <xs:sequence/>
+            <xs:attribute ref="plainToken" use="required"/>
+            <xs:attribute ref="regexToken" use="required"/>
+    </xs:complexType>
+</xs:element>
+
+<xs:element name="SearchEngine">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element ref="splitToken" maxOccurs="unbounded"/>
+        </xs:sequence>
+            <xs:attribute ref="engine" use="required"/>
+            <xs:attribute ref="domainSubstring" use="required"/>
+    </xs:complexType>
+</xs:element>
+
+<xs:element name="SES">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element ref="SearchEngine" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+
+</xs:schema>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.CustomMenuItem?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root alignment="CENTER_LEFT" spacing="5.0" type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+      <ToggleButton fx:id="pinnedEventsToggle" mnemonicParsing="false" text="Pinned Events">
+         <graphic>
+            <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../images/marker--pin.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </ToggleButton>
+        <MenuButton fx:id="advancedLayoutOptionsButtonLabel" mnemonicParsing="false">
+            <items>
+                <CustomMenuItem fx:id="bandByTypeBoxMenuItem" hideOnClick="false" mnemonicParsing="false">
+                    <content>
+                        <CheckBox fx:id="bandByTypeBox" mnemonicParsing="false">
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </CheckBox>
+                    </content>
+                </CustomMenuItem>
+                <CustomMenuItem fx:id="oneEventPerRowBoxMenuItem" hideOnClick="false" mnemonicParsing="false">
+                    <content>
+                        <CheckBox fx:id="oneEventPerRowBox" mnemonicParsing="false">
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </CheckBox>
+                    </content>
+                </CustomMenuItem>
+                <SeparatorMenuItem mnemonicParsing="false" />
+                <CustomMenuItem fx:id="truncateAllBoxMenuItem" hideOnClick="false" mnemonicParsing="false">
+                    <content>
+                        <CheckBox fx:id="truncateAllBox" mnemonicParsing="false">
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </CheckBox>
+                    </content>
+                </CustomMenuItem>
+                <CustomMenuItem fx:id="truncateSliderLabelMenuItem" hideOnClick="false" mnemonicParsing="false">
+                    <content>
+                        <Label fx:id="truncateSliderLabel" contentDisplay="BOTTOM">
+                            <graphic>
+                                <Slider id="truncateAllSlider" fx:id="truncateWidthSlider" blockIncrement="50.0" disable="false" majorTickUnit="150.0" max="500.0" min="50.0" minorTickCount="0" prefHeight="33.0" prefWidth="150.0" showTickLabels="true" showTickMarks="false" value="200.0" />
+                            </graphic>
+                        </Label>
+                    </content>
+                </CustomMenuItem>
+                <SeparatorMenuItem fx:id="descVisibilitySeparatorMenuItem" mnemonicParsing="false" />
+                <CustomMenuItem fx:id="showRadioMenuItem" hideOnClick="false" mnemonicParsing="false">
+                    <content>
+                        <RadioButton fx:id="showRadio" mnemonicParsing="false" selected="true">
+                            <toggleGroup>
+                                <ToggleGroup fx:id="descrVisibility" />
+                            </toggleGroup>
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </RadioButton>
+                    </content>
+                </CustomMenuItem>
+                <CustomMenuItem fx:id="countsRadioMenuItem" hideOnClick="false" mnemonicParsing="false">
+                    <content>
+                        <RadioButton fx:id="countsRadio" mnemonicParsing="false" toggleGroup="$descrVisibility">
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </RadioButton>
+                    </content>
+                </CustomMenuItem>
+                <CustomMenuItem fx:id="hiddenRadioMenuItem" hideOnClick="false" mnemonicParsing="false">
+                    <content>
+                        <RadioButton fx:id="hiddenRadio" mnemonicParsing="false" toggleGroup="$descrVisibility">
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </RadioButton>
+                    </content>
+                </CustomMenuItem>
+            </items>
+        </MenuButton>
+    </children>
+    <padding>
+        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+    </padding>
+</fx:root>

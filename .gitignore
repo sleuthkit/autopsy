@@ -83,6 +83,7 @@ hs_err_pid*.log
 /CentralRepository/release/
 
 /.idea/
+*.iml
 
 *.img
 *.vhd

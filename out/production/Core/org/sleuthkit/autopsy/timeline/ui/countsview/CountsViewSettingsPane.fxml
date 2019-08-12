@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root alignment="CENTER_LEFT" type="HBox" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <HBox alignment="CENTER_LEFT" spacing="5.0">
+            <children>
+                <Label fx:id="scaleLabel" minHeight="-Infinity" minWidth="-Infinity" text="Scale:">
+                    <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </HBox.margin>
+                </Label>
+              
+                <RadioButton fx:id="logRadio" contentDisplay="RIGHT" mnemonicParsing="false" selected="true" styleClass="toggle-butto" text="Logarithmic">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="scaleGroup" />
+                    </toggleGroup>
+                </RadioButton>
+              
+             
+                <ImageView fx:id="logImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../../images/question-frame.png" />
+                    </image>
+               <HBox.margin>
+                  <Insets right="5.0" />
+               </HBox.margin>
+                </ImageView>
+                <RadioButton fx:id="linearRadio" contentDisplay="RIGHT" mnemonicParsing="false" text="Linear" toggleGroup="$scaleGroup" />
+            <ImageView fx:id="linearImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../images/question-frame.png" />
+               </image>
+            </ImageView>
+            </children>
+        </HBox>
+    </children>
+</fx:root>

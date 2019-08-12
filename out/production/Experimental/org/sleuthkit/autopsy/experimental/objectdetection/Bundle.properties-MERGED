@@ -1,0 +1,9 @@
+# {0} - detectionCount
+ObjectDetectionFileIngestModule.classifierDetection.text=Classifier detected {0} object(s)
+# {0} - classifierDir
+ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed.
+ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found.
+ObjectDetectionFileIngestModule.notWindowsError=This module is only available on Windows.
+ObjectDetectionFileIngestModule.openCVNotLoaded=OpenCV was not loaded, but is required to run.
+ObjectDetectionModuleFactory.moduleDescription.text=Use object classifiers to identify objects in pictures.
+ObjectDetectionModuleFactory.moduleName.text=Object Detection

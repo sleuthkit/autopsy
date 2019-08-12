@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<fx:root id="AnchorPane" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <BorderPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <right>
+        <HBox alignment="CENTER_RIGHT" prefHeight="-1.0" prefWidth="-1.0" spacing="5.0" BorderPane.alignment="CENTER_RIGHT">
+          <children>
+                  <Label fx:id="staleLabel" text="Additional data may be available after rebuild or enabling listeners.">
+      <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+      <image>
+      <Image url="@../images/information.png" />
+      </image>
+                        </ImageView>
+      </graphic>
+                  </Label>
+            <StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="NEVER">
+              <children>
+                <ProgressBar id="progBar" fx:id="fileTaskProgresBar" focusTraversable="false" maxHeight="-1.0" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-1.0" prefHeight="24.0" prefWidth="-1.0" progress="0.0" visible="true" />
+                <Label id="fileUpdateLabel" fx:id="fileUpdateTaskLabel" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="0.0" labelFor="$fileTaskProgresBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="-1.0" text="0 File Update Tasks" StackPane.alignment="CENTER">
+                           <StackPane.margin>
+                              <Insets left="3.0" right="3.0" />
+                           </StackPane.margin>
+                           <padding>
+                              <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                           </padding></Label>
+              </children>
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+            </StackPane>
+          </children>
+<BorderPane.margin>
+<Insets left="10.0" />
+</BorderPane.margin>
+        </HBox>
+      </right>
+         <left>
+      <StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER">
+        <children>
+          <ProgressBar fx:id="regroupProgressBar" maxHeight="-1.0" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-1.0" prefHeight="24.0" prefWidth="500.0" progress="0.0" StackPane.alignment="CENTER_LEFT" />
+          <Label fx:id="regroupLabel" cache="false" contentDisplay="CENTER" disable="false" focusTraversable="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="500.0" text="" textOverrun="CENTER_ELLIPSIS" StackPane.alignment="CENTER_LEFT">
+                     <StackPane.margin>
+                        <Insets left="3.0" right="3.0" />
+                     </StackPane.margin>
+                     <padding>
+                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                     </padding>
+                  </Label>
+        </children>
+      </StackPane>
+         </left>
+    </BorderPane>
+  </children>
+</fx:root>

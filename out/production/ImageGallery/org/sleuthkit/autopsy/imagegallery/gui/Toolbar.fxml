@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.SplitMenuButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <items>
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label fx:id="groupByLabel" text="Group By:">
+                  
+                </Label>
+                <ComboBox fx:id="groupByBox" prefWidth="100.0" />
+            </children>
+        </HBox>
+        <ImageView fx:id="sortHelpImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@../images/question-frame.png" />
+            </image>
+        </ImageView> 
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label mnemonicParsing="false" text=" Data Source: ">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/datasource.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Label>
+                <ComboBox fx:id="dataSourceComboBox" editable="false" maxWidth="200.0" />
+    
+            </children>
+        </HBox>
+          
+  
+   
+   
+        <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label fx:id="tagImageViewLabel" text="Tag Group's Files:">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/tag_red.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Label>
+                <SplitMenuButton id="tagSplitMenu" fx:id="tagGroupMenuButton" disable="true" mnemonicParsing="false" text="Follow Up" textOverrun="ELLIPSIS">
+                    <items>
+                        <MenuItem mnemonicParsing="false" text="Action 1" />
+                        <MenuItem mnemonicParsing="false" text="Action 2" />
+                    </items>
+                </SplitMenuButton>
+            </children>
+        </HBox>
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label fx:id="categoryImageViewLabel" text="Categorize Group's Files:">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/category-icon.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Label>
+                <SplitMenuButton id="catSplitMenu" fx:id="catGroupMenuButton" disable="true" mnemonicParsing="false" text="Cat-0">
+                    <items>
+                        <MenuItem mnemonicParsing="false" text="Action 1" />
+                        <MenuItem mnemonicParsing="false" text="Action 2" />
+                    </items>
+                </SplitMenuButton>
+            </children>
+            <padding>
+                <Insets left="5.0" />
+            </padding>
+        </HBox>
+        <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label fx:id="thumbnailSizeLabel" text="Thumbnail Size (px):">
+                    <labelFor>
+                        <Slider fx:id="sizeSlider" blockIncrement="100.0" majorTickUnit="100.0" max="300.0" min="100.0" minorTickCount="0" orientation="HORIZONTAL" prefHeight="-1.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" />
+                    </labelFor>
+                </Label>
+                <fx:reference source="sizeSlider" />
+            </children>
+        </HBox>
+    </items>
+</fx:root>

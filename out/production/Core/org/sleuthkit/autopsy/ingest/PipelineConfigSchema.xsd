@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--    
+        This file describes the schema definition for it's twin file, pipeline_config.xml
+        
+        For more information, please see http://sleuthkit.org/sleuthkit/docs/framework-docs/pipeline_config_page.html
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<!-- definition of simple elements -->
+<xs:attribute name="order" type="xs:positiveInteger"/>
+
+<xs:attribute name="type">
+    <xs:simpleType>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="plugin"/>
+            <xs:enumeration value="executable"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:attribute>
+
+<xs:attribute name="arguments" type="xs:string"/>
+<xs:attribute name="location" type="xs:string"/>
+
+<!-- definition of complex elements -->
+
+<xs:element name="MODULE">
+    <xs:complexType>
+            <xs:attribute ref="location" use="required"/>    
+            <xs:attribute ref="order" use="required"/>
+            <xs:attribute ref="type" use="required"/>
+            <xs:attribute ref="arguments" use="optional" />
+    </xs:complexType>
+</xs:element>
+
+<xs:element name="PIPELINE">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element ref="MODULE" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="type" type="xs:string" use="required"/>
+    </xs:complexType>
+</xs:element>
+
+<xs:element name="PIPELINE_CONFIG">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element ref="PIPELINE"  minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+
+</xs:schema>

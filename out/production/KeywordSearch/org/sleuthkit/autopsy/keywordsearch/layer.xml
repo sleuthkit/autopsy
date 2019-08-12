@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    
+    <!-- ======================================================
+         Actions
+         ====================================================== -->
+    <folder name="Actions">
+        <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchConfigurationAction.instance"/>
+            <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.instance">
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.keywordsearch.KeywordSearchAction"/>
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.keywordsearch.Bundle#CTL_KeywordSearchAction"/>
+            </file>
+        </folder>    
+    </folder>
+    
+    <!-- ======================================================
+         Services
+         ======================================================= -->
+    <folder name="Services">
+        <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedText.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.TextMarkupLookup"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.HighlightedText.getDefault"/>
+            <attr name="position" intvalue="250"/>
+        </file>
+    </folder>
+    
+    <!-- ======================================================
+         Toolbars
+         ====================================================== -->
+    <folder name="Toolbars">
+        <folder name="Keyword">
+            <attr name="position" intvalue="106"/>
+            <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.instance"/>
+            </file>
+        </folder>
+    </folder>
+    
+</filesystem>

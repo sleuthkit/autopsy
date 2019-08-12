@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: white;" type="GridPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <columnConstraints>
+        <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="53.0" minWidth="10.0" prefWidth="53.0" />
+        <ColumnConstraints hgrow="NEVER" minWidth="10.0" />
+    </columnConstraints>
+    <rowConstraints>
+        <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+    </rowConstraints>
+    <children>
+        <BorderPane fx:id="graphicBorder" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+            <center>
+                <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" GridPane.halignment="CENTER" GridPane.rowSpan="2" GridPane.valignment="CENTER">
+                    <image>
+                        <Image url="@../images/information.png" />
+                    </image>
+                    <GridPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                    </GridPane.margin>
+                </ImageView>
+            </center>
+        </BorderPane>
+        <Label fx:id="messageLabel" prefWidth="300.0" text="There are no events visible with the current zoom / filter settings.  Adjust the settings or:" wrapText="true" GridPane.columnIndex="1">
+            <GridPane.margin>
+                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            </GridPane.margin>
+            <font>
+                <Font size="14.0" />
+            </font>
+        </Label>
+    </children>
+    <effect>
+        <DropShadow />
+    </effect>
+<padding>
+<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+</padding>
+</fx:root>

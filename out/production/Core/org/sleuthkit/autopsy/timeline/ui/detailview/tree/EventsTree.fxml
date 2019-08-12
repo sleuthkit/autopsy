@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+                <fx:root prefHeight="-1.0" prefWidth="-1.0" type="BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+                  <center>
+                    <TreeView fx:id="eventsTree" prefHeight="-1.0" prefWidth="-1.0" />
+                  </center>
+                  <top>
+                    <ToolBar>
+                      <items>
+                        <Label fx:id="eventsTreeLabel" />
+                        <ComboBox fx:id="sortByBox">
+                          <items>
+                            <FXCollections fx:factory="observableArrayList">
+                              <String fx:value="Item 1" />
+                              <String fx:value="Item 2" />
+                              <String fx:value="Item 3" />
+                            </FXCollections>
+                          </items>
+                        </ComboBox>
+                      </items>
+                    </ToolBar>
+                  </top>
+                </fx:root>

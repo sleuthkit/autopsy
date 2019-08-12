@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    
+    <!-- ======================================================
+         Actions
+         ====================================================== -->
+    <folder name="Actions">
+        <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance" />
+        </folder>    
+    </folder>
+    
+    <!-- ======================================================
+         Services
+         ====================================================== -->
+    <folder name="Services">
+        <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.HashSearchProvider"/>
+            <attr name="position" intvalue="250"/>
+        </file>
+    </folder>
+    
+    <!-- ======================================================
+         Menu
+         ====================================================== -->
+    <folder name="Menu">
+        <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance"/>
+                <attr name="position" intvalue="201"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Services">
+       
+    </folder>
+</filesystem>

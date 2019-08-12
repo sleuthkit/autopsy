@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<fx:root alignment="TOP_LEFT" collapsible="false" contentDisplay="RIGHT" minHeight="-Infinity" minWidth="-Infinity" type="TitledPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+    <content>
+        <AnchorPane minHeight="-Infinity" minWidth="-Infinity">
+            <children>
+                <GridPane alignment="CENTER" hgap="5.0" minHeight="-Infinity" minWidth="-Infinity" vgap="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
+                    <children>
+                        <Label fx:id="descrLODLabel" GridPane.rowIndex="2">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </Label>
+                        <Slider fx:id="descrLODSlider" blockIncrement="1.0" majorTickUnit="1.0" max="10.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                            <GridPane.margin>
+                                <Insets />
+                            </GridPane.margin>
+                        </Slider>
+                        <Label fx:id="typeZoomLabel" GridPane.rowIndex="1">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </Label>
+                        <Slider fx:id="typeZoomSlider" blockIncrement="1.0" majorTickUnit="1.0" max="10.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <GridPane.margin>
+                                <Insets />
+                            </GridPane.margin>
+                        </Slider>
+                        <Label fx:id="timeUnitLabel" GridPane.valignment="CENTER">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </Label>
+                        <Slider fx:id="timeUnitSlider" blockIncrement="1.0" majorTickUnit="1.0" max="10.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.columnIndex="1">
+                            <GridPane.margin>
+                                <Insets />
+                            </GridPane.margin>
+                        </Slider>
+                    </children>
+                    <columnConstraints>
+                        <ColumnConstraints fillWidth="false" halignment="LEFT" hgrow="NEVER" minWidth="-Infinity" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                        <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                        <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                        <RowConstraints />
+                    </rowConstraints>
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
+                </GridPane>
+            </children>
+            <padding>
+                <Insets right="5.0" />
+            </padding>
+        </AnchorPane>
+    </content>
+    <graphic>
+            <Label fx:id="zoomLabel" text="Zoom">
+                <graphic>
+                    <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                        <image>
+                            <Image url="@../images/magnifier-zoom.png" />
+                        </image>
+                    </ImageView>
+                </graphic>
+            </Label>
+    </graphic>
+</fx:root>

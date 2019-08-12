@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- 
+This file describes the schema definition for its twin files, which are loaded at runtime as notable keyword files. 
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    
+    <!-- definition of simple elements -->
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="literal" type="xs:boolean"/>
+    <xs:attribute name="ingest_messages" type="xs:boolean"/>
+    <xs:attribute name="use_for_ingest" type="xs:boolean"/>
+    <xs:attribute name="key" type="xs:string"/>
+
+    <xs:attribute name="created" >
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:whiteSpace value="preserve"/>
+                <xs:pattern value="([0-9]{4}-)+([0-1][0-9]-)+([0-3][0-9] )+([0-2][0-9]:[0-5][0-9]:[0-9][0-9])"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:attribute>
+
+    <xs:attribute name="modified">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:whiteSpace value="preserve"/>
+                <xs:pattern value="([0-9]{4}-)+([0-1][0-9]-)+([0-3][0-9] )+([0-2][0-9]:[0-5][0-9]:[0-9][0-9])"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:attribute>
+
+    <!-- definition of complex elements -->
+
+    <xs:element name="keyword">
+        <xs:complexType mixed="true">
+            <xs:attribute ref="literal" default="true" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="keyword_list">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="keyword" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+                <xs:attribute ref="created" use="required"/>
+                <xs:attribute ref="ingest_messages" default="true" use="optional"/>
+                <xs:attribute ref="modified" use="optional"/>
+                <xs:attribute ref="name" use="required"/>
+                <xs:attribute ref="use_for_ingest" default="true" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="keyword_lists">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="keyword_list" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

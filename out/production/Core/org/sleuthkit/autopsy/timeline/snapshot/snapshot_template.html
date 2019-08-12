@@ -1,0 +1,72 @@
+<html>
+    <head>
+        <title>Timeline Snapshot: {{reportTitle}}</title>
+        <link rel="stylesheet" type="text/css" href="index.css" />
+        <link rel="icon" type="image/ico" href="favicon.ico" />
+    </head>
+    <body><div id="header">Timeline Snapshot</div>
+        <div id="content">
+            <img id="snapshot" src="snapshot.png" alt="Timeline Snapshot" >
+            <table>
+                <tr><td>Time Range: </td><td>{{startTime}}
+                        to
+                        {{endTime}}</td></tr>
+                <tr><td>Description Level of Detail: </td><td>{{zoomState.getDescriptionLOD.getDisplayName}}</td></tr>
+                <tr><td>Event Type Zoom Level: </td><td>{{zoomState.getTypeZoomLevel.getDisplayName}}</td></tr>
+                {{#zoomState.getFilter}}
+                <tr>
+                    <td>Filters: </td>
+                    <td>
+                        <ul>
+                            {{#getTextFilter}}<li>text = "{{getText}}" [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li> {{/getTextFilter}}
+                            {{#getKnownFilter}}<li>Hide Known Files [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li> {{/getKnownFilter}}
+                            {{#getDataSourcesFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getDataSourcesFilter}}
+                            {{#getTagsFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getTagsFilter}}
+                            {{#getHashHitsFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getHashHitsFilter}}
+                            {{#getTypeFilter}}
+                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}] : 
+                                <ul>
+                                    {{#getSubFilters}}
+                                    <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]
+                                        <ul>  
+                                            {{#getSubFilters}}
+                                            <li>{{getDisplayName}} [{{#isSelected}}x{{/isSelected}}{{^isSelected}} {{/isSelected}}]</li>
+                                            {{/getSubFilters}}
+                                        </ul>
+                                    </li>
+                                    {{/getSubFilters}}
+                                </ul>
+                            </li>
+                            {{/getTypeFilter}}
+                        </ul>
+                    </td>
+                </tr>
+                {{/zoomState.getFilter}}
+            </table>
+        </div>
+    </body>
+</html>

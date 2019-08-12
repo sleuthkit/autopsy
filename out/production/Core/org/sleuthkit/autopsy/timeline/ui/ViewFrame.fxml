@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import jfxtras.scene.control.LocalDateTimeTextField?>
+<?import org.controlsfx.control.SegmentedButton?>
+
+<fx:root prefHeight="-1.0" prefWidth="-1.0" type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <top>
+        <ToolBar fx:id="toolBar" HBox.hgrow="ALWAYS">
+            <items>
+                <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER" HBox.hgrow="NEVER">
+                    <children>
+                        <Label fx:id="viewModeLabel" text="View Mode:" textAlignment="CENTER" wrapText="true" HBox.hgrow="NEVER">
+                            <HBox.margin>
+                                <Insets right="5.0" />
+                            </HBox.margin>
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
+                        </Label>
+                                   
+                        <SegmentedButton fx:id="modeSegButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="NEVER">
+                            <buttons>   
+                                <ToggleButton fx:id="countsToggle" alignment="TOP_LEFT" mnemonicParsing="false" selected="true">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../images/chart_bar.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
+                                </ToggleButton>
+                                <ToggleButton fx:id="detailsToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
+                                            <image>
+                                                <Image url="@../images/btn_icon_timeline_colorized_32.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
+                                </ToggleButton>
+                                <ToggleButton fx:id="listToggle" alignment="CENTER_RIGHT" layoutX="74.0" mnemonicParsing="false" selected="false">
+                                    <graphic>
+                                        <ImageView fitHeight="16.0" fitWidth="16.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" smooth="true" style="-fx-background-color:white;" x="2.0" y="1.0">
+                                            <image>
+                                                <Image url="@../images/table.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <font>
+                                        <Font name="System Bold" size="16.0" />
+                                    </font>
+                                </ToggleButton>
+                            </buttons>
+
+                        </SegmentedButton>
+                    </children>
+                    <padding>
+                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                    </padding>
+                    <BorderPane.margin>
+                        <Insets left="10.0" />
+                    </BorderPane.margin>
+                </HBox>
+                <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" HBox.hgrow="ALWAYS" />
+            <Button fx:id="addEventButton" mnemonicParsing="false" text="Add Event" />
+                <Button fx:id="snapShotButton" mnemonicParsing="false" text="Snapshot Report">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/image.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Separator maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
+                <Button fx:id="refreshButton" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Refresh View">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/arrow-circle-double-135.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </items>
+        </ToolBar>
+    </top> 
+    <bottom>
+        <VBox maxHeight="-Infinity">
+            <children>
+                <Separator />
+                <Separator />
+                <StackPane fx:id="rangeHistogramStack" maxHeight="-Infinity" BorderPane.alignment="CENTER">
+                    <children>
+                        <HBox fx:id="histogramBox" alignment="BOTTOM_LEFT" fillHeight="false" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="32.0" StackPane.alignment="BOTTOM_CENTER" />
+                    </children>
+                </StackPane>
+                <Separator />
+                <ToolBar fx:id="timeRangeToolBar">
+                    <items>
+                        <Label fx:id="startLabel" contentDisplay="RIGHT" minWidth="-Infinity">
+                            <graphic>
+                                <LocalDateTimeTextField fx:id="startPicker" minWidth="200.0" prefWidth="200.0">
+                                    <padding>
+                                        <Insets top="3.0" />
+                                    </padding>
+                                </LocalDateTimeTextField>
+                            </graphic>
+                        </Label>
+                        <Separator fx:id="leftSeperator" halignment="LEFT" maxWidth="1.7976931348623157E308" minWidth="-Infinity" orientation="VERTICAL" HBox.hgrow="ALWAYS">
+                            <HBox.margin>
+                                <Insets left="10.0" right="10.0" />
+                            </HBox.margin>
+                        </Separator>
+                        <HBox fx:id="zoomInOutHBox">
+                            <children>
+                                <Button fx:id="zoomOutButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false">
+                                    <graphic>
+                                        <ImageView pickOnBounds="true" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../images/magnifier-zoom-out-red.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <HBox.margin>
+                                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                    </HBox.margin>
+                                </Button>
+                                <Button fx:id="zoomInButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false">
+                                    <graphic>
+                                        <ImageView pickOnBounds="true" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../images/magnifier-zoom-in-green.png" />
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                    <HBox.margin>
+                                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                    </HBox.margin>
+                                </Button>
+                            </children>
+                        </HBox>
+                        <MenuButton fx:id="zoomMenuButton" mnemonicParsing="false">
+                            <graphic>
+                                <ImageView pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../images/magnifier-left.png" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
+                            <HBox.margin>
+                                <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                            </HBox.margin>
+                        </MenuButton>
+                        <Separator fx:id="rightSeperator" halignment="RIGHT" maxWidth="1.7976931348623157E308" minWidth="-Infinity" orientation="VERTICAL" HBox.hgrow="ALWAYS">
+                            <HBox.margin>
+                                <Insets left="10.0" right="10.0" />
+                            </HBox.margin>
+                        </Separator>
+                        <Label fx:id="endLabel" contentDisplay="RIGHT" minWidth="-Infinity">
+                            <graphic>
+                                <LocalDateTimeTextField fx:id="endPicker" minWidth="200.0" nodeOrientation="LEFT_TO_RIGHT" prefWidth="200.0">
+                                    <padding>
+                                        <Insets top="3.0" />
+                                    </padding>
+                                </LocalDateTimeTextField>
+                            </graphic>
+                        </Label>
+                    </items>
+                </ToolBar>
+            </children>
+        </VBox>
+    </bottom>
+</fx:root>

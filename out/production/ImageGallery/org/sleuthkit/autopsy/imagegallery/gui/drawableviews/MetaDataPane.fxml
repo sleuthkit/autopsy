@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root id="AnchorPane" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <TitledPane fx:id="titledPane" animated="false" collapsible="false" expanded="true" text="Details" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <content>
+        <AnchorPane id="Content">
+          <children>
+            <VBox alignment="TOP_CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+              <children>
+                <BorderPane id="imageAnchor" fx:id="imageBorder" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="220.0" minWidth="220.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="NEVER">
+                  <center>
+                    <ImageView fx:id="imageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+                  </center>
+                </BorderPane>
+                <TableView fx:id="tableView" editable="false" tableMenuButtonVisible="false" VBox.vgrow="ALWAYS">
+                  <columns>
+                    <TableColumn fx:id="attributeColumn" editable="false" prefWidth="100.0" text="Attribute" />
+                    <TableColumn fx:id="valueColumn" editable="false" prefWidth="100.0" text="Value" />
+                  </columns>
+                </TableView>
+              </children>
+            </VBox>
+          </children>
+        </AnchorPane>
+      </content>
+    </TitledPane>
+  </children>
+</fx:root>

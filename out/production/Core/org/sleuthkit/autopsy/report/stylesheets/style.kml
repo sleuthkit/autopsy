@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2">
+   <Document>
+      <StyleMap id="yellowFeature">
+         <Pair>
+            <key>normal</key>
+            <styleUrl>#n_YellowPushpin</styleUrl>
+         </Pair>
+         <Pair>
+            <key>highlight</key>
+            <styleUrl>#h_YellowPushpin</styleUrl>
+         </Pair>
+      </StyleMap>
+      <Style id="n_YellowPushpin">
+         <IconStyle>
+            <scale>1.0</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>0</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FF00FFFF</color>
+            <width>5.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <Style id="h_YellowPushpin">
+         <IconStyle>
+            <scale>1.3</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FF00FFFF</color>
+            <width>10.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <StyleMap id="blueFeature">
+         <Pair>
+            <key>normal</key>
+            <styleUrl>#n_bluePushpin</styleUrl>
+         </Pair>
+         <Pair>
+            <key>highlight</key>
+            <styleUrl>#h_bluePushpin</styleUrl>
+         </Pair>
+      </StyleMap>
+      <Style id="n_bluePushpin">
+         <IconStyle>
+            <scale>1.0</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>0</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FFE63900</color>
+            <width>5.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <Style id="h_bluePushpin">
+         <IconStyle>
+            <scale>1.3</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FFE63900</color>
+            <width>10.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <StyleMap id="redFeature">
+         <Pair>
+            <key>normal</key>
+            <styleUrl>#n_redPushpin</styleUrl>
+         </Pair>
+         <Pair>
+            <key>highlight</key>
+            <styleUrl>#h_redPushpin</styleUrl>
+         </Pair>
+      </StyleMap>
+      <Style id="n_redPushpin">
+         <IconStyle>
+            <scale>1.0</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>0</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FF0000FF</color>
+            <width>5.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <Style id="h_redPushpin">
+         <IconStyle>
+            <scale>1.3</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FF0000FF</color>
+            <width>10.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <StyleMap id="greenFeature">
+         <Pair>
+            <key>normal</key>
+            <styleUrl>#n_greenPushpin</styleUrl>
+         </Pair>
+         <Pair>
+            <key>highlight</key>
+            <styleUrl>#h_greenPushpin</styleUrl>
+         </Pair>
+      </StyleMap>
+      <Style id="n_greenPushpin">
+         <IconStyle>
+            <scale>1.0</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FF00CC00</color>
+            <width>5.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>
+                A route was planned between these two points. The green line connecting the points is not the actual route, but it indicates which Start and End points are associated with each other.
+                $[description]
+            </text>
+         </BalloonStyle>
+      </Style>
+      <Style id="h_greenPushpin">
+         <IconStyle>
+            <scale>1.3</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FF00CC00</color>
+            <width>10.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>
+                A route was planned between these two points. The green line connecting the points is not the actual route, but it indicates which Start and End points are associated with each other.
+                $[description]
+            </text>
+         </BalloonStyle>
+      </Style>
+      <StyleMap id="purpleFeature">
+         <Pair>
+            <key>normal</key>
+            <styleUrl>#n_purplePushpin</styleUrl>
+         </Pair>
+         <Pair>
+            <key>highlight</key>
+            <styleUrl>#h_purplePushpin</styleUrl>
+         </Pair>
+      </StyleMap>
+      <Style id="n_purplePushpin">
+         <IconStyle>
+            <scale>1.0</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/purple-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FFCC0066</color>
+            <width>5.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <Style id="h_purplePushpin">
+         <IconStyle>
+            <scale>1.3</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/purple-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FFCC0066</color>
+            <width>10.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+      <StyleMap id="whiteFeature">
+         <Pair>
+            <key>normal</key>
+            <styleUrl>#n_whitePushpin</styleUrl>
+         </Pair>
+         <Pair>
+            <key>highlight</key>
+            <styleUrl>#h_whitePushpin</styleUrl>
+         </Pair>
+      </StyleMap>
+      <Style id="n_whitePushpin">
+         <IconStyle>
+            <scale>1.0</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/wht-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>0</scale>
+         </LabelStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+         <LineStyle>
+            <color>FFFFFFFF</color>
+            <width>5.0</width>
+         </LineStyle>
+      </Style>
+      <Style id="h_whitePushpin">
+         <IconStyle>
+            <scale>1.3</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/pushpin/wht-pushpin.png</href>
+            </Icon>
+            <hotSpot x="20" y="2" xunits="pixels" yunits="pixels" />
+         </IconStyle>
+         <LabelStyle>
+            <scale>1</scale>
+         </LabelStyle>
+         <LineStyle>
+            <color>FFFFFFFF</color>
+            <width>10.0</width>
+         </LineStyle>
+         <BalloonStyle>
+            <text>$[description]</text>
+         </BalloonStyle>
+      </Style>
+   </Document>
+</kml>

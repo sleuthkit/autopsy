@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Default initial pipeline_config.xml
+Contains only the core ingest modules that ship with Autopsy -->
+<PIPELINE_CONFIG>
+    <PIPELINE type="ImageAnalysisStageOne">
+        <MODULE>org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.android.AndroidModuleFactory</MODULE>
+    </PIPELINE>
+
+    <PIPELINE type="FileAnalysis">
+        <MODULE>org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory</MODULE>
+	<MODULE>org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory</MODULE>
+    </PIPELINE>
+    
+    <PIPELINE type="ImageAnalysisStageTwo">
+        <MODULE>org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory</MODULE>
+    </PIPELINE>
+    
+</PIPELINE_CONFIG>

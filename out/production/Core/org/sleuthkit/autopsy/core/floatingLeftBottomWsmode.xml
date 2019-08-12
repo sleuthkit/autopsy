@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mode PUBLIC
+          "-//NetBeans//DTD Mode Properties 2.0//EN"
+          "http://www.netbeans.org/dtds/mode-properties2_0.dtd">
+
+<mode version="2.3">
+    <name unique="floatingLeftBottom" />
+    <kind type="view" />   <!-- modal -->
+  <!-- <kind type="editor" /> --> <!-- non-modal -->
+  <state type="separated" />
+   <constraints>
+    <path orientation="horizontal" number="100" weight="0.5"/>
+  </constraints>
+  <bounds x="7" y="909" width="700" height="400" />
+  <frame state="0"/>
+    <!-- <active-tc  id="IngestMessageTopComponent" />  -->
+    <empty-behavior permanent="true"/>
+</mode>

@@ -1,0 +1,42 @@
+FileTypeCategory.Audio.displayName=Audio
+FileTypeCategory.Documents.displayName=Documents
+FileTypeCategory.Executables.displayName=Executables
+FileTypeCategory.Image.displayName=Image
+FileTypeCategory.Media.displayName=Media
+FileTypeCategory.Video.displayName=Video
+FileTypeCategory.Visual.displayName=Visual
+# {0} - file name
+GetOrGenerateThumbnailTask.generatingPreviewFor=Generating preview for {0}
+# {0} - file name
+GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}
+ImageUtils.ffmpegLoadedError.msg=OpenCV FFMpeg library failed to load, see log for more details
+ImageUtils.ffmpegLoadedError.title=OpenCV FFMpeg
+OpenIDE-Module-Name=CoreUtils
+JLNK.noPrefPath.text=No preferred path found
+PlatformUtil.nameUnknown=unknown
+PlatformUtil.verUnknown=unknown
+PlatformUtil.archUnknown=unknown
+PlatformUtil.jrePath.jreDir.msg=Embedded jre directory found in: {0}
+PlatformUtil.jrePath.usingJavaPath.msg=Using java binary path: {0}
+PlatformUtil.getPID.sigarNotInit.msg=Cannot get PID, sigar not initialized
+PlatformUtil.getPID.gen.msg=Cannot get PID,{0}
+PlatformUtil.getJavaPID.sigarNotInit.msg=Cannot get PID of a java process, sigar not initialized
+PlatformUtil.getJavaPID.gen.msg=Cannot get PID for query: {0}, {1}
+PlatformUtil.getJavaPIDs.sigarNotInit=Cannot get PIDs of a java process, sigar not initialized
+PlatformUtil.getJavaPIDs.gen.msg=Cannot get PIDs for query: {0}, {1}
+PlatformUtil.killProcess.sigarNotInit.msg=Cannot kill process by pid, sigar not initialized.
+PlatformUtil.killProcess.gen.msg=Cannot kill process: {0}, {1}
+PlatformUtil.getProcVmUsed.sigarNotInit.msg=Cannot get virt mem used, sigar not initialized.
+PlatformUtil.getProcVmUsed.gen.msg=Cannot get virt mem used, {0}
+PlatformUtil.getJvmMemInfo.usageText=JVM heap usage: {0}, JVM non-heap usage: {1}
+PlatformUtil.getPhysicalMemInfo.usageText=Physical memory usage (max, total, free): {0}, {1}, {2}
+PlatformUtil.getAllMemUsageInfo.usageText={0}\n\
+{1}\n\
+Process Virtual Memory: {2}
+# {0} - file name
+ReadImageTask.mesageText=Reading image: {0}
+StringExtract.illegalStateException.cannotInit.msg=Unicode table not properly initialized, cannot instantiate StringExtract
+TextConverter.convert.exception.txt=Unable to convert text {0} to hex text
+TextConverter.convertFromHex.exception.txt=Unable to convert hex text to text
+# {0} - file name
+VideoUtils.genVideoThumb.progress.text=extracting temporary file {0}

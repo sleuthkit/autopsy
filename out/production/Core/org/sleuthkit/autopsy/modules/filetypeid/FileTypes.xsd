@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+    
+    <xs:simpleType name="stringType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+        </xs:restriction>
+    </xs:simpleType>    
+
+    <xs:simpleType name="verbatimStringType">
+        <xs:restriction base="stringType">
+            <xs:whiteSpace value="preserve"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="offsetType">
+        <xs:simpleContent>
+            <xs:extension base="xs:nonNegativeInteger">
+                <xs:attribute name="RelativeToStart" type="xs:boolean" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:simpleType name="sigInterpretationType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="RAW"/>
+            <xs:enumeration value="ASCII"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="signatureType">
+        <xs:sequence>
+            <xs:element name="Bytes" type="stringType"/>
+            <xs:element name="Offset" type="offsetType"/>
+        </xs:sequence>
+        <xs:attribute name="type" type="sigInterpretationType" use="required"/>
+    </xs:complexType>
+            
+    <xs:complexType name="fileType">
+        <xs:sequence>
+            <xs:element name="MimeType" type="verbatimStringType"/>
+            <xs:element name="Signature" type="signatureType"/>
+            <xs:element minOccurs="0" maxOccurs="1" name="InterestingFileSset" type="stringType"/>
+        </xs:sequence>
+        <xs:attribute name="alert" type="xs:boolean" use="required"/>
+    </xs:complexType>
+                  
+    <xs:element name="FileTypes">
+        <xs:complexType>
+            <xs:sequence>    
+                <xs:element minOccurs="0" maxOccurs="unbounded" name="FileType" type="fileType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>         
+    
+</xs:schema>

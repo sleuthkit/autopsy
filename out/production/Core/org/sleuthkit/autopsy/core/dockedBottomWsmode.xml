@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mode PUBLIC
+          "-//NetBeans//DTD Mode Properties 2.0//EN"
+          "http://www.netbeans.org/dtds/mode-properties2_0.dtd">
+
+<mode version="2.3">
+    <name unique="dockedBottom" />
+<!--  <kind type="view" /> -->
+<kind type="sliding" />
+<slidingSide side="bottom"/>  
+  <state type="joined" />
+  <bounds x="8" y="710" width="369" height="421" />
+  <frame state="0"/>
+     <!-- <active-tc  id="IngestMessageTopComponent" />  -->
+    <empty-behavior permanent="true"/>
+</mode>

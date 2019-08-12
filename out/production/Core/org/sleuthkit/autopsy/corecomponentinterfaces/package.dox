@@ -1,0 +1,6 @@
+/**
+\package org.sleuthkit.autopsy.corecomponentinterfaces
+
+This package contains the interface classes that define the core components in Autopsy.  These components are used in the different zones of the GUI. 
+
+*/
