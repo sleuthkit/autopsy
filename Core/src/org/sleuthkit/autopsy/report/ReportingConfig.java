@@ -29,8 +29,7 @@ final class ReportingConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String configName;
-    private List<ModuleStatus> moduleStatuses = new ArrayList<>();
-    private List<ReportModuleSettings> moduleSettings = new ArrayList<>();
+    private List<ReportModuleConfig> moduleConfigs = new ArrayList<>();
     private TableReportSettings tableReportSettings;
     private FileReportSettings fileReportSettings;
 
@@ -51,20 +50,12 @@ final class ReportingConfig implements Serializable {
         return this.configName;
     }
 
-    void setModulesStatuses(List<ModuleStatus> moduleStatuses) {
-        this.moduleStatuses = moduleStatuses;
+    void setModuleConfigs(List<ReportModuleConfig> moduleConfigs) {
+        this.moduleConfigs = moduleConfigs;
     }
 
-    List<ModuleStatus> getModuleStatuses() {
-        return this.moduleStatuses;
-    }
-
-    void setModuleSettings(List<ReportModuleSettings> moduleSettings) {
-        this.moduleSettings = moduleSettings;
-    }
-
-    List<ReportModuleSettings> getModuleSettings() {
-        return this.moduleSettings;
+    List<ReportModuleConfig> getModuleConfigs() {
+        return this.moduleConfigs;
     }
 
     void setTableReportSettings(TableReportSettings settings) {

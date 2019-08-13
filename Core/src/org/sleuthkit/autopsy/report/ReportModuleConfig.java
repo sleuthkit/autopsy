@@ -21,13 +21,14 @@ package org.sleuthkit.autopsy.report;
 import java.io.Serializable;
 
 /**
- * Class for persisting information about a report module (e.g. whether the report
- * module is enabled).
+ * Class for persisting information about a report module (e.g. whether the
+ * report module is enabled).
  */
-final class ModuleStatus implements Serializable {
+final class ReportModuleConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String moduleName;
+    private transient ReportModuleSettings settings; // these settings get serialized individually
     private boolean enabled;
 
     /**
@@ -36,20 +37,53 @@ final class ModuleStatus implements Serializable {
      * @param module Implementation of a ReportModule interface
      * @param enabled Boolean flag whether the module is enabled
      */
-    ModuleStatus(ReportModule module, boolean enabled) {
+    ReportModuleConfig(ReportModule module, boolean enabled) {
         this.moduleName = module.getClass().getCanonicalName();
         this.enabled = enabled;
     }
 
+    /**
+     * Get full canonical report module name.
+     *
+     * @return Full canonical report module name.
+     */
     String getModuleClassName() {
         return moduleName;
     }
 
+    /**
+     * Set flag whether the report module is enabled.
+     *
+     * @param enabled Flag whether the report module is enabled.
+     */
     void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * Is report module enabled.
+     *
+     * @return True if the module is enabled, false otherwise.
+     */
     boolean isEnabled() {
         return this.enabled;
+    }
+
+    /**
+     * Get settings object for the report module.
+     *
+     * @return the settings
+     */
+    ReportModuleSettings getModuleSettings() {
+        return settings;
+    }
+
+    /**
+     * Set settings for the report module.
+     *
+     * @param settings the settings to set
+     */
+    void setModuleSettings(ReportModuleSettings settings) {
+        this.settings = settings;
     }
 }

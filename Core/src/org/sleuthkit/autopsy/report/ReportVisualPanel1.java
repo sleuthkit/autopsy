@@ -100,7 +100,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         } else {
             popupWarning(portableCaseModule);
         }
-
+        
         // Results-HTML should always be first in the list of Report Modules.
         int indexOfHTMLReportModule = 0;
         for (ReportModule module : modules) {

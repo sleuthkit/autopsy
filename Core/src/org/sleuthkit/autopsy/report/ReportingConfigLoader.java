@@ -25,8 +25,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
+import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -36,9 +40,13 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 final class ReportingConfigLoader {
 
+    private static final Logger logger = Logger.getLogger(ReportingConfigLoader.class.getName());
     private static final String REPORT_CONFIG_FOLDER = "ReportingConfigs"; //NON-NLS
     private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ReportingConfigLoader.REPORT_CONFIG_FOLDER).toAbsolutePath().toString();
-    private static final String REPORT_CONFIG_FILE_EXTENSION = ".settings";
+    private static final String REPORT_SETTINGS_FILE_EXTENSION = ".settings";
+    private static final String TABLE_REPORT_CONFIG_FILE = "TableReportSettings.settings";
+    private static final String FILE_REPORT_CONFIG_FILE = "FileReportSettings.settings";
+    private static final String MODULE_CONFIG_FILE = "ModuleConfigs.settings";
 
     /**
      * Deserialize all of the settings that make up a reporting configuration in
@@ -52,27 +60,68 @@ final class ReportingConfigLoader {
      */
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
-        // construct the file path
-        Path reportFilePath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName + REPORT_CONFIG_FILE_EXTENSION);
-        File reportFile = reportFilePath.toFile();
+        // construct the configuration directory path
+        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
+        File reportDirectory = reportDirPath.toFile();
 
         // Return null if a reporting configuration for the given name does not exist.
-        if (!reportFile.exists()) {
+        if (!reportDirectory.exists()) {
             return null;
         }
 
-        if (!reportFile.isFile()|| !reportFile.canRead()) {
-            throw new ReportConfigException("Unable to read reporting configuration file " + reportFilePath.toString());
+        if (!reportDirectory.isDirectory() || !reportDirectory.canRead()) {
+            throw new ReportConfigException("Unable to read reporting configuration directory " + reportDirPath.toString());
         }
 
         // read in the configuration
-        ReportingConfig config = null;
-        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(reportFilePath.toString()))) {
-            config = (ReportingConfig) in.readObject();
+        ReportingConfig config = new ReportingConfig(configName);
+        
+        // read table report settings
+        String filePath = reportDirPath.toString() + File.separator + TABLE_REPORT_CONFIG_FILE;
+        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+            config.setTableReportSettings((TableReportSettings) in.readObject());
         } catch (IOException | ClassNotFoundException ex) {
-            throw new ReportConfigException("Unable to read reporting configuration " + reportFilePath.toString(), ex);
+            throw new ReportConfigException("Unable to read table report settings " + filePath, ex);
         }
-
+        
+        // read file report settings
+        filePath = reportDirPath.toString() + File.separator + FILE_REPORT_CONFIG_FILE;
+        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+            config.setFileReportSettings((FileReportSettings) in.readObject());
+        } catch (IOException | ClassNotFoundException ex) {
+            throw new ReportConfigException("Unable to read file report settings " + filePath, ex);
+        }
+        
+        // read list of module configuration objects
+        List<ReportModuleConfig> moduleConfigs = null;
+        filePath = reportDirPath.toString() + File.separator + MODULE_CONFIG_FILE;
+        try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+            moduleConfigs = (List<ReportModuleConfig>) in.readObject();
+        } catch (IOException | ClassNotFoundException ex) {
+            throw new ReportConfigException("Unable to read module configurations list " + filePath, ex);
+        }
+        
+        if (moduleConfigs == null) {
+            throw new ReportConfigException("Failed to read module configurations list " + filePath);
+        }
+        
+        // read each ReportModuleSettings object individually
+        for (Iterator<ReportModuleConfig> iterator = moduleConfigs.iterator(); iterator.hasNext();) {
+            ReportModuleConfig moduleConfig = iterator.next();
+            filePath = reportDirPath.toString() + File.separator + moduleConfig.getModuleClassName() + REPORT_SETTINGS_FILE_EXTENSION;
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+                moduleConfig.setModuleSettings((ReportModuleSettings) in.readObject());
+            } catch (IOException | ClassNotFoundException ex) {
+                /* NOTE: we do not want to re-throw the exception because we do not 
+                want a single error while reading in a (3rd party) report module 
+                to prevent us from reading the entire reporting configuration.*/
+                logger.log(Level.SEVERE, "Unable to read module settings " + filePath, ex);
+                iterator.remove();
+            }
+        }
+        
+        config.setModuleConfigs(moduleConfigs);
+        
         return config;
     }
 
@@ -87,7 +136,7 @@ final class ReportingConfigLoader {
     static synchronized void saveConfig(ReportingConfig config) throws ReportConfigException {
 
         // construct the configuration directory path
-        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH);
+        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, config.getName());
 
         // create configuration directory 
         try {
@@ -95,13 +144,45 @@ final class ReportingConfigLoader {
         } catch (IOException | SecurityException ex) {
             throw new ReportConfigException("Failed to create reporting configuration directory " + pathToConfigDir.toString(), ex);
         }
-        
-        // save the configuration
-        String filePath = pathToConfigDir.toString() + File.separator + config.getName() + REPORT_CONFIG_FILE_EXTENSION;
+
+        // save table report settings
+        String filePath = pathToConfigDir.toString() + File.separator + TABLE_REPORT_CONFIG_FILE;
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
-            out.writeObject(config);
+            out.writeObject(config.getTableReportSettings());
         } catch (IOException ex) {
-            throw new ReportConfigException("Unable to save reporting configuration " + filePath, ex);
+            throw new ReportConfigException("Unable to save table report configuration " + filePath, ex);
+        }
+
+        // save file report settings
+        filePath = pathToConfigDir.toString() + File.separator + FILE_REPORT_CONFIG_FILE;
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+            out.writeObject(config.getFileReportSettings());
+        } catch (IOException ex) {
+            throw new ReportConfigException("Unable to save file report configuration " + filePath, ex);
+        }
+
+        // save list of module configuration objects
+        filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;
+        List<ReportModuleConfig> moduleConfigs = config.getModuleConfigs();
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+            out.writeObject(moduleConfigs);
+        } catch (IOException ex) {
+            throw new ReportConfigException("Unable to save module configurations list " + filePath, ex);
+        }
+
+        // save each ReportModuleSettings object individually
+        /* NOTE: This is done to protect us from errors in reading/writing 3rd 
+        party report module settings. If we were to serialize the entire ReportingConfig 
+        object, then a single error while reading in a 3rd party report module 
+        would prevent us from reading the entire reporting configuration.*/
+        for (ReportModuleConfig moduleConfig : moduleConfigs) {
+            ReportModuleSettings settings = moduleConfig.getModuleSettings();
+            filePath = pathToConfigDir.toString() + File.separator + moduleConfig.getModuleClassName() + REPORT_SETTINGS_FILE_EXTENSION;
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+                out.writeObject(settings);
+            } catch (IOException ex) {
+                throw new ReportConfigException("Unable to save module settings " + filePath, ex);
+            }
         }
     }
 
