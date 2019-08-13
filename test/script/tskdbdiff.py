@@ -11,6 +11,7 @@ import sys
 import psycopg2
 import psycopg2.extras
 import socket
+import csv
 
 class TskDbDiff(object):
     """Compares two TSK/Autospy SQLite databases.
@@ -436,8 +437,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
-    fields_list = parens.replace(" ", "").split(',')
-    
+    fields_list = list(csv.reader([parens], quotechar="'"))[0]
+
     # remove object ID
     if files_index:
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
