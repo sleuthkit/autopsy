@@ -121,15 +121,19 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
         if (!evt.getValueIsAdjusting()) {
-            String selectedGroup = groupDisplayNameList.getSelectedValue().replaceAll(" \\([0-9]+\\)$", ""); 
-            for (String groupName : groupMap.keySet()) {
-                if (selectedGroup.equalsIgnoreCase(groupName)) {
-                    selectedGroupName = groupName;
-                    DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(
-                            searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, groupMap.get(selectedGroupName), resultType));
+            if (groupDisplayNameList.getSelectedValue() != null) {
+                String selectedGroup = groupDisplayNameList.getSelectedValue().replaceAll(" \\([0-9]+\\)$", "");
+                for (String groupName : groupMap.keySet()) {
+                    if (selectedGroup.equalsIgnoreCase(groupName)) {
+                        selectedGroupName = groupName;
+                        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(
+                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, groupMap.get(selectedGroupName), resultType));
+                        break;
+                    }
                 }
+            } else {
+                DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.NoResultsEvent());
             }
-
         }
     }//GEN-LAST:event_groupSelected
 
