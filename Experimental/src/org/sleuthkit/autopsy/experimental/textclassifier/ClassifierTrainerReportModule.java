@@ -173,6 +173,7 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         int nonnotableDocCount = 0;
 
         progressPanel.updateStatusLabel("Converting training data");
+        progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
         for (AbstractFile doc : allDocs) {
@@ -183,14 +184,15 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
                 label = "nonnotable";
                 nonnotableDocCount++;
             }
-            //TODO: Add a progress bar, or at least a status update. This is slow.
+
             //TODO: Where is the slow part? Is it in reading or converting to DocumentSample?
             //TODO: The method to build a reader and get text should be in another class accessible to TextClassifierFileIngestModule
             Reader reader = TextExtractorFactory.getExtractor(doc, null).getReader();
             String text = IOUtils.toString(reader);
             DocumentSample docSample = new DocumentSample(label, tokenizer.tokenize(text));
-
             docSamples.add(docSample);
+
+            progressPanel.increment();
         }
 
         return new ListObjectStream<>(docSamples);
