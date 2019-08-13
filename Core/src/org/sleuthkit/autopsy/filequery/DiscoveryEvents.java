@@ -200,6 +200,13 @@ final class DiscoveryEvents {
         }
     }
 
+    static final class NoResultsEvent {
+        
+        NoResultsEvent(){
+            //no arg conustructor
+        }
+    }
+    
     /**
      * Event to signal that a group has been selected.
      */

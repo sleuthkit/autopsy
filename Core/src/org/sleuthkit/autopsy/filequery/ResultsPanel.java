@@ -82,6 +82,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             thumbnailViewer.resetComponent();
+            tableViewer.resetComponent();
             resultsViewerPanel.remove(thumbnailViewer);
             resultsViewerPanel.remove(tableViewer);
             if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
@@ -128,7 +129,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param groupSelectedEvent The GroupSelectedEvent received.
      */
     @Subscribe
-    void handlePageChangedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
+    void handleGroupSelectedEvent(DiscoveryEvents.GroupSelectedEvent groupSelectedEvent) {
         SwingUtilities.invokeLater(() -> {
             searchFilters = groupSelectedEvent.getFilters();
             groupingAttribute = groupSelectedEvent.getGroupingAttr();
@@ -138,6 +139,20 @@ public class ResultsPanel extends javax.swing.JPanel {
             resultType = groupSelectedEvent.getResultType();
             groupSize = groupSelectedEvent.getGroupSize();
             setPage(0);
+        });
+    }
+
+    @Subscribe
+    void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEven) {
+        SwingUtilities.invokeLater(() -> {
+            groupSize = 0;
+            currentPage = 0;
+            updateControls();
+            thumbnailViewer.resetComponent();
+            thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
+            resultsViewerPanel.revalidate();
+            resultsViewerPanel.repaint();
         });
     }
 
@@ -352,7 +367,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      */
     @Messages({"# {0} - selectedPage",
         "# {1} - maxPage",
-        "ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value of at least 1 and at most {1}",
+        "ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.",
         "ResultsPanel.invalidPageNumber.title=Invalid Page Number"})
     private void gotoPageFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageFieldActionPerformed
         int newPage;

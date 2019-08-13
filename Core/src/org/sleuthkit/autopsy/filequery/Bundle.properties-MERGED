@@ -158,7 +158,7 @@ ResultsPanel.currentPage.displayValue=Page: {0} of {1}
 ResultsPanel.currentPageLabel.text=Page: -
 # {0} - selectedPage
 # {1} - maxPage
-ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value of at least 1 and at most {1}
+ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.
 ResultsPanel.invalidPageNumber.title=Invalid Page Number
 ResultsPanel.pageControlsLabel.text=Pages:
 ResultsPanel.gotoPageLabel.text=Go to Page:
