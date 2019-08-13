@@ -120,13 +120,14 @@ class GroupListPanel extends javax.swing.JPanel {
      * @param evt the event which indicates a selection occurs in the list
      */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
-        if (!evt.getValueIsAdjusting()) {
+        if (!evt.getValueIsAdjusting() && groupDisplayNameList.getSelectedValue() != null) {
             String selectedGroup = groupDisplayNameList.getSelectedValue().replaceAll(" \\([0-9]+\\)$", ""); 
             for (String groupName : groupMap.keySet()) {
                 if (selectedGroup.equalsIgnoreCase(groupName)) {
                     selectedGroupName = groupName;
                     DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(
                             searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, groupMap.get(selectedGroupName), resultType));
+                    break;
                 }
             }
 
