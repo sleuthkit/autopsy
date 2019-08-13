@@ -3,7 +3,7 @@
 \section Introduction
 The autopsy/test folder contains scripts that are necessary to run the regression test. Developers that are interested in running regression tests should run autopsy/test/script/regression.py. This guide will familiarize you with regression.py and walk you through a simple example at the end.
 
-If you’ve never heard of regression testing, see https://en.wikipedia.org/wiki/Regression_testing.
+If you’ve never heard of regression testing, see <a href="https://en.wikipedia.org/wiki/Regression_testing">Regression Testing</a>.
 
 From a bird’s eye view, regression.py will:
 - Run ingest on an image by starting up Autopsy and controlling the UI
@@ -54,7 +54,7 @@ One and only one of the bolded arguments is required.
 ------
 The config file is essential to giving regression.py the details it needs to run. This file is simply an XML file with some expected tag names. We’ll dive into the tag names and their descriptions in the Tag Definitions section. But first, let’s start by taking a look at a template.
 
-\section Template
+\subsection Template
 ------
 Here is a complete config file template:
 @code{.xml}
@@ -97,7 +97,7 @@ Here is a complete config file template:
 </Properties>
 @endcode
 
-\section Tag Definitions
+\subsection Tag Definitions
 ------
 With our template above, let’s break down what some of these tags mean:
     - <userCaseType>
@@ -132,21 +132,26 @@ With our template above, let’s break down what some of these tags mean:
             - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the host name of the ActiveMQ service that Autopsy will use for message brokerage between clients.
     - <messageServicePort>
             - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the port number that the ActiveMQ service is listening on at <messageServiceHost>.
-\section Simple Example
+
+\section    Simple Example
+------
 Now that we are familiar with the parameter types and config file definitions, let's walk through a simple example. In this example, we are going to do a rebuild to establish our gold standards, introduce a regression, and discover it by running a test and examining the diffs.
-	Workspace
-	Here is how our workspace is set up:
-	
-autopsy, sleuthkit
-These folders are clones of the Autopsy and Sleuthkit GitHub repositories. Sleuthkit was built using sleuthkit/win32/updateAndBuildAll.py and Autopsy was built in Netbeans 8.2.
-autopsy_regression_config
-This folder contains the regression_config.xml that is covered in the next subsection.
-autopsy_single_gold
-This folder will contain the gold standards for the <image> tags we define in the config file.
-autopsy_single_output
-This folder will contain the case output for each <image> tag ingest.
-small2
-The image that we will be used in our regression testing.
+\subsection    Workspace
+------
+Here is how our workspace is set up:
+
+\image html regression_example_workspace-env.PNG
+- autopsy, sleuthkit
+    - These folders are clones of the Autopsy and Sleuthkit GitHub repositories. Sleuthkit was built using sleuthkit/win32/updateAndBuildAll.py and Autopsy was built in Netbeans 8.2.
+- autopsy_regression_config
+    - This folder contains the regression_config.xml that is covered in the next subsection.
+- autopsy_single_gold
+    - This folder will contain the gold standards for the <image> tags we define in the config file.
+- autopsy_single_output
+    - This folder will contain the case output for each <image> tag ingest.
+- small2
+    - The image that we will be used in our regression testing.
+
 \subsection     Config File
 ------
 Here is the config file we will be using for our regression testing. This file is located in the autopsy_regression_config folder.
@@ -171,7 +176,7 @@ In order to produce diffs, we need to first establish gold standards. We can do 
 
 Let’s run the following command from within autopsy/test/script directory.
 
-
+\image html regression_example_rebuild-command.PNG
 
 This will instruct regression.py to make gold standards using our config file.
 
@@ -179,16 +184,15 @@ Regression.py is going to start ingesting the images found in the config file on
 
 When this process is complete, the directory specified in <singleUser_golddir> should be populated with our gold standards. Here is what our folder looks like after the rebuild:
 
+\image html regression_example_gold-dir.PNG
 
 \subsection     Performing a Regression Test
 ------
-Now that we have our gold standards, it’s time to start our development cycle.
-
-Let's pretend we accidentally introduced a MIME type regression. All MIME types that were once text/plain are now mistakenly labeled as text/error-plain. Using the diffs that regression.py will produce, we can catch this before it becomes a problem.
+Now that we have our gold standards, it’s time to start our development cycle. Let's pretend we accidentally introduced a MIME type regression. All MIME types that were once text/plain are now mistakenly labeled as text/error-plain. Using the diffs that regression.py will produce, we can catch this before it becomes a problem.
 
 Let’s run the following command from within the autopsy/test/script directory.
 
-
+\image html regression_example_run-command.PNG
 
 This will instruct regression.py to run a regression test using our config file.
 
@@ -198,17 +202,20 @@ After completing on an image, Autopsy will disappear and you will be presented w
 
 Since we only had one image in our config file and we ran in single-user mode, regression.py is finished. As expected, our case database diffs did not pass:
 
+\image html regression_example_diff-failure.PNG
 
 We’ll learn how to examine our diffs in the next section.
-Examining the Diffs
-	Let’s start by opening up our output folder:
+\subsection    Examining the Diffs
+------
+Let’s start by opening up our output folder:
+
+\image html regression_example_output-folder.PNG
 	
-Each timestamp corresponds to the start of a regression or rebuild run. The most recent folder is where our latest diff will be contained. A folder named “small2” will be in this directory.
+Each timestamp corresponds to the start of a regression or rebuild run. The most recent folder is where our latest diff will be contained. A folder named “small2” will be in this directory. Diff files will be stored at the top level of the image directory. 
 
-Diff files will be stored at the top level of the image directory. As expected, there is a DBDump-Diff file waiting for us.
+As expected, there is a DBDump-Diff file waiting for us. We can examine our regressions by opening this file in Notepad++:
 
-We can examine our regressions by opening this file in Notepad++:
-
+\image html regression_example_diff.PNG
 
 Since our dumps are INSERT statements from the database, we can see exactly which files have changed. 
 
