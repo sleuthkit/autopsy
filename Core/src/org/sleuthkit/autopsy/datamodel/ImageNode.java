@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
+import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.Tag;
 
 /**
@@ -210,10 +211,9 @@ public class ImageNode extends AbstractContentNode<Image> {
 
     private Boolean checkSchemaVersion() {
         try {
-            int creationMajorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion().getMajor();
-            int creationMinorVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion().getMinor();
-        
-            if ((creationMajorVersion == 8 && creationMinorVersion >= 3) || creationMajorVersion > 8) {
+            CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion();
+
+            if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 3) || creationVersion.getMajor() > 8) {
                         return true;
             }
         } catch (NoCurrentCaseException ex) {
