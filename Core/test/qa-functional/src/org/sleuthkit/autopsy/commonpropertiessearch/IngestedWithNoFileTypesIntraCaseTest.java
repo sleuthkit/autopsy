@@ -51,10 +51,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Add images set 1, set 2, set 3, and set 4 to case. Do not run mime type
  * module.
  */
-public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
+public class IngestedWithNoFileTypesIntraCaseTest extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithNoFileTypesIntraCaseTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithNoFileTypesIntraCaseTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
@@ -62,7 +62,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
 
     private final IntraCaseTestUtils utils;
     
-    public IngestedWithNoFileTypesIntraCaseTests(String name) {
+    public IngestedWithNoFileTypesIntraCaseTest(String name) {
         super(name);
         
         this.utils = new IntraCaseTestUtils(this, "IngestedWithNoFileTypes");
@@ -77,7 +77,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(hashLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithNoFileTypesIntraCaseTests.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithNoFileTypesIntraCaseTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
