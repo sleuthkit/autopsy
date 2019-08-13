@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * This module is based on the RecycleBin python module from Mark Mackinnon.
+ * This module is based on the RecycleBin python module from Mark McKinnon.
  *
  * @see
  * <a href="https://github.com/markmckinnon/Autopsy-Plugins/blob/master/Recycle_Bin/Recycle_Bin.py">Recycle_Bin.py</a>
