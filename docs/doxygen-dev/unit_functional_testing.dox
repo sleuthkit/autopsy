@@ -1,6 +1,6 @@
 /*! \page unit_functional_testing Functional/Unit Testing in Autopsy
 
-\section intro Introduction
+\section intro_unit Introduction
 Autopsy has functional and unit tests for the Autopsy Core and Keyword Search NBMs. These tests can be run at the NBM, package or file level. These tests can be run from Netbeans or the command line using Apache Ant. Each section will demonstrate both approaches.
 \section nbm Running Tests by NBM
 - In Netbeans, right click the Autopsy-Core or Keyword Search NBM and click Test. This will run both the unit and functional tests.
@@ -9,7 +9,7 @@ Autopsy has functional and unit tests for the Autopsy Core and Keyword Search NB
     - $ ant -f {$NBM} test
         <br>  e.g. $ ant -f Core test
 
-You may need an internet connection the first time you run Autopsy Core. The ant target will attempt to reach out to Google Drive to download the required test data. This data is stored in autopsy\Core\test\qa-functional\data.
+You may need an internet connection the first time you run Autopsy Core. The ant target will attempt to reach out to Google Drive to download the required test data. This data is stored in autopsy\\Core\\test\\qa-functional\\data.
 In the event that tests are failing due to missing test data, manually run the “getTestDataFiles” target from the Core/build.xml script.
 \section package Running Tests by Package
 - In Netbeans, right click the package and click Test. The tests are separated into Unit and Functional packages.

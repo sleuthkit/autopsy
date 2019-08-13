@@ -1,6 +1,6 @@
 /*! \page regression_testing Regression Testing in Autopsy
 
-\section intro Introduction
+\section intro_regression Introduction
 The autopsy/test folder contains scripts that are necessary to run the regression test. Developers that are interested in running regression tests should run autopsy/test/script/regression.py. This guide will familiarize you with regression.py and walk you through a simple example at the end.
 
 If you’ve never heard of regression testing, see <a href="https://en.wikipedia.org/wiki/Regression_testing">Regression Testing</a>.
