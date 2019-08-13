@@ -46,6 +46,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
         String version = LogicalImagerConfig.getCurrentVersion();
         boolean finalizeImageWriter = false;
         boolean promptBeforeExit = true;
+        boolean createVHD = false;
 
         final JsonObject jsonObject = je.getAsJsonObject();
         final JsonElement jsonVersion = jsonObject.get("version"); // NON-NLS
@@ -61,6 +62,11 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
         final JsonElement jsonPromptBeforeExit = jsonObject.get("prompt-before-exit"); // NON-NLS
         if (jsonPromptBeforeExit != null) {
             promptBeforeExit = jsonPromptBeforeExit.getAsBoolean();
+        }
+
+        final JsonElement jsonCreateVHD = jsonObject.get("create-VHD"); // NON-NLS
+        if (jsonCreateVHD != null) {
+            createVHD = jsonCreateVHD.getAsBoolean();
         }
 
         JsonArray asJsonArray = jsonObject.get("rule-sets").getAsJsonArray(); // NON-NLS
@@ -80,7 +86,7 @@ class LogicalImagerConfigDeserializer implements JsonDeserializer<LogicalImagerC
             LogicalImagerRuleSet ruleSet = new LogicalImagerRuleSet(setName, rules);
             ruleSets.add(ruleSet);
         }
-        return new LogicalImagerConfig(version, finalizeImageWriter, promptBeforeExit, ruleSets);
+        return new LogicalImagerConfig(version, finalizeImageWriter, promptBeforeExit, createVHD, ruleSets);
     }
 
     private List<LogicalImagerRule> parseRules(JsonArray asJsonArray) {

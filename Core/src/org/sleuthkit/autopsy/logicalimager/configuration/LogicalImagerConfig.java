@@ -42,6 +42,10 @@ class LogicalImagerConfig {
     @Expose(serialize = true)
     private boolean promptBeforeExit;
 
+    @SerializedName("create-VHD")
+    @Expose(serialize = true)
+    private boolean createVHD;
+
     @SerializedName("rule-sets")
     @Expose(serialize = true)
     private List<LogicalImagerRuleSet> ruleSets;
@@ -50,6 +54,7 @@ class LogicalImagerConfig {
         this.version = CURRENT_VERSION;
         this.finalizeImageWriter = false;
         this.promptBeforeExit = true;
+        this.createVHD = false;
         this.ruleSets = new ArrayList<>();
     }
 
@@ -60,6 +65,7 @@ class LogicalImagerConfig {
         this.version = CURRENT_VERSION;
         this.finalizeImageWriter = finalizeImageWriter;
         this.promptBeforeExit = true;
+        this.createVHD = false;
         this.ruleSets = ruleSets;
     }
 
@@ -71,6 +77,7 @@ class LogicalImagerConfig {
         this.version = version;
         this.finalizeImageWriter = finalizeImageWriter;
         this.promptBeforeExit = true;
+        this.createVHD = false;
         this.ruleSets = ruleSets;
     }
 
@@ -78,11 +85,13 @@ class LogicalImagerConfig {
         String version,
         boolean finalizeImageWriter,
         boolean promptBeforeExit,
+        boolean creatVHD,
         List<LogicalImagerRuleSet> ruleSets
     ) {
         this.version = version;
         this.finalizeImageWriter = finalizeImageWriter;
         this.promptBeforeExit = promptBeforeExit;
+        this.createVHD = creatVHD;
         this.ruleSets = ruleSets;
     }
 
@@ -112,6 +121,14 @@ class LogicalImagerConfig {
 
     void setPromptBeforeExit(boolean promptBeforeExit) {
         this.promptBeforeExit = promptBeforeExit;
+    }
+
+    boolean isCreateVHD() {
+        return createVHD;
+    }
+
+    void setCreateVHD(boolean createVHD) {
+        this.createVHD = createVHD;
     }
 
     List<LogicalImagerRuleSet> getRuleSets() {
