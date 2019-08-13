@@ -42,9 +42,12 @@ final class TextFileExtractor {
     static final private int MIN_MATCH_CONFIDENCE = 20;
 
     public Reader getReader(AbstractFile source) throws TextFileExtractorException {
-        Charset decodetectCharset = TextExtractor.getDecodetectCharset(source);
-        if (decodetectCharset != null) {
-            return new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(source)), decodetectCharset);
+        String mimeType = source.getMIMEType();
+        if (mimeType.equals("text/plain") || mimeType.equals("application/octet-stream")) {
+            Charset decodetectCharset = TextExtractor.getDecodetectCharset(source);
+            if (decodetectCharset != null) {
+                return new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(source)), decodetectCharset);
+            }
         }
 
         CharsetDetector detector = new CharsetDetector();

@@ -101,18 +101,6 @@ public interface TextExtractor {
     }
 
     static Charset getDecodetectCharset(AbstractFile aFile) {
-        String mimeType = aFile.getMIMEType();
-        if (mimeType == null) {
-            if (!aFile.getNameExtension().equals("txt")) {
-                return null;
-            }
-        } else {
-            if (!mimeType.equals("text/plain") &&
-                    !mimeType.equals("application/octet-stream")) {
-                return null;
-            }
-        }
-
         InputStream stream = new BufferedInputStream(new ReadContentInputStream(aFile));
         Charset detectedCharset = null;
 
