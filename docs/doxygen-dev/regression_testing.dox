@@ -203,7 +203,11 @@ Let’s start by opening up our output folder:
 	
 Each timestamp corresponds to the start of a regression or rebuild run. The most recent folder is where our latest diff will be contained. A folder named “small2” will be in this directory. Diff files will be stored at the top level of the image directory. 
 
-As expected, there is a DBDump-Diff file waiting for us. We can examine our regressions by opening this file in Notepad++:
+As expected, there is a DBDump-Diff file waiting for us. 
+
+\image html regression_example_case-output-folder.PNG
+
+We can examine our regressions by opening this file in Notepad++:
 
 \image html regression_example_diff.PNG
 
