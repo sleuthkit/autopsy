@@ -1,8 +1,0 @@
-msgdlg.problem.text=There was a problem populating the timeline.  Not all events may be present or accurate.
-progressWindow.msg.commitingDb=Committing events database
-progressWindow.msg.gatheringData=Gathering event data
-progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files
-progressWindow.msg.refreshingFileTags=Refreshing file tags
-progressWindow.msg.refreshingResultTags=Refreshing result tags
-# {0} - event type 
-progressWindow.populatingXevents=Populating {0} events
