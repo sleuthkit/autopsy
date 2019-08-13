@@ -437,7 +437,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
-    fields_list = list(csv.reader([parens], quotechar="'"))[0]
+    fields_list = list(csv.reader([parens.replace(" ", "")], quotechar="'"))[0]
 
     # remove object ID
     if files_index:
