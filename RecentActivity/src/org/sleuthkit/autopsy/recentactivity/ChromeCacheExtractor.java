@@ -49,8 +49,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -272,7 +272,7 @@ final class ChromeCacheExtractor {
         
         } catch (TskCoreException ex) {
                 String msg = "Failed to find cache index files"; //NON-NLS
-                logger.log(Level.SEVERE, msg, ex);
+                logger.log(Level.WARNING, msg, ex);
         } 
     }
     
@@ -292,7 +292,7 @@ final class ChromeCacheExtractor {
             indexFileCopy = this.getCacheFileCopy(indexAbstractFile.getName(), cachePath);
             if (!indexFileCopy.isPresent()) {
                 String msg = String.format("Failed to find copy cache index file %s", indexAbstractFile.getUniquePath());
-                logger.log(Level.SEVERE, msg);
+                logger.log(Level.WARNING, msg);
                 return;
             }
 
@@ -310,7 +310,7 @@ final class ChromeCacheExtractor {
 
         } catch (TskCoreException | IngestModuleException ex) {
             String msg = "Failed to find cache files in path " + cachePath; //NON-NLS
-            logger.log(Level.SEVERE, msg, ex);
+            logger.log(Level.WARNING, msg, ex);
             return;
         } 
 
@@ -346,7 +346,7 @@ final class ChromeCacheExtractor {
                     derivedFiles.addAll(addedFiles);
                 }
                 catch (TskCoreException | IngestModuleException ex) {
-                   logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr), ex); //NON-NLS
+                   logger.log(Level.WARNING, String.format("Failed to get cache entry at address %s", addr), ex); //NON-NLS
                 } 
             }  
         }
@@ -361,10 +361,16 @@ final class ChromeCacheExtractor {
          });
 
         context.addFilesToJob(derivedFiles);
-        
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, !sourceArtifacts.isEmpty() ? sourceArtifacts : null));
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, !webCacheArtifacts.isEmpty() ? webCacheArtifacts : null));
 
+        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
+        
+        try {
+            blackboard.postArtifacts(sourceArtifacts, moduleName);
+            blackboard.postArtifacts(webCacheArtifacts, moduleName);
+        } catch (Blackboard.BlackboardException ex) {
+           logger.log(Level.WARNING, String.format("Failed to post cacheIndex artifacts "), ex); //NON-NLS
+        }
+       
         cleanup();
     }
     
@@ -411,7 +417,7 @@ final class ChromeCacheExtractor {
         String cachedFileName = dataSegment.getAddress().getFilename();
         Optional<AbstractFile> cachedFileAbstractFile = this.findCacheFile(cachedFileName, cachePath);
         if (!cachedFileAbstractFile.isPresent()) {
-            logger.log(Level.SEVERE, "Error finding file: " + cachePath + "/" + cachedFileName); //NON-NLS
+            logger.log(Level.WARNING, "Error finding file: " + cachePath + "/" + cachedFileName); //NON-NLS
             return derivedFiles;
         }        
         
@@ -1281,7 +1287,7 @@ final class ChromeCacheExtractor {
                     CacheData data = new CacheData(longKeyAddresses, this.keyLen, true);
                     key = data.getDataString();
                 } catch (TskCoreException | IngestModuleException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to get external key from address %s", longKeyAddresses)); //NON-NLS 
+                    logger.log(Level.WARNING, String.format("Failed to get external key from address %s", longKeyAddresses)); //NON-NLS 
                 } 
             }
             else {  // key stored within entry 

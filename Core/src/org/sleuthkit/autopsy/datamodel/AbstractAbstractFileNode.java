@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -27,14 +26,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -55,6 +51,8 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.RefreshKeysEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
@@ -64,6 +62,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -75,14 +74,9 @@ import org.sleuthkit.datamodel.TskData;
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
 
     private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
-    @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
-    private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
-
-    private static final ExecutorService translationPool;
-    private static final Integer MAX_POOL_SIZE = 10;
 
     /**
      * @param abstractFile file to wrap
@@ -100,20 +94,13 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
 
         if (UserPreferences.displayTranslatedFileNames()) {
-            AbstractAbstractFileNode.translationPool.submit(new TranslationTask(
+            backgroundTasksPool.submit(new TranslationTask(
                     new WeakReference<>(this), weakPcl));
         }
 
         // Listen for case events so that we can detect when the case is closed
         // or when tags are added.
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
-    }
-
-    static {
-        //Initialize this pool only once! This will be used by every instance of AAFN
-        //to do their heavy duty SCO column and translation updates.
-        translationPool = Executors.newFixedThreadPool(MAX_POOL_SIZE,
-                new ThreadFactoryBuilder().setNameFormat("translation-task-thread-%d").build());
     }
 
     /**
@@ -136,16 +123,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
 
-    /**
-     * Event signals to indicate the background tasks have completed processing.
-     * Currently, we have one property task in the background:
-     *
-     * 1) Retreiving the translation of the file name
-     */
-    enum NodeSpecificEvents {
-        TRANSLATION_AVAILABLE,
-    }
-
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 
@@ -164,17 +141,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (getContent().getId() == newContent.getId()) {
                 // If so, refresh our children.
                 try {
-                    Children parentsChildren = getParentNode().getChildren();
                     // We only want to refresh our parents children if we are in the
                     // data sources branch of the tree. The parent nodes in other
                     // branches of the tree (e.g. File Types and Deleted Files) do
                     // not need to be refreshed.
-                    if (parentsChildren instanceof ContentChildren) {
-                        ((ContentChildren) parentsChildren).refreshChildren();
-                        parentsChildren.getNodesCount();
-                    }
+                    BaseChildFactory.post(getParentNode().getName(), new RefreshKeysEvent());
                 } catch (NullPointerException ex) {
                     // Skip
+                } catch (NoSuchEventBusException ex) {
+                    logger.log(Level.WARNING, "Failed to post key refresh event", ex); //NON-NLS
                 }
             }
         } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -191,7 +166,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
             ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
             if (event.getAddedTag().getContent().equals(content)) {
-                List<ContentTag> tags = getContentTagsFromDatabase();
+                List<Tag> tags = this.getAllTagsFromDatabase();
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
@@ -203,7 +178,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
             ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
             if (event.getDeletedTagInfo().getContentID() == content.getId()) {
-                List<ContentTag> tags = getContentTagsFromDatabase();
+                List<Tag> tags = getAllTagsFromDatabase();
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
@@ -215,7 +190,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
             CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
-                List<ContentTag> tags = getContentTagsFromDatabase();
+                List<Tag> tags = getAllTagsFromDatabase();
                 CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute)));
             }
@@ -224,6 +199,17 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             //Set the tooltip
             this.setShortDescription(content.getName());
             updateSheet(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, content.getName()));
+        } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
+            SCOData scoData = (SCOData) evt.getNewValue();
+            if (scoData.getScoreAndDescription() != null) {
+                updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoData.getScoreAndDescription().getRight(), scoData.getScoreAndDescription().getLeft()));
+            }
+            if (scoData.getComment() != null) {
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, scoData.getComment()));
+            }
+            if (scoData.getCountAndDescription() != null) {
+                updateSheet(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), scoData.getCountAndDescription().getRight(), scoData.getCountAndDescription().getLeft()));
+            }
         }
     };
     /**
@@ -235,38 +221,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * unregistering of the listener in removeListeners() below.
      */
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-
-    /**
-     * Updates the values of the properties in the current property sheet with
-     * the new properties being passed in. Only if that property exists in the
-     * current sheet will it be applied. That way, we allow for subclasses to
-     * add their own (or omit some!) properties and we will not accidentally
-     * disrupt their UI.
-     *
-     * Race condition if not synchronized. Only one update should be applied at
-     * a time.
-     *
-     * @param newProps New file property instances to be updated in the current
-     *                 sheet.
-     */
-    private synchronized void updateSheet(NodeProperty<?>... newProps) {
-        //Refresh ONLY those properties in the sheet currently. Subclasses may have 
-        //only added a subset of our properties or their own props.s
-        Sheet visibleSheet = this.getSheet();
-        Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
-        Property<?>[] visibleProps = visibleSheetSet.getProperties();
-        for (NodeProperty<?> newProp : newProps) {
-            for (int i = 0; i < visibleProps.length; i++) {
-                if (visibleProps[i].getName().equals(newProp.getName())) {
-                    visibleProps[i] = newProp;
-                }
-            }
-        }
-        visibleSheetSet.put(visibleProps);
-        visibleSheet.put(visibleSheetSet);
-        //setSheet() will notify Netbeans to update this node in the UI.
-        this.setSheet(visibleSheet);
-    }
 
     /*
      * This is called when the node is first initialized. Any new updates or
@@ -369,18 +323,19 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             properties.add(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, ""));
         }
 
-        //SCO column prereq info..
-        List<ContentTag> tags = getContentTagsFromDatabase();
-        CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-
-        Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
-        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
-        DataResultViewerTable.HasCommentStatus comment = getCommentProperty(tags, attribute);
-        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, comment));
-        if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-            Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute);
-            properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), countAndDescription.getRight(), countAndDescription.getLeft()));
+        // Create place holders for S C O 
+        if (!UserPreferences.getHideSCOColumns()) {
+            properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), VALUE_LOADING, ""));
+            properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), VALUE_LOADING, ""));
+            if (EamDb.isEnabled()) {
+                properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
+            }
         }
+
+        // Get the SCO columns data in a background task
+        backgroundTasksPool.submit(new GetSCOTask(
+                new WeakReference<>(this), weakPcl));
+
         properties.add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
         properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
         properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
@@ -438,19 +393,20 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.count.displayName=O",
-        "AbstractAbstractFileNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
         "AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
-        "# {0} - occuranceCount",
-        "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
-    Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute) {
+        "# {0} - occurrenceCount",
+        "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value"})
+    @Override
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue,
+            String defaultDescription) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
-        String description = Bundle.AbstractAbstractFileNode_createSheet_count_noCentralRepo_description();
+        String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
-            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
-                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
+            if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
+                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
-            } else if (attribute != null) {
+            } else if (attributeType != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
         } catch (EamDbException ex) {
@@ -458,7 +414,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
-
         return Pair.of(count, description);
     }
 
@@ -469,7 +424,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
         "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
         "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
-    Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<ContentTag> tags) {
+    @Override
+    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
         DataResultViewerTable.Score score = DataResultViewerTable.Score.NO_SCORE;
         String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
         if (content.getKnown() == TskData.FileKnown.BAD) {
@@ -487,7 +443,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         if (!tags.isEmpty() && (score == DataResultViewerTable.Score.NO_SCORE || score == DataResultViewerTable.Score.INTERESTING_SCORE)) {
             score = DataResultViewerTable.Score.INTERESTING_SCORE;
             description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
-            for (ContentTag tag : tags) {
+            for (Tag tag : tags) {
                 if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
                     score = DataResultViewerTable.Score.NOTABLE_SCORE;
                     description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
@@ -500,11 +456,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
-    HasCommentStatus getCommentProperty(List<ContentTag> tags, CorrelationAttributeInstance attribute) {
+    @Override
+    protected HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
 
         DataResultViewerTable.HasCommentStatus status = !tags.isEmpty() ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
 
-        for (ContentTag tag : tags) {
+        for (Tag tag : tags) {
             if (!StringUtils.isBlank(tag.getComment())) {
                 //if the tag is null or empty or contains just white space it will indicate there is not a comment
                 status = DataResultViewerTable.HasCommentStatus.TAG_COMMENT;
@@ -572,9 +529,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return tags;
     }
 
-    CorrelationAttributeInstance getCorrelationAttributeInstance() {
+    @Override
+    protected List<Tag> getAllTagsFromDatabase() {
+        return new ArrayList<>(getContentTagsFromDatabase());
+    }
+
+    @Override
+    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
-        if (EamDb.isEnabled() && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+        if (EamDb.isEnabled() && !UserPreferences.getHideSCOColumns()) {
             attribute = EamArtifactUtil.getInstanceFromContent(content);
         }
         return attribute;

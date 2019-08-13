@@ -33,7 +33,6 @@ import org.opencv.objdetect.CascadeClassifier;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,6 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -56,6 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter {
 
+    private final static String MODULE_NAME = ObjectDetectionModuleFactory.getModuleName();
     private final static Logger logger = Logger.getLogger(ObjectDetectectionFileIngestModule.class.getName());
     private final static int MAX_FILE_SIZE = 100000000;  //Max size of pictures to perform object detection on  
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -65,14 +66,32 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
     private Blackboard blackboard;
 
     @Messages({"ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found.",
-        "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
+        "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed.",
+        "ObjectDetectionFileIngestModule.openCVNotLoaded=OpenCV was not loaded, but is required to run.",
+        "ObjectDetectionFileIngestModule.notWindowsError=This module is only available on Windows."
+    })
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         jobId = context.getJobId();
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         classifiers = new HashMap<>();
+        
+        if(!PlatformUtil.isWindowsOS()) {
+            //Pop-up that catches IngestModuleException will automatically indicate 
+            //the name of the module before the message.
+            String errorMsg = Bundle.ObjectDetectionFileIngestModule_notWindowsError();
+            logger.log(Level.SEVERE, errorMsg);
+            throw new IngestModule.IngestModuleException(errorMsg);
+        }
+        
+        if(!OpenCvLoader.hasOpenCvLoaded()) {
+            String errorMsg = Bundle.ObjectDetectionFileIngestModule_openCVNotLoaded();
+            logger.log(Level.SEVERE, errorMsg);
+            throw new IngestModule.IngestModuleException(errorMsg);
+        }
+        
         //Load all classifiers found in PlatformUtil.getObjectDetectionClassifierPath()
-        if (OpenCvLoader.isOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
+        if (classifierDir.exists() && classifierDir.isDirectory()) {
             for (File classifier : classifierDir.listFiles()) {
                 if (classifier.isFile() && FilenameUtils.getExtension(classifier.getName()).equalsIgnoreCase("xml")) {
                     classifiers.put(classifier.getName(), new CascadeClassifier(classifier.getAbsolutePath()));
@@ -87,7 +106,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                     Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_message(PlatformUtil.getObjectDetectionClassifierPath())));
         }
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException("Exception while getting open case.", ex);
         }
@@ -146,26 +165,20 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                     try {
                         BlackboardArtifact artifact = file.newArtifact(TSK_OBJECT_DETECTED);
                         artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                                ObjectDetectionModuleFactory.getModuleName(),
+                                MODULE_NAME,
                                 classifierKey));
                         artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                                ObjectDetectionModuleFactory.getModuleName(),
+                                MODULE_NAME,
                                 Bundle.ObjectDetectionFileIngestModule_classifierDetection_text((int) detectionRectangles.size().height)));
 
                         try {
                             /*
                              * Index the artifact for keyword search.
                              */
-                            blackboard.indexArtifact(artifact);
+                            blackboard.postArtifact(artifact, MODULE_NAME);
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                         }
-
-                        /*
-                         * Send an event to update the view with the new result.
-                         */
-                        services.fireModuleDataEvent(new ModuleDataEvent(ObjectDetectionModuleFactory.getModuleName(), TSK_OBJECT_DETECTED, Collections.singletonList(artifact)));
-
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
                         detectionRectangles.release();

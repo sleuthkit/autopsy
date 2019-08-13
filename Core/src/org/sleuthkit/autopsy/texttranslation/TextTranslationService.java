@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Optional;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Performs a lookup for a TextTranslator service provider and if present, will
@@ -33,6 +34,7 @@ public final class TextTranslationService {
     private final static TextTranslationService tts = new TextTranslationService();
 
     private final Collection<? extends TextTranslator> translators;
+    @GuardedBy("this")
     private Optional<TextTranslator> selectedTranslator;
 
     private TextTranslationService() {
@@ -50,7 +52,7 @@ public final class TextTranslationService {
      * Update the translator currently in use to match the one saved to the user
      * preferences
      */
-    public void updateSelectedTranslator() {
+    synchronized void updateSelectedTranslator() {
         String translatorName = UserPreferences.getTextTranslatorName();
         for (TextTranslator translator : translators) {
             if (translator.getName().equals(translatorName)) {
@@ -75,7 +77,7 @@ public final class TextTranslationService {
      *                                    when specific translation
      *                                    implementations fail
      */
-    public String translate(String input) throws NoServiceProviderException, TranslationException {
+    public synchronized String translate(String input) throws NoServiceProviderException, TranslationException {
         if (hasProvider()) {
             return selectedTranslator.get().translate(input);
         }
@@ -92,7 +94,7 @@ public final class TextTranslationService {
      *
      * @throws NoServiceProviderException
      */
-    public TextTranslator getTranslatorByName(String translatorName) throws NoServiceProviderException {
+    TextTranslator getTranslatorByName(String translatorName) throws NoServiceProviderException {
         for (TextTranslator translator : translators) {
             if (translator.getName().equals(translatorName)) {
                 return translator;
@@ -107,7 +109,7 @@ public final class TextTranslationService {
      *
      * @return an unmodifiable collection of TextTranslators
      */
-    public Collection<? extends TextTranslator> getTranslators() {
+    Collection<? extends TextTranslator> getTranslators() {
         return Collections.unmodifiableCollection(translators);
     }
 
@@ -117,7 +119,16 @@ public final class TextTranslationService {
      *
      * @return
      */
-    public boolean hasProvider() {
+    public synchronized boolean hasProvider() {
         return selectedTranslator.isPresent();
+    }
+
+    /**
+     * Gets the maximum number of characters allowed in a translation request.
+     *
+     * @return The maximum character count.
+     */
+    public synchronized int getMaxTextChars() {
+        return selectedTranslator.get().getMaxTextChars();
     }
 }

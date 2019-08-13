@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -42,7 +41,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
@@ -103,7 +101,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
                 + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal())) 
                 + "))"
-                + ( Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
+                + ( (filteringDataSourceObjId() > 0) ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
     }
 
@@ -445,25 +443,14 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * files that match MimeType which is represented by this position in the
      * tree.
      */
-    private class MediaSubTypeNodeChildren extends ChildFactory.Detachable<FileTypesKey> implements Observer {
+    private class MediaSubTypeNodeChildren extends BaseChildFactory<FileTypesKey> implements Observer {
 
         private final String mimeType;
 
         private MediaSubTypeNodeChildren(String mimeType) {
-            super();
+            super(mimeType, new ViewsKnownAndSlackFilter<>());
             addObserver(this);
             this.mimeType = mimeType;
-        }
-
-        @Override
-        protected boolean createKeys(List<FileTypesKey> list) {
-            try {
-                list.addAll(skCase.findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
-                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList())); //NON-NLS
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
-            }
-            return true;
         }
 
         @Override
@@ -474,6 +461,27 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         protected Node createNodeForKey(FileTypesKey key) {
             return key.accept(new FileTypes.FileNodeCreationVisitor());
+        }
+
+        @Override
+        protected List<FileTypesKey> makeKeys() {
+            try {
+                return skCase.findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
+                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList()); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
+            }
+            return Collections.emptyList();
+        }
+
+        @Override
+        protected void onAdd() {
+            // No-op
+        }
+
+        @Override
+        protected void onRemove() {
+            // No-op
         }
     }
 }

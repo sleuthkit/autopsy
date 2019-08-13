@@ -88,7 +88,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      * @return caseName the case name from the case name text field
      */
     String getCaseName() {
-        return this.caseNameTextField.getText();
+        return this.caseNameTextField.getText().trim();
     }
 
     /**
@@ -109,7 +109,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      * @return baseDirectory the base directory from the case dir text field
      */
     String getCaseParentDir() {
-        String parentDir = this.caseParentDirTextField.getText();
+        String parentDir = this.caseParentDirTextField.getText().trim();
         if (parentDir.endsWith(File.separator) == false) {
             parentDir = parentDir + File.separator;
         }

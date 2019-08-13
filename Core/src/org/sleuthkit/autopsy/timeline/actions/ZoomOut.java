@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,40 +18,61 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
+import java.util.logging.Level;
 import javafx.beans.binding.BooleanBinding;
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 public class ZoomOut extends Action {
 
+    final private static Logger logger = Logger.getLogger(ZoomOut.class.getName());
+
     private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png"); //NOI18N NON-NLS
 
     @NbBundle.Messages({"ZoomOut.longText=Zoom out to view about 50% more time.",
-        "ZoomOut.action.text=Zoom out"})
+        "ZoomOut.action.text=Zoom out",
+        "ZoomOut.errorMessage=Error zooming out.",
+        "ZoomOut.disabledProperty.errorMessage=Error getting spanning interval."})
     public ZoomOut(TimeLineController controller) {
         super(Bundle.ZoomOut_action_text());
         setLongText(Bundle.ZoomOut_longText());
         setGraphic(new ImageView(MAGNIFIER_OUT));
-        setEventHandler(actionEvent -> controller.pushZoomOutTime());
+        setEventHandler(actionEvent -> {
+            try {
+                controller.pushZoomOutTime();
+            } catch (TskCoreException ex) {
+                new Alert(Alert.AlertType.ERROR, Bundle.ZoomOut_errorMessage()).showAndWait();
+                logger.log(Level.SEVERE, "Error zooming out.", ex);
+            }
+        });
 
         //disable action when the current time range already encompases the entire case.
         disabledProperty().bind(new BooleanBinding() {
             private final FilteredEventsModel eventsModel = controller.getEventsModel();
 
             {
-                bind(eventsModel.zoomParametersProperty(), eventsModel.timeRangeProperty());
+                bind(eventsModel.zoomStateProperty(), eventsModel.timeRangeProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.timeRangeProperty().get().contains(eventsModel.getSpanningInterval());
+                try {
+                    return eventsModel.getTimeRange().contains(eventsModel.getSpanningInterval());
+                } catch (TskCoreException ex) {
+                    new Alert(Alert.AlertType.ERROR, Bundle.ZoomOut_disabledProperty_errorMessage()).showAndWait();
+                    logger.log(Level.SEVERE, "Error getting spanning interval.", ex);
+                    return true;
+                }
             }
         });
     }

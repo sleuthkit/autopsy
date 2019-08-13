@@ -44,7 +44,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 /**
@@ -140,8 +139,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         try {
             for (Content c : vol.getChildren()) {
-                if (!(c instanceof LayoutFile
-                        || c instanceof VirtualDirectory)) {
+                if (!(c instanceof LayoutFile)) {
                     ret = false;
                     break;
                 }

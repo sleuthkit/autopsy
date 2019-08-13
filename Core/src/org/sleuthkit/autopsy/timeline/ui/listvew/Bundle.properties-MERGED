@@ -1,3 +1,5 @@
+EventRow.updateItem.errorMessage=Error getting event by id.
+EventTableCell.updateItem.errorMessage=Error getting event by id.
 ListChart.errorMsg=There was a problem getting the content for the selected event.
 # {0} - the number of events
 ListTimeline.eventCountLabel.text={0} events

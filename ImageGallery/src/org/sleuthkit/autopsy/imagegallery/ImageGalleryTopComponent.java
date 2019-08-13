@@ -25,7 +25,9 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
-import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.concurrent.Task;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
@@ -49,7 +51,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
-import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
@@ -63,10 +64,12 @@ import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.gui.DataSourceCell;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
@@ -88,7 +91,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 @TopComponent.Description(
         preferredID = "ImageGalleryTopComponent",
         //iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png", /*use this to put icon in window title area*/
-        persistenceType = TopComponent.PERSISTENCE_NEVER)
+        persistenceType = TopComponent.PERSISTENCE_NEVER
+)
 @RetainLocation("ImageGallery")
 @TopComponent.Registration(mode = "ImageGallery", openAtStartup = false)
 @Messages({
@@ -99,15 +103,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
-    public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS // RJCTODO: This should not be public, clients should call getTopComponent instead
+    private static final String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
     private static final Logger logger = Logger.getLogger(ImageGalleryTopComponent.class.getName());
 
     private final ExplorerManager em = new ExplorerManager();
     private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
 
-    private final Object controllerLock = new Object();
-    @GuardedBy("controllerLock")
-    private ImageGalleryController controller;
+    private volatile ImageGalleryController controller;
+    private volatile ControllerListener controllerListener;
+    private volatile GroupManagerListener groupManagerListener;
 
     private SplitPane splitPane;
     private StackPane centralStack;
@@ -157,7 +161,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         if (topComponent.isOpened()) {
             showTopComponent();
         } else {
-            topComponent.getCurrentControllerAndOpen();
+            topComponent.openForCurrentCase();
         }
     }
 
@@ -176,17 +180,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             Platform.runLater(ImageGalleryTopComponent::showTooManyFiles);
         } else {
             SwingUtilities.invokeLater(() -> showTopComponent());
-            synchronized (controllerLock) {
-                GroupManager groupManager = controller.getGroupManager();
-                // RJCTODO: Why are there potentially hazardous nested synchronized 
-                // blocks here (note: method used to be synchronized, my 
-                // dedicated controllerLock lock just makes the nesting more obvious)? 
-                // Why is the groups manager not taking responsibility for its own thread 
-                // safety policy? 
-                synchronized (groupManager) {
-                    groupManager.regroup(selectedDataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
-                }
-            }
+            GroupManager groupManager = controller.getGroupManager();
+            groupManager.regroup(selectedDataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
         }
     }
 
@@ -223,14 +218,12 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     /*
-     * Closes the singleton Image Gallery top component. Note that calling this
-     * method will cause the top component to be constructed if it does not
-     * already exist.
+     * Closes the singleton Image Gallery top component.
      */
     public static void closeTopComponent() {
-        // RJCTODO: Could add the flag that used to be used for the busy wait on 
-        // the initial JavaFX thread task to avoid superfluous construction here. 
-        getTopComponent().close();
+        ImageGalleryTopComponent topComponent = getTopComponent();
+        topComponent.closeForCurrentCase();
+        topComponent.close();
     }
 
     /**
@@ -245,9 +238,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     /**
-     * Gets the current controller, allows the user to select the data sources
-     * for which images are to be displayed and opens the top component's
-     * window.
+     * Gets the controller for the current case, allows the user to select the
+     * data sources for which images are to be displayed and opens the top
+     * component's window.
      *
      * @throws TskCoreException If there is an error getting the current
      *                          controller.
@@ -257,144 +250,132 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.chooseDataSourceDialog.contentText=Data source:",
         "ImageGalleryTopComponent.chooseDataSourceDialog.all=All",
         "ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery",})
-    private void getCurrentControllerAndOpen() throws TskCoreException {
-        ImageGalleryController currentController = ImageGalleryModule.getController();
-        /*
-         * Dispatch a task to run in the JavaFX thread. This task will swap the
-         * new controller, if there is one, into this top component and its
-         * child UI components. This task also queues another JavaFX thread task
-         * to check for analyzed groups, which has the side effect of starting
-         * the spinner(s) that take the place of a wait cursor. Finally, this
-         * task starts a background thread to query the case database. This
-         * background task may dispatch a JavaFX thread task to do a data source
-         * selection dialog. Ultimately, there is a final task that either opens
-         * the window in the AWT EDT or displays a "too many files" dialog in
-         * the JFX thread.
-         */
-        // RJCTODO: Verify the side effect remark above.
+    private void openForCurrentCase() throws TskCoreException {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                synchronized (controllerLock) {
-                    if (notEqual(controller, currentController)) {
-                        controller = currentController;
-                        /*
-                         * Create or re-create the top component's child UI
-                         * components. This is currently done every time a new
-                         * controller is created (i.e., a new case is opened).
-                         * It could be done by resetting the controller in the
-                         * child UI components instead.
-                         */
-                        // RJCTODO: Construction of these components can perhaps 
-                        // be separated from opening the window again so that
-                        // a setController implementation could be called from
-                        // the case opened event handler in the ImageGalleryModule
-                        // object.
-                        fullUIStack = new StackPane();
-                        myScene = new Scene(fullUIStack);
-                        jfxPanel.setScene(myScene);
-                        groupPane = new GroupPane(controller);
-                        centralStack = new StackPane(groupPane);
-                        fullUIStack.getChildren().add(borderPane);
-                        splitPane = new SplitPane();
-                        borderPane.setCenter(splitPane);
-                        Toolbar toolbar = new Toolbar(controller);
-                        borderPane.setTop(toolbar);
-                        borderPane.setBottom(new StatusBar(controller));
-                        metaDataTable = new MetaDataPane(controller);
-                        groupTree = new GroupTree(controller);
-                        hashHitList = new HashHitGroupList(controller);
-                        TabPane tabPane = new TabPane(groupTree, hashHitList);
-                        tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
-                        tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
-                        VBox.setVgrow(tabPane, Priority.ALWAYS);
-                        leftPane = new VBox(tabPane, new SummaryTablePane(controller));
-                        SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
-                        SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
-                        SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
-                        splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
-                        splitPane.setDividerPositions(0.1, 1.0);
-
-                        /*
-                         * Set up for a call to checkForGroups to happen
-                         * whenever the controller's regrouping disabled
-                         * property or the group manager's analyzed groups
-                         * property changes.
-                         */
-                        controller.regroupDisabledProperty().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroups()));
-                        controller.getGroupManager().getAnalyzedGroups().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroups()));
-
-                        /*
-                         * Dispatch a later task to call check for groups. Note
-                         * that this method displays one or more spinner(s) that
-                         * take the place of a wait cursor if there are no
-                         * analyzed groups yet, ingest is running, etc.
-                         */
-                        // RJCTODO: Is there a race condition here, since this task could be 
-                        // executed before the task to actually open the top component window?
-                        // It seems like this might be a sort of a hack and I am wondering 
-                        // why this can't be done in openWithSelectedDataSources instead.
-                        Platform.runLater(() -> checkForAnalyzedGroups());
-                    }
-
-                    /*
-                     * Kick off a background task to query the case database for
-                     * data sources. This task may queue another task for the
-                     * JavaFX thread to allow the user to select which data
-                     * sources for which to display images. Ultimately, a task
-                     * will be queued for the AWT EDT that will show the top
-                     * component window.
-                     */
-                    new Thread(new Task<Void>() {
-                        @Override
-                        protected Void call() throws Exception {
-                            synchronized (controllerLock) {
-                                /*
-                                 * If there is only one datasource or the
-                                 * grouping criterion is already set to
-                                 * something other than by path (the default),
-                                 * proceed to open this top component.
-                                 * Otherwise, do a dialog to allow the user to
-                                 * select the data sources for which images are
-                                 * to be displayed, then open the top component.
-                                 */
-                                List<DataSource> dataSources = controller.getSleuthKitCase().getDataSources();
-                                Map<DataSource, Boolean> dataSourcesWithTooManyFiles = new HashMap<>();
-                                // RJCTODO: At least some of this designation of "all data sources" with null seems uneccessary; 
-                                // in any case, the use of nulls and zeros here is 
-                                // very confusing and should be reworked.
-                                if (dataSources.size() <= 1
-                                        || controller.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
-                                    dataSourcesWithTooManyFiles.put(null, controller.hasTooManyFiles(null));
-                                    openWithSelectedDataSources(null, dataSourcesWithTooManyFiles);
-                                } else {
-                                    dataSources.add(0, null);
-                                    for (DataSource dataSource : dataSources) {
-                                        dataSourcesWithTooManyFiles.put(dataSource, controller.hasTooManyFiles(dataSource));
-                                    }
-                                    Platform.runLater(() -> {
-                                        List<Optional<DataSource>> dataSourceOptionals = dataSources.stream().map(Optional::ofNullable).collect(Collectors.toList());
-                                        ChoiceDialog<Optional<DataSource>> datasourceDialog = new ChoiceDialog<>(null, dataSourceOptionals);
-                                        datasourceDialog.setTitle(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_titleText());
-                                        datasourceDialog.setHeaderText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_headerText());
-                                        datasourceDialog.setContentText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_contentText());
-                                        datasourceDialog.initModality(Modality.APPLICATION_MODAL);
-                                        GuiUtils.setDialogIcons(datasourceDialog);
-                                        @SuppressWarnings(value = "unchecked")
-                                        ComboBox<Optional<DataSource>> comboBox = (ComboBox<Optional<DataSource>>) datasourceDialog.getDialogPane().lookup(".combo-box");
-                                        comboBox.setCellFactory((ListView<Optional<DataSource>> unused) -> new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
-                                        comboBox.setButtonCell(new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
-                                        DataSource dataSource = datasourceDialog.showAndWait().orElse(Optional.empty()).orElse(null);
-                                        openWithSelectedDataSources(dataSource, dataSourcesWithTooManyFiles);
-                                    });
-                                }
-                                return null;
-                            }
-                        }
-                    }).start();
-                }
+                resetComponents();
+                openForDataSelectedSources();
             }
         });
+    }
+
+    /**
+     * Integrates the controller for the current case into this top component
+     * and its child UI components. This task also queues another JavaFX thread
+     * task to check for analyzed groups, which has the side effect of starting
+     * the spinner(s) that take the place of a wait cursor.
+     */
+    private void resetComponents() {
+        Case currentCase = Case.getCurrentCase();
+        ImageGalleryController controllerForCase = ImageGalleryController.getController(currentCase);
+        if (notEqual(controller, controllerForCase)) {
+            controller = controllerForCase;
+            /*
+             * Create or re-create the top component's child UI components. This
+             * is currently done every time a new controller is created (i.e., a
+             * new case is opened).
+             */
+            fullUIStack = new StackPane();
+            myScene = new Scene(fullUIStack);
+            jfxPanel.setScene(myScene);
+            groupPane = new GroupPane(controller);
+            centralStack = new StackPane(groupPane);
+            fullUIStack.getChildren().add(borderPane);
+            splitPane = new SplitPane();
+            borderPane.setCenter(splitPane);
+            Toolbar toolbar = new Toolbar(controller);
+            borderPane.setTop(toolbar);
+            borderPane.setBottom(new StatusBar(controller));
+            metaDataTable = new MetaDataPane(controller);
+            groupTree = new GroupTree(controller);
+            hashHitList = new HashHitGroupList(controller);
+            TabPane tabPane = new TabPane(groupTree, hashHitList);
+            tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
+            tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
+            VBox.setVgrow(tabPane, Priority.ALWAYS);
+            leftPane = new VBox(tabPane, new SummaryTablePane(controller));
+            SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
+            SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
+            SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
+            splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
+            splitPane.setDividerPositions(0.1, 1.0);
+
+            /*
+             * Set up listeners to update the UI when the controller's grouping
+             * enabled/disabled property changes or the contents of the group
+             * managers list of drawable groups changes.
+             */
+            controllerListener = new ControllerListener();
+            controller.regroupDisabledProperty().addListener(controllerListener);
+            groupManagerListener = new GroupManagerListener();
+            controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().addListener(groupManagerListener);
+
+            Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy());
+        }
+    }
+
+    /**
+     * Starts a background thread to query the case database. This background
+     * task may dispatch a JavaFX thread task to do a data source selection
+     * dialog. Ultimately, there is a final task that either opens the window in
+     * the AWT EDT or displays a "too many files" dialog in the JFX thread.
+     */
+    private void openForDataSelectedSources() {
+        new Thread(new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                /*
+                 * If there is only one data source or the grouping criterion is
+                 * already set to something other than by path (the default),
+                 * proceed to open this top component. Otherwise, do a dialog to
+                 * allow the user to select the data sources for which images
+                 * are to be displayed, then open the top component.
+                 */
+                List<DataSource> dataSources = controller.getCaseDatabase().getDataSources();
+                Map<DataSource, Boolean> dataSourcesWithTooManyFiles = new HashMap<>();
+                // TODO (JIRA-5218): At least some of this designation of "all data sources" with null seems uneccessary; 
+                // in any case, the use of nulls and zeros here is 
+                // very confusing and should be reworked.
+                if (dataSources.size() <= 1
+                        || controller.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
+                    dataSourcesWithTooManyFiles.put(null, controller.hasTooManyFiles(null));
+                    openWithSelectedDataSources(null, dataSourcesWithTooManyFiles);
+                } else {
+                    dataSources.add(0, null);
+                    for (DataSource dataSource : dataSources) {
+                        dataSourcesWithTooManyFiles.put(dataSource, controller.hasTooManyFiles(dataSource));
+                    }
+                    Platform.runLater(() -> {
+                        List<Optional<DataSource>> dataSourceOptionals = dataSources.stream().map(Optional::ofNullable).collect(Collectors.toList());
+                        ChoiceDialog<Optional<DataSource>> datasourceDialog = new ChoiceDialog<>(null, dataSourceOptionals);
+                        datasourceDialog.setTitle(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_titleText());
+                        datasourceDialog.setHeaderText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_headerText());
+                        datasourceDialog.setContentText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_contentText());
+                        datasourceDialog.initModality(Modality.APPLICATION_MODAL);
+                        GuiUtils.setDialogIcons(datasourceDialog);
+                        @SuppressWarnings(value = "unchecked")
+                        ComboBox<Optional<DataSource>> comboBox = (ComboBox<Optional<DataSource>>) datasourceDialog.getDialogPane().lookup(".combo-box");
+                        comboBox.setCellFactory((ListView<Optional<DataSource>> unused) -> new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
+                        comboBox.setButtonCell(new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
+                        DataSource dataSource = datasourceDialog.showAndWait().orElse(Optional.empty()).orElse(null);
+                        openWithSelectedDataSources(dataSource, dataSourcesWithTooManyFiles);
+                    });
+                }
+                return null;
+            }
+        }).start();
+    }
+
+    void closeForCurrentCase() {
+        if (controller != null) {
+            if (controllerListener != null) {
+                controller.regroupDisabledProperty().removeListener(controllerListener);
+            }
+            if (groupManagerListener != null) {
+                controller.getGroupManager().getAnalyzedGroupsForCurrentGroupBy().removeListener(groupManagerListener);
+            }
+        }
     }
 
     /**
@@ -467,60 +448,61 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryController.noGroupsDlg.msg6=There are no fully analyzed groups to display:"
         + "  the current Group By setting resulted in no groups, "
         + "or no groups are fully analyzed but ingest is not running."})
-    private void checkForAnalyzedGroups() {
-        synchronized (controllerLock) {
-            GroupManager groupManager = controller.getGroupManager();
+    private void checkForAnalyzedGroupsForCurrentGroupBy() {
 
-            // if there are groups to display, then display them
-            // @@@ Need to check timing on this and make sure we have only groups for the selected DS.  Seems like rebuild can cause groups to be created for a DS that is not later selected...
-            // RJCTODO: Get Brian's TODO resolved.
-            if (isNotEmpty(groupManager.getAnalyzedGroups())) {
-                clearNotification();
-                return;
+        GroupManager groupManager = controller.getGroupManager();
+
+        /*
+         * TODO (JIRA-5219): Need to check timing on this and make sure we have
+         * only groups for the selected DS. Seems like rebuild can cause groups
+         * to be created for a DS that is not later selected...
+         */
+        if (isNotEmpty(groupManager.getAnalyzedGroupsForCurrentGroupBy())) {
+            clearNotification();
+            return;
+        }
+
+        // display a message based on if ingest is running and/or listening
+        if (IngestManager.getInstance().isIngestRunning()) {
+            if (controller.isListeningEnabled()) {
+                replaceNotification(centralStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
+                                new ProgressIndicator()));
+            } else {
+                replaceNotification(fullUIStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
             }
+            return;
+        }
 
-            // display a message based on if ingest is running and/or listening
-            if (IngestManager.getInstance().isIngestRunning()) {
+        // display a message about stuff still being in the queue
+        if (controller.getDBTasksQueueSizeProperty().get() > 0) {
+            replaceNotification(fullUIStack,
+                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
+                            new ProgressIndicator()));
+            return;
+        }
+
+        // are there are files in the DB?
+        try {
+            if (controller.getDrawablesDatabase().countAllFiles() <= 0) {
+                // there are no files in db
                 if (controller.isListeningEnabled()) {
-                    replaceNotification(centralStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                    new ProgressIndicator()));
+                    replaceNotification(fullUIStack,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
                 } else {
                     replaceNotification(fullUIStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
                 }
                 return;
             }
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.SEVERE, "Error counting files in the database.", tskCoreException);
+        }
 
-            // display a message about stuff still being in the queue
-            if (controller.getDBTasksQueueSizeProperty().get() > 0) {
-                replaceNotification(fullUIStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                                new ProgressIndicator()));
-                return;
-            }
-
-            // are there are files in the DB?
-            try {
-                if (controller.getDatabase().countAllFiles() <= 0) {
-                    // there are no files in db
-                    if (controller.isListeningEnabled()) {
-                        replaceNotification(fullUIStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
-                    } else {
-                        replaceNotification(fullUIStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
-                    }
-                    return;
-                }
-            } catch (TskCoreException tskCoreException) {
-                logger.log(Level.SEVERE, "Error counting files in the database.", tskCoreException);
-            }
-
-            if (false == groupManager.isRegrouping()) {
-                replaceNotification(centralStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
-            }
+        if (false == groupManager.isRegrouping()) {
+            replaceNotification(centralStack,
+                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
         }
     }
 
@@ -554,4 +536,37 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             setOpacity(.4);
         }
     }
+
+    /**
+     * Instances of this class are used to listen for changes to the
+     * controller's grouping enabled property. If the value of the property
+     * changes, a call to the top component's
+     * checkForAnalyzedGroupsForCurrentGroupBy method is queued for the JavaFX
+     * thread.
+     */
+    private class ControllerListener implements ChangeListener<Boolean> {
+
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+            Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy());
+        }
+
+    }
+
+    /**
+     * Instances of this class are used to listen for changes to the group
+     * manager's list of drawable groups for the user's currently selected
+     * "group by" choice. If the contents of the list change, a call to the top
+     * component's checkForAnalyzedGroupsForCurrentGroupBy method is queued for
+     * the JavaFX thread.
+     */
+    private class GroupManagerListener implements ListChangeListener<DrawableGroup> {
+
+        @Override
+        public void onChanged(Change<? extends DrawableGroup> c) {
+            Platform.runLater(() -> checkForAnalyzedGroupsForCurrentGroupBy());
+        }
+
+    }
+
 }

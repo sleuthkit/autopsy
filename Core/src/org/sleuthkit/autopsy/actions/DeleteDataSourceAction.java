@@ -30,6 +30,9 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Instances of this Action allow users to delete the specified data source.
+ */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
     private final Long selectedDataSource;
@@ -38,14 +41,13 @@ public final class DeleteDataSourceAction extends AbstractAction {
     public DeleteDataSourceAction(Long selectedDataSource) {
         super(Bundle.DeleteDataSourceAction_name_text());
         this.selectedDataSource = selectedDataSource;
-
     }
+
     @Override
     public void actionPerformed(ActionEvent event) {
         try {
             Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectedDataSource);
-            deleteDataSource(selectedDataSource);
-        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
+        } catch (NoCurrentCaseException | TskCoreException e) {
             logger.log(Level.WARNING, "Error Deleting Data source " + selectedDataSource, e);
         }
     }

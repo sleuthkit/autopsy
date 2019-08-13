@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,32 +21,34 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 
+/**
+ * Comparators of TreeItems: these are the ways the EventsTree can be sorted.
+ */
 @NbBundle.Messages({"TreeComparator.Description.displayName=Description",
     "TreeComparator.Count.displayName=Count",
     "TreeComparator.Type.displayName=Type"})
-enum TreeComparator implements Comparator<TreeItem<TimeLineEvent>> {
+enum TreeComparator implements Comparator<TreeItem<DetailViewEvent>> {
 
     Description(Bundle.TreeComparator_Description_displayName()) {
-                @Override
-        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
-                    return o1.getValue().getDescription().compareTo(o2.getValue().getDescription());
-                }
-            },
+        @Override
+        public int compare(TreeItem<DetailViewEvent> item1, TreeItem<DetailViewEvent> item2) {
+            return item1.getValue().getDescription().compareTo(item2.getValue().getDescription());
+        }
+    },
     Count(Bundle.TreeComparator_Count_displayName()) {
-                @Override
-        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
-                    return Long.compare(o2.getValue().getSize(), o1.getValue().getSize());
-                }
-            },
+        @Override
+        public int compare(TreeItem<DetailViewEvent> item1, TreeItem<DetailViewEvent> item2) {
+            return Long.compare(item2.getValue().getSize(), item1.getValue().getSize());
+        }
+    },
     Type(Bundle.TreeComparator_Type_displayName()) {
-                @Override
-        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
-                    return EventType.getComparator().compare(o1.getValue().getEventType(), o2.getValue().getEventType());
-                }
-            };
+        @Override
+        public int compare(TreeItem<DetailViewEvent> item1, TreeItem<DetailViewEvent> item2) {
+            return item1.getValue().getEventType().compareTo(item2.getValue().getEventType());
+        }
+    };
 
     private final String displayName;
 

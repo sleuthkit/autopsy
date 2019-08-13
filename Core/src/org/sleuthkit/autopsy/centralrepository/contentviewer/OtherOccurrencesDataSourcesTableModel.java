@@ -21,8 +21,13 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Model for cells in the data sources section of the other occurrences data
@@ -31,6 +36,7 @@ import org.openide.util.NbBundle;
 final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(OtherOccurrencesDataSourcesTableModel.class.getName());
     private final Set<DataSourceColumnItem> dataSourceSet = new LinkedHashSet<>();
 
     /**
@@ -87,6 +93,25 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
     }
 
     /**
+     * Get the case uuid of the case the data source shown at the specified row
+     * index exists in
+     *
+     * @param rowIdx the row index of the data source you want the case uuid for
+     *
+     * @return the case uuid of the case the specified data source exists in or
+     *         an empty string if a device id could not be retrieved
+     */
+    String getCaseUUIDForRow(int rowIdx) {
+        //if anything would prevent this from working we will return an empty string 
+        if (dataSourceSet.isEmpty() || rowIdx < 0
+                || rowIdx >= dataSourceSet.size()
+                || !(dataSourceSet.toArray()[rowIdx] instanceof DataSourceColumnItem)) {
+            return "";
+        }
+        return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getCaseUUID();
+    }
+
+    /**
      * Get the case name of the data source shown at the specified row index
      *
      * @param rowIdx the row index of the data source you want the case name for
@@ -115,7 +140,21 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
      * @param newNodeData data to add to the table
      */
     void addNodeData(OtherOccurrenceNodeData newNodeData) {
-        dataSourceSet.add(new DataSourceColumnItem((OtherOccurrenceNodeInstanceData) newNodeData));
+        OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) newNodeData;
+        String caseUUID;
+        try {
+            caseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
+        } catch (EamDbException ignored) {
+            //non central repo nodeData won't have a correlation case
+            try {
+                caseUUID = Case.getCurrentCaseThrows().getName();
+                //place holder value will be used since correlation attribute was unavailble
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get current case", ex);
+                caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
+            }
+        }
+        dataSourceSet.add(new DataSourceColumnItem(nodeData.getCaseName(), nodeData.getDeviceID(), nodeData.getDataSourceName(), caseUUID));
         fireTableDataChanged();
     }
 
@@ -136,30 +175,23 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
         private final String caseName;
         private final String deviceId;
         private final String dataSourceName;
-
-        /**
-         * Create a DataSourceColumnItem given an
-         * OtherOccurrenceNodeInstanceData object
-         *
-         * @param nodeData the OtherOccurrenceNodeInstanceData which contains
-         *                 the data source information
-         */
-        private DataSourceColumnItem(OtherOccurrenceNodeInstanceData nodeData) {
-            this(nodeData.getCaseName(), nodeData.getDeviceID(), nodeData.getDataSourceName());
-        }
+        private final String caseUUID;
 
         /**
          * Create a DataSourceColumnItem given a case name, device id, and data
          * source name
          *
          * @param caseName       the name of the case the data source exists in
-         * @param deviceId       the name of the device id for the data source
+         * @param deviceId       the device id for the data source
          * @param dataSourceName the name of the data source
+         * @param caseUUID       the case uuid for the case the data source
+         *                       exists in
          */
-        private DataSourceColumnItem(String caseName, String deviceId, String dataSourceName) {
+        private DataSourceColumnItem(String caseName, String deviceId, String dataSourceName, String caseUUID) {
             this.caseName = caseName;
             this.deviceId = deviceId;
             this.dataSourceName = dataSourceName;
+            this.caseUUID = caseUUID;
         }
 
         /**
@@ -189,17 +221,27 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
             return caseName;
         }
 
+        /**
+         * Get the case uuid of the case the data source exists in
+         *
+         * @return the case UUID
+         */
+        private String getCaseUUID() {
+            return caseUUID;
+        }
+
         @Override
         public boolean equals(Object other) {
             return other instanceof DataSourceColumnItem
                     && caseName.equals(((DataSourceColumnItem) other).getCaseName())
                     && dataSourceName.equals(((DataSourceColumnItem) other).getDataSourceName())
-                    && deviceId.equals(((DataSourceColumnItem) other).getDeviceId());
+                    && deviceId.equals(((DataSourceColumnItem) other).getDeviceId())
+                    && caseUUID.equals(((DataSourceColumnItem) other).getCaseUUID());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(caseName, deviceId, dataSourceName);
+            return Objects.hash(caseName, deviceId, dataSourceName, caseUUID);
         }
     }
 

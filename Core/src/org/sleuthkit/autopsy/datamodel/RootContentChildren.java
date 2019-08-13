@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,14 +20,22 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collection;
 import java.util.Collections;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
  * Children implementation for the root node of a ContentNode tree. Accepts a
  * list of root Content objects for the tree.
  */
-public class RootContentChildren extends AbstractContentChildren<Object> {
+public class RootContentChildren extends Children.Keys<Object> {
 
     private final Collection<? extends Object> contentKeys;
+    private final CreateAutopsyNodeVisitor createAutopsyNodeVisitor = new CreateAutopsyNodeVisitor();
+    private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
 
     /**
      * @param contentKeys root Content objects for the Node tree
@@ -55,5 +63,121 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
      */
     public void refreshContentKeys() {
         contentKeys.forEach(this::refreshKey);
+    }
+
+    @Override
+    protected Node[] createNodes(Object key) {
+        if (key instanceof AutopsyVisitableItem) {
+            return new Node[] {((AutopsyVisitableItem)key).accept(createAutopsyNodeVisitor)};
+        } else {
+            return new Node[] {((SleuthkitVisitableItem)key).accept(createSleuthkitNodeVisitor)};
+        }
+    }
+    
+    /**
+     * Gets a DisplayableItemNode for use as a subtree root node for the Autopsy
+     * tree view from each type of AutopsyVisitableItem visited. There are
+     * AutopsyVisitableItems for the Data Sources, Views, Results, and Reports
+     * subtrees, and for the subtrees of Results (e.g., Extracted Content, Hash
+     * Set Hits, etc.).
+     */
+    static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
+
+        @Override
+        public ExtractedContent.RootNode visit(ExtractedContent ec) {
+            return ec.new RootNode(ec.getSleuthkitCase());
+        }
+
+        @Override
+        public AbstractNode visit(FileTypesByExtension sf) {
+            return sf.new FileTypesByExtNode(sf.getSleuthkitCase(), null);
+        }
+
+        @Override
+        public AbstractNode visit(RecentFiles rf) {
+            return new RecentFilesNode(rf.getSleuthkitCase());
+        }
+
+        @Override
+        public AbstractNode visit(DeletedContent dc) {
+            return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
+        }
+
+        @Override
+        public AbstractNode visit(FileSize dc) {
+            return new FileSize.FileSizeRootNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
+        }
+
+        @Override
+        public AbstractNode visit(KeywordHits kh) {
+            return kh.new RootNode();
+        }
+
+        @Override
+        public AbstractNode visit(HashsetHits hh) {
+            return hh.new RootNode();
+        }
+
+        @Override
+        public AbstractNode visit(InterestingHits ih) {
+            return ih.new RootNode();
+        }
+
+        @Override
+        public AbstractNode visit(EmailExtracted ee) {
+            return ee.new RootNode();
+        }
+
+        @Override
+        public AbstractNode visit(Tags tagsNodeKey) {
+            return tagsNodeKey.new RootNode(tagsNodeKey.filteringDataSourceObjId());
+        }
+
+        @Override
+        public AbstractNode visit(DataSources i) {
+            return new DataSourcesNode(i.filteringDataSourceObjId());
+        }
+
+        @Override
+        public AbstractNode visit(DataSourceGrouping datasourceGrouping) {
+            return new DataSourceGroupingNode(datasourceGrouping.getDataSource());
+        }
+        
+        @Override
+        public AbstractNode visit(Views v) {
+            return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
+        }
+
+        @Override
+        public AbstractNode visit(Results results) {
+            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId() );
+        }
+
+        @Override
+        public AbstractNode visit(FileTypes ft) {
+            return ft.new FileTypesNode();
+        }
+
+        @Override
+        public AbstractNode visit(Reports reportsItem) {
+            return new Reports.ReportsListNode();
+        }
+
+        @Override
+        public AbstractNode visit(Accounts accountsItem) {
+            return accountsItem.new AccountsRootNode();
+        }
+
+        @Override
+        protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(),
+                            "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
+        }
+
+        @Override
+        public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
+            return ftByMimeTypeItem.new ByMimeTypeNode();
+        }
     }
 }

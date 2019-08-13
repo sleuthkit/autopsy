@@ -482,8 +482,8 @@
                 <binary-origin>release\modules\ext\jmatio-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.6.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-parsers-1.20.jar</runtime-relative-path>
@@ -682,8 +682,8 @@
                 <binary-origin>release\modules\ext\dec-0.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
+                <runtime-relative-path>ext/Rejistry-1.1-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/Rejistry-1.1-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dd-plist-1.20.jar</runtime-relative-path>
@@ -700,6 +700,86 @@
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\vorbis-java-tika-0.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-context-1.19.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-context-1.19.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gax-grpc-1.44.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gax-grpc-1.44.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/opencensus-api-0.19.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencensus-api-0.19.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gax-httpjson-0.61.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gax-httpjson-0.61.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/api-common-1.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/api-common-1.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-auth-library-credentials-0.15.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-auth-library-credentials-0.15.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-api-client-1.27.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-api-client-1.27.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/opencensus-contrib-http-util-0.19.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencensus-contrib-http-util-0.19.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-auth-library-oauth2-http-0.15.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-auth-library-oauth2-http-0.15.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-http-client-appengine-1.29.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-http-client-appengine-1.29.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-http-client-1.29.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-http-client-1.29.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-core-1.70.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-core-1.70.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-core-http-1.70.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-core-http-1.70.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-http-client-jackson2-1.29.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-http-client-jackson2-1.29.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/threetenbp-1.3.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/threetenbp-1.3.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-translate-1.70.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-translate-1.70.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gax-1.44.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/okhttp-2.7.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/okhttp-2.7.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/okio-1.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/okio-1.6.0.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

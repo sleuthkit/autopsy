@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -37,9 +36,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -60,7 +57,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public class DeletedContent implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
-    private final long datasourceObjId;
+    private final long filteringDSObjId;    // 0 if not filtering/grouping by data source
 
     @NbBundle.Messages({"DeletedContent.fsDelFilter.text=File System",
         "DeletedContent.allDelFilter.text=All"})
@@ -106,11 +103,11 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public DeletedContent(SleuthkitCase skCase, long dsObjId) {
         this.skCase = skCase;
-        this.datasourceObjId = dsObjId;
+        this.filteringDSObjId = dsObjId;
     }
 
     long filteringDataSourceObjId() {
-        return this.datasourceObjId;
+        return this.filteringDSObjId;
     }
 
     @Override
@@ -358,7 +355,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
         }
 
-        static class DeletedContentChildren extends ChildFactory.Detachable<AbstractFile> {
+        static class DeletedContentChildren extends BaseChildFactory<AbstractFile> {
 
             private final SleuthkitCase skCase;
             private final DeletedContent.DeletedContentFilter filter;
@@ -368,6 +365,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             private final long datasourceObjId;
 
             DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase, Observable o, long datasourceObjId) {
+                super(filter.getName(), new ViewsKnownAndSlackFilter<>());
                 this.skCase = skCase;
                 this.filter = filter;
                 this.notifier = o;
@@ -375,6 +373,11 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             private final Observer observer = new DeletedContentChildrenObserver();
+
+            @Override
+            protected List<AbstractFile> makeKeys() {
+                return runFsQuery();
+            }
 
             // Cause refresh of children if there are changes
             private class DeletedContentChildrenObserver implements Observer {
@@ -386,23 +389,17 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
-            protected void addNotify() {
+            protected void onAdd() {
                 if (notifier != null) {
                     notifier.addObserver(observer);
                 }
             }
 
             @Override
-            protected void removeNotify() {
+            protected void onRemove() {
                 if (notifier != null) {
                     notifier.deleteObserver(observer);
                 }
-            }
-
-            @Override
-            protected boolean createKeys(List<AbstractFile> list) {
-                list.addAll(runFsQuery());
-                return true;
             }
 
             static private String makeQuery(DeletedContent.DeletedContentFilter filter, long filteringDSObjId) {
@@ -440,12 +437,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 }
 
-                if (UserPreferences.hideKnownFilesInViewsTree()) {
-                    query += " AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue() //NON-NLS
-                            + " OR known IS NULL)"; //NON-NLS
-                }
-
-                if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                if (filteringDSObjId > 0) {
                     query += " AND data_source_obj_id = " + filteringDSObjId;
                 }
                 return query;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -42,9 +41,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -66,7 +63,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
     private SleuthkitCase skCase;
     private final HashsetResults hashsetResults;
-    private final long datasourceObjId;
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
     
     
     /**
@@ -88,7 +85,7 @@ public class HashsetHits implements AutopsyVisitableItem {
      */ 
     public HashsetHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
-        this.datasourceObjId = objId;
+        this.filteringDSObjId = objId;
         hashsetResults = new HashsetResults();
     }
 
@@ -143,8 +140,8 @@ public class HashsetHits implements AutopsyVisitableItem {
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            if (filteringDSObjId > 0) {
+                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
             
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
@@ -378,60 +375,53 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Creates the nodes for the hits in a given set.
      */
-    private class HitFactory extends ChildFactory.Detachable<Long> implements Observer {
+    private class HitFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
 
         private String hashsetName;
         private Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
  
         private HitFactory(String hashsetName) {
-            super();
+            super(hashsetName);
             this.hashsetName = hashsetName;
         }
 
         @Override
-        protected void addNotify() {
+        protected void onAdd() {
             hashsetResults.addObserver(this);
         }
 
         @Override
-        protected void removeNotify() {
+        protected void onRemove() {
             hashsetResults.deleteObserver(this);
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {
- 
-            if (skCase == null) {
-               return true;
-            }
-            
-            hashsetResults.getArtifactIds(hashsetName).forEach((id) -> {
-                try {
-                    if (!artifactHits.containsKey(id)) {
-                        BlackboardArtifact art = skCase.getBlackboardArtifact(id);
-                        artifactHits.put(id, art);
-                    }
-                } catch (TskException ex) {
-                    logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
-                }
-            });
-
-            // Adding all keys at once is more efficient than adding one at a 
-            // time because Netbeans triggers internal processing each time an
-            // element is added to the list.
-            list.addAll(artifactHits.keySet());
-            return true;
-        }
-
-        @Override
-        protected Node createNodeForKey(Long id) {     
-            BlackboardArtifact art = artifactHits.get(id);
-            return (null == art) ? null : new BlackboardArtifactNode(art);
+        protected Node createNodeForKey(BlackboardArtifact key) {     
+            return new BlackboardArtifactNode(key);
         }
 
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);
+        }
+
+        @Override
+        protected List<BlackboardArtifact> makeKeys() {
+            if (skCase != null) {
+
+                hashsetResults.getArtifactIds(hashsetName).forEach((id) -> {
+                    try {
+                        if (!artifactHits.containsKey(id)) {
+                            BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                            artifactHits.put(id, art);
+                        }
+                    } catch (TskException ex) {
+                        logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
+                    }
+                });
+                return new ArrayList<>(artifactHits.values());
+            }
+            return Collections.emptyList();
         }
     }
 }

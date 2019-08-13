@@ -221,7 +221,8 @@ public class StringExtract {
             StringExtractResult resWin = null;
             if (enableUTF8 && resUTF16 != null) {
                 resWin = runUTF16 && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
-            } else if (enableUTF16) {
+            } else if (runUTF16) {
+                //Only let resUTF16 "win" if it was actually run.
                 resWin = resUTF16;
             } else if (enableUTF8) {
                 resWin = resUTF8;

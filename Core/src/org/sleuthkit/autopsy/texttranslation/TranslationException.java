@@ -22,13 +22,8 @@ package org.sleuthkit.autopsy.texttranslation;
  * Provides a system exception for Text Translation errors
  */
 public class TranslationException extends Exception {
-    
-    /**
-     * Constructs a new exception with null as its message.
-     */
-    public TranslationException() {
-        super();
-    }
+
+    private static final long serialVersionUID = 1L;
         
     /**
      * Constructs a new exception with the specified message.

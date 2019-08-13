@@ -198,6 +198,7 @@ final class HtmlTextExtractor implements TextExtractor {
             renderer.setIncludeHyperlinkURLs(false);
             renderer.setDecorateFontStyles(false);
             renderer.setIncludeAlternateText(false);
+            renderer.setMaxLineLength(0); // don't force wrapping
             return new StringReader(renderer.toString());
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error extracting HTML from content.", ex);

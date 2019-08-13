@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,40 +18,77 @@
  */
 package org.sleuthkit.autopsy.corelibs;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.opencv.core.Core;
 
+/**
+ * A utility class that loads the core OpenCV library and allows clients to
+ * verify that the library was loaded.
+ */
 public final class OpenCvLoader {
 
-    private static final boolean OPEN_CV_LOADED;
-    private static UnsatisfiedLinkError exception = null;
+    private static final Logger logger = Logger.getLogger(OpenCvLoader.class.getName());
+    private static boolean openCvLoaded;
+    private static UnsatisfiedLinkError exception = null; // Deprecated
 
     static {
-        boolean tempOpenCvLoaded = false;
+        openCvLoaded = false;
         try {
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            tempOpenCvLoaded = true;
-        } catch (UnsatisfiedLinkError e) {
-            tempOpenCvLoaded = false;
-            exception = e;  //save relevant error for throwing at appropriate time
+            openCvLoaded = true;
+        } catch (UnsatisfiedLinkError ex) {
+            logger.log(Level.WARNING, "Failed to load core OpenCV library", ex);
+            /*
+             * Save exception to rethrow later (deprecated).
+             */
+            exception = ex;
+        } catch (Exception ex) {
+            /*
+             * Exception firewall to ensure that runtime exceptions do not cause
+             * the loading of this class by the Java class loader to fail.
+             */
+            logger.log(Level.WARNING, "Failed to load core OpenCV library", ex);
         }
-        OPEN_CV_LOADED = tempOpenCvLoaded;
+
     }
 
     /**
-     * Return whether or not the OpenCV library has been loaded.
+     * Indicates whether or not the core OpenCV library has been loaded.
      *
-     * @return - true if the opencv library is loaded or false if it is not
+     * @return True or false.
      */
+    public static boolean hasOpenCvLoaded() {
+        return openCvLoaded;
+    }
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private OpenCvLoader() {
+    }
+
+    /**
+     * Indicates whether or not the core OpenCV library has been loaded.
+     *
+     * @return True or false.
+     *
+     * @throws UnsatisfiedLinkError if this error was thrown during the loading
+     *                              of the core OpenCV library during static
+     *                              initialization of this class.
+     *
+     * @deprecated Use hasOpenCvLoaded instead.
+     */
+    @Deprecated
     public static boolean isOpenCvLoaded() throws UnsatisfiedLinkError {
-        if (!OPEN_CV_LOADED) {
-             //exception should never be null if the open cv isn't loaded but just in case
+        if (!openCvLoaded) {
             if (exception != null) {
                 throw exception;
             } else {
                 throw new UnsatisfiedLinkError("OpenCV native library failed to load");
             }
-
         }
-        return OPEN_CV_LOADED;
+        return openCvLoaded;
     }
+
 }

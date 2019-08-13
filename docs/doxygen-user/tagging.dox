@@ -1,6 +1,6 @@
 /*! \page tagging_page Tagging
 
-Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later. Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable.
+Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later or include it in a \ref reporting_page "report". Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable.
 
 \section tagging_items Tagging items
 
@@ -40,6 +40,48 @@ Items may have more than one tag.
 Tagged results are shown in the "Results" portion of the tree under "Tags". Tagged items are also highlighted in the Results Viewer.
 
 \image html tagging-4.PNG
+
+\section image_tagging Image tagging
+
+When you have an image selected in the \ref result_viewer_page, you'll see a "Tags Menu" option in the upper right of the "Application" \ref content_viewer_page "Content Viewer". This allows you to tag only a selected area of the image. Image tagging is currently only enabled on Windows.
+
+\image html tagging_image_menu.png
+
+\subsection image_tagging_creation Creating an image tag
+
+To start, select the "Create" option on the tags menu. You may then left-click and drag on the image to create a rectangle (which will be your 'tag'). When you release the mouse, you'll be able to apply a tag name (and optionally a comment) to your image tag.
+
+\image html tagging_image_select.png
+
+You can add a new tag name using the "New Tag" button.
+
+\image html tagging_image_create_tag.png
+
+Once you choose the tag name you'll see a red outline in the image around the section you chose.
+
+\image html tagging_image_one_tag.png
+
+You can create multiple tags in the same image.
+
+\image html tagging_image_multiple.png
+
+If you want to temporarily hide the tag outlines, select "Hide" from the tags menu. You can then select "Show" to see them again. The outlines will also reappear if you switch to a different item in the Result Viewer and come back.
+
+\subsection image_tagging_editing Selecting, resizing and deleting an image tag
+
+In order to resize or delete an image tag, you will need to first select it. You can do this by left clicking anywhere inside (or on) the image tag. Selected tags can be resized by dragging any of the 8 handles that appear. The resized dimensions will automatically be saved when the mouse is released.
+
+\image html tagging_image_edit_tag.png
+
+Selecting a tag will also enable the "Delete" option in the tags menu. Deleting a tag is an irreversible operation, so please use caution.
+
+\subsection image_tagging_report Exporting and reporting on image tags
+
+If you want to save the image with the tag outline, select "Export" from the tags menu. The result will always be a PNG file. Note that using the "Extract File(s)" option from the right-click menu in the Result Viewer will export the original image.
+
+You'll also be able to see the image tags in an \ref report_html "HTML report".
+
+\image html tagging_image_report.png
 
 \section managing_tags Managing tags
 

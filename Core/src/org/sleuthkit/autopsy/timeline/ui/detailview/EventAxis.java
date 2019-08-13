@@ -22,15 +22,15 @@ import java.util.Collections;
 import java.util.List;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 
 /**
  * No-Op axis that doesn't do anything usefull but is necessary to pass
  * AggregateEvent as the second member of {@link XYChart.Data} objects
  */
-class EventAxis<Type extends TimeLineEvent> extends Axis<Type> {
+class EventAxis<Type extends DetailViewEvent> extends Axis<Type> {
 
-     EventAxis(String label) {
+    EventAxis(String label) {
         setLabel(label);
     }
 

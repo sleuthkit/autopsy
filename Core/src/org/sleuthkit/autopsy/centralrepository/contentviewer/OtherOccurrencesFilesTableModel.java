@@ -22,9 +22,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Model for cells in the files section of the other occurrences data content
@@ -33,6 +38,7 @@ import org.apache.commons.io.FilenameUtils;
 public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(OtherOccurrencesFilesTableModel.class.getName());
     private final List<String> nodeKeys = new ArrayList<>();
     private final Map<String, List<OtherOccurrenceNodeData>> nodeMap = new HashMap<>();
 
@@ -114,7 +120,20 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     }
 
     private String createNodeKey(OtherOccurrenceNodeInstanceData nodeData) {
-        return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath();
+        String caseUUID;
+        try {
+            caseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
+        } catch (EamDbException ignored) {
+            //non central repo nodeData won't have a correlation case
+            try {
+                caseUUID = Case.getCurrentCaseThrows().getName();
+                //place holder value will be used since correlation attribute was unavailble
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get current case", ex);
+                caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
+            }
+        }
+        return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath() + caseUUID;
     }
 
     /**

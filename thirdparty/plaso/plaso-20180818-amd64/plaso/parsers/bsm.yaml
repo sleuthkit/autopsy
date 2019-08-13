@@ -1,0 +1,628 @@
+name: bsm
+type: format
+description: Basic Security Module (BSM) event auditing file format
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/Basic%20Security%20Module%20(BSM)%20event%20auditing%20file%20format.asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: char
+type: character
+attributes:
+  size: 1
+  units: bytes
+---
+name: uint8
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: int32
+type: integer
+attributes:
+  format: signed
+  size: 4
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: int64
+type: integer
+attributes:
+  format: signed
+  size: 8
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: cstring
+type: string
+encoding: ascii
+element_data_type: char
+elements_terminator: "\x00"
+---
+name: bsm_token_data_arg32
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: argument_index
+  data_type: uint8
+- name: argument_name
+  data_type: uint32
+- name: argument_value_size
+  data_type: uint16
+- name: argument_value
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: bsm_token_data_arg32.argument_value_size
+---
+name: bsm_token_data_arg64
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: argument_index
+  data_type: uint8
+- name: argument_name
+  data_type: uint64
+- name: argument_value_size
+  data_type: uint16
+- name: argument_value
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: bsm_token_data_arg64.argument_value_size
+---
+name: bsm_token_data_attr32
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: unknown1
+  data_type: uint16
+- name: file_mode
+  data_type: uint16
+- name: user_identifier
+  data_type: int32
+- name: group_identifier
+  data_type: int32
+- name: file_system_identifier
+  data_type: uint32
+- name: file_identifier
+  data_type: uint64
+- name: device
+  data_type: uint32
+---
+name: bsm_token_data_attr64
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: unknown1
+  data_type: uint16
+- name: file_mode
+  data_type: uint16
+- name: user_identifier
+  data_type: int32
+- name: group_identifier
+  data_type: int32
+- name: file_system_identifier
+  data_type: uint32
+- name: file_identifier
+  data_type: uint64
+- name: device
+  data_type: uint64
+---
+name: bsm_token_data_data
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: data_format
+  data_type: uint8
+- name: element_data_type
+  data_type: uint8
+- name: number_of_elements
+  data_type: uint8
+- name: data
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_data.number_of_elements
+---
+name: bsm_token_data_exec_args
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: number_of_strings
+  data_type: uint32
+- name: strings
+  type: sequence
+  element_data_type: cstring
+  number_of_elements: bsm_token_data_exec_args.number_of_strings
+---
+name: bsm_token_data_exit
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: status
+  data_type: uint32
+- name: return_value
+  data_type: int32
+---
+name: bsm_token_data_groups
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: number_of_groups
+  data_type: uint32
+- name: groups
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: bsm_token_data_groups.number_of_groups
+---
+name: bsm_token_data_header32
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: record_size
+  data_type: uint32
+- name: format_version
+  data_type: uint8
+- name: event_type
+  data_type: uint16
+- name: modifier
+  data_type: uint16
+- name: timestamp
+  data_type: uint32
+- name: microseconds
+  data_type: uint32
+---
+name: bsm_token_data_header32_ex
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: record_size
+  data_type: uint32
+- name: format_version
+  data_type: uint8
+- name: event_type
+  data_type: uint16
+- name: modifier
+  data_type: uint16
+- name: net_type
+  data_type: uint32
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_header32_ex.net_type
+- name: timestamp
+  data_type: uint32
+- name: microseconds
+  data_type: uint32
+---
+name: bsm_token_data_header64
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: record_size
+  data_type: uint32
+- name: format_version
+  data_type: uint8
+- name: event_type
+  data_type: uint16
+- name: modifier
+  data_type: uint16
+- name: timestamp
+  data_type: uint64
+- name: microseconds
+  data_type: uint64
+---
+name: bsm_token_data_header64_ex
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: record_size
+  data_type: uint32
+- name: format_version
+  data_type: uint8
+- name: event_type
+  data_type: uint16
+- name: modifier
+  data_type: uint16
+- name: net_type
+  data_type: uint32
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_header64_ex.net_type
+- name: timestamp
+  data_type: uint64
+- name: microseconds
+  data_type: uint64
+---
+name: bsm_token_data_in_addr
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: 4
+---
+name: bsm_token_data_in_addr_ex
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: net_type
+  data_type: uint32
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: 16
+---
+name: bsm_token_data_ip
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: data
+  type: sequence
+  element_data_type: byte
+  elements_data_size: 20
+---
+name: bsm_token_data_ipc
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: object_type
+  data_type: uint8
+- name: object_identifier
+  data_type: uint32
+---
+name: bsm_token_data_ipc_perm
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: user_identifier
+  data_type: uint32
+- name: group_identifier
+  data_type: uint32
+- name: creator_user_identifier
+  data_type: uint32
+- name: creator_group_identifier
+  data_type: uint32
+- name: unknown1
+  data_type: uint16
+- name: access_mode
+  data_type: uint16
+- name: unknown2
+  data_type: uint16
+- name: slot_sequence_number
+  data_type: uint16
+- name: unknown3
+  data_type: uint16
+- name: key
+  data_type: uint16
+---
+name: bsm_token_data_iport
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: port_number
+  data_type: uint16
+---
+name: bsm_token_data_opaque
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: data_size
+  data_type: uint16
+- name: data
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_opaque.data_size
+---
+name: bsm_token_data_other_file32
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: timestamp
+  data_type: uint32
+- name: microseconds
+  data_type: uint32
+- name: name_size
+  data_type: uint16
+- name: name
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: bsm_token_data_other_file32.name_size
+---
+name: bsm_token_data_path
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: path_size
+  data_type: uint16
+- name: path
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: bsm_token_data_path.path_size
+---
+name: bsm_token_data_return32
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: status
+  data_type: uint8
+- name: return_value
+  data_type: int32
+---
+name: bsm_token_data_return64
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: status
+  data_type: uint8
+- name: return_value
+  data_type: int64
+---
+name: bsm_token_data_seq
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: sequence_number
+  data_type: uint32
+---
+name: bsm_token_data_socket_ex
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: socket_domain
+  data_type: uint16
+- name: socket_type
+  data_type: uint16
+- name: net_type
+  data_type: uint16
+- name: local_port
+  data_type: uint16
+- name: local_ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_socket_ex.net_type
+- name: remote_port
+  data_type: uint16
+- name: remote_ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_socket_ex.net_type
+---
+name: bsm_token_data_sockinet32
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: socket_family
+  data_type: uint16
+- name: local_port
+  data_type: uint16
+- name: local_ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: 4
+---
+name: bsm_token_data_sockinet64
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: socket_family
+  data_type: uint16
+- name: local_port
+  data_type: uint16
+- name: local_ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: 16
+---
+name: bsm_token_data_sockunix
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: socket_family
+  data_type: uint16
+- name: socket_path
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_terminator: "\x00"
+---
+name: bsm_token_data_subject32
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: audit_user_identifier
+  data_type: int32
+- name: effective_user_identifier
+  data_type: int32
+- name: effective_group_identifier
+  data_type: int32
+- name: real_user_identifier
+  data_type: int32
+- name: real_group_identifier
+  data_type: int32
+- name: process_identifier
+  data_type: uint32
+- name: session_identifier
+  data_type: uint32
+- name: terminal_port
+  data_type: uint32
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: 4
+---
+name: bsm_token_data_subject32_ex
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: audit_user_identifier
+  data_type: int32
+- name: effective_user_identifier
+  data_type: int32
+- name: effective_group_identifier
+  data_type: int32
+- name: real_user_identifier
+  data_type: int32
+- name: real_group_identifier
+  data_type: int32
+- name: process_identifier
+  data_type: uint32
+- name: session_identifier
+  data_type: uint32
+- name: terminal_port
+  data_type: uint32
+- name: net_type
+  data_type: uint32
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_subject32_ex.net_type
+---
+name: bsm_token_data_subject64
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: audit_user_identifier
+  data_type: int32
+- name: effective_user_identifier
+  data_type: int32
+- name: effective_group_identifier
+  data_type: int32
+- name: real_user_identifier
+  data_type: int32
+- name: real_group_identifier
+  data_type: int32
+- name: process_identifier
+  data_type: uint32
+- name: session_identifier
+  data_type: uint32
+- name: terminal_port
+  data_type: uint64
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: 4
+---
+name: bsm_token_data_subject64_ex
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: audit_user_identifier
+  data_type: int32
+- name: effective_user_identifier
+  data_type: int32
+- name: effective_group_identifier
+  data_type: int32
+- name: real_user_identifier
+  data_type: int32
+- name: real_group_identifier
+  data_type: int32
+- name: process_identifier
+  data_type: uint32
+- name: session_identifier
+  data_type: uint32
+- name: terminal_port
+  data_type: uint64
+- name: net_type
+  data_type: uint32
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  elements_data_size: bsm_token_data_subject64_ex.net_type
+---
+name: bsm_token_data_text
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: text_size
+  data_type: uint16
+- name: text
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: bsm_token_data_text.text_size
+---
+name: bsm_token_data_trailer
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: signature
+  data_type: uint16
+- name: record_size
+  data_type: uint32
+---
+name: bsm_token_data_zonename
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: name_size
+  data_type: uint16
+- name: name
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: bsm_token_data_zonename.name_size

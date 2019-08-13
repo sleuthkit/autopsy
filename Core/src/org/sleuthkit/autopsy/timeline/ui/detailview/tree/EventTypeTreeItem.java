@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * abstract EventTreeItem for event types
@@ -31,7 +31,7 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
     /**
      * The event type for this tree item.
      */
-    private final EventType eventType;
+    private final TimelineEventType eventType;
 
     /**
      * Constructor
@@ -40,19 +40,19 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    EventTypeTreeItem(EventType eventType, Comparator<TreeItem<TimeLineEvent>> comparator) {
+    EventTypeTreeItem(TimelineEventType eventType, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(comparator);
         this.eventType = eventType;
     }
 
     @Override
-    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+    void sort(Comparator<TreeItem<DetailViewEvent>> comp, Boolean recursive) {
         setComparator(comp);
         if (recursive) {
             //sort childrens children
             getChildren().stream()
                     .map(EventsTreeItem.class::cast)
-                    .forEach(ti -> ti.sort(comp, true));
+                    .forEach(treeItem -> treeItem.sort(comp, true));
         }
     }
 
@@ -62,7 +62,7 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
     }
 
     @Override
-    EventType getEventType() {
+    TimelineEventType getEventType() {
         return eventType;
     }
 }
