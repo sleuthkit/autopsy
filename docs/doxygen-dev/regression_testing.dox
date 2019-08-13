@@ -96,38 +96,38 @@ Here is a complete config file template:
 
 \subsection tag_def Tag Definitions
 With our template above, let’s break down what some of these tags mean:
-    - <userCaseType>
-            - The value of this tag specifies the type of case that should be produced during the regression test. This may be significant since multi-user and single-user cases use different databases. Specify this value as “Single-user” to create only single user cases, “Multi-user” to create only multi-user cases, or “Both-user” to create both for each <image>. “Both-user” does two passes over all <image> tags. The first will be run as “Single-user” and the second will be run as “Multi-user”. Each <image> gets its own case.
-    - <build>
+    - \<userCaseType\>
+            - The value of this tag specifies the type of case that should be produced during the regression test. This may be significant since multi-user and single-user cases use different databases. Specify this value as “Single-user” to create only single user cases, “Multi-user” to create only multi-user cases, or “Both-user” to create both for each \<image\>. “Both-user” does two passes over all \<image\> tags. The first will be run as “Single-user” and the second will be run as “Multi-user”. Each \<image\> gets its own case.
+    - \<build\>
             - This specifies the path to the Autopsy/Testing folder. This directory has code that will control the Autopsy UI during ingest. You can leave this path as relative, since the regression.py file already lives in the autopsy repository.
-    - <image> 
+    - \<image\> 
             - The value of this tag is the path to the image that will be ingested. A new case will be created for each one. You may have any number of image tags, but at least one.
-    - <singleUser_golddir>
-            - The value of this tag specifies the path to the directory that contains single user (See <userCaseType>) gold standards for each <image> tag. This will also be the place that new single user gold standards will be saved when run in rebuild mode (-r).
-    - <singleUser_outdir>
-            - The value of this tag will be the location on disk that single user case output (See <userCaseType>) will be stored. Each image will create a case folder in this directory.
-    - <timing>
+    - \<singleUser_golddir\>
+            - The value of this tag specifies the path to the directory that contains single user (See \<userCaseType\>) gold standards for each \<image\> tag. This will also be the place that new single user gold standards will be saved when run in rebuild mode (-r).
+    - \<singleUser_outdir\>
+            - The value of this tag will be the location on disk that single user case output (See \<userCaseType\>) will be stored. Each image will create a case folder in this directory.
+    - \<timing\>
             - The value of this tag indicates that ingest time should be considered a test metric.
-    - <multiUser_golddir>
-            - The value of this tag specifies the path to the directory that contains multi user (see <userCaseType>) gold standards for each <image> tag. This will also be the place that new multi user gold standards will be saved when run in rebuild mode (-r).
-    - <multiUser_outdir>
-            - The value of this tag will be the location on disk that multi user case output (See <userCaseType>) will be stored. Each image will create a case folder in this directory. It is highly recommended that this folder be shared and the value be a UNC path.
-    - <dbHost>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the host name of the machine running the PostgreSQL database that Autopsy will use during ingest.
-    - <dbPort>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the port number that the PostgreSQL database is listening on at <dbHost>.
-    - <dbUserName>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag represents the database user Autopsy will act as when adding records to the case database on <dbHost> and <dbPort>.
-    - <dbPassword>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag represents the password to the <dbUserName> that Autopsy will act as when adding records to the case database on <dbHost> and <dbPort>.
-    - <solrHost>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the host name of the Solr service. The solr service is needed when running keyword search.
-    - <solrPort>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the port number Solr is listening on at <solrHost>.
-    - <messageServiceHost>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the host name of the ActiveMQ service that Autopsy will use for message brokerage between clients.
-    - <messageServicePort>
-            - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the port number that the ActiveMQ service is listening on at <messageServiceHost>.
+    - \<multiUser_golddir\>
+            - The value of this tag specifies the path to the directory that contains multi user (see \<userCaseType\>) gold standards for each \<image\> tag. This will also be the place that new multi user gold standards will be saved when run in rebuild mode (-r).
+    - \<multiUser_outdir\>
+            - The value of this tag will be the location on disk that multi user case output (See \<userCaseType\>) will be stored. Each image will create a case folder in this directory. It is highly recommended that this folder be shared and the value be a UNC path.
+    - \<dbHost\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag indicates the host name of the machine running the PostgreSQL database that Autopsy will use during ingest.
+    - \<dbPort\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag indicates the port number that the PostgreSQL database is listening on at \<dbHost\>.
+    - \<dbUserName\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag represents the database user Autopsy will act as when adding records to the case database on \<dbHost\> and \<dbPort\>.
+    - \<dbPassword\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag represents the password to the \<dbUserName\> that Autopsy will act as when adding records to the case database on \<dbHost\> and \<dbPort\>.
+    - \<solrHost\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag indicates the host name of the Solr service. The solr service is needed when running keyword search.
+    - \<solrPort\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag indicates the port number Solr is listening on at \<solrHost\>.
+    - \<messageServiceHost\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag indicates the host name of the ActiveMQ service that Autopsy will use for message brokerage between clients.
+    - \<messageServicePort\>
+            - This tag is only relevant when run in multi user mode (See \<userCaseType\>). The value of this tag indicates the port number that the ActiveMQ service is listening on at \<messageServiceHost\>.
 
 \section example Simple Example
 Now that we are familiar with the parameter types and config file definitions, let's walk through a simple example. In this example, we are going to do a rebuild to establish our gold standards, introduce a regression, and discover it by running a test and examining the diffs.
@@ -140,9 +140,9 @@ Here is how our workspace is set up:
 - autopsy_regression_config
     - This folder contains the regression_config.xml that is covered in the next subsection.
 - autopsy_single_gold
-    - This folder will contain the gold standards for the <image> tags we define in the config file.
+    - This folder will contain the gold standards for the \<image\> tags we define in the config file.
 - autopsy_single_output
-    - This folder will contain the case output for each <image> tag ingest.
+    - This folder will contain the case output for each \<image\> tag ingest.
 - small2
     - The image that we will be used in our regression testing.
 
@@ -174,7 +174,7 @@ This will instruct regression.py to make gold standards using our config file.
 
 Regression.py is going to start ingesting the images found in the config file one by one from top to bottom. An ant command will be printed to console so we can see exactly what is being run. The Autopsy UI should become visible shortly after. Refrain from clicking on anything as this may interrupt the regression process.
 
-When this process is complete, the directory specified in <singleUser_golddir> should be populated with our gold standards. Here is what our folder looks like after the rebuild:
+When this process is complete, the directory specified in \<singleUser_golddir\> should be populated with our gold standards. Here is what our folder looks like after the rebuild:
 
 \image html regression_example_gold-dir.PNG
 
