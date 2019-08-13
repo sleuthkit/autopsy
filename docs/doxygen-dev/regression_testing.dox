@@ -1,6 +1,6 @@
 /*! \page regression_testing Regression Testing in Autopsy
 
-\section Introduction
+\section intro Introduction
 The autopsy/test folder contains scripts that are necessary to run the regression test. Developers that are interested in running regression tests should run autopsy/test/script/regression.py. This guide will familiarize you with regression.py and walk you through a simple example at the end.
 
 If you’ve never heard of regression testing, see <a href="https://en.wikipedia.org/wiki/Regression_testing">Regression Testing</a>.
@@ -10,22 +10,21 @@ From a bird’s eye view, regression.py will:
 - Generate a HTML report once ingest is complete
 - Dump the case database and perform diffs on the gold standards. HTML reports are also diffed.
 
-Don’t worry if the terminology of the last bullet confuses you. The Terminology section will help get you up to speed. What’s important is that regression.py will enable you to isolate changes that you may have caused while developing and adding features.
+Don’t worry if the terminology of the last bullet confuses you. The \ref terminology section will help get you up to speed. What’s important is that regression.py will enable you to isolate changes that you may have caused while developing and adding features.
 
 Regression.py is also responsible for producing and saving gold standards for you. This allows your gold standards to evolve as your source code changes. In the following sections, we will learn how to accomplish this and what regression.py will need to know in order to run smoothly.
-\section General
+\section general General
 Regression.py will use the most recent Autopsy and Sleuthkit builds as a launching point. To ensure that your latest changes are included, you will need to make sure you build.
-\section Terminology
+\section terminology Terminology
 Before we jump in, let's start off by defining some common terminology.
     - Dump 
         - A dump refers to writing all case database INSERT statements to file. The case database is what Autopsy uses to persist its analysis. Items that are time or execution order dependent are obfuscated so that only meaningful changes are captured.
     - Gold standard 
         - A gold standard is simply a dump that we designate to be the base expectation for any given ingest run. Some changes may add to this base (potentially positive) and some may modify or remove from this base (potentially negative). HTML reports will also be saved as gold standards.
     - Diff
-        - A diff is the result of running the diff command against a new dump and a corresponding gold standard. If there are any regressions, they will hopefully be captured in these files.
+        - A diff is the result of running the <a href="http://man7.org/linux/man-pages/man1/diff.1.html">diff</a> command against a new dump and a corresponding gold standard. If there are any regressions, they will hopefully be captured in these files.
 
-\section Parameter Descriptions
-------
+\section param_desc Parameter Descriptions
 Now that we have defined some common terminology, we can move on to learning which command line arguments regression.py can recognize. 
 A regression test (one that may produce diffs) is the default unless otherwise specified. 
 One and only one of the bolded arguments is required.
@@ -36,7 +35,7 @@ One and only one of the bolded arguments is required.
     - -b (for both compare and rebuild)
         - This indicates that diffs should be produced on the current gold standards and then overwritten with new ones. It’s recommended to separate this behavior if you are not using version control on your gold standards. This is logically equivalent to running a regression test and then running with -r. This parameter needs no additional arguments.
     - <b>-l PATH</b>
-        - This parameter specifies the PATH to the config file. The config file is very important and has its own Creating a Config File section.
+        - This parameter specifies the PATH to the config file. The config file is very important and has its own \ref creating_config_file section.
     - -u (Ignore unallocated space)
         - Unallocated space can take a long time to ingest. Depending on your use case, you may omit processing unallocated space on all images. This parameter needs no additional arguments.
     - -k (Do not delete the Solr index)
@@ -50,12 +49,10 @@ One and only one of the bolded arguments is required.
           e.g. ‘-e IOException’
     - -h (help)
 
-\section Creating a Config File
-------
-The config file is essential to giving regression.py the details it needs to run. This file is simply an XML file with some expected tag names. We’ll dive into the tag names and their descriptions in the Tag Definitions section. But first, let’s start by taking a look at a template.
+@section creating_config_file Creating a Config File
+The config file is essential to giving regression.py the details it needs to run. This file is simply an XML file with some expected tag names. We’ll dive into the tag names and their descriptions in the \ref tag_def section. But first, let’s start by taking a look at a template.
 
-\subsection Template
-------
+\subsection template Template
 Here is a complete config file template:
 @code{.xml}
 <?xml version="1.0" encoding="ASCII"?>
@@ -97,8 +94,7 @@ Here is a complete config file template:
 </Properties>
 @endcode
 
-\subsection Tag Definitions
-------
+\subsection tag_def Tag Definitions
 With our template above, let’s break down what some of these tags mean:
     - <userCaseType>
             - The value of this tag specifies the type of case that should be produced during the regression test. This may be significant since multi-user and single-user cases use different databases. Specify this value as “Single-user” to create only single user cases, “Multi-user” to create only multi-user cases, or “Both-user” to create both for each <image>. “Both-user” does two passes over all <image> tags. The first will be run as “Single-user” and the second will be run as “Multi-user”. Each <image> gets its own case.
@@ -133,11 +129,9 @@ With our template above, let’s break down what some of these tags mean:
     - <messageServicePort>
             - This tag is only relevant when run in multi user mode (See <userCaseType>). The value of this tag indicates the port number that the ActiveMQ service is listening on at <messageServiceHost>.
 
-\section    Simple Example
-------
+\section example Simple Example
 Now that we are familiar with the parameter types and config file definitions, let's walk through a simple example. In this example, we are going to do a rebuild to establish our gold standards, introduce a regression, and discover it by running a test and examining the diffs.
-\subsection    Workspace
-------
+\subsection wrkspace Workspace
 Here is how our workspace is set up:
 
 \image html regression_example_workspace-env.PNG
@@ -152,8 +146,7 @@ Here is how our workspace is set up:
 - small2
     - The image that we will be used in our regression testing.
 
-\subsection     Config File
-------
+\subsection config_file Config File
 Here is the config file we will be using for our regression testing. This file is located in the autopsy_regression_config folder.
 
 @code{.xml}
@@ -170,9 +163,8 @@ Here is the config file we will be using for our regression testing. This file i
 </Properties>
 @endcode
 
-\subsection     Rebuilding Gold Standards
-------
-In order to produce diffs, we need to first establish gold standards. We can do this by performing a rebuild (see -r in Parameter Descriptions).
+\subsection rebuild Rebuilding Gold Standards
+In order to produce diffs, we need to first establish gold standards. We can do this by performing a rebuild (see -r in \ref param_desc).
 
 Let’s run the following command from within autopsy/test/script directory.
 
@@ -186,8 +178,7 @@ When this process is complete, the directory specified in <singleUser_golddir> s
 
 \image html regression_example_gold-dir.PNG
 
-\subsection     Performing a Regression Test
-------
+\subsection perform_reg_test Performing a Regression Test
 Now that we have our gold standards, it’s time to start our development cycle. Let's pretend we accidentally introduced a MIME type regression. All MIME types that were once text/plain are now mistakenly labeled as text/error-plain. Using the diffs that regression.py will produce, we can catch this before it becomes a problem.
 
 Let’s run the following command from within the autopsy/test/script directory.
@@ -205,8 +196,7 @@ Since we only had one image in our config file and we ran in single-user mode, r
 \image html regression_example_diff-failure.PNG
 
 We’ll learn how to examine our diffs in the next section.
-\subsection    Examining the Diffs
-------
+\subsection examine_diffs Examining the Diffs
 Let’s start by opening up our output folder:
 
 \image html regression_example_output-folder.PNG
@@ -219,7 +209,5 @@ As expected, there is a DBDump-Diff file waiting for us. We can examine our regr
 
 Since our dumps are INSERT statements from the database, we can see exactly which files have changed. 
 
-A line that’s preceded by a “<” indicates the record in the gold standard. A line that’s preceded by a “>” indicates the record in the current dump. As you can see on the second line, our MIME type was mistakenly changed. In the event that this change was correct, we can overwrite our current gold standards by running another rebuild (see -r in Parameter Descriptions).
-
-
+A line that’s preceded by a “<” indicates the record in the gold standard. A line that’s preceded by a “>” indicates the record in the current dump. As you can see on the second line, our MIME type was mistakenly changed. In the event that this change was correct, we can overwrite our current gold standards by running another rebuild (see -r in \ref param_desc).
 */
