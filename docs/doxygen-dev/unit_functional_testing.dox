@@ -1,0 +1,20 @@
+/*! \page unit_functional_testing Functional/Unit Testing in Autopsy
+
+What Does It Do
+========
+
+The Android Analyzer module allows you to analyze SQLite and other files from an Android device.  It works on Physical dumps from most Android devices (note that we do not provide an acquisition method).  Autopsy will not support older Android devices that do not have a volume system.  These devices will often have a single physical image file for them and there is no information in the image that describes the layout of the file systems.  Autopsy will therefore not be able to detect what it is.
+
+
+The module should be able to extract the following:
+
+- Text messages / SMS / MMS
+- Call Logs
+- Contacts
+- Tango Messages
+- Words with Friends Messages
+- GPS from the browser and Google Maps
+- GPS from cache.wifi and cache.cell files
+
+
+*/
