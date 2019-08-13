@@ -19,13 +19,11 @@
 package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -80,20 +78,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
         List<String> errorList = new ArrayList<>();
         List<Content> emptyDataSources = new ArrayList<>();
 
-        try {
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_copyingImageFromTo(src.toString(), dest.toString()));
-            FileUtils.copyDirectory(src, dest);
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneCopying());
-        } catch (IOException ex) {
-            // Copy directory failed
-            String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
-            errorList.add(msg);
-            logger.log(Level.SEVERE, String.format("Failed to copy directory %s to %s", src.toString(), dest.toString()), ex);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-
-        // Add the alert.txt and users.txt to the case report
+       // Add the alert.txt and users.txt to the case report
         progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingToReport(ALERT_TXT));
         String status = addReport(Paths.get(dest.toString(), ALERT_TXT), ALERT_TXT + " " + src.getName());
         if (status != null) {

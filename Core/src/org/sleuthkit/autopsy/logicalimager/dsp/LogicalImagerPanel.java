@@ -333,9 +333,19 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     }
                 });
                 if (vhdFiles.length == 0) {
-                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
-                    firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
-                    return;
+                    // No VHD files, try directories for individual files
+                    String[] directories = dir.list(new FilenameFilter() {
+                        @Override
+                        public boolean accept(File dir, String name) {
+                            return Paths.get(dir.toString(), name).toFile().isDirectory();
+                        }
+                    });
+                    if (directories.length == 0) {
+                        // No directories, bail
+                        setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
+                        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+                        return;
+                    }
                 }
                 manualImageDirPath = Paths.get(path);
                 setNormalMessage(path);

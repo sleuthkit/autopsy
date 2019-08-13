@@ -39,6 +39,8 @@ AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for de
 LogicalImagerDSProcessor.dataSourceType=Autopsy Logical Imager Results
 # {0} - directory
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
+# {0} - sparseImageDirectory
+LogicalImagerDSProcessor.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
 # {0} - directory
 LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
 # {0} - file
