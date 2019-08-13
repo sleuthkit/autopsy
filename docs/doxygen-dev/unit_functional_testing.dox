@@ -5,6 +5,8 @@ Autopsy has functional and unit tests for the Autopsy Core and Keyword Search NB
 \section nbm Running Tests by NBM
 - In Netbeans, right click the Autopsy-Core or Keyword Search NBM and click Test. This will run both the unit and functional tests.
 
+\image html unit_functional_testing_nbm.png
+
 - Run this ant command from within your autopsy directory. Replace {$NBM} with either KeywordSearch or Core.
     - $ ant -f {$NBM} test
         <br>  e.g. $ ant -f Core test
@@ -14,14 +16,17 @@ In the event that tests are failing due to missing test data, manually run the �
 \section package Running Tests by Package
 - In Netbeans, right click the package and click Test. The tests are separated into Unit and Functional packages.
 
+\image html unit_functional_testing_package.png
+
 - Run this ant command from within the autopsy directory. Replace {$PACKAGE_NAME} with the name of the test package and {$NBM} with either KeywordSearch or Core.
     - $ ant -f {$NBM} -Dtest.includes=org/sleuthkit/autopsy/{$PACKAGE_NAME}/"**"/"*"Test.java test-single
         <br>  e.g. $ ant -f Core -Dtest.includes=org/sleuthkit/autopsy/ingest/"**"/"*"Test.java test-single
 \section file Running Tests by File
 - In Netbeans, right click the File and click “Test File”.
 
+\image html unit_functional_testing_file.png
+
 - Run this ant command from within the autopsy directory. Replace {$TEST_NAME} with the name of the .java file, {$NBM} with either KeywordSearch or Core and {$PACKAGE_NAME} with the name of the test package.
     - $ ant -f {$NBM} -Dtest.includes=org/sleuthkit/autopsy/{$PACKAGE_NAME}/{$TEST_NAME} test-single
         <br>  e.g. $ ant -f KeywordSearch -Dtest.includes=org/sleuthkit/autopsy/keywordsearch/CreditCardValidatorTest.java test-single
-
 */
