@@ -223,7 +223,7 @@ public class FileTypeDetector {
          * If the file does not match an Autopsy-defined type, try to detect a
          * text encoding with Decodetect.
          */
-        if (null == mimeType) {
+        if (null == mimeType && file.getNameExtension().equals("txt")) {
             Charset detectedCharset = TextExtractor.getDecodetectCharset(file);
             if (detectedCharset != null) {
                 mimeType = MimeTypes.PLAIN_TEXT;
