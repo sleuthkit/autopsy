@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import java.io.BufferedWriter;
@@ -25,7 +24,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,8 +32,6 @@ import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.doccat.DocumentSample;
-import opennlp.tools.ml.model.AbstractModel;
-import opennlp.tools.ml.naivebayes.NaiveBayesModelWriter;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.tokenize.SimpleTokenizer;
@@ -43,16 +39,13 @@ import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
 import org.apache.commons.io.IOUtils;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
@@ -70,56 +63,52 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
     private final Tokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
     private ClassifierTrainerReportModuleConfigPanel configPanel;
-    
+
     @Override
     @Messages({"ClassifierTrainerReportModule.srcModuleName.txt=Text classifier model"})
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
-         // Start the progress bar and setup the report
+        // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
-        progressPanel.updateStatusLabel("In progress");        
+        progressPanel.complete(ReportStatus.RUNNING);
+        progressPanel.updateStatusLabel("In progress");
         String modelPath = baseReportDir + getRelativeFilePath();
-        
-        
-        /*
+
         ObjectStream<DocumentSample> sampleStream;
         try {
-            sampleStream = processTrainingData();
-        } catch (Exception  ex) {
+
+            sampleStream = processTrainingData(progressPanel);
+        } catch (Exception ex) {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel("Unable to process training data: " + ex);
             new File(baseReportDir).delete();
             return;
         }
-        DoccatModel model;
-        try {
-            model = train(modelPath, sampleStream);
-        } catch(IOException ex) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("Unable to train text classifier: " + ex);
-            new File(baseReportDir).delete();    
-            return;
-        }
+
+        DoccatModel model = null;
 
         try {
-            writeModel((NaiveBayesModel) model.getMaxentModel(), modelPath);
-        } catch(IOException ex) {
+            progressPanel.updateStatusLabel("Training model");
+            model = train(modelPath, sampleStream);
+        } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("Unable to save text classifier model: " + ex);
+            progressPanel.updateStatusLabel("Unable to train text classifier: " + ex);
             new File(baseReportDir).delete();
             return;
         }
-        */
-       
+
+        if (model == null) {
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel("No model was trained");
+            new File(baseReportDir).delete();
+            return;
+        }
         try {
-            File modelFile = new File(modelPath);
-            FileWriter fw = new FileWriter(modelFile);
-            BufferedWriter bw = new BufferedWriter(fw);
-            bw.write("This is a model file!\n");
-            bw.close();
-            fw.close();
+            progressPanel.updateStatusLabel("Writing model");
+            writeModel((NaiveBayesModel) model.getMaxentModel(), modelPath);
             progressPanel.complete(ReportStatus.COMPLETE);
-            progressPanel.updateStatusLabel("SUCCESS");
+            progressPanel.updateStatusLabel("Complete");
+            progressPanel.complete();
         } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel("Unable to save text classifier model: " + ex);
@@ -142,12 +131,11 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         return desc;
     }
 
-
     @Override
     public String getRelativeFilePath() {
         return "model.txt"; //NON-NLS
     }
-    
+
     @Override
     public JPanel getConfigurationPanel() {
         configPanel = new ClassifierTrainerReportModuleConfigPanel();
@@ -167,34 +155,45 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         DoccatModel model = DocumentCategorizerME.train("en", sampleStream, params, new DoccatFactory());
 
         double duration = (System.nanoTime() - startTime) / 1.0e9;
-        System.out.println(duration + "\ttrain time for text classifier");
         return model;
     }
 
     /**
      * Fetches the training data and converts it to a format OpenNLP can use.
+     *
      * @return training data usable by OpenNLP
      */
-    private ObjectStream<DocumentSample> processTrainingData() throws TskCoreException, TextExtractor.InitReaderException, IOException, TextExtractorFactory.NoTextExtractorFound {
+    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException, TextExtractor.InitReaderException, IOException, TextExtractorFactory.NoTextExtractorFound {
+        progressPanel.updateStatusLabel("Fetching training data");
+
         List<AbstractFile> allDocs = fetchAllDocuments();
         Set<Long> notableObjectIDs = fetchNotableObjectIDs();
 
+        int notableDocCount = 0;
+        int nonnotableDocCount = 0;
+
+        progressPanel.updateStatusLabel("Converting training data");
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = "notable";
+                notableDocCount++;
             } else {
                 label = "nonnotable";
+                nonnotableDocCount++;
             }
-            //TODO: The method to build a reader and get text should be in another class accessable to TextClassifierFileIngestModule
+            //TODO: Add a progress bar, or at least a status update. This is slow.
+            //TODO: Where is the slow part? Is it in reading or converting to DocumentSample?
+            //TODO: The method to build a reader and get text should be in another class accessible to TextClassifierFileIngestModule
             Reader reader = TextExtractorFactory.getExtractor(doc, null).getReader();
             String text = IOUtils.toString(reader);
             DocumentSample docSample = new DocumentSample(label, tokenizer.tokenize(text));
 
             docSamples.add(docSample);
         }
-        return new ListObjectStream<DocumentSample>(docSamples);
+
+        return new ListObjectStream<>(docSamples);
     }
 
     private Set<Long> fetchNotableObjectIDs() throws TskCoreException {
@@ -213,14 +212,9 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
     }
 
     private List<AbstractFile> fetchAllDocuments() throws TskCoreException {
-        //Get all files
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        List<AbstractFile> allFiles = fileManager.findFilesByMimeType(FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
-        return allFiles;
-    }
-
-    private ObjectStream<DocumentSample> convertTrainingData(Collection<AbstractFile> trainingFiles) {
-        throw new UnsupportedOperationException();
+        List<AbstractFile> allDocs = fileManager.findFilesByMimeType(SupportedFormats.getDocumentMIMETypes());
+        return allDocs;
     }
 
     private void writeModel(NaiveBayesModel model, String modelPath) throws IOException {

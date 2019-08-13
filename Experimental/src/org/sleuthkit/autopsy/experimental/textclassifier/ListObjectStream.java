@@ -16,8 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import opennlp.tools.util.ObjectStream;
@@ -29,9 +27,11 @@ import java.util.List;
  * A very simple implementation of the ObjectStream interface that is backed by
  * a list. This is intended to make tests easier. I don't see a need for it in
  * production at this time.
+ *
  * @param <T> For the document classification task, this is DocumentSample.
  */
 public class ListObjectStream<T> implements ObjectStream<T> {
+
     private List<T> items;
     private int i;
 
@@ -60,9 +60,9 @@ public class ListObjectStream<T> implements ObjectStream<T> {
     }
 
     /**
-     * Repositions the stream at the beginning and the previously seen object sequence
-     * will be repeated exactly. This method can be used to re-read
-     * the stream if multiple passes over the objects are required.
+     * Repositions the stream at the beginning and the previously seen object
+     * sequence will be repeated exactly. This method can be used to re-read the
+     * stream if multiple passes over the objects are required.
      *
      * The implementation of this method is optional.
      *
@@ -75,8 +75,7 @@ public class ListObjectStream<T> implements ObjectStream<T> {
 
     /**
      * Closes the <code>ObjectStream</code> and releases all allocated
-     * resources. After close was called its not allowed to call
-     * read or reset.
+     * resources. After close was called its not allowed to call read or reset.
      *
      * @throws IOException if there is an error during closing the stream
      */
@@ -84,5 +83,9 @@ public class ListObjectStream<T> implements ObjectStream<T> {
     public void close() throws IOException {
         items = null;
         i = 0;
+    }
+
+    public int size() {
+        return items.size();
     }
 }

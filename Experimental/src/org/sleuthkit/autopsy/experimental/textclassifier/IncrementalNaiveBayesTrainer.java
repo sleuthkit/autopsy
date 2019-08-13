@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import opennlp.tools.ml.AbstractEventTrainer;
@@ -24,14 +23,12 @@ import opennlp.tools.ml.model.Context;
 import opennlp.tools.ml.model.DataIndexer;
 import opennlp.tools.ml.model.MaxentModel;
 import opennlp.tools.ml.model.MutableContext;
-import opennlp.tools.ml.naivebayes.BinaryNaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.util.TrainingParameters;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
+public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
     public static final String INCREMENTAL_NAIVE_BAYES_VALUE = "INCREMENTALNAIVEBAYES";
 
@@ -58,7 +55,6 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
     // documents in each category.
     //private List<Integer> eventCountPerOutcome = new ArrayList<>();
 
-
     //These are the values that we don't need to serialize
     // For the document classification task, this maps each category name to a
     // unique integer for more compact memory usage.
@@ -74,7 +70,6 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
     // in the training data
     //private int numEvents;
 
-
     public IncrementalNaiveBayesTrainer() {
         this.setMasterPredLabels(new ArrayList<>());
         this.setMasterOutcomeLabels(new ArrayList<>());
@@ -84,15 +79,15 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
     /**
      * Constructs a trainer that starts with the values in a model, and can
      * incrementally learn from a corpus.
+     *
      * @param modelInputPath
      */
     public void uploadModel(String modelInputPath) throws IOException {
         FileReader fr = new FileReader(modelInputPath);
         NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
         reader.checkModelType();
-        NaiveBayesModel initialModel = (NaiveBayesModel)reader.constructModel();
+        NaiveBayesModel initialModel = (NaiveBayesModel) reader.constructModel();
         fr.close();
-
 
         Object[] data = initialModel.getDataStructures();
 
@@ -114,16 +109,17 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
     }
 
     @Override
-    public void init(TrainingParameters trainingParameters, Map<String,String> reportMap) {
+    public void init(TrainingParameters trainingParameters, Map<String, String> reportMap) {
         super.init(trainingParameters, reportMap);
 
         String oldModelPath = trainingParameters.getStringParameter("MODEL_INPUT", null);
 
-        if(oldModelPath != null) {
+        if (oldModelPath != null) {
             try {
                 uploadModel(oldModelPath);
-            } catch (IOException e) {
-                throw new RuntimeException("Cannot find " + oldModelPath);
+            } catch (IOException ex) {
+                //If the model doesn't exist, start with a blank one.
+                this.setParameters(new ArrayList<>());
             }
         }
     }
@@ -139,7 +135,6 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
     public MaxentModel doTrain(DataIndexer indexer) throws IOException {
         return this.trainModel(indexer);
     }
-
 
     public MaxentModel trainModel(DataIndexer di) {
         display("Incorporating indexed data for training...  \n");
@@ -179,7 +174,7 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
     private void mergeInParameters(MutableContext[] newParameters, String[] newOutcomeLabels, String[] newPredLabels) {
 
         List<Integer> mappingNewOutcomeToOldOutcome = new ArrayList<>();
-        for(int newIndex = 0; newIndex < newOutcomeLabels.length; newIndex++) {
+        for (int newIndex = 0; newIndex < newOutcomeLabels.length; newIndex++) {
             //TODO: Make a single method that adds a new outcome label, because
             //there are a lot of things to update.
             String newLabel = newOutcomeLabels[newIndex];
@@ -191,12 +186,12 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
         }
 
         int[] allOutcomesPattern = new int[getNumOutcomes()];
-        for (int oi = 0; oi < getNumOutcomes(); oi++)
+        for (int oi = 0; oi < getNumOutcomes(); oi++) {
             allOutcomesPattern[oi] = oi;
-
+        }
 
         List<Integer> mappingNewPredToOldPred = new ArrayList<>();
-        for(int newIndex = 0; newIndex < newPredLabels.length; newIndex++) {
+        for (int newIndex = 0; newIndex < newPredLabels.length; newIndex++) {
             //TODO: Make a single method that adds a new predicate label, because
             //there are a lot of things to update.
             String newLabel = newPredLabels[newIndex];
@@ -231,19 +226,18 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
         int numUniqueEvents = contexts.length;
 
         int[] allOutcomesPattern = new int[numOutcomes];
-        for (int oi = 0; oi < numOutcomes; oi++)
+        for (int oi = 0; oi < numOutcomes; oi++) {
             allOutcomesPattern[oi] = oi;
+        }
 
-        /* Stores the estimated parameter value of each predicate during iteration. */
+        // Stores the estimated parameter value of each predicate during iteration.
         MutableContext[] params = new MutableContext[numPreds];
         for (int pi = 0; pi < numPreds; pi++) {
             params[pi] = new MutableContext(allOutcomesPattern, new double[numOutcomes]);
-            for (int aoi = 0; aoi < numOutcomes; aoi++)
+            for (int aoi = 0; aoi < numOutcomes; aoi++) {
                 params[pi].setParameter(aoi, 0.0);
+            }
         }
-
-        //EvalParameters evalParams = new EvalParameters(params, numOutcomes);
-
         double stepSize = 1;
 
         for (int ei = 0; ei < numUniqueEvents; ei++) {
@@ -259,35 +253,8 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
                 }
             }
         }
-
-        // Output the final training stats.
-        //trainingStats(evalParams);
-
         return params;
     }
-
-    /*
-    //Method from Serializable
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(masterOutcomeLabels);
-        out.writeObject(masterPredLabels);
-        //out.writeObject(eventCountPerOutcome);
-        out.writeObject(parameters);
-    }
-
-    //Method from Serializable
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        List<String> outcomes = (List<String>) in.readObject();
-        List<String> predicates = (List<String>) in.readObject();
-        List<Integer> eventCounts = (List<Integer>) in.readObject();
-        List<MutableContext> predCounts = (List<MutableContext>) in.readObject();
-
-        this.setMasterOutcomeLabels(outcomes);
-        this.setMasterPredLabels(predicates);
-        //this.setEventCountPerOutcome(eventCounts);
-        this.setParameters(predCounts);
-    }
-    */
 
     private void setMasterOutcomeLabels(List<String> outcomes) {
         this.masterOutcomeLabels = outcomes;
@@ -309,18 +276,6 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
         }
     }
 
-    /*
-    private void setEventCountPerOutcome(List<Integer> eventCounts) {
-        this.eventCountPerOutcome = eventCounts;
-
-        //Set numEvents
-        numEvents = 0;
-        for (int count : eventCounts) {
-            numEvents += count;
-        }
-    }
-    */
-
     private void setParameters(List<MutableContext> counts) {
         this.parameters = counts;
 
@@ -328,8 +283,9 @@ public class IncrementalNaiveBayesTrainer  extends AbstractEventTrainer {
         numPredsNonUniq = 0;
         for (int predicateIndex = 0; predicateIndex < counts.size(); predicateIndex++) {
             MutableContext context = counts.get(predicateIndex);
-            for (double parameter : context.getParameters())
+            for (double parameter : context.getParameters()) {
                 numPredsNonUniq += parameter;
+            }
         }
     }
 }
