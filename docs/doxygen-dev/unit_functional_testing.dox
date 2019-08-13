@@ -1,20 +1,27 @@
 /*! \page unit_functional_testing Functional/Unit Testing in Autopsy
 
-What Does It Do
-========
+\section intro Introduction
+Autopsy has functional and unit tests for the Autopsy Core and Keyword Search NBMs. These tests can be run at the NBM, package or file level. These tests can be run from Netbeans or the command line using Apache Ant. Each section will demonstrate both approaches.
+\section nbm Running Tests by NBM
+- In Netbeans, right click the Autopsy-Core or Keyword Search NBM and click Test. This will run both the unit and functional tests.
 
-The Android Analyzer module allows you to analyze SQLite and other files from an Android device.  It works on Physical dumps from most Android devices (note that we do not provide an acquisition method).  Autopsy will not support older Android devices that do not have a volume system.  These devices will often have a single physical image file for them and there is no information in the image that describes the layout of the file systems.  Autopsy will therefore not be able to detect what it is.
+- Run this ant command from within your autopsy directory. Replace {$NBM} with either KeywordSearch or Core.
+    - $ ant -f {$NBM} test
+        <br>  e.g. $ ant -f Core test
 
+You may need an internet connection the first time you run Autopsy Core. The ant target will attempt to reach out to Google Drive to download the required test data. This data is stored in autopsy\Core\test\qa-functional\data.
+In the event that tests are failing due to missing test data, manually run the “getTestDataFiles” target from the Core/build.xml script.
+\section package Running Tests by Package
+- In Netbeans, right click the package and click Test. The tests are separated into Unit and Functional packages.
 
-The module should be able to extract the following:
+- Run this ant command from within the autopsy directory. Replace {$PACKAGE_NAME} with the name of the test package and {$NBM} with either KeywordSearch or Core.
+    - $ ant -f {$NBM} -Dtest.includes=org/sleuthkit/autopsy/{$PACKAGE_NAME}/"**"/"*"Test.java test-single
+        <br>  e.g. $ ant -f Core -Dtest.includes=org/sleuthkit/autopsy/ingest/"**"/"*"Test.java test-single
+\section file Running Tests by File
+- In Netbeans, right click the File and click “Test File”.
 
-- Text messages / SMS / MMS
-- Call Logs
-- Contacts
-- Tango Messages
-- Words with Friends Messages
-- GPS from the browser and Google Maps
-- GPS from cache.wifi and cache.cell files
-
+- Run this ant command from within the autopsy directory. Replace {$TEST_NAME} with the name of the .java file, {$NBM} with either KeywordSearch or Core and {$PACKAGE_NAME} with the name of the test package.
+    - $ ant -f {$NBM} -Dtest.includes=org/sleuthkit/autopsy/{$PACKAGE_NAME}/{$TEST_NAME} test-single
+        <br>  e.g. $ ant -f KeywordSearch -Dtest.includes=org/sleuthkit/autopsy/keywordsearch/CreditCardValidatorTest.java test-single
 
 */
