@@ -19,8 +19,8 @@ In the event that tests are failing due to missing test data, manually run the �
 \image html unit_functional_testing_package.png
 
 - Run this ant command from within the autopsy directory. Replace {$PACKAGE_NAME} with the name of the test package and {$NBM} with either KeywordSearch or Core.
-    - $ ant -f {$NBM} -Dtest.includes=org/sleuthkit/autopsy/{$PACKAGE_NAME}/"**"/"*"Test.java test-single
-        <br>  e.g. ant -f Core -Dtest.includes=org/sleuthkit/autopsy/ingest/"**"/"*"Test.java test-single
+    - $ ant -f {$NBM} -Dtest.includes=org/sleuthkit/autopsy/{$PACKAGE_NAME}/\**\htmlonly\endhtmlonly/\*Test.java test-single
+        <br>  e.g. ant -f Core -Dtest.includes=org/sleuthkit/autopsy/ingest/\**\htmlonly\endhtmlonly/\*Test.java test-single
 \section file Running Tests by File
 - In Netbeans, right click the File and click “Test File”.
 
