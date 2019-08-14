@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
@@ -59,9 +60,13 @@ import org.sleuthkit.datamodel.TskData;
 public class ClassifierTrainerReportModule implements GeneralReportModule {
 
     private static String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
+    
     //TODO: tokenizer should be shared with TextClassifierFileIngestModule so they don't get out of sync
     private final Tokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
+    private final String MODEL_DIR = PlatformUtil.getTextClassifierPath();
+    private final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
+    
     private ClassifierTrainerReportModuleConfigPanel configPanel;
 
     @Override
@@ -72,7 +77,6 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         progressPanel.start();
         progressPanel.complete(ReportStatus.RUNNING);
         progressPanel.updateStatusLabel("In progress");
-        String modelPath = baseReportDir + getRelativeFilePath();
 
         ObjectStream<DocumentSample> sampleStream;
         try {
@@ -88,8 +92,9 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         DoccatModel model = null;
 
         try {
+            progressPanel.setIndeterminate(true);
             progressPanel.updateStatusLabel("Training model");
-            model = train(modelPath, sampleStream);
+            model = train(MODEL_PATH, sampleStream);
         } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel("Unable to train text classifier: " + ex);
@@ -104,11 +109,11 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
             return;
         }
         try {
-            progressPanel.updateStatusLabel("Writing model");
-            writeModel((NaiveBayesModel) model.getMaxentModel(), modelPath);
+            progressPanel.setIndeterminate(true);
+            progressPanel.updateStatusLabel("Writing model to " + MODEL_PATH);
+            writeModel((NaiveBayesModel) model.getMaxentModel(), MODEL_PATH);
             progressPanel.complete(ReportStatus.COMPLETE);
-            progressPanel.updateStatusLabel("Complete");
-            progressPanel.complete();
+            progressPanel.updateStatusLabel("Complete. Model is at " + MODEL_PATH);
         } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel("Unable to save text classifier model: " + ex);
@@ -133,9 +138,9 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "model.txt"; //NON-NLS
+        return "classifierTrainerReport.txt";
     }
-
+    
     @Override
     public JPanel getConfigurationPanel() {
         configPanel = new ClassifierTrainerReportModuleConfigPanel();
@@ -219,7 +224,7 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         return allDocs;
     }
 
-    private void writeModel(NaiveBayesModel model, String modelPath) throws IOException {
+    private void writeModel(NaiveBayesModel model, String modelPath) throws IOException {        
         FileWriter fw = new FileWriter(new File(modelPath));
         //TODO: Try the binary naive Bayes model writer
         PlainTextNaiveBayesModelWriter modelWriter;

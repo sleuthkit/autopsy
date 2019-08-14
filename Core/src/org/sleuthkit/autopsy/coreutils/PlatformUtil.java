@@ -53,6 +53,7 @@ public class PlatformUtil {
 
     private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules"; //NON-NLS
     private static final String CLASSIFIERS_SUBDIRECTORY = "object_detection_classifiers"; //NON-NLS
+    private static final String TEXT_CLASSIFIERS_SUBDIRECTORY = "text_classifiers"; //NON-NLS
     private static final String OCR_LANGUAGE_SUBDIRECTORY = "ocr_language_packs"; //NON-NLS
     private static final String OCR_LANGUAGE_PACK_EXT = "traineddata";
     private static String javaPath = null;
@@ -156,6 +157,15 @@ public class PlatformUtil {
      */
     public static String getObjectDetectionClassifierPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + CLASSIFIERS_SUBDIRECTORY;
+    }
+    
+    /**
+     * Get root path where the user's text classifiers are stored.
+     * 
+     * @return Absolute path to the text classifiers root directory. 
+     */
+    public static String getTextClassifierPath() {
+        return getUserDirectory().getAbsolutePath() + File.separator + TEXT_CLASSIFIERS_SUBDIRECTORY;
     }
 
     /**

@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
@@ -71,9 +72,11 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     private DocumentCategorizerME categorizer;
     private Tokenizer tokenizer;
     private FileTypeDetector fileTypeDetector;
+    private final String MODEL_PATH = PlatformUtil.getTextClassifierPath() + File.separator + "model.txt";
 
     private void loadModel() throws IOException {
-        File modelFile = InstalledFileLocator.getDefault().locate("text_classifier_model/model.txt", TextClassifierFileIngestModule.class.getPackage().getName(), false);
+        //File modelFile = InstalledFileLocator.getDefault().locate("text_classifier_model/model.txt", TextClassifierFileIngestModule.class.getPackage().getName(), false);
+        File modelFile = new File(MODEL_PATH);
         this.model = deserializeModel(modelFile);
         DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE,
                 model,
