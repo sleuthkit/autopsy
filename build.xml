@@ -69,12 +69,16 @@
 
     <target name="clean" depends="suite.clean">
 	<delete includeEmptyDirs="true" failonerror="false">
-		<fileset dir="docs\doxygen-user\user-docs" includes="**/*"/>
+            <fileset dir="docs\doxygen-user\user-docs" includes="**/*"/>
 	</delete>
 
-	<delete includeEmptyDirs="true" failonerror="false">
-  		<fileset dir="docs\doxygen\doxygen_docs\api-docs" includes="**/*"/>
+        <delete includeEmptyDirs="true" failonerror="false">
+            <fileset dir="docs\doxygen\doxygen_docs\api-docs" includes="**/*"/>
 	</delete>
+        
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${basedir}/docs/doxygen-dev/dev-docs" includes="**/*"/>
+        </delete>
     </target>
 
     <!-- This target will create a custom ZIP file for us.  It first uses the general
@@ -260,12 +264,18 @@
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs" includes="**/*"/>
         </delete>
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${basedir}/docs/doxygen-dev/dev-docs" includes="**/*"/>
+        </delete>
         
         <!-- Generate new -->
         <exec executable="doxygen" dir="${basedir}/docs/doxygen">
             <arg value="Doxyfile"/>
         </exec>
         <exec executable="doxygen" dir="${basedir}/docs/doxygen-user">
+            <arg value="Doxyfile"/>
+        </exec>
+        <exec executable="doxygen" dir="${basedir}/docs/doxygen-dev">
             <arg value="Doxyfile"/>
         </exec>
     </target>

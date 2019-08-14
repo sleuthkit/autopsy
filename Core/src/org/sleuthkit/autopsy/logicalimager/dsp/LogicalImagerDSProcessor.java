@@ -26,6 +26,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;

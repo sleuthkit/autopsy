@@ -15,9 +15,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * TODO (AUT-2158): This class should not extend Closeable.
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
+import java.io.Closeable;
+import java.io.IOException;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -29,7 +33,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * @deprecated Use org.sleuthkit.datamodel.Blackboard instead.
  */
 @Deprecated
-public final class Blackboard {
+public final class Blackboard implements Closeable {
 
     /**
      * Constructs a representation of the blackboard, a place where artifacts
@@ -103,6 +107,21 @@ public final class Blackboard {
         } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
             throw new BlackboardException(ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Closes the artifacts blackboard.
+     *
+     * @throws IOException If there is a problem closing the artifacts
+     *                     blackboard.
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public void close() throws IOException {
+        /*
+         * No-op maintained for backwards compatibility. Clients should not
+         * attempt to close case services.
+         */
     }
 
     /**
