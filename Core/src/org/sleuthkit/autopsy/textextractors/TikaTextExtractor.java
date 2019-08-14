@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap; 
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
