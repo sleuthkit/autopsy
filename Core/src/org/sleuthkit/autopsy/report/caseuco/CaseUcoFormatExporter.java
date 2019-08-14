@@ -23,24 +23,32 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.SimpleTimeZone;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Generates CASE-UCO report file for a data source
@@ -48,7 +56,10 @@ import org.sleuthkit.datamodel.TskData;
 public final class CaseUcoFormatExporter {
 
     private static final Logger logger = Logger.getLogger(CaseUcoFormatExporter.class.getName());
-
+    private static final BlackboardAttribute.Type SET_NAME = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+    private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_FILE_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
+    private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_ARTIFACT_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
+    
     private CaseUcoFormatExporter() {
     }
 
@@ -174,6 +185,59 @@ public final class CaseUcoFormatExporter {
                     logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
                 }
             }
+        }
+    }
+
+    /**
+     * 
+     * 
+     * 
+     * @param tagTypes
+     * @param interestingItemSets
+     * @param outputFilePath
+     * @param progressPanel 
+     */
+    public static void export(List<TagName> tagTypes, List<String> interestingItemSets,
+            File caseReportFolder, ReportProgressPanel progressPanel) {
+
+        try {
+            File outputFolder = Paths.get(caseReportFolder.toString(), ReportCaseUco.getReportFileName()).toFile();
+            if(!outputFolder.mkdir()) {
+                //log
+                return;
+            }
+            
+            SleuthkitCase currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+            
+            for(TagName tn : tagTypes) {
+                for(ContentTag ct : tagsManager.getContentTagsByTagName(tn)) {
+                    //copy content tag
+                }
+                
+                for(BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn)) {
+                    //copy content
+                    //copy associated content
+                }
+            }
+            
+            if(!interestingItemSets.isEmpty()) {
+                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_FILE_HIT)) {
+                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                    if (interestingItemSets.contains(setAttr.getValueString())) {
+                        
+                    }
+                }
+                
+                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT)) {
+                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                    if (interestingItemSets.contains(setAttr.getValueString())) {
+                        
+                    }
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            //log oh no
         }
     }
 
