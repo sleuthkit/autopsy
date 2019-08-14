@@ -98,6 +98,6 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     public void storeSettings(WizardDescriptor wiz) {
         wiz.putProperty("tagStates", getComponent().getTagStates()); //NON-NLS
         wiz.putProperty("artifactStates", getComponent().getArtifactStates()); //NON-NLS
-        wiz.putProperty("isTagsSelected", getComponent().isTaggedResultsRadioButtonSelected()); //NON-NLS
+        wiz.putProperty("isTagsSelected", getComponent().isSpecificTaggedResultsRadioButtonSelected()); //NON-NLS
     }
 }

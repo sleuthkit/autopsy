@@ -79,20 +79,30 @@ final class ReportVisualPanel2 extends JPanel {
         this.allResultsRadioButton.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                tagsList.setEnabled(taggedResultsRadioButton.isSelected());
-                selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-                deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-                advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
+                tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                advancedButton.setEnabled(!specificTaggedResultsRadioButton.isSelected());
                 updateFinishButton();
             }
         });
-        this.taggedResultsRadioButton.addChangeListener(new ChangeListener() {
+        this.allTaggedResultsRadioButton.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                tagsList.setEnabled(taggedResultsRadioButton.isSelected());
-                selectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-                deselectAllButton.setEnabled(taggedResultsRadioButton.isSelected());
-                advancedButton.setEnabled(!taggedResultsRadioButton.isSelected());
+                tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                advancedButton.setEnabled(!specificTaggedResultsRadioButton.isSelected());
+                updateFinishButton();
+            }
+        });
+        this.specificTaggedResultsRadioButton.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
+                advancedButton.setEnabled(!specificTaggedResultsRadioButton.isSelected());
                 updateFinishButton();
             }
         });
@@ -124,7 +134,7 @@ final class ReportVisualPanel2 extends JPanel {
         tagsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-                if (!taggedResultsRadioButton.isSelected()) {
+                if (!specificTaggedResultsRadioButton.isSelected()) {
                     return;
                 }
                 int index = tagsList.locationToIndex(evt.getPoint());
@@ -207,7 +217,7 @@ final class ReportVisualPanel2 extends JPanel {
      * component selections.
      */
     private void updateFinishButton() {
-        if (taggedResultsRadioButton.isSelected()) {
+        if (specificTaggedResultsRadioButton.isSelected()) {
             wizPanel.setFinish(areTagsSelected());
         } else {
             wizPanel.setFinish(true);
@@ -215,10 +225,10 @@ final class ReportVisualPanel2 extends JPanel {
     }
 
     /**
-     * @return true if the Tags radio button is selected, false otherwise
+     * @return true if the Specific Tags radio button is selected, false otherwise
      */
-    boolean isTaggedResultsRadioButtonSelected() {
-        return taggedResultsRadioButton.isSelected();
+    boolean isSpecificTaggedResultsRadioButtonSelected() {
+        return specificTaggedResultsRadioButton.isSelected();
     }
 
     /**
@@ -243,7 +253,7 @@ final class ReportVisualPanel2 extends JPanel {
     private void initComponents() {
 
         optionsButtonGroup = new javax.swing.ButtonGroup();
-        taggedResultsRadioButton = new javax.swing.JRadioButton();
+        specificTaggedResultsRadioButton = new javax.swing.JRadioButton();
         allResultsRadioButton = new javax.swing.JRadioButton();
         dataLabel = new javax.swing.JLabel();
         selectAllButton = new javax.swing.JButton();
@@ -251,11 +261,12 @@ final class ReportVisualPanel2 extends JPanel {
         tagsScrollPane = new javax.swing.JScrollPane();
         tagsList = new javax.swing.JList<>();
         advancedButton = new javax.swing.JButton();
+        allTaggedResultsRadioButton = new javax.swing.JRadioButton();
 
         setPreferredSize(new java.awt.Dimension(650, 250));
 
-        optionsButtonGroup.add(taggedResultsRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(taggedResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.taggedResultsRadioButton.text")); // NOI18N
+        optionsButtonGroup.add(specificTaggedResultsRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(specificTaggedResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.specificTaggedResultsRadioButton.text")); // NOI18N
 
         optionsButtonGroup.add(allResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(allResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.allResultsRadioButton.text")); // NOI18N
@@ -292,6 +303,14 @@ final class ReportVisualPanel2 extends JPanel {
             }
         });
 
+        optionsButtonGroup.add(allTaggedResultsRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(allTaggedResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.allTaggedResultsRadioButton.text")); // NOI18N
+        allTaggedResultsRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                allTaggedResultsRadioButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -300,19 +319,20 @@ final class ReportVisualPanel2 extends JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
+                        .addGap(27, 27, 27)
                         .addComponent(tagsScrollPane)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(advancedButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(taggedResultsRadioButton)
+                            .addComponent(allTaggedResultsRadioButton)
                             .addComponent(dataLabel)
-                            .addComponent(allResultsRadioButton))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(allResultsRadioButton)
+                            .addComponent(specificTaggedResultsRadioButton))
+                        .addGap(0, 402, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -325,18 +345,19 @@ final class ReportVisualPanel2 extends JPanel {
                 .addComponent(dataLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(allResultsRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(taggedResultsRadioButton)
-                .addGap(7, 7, 7)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(allTaggedResultsRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(specificTaggedResultsRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(selectAllButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(deselectAllButton)
-                        .addGap(0, 70, Short.MAX_VALUE))
-                    .addComponent(tagsScrollPane))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(advancedButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(advancedButton))
+                    .addComponent(tagsScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -357,14 +378,19 @@ final class ReportVisualPanel2 extends JPanel {
         setAllTaggedResultsSelected(false);
     }//GEN-LAST:event_allResultsRadioButtonActionPerformed
 
+    private void allTaggedResultsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allTaggedResultsRadioButtonActionPerformed
+        setAllTaggedResultsSelected(true);
+    }//GEN-LAST:event_allTaggedResultsRadioButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
     private javax.swing.JRadioButton allResultsRadioButton;
+    private javax.swing.JRadioButton allTaggedResultsRadioButton;
     private javax.swing.JLabel dataLabel;
     private javax.swing.JButton deselectAllButton;
     private javax.swing.ButtonGroup optionsButtonGroup;
     private javax.swing.JButton selectAllButton;
-    private javax.swing.JRadioButton taggedResultsRadioButton;
+    private javax.swing.JRadioButton specificTaggedResultsRadioButton;
     private javax.swing.JList<String> tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
     // End of variables declaration//GEN-END:variables
