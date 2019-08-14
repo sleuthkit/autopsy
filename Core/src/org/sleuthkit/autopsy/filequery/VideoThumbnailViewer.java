@@ -6,6 +6,8 @@
 package org.sleuthkit.autopsy.filequery;
 
 import javax.swing.DefaultListModel;
+import javax.swing.event.ListSelectionListener;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  *
@@ -21,6 +23,18 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
      */
     public VideoThumbnailViewer() {
         initComponents();
+    }
+
+    void addListSelectionListener(ListSelectionListener listener) {
+        thumbnailList.getSelectionModel().addListSelectionListener(listener);
+    }
+
+    AbstractFile getSelectedFile() {
+        if (thumbnailList.getSelectedIndex() == -1) {
+            return null;
+        } else {
+            return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getAbstractFile();
+        }
     }
 
     void clearViewer() {

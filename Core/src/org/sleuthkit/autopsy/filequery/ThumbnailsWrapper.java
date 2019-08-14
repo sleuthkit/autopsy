@@ -8,6 +8,7 @@ package org.sleuthkit.autopsy.filequery;
 import java.awt.Image;
 import java.util.Collections;
 import java.util.List;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  *
@@ -16,17 +17,19 @@ import java.util.List;
 public class ThumbnailsWrapper {
 
     private final List<Image> thumbnails;
-    private final String fileInfo;
+    private final AbstractFile abstractFile;
 
-    public ThumbnailsWrapper(List<Image> thumbnails, String fileInfo) {
-
-        System.out.println("WRAPPER CREATED");
+    public ThumbnailsWrapper(List<Image> thumbnails, AbstractFile file) {
         this.thumbnails = thumbnails;
-        this.fileInfo = fileInfo;
+        this.abstractFile = file;
     }
 
+    AbstractFile getAbstractFile(){
+        return abstractFile;
+    }
+    
     String getFileInfo() {
-        return fileInfo;
+        return abstractFile.getParentPath();
     }
 
     List<Image> getThumbnails() {

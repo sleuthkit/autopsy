@@ -27,6 +27,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.ListSelectionListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
@@ -71,6 +72,14 @@ public class ResultsPanel extends javax.swing.JPanel {
         videoThumbnailViewer = new VideoThumbnailViewer();
         // Disable manual editing of page size spinner
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
+    }
+
+    void addListSelectionListener(ListSelectionListener listener) {
+        videoThumbnailViewer.addListSelectionListener(listener);
+    }
+    
+    AbstractFile getSelectedFile() {
+        return videoThumbnailViewer.getSelectedFile();
     }
 
     /**
@@ -427,7 +436,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
-            videoThumbnailViewer.addRow(new ThumbnailsWrapper(thumbnails, file.getAbstractFile().getParentPath()));
+            videoThumbnailViewer.addRow(new ThumbnailsWrapper(thumbnails, file.getAbstractFile()));
         }
     }
 
