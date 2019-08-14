@@ -5,12 +5,7 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.awt.GridBagConstraints;
-import java.awt.Image;
-import java.util.List;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
+import javax.swing.DefaultListModel;
 
 /**
  *
@@ -18,7 +13,8 @@ import javax.swing.SwingUtilities;
  */
 public class VideoThumbnailViewer extends javax.swing.JPanel {
 
-    private int nextRow = 0;
+    private static final long serialVersionUID = 1L;
+    private final DefaultListModel<ThumbnailsWrapper> thumbnailListModel = new DefaultListModel<>();
 
     /**
      * Creates new form VideoThumbnailViewer
@@ -27,27 +23,16 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
         initComponents();
     }
 
-    void clearViewer(){
-        nextRow = 0;
-        this.removeAll();
+    void clearViewer() {
+        synchronized (this) {
+            thumbnailListModel.removeAllElements();
+        }
     }
-    
-    void addRow(List<Image> thumbnails, String fileInfo) {
-        SwingUtilities.invokeLater(() -> {
-            GridBagConstraints gridBagConstraints = new GridBagConstraints();
-            gridBagConstraints.gridx = 0;
-            gridBagConstraints.weightx = 1.0;
-            gridBagConstraints.weighty = 1.0;
-            gridBagConstraints.anchor = GridBagConstraints.LINE_START;
-            synchronized (this) {
-                gridBagConstraints.gridy = nextRow;
-                nextRow++;
-            }
-            this.add(new ThumbnailPanel(thumbnails, fileInfo), gridBagConstraints);
-            System.out.println("ROW ADDED");
-            revalidate();
-            repaint();
-        });
+
+    void addRow(ThumbnailsWrapper thumbnailWrapper) {
+        synchronized (this) {
+            thumbnailListModel.addElement(thumbnailWrapper);
+        }
     }
 
     /**
@@ -59,10 +44,23 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setLayout(new java.awt.GridBagLayout());
+        thumbnailListScrollPane = new javax.swing.JScrollPane();
+        thumbnailList = new javax.swing.JList<>();
+
+        setLayout(new java.awt.BorderLayout());
+
+        thumbnailList.setModel(thumbnailListModel);
+        thumbnailList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        thumbnailList.setCellRenderer(new ThumbnailPanel());
+        thumbnailListScrollPane.setViewportView(thumbnailList);
+
+        add(thumbnailListScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JList<ThumbnailsWrapper> thumbnailList;
+    private javax.swing.JScrollPane thumbnailListScrollPane;
     // End of variables declaration//GEN-END:variables
+
 }

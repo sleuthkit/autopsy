@@ -5,43 +5,51 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.awt.GridBagConstraints;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Image;
+import java.awt.GridBagConstraints;
 import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 
 /**
  *
- * @author wschaefer
  */
-public class ThumbnailPanel extends javax.swing.JPanel {
+public class ThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<ThumbnailsWrapper> {
 
-    private static final int GAP_SIZE = 2;
+    private static final int GAP_SIZE = 4;
+    private static final Color SELECTION_COLOR = Color.blue;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Creates new form ThumbnailPanel
      */
-    public ThumbnailPanel(List<Image> thumbnails, String fileInfo) {
+    public ThumbnailPanel() {
         initComponents();
-        fileInfoLabel.setText(fileInfo);
-        addThumbnails(thumbnails);
         this.setFocusable(true);
     }
 
     private void addThumbnails(List<Image> thumbnails) {
-        GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
-        imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(2, 0), new java.awt.Dimension(2, 0), new java.awt.Dimension(2, 32767)));
-        gridBagConstraints.gridx++;
-        for (Image image : thumbnails) {
-            imagePanel.add(new JLabel(new ImageIcon(image)), gridBagConstraints);
+        SwingUtilities.invokeLater(() -> {
+            imagePanel.removeAll();
+            GridBagConstraints gridBagConstraints = new GridBagConstraints();
+            gridBagConstraints.gridx = 0;
+            gridBagConstraints.gridy = 0;
+            gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+            imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)));
             gridBagConstraints.gridx++;
-            imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(2, 0), new java.awt.Dimension(2, 0), new java.awt.Dimension(2, 32767)));
-            gridBagConstraints.gridx++;
-        }
+            for (Image image : thumbnails) {
+                imagePanel.add(new JLabel(new ImageIcon(image)), gridBagConstraints);
+                gridBagConstraints.gridx++;
+                imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)));
+                gridBagConstraints.gridx++;
+            }
+        });
+
     }
 
     /**
@@ -77,9 +85,9 @@ public class ThumbnailPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
+                .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fileInfoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 8, Short.MAX_VALUE)
+                .addComponent(fileInfoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -89,4 +97,14 @@ public class ThumbnailPanel extends javax.swing.JPanel {
     private javax.swing.JLabel fileInfoLabel;
     private javax.swing.JPanel imagePanel;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends ThumbnailsWrapper> list, ThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
+            fileInfoLabel.setText(value.getFileInfo());
+            addThumbnails(value.getThumbnails());
+
+        setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
+
+        return this;
+    }
 }

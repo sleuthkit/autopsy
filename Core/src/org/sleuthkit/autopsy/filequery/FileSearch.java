@@ -361,7 +361,6 @@ class FileSearch {
          */
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
             // Default is to do nothing
-            System.out.println("DEFAULT IMPLE ");
         }
     }
 

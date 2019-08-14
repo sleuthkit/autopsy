@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Image;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
@@ -106,20 +108,14 @@ public class ResultsPanel extends javax.swing.JPanel {
                     tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
                 }
             }
-            resultsViewerPanel.validate();
         });
     }
 
     void populateVideoViewer(List<ResultFile> files) {
-        System.out.println("POPULATE VIEWER");
         videoThumbnailViewer.clearViewer();
+        System.out.println("POPULATE VIEWER");
         for (ResultFile file : files) {
-            System.out.println("NEW THREAD");
-            new Thread(() -> {      
-                System.out.println("ON NEW THREAD");
-                videoThumbnailViewer.addRow(file.getThumbnails(resultType), file.getAbstractFile().getParentPath());
-                System.out.println("END NEW THREAD");
-            }).start();
+            new ThumbnailWorker(file, resultType).execute();
         }
     }
 
@@ -209,7 +205,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         gotoPageLabel = new javax.swing.JLabel();
         gotoPageField = new javax.swing.JTextField();
         pageSizeLabel = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
         resultsViewerPanel = new javax.swing.JPanel();
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -312,21 +307,20 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
 
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
-        jScrollPane1.setViewportView(resultsViewerPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(pagingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jScrollPane1)
+            .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(jScrollPane1))
+                .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 62, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -405,7 +399,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JTextField gotoPageField;
     private javax.swing.JLabel gotoPageLabel;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel pageControlsLabel;
     private javax.swing.JLabel pageSizeLabel;
@@ -414,4 +407,28 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JButton previousPageButton;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
+
+    private class ThumbnailWorker extends SwingWorker<Void, Void> {
+
+        private final ResultFile file;
+        private final FileSearchData.FileType type;
+        private List<Image> thumbnails = new ArrayList<>();
+
+        ThumbnailWorker(ResultFile file, FileSearchData.FileType resultType) {
+            this.file = file;
+            this.type = resultType;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            thumbnails.addAll(file.getThumbnails(type));
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            videoThumbnailViewer.addRow(new ThumbnailsWrapper(thumbnails, file.getAbstractFile().getParentPath()));
+        }
+    }
+
 }

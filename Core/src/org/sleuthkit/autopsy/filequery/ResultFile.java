@@ -204,25 +204,20 @@ class ResultFile {
 
     private void createThumbnails(FileSearchData.FileType resultType) {
         if (resultType == FileType.IMAGE) {
-            System.out.println("create single image thumbnail");
             thumbnails.add(ImageUtils.getThumbnail(abstractFile, ImageUtils.ICON_SIZE_MEDIUM));
         } else if (resultType == FileType.VIDEO) {
             thumbnails.add(ImageUtils.getThumbnail(abstractFile, ImageUtils.ICON_SIZE_LARGE));
             thumbnails.add(ImageUtils.getThumbnail(abstractFile, ImageUtils.ICON_SIZE_LARGE));
             thumbnails.add(ImageUtils.getThumbnail(abstractFile, ImageUtils.ICON_SIZE_LARGE));
             thumbnails.add(ImageUtils.getThumbnail(abstractFile, ImageUtils.ICON_SIZE_LARGE));
-        } else {
-            System.out.println("NOT IMAGE OR VIDEO: " + fileType.name());
-        }
+        } 
 
     }
 
     List<Image> getThumbnails(FileSearchData.FileType resultType) {
         if (thumbnails.isEmpty()) {
-            System.out.println("IS EMPTY");
             createThumbnails(resultType);
         }
-        System.out.println("THUMBNAILS GOT");
         return Collections.unmodifiableList(thumbnails);
     }
 
