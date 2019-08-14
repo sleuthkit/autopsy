@@ -76,7 +76,7 @@
             <fileset dir="docs\doxygen\doxygen_docs\api-docs" includes="**/*"/>
 	</delete>
         
-        <delete includeemptydirs="true">
+        <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${basedir}/docs/doxygen-dev/dev-docs" includes="**/*"/>
         </delete>
     </target>
@@ -264,7 +264,7 @@
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs" includes="**/*"/>
         </delete>
-        <delete includeemptydirs="true">
+        <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${basedir}/docs/doxygen-dev/dev-docs" includes="**/*"/>
         </delete>
         
