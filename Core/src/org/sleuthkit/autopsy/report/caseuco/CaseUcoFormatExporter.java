@@ -198,47 +198,53 @@ public final class CaseUcoFormatExporter {
      * @param progressPanel 
      */
     public static void export(List<TagName> tagTypes, List<String> interestingItemSets,
-            File caseReportFolder, ReportProgressPanel progressPanel) {
+            File caseReportFolder, ReportProgressPanel progressPanel) throws IOException, SQLException, 
+            NoCurrentCaseException, TskCoreException {
 
-        try {
-            File outputFolder = Paths.get(caseReportFolder.toString(), ReportCaseUco.getReportFileName()).toFile();
-            if(!outputFolder.mkdir()) {
-                //log
-                return;
+        SleuthkitCase currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+
+        String reportFileName = ReportCaseUco.getReportFileName();
+        File reportFile = Paths.get(caseReportFolder.toString(), reportFileName).toFile();
+
+        JsonGenerator jsonGenerator = createJsonGenerator(reportFile);
+        initializeJsonOutputFile(jsonGenerator);
+        String caseTraceId = saveCaseInfo(currentCase, jsonGenerator);
+
+        for(TagName tn : tagTypes) {
+            for(ContentTag ct : tagsManager.getContentTagsByTagName(tn)) {
+                //copy content tag
             }
-            
-            SleuthkitCase currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
-            
-            for(TagName tn : tagTypes) {
-                for(ContentTag ct : tagsManager.getContentTagsByTagName(tn)) {
-                    //copy content tag
-                }
-                
-                for(BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn)) {
-                    //copy content
-                    //copy associated content
-                }
+
+            for(BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn)) {
+                //copy content
+                //copy associated content
             }
-            
-            if(!interestingItemSets.isEmpty()) {
-                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_FILE_HIT)) {
-                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-                    if (interestingItemSets.contains(setAttr.getValueString())) {
-                        
-                    }
-                }
-                
-                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT)) {
-                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-                    if (interestingItemSets.contains(setAttr.getValueString())) {
-                        
-                    }
-                }
-            }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            //log oh no
         }
+
+        if(!interestingItemSets.isEmpty()) {
+            for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_FILE_HIT)) {
+                BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                if (interestingItemSets.contains(setAttr.getValueString())) {
+
+                }
+            }
+
+            for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT)) {
+                BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                if (interestingItemSets.contains(setAttr.getValueString())) {
+
+                }
+            }
+        }
+    }
+    
+    private static JsonGenerator createJsonGenerator(File reportFile) throws IOException {
+        JsonFactory jsonGeneratorFactory = new JsonFactory();
+        JsonGenerator jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
+        // instert \n after each field for more readable formatting
+        jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
+        return jsonGenerator;
     }
 
     private static void initializeJsonOutputFile(JsonGenerator catalog) throws IOException {
