@@ -158,7 +158,9 @@ public class ResultsPanel extends javax.swing.JPanel {
     private void updateControls() {
         previousPageSize = (int) pageSizeSpinner.getValue();
         int pageSize = (int) pageSizeSpinner.getValue();
-        currentPageLabel.setText(Bundle.ResultsPanel_currentPage_displayValue(currentPage + 1, (groupSize / pageSize) + 1));
+        //handle edge case where group size is 0 and we want the empty results to be labeled paged 1 of 1 not page 1 of 0
+        double maxPageDouble = groupSize == 0 ? 1 : Math.ceil((double) groupSize / pageSize);
+        currentPageLabel.setText(Bundle.ResultsPanel_currentPage_displayValue(currentPage + 1, maxPageDouble));
         previousPageButton.setEnabled(currentPage != 0);
         nextPageButton.setEnabled(groupSize > ((currentPage + 1) * pageSize));
         gotoPageField.setEnabled(groupSize > pageSize);
@@ -358,9 +360,9 @@ public class ResultsPanel extends javax.swing.JPanel {
             return;
         }
         int pageSize = (int) pageSizeSpinner.getValue();
-        if ((newPage - 1) < 0 || groupSize < ((newPage - 1) * pageSize)) {
+        if ((newPage - 1) < 0 || groupSize <= ((newPage - 1) * pageSize)) {
             JOptionPane.showMessageDialog(this,
-                    Bundle.ResultsPanel_invalidPageNumber_message(newPage, ((groupSize / pageSize) + 1)),
+                    Bundle.ResultsPanel_invalidPageNumber_message(newPage, Math.ceil((double) groupSize / pageSize)),
                     Bundle.ResultsPanel_invalidPageNumber_title(),
                     JOptionPane.WARNING_MESSAGE);
             return;
