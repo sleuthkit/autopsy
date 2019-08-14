@@ -7,6 +7,8 @@ AddLogicalImageTask.addingToReport=Adding {0} to report
 # {0} - src
 # {1} - dest
 AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
+# {0} - sparseImageDirectory
+AddLogicalImageTask.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
 # {0} - file
 AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
 AddLogicalImageTask.doneCopying=Done copying
@@ -16,6 +18,10 @@ AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
 # {0} - src
 # {1} - dest
 AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
+# {0} - file
+AddLogicalImageTask.failToGetCanonicalPath=Fail to get canonical path for {0}
+AddLogicalImageTask.ingestionCancelled=Ingestion cancelled
+AddLogicalImageTask.noCurrentCase=No current case
 # {0} - imageFilePath
 AddMultipleImageTask.adding=Adding: {0}
 # {0} - file
@@ -39,12 +45,8 @@ AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for de
 LogicalImagerDSProcessor.dataSourceType=Autopsy Logical Imager Results
 # {0} - directory
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
-# {0} - sparseImageDirectory
-LogicalImagerDSProcessor.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
 # {0} - directory
 LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
-# {0} - file
-LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}
 # {0} - imageDirPath
 LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
 LogicalImagerDSProcessor.noCurrentCase=No current case

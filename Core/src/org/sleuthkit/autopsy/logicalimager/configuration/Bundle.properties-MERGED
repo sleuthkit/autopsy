@@ -191,7 +191,6 @@ EditNonFullPathsRulePanel.fileNamesInfoLabel.text=File names are case insensitiv
 EditNonFullPathsRulePanel.extensionsInfoLabel.text=Extensions are case insensitive.
 ConfigVisualPanel2.promptBeforeExit.text=Prompt before exiting imager
 ConfigVisualPanel2.promptBeforeExit.actionCommand=
-ConfigVisualPanel2.createVHDCheckBox.toolTipText=
 ConfigVisualPanel2.createVHDCheckBox.text=Create VHD
 NewRuleSetPanel.attributeRule.description=Search for files based on one or more attributes or metadata fields.
 NewRuleSetPanel.attributeRule.name=Attribute

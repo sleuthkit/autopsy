@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,11 +26,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.casemodule.AddLocalFilesTask;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -133,10 +129,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
-        "# {0} - file", "LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}",
         "LogicalImagerDSProcessor.noCurrentCase=No current case",
-        "# {0} - sparseImageDirectory", "LogicalImagerDSProcessor.directoryDoesNotContainSparseImage=Directory {0} does not contain any images",
-
     })
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
@@ -177,64 +170,14 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         File src = imageDirPath.toFile();
 
         try {
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_copyingImageFromTo(src.toString(), dest.toString()));
-            FileUtils.copyDirectory(src, dest);
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneCopying());
-        } catch (IOException ex) {
-            // Copy directory failed
-            String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
+            String deviceId = UUID.randomUUID().toString();
+            String timeZone = Calendar.getInstance().getTimeZone().getID();
+            run(deviceId, timeZone, src, dest,
+                    progressMonitor, callback);
+        } catch (NoCurrentCaseException ex) {
+            String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
             errorList.add(msg);
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-
-        // Get all VHD files in the src directory
-        List<String> imagePaths = new ArrayList<>();
-        for (File f : dest.listFiles()) {
-            if (f.getName().endsWith(".vhd")) {
-                try {
-                    imagePaths.add(f.getCanonicalPath());
-                } catch (IOException ex) {
-                    String msg = Bundle.LogicalImagerDSProcessor_failToGetCanonicalPath(f.getName());
-                    errorList.add(msg);
-                    callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-                    return;
-                }
-            }
-        }
-        String deviceId = UUID.randomUUID().toString();
-        if (imagePaths.isEmpty()) {
-            // No VHD in src directory, try ingest directories using Logical File Set
-            String[] directories = dest.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return Paths.get(dir.toString(), name).toFile().isDirectory();
-                }
-            });
-            for (String dir : directories) {
-                imagePaths.add(Paths.get(dest.toString(), dir).toFile().getAbsolutePath());
-            }
-            if (imagePaths.isEmpty()) {
-                String msg = Bundle.LogicalImagerDSProcessor_directoryDoesNotContainSparseImage(dest);
-                errorList.add(msg);
-                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-                return;
-            }
-        
-            // ingest the directories
-            new Thread(new AddLocalFilesTask(deviceId, null, imagePaths, progressMonitor, callback)).start();
-
-        } else {        
-            try {
-                String timeZone = Calendar.getInstance().getTimeZone().getID();
-                run(deviceId, imagePaths,
-                        timeZone, src, dest,
-                        progressMonitor, callback);
-            } catch (NoCurrentCaseException ex) {
-                String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
-                errorList.add(msg);
-                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            }
         }
     }
 
@@ -248,7 +191,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param deviceId        An ASCII-printable identifier for the device
      *                        associated with the data source that is intended
      *                        to be unique across multiple cases (e.g., a UUID).
-     * @param imagePaths      Paths to the image files.
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
      *                        java.util.TimeZone.getID.
@@ -258,11 +200,11 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, List<String> imagePaths, String timeZone,
+    private void run(String deviceId, String timeZone,
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
-        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePaths, timeZone, src, dest,
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest,
                 progressMonitor, callback);
         new Thread(addLogicalImageTask).start();
     }
