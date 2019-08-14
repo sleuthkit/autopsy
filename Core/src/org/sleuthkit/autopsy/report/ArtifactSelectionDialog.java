@@ -159,6 +159,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(ArtifactSelectionDialog.class, "ArtifactSelectionDialog.titleLabel.text")); // NOI18N
+        titleLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ArtifactSelectionDialog.class, "ArtifactSelectionDialog.titleLabel.toolTipText")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(ArtifactSelectionDialog.class, "ArtifactSelectionDialog.selectAllButton.text")); // NOI18N
         selectAllButton.addActionListener(new java.awt.event.ActionListener() {
@@ -189,7 +190,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                             .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(titleLabel)
-                        .addGap(0, 221, Short.MAX_VALUE))
+                        .addGap(0, 195, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton)))
