@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 //TODO: This and the corresponding imageanalyzer action are identical except for the type of the controller...  abstract something! -jm
 public class Back extends Action {
 
-    private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/images/resultset_previous.png", 16, 16, true, true, true); // NON-NLS
+    private static final Image BACK_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/arrow-180.png", 16, 16, true, true, true); // NON-NLS
 
     private final TimeLineController controller;
 

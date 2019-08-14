@@ -11,9 +11,9 @@
                 <tr><td>Time Range: </td><td>{{startTime}}
                         to
                         {{endTime}}</td></tr>
-                <tr><td>Description Level of Detail: </td><td>{{zoomParams.getDescriptionLOD.getDisplayName}}</td></tr>
-                <tr><td>Event Type Zoom Level: </td><td>{{zoomParams.getTypeZoomLevel.getDisplayName}}</td></tr>
-                {{#zoomParams.getFilter}}
+                <tr><td>Description Level of Detail: </td><td>{{zoomState.getDescriptionLOD.getDisplayName}}</td></tr>
+                <tr><td>Event Type Zoom Level: </td><td>{{zoomState.getTypeZoomLevel.getDisplayName}}</td></tr>
+                {{#zoomState.getFilter}}
                 <tr>
                     <td>Filters: </td>
                     <td>
@@ -65,7 +65,7 @@
                         </ul>
                     </td>
                 </tr>
-                {{/zoomParams.getFilter}}
+                {{/zoomState.getFilter}}
             </table>
         </div>
     </body>

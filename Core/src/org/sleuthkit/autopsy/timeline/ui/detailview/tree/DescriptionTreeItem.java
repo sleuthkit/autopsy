@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,9 +25,9 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * EventsTreeItem for specific event descriptions
@@ -46,14 +46,14 @@ class DescriptionTreeItem extends EventsTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    DescriptionTreeItem(TimeLineEvent event, Comparator<TreeItem<TimeLineEvent>> comparator) {
+    DescriptionTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(comparator);
         setValue(event);
     }
-    
+
     @Override
-    public void insert(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.remove(0);
+    public void insert(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.remove(0);
 
         //strip off parent description
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
@@ -68,13 +68,13 @@ class DescriptionTreeItem extends EventsTreeItem {
             treeItem.insert(path);
         }
     }
-    
+
     @Override
-    void remove(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.remove(0);
+    void remove(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.remove(0);
         //strip off parent description
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
-        
+
         DescriptionTreeItem descTreeItem = childMap.get(substringAfter);
 
         //remove path from child too 
@@ -89,21 +89,21 @@ class DescriptionTreeItem extends EventsTreeItem {
             }
         }
     }
-    
+
     @Override
-    void sort(Comparator<TreeItem<TimeLineEvent>> comparator, Boolean recursive) {
+    void sort(Comparator<TreeItem<DetailViewEvent>> comparator, Boolean recursive) {
         setComparator(comparator);
         FXCollections.sort(getChildren(), comparator); //sort children with new comparator
         if (recursive) {
             //resort children's children
-            childMap.values().forEach(ti -> ti.sort(comparator, true));
+            childMap.values().forEach(treeItem -> treeItem.sort(comparator, true));
         }
     }
-    
+
     @Override
-    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
+    public EventsTreeItem findTreeItemForEvent(DetailViewEvent event) {
         if (getValue().getEventType() == event.getEventType()
-                && getValue().getDescription().equals(event.getDescription())) {
+            && getValue().getDescription().equals(event.getDescription())) {
             //if this tree item match the given event, return this.
             return this;
         } else {
@@ -111,22 +111,22 @@ class DescriptionTreeItem extends EventsTreeItem {
             return super.findTreeItemForEvent(event);
         }
     }
-    
+
     @Override
     String getDisplayText() {
-        
+
         String text = getValue().getDescription() + " (" + getValue().getSize() + ")"; // NON-NLS
 
-        TreeItem<TimeLineEvent> parent = getParent();
+        TreeItem<DetailViewEvent> parent = getParent();
         if (parent != null && parent.getValue() != null && (parent instanceof DescriptionTreeItem)) {
             //strip off parent description
             text = StringUtils.substringAfter(text, parent.getValue().getDescription());
         }
         return text;
     }
-    
+
     @Override
-    EventType getEventType() {
+    TimelineEventType getEventType() {
         return getValue().getEventType();
     }
 }

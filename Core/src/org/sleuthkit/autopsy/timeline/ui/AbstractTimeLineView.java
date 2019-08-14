@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,9 +37,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 
 /**
@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  */
 public abstract class AbstractTimeLineView extends BorderPane {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractTimeLineView.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractTimeLineView.class.getName());
 
     /**
      * Boolean property that holds true if the view does not show any events
@@ -61,7 +61,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * current state of the DB, because, for example, tags have been updated but
      * the view. was not refreshed.
      */
-    private final ReadOnlyBooleanWrapper outOfDate = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyBooleanWrapper needsRefresh = new ReadOnlyBooleanWrapper(false);
 
     /**
      * Listener that is attached to various properties that should trigger a
@@ -86,8 +86,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
-        this.filteredEvents.zoomParametersProperty().addListener(updateListener);
-        TimeLineController.getTimeZone().addListener(updateListener);
+        this.filteredEvents.zoomStateProperty().addListener(updateListener);
+        TimeLineController.timeZoneProperty().addListener(updateListener);
     }
 
     /**
@@ -100,6 +100,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         refresh();
     }
+ 
 
     /**
      * Does the view represent an out-of-date state of the DB. It might if, for
@@ -107,8 +108,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
      *
      * @return True if the view does not represent the current state of the DB.
      */
-    public boolean isOutOfDate() {
-        return outOfDate.get();
+    public boolean needsRefresh() {
+        return needsRefresh.get();
     }
 
     /**
@@ -118,8 +119,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * @return A ReadOnlyBooleanProperty that holds the out-of-date state for
      *         this view.
      */
-    public ReadOnlyBooleanProperty outOfDateProperty() {
-        return outOfDate.getReadOnlyProperty();
+    public ReadOnlyBooleanProperty needsRefreshProperty() {
+        return needsRefresh.getReadOnlyProperty();
     }
 
     /**
@@ -156,7 +157,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
                     try {
                         this.hasVisibleEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception updating view", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Unexpected exception updating view", ex); //NON-NLS
                     }
                     break;
             }
@@ -223,8 +224,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
             updateTask = null;
         }
         //remvoe and gc updateListener
-        this.filteredEvents.zoomParametersProperty().removeListener(updateListener);
-        TimeLineController.getTimeZone().removeListener(updateListener);
+        this.filteredEvents.zoomStateProperty().removeListener(updateListener);
+        TimeLineController.timeZoneProperty().removeListener(updateListener);
         updateListener = null;
         filteredEvents.unRegisterForEvents(this);
         controller.unRegisterForEvents(this);
@@ -256,8 +257,8 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * Set this view out of date because, for example, tags have been updated
      * but the view was not refreshed.
      */
-    void setOutOfDate() {
-        outOfDate.set(true);
+    void setNeedsRefresh() {
+        needsRefresh.set(true);
     }
 
     /**
@@ -321,7 +322,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
         @Override
         protected void succeeded() {
             super.succeeded();
-            outOfDate.set(false);
+            needsRefresh.set(false);
             cleanup();
         }
 
