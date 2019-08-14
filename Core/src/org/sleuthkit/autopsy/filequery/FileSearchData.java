@@ -205,7 +205,8 @@ class FileSearchData {
     }
 
     /**
-     * Enum representing the file type. We don't simply use
+     * Enum representing the file type.
+     * We don't simply use
      * FileTypeUtils.FileTypeCategory because: - Some file types categories
      * overlap - It is convenient to have the "OTHER" option for files that
      * don't match the given types
