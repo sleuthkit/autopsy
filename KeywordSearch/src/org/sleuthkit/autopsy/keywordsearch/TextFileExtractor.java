@@ -23,6 +23,7 @@ import java.io.BufferedInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import org.apache.tika.mime.MimeTypes;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
@@ -43,7 +44,7 @@ final class TextFileExtractor {
 
     public Reader getReader(AbstractFile source) throws TextFileExtractorException {
         String mimeType = source.getMIMEType();
-        if (mimeType.equals("text/plain") || mimeType.equals("application/octet-stream")) {
+        if (mimeType.equals(MimeTypes.PLAIN_TEXT)) {
             Charset decodetectCharset = TextExtractor.getDecodetectCharset(source);
             if (decodetectCharset != null) {
                 return new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(source)), decodetectCharset);

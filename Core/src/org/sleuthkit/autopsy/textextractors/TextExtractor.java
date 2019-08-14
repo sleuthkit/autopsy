@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
@@ -100,8 +100,8 @@ public interface TextExtractor {
         }
     }
 
-    static Charset getDecodetectCharset(AbstractFile aFile) {
-        InputStream stream = new BufferedInputStream(new ReadContentInputStream(aFile));
+    static Charset getDecodetectCharset(Content content) {
+        InputStream stream = new BufferedInputStream(new ReadContentInputStream(content));
         Charset detectedCharset = null;
 
         try {
