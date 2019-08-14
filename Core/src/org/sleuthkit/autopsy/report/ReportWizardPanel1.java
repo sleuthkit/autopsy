@@ -33,8 +33,8 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
 
     private WizardDescriptor wiz;
     private ReportVisualPanel1 component;
-    private JButton nextButton;
-    private JButton finishButton;
+    private final JButton nextButton;
+    private final JButton finishButton;
 
     ReportWizardPanel1() {
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.nextButton.text"));

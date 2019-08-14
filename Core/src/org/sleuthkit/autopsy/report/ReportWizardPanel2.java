@@ -25,13 +25,12 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
-import org.openide.util.NbPreferences;
 
 class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private ReportVisualPanel2 component;
-    private JButton finishButton;
-    private JButton nextButton;
+    private final JButton finishButton;
+    private final JButton nextButton;
     private WizardDescriptor wiz;
 
     ReportWizardPanel2() {
