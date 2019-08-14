@@ -3,25 +3,23 @@
 \section intro_regression Introduction
 The autopsy/test folder contains scripts that are necessary to run the regression test. Developers that are interested in running regression tests should run autopsy/test/script/regression.py. This guide will familiarize you with regression.py and walk you through a simple example at the end.
 
-If you’ve never heard of regression testing, see <a href="https://en.wikipedia.org/wiki/Regression_testing">Regression Testing</a>.
-
 From a bird’s eye view, regression.py will:
 - Run ingest on an image by starting up Autopsy and controlling the UI
 - Generate a HTML report once ingest is complete
-- Dump the case database and perform diffs on the gold standards. HTML reports are also diffed.
+- \ref dump "Dump" the case database and perform \ref diff "diffs" on the \ref gold_standard "gold standards". HTML reports are also \ref diff "diffed".
 
-Don’t worry if the terminology of the last bullet confuses you. The \ref terminology section will help get you up to speed. What’s important is that regression.py will enable you to isolate changes that you may have caused while developing and adding features.
+What’s important is that regression.py will enable you to isolate changes that you may have caused while developing and adding features.
 
 Regression.py is also responsible for producing and saving gold standards for you. This allows your gold standards to evolve as your source code changes. In the following sections, we will learn how to accomplish this and what regression.py will need to know in order to run smoothly.
 \section general General
 Regression.py will use the most recent Autopsy and Sleuthkit builds as a launching point. To ensure that your latest changes are included, you will need to make sure you build.
 \section terminology Terminology
 Before we jump in, let's start off by defining some common terminology.
-    - Dump 
+    - \anchor dump Dump 
         - A dump refers to writing all case database INSERT statements to file. The case database is what Autopsy uses to persist its analysis. Items that are time or execution order dependent are obfuscated so that only meaningful changes are captured.
-    - Gold standard 
+    - \anchor gold_standard Gold standard 
         - A gold standard is simply a dump that we designate to be the base expectation for any given ingest run. Some changes may add to this base (potentially positive) and some may modify or remove from this base (potentially negative). HTML reports will also be saved as gold standards.
-    - Diff
+    - \anchor diff Diff
         - A diff is the result of running the <a href="http://man7.org/linux/man-pages/man1/diff.1.html">diff</a> command against a new dump and a corresponding gold standard. If there are any regressions, they will hopefully be captured in these files.
 
 \section param_desc Parameter Descriptions

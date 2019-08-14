@@ -1,10 +1,10 @@
-/*! \mainpage Autopsy Dev's Guide 
+/*! \mainpage Autopsy Developer's Guide 
 
 
 Overview
 -----
 
-This is the Dev's Guide for the <a href="http://www.sleuthkit.org/autopsy/">open source Autopsy platform</a>.  Autopsy allows you to examine a hard drive or mobile device and recover evidence from it. This guide should help you with using Autopsy. There is a seperate <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/"> developer's guide</a> for writing Autopsy modules.
+This is the Developer's Guide for the <a href="http://www.sleuthkit.org/autopsy/">open source Autopsy platform</a>.  Autopsy allows you to examine a hard drive or mobile device and recover evidence from it. This guide should help you with using Autopsy. There is a seperate <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/"> developer's guide</a> for writing Autopsy modules.
 
 Topics
 -------
