@@ -85,12 +85,12 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(edge);
         extractors.add(safari);
         extractors.add(recentDocuments);
-        extractors.add(recycleBin);
         extractors.add(SEUQA); // this needs to run after the web browser modules
         extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
         extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
         extractors.add(zoneInfo); // this needs to run after the web browser modules
+        extractors.add(recycleBin); // this needs to run after ExtractRegistry and ExtractOS
 
         browserExtractors.add(chrome);
         browserExtractors.add(firefox);

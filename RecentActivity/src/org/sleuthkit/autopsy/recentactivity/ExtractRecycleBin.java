@@ -30,7 +30,9 @@ import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -41,11 +43,13 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_DELETED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
@@ -76,26 +80,35 @@ final class ExtractRecycleBin extends Extract {
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
-
-        // At this time it was decided tjat we would not include TSK_RECYCLE_BIN
+        
+        // At this time it was decided that we would not include TSK_RECYCLE_BIN
         // in the default list of BlackboardArtifact types.
         try {
-            skCase.addBlackboardArtifactType(RECYCLE_BIN_ARTIFACT_NAME, "Recycle Bin"); //NON-NLS
+            tskCase.addBlackboardArtifactType(RECYCLE_BIN_ARTIFACT_NAME, "Recycle Bin"); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("%s may not have been created.", RECYCLE_BIN_ARTIFACT_NAME), ex);
         } catch (TskDataException ex) {
-            logger.log(Level.WARNING, String.format("%s may have already been defined for this case", RECYCLE_BIN_ARTIFACT_NAME), ex);
+            logger.log(Level.INFO, String.format("%s may have already been defined for this case", RECYCLE_BIN_ARTIFACT_NAME));
         }
 
         BlackboardArtifact.Type recycleBinArtifactType;
 
         try {
-            recycleBinArtifactType = skCase.getArtifactType(RECYCLE_BIN_ARTIFACT_NAME);
+            recycleBinArtifactType = tskCase.getArtifactType(RECYCLE_BIN_ARTIFACT_NAME);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("Unable to retrive custom artifact type %s", RECYCLE_BIN_ARTIFACT_NAME), ex); // NON-NLS
             // If this doesn't work bail.
             return;
+        }
+        Map<String, String> userNameMap;
+        
+        try {
+            userNameMap = makeUserNameMap(dataSource);
+        } catch (TskCoreException ex) {
+           logger.log(Level.WARNING, "Unable to create OS Account user name map", ex);
+           // This is not the end of the world we will just continue without 
+           // user names
+           userNameMap = new HashMap<>();
         }
 
         List<AbstractFile> iFiles;
@@ -135,6 +148,9 @@ final class ExtractRecycleBin extends Extract {
                 }
 
                 String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
+                String userID = getUserIDFromPath(iFile.getParentPath());
+                String userName = userNameMap.get(userID);
+                
                 List<AbstractFile> rFiles;
 
                 try {
@@ -155,6 +171,7 @@ final class ExtractRecycleBin extends Extract {
                             BlackboardArtifact bba = rFile.newArtifact(recycleBinArtifactType.getTypeID());
                             bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), metaData.getFileName()));
                             bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), metaData.getDeletedTimeStamp()));
+                            bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName != null ? userName : ""));
 
                             postArtifact(bba);
                         } catch (TskCoreException ex) {
@@ -218,13 +235,43 @@ final class ExtractRecycleBin extends Extract {
         if (version == 1) {
             stringBytes = Arrays.copyOfRange(allBytes, V1_FILE_NAME_OFFSET, allBytes.length);
         } else {
-            int fileNameLength = byteBuffer.getInt();
-            stringBytes = Arrays.copyOfRange(allBytes, V2_FILE_NAME_OFFSET, fileNameLength);
+            int fileNameLength = byteBuffer.getInt() * 2; //Twice the bytes for unicode
+            stringBytes = Arrays.copyOfRange(allBytes, V2_FILE_NAME_OFFSET, V2_FILE_NAME_OFFSET + fileNameLength);
         }
 
         String fileName = new String(stringBytes, "UTF-16LE"); //NON-NLS
 
         return new RecycledFileMetaData(fileSize, timestamp, fileName);
+    }
+    
+        
+    private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException{
+        Map<String, String> userNameMap = new HashMap<>();
+      
+        List<BlackboardArtifact> accounts = blackboard.getArtifacts(TSK_OS_ACCOUNT.getTypeID(), dataSource.getId());
+        
+        for (BlackboardArtifact account: accounts) {
+            BlackboardAttribute nameAttribute = getAttributeForArtifact(account, TSK_USER_NAME);
+            BlackboardAttribute idAttribute = getAttributeForArtifact(account, TSK_USER_ID);
+            
+            String userName = nameAttribute != null ? nameAttribute.getDisplayString() : "";
+            String userID = idAttribute != null ? idAttribute.getDisplayString() : "";
+            
+            if (!userID.isEmpty()) {
+                userNameMap.put(userID, userName);
+            }
+        }
+        
+        return userNameMap;
+    }
+    
+    private String getUserIDFromPath(String iFileParentPath) {
+        int index = iFileParentPath.indexOf("-") - 1;
+        return (iFileParentPath.substring(index)).replace("/", "");
+    }
+    
+    private BlackboardAttribute getAttributeForArtifact(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException{
+       return artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(type.getTypeID())));
     }
 
     /**
