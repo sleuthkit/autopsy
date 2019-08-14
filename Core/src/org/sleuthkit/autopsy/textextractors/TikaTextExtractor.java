@@ -71,8 +71,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import com.google.common.collect.ImmutableMap; 
-import java.nio.charset.Charset;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -239,12 +238,6 @@ final class TikaTextExtractor implements TextExtractor {
         }
 
         Metadata metadata = new Metadata();
-
-        Charset detectedCharset = TextExtractor.getDecodetectCharset(content);
-        if (detectedCharset != null ) {
-            metadata.add(Metadata.CONTENT_ENCODING, detectedCharset.name());
-        }
-
         // Use the more memory efficient Tika SAX parsers for DOCX and
         // PPTX files (it already uses SAX for XLSX).
         OfficeParserConfig officeParserConfig = new OfficeParserConfig();
