@@ -628,6 +628,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             boolean wasTextAdded = false;
 
+            Charset decodetectCharset = null;
             //extract text with one of the extractors, divide into chunks and index with Solr
             try {
                 //logger.log(Level.INFO, "indexing: " + aFile.getName());
@@ -638,12 +639,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     extractStringsAndIndex(aFile);
                     return;
                 }
-                if (fileType.equals(MimeTypes.PLAIN_TEXT)) {
-                    Charset detectedCharset = TextExtractor.getDecodetectCharset(aFile);
-                    if (detectedCharset != null) {
-                        indexTextFile(aFile);
-                        return;
-                    }
+                decodetectCharset = TextExtractor.getDecodetectCharset(aFile);
+                if (fileType.equals(MimeTypes.PLAIN_TEXT) && decodetectCharset != null) {
+                    indexTextFile(aFile, decodetectCharset);
+                    return;
                 }
                 if (!extractTextAndIndex(aFile)) {
                     // Text extractor not found for file. Extract string only.
@@ -666,7 +665,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt") && !(aFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)))) {
                 //Carved Files should be the only type of unallocated files capable of a txt extension and 
                 //should be ignored by the TextFileExtractor because they may contain more than one text encoding
-                wasTextAdded = indexTextFile(aFile);
+                wasTextAdded = indexTextFile(aFile, decodetectCharset);
             }
 
             // if it wasn't supported or had an error, default to strings
@@ -675,9 +674,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
         }
 
-        private boolean indexTextFile(AbstractFile aFile) {
+        private boolean indexTextFile(AbstractFile aFile, Charset detectedCharset) {
             try {
-                TextFileExtractor textFileExtractor = new TextFileExtractor();
+                TextFileExtractor textFileExtractor = new TextFileExtractor(detectedCharset);
                 Reader textReader = textFileExtractor.getReader(aFile);
                 if (textReader == null) {
                     logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
