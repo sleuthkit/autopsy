@@ -26,12 +26,14 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.SimpleTimeZone;
 import java.util.logging.Level;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -41,9 +43,11 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -57,9 +61,11 @@ import org.sleuthkit.datamodel.TagName;
 public final class CaseUcoFormatExporter {
 
     private static final Logger logger = Logger.getLogger(CaseUcoFormatExporter.class.getName());
+    
     private static final BlackboardAttribute.Type SET_NAME = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
     private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_FILE_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
     private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_ARTIFACT_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
+    private static final String TEMP_DIR_NAME = "case_uco_tmp";
     
     private CaseUcoFormatExporter() {
     }
@@ -202,21 +208,56 @@ public final class CaseUcoFormatExporter {
             File caseReportFolder, ReportProgressPanel progressPanel) throws IOException, SQLException, 
             NoCurrentCaseException, TskCoreException {
 
-        SleuthkitCase currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
+        //Acquire references for file discovery
+        Case currentCase = Case.getCurrentCaseThrows();
+        String caseTempDirectory = currentCase.getTempDirectory();
+        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        TagsManager tagsManager = currentCase.getServices().getTagsManager();
 
+        //Create temp directory to filter out duplicate files.
+        Path tmpDir = Paths.get(caseTempDirectory, TEMP_DIR_NAME);
+        FileUtils.deleteDirectory(tmpDir.toFile());
+        tmpDir.toFile().mkdir();
+        
+        //Create the case-uco generator
         String reportFileName = ReportCaseUco.getReportFileName();
         File reportFile = Paths.get(caseReportFolder.toString(), reportFileName).toFile();
-
         JsonGenerator jsonGenerator = createJsonGenerator(reportFile);
         initializeJsonOutputFile(jsonGenerator);
-        String caseTraceId = saveCaseInfo(currentCase, jsonGenerator);
         
-        for(DataSource ds : currentCase.getDataSources()) {
-            String dataSourceTraceId = saveDataSourceInfo(ds.getId(), caseTraceId, currentCase, jsonGenerator);
+        //Make the case the first entity in the report file.
+        String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
+        
+        SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
+        
+        //Process by data source so that data source entities in the report file
+        //appear before any files from that data source.
+        for(DataSource ds : skCase.getDataSources()) {
+            String dataSourceTraceId = saveDataSourceInfo(ds.getId(), caseTraceId, skCase, jsonGenerator);
             for(TagName tn : tagTypes) {
                 for(ContentTag ct : tagsManager.getContentTagsByTagName(tn, ds.getId())) {
-                    // copy content tag.
+                    Content content = ct.getContent();
+                    if (content instanceof AbstractFile) {
+                        AbstractFile absFile = (AbstractFile) content;
+                        Path filePath = tmpDir.resolve(absFile.getMd5Hash());
+                        if(!Files.exists(filePath)) {
+                            saveFileInCaseUcoFormat(
+                                    absFile.getId(), 
+                                    absFile.getName(), 
+                                    absFile.getParentPath(), 
+                                    absFile.getMd5Hash(), 
+                                    absFile.getMIMEType(), 
+                                    absFile.getSize(), 
+                                    ContentUtils.getStringTimeISO8601(absFile.getCtime(), timeZone),
+                                    ContentUtils.getStringTimeISO8601(absFile.getAtime(), timeZone),
+                                    ContentUtils.getStringTimeISO8601(absFile.getMtime(), timeZone),
+                                    absFile.getNameExtension(),
+                                    jsonGenerator,
+                                    dataSourceTraceId
+                            );
+                            filePath.toFile().createNewFile();
+                        }
+                    }
                 }
                 
                 for(BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn, ds.getId())) {
@@ -226,14 +267,14 @@ public final class CaseUcoFormatExporter {
             }
             
             if(!interestingItemSets.isEmpty()) {
-                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_FILE_HIT, ds.getId())) {
+                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_FILE_HIT, ds.getId())) {
                     BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
                     if (interestingItemSets.contains(setAttr.getValueString())) {
 
                     }
                 }
 
-                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT, ds.getId())) {
+                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT, ds.getId())) {
                     BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
                     if (interestingItemSets.contains(setAttr.getValueString())) {
 
@@ -241,6 +282,8 @@ public final class CaseUcoFormatExporter {
                 }
             }
         }
+        
+        finilizeJsonOutputFile(jsonGenerator);
     }
     
     private static JsonGenerator createJsonGenerator(File reportFile) throws IOException {
