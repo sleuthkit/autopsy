@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -107,6 +108,15 @@ final class ExtractRecycleBin extends Extract {
         }
         
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+
+        Map<String, List<AbstractFile>> rFileMap;
+        try {
+            rFileMap = makeRFileMap(dataSource);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Unable to create $R file map for dataSource: %s", dataSource.getName()), ex);
+            return; // No $R files, no need to continue;
+        }
+
         List<AbstractFile> iFiles;
 
         try {
@@ -124,7 +134,7 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
             
-            processIFiles(dataSource, context, recycleBinArtifactType, iFile, userNameMap, tempRARecycleBinPath);
+            processIFiles(context, recycleBinArtifactType, iFile, userNameMap, rFileMap, tempRARecycleBinPath);
         }
 
         (new File(tempRARecycleBinPath)).delete();
@@ -140,9 +150,8 @@ final class ExtractRecycleBin extends Extract {
      * @param userNameMap Map of user ids to names
      * @param tempRARecycleBinPath Temp directory path
      */
-    private void processIFiles(Content dataSource,  IngestJobContext context,  BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile,  Map<String, String> userNameMap, String tempRARecycleBinPath) {
+    private void processIFiles(IngestJobContext context,  BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile,  Map<String, String> userNameMap, Map<String, List<AbstractFile>> rFileMap, String tempRARecycleBinPath) {
         String tempFilePath = tempRARecycleBinPath + File.separator + iFile.getName();
-        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         try {
             try {
                 ContentUtils.writeToFile(iFile, new File(tempFilePath));
@@ -173,15 +182,7 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
 
-            List<AbstractFile> rFiles;
-
-            try {
-                rFiles = fileManager.findFiles(dataSource, rFileName, iFile.getParentPath());
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, String.format("Unable to find R file (%s) for I file (%s)", rFileName, iFile.getName()), ex); //NON-NLS
-                // If there are no $R files go on to the next $I file
-                return;
-            }
+            List<AbstractFile> rFiles = rFileMap.get(rFileName);
 
             for (AbstractFile rFile : rFiles) {
                 if (context.dataSourceIngestIsCancelled()) {
@@ -285,6 +286,34 @@ final class ExtractRecycleBin extends Extract {
         }
         
         return userNameMap;
+    }
+    
+    /**
+     * Get a list of files that start with $R and create a map of the file to 
+     * their name.
+     * 
+     * @param dataSource
+     * @return File map
+     * @throws TskCoreException 
+     */
+    private Map<String, List<AbstractFile>> makeRFileMap(Content dataSource) throws TskCoreException{
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        List<AbstractFile> rFiles = fileManager.findFiles(dataSource, "$R%");
+        Map<String, List<AbstractFile>> fileMap = new HashMap<>();
+        
+        for (AbstractFile rFile: rFiles) {
+            String fileName = rFile.getName();
+            List<AbstractFile> fileList = fileMap.get(fileName);
+            
+            if(fileList == null) {
+                fileList = new ArrayList<>();
+                fileMap.put(fileName, fileList);
+            }
+            
+            fileList.add(rFile);
+        }
+        
+        return fileMap;
     }
     
     /**
