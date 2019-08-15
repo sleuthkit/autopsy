@@ -24,12 +24,12 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="imagePanel" pref="800" max="32767" attributes="0"/>
-                  <Component id="fileInfoLabel" max="32767" attributes="0"/>
+                  <Component id="fileInfoLabel" alignment="0" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -37,7 +37,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="imagePanel" min="-2" pref="148" max="-2" attributes="0"/>
+              <Component id="imagePanel" min="-2" pref="170" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="fileInfoLabel" min="-2" pref="19" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>

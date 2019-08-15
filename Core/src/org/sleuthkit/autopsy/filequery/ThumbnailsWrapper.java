@@ -18,14 +18,20 @@ public class ThumbnailsWrapper {
 
     private final List<Image> thumbnails;
     private final AbstractFile abstractFile;
+    private final int[] timeStamps;
 
-    public ThumbnailsWrapper(List<Image> thumbnails, AbstractFile file) {
+    public ThumbnailsWrapper(List<Image> thumbnails, int[] timeStamps, AbstractFile file) {
         this.thumbnails = thumbnails;
+        this.timeStamps = timeStamps;
         this.abstractFile = file;
     }
 
     AbstractFile getAbstractFile(){
         return abstractFile;
+    }
+    
+    int[] getTimeStamps(){
+        return timeStamps.clone();
     }
     
     String getFileInfo() {

@@ -114,6 +114,8 @@ FileSorter.SortingMethod.filetype.displayName=By file type
 FileSorter.SortingMethod.frequency.displayName=By central repo frequency
 FileSorter.SortingMethod.keywordlist.displayName=By keyword list names
 FileSorter.SortingMethod.parent.displayName=By parent path
+# {0} - file name
+ResultFile.genVideoThumb.progress.text=extracting temporary file {0}
 ResultsDialog.dialogTitle.text=File search results
 ResultsDialog.exitButton.text=Exit
 ResultsDialog.searchButton.text=Run another search

@@ -421,7 +421,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         private final ResultFile file;
         private final FileSearchData.FileType type;
-        private List<Image> thumbnails = new ArrayList<>();
+        private ThumbnailsWrapper thumbnailWrapper;
 
         ThumbnailWorker(ResultFile file, FileSearchData.FileType resultType) {
             this.file = file;
@@ -430,13 +430,13 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            thumbnails.addAll(file.getThumbnails(type));
+            thumbnailWrapper = ResultFile.createVideoThumbnails(file.getAbstractFile());
             return null;
         }
 
         @Override
         protected void done() {
-            videoThumbnailViewer.addRow(new ThumbnailsWrapper(thumbnails, file.getAbstractFile()));
+            videoThumbnailViewer.addRow(thumbnailWrapper);
         }
     }
 

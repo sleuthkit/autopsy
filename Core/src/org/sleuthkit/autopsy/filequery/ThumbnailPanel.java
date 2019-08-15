@@ -10,6 +10,7 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.GridBagConstraints;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -32,19 +33,36 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
         this.setFocusable(true);
     }
 
-    private void addThumbnails(List<Image> thumbnails) {
+    private void addThumbnails(ThumbnailsWrapper thumbnailWrapper) {
         imagePanel.removeAll();
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = GridBagConstraints.LINE_START;
-        imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)));
+        imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
+        gridBagConstraints.gridy = 1;
+        imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
         gridBagConstraints.gridx++;
-        for (Image image : thumbnails) {
+        int timeIndex = 0;
+        int[] timeStamps = thumbnailWrapper.getTimeStamps();
+        for (Image image : thumbnailWrapper.getThumbnails()) {
+            gridBagConstraints.gridy = 0;
             imagePanel.add(new JLabel(new ImageIcon(image)), gridBagConstraints);
+            gridBagConstraints.gridy = 1;
+            long millis = timeStamps[timeIndex];
+            long hours = TimeUnit.MILLISECONDS.toHours(millis);
+            millis -= TimeUnit.HOURS.toMillis(hours);
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(millis);
+            millis -= TimeUnit.MINUTES.toMillis(minutes);
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
+            imagePanel.add(new JLabel(String.format("%01d:%02d:%02d", hours, minutes, seconds)), gridBagConstraints);
             gridBagConstraints.gridx++;
-            imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)));
+            gridBagConstraints.gridy = 0;
+            imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
+            gridBagConstraints.gridy = 1;
+            imagePanel.add(new javax.swing.Box.Filler(new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 0), new java.awt.Dimension(GAP_SIZE, 32767)), gridBagConstraints);
             gridBagConstraints.gridx++;
+            timeIndex++;
         }
     }
 
@@ -81,7 +99,7 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(fileInfoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -97,7 +115,7 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
     @Override
     public Component getListCellRendererComponent(JList<? extends ThumbnailsWrapper> list, ThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileInfoLabel.setText(value.getFileInfo());
-        addThumbnails(value.getThumbnails());
+        addThumbnails(value);
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
     }
