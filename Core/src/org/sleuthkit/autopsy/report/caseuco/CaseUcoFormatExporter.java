@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -210,30 +211,33 @@ public final class CaseUcoFormatExporter {
         JsonGenerator jsonGenerator = createJsonGenerator(reportFile);
         initializeJsonOutputFile(jsonGenerator);
         String caseTraceId = saveCaseInfo(currentCase, jsonGenerator);
-
-        for(TagName tn : tagTypes) {
-            for(ContentTag ct : tagsManager.getContentTagsByTagName(tn)) {
-                //copy content tag
-            }
-
-            for(BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn)) {
-                //copy content
-                //copy associated content
-            }
-        }
-
-        if(!interestingItemSets.isEmpty()) {
-            for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_FILE_HIT)) {
-                BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-                if (interestingItemSets.contains(setAttr.getValueString())) {
-
+        
+        for(DataSource ds : currentCase.getDataSources()) {
+            String dataSourceTraceId = saveDataSourceInfo(ds.getId(), caseTraceId, currentCase, jsonGenerator);
+            for(TagName tn : tagTypes) {
+                for(ContentTag ct : tagsManager.getContentTagsByTagName(tn, ds.getId())) {
+                    // copy content tag.
+                }
+                
+                for(BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn, ds.getId())) {
+                    //copy content
+                    //copy associated content
                 }
             }
+            
+            if(!interestingItemSets.isEmpty()) {
+                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_FILE_HIT, ds.getId())) {
+                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                    if (interestingItemSets.contains(setAttr.getValueString())) {
 
-            for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT)) {
-                BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-                if (interestingItemSets.contains(setAttr.getValueString())) {
+                    }
+                }
 
+                for(BlackboardArtifact bArt : currentCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT, ds.getId())) {
+                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                    if (interestingItemSets.contains(setAttr.getValueString())) {
+
+                    }
                 }
             }
         }
