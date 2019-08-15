@@ -54,6 +54,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
     @ActionReference(path = "Toolbars/Case", position = 105)})
 public final class ReportWizardAction extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
 
+    private static final String REPORTING_CONFIGURATION_NAME = "REPORT_ACTION";
+    private static final boolean DISPLAY_CASE_SPECIFIC_DATA = true;
+    private static final boolean RUN_REPORTS = true;
     private final JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.actionName.text");
 
@@ -64,7 +67,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
      */
     @SuppressWarnings("unchecked")
     public static void doReportWizard() {
-        WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
+        WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator(REPORTING_CONFIGURATION_NAME, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS));
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
@@ -75,11 +78,11 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             PortableCaseReportModule portableCaseReport = (PortableCaseReportModule) wiz.getProperty("portableCaseModule");  // NON-NLS
             try {
                 if (tableReport != null) {
-                    generator.generateTableReport(tableReport, (Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
+                    generator.generateTableReport(tableReport, new TableReportSettings((Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates"))); //NON-NLS
                 } else if (generalReport != null) {
                     generator.generateGeneralReport(generalReport);
                 } else if (fileReport != null) {
-                    generator.generateFileListReport(fileReport, (Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
+                    generator.generateFileListReport(fileReport, new FileReportSettings((Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions"))); //NON-NLS
                 } else if (portableCaseReport != null) {
                     generator.generatePortableCaseReport(portableCaseReport, (PortableCaseReportModule.PortableCaseOptions) wiz.getProperty("portableCaseReportOptions"));
                 }

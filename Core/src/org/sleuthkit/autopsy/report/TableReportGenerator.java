@@ -61,8 +61,8 @@ import org.sleuthkit.datamodel.TskData;
 
 class TableReportGenerator {
 
-    private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
-    private final HashSet<String> tagNamesFilter = new HashSet<>();
+    private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
+    private HashSet<String> tagNamesFilter = new HashSet<>();
 
     private final Set<Content> images = new HashSet<>();
     private final ReportProgressPanel progressPanel;
@@ -72,27 +72,30 @@ class TableReportGenerator {
 
     private final List<String> errorList;
 
-    TableReportGenerator(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, ReportProgressPanel progressPanel, TableReportModule tableReport) {
+    TableReportGenerator(TableReportSettings settings, ReportProgressPanel progressPanel, TableReportModule tableReport) {
 
         this.progressPanel = progressPanel;
         this.tableReport = tableReport;
         this.columnHeaderMap = new HashMap<>();
         errorList = new ArrayList<>();
         // Get the artifact types selected by the user.
-        for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
-            if (entry.getValue()) {
-                artifactTypes.add(entry.getKey());
-            }
-        }
+        artifactTypes = settings.getArtifactSelections();
 
         // Get the tag names selected by the user and make a tag names filter.
-        if (null != tagNameSelections) {
-            for (Map.Entry<String, Boolean> entry : tagNameSelections.entrySet()) {
-                if (entry.getValue() == true) {
-                    tagNamesFilter.add(entry.getKey());
-                }
-            }
+        tagNamesFilter = new HashSet<>(settings.getTagSelections());
+    }
+    
+    static TableReportSettings getDefaultTableReportSettings(boolean useCaseSpecificData) {
+        Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
+        Map<String, Boolean> tagNameSelections = new HashMap<>();
+        
+        if (useCaseSpecificData) {
+            // get tags and artifact types from current case
+        } else {
+            // get all possible tag names and artifact types
         }
+        
+        return new TableReportSettings(artifactTypeSelections, tagNameSelections);
     }
 
     protected void execute() {

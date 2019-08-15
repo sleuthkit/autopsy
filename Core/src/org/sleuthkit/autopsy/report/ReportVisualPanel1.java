@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import static java.util.Collections.swap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -49,13 +50,15 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private List<TableReportModule> tableModules = new ArrayList<>();
     private List<FileReportModule> fileModules = new ArrayList<>();
     private PortableCaseReportModule portableCaseModule;
+    private Map<String, ReportModuleConfig> moduleConfigs;
     private Integer selectedIndex;
 
     /**
      * Creates new form ReportVisualPanel1
      */
-    public ReportVisualPanel1(ReportWizardPanel1 wizPanel) {
+    public ReportVisualPanel1(ReportWizardPanel1 wizPanel, Map<String, ReportModuleConfig> moduleConfigs) {
         this.wizPanel = wizPanel;
+        this.moduleConfigs = moduleConfigs;
         initComponents();
         configurationPanel.setLayout(new BorderLayout());
         descriptionTextPane.setEditable(false);
@@ -67,14 +70,14 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         tableModules = ReportModuleLoader.getTableReportModules();
         generalModules = ReportModuleLoader.getGeneralReportModules();
         fileModules = ReportModuleLoader.getFileReportModules();
-        
+
         for (TableReportModule module : tableModules) {
             if (!moduleIsValid(module)) {
                 popupWarning(module);
-                tableModules.remove(module);                
+                tableModules.remove(module);
             }
         }
-        
+
         for (GeneralReportModule module : generalModules) {
             if (!moduleIsValid(module)) {
                 popupWarning(module);
@@ -85,22 +88,22 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         for (FileReportModule module : fileModules) {
             if (!moduleIsValid(module)) {
                 popupWarning(module);
-                fileModules.remove(module);                
+                fileModules.remove(module);
             }
         }
-        
+
         // our theory is that the report table modules are more common, so they go on top
         modules.addAll(tableModules);
         modules.addAll(fileModules);
         modules.addAll(generalModules);
-        
+
         portableCaseModule = new PortableCaseReportModule();
         if (moduleIsValid(portableCaseModule)) {
             modules.add(portableCaseModule);
         } else {
             popupWarning(portableCaseModule);
         }
-
+        
         // Results-HTML should always be first in the list of Report Modules.
         int indexOfHTMLReportModule = 0;
         for (ReportModule module : modules) {
@@ -110,6 +113,27 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             indexOfHTMLReportModule++;
         }
         swap(modules, indexOfHTMLReportModule, 0);
+        
+        // set module configurations
+        for (ReportModule module : modules) {
+            ReportModuleSettings settings;
+            if (moduleConfigs == null) {
+                // ELTODO get default module configuration (API isn't implemented yet)
+                // settings = module.getDefaultConfiguration();
+            } else {
+                // get configuration for this module
+                ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
+                if (config != null) {
+                    // there is an existing configuration for this module
+                    settings = config.getModuleSettings();
+                } else {
+                    // ELTODO get default module configuration (API isn't implemented yet)
+                    // settings = module.getDefaultConfiguration();
+                }
+            }
+            // ELTODO set module configuration (API isn't implemented yet)
+            // module.setConfiguration(settings);
+        }
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
@@ -178,7 +202,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         }
         return null;
     }
-    
+
     /**
      * Get the selection status of the Portable Case report module.
      *
@@ -300,7 +324,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         configurationPanel.add(panel, BorderLayout.CENTER);
         configurationPanel.revalidate();
         configurationPanel.repaint();
-        
+
         boolean generalModuleSelected = (module instanceof GeneralReportModule);
 
         wizPanel.setNext(!generalModuleSelected);

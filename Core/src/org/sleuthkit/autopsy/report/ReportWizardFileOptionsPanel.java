@@ -37,7 +37,7 @@ class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<W
     private ReportWizardFileOptionsVisualPanel component;
     private JButton finishButton;
 
-    ReportWizardFileOptionsPanel() {
+    ReportWizardFileOptionsPanel(FileReportSettings fileReportSettings) {
         finishButton = new JButton(
                 NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
         finishButton.setEnabled(false);

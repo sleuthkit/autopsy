@@ -25,16 +25,20 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
-import org.openide.util.NbPreferences;
 
 class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private ReportVisualPanel2 component;
-    private JButton finishButton;
-    private JButton nextButton;
+    private final JButton finishButton;
+    private final JButton nextButton;
     private WizardDescriptor wiz;
+    private final TableReportSettings tableReportSettings;
+    private final boolean useCaseSpecificData;
 
-    ReportWizardPanel2() {
+    ReportWizardPanel2(TableReportSettings tableReportSettings, boolean useCaseSpecificData) {
+        this.tableReportSettings = tableReportSettings;
+        this.useCaseSpecificData = useCaseSpecificData;
+        
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.finishButton.text"));
 
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.nextButton.text"));
@@ -58,7 +62,7 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public ReportVisualPanel2 getComponent() {
         if (component == null) {
-            component = new ReportVisualPanel2(this);
+            component = new ReportVisualPanel2(this, tableReportSettings, useCaseSpecificData);
         }
         return component;
     }
@@ -98,6 +102,6 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     public void storeSettings(WizardDescriptor wiz) {
         wiz.putProperty("tagStates", getComponent().getTagStates()); //NON-NLS
         wiz.putProperty("artifactStates", getComponent().getArtifactStates()); //NON-NLS
-        wiz.putProperty("isTagsSelected", getComponent().isTaggedResultsRadioButtonSelected()); //NON-NLS
+        wiz.putProperty("isTagsSelected", getComponent().isSpecificTaggedResultsRadioButtonSelected()); //NON-NLS
     }
 }

@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -137,18 +136,15 @@ class ReportGenerator {
     /**
      * Run the TableReportModules using a SwingWorker.
      *
-     * @param artifactTypeSelections the enabled/disabled state of the artifact
-     * types to be included in the report
-     * @param tagSelections the enabled/disabled state of the tag names to be
-     * included in the report
+     * @param tableReportSettings settings for the table report
      */
-    void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) throws IOException {
-        if (tableReport != null && null != artifactTypeSelections) {
+    void generateTableReport(TableReportModule tableReport, TableReportSettings tableReportSettings) throws IOException {
+        if (tableReport != null && tableReportSettings != null && null != tableReportSettings.getArtifactSelections()) {
             String reportDir = createReportDirectory(tableReport);
             setupProgressPanel(tableReport, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
                 tableReport.startReport(reportDir);
-                TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
+                TableReportGenerator generator = new TableReportGenerator(tableReportSettings, progressPanel, tableReport);
                 generator.execute();
                 tableReport.endReport();
                 // finish progress, wrap up
@@ -163,14 +159,13 @@ class ReportGenerator {
     /**
      * Run the FileReportModules using a SwingWorker.
      *
-     * @param enabledInfo the Information that should be included about each
-     * file in the report.
+     * @param fileReportSettings settings for the file report
      */
-    void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) throws IOException {
-        if (fileReportModule != null && null != enabledInfo) {
+    void generateFileListReport(FileReportModule fileReportModule, FileReportSettings fileReportSettings) throws IOException {
+        if (fileReportModule != null && fileReportSettings != null && null != fileReportSettings.getFileProperties()) {
             String reportDir = createReportDirectory(fileReportModule);
             List<FileReportDataTypes> enabled = new ArrayList<>();
-            for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
+            for (Entry<FileReportDataTypes, Boolean> e : fileReportSettings.getFileProperties().entrySet()) {
                 if (e.getValue()) {
                     enabled.add(e.getKey());
                 }
