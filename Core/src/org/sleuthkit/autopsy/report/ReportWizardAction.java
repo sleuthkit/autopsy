@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
     @ActionReference(path = "Toolbars/Case", position = 105)})
 public final class ReportWizardAction extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
 
-    private static final String REPORTING_CONFIGURATION_NAME = "EXAMINER_MODE";
+    private static final String REPORTING_CONFIGURATION_NAME = "REPORT_ACTION";
     private static final boolean DISPLAY_CASE_SPECIFIC_DATA = true;
     private static final boolean RUN_REPORTS = true;
     private final JButton toolbarButton = new JButton();
