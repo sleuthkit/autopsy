@@ -18,23 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.Reader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.logging.Level;
-import opennlp.tools.doccat.DoccatFactory;
-import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
-import opennlp.tools.ml.naivebayes.NaiveBayesModel;
-import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
-import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
-import opennlp.tools.tokenize.SimpleTokenizer;
-import opennlp.tools.tokenize.Tokenizer;
-import org.apache.commons.io.IOUtils;
-import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -45,8 +31,6 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractorFound;
@@ -62,44 +46,24 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
 
     private final static Logger logger = Logger.getLogger(TextClassifierFileIngestModule.class.getName());
-    private final static String LANGUAGE_CODE = "en";
-    private final static int MAX_FILE_SIZE = 100000000;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-
+    
     private Blackboard blackboard;
     private long jobId;
-    private NaiveBayesModel model;
     private DocumentCategorizerME categorizer;
-    private Tokenizer tokenizer;
-    private FileTypeDetector fileTypeDetector;
-    private final String MODEL_PATH = PlatformUtil.getTextClassifierPath() + File.separator + "model.txt";
-
-    private void loadModel() throws IOException {
-        //File modelFile = InstalledFileLocator.getDefault().locate("text_classifier_model/model.txt", TextClassifierFileIngestModule.class.getPackage().getName(), false);
-        File modelFile = new File(MODEL_PATH);
-        this.model = deserializeModel(modelFile);
-        DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE,
-                model,
-                new HashMap<>(),
-                new DoccatFactory());
-        this.categorizer = new DocumentCategorizerME(doccatModel);
-    }
+    private TextClassifierUtils utils;
+    
 
     @Messages({"TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.",
         "# {0} - classifierDir", "TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
-        try {
-            this.fileTypeDetector = new FileTypeDetector();
-        } catch (FileTypeDetectorInitException ex) {
-            throw new IngestModule.IngestModuleException("Exception while constructing FileTypeDector.", ex);
-        }
-        this.tokenizer = SimpleTokenizer.INSTANCE;
+        utils = new TextClassifierUtils();
 
         jobId = context.getJobId();
 
         try {
-            loadModel();
+            categorizer = utils.loadModel(this);
         } catch (IOException ex) {
             throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.", ex);
         }
@@ -113,12 +77,14 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
 
     @Override
     public ProcessResult process(AbstractFile file) {
-        isSupported(file);
+        if (!utils.isSupported(file, this)) {
+            return ProcessResult.OK;
+        }
 
-        if (file.getSize() > MAX_FILE_SIZE) {
+        if (file.getSize() > TextClassifierUtils.MAX_FILE_SIZE) {
             //prevent it from allocating gigabytes of memory for extremely large files
             logger.log(Level.INFO, "Encountered file " + file.getParentPath() + file.getName() + " with object id of "
-                    + file.getId() + " which exceeds max file size of " + MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
+                    + file.getId() + " which exceeds max file size of " + TextClassifierUtils.MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
             return IngestModule.ProcessResult.OK;
         }
 
@@ -155,34 +121,9 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         return ProcessResult.OK;
     }
 
-    private boolean isSupported(AbstractFile abstractFile) {
-        String fileMimeType;
-        if (fileTypeDetector != null) {
-            fileMimeType = fileTypeDetector.getMIMEType(abstractFile);
-        } else {
-            fileMimeType = abstractFile.getMIMEType();
-        }
-        return fileMimeType != null && SupportedFormats.contains(fileMimeType);
-    }
-
     private boolean classify(AbstractFile file) throws InitReaderException, IOException, NoTextExtractorFound {
-        boolean isInteresting = true;
-
-        Reader reader = TextExtractorFactory.getExtractor(file, null).getReader();
-        String text = IOUtils.toString(reader);
-        String[] tokens = tokenizer.tokenize(text);
+        String[] tokens = TextClassifierUtils.extractTokens(file);
         String category = categorizer.getBestCategory(categorizer.categorize(tokens));
-        isInteresting = "interesting".equalsIgnoreCase(category);
-
-        return isInteresting;
-    }
-
-    public static NaiveBayesModel deserializeModel(File inputFile) throws IOException {
-        FileReader fr = new FileReader(inputFile);
-        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
-        reader.checkModelType();
-        NaiveBayesModel model = (NaiveBayesModel) reader.constructModel();
-        fr.close();
-        return model;
+        return TextClassifierUtils.NOTABLE_LABEL.equalsIgnoreCase(category);
     }
 }

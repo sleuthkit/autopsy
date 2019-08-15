@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,7 +31,6 @@ import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.doccat.DocumentSample;
-import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
@@ -55,19 +53,9 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-//TODO: Title should include "TextClassifier"
 @ServiceProvider(service = GeneralReportModule.class)
-public class ClassifierTrainerReportModule implements GeneralReportModule {
-
-    private static String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
-    
-    //TODO: tokenizer should be shared with TextClassifierFileIngestModule so they don't get out of sync
-    private final Tokenizer tokenizer = SimpleTokenizer.INSTANCE;
-
-    private final String MODEL_DIR = PlatformUtil.getTextClassifierPath();
-    private final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
-    
-    private ClassifierTrainerReportModuleConfigPanel configPanel;
+public class TextClassifierTrainer implements GeneralReportModule {    
+    private TextClassifierTrainerConfigPanel configPanel;
 
     @Override
     @Messages({"ClassifierTrainerReportModule.srcModuleName.txt=Text classifier model"})
@@ -94,7 +82,7 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         try {
             progressPanel.setIndeterminate(true);
             progressPanel.updateStatusLabel("Training model");
-            model = train(MODEL_PATH, sampleStream);
+            model = train(TextClassifierUtils.MODEL_PATH, sampleStream);
         } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel("Unable to train text classifier: " + ex);
@@ -110,10 +98,10 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         }
         try {
             progressPanel.setIndeterminate(true);
-            progressPanel.updateStatusLabel("Writing model to " + MODEL_PATH);
-            writeModel((NaiveBayesModel) model.getMaxentModel(), MODEL_PATH);
+            progressPanel.updateStatusLabel("Writing model to " + TextClassifierUtils.MODEL_PATH);
+            TextClassifierUtils.writeModel((NaiveBayesModel) model.getMaxentModel(), TextClassifierUtils.MODEL_PATH);
             progressPanel.complete(ReportStatus.COMPLETE);
-            progressPanel.updateStatusLabel("Complete. Model is at " + MODEL_PATH);
+            progressPanel.updateStatusLabel("Complete. Model is at " + TextClassifierUtils.MODEL_PATH);
         } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel("Unable to save text classifier model: " + ex);
@@ -143,7 +131,7 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
     
     @Override
     public JPanel getConfigurationPanel() {
-        configPanel = new ClassifierTrainerReportModuleConfigPanel();
+        configPanel = new TextClassifierTrainerConfigPanel();
         return configPanel;
     }
 
@@ -152,7 +140,7 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
 
         TrainingParameters params = new TrainingParameters();
         params.put(TrainingParameters.CUTOFF_PARAM, Integer.toString(0));
-        params.put(TrainingParameters.ALGORITHM_PARAM, ALGORITHM);
+        params.put(TrainingParameters.ALGORITHM_PARAM, TextClassifierUtils.ALGORITHM);
         if (oldModelPath != null) {
             params.put("MODEL_INPUT", oldModelPath);
         }
@@ -183,24 +171,40 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         String label;
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
-                label = "notable";
+                label = TextClassifierUtils.NOTABLE_LABEL;
                 notableDocCount++;
             } else {
-                label = "nonnotable";
+                label = TextClassifierUtils.NONNOTABLE_LABEL;
                 nonnotableDocCount++;
             }
 
-            //TODO: Where is the slow part? Is it in reading or converting to DocumentSample?
-            //TODO: The method to build a reader and get text should be in another class accessible to TextClassifierFileIngestModule
-            Reader reader = TextExtractorFactory.getExtractor(doc, null).getReader();
-            String text = IOUtils.toString(reader);
-            DocumentSample docSample = new DocumentSample(label, tokenizer.tokenize(text));
+            String[] tokens = TextClassifierUtils.extractTokens(doc);
+            DocumentSample docSample = new DocumentSample(label, tokens);
             docSamples.add(docSample);
 
             progressPanel.increment();
         }
-
-        return new ListObjectStream<>(docSamples);
+        
+        ObjectStream<DocumentSample> objectStream = new ListObjectStream<>(docSamples);
+        
+        
+        //TODO: Delete this. It's for testing only.
+        String outputPath = "C:/Users/Brian Kjersten/Documents/Story-specific/5333/trainingSamples.txt";
+        try {
+            PrintWriter writer = new PrintWriter(outputPath, "UTF-8");
+            for (DocumentSample sample = objectStream.read(); sample != null; sample = objectStream.read()) {
+                writer.println(sample.getText().length + " " + sample.getCategory() + "\t" + String.join(" ", sample.getText()));
+            }
+        } catch (IOException ex){
+            System.err.println("!!!!! Printing objectStream failed");
+        }
+        try {
+            objectStream.reset();
+        } catch (IOException ex){
+            System.err.println("!!!!! Resetting objectStream failed");
+        }
+        
+        return objectStream;
     }
 
     private Set<Long> fetchNotableObjectIDs() throws TskCoreException {
@@ -214,7 +218,6 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
                 notableObjectIDs.add(tag.getContent().getId());
             }
         }
-
         return notableObjectIDs;
     }
 
@@ -224,12 +227,4 @@ public class ClassifierTrainerReportModule implements GeneralReportModule {
         return allDocs;
     }
 
-    private void writeModel(NaiveBayesModel model, String modelPath) throws IOException {        
-        FileWriter fw = new FileWriter(new File(modelPath));
-        //TODO: Try the binary naive Bayes model writer
-        PlainTextNaiveBayesModelWriter modelWriter;
-        modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
-        modelWriter.persist();
-        fw.close();
-    }
 }
