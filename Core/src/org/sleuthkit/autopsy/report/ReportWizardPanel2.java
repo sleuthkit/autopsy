@@ -33,7 +33,7 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private final JButton nextButton;
     private WizardDescriptor wiz;
 
-    ReportWizardPanel2() {
+    ReportWizardPanel2(TableReportSettings tableReportSettings) {
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.finishButton.text"));
 
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.nextButton.text"));

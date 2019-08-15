@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -129,14 +130,14 @@ final class ReportingConfigLoader {
      * Serialize all of the settings that make up a reporting configuration in
      * an atomic, thread safe way.
      *
-     * @param config ReportingConfig object to serialize to disk
+     * @param reportConfig ReportingConfig object to serialize to disk
      * @throws ReportConfigException if an error occurred while saving the
      * configuration
      */
-    static synchronized void saveConfig(ReportingConfig config) throws ReportConfigException {
+    static synchronized void saveConfig(ReportingConfig reportConfig) throws ReportConfigException {
 
         // construct the configuration directory path
-        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, config.getName());
+        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName());
 
         // create configuration directory 
         try {
@@ -148,7 +149,7 @@ final class ReportingConfigLoader {
         // save table report settings
         String filePath = pathToConfigDir.toString() + File.separator + TABLE_REPORT_CONFIG_FILE;
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
-            out.writeObject(config.getTableReportSettings());
+            out.writeObject(reportConfig.getTableReportSettings());
         } catch (IOException ex) {
             throw new ReportConfigException("Unable to save table report configuration " + filePath, ex);
         }
@@ -156,14 +157,18 @@ final class ReportingConfigLoader {
         // save file report settings
         filePath = pathToConfigDir.toString() + File.separator + FILE_REPORT_CONFIG_FILE;
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
-            out.writeObject(config.getFileReportSettings());
+            out.writeObject(reportConfig.getFileReportSettings());
         } catch (IOException ex) {
             throw new ReportConfigException("Unable to save file report configuration " + filePath, ex);
         }
 
         // save list of module configuration objects
         filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;
-        List<ReportModuleConfig> moduleConfigs = config.getModuleConfigs();
+        List<ReportModuleConfig> moduleConfigs = new ArrayList<>();
+        for (ReportModuleConfig config : reportConfig.getModuleConfigs().values()) {
+            moduleConfigs.add(config);
+        }
+        
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             out.writeObject(moduleConfigs);
         } catch (IOException ex) {

@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import static java.util.Collections.swap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -49,13 +50,15 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private List<TableReportModule> tableModules = new ArrayList<>();
     private List<FileReportModule> fileModules = new ArrayList<>();
     private PortableCaseReportModule portableCaseModule;
+    private Map<String, ReportModuleConfig> moduleConfigs;
     private Integer selectedIndex;
 
     /**
      * Creates new form ReportVisualPanel1
      */
-    public ReportVisualPanel1(ReportWizardPanel1 wizPanel) {
+    public ReportVisualPanel1(ReportWizardPanel1 wizPanel, Map<String, ReportModuleConfig> moduleConfigs) {
         this.wizPanel = wizPanel;
+        this.moduleConfigs = moduleConfigs;
         initComponents();
         configurationPanel.setLayout(new BorderLayout());
         descriptionTextPane.setEditable(false);

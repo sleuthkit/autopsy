@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A bundling of all the settings objects that define a report configuration.
@@ -29,7 +30,7 @@ final class ReportingConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String configName;
-    private List<ReportModuleConfig> moduleConfigs = new ArrayList<>();
+    private Map<String, ReportModuleConfig> moduleConfigs = new HashMap<>();
     private TableReportSettings tableReportSettings;
     private FileReportSettings fileReportSettings;
 
@@ -51,10 +52,12 @@ final class ReportingConfig implements Serializable {
     }
 
     void setModuleConfigs(List<ReportModuleConfig> moduleConfigs) {
-        this.moduleConfigs = moduleConfigs;
+        for (ReportModuleConfig config : moduleConfigs) {
+            this.moduleConfigs.put(config.getModuleClassName(), config);
+        }
     }
 
-    List<ReportModuleConfig> getModuleConfigs() {
+    Map<String, ReportModuleConfig> getModuleConfigs() {
         return this.moduleConfigs;
     }
 

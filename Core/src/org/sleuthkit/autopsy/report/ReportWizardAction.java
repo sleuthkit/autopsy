@@ -54,6 +54,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
     @ActionReference(path = "Toolbars/Case", position = 105)})
 public final class ReportWizardAction extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
 
+    private static final String REPORTING_CONFIGURATION_NAME = "EXAMINER_MODE";
+    private static final boolean DISPLAY_CASE_SPECIFIC_DATA = true;
+    private static final boolean RUN_REPORTS = true;
     private final JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.actionName.text");
 
@@ -64,7 +67,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
      */
     @SuppressWarnings("unchecked")
     public static void doReportWizard() {
-        WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator());
+        WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator(REPORTING_CONFIGURATION_NAME, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS));
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
