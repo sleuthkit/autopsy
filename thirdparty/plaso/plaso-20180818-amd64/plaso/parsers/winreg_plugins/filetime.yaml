@@ -1,0 +1,12 @@
+name: filetime_structure
+type: format
+description: Windows FILETIME structure
+urls: ["https://msdn.microsoft.com/en-us/library/windows/desktop/ms724284(v=vs.85).aspx"]
+---
+name: filetime
+type: integer
+attributes:
+  byte_order: little-endian
+  format: unsigned
+  size: 8
+  units: bytes

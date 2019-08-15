@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -239,7 +239,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
              library calls that throw unchecked exceptions. See JIRA-5144, where an IllegalStateException
              was thrown because a file's MIME type was incorrectly identified as a picture type. */
             logger.log(Level.WARNING, "Exception while getting image attributes", ex); //NON-NLS
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
     }
 
