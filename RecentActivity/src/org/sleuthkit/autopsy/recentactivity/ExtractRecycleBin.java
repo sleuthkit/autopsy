@@ -171,7 +171,6 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
 
-            String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
             String userID = getUserIDFromPath(iFile.getParentPath());
             String userName = "";
             if (!userID.isEmpty()) {
@@ -182,14 +181,21 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
 
+            String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
+            
             List<AbstractFile> rFiles = rFileMap.get(rFileName);
+            
+            if(rFiles == null) {
+                return;
+            }
 
             for (AbstractFile rFile : rFiles) {
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
 
-                if (iFile.getParentPath().equals(rFile.getParentPath())) {
+                if (iFile.getParentPath().equals(rFile.getParentPath()) 
+                        && iFile.getMetaFlagsAsString().equals(rFile.getMetaFlagsAsString())) {
                     try {
                         postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFileName(), userName, metaData.getDeletedTimeStamp()));
                     } catch (TskCoreException ex) {
@@ -325,7 +331,7 @@ final class ExtractRecycleBin extends Extract {
      * @return String user id 
      */
     private String getUserIDFromPath(String iFileParentPath) {
-        int index = iFileParentPath.indexOf("-") - 1;
+        int index = iFileParentPath.indexOf('-') - 1;
         if (index >= 0) {
             return (iFileParentPath.substring(index)).replace("/", "");
         } else {
