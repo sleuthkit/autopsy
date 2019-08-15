@@ -78,17 +78,12 @@ final class ExtractRecycleBin extends Extract {
 
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
-        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
-        
         // At this time it was decided that we would not include TSK_RECYCLE_BIN
         // in the default list of BlackboardArtifact types.
         try {
-            tskCase.addBlackboardArtifactType(RECYCLE_BIN_ARTIFACT_NAME, "Recycle Bin"); //NON-NLS
+           createRecycleBinArtifactType();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("%s may not have been created.", RECYCLE_BIN_ARTIFACT_NAME), ex);
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", RECYCLE_BIN_ARTIFACT_NAME));
         }
 
         BlackboardArtifact.Type recycleBinArtifactType;
@@ -110,7 +105,8 @@ final class ExtractRecycleBin extends Extract {
            // user names
            userNameMap = new HashMap<>();
         }
-
+        
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         List<AbstractFile> iFiles;
 
         try {
@@ -119,72 +115,90 @@ final class ExtractRecycleBin extends Extract {
             logger.log(Level.WARNING, "Unable to find recycle bin I files.", ex); //NON-NLS
             return;  // No need to continue
         }
+        
+        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
 
         for (AbstractFile iFile : iFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
-
-            String tempFilePath = tempDirPath + File.separator + iFile.getName();
-
-            try {
-                try {
-                    ContentUtils.writeToFile(iFile, new File(tempFilePath));
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", iFile.getName(), tempFilePath), ex); //NON-NLS
-                    // if we cannot make a copy of the $I file for later processing
-                    // move onto the next file
-                    continue;
-                }
-
-                RecycledFileMetaData metaData;
-                try {
-                    metaData = parseIFile(tempFilePath);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to parse iFile %s", iFile.getName()), ex); //NON-NLS
-                    // Unable to parse the $I file move onto the next file
-                    continue;
-                }
-
-                String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
-                String userID = getUserIDFromPath(iFile.getParentPath());
-                String userName = userNameMap.get(userID);
-                
-                List<AbstractFile> rFiles;
-
-                try {
-                    rFiles = fileManager.findFiles(dataSource, rFileName, iFile.getParentPath());
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to find R file (%s) for I file (%s)", rFileName, iFile.getName()), ex); //NON-NLS
-                    // If there are no $R files go on to the next $I file
-                    continue;
-                }
-
-                for (AbstractFile rFile : rFiles) {
-                    if (context.dataSourceIngestIsCancelled()) {
-                        return;
-                    }
-
-                    if (iFile.getParentPath().equals(rFile.getParentPath())) {
-                        try {
-                            BlackboardArtifact bba = rFile.newArtifact(recycleBinArtifactType.getTypeID());
-                            bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), metaData.getFileName()));
-                            bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), metaData.getDeletedTimeStamp()));
-                            bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName != null ? userName : ""));
-
-                            postArtifact(bba);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.WARNING, String.format("Unable to add attributes to artifact %s", rFile.getName()), ex); //NON-NLS
-                        }
-                    }
-                }
-            } finally {
-                (new File(tempFilePath)).delete();
-            }
+            
+            processIFiles(dataSource, context, recycleBinArtifactType, iFile, userNameMap, tempRARecycleBinPath);
         }
 
-        (new File(tempDirPath)).delete();
+        (new File(tempRARecycleBinPath)).delete();
+    }
+    
+    /**
+     * Process each individual iFile.
+     * 
+     * @param dataSource
+     * @param context
+     * @param recycleBinArtifactType Module created artifact type
+     * @param iFile The AbstractFile to process
+     * @param userNameMap Map of user ids to names
+     * @param tempRARecycleBinPath Temp directory path
+     */
+    private void processIFiles(Content dataSource,  IngestJobContext context,  BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile,  Map<String, String> userNameMap, String tempRARecycleBinPath) {
+        String tempFilePath = tempRARecycleBinPath + File.separator + iFile.getName();
+        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        try {
+            try {
+                ContentUtils.writeToFile(iFile, new File(tempFilePath));
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, String.format("Unable to write %s to temp directory. File name: %s", iFile.getName(), tempFilePath), ex); //NON-NLS
+                // if we cannot make a copy of the $I file for later processing
+                // move onto the next file
+                return;
+            }
+
+            RecycledFileMetaData metaData;
+            try {
+                metaData = parseIFile(tempFilePath);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, String.format("Unable to parse iFile %s", iFile.getName()), ex); //NON-NLS
+                // Unable to parse the $I file move onto the next file
+                return;
+            }
+
+            String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
+            String userID = getUserIDFromPath(iFile.getParentPath());
+            String userName = "";
+            if (!userID.isEmpty()) {
+                userName = userNameMap.get(userID);
+            } else {
+                // If the iFile doesn't have a user ID in its parent 
+                // directory structure then it is not from the recyle bin
+                return;
+            }
+
+            List<AbstractFile> rFiles;
+
+            try {
+                rFiles = fileManager.findFiles(dataSource, rFileName, iFile.getParentPath());
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Unable to find R file (%s) for I file (%s)", rFileName, iFile.getName()), ex); //NON-NLS
+                // If there are no $R files go on to the next $I file
+                return;
+            }
+
+            for (AbstractFile rFile : rFiles) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }
+
+                if (iFile.getParentPath().equals(rFile.getParentPath())) {
+                    try {
+                        postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFileName(), userName, metaData.getDeletedTimeStamp()));
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to add attributes to artifact %s", rFile.getName()), ex); //NON-NLS
+                    }
+                }
+            }
+        } finally {
+            (new File(tempFilePath)).delete();
+        }
     }
 
     /**
@@ -217,7 +231,7 @@ final class ExtractRecycleBin extends Extract {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    RecycledFileMetaData parseIFile(String iFilePath) throws FileNotFoundException, IOException {
+    private RecycledFileMetaData parseIFile(String iFilePath) throws FileNotFoundException, IOException {
         byte[] allBytes = Files.readAllBytes(Paths.get(iFilePath));
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(allBytes);
@@ -244,7 +258,15 @@ final class ExtractRecycleBin extends Extract {
         return new RecycledFileMetaData(fileSize, timestamp, fileName);
     }
     
-        
+    /**
+     * Create a map of userids to usernames from the OS Accounts.
+     * 
+     * @param dataSource
+     * 
+     * @return A Map of userIDs and userNames
+     * 
+     * @throws TskCoreException 
+     */
     private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException{
         Map<String, String> userNameMap = new HashMap<>();
       
@@ -265,13 +287,66 @@ final class ExtractRecycleBin extends Extract {
         return userNameMap;
     }
     
+    /**
+     * Helper functions to get the user ID from the iFile parent path. User ids
+     * will be of the form S-<more characters>.
+     * 
+     * @param iFileParentPath String parent path of the iFile
+     * 
+     * @return String user id 
+     */
     private String getUserIDFromPath(String iFileParentPath) {
         int index = iFileParentPath.indexOf("-") - 1;
-        return (iFileParentPath.substring(index)).replace("/", "");
+        if (index >= 0) {
+            return (iFileParentPath.substring(index)).replace("/", "");
+        } else {
+            return "";
+        }
     }
     
+    /**
+     * Gets the attribute for the given type from the given artifact.
+     * 
+     * @param artifact BlackboardArtifact to get the attribute from
+     * @param type The BlackboardAttribute Type to get
+     * 
+     * @return BlackboardAttribute for given artifact and type
+     * 
+     * @throws TskCoreException 
+     */
     private BlackboardAttribute getAttributeForArtifact(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException{
        return artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(type.getTypeID())));
+    }
+    
+    private void createRecycleBinArtifactType() throws TskCoreException {
+         try {
+            tskCase.addBlackboardArtifactType(RECYCLE_BIN_ARTIFACT_NAME, "Recycle Bin"); //NON-NLS
+        } catch (TskDataException ex) {
+            logger.log(Level.INFO, String.format("%s may have already been defined for this case", RECYCLE_BIN_ARTIFACT_NAME));
+        }
+
+    }
+    
+    /**
+     * Create the new artifact for the give rFile
+     * 
+     * @param rFile AbstractFile to create the artifact for
+     * @param type Type of artifact to create
+     * @param fileName The original path of the deleted file
+     * @param userName The name of the user that deleted the file
+     * @param dateTime The time in epoch seconds that the file was deleted
+     * 
+     * @return Newly created artifact
+     * 
+     * @throws TskCoreException 
+     */
+    private BlackboardArtifact createArtifact(AbstractFile rFile, BlackboardArtifact.Type type, String fileName, String userName, long dateTime) throws TskCoreException{
+        BlackboardArtifact bba = rFile.newArtifact(type.getTypeID());
+        bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+        bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
+        bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
+        
+        return bba;
     }
 
     /**
