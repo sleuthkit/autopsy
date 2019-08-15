@@ -113,6 +113,26 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             indexOfHTMLReportModule++;
         }
         swap(modules, indexOfHTMLReportModule, 0);
+        
+        // set module configurations
+        for (ReportModule module : modules) {
+            ReportModuleSettings settings;
+            if (moduleConfigs == null) {
+                // ELTODO get default module configuration (API isn't implemented yet)
+                // settings = module.getDefaultConfiguration();
+            } else {
+                // get configuration for this module
+                ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
+                if (config != null) {
+                    settings = config.getModuleSettings();
+                } else {
+                    // ELTODO get default module configuration (API isn't implemented yet)
+                    // settings = module.getDefaultConfiguration();
+                }
+            }
+            // ELTODO set module configuration (API isn't implemented yet)
+            // module.setConfiguration(settings);
+        }
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
