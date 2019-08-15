@@ -32,6 +32,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
@@ -62,12 +63,12 @@ import org.sleuthkit.datamodel.TagName;
 public final class CaseUcoFormatExporter {
 
     private static final Logger logger = Logger.getLogger(CaseUcoFormatExporter.class.getName());
-    
+
     private static final BlackboardAttribute.Type SET_NAME = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
     private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_FILE_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
     private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_ARTIFACT_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
     private static final String TEMP_DIR_NAME = "case_uco_tmp";
-    
+
     private CaseUcoFormatExporter() {
     }
 
@@ -91,7 +92,7 @@ public final class CaseUcoFormatExporter {
     @SuppressWarnings("deprecation")
     public static void generateReport(Long selectedDataSourceId, String reportOutputPath, ReportProgressPanel progressPanel) {
 
-            //        // Start the progress bar and setup the report
+        //        // Start the progress bar and setup the report
 //        progressPanel.setIndeterminate(false);
 //        progressPanel.start();
 //        progressPanel.updateStatusLabel(Bundle.ReportCaseUco_initializing());
@@ -208,16 +209,16 @@ public final class CaseUcoFormatExporter {
     }
 
     /**
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @param tagTypes
      * @param interestingItemSets
      * @param outputFilePath
-     * @param progressPanel 
+     * @param progressPanel
      */
     public static void export(List<TagName> tagTypes, List<String> interestingItemSets,
-            File caseReportFolder, ReportProgressPanel progressPanel) throws IOException, SQLException, 
+            File caseReportFolder, ReportProgressPanel progressPanel) throws IOException, SQLException,
             NoCurrentCaseException, TskCoreException {
 
         progressPanel.start();
@@ -226,109 +227,103 @@ public final class CaseUcoFormatExporter {
         String caseTempDirectory = currentCase.getTempDirectory();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         TagsManager tagsManager = currentCase.getServices().getTagsManager();
-        
+
         tagTypes = tagsManager.getAllTagNames();
 
         //Create temp directory to filter out duplicate files.
         Path tmpDir = Paths.get(caseTempDirectory, TEMP_DIR_NAME);
         FileUtils.deleteDirectory(tmpDir.toFile());
-        tmpDir.toFile().mkdir();
-        
-        JsonGenerator jsonGenerator = null;       
-        try {
-            //Create the case-uco generator
-            String reportFileName = ReportCaseUco.getReportFileName();
-            File reportFile = Paths.get(caseReportFolder.toString(), reportFileName).toFile();
-            jsonGenerator = createJsonGenerator(reportFile);
-            initializeJsonOutputFile(jsonGenerator);
+        Files.createDirectory(tmpDir);
 
+        //Create our report file
+        Path reportFile = Paths.get(caseReportFolder.toString(), 
+                ReportCaseUco.getReportFileName());
+
+        //Timezone for formatting file creation, modification, and accessed times
+        SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
+
+        try (JsonGenerator jsonGenerator = 
+                createJsonGenerator(reportFile.toFile())) {
+            
+            initializeJsonOutputFile(jsonGenerator);
             //Make the case the first entity in the report file.
             String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
 
-            SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
-
-            //Process by data source so that data source entities in the report file
-            //appear before any files from that data source.
-            for(DataSource ds : skCase.getDataSources()) {
-                String dataSourceTraceId = saveDataSourceInfo(ds.getId(), caseTraceId, skCase, jsonGenerator);
-                for(TagName tn : tagTypes) {
-                    for(ContentTag ct : tagsManager.getContentTagsByTagName(tn, ds.getId())) {
-                        Content content = ct.getContent();
-                        if (content instanceof AbstractFile) {
-                            AbstractFile absFile = (AbstractFile) content;
-                            Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
-                            if(!Files.exists(filePath)) {
-                                saveFileInCaseUcoFormat(
-                                        absFile.getId(), 
-                                        absFile.getName(), 
-                                        absFile.getParentPath(), 
-                                        absFile.getMd5Hash(), 
-                                        absFile.getMIMEType(), 
-                                        absFile.getSize(), 
-                                        ContentUtils.getStringTimeISO8601(absFile.getCtime(), timeZone),
-                                        ContentUtils.getStringTimeISO8601(absFile.getAtime(), timeZone),
-                                        ContentUtils.getStringTimeISO8601(absFile.getMtime(), timeZone),
-                                        absFile.getNameExtension(),
-                                        jsonGenerator,
-                                        dataSourceTraceId
-                                );
-                                filePath.toFile().createNewFile();
-                            }
-                        }
+            for (DataSource ds : skCase.getDataSources()) {
+                String dataSourceTraceId = saveDataSourceInfo(ds.getId(), 
+                        caseTraceId, skCase, jsonGenerator);
+                
+                for (TagName tn : tagTypes) {
+                    for (ContentTag ct : tagsManager.getContentTagsByTagName(tn, ds.getId())) {
+                        saveUniqueFilesToCaseUcoFormat(ct.getContent(), tmpDir,
+                                jsonGenerator, timeZone, dataSourceTraceId);
                     }
 
-                    for(BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn, ds.getId())) {
-                        Content content = bat.getContent();
-                        if (content instanceof AbstractFile) {
-                            AbstractFile absFile = (AbstractFile) content;
-                            Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
-                            if(!Files.exists(filePath)) {
-                                saveFileInCaseUcoFormat(
-                                        absFile.getId(), 
-                                        absFile.getName(), 
-                                        absFile.getParentPath(), 
-                                        absFile.getMd5Hash(), 
-                                        absFile.getMIMEType(), 
-                                        absFile.getSize(), 
-                                        ContentUtils.getStringTimeISO8601(absFile.getCtime(), timeZone),
-                                        ContentUtils.getStringTimeISO8601(absFile.getAtime(), timeZone),
-                                        ContentUtils.getStringTimeISO8601(absFile.getMtime(), timeZone),
-                                        absFile.getNameExtension(),
-                                        jsonGenerator,
-                                        dataSourceTraceId
-                                );
-                                filePath.toFile().createNewFile();
-                            }
-                        }
+                    for (BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn, ds.getId())) {
+                        saveUniqueFilesToCaseUcoFormat(bat.getContent(), tmpDir,
+                                jsonGenerator, timeZone, dataSourceTraceId);
                     }
                 }
 
-    //            if(!interestingItemSets.isEmpty()) {
-    //                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_FILE_HIT, ds.getId())) {
-    //                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-    //                    if (interestingItemSets.contains(setAttr.getValueString())) {
-    //
-    //                    }
-    //                }
-    //
-    //                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT, ds.getId())) {
-    //                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-    //                    if (interestingItemSets.contains(setAttr.getValueString())) {
-    //
-    //                    }
-    //                }
-    //            }
+                //            if(!interestingItemSets.isEmpty()) {
+                //                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_FILE_HIT, ds.getId())) {
+                //                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                //                    if (interestingItemSets.contains(setAttr.getValueString())) {
+                //
+                //                    }
+                //                }
+                //
+                //                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT, ds.getId())) {
+                //                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                //                    if (interestingItemSets.contains(setAttr.getValueString())) {
+                //
+                //                    }
+                //                }
+                //            }
             }
 
             finilizeJsonOutputFile(jsonGenerator);
-        } finally {
-            if (jsonGenerator != null) {
-                jsonGenerator.close();
-            }
         }
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
-        
+
+    /**
+     * Saves only unique abstract files to the case uco report file. Uniqueness is
+     * determined by object id. A folder in the case temp directory is used to
+     * store object id's that have already been visited.
+     *
+     * @param content
+     * @param tmpDir
+     * @param jsonGenerator
+     * @param timeZone
+     * @param dataSourceTraceId
+     * @throws IOException
+     */
+    private static void saveUniqueFilesToCaseUcoFormat(Content content, Path tmpDir, JsonGenerator jsonGenerator,
+            TimeZone timeZone, String dataSourceTraceId) throws IOException {
+        if (content instanceof AbstractFile) {
+            AbstractFile absFile = (AbstractFile) content;
+            Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
+            if (!Files.exists(filePath)) {
+                saveFileInCaseUcoFormat(
+                        absFile.getId(),
+                        absFile.getName(),
+                        absFile.getParentPath(),
+                        absFile.getMd5Hash(),
+                        absFile.getMIMEType(),
+                        absFile.getSize(),
+                        ContentUtils.getStringTimeISO8601(absFile.getCtime(), timeZone),
+                        ContentUtils.getStringTimeISO8601(absFile.getAtime(), timeZone),
+                        ContentUtils.getStringTimeISO8601(absFile.getMtime(), timeZone),
+                        absFile.getNameExtension(),
+                        jsonGenerator,
+                        dataSourceTraceId
+                );
+                filePath.toFile().createNewFile();
+            }
+        }
+    }
+
     private static JsonGenerator createJsonGenerator(File reportFile) throws IOException {
         JsonFactory jsonGeneratorFactory = new JsonFactory();
         JsonGenerator jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
