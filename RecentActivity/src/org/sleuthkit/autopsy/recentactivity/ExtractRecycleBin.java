@@ -162,7 +162,6 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
 
-            String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
             String userID = getUserIDFromPath(iFile.getParentPath());
             String userName = "";
             if (!userID.isEmpty()) {
@@ -174,6 +173,8 @@ final class ExtractRecycleBin extends Extract {
             }
 
             List<AbstractFile> rFiles;
+            
+            String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
 
             try {
                 rFiles = fileManager.findFiles(dataSource, rFileName, iFile.getParentPath());
@@ -296,7 +297,7 @@ final class ExtractRecycleBin extends Extract {
      * @return String user id 
      */
     private String getUserIDFromPath(String iFileParentPath) {
-        int index = iFileParentPath.indexOf("-") - 1;
+        int index = iFileParentPath.indexOf('-') - 1;
         if (index >= 0) {
             return (iFileParentPath.substring(index)).replace("/", "");
         } else {
