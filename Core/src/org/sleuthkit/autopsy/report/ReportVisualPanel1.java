@@ -124,6 +124,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
                 // get configuration for this module
                 ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
                 if (config != null) {
+                    // there is an existing configuration for this module
                     settings = config.getModuleSettings();
                 } else {
                     // ELTODO get default module configuration (API isn't implemented yet)

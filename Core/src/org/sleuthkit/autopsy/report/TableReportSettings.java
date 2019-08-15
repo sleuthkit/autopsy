@@ -19,7 +19,8 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -28,30 +29,46 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * by the TableReportGenerator class to drive report generation by
  * TableReportModules.
  */
-final class TableReportSettings implements Serializable  {
+final class TableReportSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
-    private Map<String, Boolean> tagNameSelections = new HashMap<>();
+    private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
+    private List<String> tagNames = new ArrayList<>();
 
     /**
      * Creates TableReportSettings object.
      *
      * @param artifactTypeSelections The enabled/disabled state of the artifact
-     * types to be included in the report
+     * types to be included in the report. Only enabled entries will be kept.
      * @param tagNameSelections The enabled/disabled state of the tag names to
-     * be included in the report
+     * be included in the report. Only enabled entries will be kept.
      */
     TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
-        this.artifactTypeSelections = artifactTypeSelections;
-        this.tagNameSelections = tagNameSelections;
+        // Get the artifact types selected by the user
+        for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
+            if (entry.getValue()) {
+                artifactTypes.add(entry.getKey());
+            }
+        }
+
+        // Get the tag names selected by the user
+        for (Map.Entry<String, Boolean> entry : tagNameSelections.entrySet()) {
+            if (entry.getValue() == true) {
+                tagNames.add(entry.getKey());
+            }
+        }
+    }
+    
+    TableReportSettings(List<BlackboardArtifact.Type> artifactTypes, List<String> tagNames) {
+        this.artifactTypes = artifactTypes;
+        this.tagNames = tagNames;
     }
 
-    Map<BlackboardArtifact.Type, Boolean> getArtifactSelections() {
-        return artifactTypeSelections;
+    List<BlackboardArtifact.Type> getArtifactSelections() {
+        return artifactTypes;
     }
 
-    Map<String, Boolean> getTagSelections() {
-        return tagNameSelections;
+    List<String> getTagSelections() {
+        return tagNames;
     }
 }
