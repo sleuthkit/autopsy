@@ -45,7 +45,8 @@ import traceback
 import general
 
 """
-Locates database for the IMO app and adds info to blackboard.
+Locates database for the IMO app, parses then DB for contacts & messages,
+and adds artifacts to the case.
 """
 class IMOAnalyzer(general.AndroidComponentAnalyzer):
 
@@ -54,34 +55,36 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
-			selfAccountInstance = None
-			
-			appDBHelper = MobileAppDBParserHelper.createInstance("IMO Parser")
-            accountDbFile = appDBHelper.findAppDB(dataSource, "accountdb.db", true, "com.imo.android.imous")
-			if accountDbFile is not None:
-				resultSet = appDBHelper.runQuery(accountDbFile, "SELECT uid, name FROM account")
+			## RAMAN TBD: need to reconcile that the self account info is found in a different DB file than the Friends
+			##
+			##selfAccountInstance = None
+            ##accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", "com.imo.android.imous")
+			##if accountDbs:
+			##	accountResultSet = accountDB[0].runQuery("SELECT uid, name FROM account")
 				# TBD: Create a new account type for IMO ???
-				if resultSet is not None:
-					# We can determine the IMO user ID of the device owner. Therefore we can create and use a app account and use that 
-					# as a 'self' account instead of a Device account 
-					selfAccount = appDBHelper.createAccountInstance(accountDbFile, Account.Type.MESSAGING_APP, resultSet.getString("name") )
+			##	if accountResultSet:
+			##		# We can determine the IMO user ID of the device owner. Therefore we can create and use a app account and use that 
+			##		# as a 'self' account instead of a Device account 
+			##		selfAccountInstance = appDBHelper.createAccountInstance(accountDbFile, Account.Type.MESSAGING_APP, accountResultSet.getString("name") )
+			##		accountResultSet.close()
 			
-			
-			friendsDbFile = appDBHelper.findAppDB(dataSource, "imofriends.db", true, "com.imo.android.imous")
-			if friendsDbFile is not None:
-				contactsResultSet = appDBHelper.runQuery(friendsDbFile, "SELECT buid, name FROM friends")
+			friendsDbs = AppSQLiteDB.findAppDB(dataSource, "imofriends.db", "com.imo.android.imous")
+			for friendsDb in friendsDbs:
+				freindsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(), Account.Type.MESSAGING_APP,  dataSource)
+				contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
 				if contactsResultSet is not None:
-					while contactsResultSet.next()
-						appDBHelper.addContact(friendsDbFile, selfAccountInstance, Account.Type.MESSAGING_APP, 
-												contactsResultSet.getString("name"), 
-												contactsResultSet.getString("name"), 
-												"", 
-												"", 
-												None)
+					while contactsResultSet.next():
+						freindsDBHelper.addContact(
+												contactsResultSet.getString("name"),  ## name for account
+												contactsResultSet.getString("name"),  ## contact name
+												""		## phone
+												"", 	## home phone
+												"", 	## mobile
+												"")		## email
 					
-				messagesResultSet = appDBHelper.runQuery(friendsDbFile, "SELECT imdata, last_message, timestamp, message_type, message_read, name FROM messages INNER JOIN friends ON friends.buid = messages.buid")
+				messagesResultSet = freindsDBHelper.runQuery("SELECT imdata, last_message, timestamp, message_type, message_read, name FROM messages INNER JOIN friends ON friends.buid = messages.buid")
 				if messagesResultSet is not None:
-					while messagesResultSet.next()
+					while messagesResultSet.next():
 						direction = ""
 						fromAddress = None
 						toAdddress = None
@@ -93,7 +96,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
 							toAddress = messagesResultSet.getString("name")
 						
 						timeStamp = messagesResultSet.getInt("timestamp") / 1000000
-						messageArtifact = appDBHelper.addMessage(friendsDbFile, selfAccountInstance, Account.Type.MESSAGING_APP, 
+						messageArtifact = freindsDBHelper.addMessage( 
 												contactsResultSet.getString("name"),
 												"IMO Message",
 												direction,
@@ -104,16 +107,16 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
 												"", 
 												messagesResultSet.getString("last_message"),
 												"", 
-												"", 
-												None)
+												"" )
 												
 						# TBD: parse the imdata JSON structure to figure out if there is an attachment.
 						#      If one exists, add the attachment as a derived file and a child of the message artifact.
 
-			appDBHelper.release()
+			
+				friendsDb.close()
 			
         except TskCoreException as ex:
-            # Error finding Tango messages.
+            # Error parsing IMO databases.
             pass
 
     
