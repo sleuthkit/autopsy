@@ -21,6 +21,6 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import javax.swing.JPanel;
 
-class ClassifierTrainerReportModuleConfigPanel extends JPanel {
+class TextClassifierTrainerConfigPanel extends JPanel {
     
 }
