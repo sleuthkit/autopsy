@@ -70,7 +70,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
         if (IngestManager.getInstance().isIngestRunning()) {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needFileType.text"));
         }
-        
+
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
@@ -171,13 +171,13 @@ public class TextClassifierTrainer implements GeneralReportModule {
             progressPanel.updateStatusLabel("Cannot fetch documents.");
             throw ex;
         }
-        
-        if(allDocs.isEmpty()) {
+
+        if (allDocs.isEmpty()) {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel("No documents found. You may need to run the Ingest Module for File Type Detection.");
             throw new TskCoreException();
         }
-        
+
         Set<Long> notableObjectIDs = fetchNotableObjectIDs();
 
         int notableDocCount = 0;
