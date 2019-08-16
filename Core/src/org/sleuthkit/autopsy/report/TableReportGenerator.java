@@ -72,30 +72,51 @@ class TableReportGenerator {
 
     private final List<String> errorList;
 
-    TableReportGenerator(TableReportSettings settings, ReportProgressPanel progressPanel, TableReportModule tableReport) {
+    TableReportGenerator(TableReportSettings settings, ReportProgressPanel progressPanel, TableReportModule tableReport) throws NoCurrentCaseException, TskCoreException {
 
         this.progressPanel = progressPanel;
         this.tableReport = tableReport;
         this.columnHeaderMap = new HashMap<>();
         errorList = new ArrayList<>();
-        // Get the artifact types selected by the user.
-        artifactTypes = settings.getArtifactSelections();
-
-        // Get the tag names selected by the user and make a tag names filter.
-        tagNamesFilter = new HashSet<>(settings.getTagSelections());
-    }
-    
-    static TableReportSettings getDefaultTableReportSettings(boolean useCaseSpecificData) {
-        Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
-        Map<String, Boolean> tagNameSelections = new HashMap<>();
         
-        if (useCaseSpecificData) {
-            // get tags and artifact types from current case
+        if (settings.isUseCaseSpecificData()) {
+            // Get the artifact types selected by the user.
+            artifactTypes = settings.getArtifactSelections();
+
+            // Get the tag names selected by the user and make a tag names filter.
+            tagNamesFilter = new HashSet<>(settings.getTagSelections());
         } else {
             // get all possible tag names and artifact types
+            getAllExistingTagsAndArtiacts(true); // ELTODO verify whether we should add (Notable) to tag names like we do in UI
         }
+    }
+    
+    private void getAllExistingTagsAndArtiacts(boolean addNotableToTagNames) throws NoCurrentCaseException, TskCoreException {
+        List<String> tagNames = new ArrayList<>();
+
+        // get all possible tag names
+        List<TagName> tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getAllTagNames();
         
-        return new TableReportSettings(artifactTypeSelections, tagNameSelections);
+        String notableString = "";
+        for (TagName tagName : tagNamesInUse) {
+            if (addNotableToTagNames) {
+                notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            }
+            tagNames.add(tagName.getDisplayName() + notableString);
+        }
+        tagNamesFilter = new HashSet<>(tagNames);
+        
+        // get all possible artifact types
+        ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
+        doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()));
+        doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
+
+        Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactTypes().forEach(artifactTypes::add);
+        artifactTypes.removeAll(doNotReport);
     }
 
     protected void execute() {

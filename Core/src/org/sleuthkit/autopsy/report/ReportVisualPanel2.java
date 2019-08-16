@@ -58,10 +58,9 @@ final class ReportVisualPanel2 extends JPanel {
     private final ReportWizardPanel2 wizPanel;
     private final Map<String, Boolean> tagStates = new LinkedHashMap<>();
     private final List<String> tags = new ArrayList<>();
-    ArtifactSelectionDialog dialog = new ArtifactSelectionDialog((JFrame) WindowManager.getDefault().getMainWindow(), true);
+    final ArtifactSelectionDialog dialog = new ArtifactSelectionDialog((JFrame) WindowManager.getDefault().getMainWindow(), true);
     private Map<BlackboardArtifact.Type, Boolean> artifactStates = new HashMap<>();
     private List<BlackboardArtifact.Type> artifacts = new ArrayList<>();
-    private TableReportSettings tableReportSettings;
     private final boolean useCaseSpecificData;
     private TagsListModel tagsModel;
     private TagsListRenderer tagsRenderer;
@@ -69,7 +68,7 @@ final class ReportVisualPanel2 extends JPanel {
     /**
      * Creates new form ReportVisualPanel2
      */
-    public ReportVisualPanel2(ReportWizardPanel2 wizPanel, TableReportSettings tableReportSettings, boolean useCaseSpecificData) {
+    public ReportVisualPanel2(ReportWizardPanel2 wizPanel, boolean useCaseSpecificData) {
         initComponents();
         initTags();
         initArtifactTypes();
@@ -77,8 +76,9 @@ final class ReportVisualPanel2 extends JPanel {
         selectAllButton.setEnabled(false);
         deselectAllButton.setEnabled(false);
         allResultsRadioButton.setSelected(true);
+        advancedButton.setEnabled(useCaseSpecificData);
+        specificTaggedResultsRadioButton.setEnabled(useCaseSpecificData);
         this.wizPanel = wizPanel;
-        this.tableReportSettings = tableReportSettings;
         this.useCaseSpecificData = useCaseSpecificData;
         this.allResultsRadioButton.addChangeListener(new ChangeListener() {
             @Override
@@ -114,19 +114,15 @@ final class ReportVisualPanel2 extends JPanel {
 
     // Initialize the list of Tags
     private void initTags() {
-        List<TagName> tagNamesInUse;
-        if (tableReportSettings == null) {
-            // get default table report settings
-            tableReportSettings = TableReportGenerator.getDefaultTableReportSettings(useCaseSpecificData);
-        }
         
-        // use specified configuration
-        List<String> tagNames = tableReportSettings.getTagSelections();
-        // ELTODO convert List<String> tagNames to List<TagName> tagNamesInUse
-        // use this list instead of of calling Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
-
+        List<TagName> tagNamesInUse = new ArrayList<>();
         try {
-            tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+            // only try to load tag names if we are displaying case specific data, otherwise
+            // there may not be a case open.
+            if (useCaseSpecificData) {
+                // get tags and artifact types from current case
+                tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+            }
         } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             return;
@@ -176,7 +172,13 @@ final class ReportVisualPanel2 extends JPanel {
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
 
-            artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
+            if (useCaseSpecificData) {
+                // get artifact types that exist in the current case
+                artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
+            } else {
+                // get all possible artifact types
+                openCase.getSleuthkitCase().getArtifactTypes().forEach(artifacts::add);
+            }
 
             artifacts.removeAll(doNotReport);
 

@@ -32,11 +32,9 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private final JButton finishButton;
     private final JButton nextButton;
     private WizardDescriptor wiz;
-    private final TableReportSettings tableReportSettings;
     private final boolean useCaseSpecificData;
 
-    ReportWizardPanel2(TableReportSettings tableReportSettings, boolean useCaseSpecificData) {
-        this.tableReportSettings = tableReportSettings;
+    ReportWizardPanel2(boolean useCaseSpecificData) {
         this.useCaseSpecificData = useCaseSpecificData;
         
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.finishButton.text"));
@@ -62,7 +60,7 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public ReportVisualPanel2 getComponent() {
         if (component == null) {
-            component = new ReportVisualPanel2(this, tableReportSettings, useCaseSpecificData);
+            component = new ReportVisualPanel2(this, useCaseSpecificData);
         }
         return component;
     }

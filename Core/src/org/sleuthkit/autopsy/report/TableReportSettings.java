@@ -34,6 +34,7 @@ final class TableReportSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private List<String> tagNames = new ArrayList<>();
+    private boolean useCaseSpecificData = false;
 
     /**
      * Creates TableReportSettings object.
@@ -43,7 +44,7 @@ final class TableReportSettings implements Serializable {
      * @param tagNameSelections The enabled/disabled state of the tag names to
      * be included in the report. Only enabled entries will be kept.
      */
-    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean useCaseSpecificData) {
         // Get the artifact types selected by the user
         for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
             if (entry.getValue()) {
@@ -57,11 +58,18 @@ final class TableReportSettings implements Serializable {
                 tagNames.add(entry.getKey());
             }
         }
+        
+        this.useCaseSpecificData = useCaseSpecificData;
     }
     
-    TableReportSettings(List<BlackboardArtifact.Type> artifactTypes, List<String> tagNames) {
+    TableReportSettings(List<BlackboardArtifact.Type> artifactTypes, List<String> tagNames, boolean useCaseSpecificData) {
         this.artifactTypes = artifactTypes;
         this.tagNames = tagNames;
+        this.useCaseSpecificData = useCaseSpecificData;
+    }
+
+    TableReportSettings(boolean useCaseSpecificData) {
+        this.useCaseSpecificData = useCaseSpecificData;
     }
 
     List<BlackboardArtifact.Type> getArtifactSelections() {
@@ -70,5 +78,9 @@ final class TableReportSettings implements Serializable {
 
     List<String> getTagSelections() {
         return tagNames;
+    }
+
+    boolean isUseCaseSpecificData() {
+        return useCaseSpecificData;
     }
 }
