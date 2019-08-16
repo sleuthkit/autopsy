@@ -21,12 +21,12 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 import java.io.IOException;
 import java.util.logging.Level;
 import opennlp.tools.doccat.DocumentCategorizerME;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
@@ -40,19 +40,18 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Classifies a file as interesting or not interesting, based on a model trained
- * on labeled data.
+ * Classifies a file as notable or not notable, based on a model trained on
+ * labeled data.
  */
 public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
 
     private final static Logger logger = Logger.getLogger(TextClassifierFileIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    
+
     private Blackboard blackboard;
     private long jobId;
     private DocumentCategorizerME categorizer;
     private TextClassifierUtils utils;
-    
 
     @Messages({"TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.",
         "# {0} - classifierDir", "TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed."})
@@ -63,7 +62,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         jobId = context.getJobId();
 
         try {
-            categorizer = utils.loadModel(this);
+            categorizer = TextClassifierUtils.loadModel();
         } catch (IOException ex) {
             throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.", ex);
         }
@@ -88,9 +87,9 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
             return IngestModule.ProcessResult.OK;
         }
 
-        boolean isInteresting;
+        boolean isNotable;
         try {
-            isInteresting = classify(file);
+            isNotable = classify(file);
         } catch (TextExtractorFactory.NoTextExtractorFound ex) {
             logger.log(Level.SEVERE, "NoTextExtractorFound in categorizing : " + ex.getMessage());
             return ProcessResult.ERROR;
@@ -102,7 +101,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
             return ProcessResult.ERROR;
         }
 
-        if (isInteresting) {
+        if (isNotable) {
             try {
                 BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                 artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,

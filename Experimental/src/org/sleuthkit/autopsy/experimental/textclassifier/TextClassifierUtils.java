@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import java.io.BufferedReader;
@@ -51,7 +50,7 @@ public class TextClassifierUtils {
 
     private static final Tokenizer tokenizer = SimpleTokenizer.INSTANCE;
     private FileTypeDetector fileTypeDetector;
-    
+
     static final String NOTABLE_LABEL = "notable";
     static final String NONNOTABLE_LABEL = "nonnotable";
     static final int MAX_FILE_SIZE = 100000000;
@@ -59,15 +58,15 @@ public class TextClassifierUtils {
     static final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
     static final String LANGUAGE_CODE = "en";
     static final String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
-    
-    TextClassifierUtils() throws IngestModuleException{
+
+    TextClassifierUtils() throws IngestModuleException {
         try {
             this.fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetectorInitException ex) {
             throw new IngestModuleException("Exception while constructing FileTypeDector.", ex);
         }
     }
-    
+
     boolean isSupported(AbstractFile abstractFile, TextClassifierFileIngestModule textClassifierFileIngestModule) {
         String fileMimeType;
         if (fileTypeDetector != null) {
@@ -77,7 +76,7 @@ public class TextClassifierUtils {
         }
         return fileMimeType != null && SupportedFormats.contains(fileMimeType);
     }
-    
+
     static String[] extractTokens(AbstractFile file) throws NoTextExtractorFound, InitReaderException, IOException {
         Reader reader = TextExtractorFactory.getExtractor(file, null).getReader();
         String text = IOUtils.toString(reader);
@@ -85,7 +84,7 @@ public class TextClassifierUtils {
         return tokens;
     }
 
-    static DocumentCategorizerME loadModel(TextClassifierFileIngestModule textClassifierFileIngestModule) throws IOException {
+    static DocumentCategorizerME loadModel() throws IOException {
         FileReader fr = new FileReader(new File(MODEL_PATH));
         NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
         reader.checkModelType();
@@ -103,5 +102,5 @@ public class TextClassifierUtils {
         modelWriter.persist();
         fw.close();
     }
-    
+
 }

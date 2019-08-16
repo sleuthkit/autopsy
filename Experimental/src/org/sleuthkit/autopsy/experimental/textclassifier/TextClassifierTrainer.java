@@ -49,7 +49,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 @ServiceProvider(service = GeneralReportModule.class)
-public class TextClassifierTrainer implements GeneralReportModule {    
+public class TextClassifierTrainer implements GeneralReportModule {
+
     private TextClassifierTrainerConfigPanel configPanel;
 
     @Override
@@ -122,7 +123,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
     public String getRelativeFilePath() {
         return "classifierTrainerReport.txt";
     }
-    
+
     @Override
     public JPanel getConfigurationPanel() {
         configPanel = new TextClassifierTrainerConfigPanel();
@@ -178,14 +179,14 @@ public class TextClassifierTrainer implements GeneralReportModule {
 
             progressPanel.increment();
         }
-        
+
         ObjectStream<DocumentSample> objectStream = new ListObjectStream<>(docSamples);
-        
+
         return objectStream;
     }
 
     private Set<Long> fetchNotableObjectIDs() throws TskCoreException {
-        //Get files labeled as interesting
+        //Get files labeled as notable
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
 
         Set<Long> notableObjectIDs = new HashSet<>();
@@ -200,6 +201,11 @@ public class TextClassifierTrainer implements GeneralReportModule {
 
     private List<AbstractFile> fetchAllDocuments() throws TskCoreException {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+
+        //The only difference between SupportedFormats's getDocumentMIMETypes() 
+        //and FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes() is that
+        //this one contains contains message/rfc822 which is what our test
+        //corpus( 20 Newsgroups) has.
         List<AbstractFile> allDocs = fileManager.findFilesByMimeType(SupportedFormats.getDocumentMIMETypes());
         return allDocs;
     }
