@@ -60,6 +60,7 @@ final class AddLogicalImageTask implements Runnable {
     private final static String USERS_TXT = "users.txt"; //NON-NLS
     private final static String MODULE_NAME = "Logical Imager"; //NON-NLS
     private final static String ROOT_STR = "root"; // NON-NLS
+    private final static String VHD_EXTENSION = ".vhd"; // NON-NLS
     private final String deviceId;
     private final String timeZone;
     private final File src;
@@ -156,7 +157,7 @@ final class AddLogicalImageTask implements Runnable {
         // Get all VHD files in the dest directory
         List<String> imagePaths = new ArrayList<>();
         for (File f : dest.listFiles()) {
-            if (f.getName().endsWith(".vhd")) {
+            if (f.getName().endsWith(VHD_EXTENSION)) {
                 try {
                     imagePaths.add(f.getCanonicalPath());
                 } catch (IOException ioe) {
@@ -317,7 +318,8 @@ final class AddLogicalImageTask implements Runnable {
                 } else {
                     String parentPath = fields[8];
                     targetImagePath = Paths.get(ROOT_STR, vhdFilename).toString();
-                    String tmpRootPath = targetImagePath.replace(".vhd", "").replace("\\", "/");
+                    // vhdFilename have .vhd extension, we don't
+                    String tmpRootPath = targetImagePath.replace("\\", "/");
                     String searchParentPath = "/" + tmpRootPath + "/" + parentPath;
                     query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
                         filename.replace("'", "''"), searchParentPath.replace("'", "''"));
