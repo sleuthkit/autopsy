@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.logicalimager.dsp;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
@@ -60,6 +59,7 @@ final class AddLogicalImageTask implements Runnable {
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
     private final static String USERS_TXT = "users.txt"; //NON-NLS
     private final static String MODULE_NAME = "Logical Imager"; //NON-NLS
+    private final static String ROOT_STR = "root"; // NON-NLS
     private final String deviceId;
     private final String timeZone;
     private final File src;
@@ -174,24 +174,18 @@ final class AddLogicalImageTask implements Runnable {
         
         if (imagePaths.isEmpty()) {
             createVHD = false;
-            // No VHD in src directory, try ingest directories using Logical File Set
-            String[] directories = dest.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return Paths.get(dir.toString(), name).toFile().isDirectory();
-                }
-            });
-//            for (String dir : directories) {
-                imagePaths.add(Paths.get(dest.toString(), "root").toFile().getAbsolutePath());
-//            }
-            if (imagePaths.isEmpty()) {
+            // No VHD in src directory, try ingest the root directory using Logical File Set
+            File root = Paths.get(dest.toString(), ROOT_STR).toFile();
+            if (root.exists() && root.isDirectory()) {
+                imagePaths.add(root.getAbsolutePath());
+            } else {
                 String msg = Bundle.AddLogicalImageTask_directoryDoesNotContainSparseImage(dest);
                 errorList.add(msg);
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
                 return;
             }
 
-            // ingest the directories
+            // ingest the root directory
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             try {
                 LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, "", "", imagePaths, new ProgressUpdater());
@@ -204,17 +198,14 @@ final class AddLogicalImageTask implements Runnable {
 
         } else {
             createVHD = true;
-            
             // ingest the VHDs
             try {
                 addMultipleImageTask = new AddMultipleImageTask(deviceId, imagePaths, timeZone , progressMonitor, callback);
                 addMultipleImageTask.run();
-
                 if (addMultipleImageTask.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
                     callback.done(addMultipleImageTask.getResult(), addMultipleImageTask.getErrorMessages(), addMultipleImageTask.getNewDataSources());
                     return;
                 }
-
             } catch (NoCurrentCaseException ex) {
                 String msg = Bundle.AddLogicalImageTask_noCurrentCase();
                 errorList.add(msg);
@@ -295,6 +286,7 @@ final class AddLogicalImageTask implements Runnable {
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                       new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
+            List<BlackboardArtifact> artifacts = new ArrayList<>();
             String line;
             br.readLine(); // skip the header line
             int lineNumber = 2;
@@ -324,40 +316,40 @@ final class AddLogicalImageTask implements Runnable {
                         dataSourceObjId.toString(), fileMetaAddressStr, filename.replace("'", "''"));
                 } else {
                     String parentPath = fields[8];
-                    targetImagePath = Paths.get("root", vhdFilename).toString();
+                    targetImagePath = Paths.get(ROOT_STR, vhdFilename).toString();
                     String tmpRootPath = targetImagePath.replace(".vhd", "").replace("\\", "/");
                     String searchParentPath = "/" + tmpRootPath + "/" + parentPath;
-                    query =  String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
+                    query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
                         filename.replace("'", "''"), searchParentPath.replace("'", "''"));
                 }
 
+                // TODO - findAllFilesWhere should SQL-escape the query
                 List<AbstractFile> matchedFiles = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(query);
                 for (AbstractFile file : matchedFiles) {
-                    addInterestingFile(file, ruleSetName, ruleName);
+                    addInterestingFileToArtifacts(file, ruleSetName, ruleName, artifacts);
                 }
                 lineNumber++;
+            } // end reading file
+
+            try {
+                // index the artifact for keyword search
+                blackboard.postArtifacts(artifacts, MODULE_NAME);
+            } catch (Blackboard.BlackboardException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
             }
         }
-//        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME,
-//                BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
     }
 
-    private void addInterestingFile(AbstractFile file, String ruleSetName, String ruleName) throws TskCoreException {
+    private void addInterestingFileToArtifacts(AbstractFile file, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName);
         attributes.add(setNameAttribute);
         BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName);
         attributes.add(ruleNameAttribute);
-        Blackboard tskBlackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
-        if (!tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+        if (!blackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
             BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             artifact.addAttributes(attributes);
-            try {
-                // index the artifact for keyword search
-                blackboard.postArtifact(artifact, MODULE_NAME);
-            } catch (Blackboard.BlackboardException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-            }
+            artifacts.add(artifact);
         }
     }
 
