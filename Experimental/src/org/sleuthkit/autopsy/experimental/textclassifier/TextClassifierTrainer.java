@@ -32,7 +32,6 @@ import opennlp.tools.doccat.DocumentSample;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -57,17 +56,26 @@ public class TextClassifierTrainer implements GeneralReportModule {
     private TextClassifierTrainerConfigPanel configPanel;
 
     @Override
-    @Messages({"TextClassifierTrainer.srcModuleName.txt=Text classifier model"})
+    @Messages({
+        "TextClassifierTrainer.srcModuleName.text=Text classifier model",
+        "TextClassifierTrainer.inProgress.text=In progress",
+        "TextClassifierTrainer.needFileType.text=File type detection must complete before generating this report.",
+        "TextClassifierTrainer.training.text=Training model.",
+        "TextClassifierTrainer.noModel.text=No model was trained.",
+        "TextClassifierTrainer.writingModel.text=Writing model: ",
+        "TextClassifierTrainer.completeModelLocation.text=Complete. Model location: ",
+        "TextClassifierTrainer.cannotSave.text=Cannot save model: "
+    })
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         if (IngestManager.getInstance().isIngestRunning()) {
-            MessageNotifyUtil.Message.error("File type detection must complete before generating this report.");
+            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needFileType.text"));
         }
         
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.complete(ReportStatus.RUNNING);
-        progressPanel.updateStatusLabel("In progress");
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.inProgress.text"));
 
         ObjectStream<DocumentSample> sampleStream;
         try {
@@ -80,30 +88,31 @@ public class TextClassifierTrainer implements GeneralReportModule {
         DoccatModel model = null;
 
         progressPanel.setIndeterminate(true);
-        progressPanel.updateStatusLabel("Training model");
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.training.text"));
         try {
             model = train(TextClassifierUtils.MODEL_PATH, sampleStream);
         } catch (IOException ex) {
-            progressPanel.updateStatusLabel("Cannot train model.");
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.noModel.text"));
             new File(baseReportDir).delete();
             return;
         }
 
         if (model == null) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("No model was trained.");
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.noModel.text"));
             new File(baseReportDir).delete();
             return;
         }
         try {
             progressPanel.setIndeterminate(true);
-            progressPanel.updateStatusLabel("Writing model to " + TextClassifierUtils.MODEL_PATH);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.writingModel.text") + TextClassifierUtils.MODEL_PATH);
             TextClassifierUtils.writeModel((NaiveBayesModel) model.getMaxentModel(), TextClassifierUtils.MODEL_PATH);
             progressPanel.complete(ReportStatus.COMPLETE);
-            progressPanel.updateStatusLabel("Complete. Model is at " + TextClassifierUtils.MODEL_PATH);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.completeModelLocation.text") + TextClassifierUtils.MODEL_PATH);
         } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("Unable to save text classifier model.");
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.cannotSave.text") + TextClassifierUtils.MODEL_PATH);
             new File(baseReportDir).delete();
             return;
         }
@@ -142,7 +151,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
             params.put("MODEL_INPUT", oldModelPath);
         }
 
-        DoccatModel model = DocumentCategorizerME.train("en", sampleStream, params, new DoccatFactory());
+        DoccatModel model = DocumentCategorizerME.train(TextClassifierUtils.LANGUAGE_CODE, sampleStream, params, new DoccatFactory());
         return model;
     }
 
