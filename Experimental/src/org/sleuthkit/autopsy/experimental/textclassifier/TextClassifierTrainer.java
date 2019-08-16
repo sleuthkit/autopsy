@@ -32,6 +32,7 @@ import opennlp.tools.doccat.DocumentSample;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -40,6 +41,8 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
@@ -56,6 +59,10 @@ public class TextClassifierTrainer implements GeneralReportModule {
     @Override
     @Messages({"TextClassifierTrainer.srcModuleName.txt=Text classifier model"})
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+        if (IngestManager.getInstance().isIngestRunning()) {
+            MessageNotifyUtil.Message.error("File type detection must complete before generating this report.");
+        }
+        
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
@@ -66,28 +73,25 @@ public class TextClassifierTrainer implements GeneralReportModule {
         try {
             sampleStream = processTrainingData(progressPanel);
         } catch (Exception ex) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("Unable to process training data: " + ex);
             new File(baseReportDir).delete();
             return;
         }
 
         DoccatModel model = null;
 
+        progressPanel.setIndeterminate(true);
+        progressPanel.updateStatusLabel("Training model");
         try {
-            progressPanel.setIndeterminate(true);
-            progressPanel.updateStatusLabel("Training model");
             model = train(TextClassifierUtils.MODEL_PATH, sampleStream);
         } catch (IOException ex) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("Unable to train text classifier: " + ex);
+            progressPanel.updateStatusLabel("Cannot train model.");
             new File(baseReportDir).delete();
             return;
         }
 
         if (model == null) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("No model was trained");
+            progressPanel.updateStatusLabel("No model was trained.");
             new File(baseReportDir).delete();
             return;
         }
@@ -99,7 +103,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
             progressPanel.updateStatusLabel("Complete. Model is at " + TextClassifierUtils.MODEL_PATH);
         } catch (IOException ex) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("Unable to save text classifier model: " + ex);
+            progressPanel.updateStatusLabel("Unable to save text classifier model.");
             new File(baseReportDir).delete();
             return;
         }
@@ -131,8 +135,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
     }
 
     public DoccatModel train(String oldModelPath, ObjectStream<DocumentSample> sampleStream) throws IOException {
-        long startTime = System.nanoTime();
-
         TrainingParameters params = new TrainingParameters();
         params.put(TrainingParameters.CUTOFF_PARAM, Integer.toString(0));
         params.put(TrainingParameters.ALGORITHM_PARAM, TextClassifierUtils.ALGORITHM);
@@ -141,8 +143,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
         }
 
         DoccatModel model = DocumentCategorizerME.train("en", sampleStream, params, new DoccatFactory());
-
-        double duration = (System.nanoTime() - startTime) / 1.0e9;
         return model;
     }
 
@@ -151,10 +151,24 @@ public class TextClassifierTrainer implements GeneralReportModule {
      *
      * @return training data usable by OpenNLP
      */
-    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException, TextExtractor.InitReaderException, IOException, TextExtractorFactory.NoTextExtractorFound {
+    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException, TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException, IOException {
         progressPanel.updateStatusLabel("Fetching training data");
 
-        List<AbstractFile> allDocs = fetchAllDocuments();
+        List<AbstractFile> allDocs;
+        try {
+            allDocs = fetchAllDocuments();
+        } catch (TskCoreException ex) {
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel("Cannot fetch documents.");
+            throw ex;
+        }
+        
+        if(allDocs.isEmpty()) {
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel("No documents found. You may need to run the Ingest Module for File Type Detection.");
+            throw new TskCoreException();
+        }
+        
         Set<Long> notableObjectIDs = fetchNotableObjectIDs();
 
         int notableDocCount = 0;
@@ -173,7 +187,14 @@ public class TextClassifierTrainer implements GeneralReportModule {
                 nonnotableDocCount++;
             }
 
-            String[] tokens = TextClassifierUtils.extractTokens(doc);
+            String[] tokens;
+            try {
+                tokens = TextClassifierUtils.extractTokens(doc);
+            } catch (Exception ex) {
+                progressPanel.complete(ReportStatus.ERROR);
+                progressPanel.updateStatusLabel("Cannot extract text from document of type " + doc.getMIMEType());
+                throw ex;
+            }
             DocumentSample docSample = new DocumentSample(label, tokens);
             docSamples.add(docSample);
 
