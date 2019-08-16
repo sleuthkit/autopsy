@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +40,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -92,119 +94,108 @@ public final class CaseUcoFormatExporter {
     @SuppressWarnings("deprecation")
     public static void generateReport(Long selectedDataSourceId, String reportOutputPath, ReportProgressPanel progressPanel) {
 
-        //        // Start the progress bar and setup the report
-//        progressPanel.setIndeterminate(false);
-//        progressPanel.start();
-//        progressPanel.updateStatusLabel(Bundle.ReportCaseUco_initializing());
-//
-//        // Create the JSON generator
-//        JsonFactory jsonGeneratorFactory = new JsonFactory();
-//        java.io.File reportFile = Paths.get(reportOutputPath).toFile();
-//        try {
-//            Files.createDirectories(Paths.get(reportFile.getParent()));
-//        } catch (IOException ex) {
-//            logger.log(Level.SEVERE, "Unable to create directory for CASE-UCO report", ex); //NON-NLS
-//            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_unableToCreateDirectories());
-//            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
-//            return;
-//        }
-//
-//        // Check if ingest has finished
-//        if (IngestManager.getInstance().isIngestRunning()) {
-//            MessageNotifyUtil.Message.warn(Bundle.ReportCaseUco_ingestWarning());
-//        }
-//
-//        JsonGenerator jsonGenerator = null;
-//        SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
-//        try {
-//            jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
-//            // instert \n after each field for more readable formatting
-//            jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
-//
-//            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-//
-//            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_querying());
-//
-//            // create the required CASE-UCO entries at the beginning of the output file
-//            initializeJsonOutputFile(jsonGenerator);
-//
-//            // create CASE-UCO entry for the Autopsy case
-//            String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
-//
-//            // create CASE-UCO data source entry
-//            String dataSourceTraceId = saveDataSourceInfo(selectedDataSourceId, caseTraceId, skCase, jsonGenerator);
-//
-//            // Run getAllFilesQuery to get all files, exclude directories
-//            final String getAllFilesQuery = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
-//                    + "data_source_obj_id = " + Long.toString(selectedDataSourceId)
-//                    + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
-//                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
-//                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + "))"; //NON-NLS
-//
-//            try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery)) {
-//                ResultSet resultSet = queryResult.getResultSet();
-//
-//                progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
-//
-//                // Loop files and write info to CASE-UCO report
-//                while (resultSet.next()) {
-//
-//                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-//                        break;
-//                    }
-//
-//                    Long objectId = resultSet.getLong(1);
-//                    String fileName = resultSet.getString(2);
-//                    long size = resultSet.getLong("size");
-//                    String crtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("crtime"), timeZone);
-//                    String atime = ContentUtils.getStringTimeISO8601(resultSet.getLong("atime"), timeZone);
-//                    String mtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("mtime"), timeZone);
-//                    String md5Hash = resultSet.getString("md5");
-//                    String parent_path = resultSet.getString("parent_path");
-//                    String mime_type = resultSet.getString("mime_type");
-//                    String extension = resultSet.getString("extension");
-//
-//                    saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
-//                }
-//            }
-//
-//            // create the required CASE-UCO entries at the end of the output file
-//            finilizeJsonOutputFile(jsonGenerator);
-//
-//            Case.getCurrentCaseThrows().addReport(reportOutputPath, Bundle.ReportCaseUco_srcModuleName_text(), "");
-//
-//            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
-//        } catch (TskCoreException ex) {
-//            logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
-//            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
-//        } catch (IOException ex) {
-//            logger.log(Level.SEVERE, "Failed to create JSON output for the CASE-UCO report", ex); //NON-NLS
-//            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
-//        } catch (SQLException ex) {
-//            logger.log(Level.WARNING, "Unable to read result set", ex); //NON-NLS
-//            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
-//        } catch (NoCurrentCaseException ex) {
-//            logger.log(Level.SEVERE, "No current case open", ex); //NON-NLS
-//            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
-//        } finally {
-//            if (jsonGenerator != null) {
-//                try {
-//                    jsonGenerator.close();
-//                } catch (IOException ex) {
-//                    logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
-//                }
-//            }
-//        }
+        // Start the progress bar and setup the report
+        progressPanel.setIndeterminate(false);
+        progressPanel.start();
+        progressPanel.updateStatusLabel(Bundle.ReportCaseUco_initializing());
+
+        // Create the JSON generator
+        JsonFactory jsonGeneratorFactory = new JsonFactory();
+        java.io.File reportFile = Paths.get(reportOutputPath).toFile();
         try {
-            export(null, null, Paths.get("C:", "Users", "dsmyda", "Desktop").toFile(), progressPanel);
+            Files.createDirectories(Paths.get(reportFile.getParent()));
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Unable to create directory for CASE-UCO report", ex); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_unableToCreateDirectories());
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            return;
+        }
+
+        // Check if ingest has finished
+        if (IngestManager.getInstance().isIngestRunning()) {
+            MessageNotifyUtil.Message.warn(Bundle.ReportCaseUco_ingestWarning());
+        }
+
+        JsonGenerator jsonGenerator = null;
+        SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
+        try {
+            jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
+            // instert \n after each field for more readable formatting
+            jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
+
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+
+            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_querying());
+
+            // create the required CASE-UCO entries at the beginning of the output file
+            initializeJsonOutputFile(jsonGenerator);
+
+            // create CASE-UCO entry for the Autopsy case
+            String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
+
+            // create CASE-UCO data source entry
+            String dataSourceTraceId = saveDataSourceInfo(selectedDataSourceId, caseTraceId, skCase, jsonGenerator);
+
+            // Run getAllFilesQuery to get all files, exclude directories
+            final String getAllFilesQuery = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
+                    + "data_source_obj_id = " + Long.toString(selectedDataSourceId)
+                    + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
+                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
+                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + "))"; //NON-NLS
+
+            try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery)) {
+                ResultSet resultSet = queryResult.getResultSet();
+
+                progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
+
+                // Loop files and write info to CASE-UCO report
+                while (resultSet.next()) {
+
+                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                        break;
+                    }
+
+                    Long objectId = resultSet.getLong(1);
+                    String fileName = resultSet.getString(2);
+                    long size = resultSet.getLong("size");
+                    String crtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("crtime"), timeZone);
+                    String atime = ContentUtils.getStringTimeISO8601(resultSet.getLong("atime"), timeZone);
+                    String mtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("mtime"), timeZone);
+                    String md5Hash = resultSet.getString("md5");
+                    String parent_path = resultSet.getString("parent_path");
+                    String mime_type = resultSet.getString("mime_type");
+                    String extension = resultSet.getString("extension");
+
+                    saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
+                }
+            }
+
+            // create the required CASE-UCO entries at the end of the output file
+            finilizeJsonOutputFile(jsonGenerator);
+
+            Case.getCurrentCaseThrows().addReport(reportOutputPath, Bundle.ReportCaseUco_srcModuleName_text(), "");
+
+            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to create JSON output for the CASE-UCO report", ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "Unable to read result set", ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "No current case open", ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+        } finally {
+            if (jsonGenerator != null) {
+                try {
+                    jsonGenerator.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
+                }
+            }
         }
     }
 
@@ -221,14 +212,12 @@ public final class CaseUcoFormatExporter {
             File caseReportFolder, ReportProgressPanel progressPanel) throws IOException, SQLException,
             NoCurrentCaseException, TskCoreException {
 
-        progressPanel.start();
+        progressPanel.updateStatusLabel("Generating CASE-UCO Report");
         //Acquire references for file discovery
         Case currentCase = Case.getCurrentCaseThrows();
         String caseTempDirectory = currentCase.getTempDirectory();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         TagsManager tagsManager = currentCase.getServices().getTagsManager();
-
-        tagTypes = tagsManager.getAllTagNames();
 
         //Create temp directory to filter out duplicate files.
         Path tmpDir = Paths.get(caseTempDirectory, TEMP_DIR_NAME);
@@ -264,27 +253,27 @@ public final class CaseUcoFormatExporter {
                                 jsonGenerator, timeZone, dataSourceTraceId);
                     }
                 }
-
-                //            if(!interestingItemSets.isEmpty()) {
-                //                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_FILE_HIT, ds.getId())) {
-                //                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-                //                    if (interestingItemSets.contains(setAttr.getValueString())) {
-                //
-                //                    }
-                //                }
-                //
-                //                for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(INTERESTING_ARTIFACT_HIT, ds.getId())) {
-                //                    BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-                //                    if (interestingItemSets.contains(setAttr.getValueString())) {
-                //
-                //                    }
-                //                }
-                //            }
+                
+                if(!interestingItemSets.isEmpty()) {
+                    List<BlackboardArtifact.ARTIFACT_TYPE> typesToQuery = Lists.newArrayList(
+                            INTERESTING_FILE_HIT, INTERESTING_ARTIFACT_HIT);
+                    for(BlackboardArtifact.ARTIFACT_TYPE artType : typesToQuery) {
+                        for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(artType)) {
+                            if(bArt.getDataSource().getId() == ds.getId()) {
+                                BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                                if (interestingItemSets.contains(setAttr.getValueString())) {
+                                    Content content = skCase.getContentById(bArt.getObjectID());
+                                    saveUniqueFilesToCaseUcoFormat(content, tmpDir,
+                                            jsonGenerator, timeZone, dataSourceTraceId);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             finilizeJsonOutputFile(jsonGenerator);
         }
-        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 
     /**
@@ -301,10 +290,10 @@ public final class CaseUcoFormatExporter {
      */
     private static void saveUniqueFilesToCaseUcoFormat(Content content, Path tmpDir, JsonGenerator jsonGenerator,
             TimeZone timeZone, String dataSourceTraceId) throws IOException {
-        if (content instanceof AbstractFile) {
+        if (content instanceof AbstractFile && !(content instanceof DataSource)) {
             AbstractFile absFile = (AbstractFile) content;
             Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
-            if (!Files.exists(filePath)) {
+            if (!Files.exists(filePath) && !absFile.isDir()) {
                 saveFileInCaseUcoFormat(
                         absFile.getId(),
                         absFile.getName(),
