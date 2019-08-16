@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,11 +30,9 @@ import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.doccat.DocumentSample;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
-import opennlp.tools.tokenize.SimpleTokenizer;
-import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
-import org.apache.commons.io.IOUtils;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
@@ -44,7 +40,6 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
@@ -58,7 +53,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
     private TextClassifierTrainerConfigPanel configPanel;
 
     @Override
-    @Messages({"ClassifierTrainerReportModule.srcModuleName.txt=Text classifier model"})
+    @Messages({"TextClassifierTrainer.srcModuleName.txt=Text classifier model"})
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
@@ -68,7 +63,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
 
         ObjectStream<DocumentSample> sampleStream;
         try {
-
             sampleStream = processTrainingData(progressPanel);
         } catch (Exception ex) {
             progressPanel.complete(ReportStatus.ERROR);
@@ -110,17 +104,17 @@ public class TextClassifierTrainer implements GeneralReportModule {
         }
     }
 
+    @Messages({"TextClassifierTrainer.getName.text=Text classifier model"})
     @Override
     public String getName() {
-        //String name = NbBundle.getMessage(this.getClass(), "ClassifierTrainerReportModule.getName.text");
-        String name = "Text Classifier Trainer";
+        String name = NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getName.text");
         return name;
     }
 
+    @Messages({"TextClassifierTrainer.getDesc.text=Machine learning model to classify which documents are notable"})
     @Override
     public String getDescription() {
-        //String desc = NbBundle.getMessage(this.getClass(), "ClassifierTrainerReportModule.getDesc.text");
-        String desc = "Machine learning model to classify which documents are notable";
+        String desc = NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getDesc.text");
         return desc;
     }
 
@@ -186,23 +180,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
         }
         
         ObjectStream<DocumentSample> objectStream = new ListObjectStream<>(docSamples);
-        
-        
-        //TODO: Delete this. It's for testing only.
-        String outputPath = "C:/Users/Brian Kjersten/Documents/Story-specific/5333/trainingSamples.txt";
-        try {
-            PrintWriter writer = new PrintWriter(outputPath, "UTF-8");
-            for (DocumentSample sample = objectStream.read(); sample != null; sample = objectStream.read()) {
-                writer.println(sample.getText().length + " " + sample.getCategory() + "\t" + String.join(" ", sample.getText()));
-            }
-        } catch (IOException ex){
-            System.err.println("!!!!! Printing objectStream failed");
-        }
-        try {
-            objectStream.reset();
-        } catch (IOException ex){
-            System.err.println("!!!!! Resetting objectStream failed");
-        }
         
         return objectStream;
     }
