@@ -231,9 +231,7 @@ public final class CaseUcoFormatExporter {
         //Timezone for formatting file creation, modification, and accessed times
         SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
 
-        try (JsonGenerator jsonGenerator = 
-                createJsonGenerator(reportFile.toFile())) {
-            
+        try (JsonGenerator jsonGenerator = createJsonGenerator(reportFile.toFile())) {   
             initializeJsonOutputFile(jsonGenerator);
             //Make the case the first entity in the report file.
             String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
@@ -241,7 +239,6 @@ public final class CaseUcoFormatExporter {
             for (DataSource ds : skCase.getDataSources()) {
                 String dataSourceTraceId = saveDataSourceInfo(ds.getId(), 
                         caseTraceId, skCase, jsonGenerator);
-                
                 for (TagName tn : tagTypes) {
                     for (ContentTag ct : tagsManager.getContentTagsByTagName(tn, ds.getId())) {
                         saveUniqueFilesToCaseUcoFormat(ct.getContent(), tmpDir,
@@ -253,7 +250,6 @@ public final class CaseUcoFormatExporter {
                                 jsonGenerator, timeZone, dataSourceTraceId);
                     }
                 }
-                
                 if(!interestingItemSets.isEmpty()) {
                     List<BlackboardArtifact.ARTIFACT_TYPE> typesToQuery = Lists.newArrayList(
                             INTERESTING_FILE_HIT, INTERESTING_ARTIFACT_HIT);
@@ -271,7 +267,6 @@ public final class CaseUcoFormatExporter {
                     }
                 }
             }
-
             finilizeJsonOutputFile(jsonGenerator);
         }
     }
