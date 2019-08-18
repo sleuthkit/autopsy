@@ -208,11 +208,16 @@ public final class CaseUcoFormatExporter {
      * @param outputFilePath
      * @param progressPanel
      */
+    @NbBundle.Messages({
+        "CaseUcoFormatExporter.startMsg=Generating CASE-UCO Report",
+        "CaseUcoFormatExporter.datasourceMsg=Generating CASE-UCO Report for %s",
+        "CaseUcoFormatExporter.finishMsg=Finished generating CASE-UCO Report"
+    })
     public static void export(List<TagName> tagTypes, List<String> interestingItemSets,
             File caseReportFolder, ReportProgressPanel progressPanel) throws IOException, SQLException,
             NoCurrentCaseException, TskCoreException {
 
-        progressPanel.updateStatusLabel("Generating CASE-UCO Report");
+        progressPanel.updateStatusLabel(Bundle.CaseUcoFormatExporter_startMsg());
         //Acquire references for file discovery
         Case currentCase = Case.getCurrentCaseThrows();
         String caseTempDirectory = currentCase.getTempDirectory();
@@ -237,6 +242,8 @@ public final class CaseUcoFormatExporter {
             String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
 
             for (DataSource ds : skCase.getDataSources()) {
+                progressPanel.updateStatusLabel(String.format(
+                        Bundle.CaseUcoFormatExporter_datasourceMsg(), ds.getName()));
                 String dataSourceTraceId = saveDataSourceInfo(ds.getId(), 
                         caseTraceId, skCase, jsonGenerator);
                 for (TagName tn : tagTypes) {
@@ -268,6 +275,7 @@ public final class CaseUcoFormatExporter {
                 }
             }
             finilizeJsonOutputFile(jsonGenerator);
+            progressPanel.updateStatusLabel(Bundle.CaseUcoFormatExporter_finishMsg());
         }
     }
 
