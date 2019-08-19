@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -50,23 +50,26 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.SqlFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 
 /**
  * A Node to represent an EventCluster in a DetailsChart
  */
 final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStripe, EventStripeNode> {
-    
+
     private static final Logger LOGGER = Logger.getLogger(EventClusterNode.class.getName());
 
     /**
@@ -98,17 +101,17 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
      */
     EventClusterNode(DetailsChartLane<?> chartLane, EventCluster eventCluster, EventStripeNode parentNode) {
         super(chartLane, eventCluster, parentNode);
-        
+
         subNodePane.setBorder(clusterBorder);
         subNodePane.setBackground(defaultBackground);
         subNodePane.setMinWidth(1);
         subNodePane.setMaxWidth(USE_PREF_SIZE);
         setMinHeight(24);
         setAlignment(Pos.CENTER_LEFT);
-        
+
         setCursor(Cursor.HAND);
         getChildren().addAll(subNodePane, infoHBox);
-        
+
         if (parentNode == null) {
             setDescriptionVisibility(DescriptionVisibility.SHOWN);
         }
@@ -131,7 +134,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
     Button getNewCollapseButton() {
         return ActionUtils.createButton(new CollapseClusterAction(this), ActionUtils.ActionTextBehavior.HIDE);
     }
-    
+
     @Override
     void installActionButtons() {
         super.installActionButtons();
@@ -139,12 +142,12 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
             plusButton = getNewExpandButton();
             minusButton = getNewCollapseButton();
             controlsHBox.getChildren().addAll(minusButton, plusButton);
-            
+
             configureActionButton(plusButton);
             configureActionButton(minusButton);
         }
     }
-    
+
     @Override
     void showFullDescription(final int size) {
         if (getParentNode().isPresent()) {
@@ -162,11 +165,11 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
      */
     @NbBundle.Messages(value = "EventClusterNode.loggedTask.name=Load sub events")
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private synchronized void loadSubStripes(DescriptionLoD.RelativeDetail relativeDetail) {
+    private synchronized void loadSubStripes(RelativeDetail relativeDetail) {
         getChartLane().setCursor(Cursor.WAIT);
 
         /*
-         * make new ZoomParams to query with
+         * Make new ZoomState to query with:
          *
          * We need to extend end time for the query by one second, because it is
          * treated as an open interval but we want to include events at exactly
@@ -174,40 +177,39 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * to the type and description of this cluster by intersecting a new
          * filter with the existing root filter.
          */
-        final RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
-        subClusterFilter.getSubFilters().addAll(
-                new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
-                new TypeFilter(getEventType()));
+        RootFilterState subClusterFilter = eventsModel.getFilterState()
+                .intersect(new SqlFilterState<>(
+                        new EventTypeFilter(getEventType()), true));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
-        final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
-        final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
+        final TimelineEventType.TypeLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
+        final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLevel());
 
+        DescriptionFilter descriptionFilter = new DescriptionFilter(getEvent().getDescriptionLevel(), getDescription());
         /*
          * task to load sub-stripes in a background thread
          */
         Task<List<EventStripe>> loggedTask;
         loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventClusterNode_loggedTask_name(), false) {
-            
-            private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
-            
+
+            private volatile TimelineEvent.DescriptionLevel loadedDescriptionLevel = withRelativeDetail(getDescriptionLevel(), relativeDetail);
+
             @Override
             protected List<EventStripe> call() throws Exception {
                 //newly loaded substripes                
                 List<EventStripe> stripes;
                 //next LoD in diraction of given relativeDetail
-                DescriptionLoD next = loadedDescriptionLoD;
+                TimelineEvent.DescriptionLevel next = loadedDescriptionLevel;
                 do {
-                    
-                    loadedDescriptionLoD = next;
-                    if (loadedDescriptionLoD == getEvent().getDescriptionLoD()) {
+                    loadedDescriptionLevel = next;
+                    if (loadedDescriptionLevel == getEvent().getDescriptionLevel()) {
                         //if we are back at the level of detail of the original cluster, return empty list to inidicate.
                         return Collections.emptyList();
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(descriptionFilter, zoom.withDescrLOD(loadedDescriptionLevel));
                     //setup next for subsequent go through the "do" loop
-                    next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
+                    next = withRelativeDetail(loadedDescriptionLevel, relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.
 
                 // return list of EventStripes with parents set to this cluster
@@ -215,31 +217,36 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                         .map(eventStripe -> eventStripe.withParent(getEvent()))
                         .collect(Collectors.toList());
             }
-            
+
             @Override
             protected void succeeded() {
-                ObservableList<TimeLineEvent> chartNestedEvents = getChartLane().getParentChart().getAllNestedEvents();
+                ObservableList<DetailViewEvent> chartNestedEvents = getChartLane().getParentChart().getAllNestedEvents();
 
                 //clear the existing subnodes/events
                 chartNestedEvents.removeAll(StripeFlattener.flatten(subNodes));
                 subNodes.clear();
-                
+
                 try {
-                    setDescriptionLOD(loadedDescriptionLoD);
+                    setDescriptionLOD(loadedDescriptionLevel);
                     List<EventStripe> newSubStripes = get();
                     if (newSubStripes.isEmpty()) {
                         //restore original display
                         getChildren().setAll(subNodePane, infoHBox);
                     } else {
                         //display new sub stripes
-                        subNodes.addAll(Lists.transform(newSubStripes, EventClusterNode.this::createChildNode)); //map stripes to nodes
+                        List<EventNodeBase<?>> newSubNodes = new ArrayList<>();
+                        for (EventStripe subStripe : newSubStripes) {//map stripes to nodes
+                            newSubNodes.add(createChildNode(subStripe));
+                        }
+                        subNodes.addAll(newSubNodes);
                         chartNestedEvents.addAll(StripeFlattener.flatten(subNodes));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                     }
-                } catch (InterruptedException | ExecutionException ex) {
+                } catch (TskCoreException | InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
+
                 }
-                
+
                 getChartLane().requestChartLayout();
                 getChartLane().setCursor(null);
             }
@@ -249,27 +256,28 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         new Thread(loggedTask).start();
         getChartLane().getController().monitorTask(loggedTask);
     }
-    
+
     @Override
-    EventNodeBase<?> createChildNode(EventStripe stripe) {
-        ImmutableSet<Long> eventIDs = stripe.getEventIDs();
+    EventNodeBase<?> createChildNode(EventStripe stripe) throws TskCoreException {
+         Set<Long> eventIDs = stripe.getEventIDs();
         if (eventIDs.size() == 1) {
             //If the stripe is a single event, make a single event node rather than a stripe node.
-            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(stripe);
-            return new SingleEventNode(getChartLane(), singleEvent, this);
+            TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
+            SingleDetailsViewEvent singleDetailsEvent = new SingleDetailsViewEvent(singleEvent).withParent(stripe);
+            return new SingleEventNode(getChartLane(), singleDetailsEvent, this);
         } else {
             return new EventStripeNode(getChartLane(), stripe, this);
         }
     }
-    
+
     @Override
     protected void layoutChildren() {
         double chartX = getChartLane().getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
-        double w = getChartLane().getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
-        subNodePane.setPrefWidth(Math.max(1, w));
+        double width = getChartLane().getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
+        subNodePane.setPrefWidth(Math.max(1, width));
         super.layoutChildren();
     }
-    
+
     @Override
     Iterable<? extends Action> getActions() {
         return Iterables.concat(
@@ -277,7 +285,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                 Arrays.asList(new ExpandClusterAction(this), new CollapseClusterAction(this))
         );
     }
-    
+
     @Override
     EventHandler<MouseEvent> getDoubleClickHandler() {
         return mouseEvent -> new ExpandClusterAction(this).handle(null);
@@ -288,22 +296,22 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
      * at the next description level of detail.
      */
     static private class ExpandClusterAction extends Action {
-        
+
         private static final Image PLUS = new Image("/org/sleuthkit/autopsy/timeline/images/plus-button.png"); // NON-NLS //NOI18N
 
         @NbBundle.Messages({"ExpandClusterAction.text=Expand"})
         ExpandClusterAction(EventClusterNode node) {
             super(Bundle.ExpandClusterAction_text());
             setGraphic(new ImageView(PLUS));
-            
+
             setEventHandler(actionEvent -> {
-                if (node.getDescriptionLoD().moreDetailed() != null) {
-                    node.loadSubStripes(DescriptionLoD.RelativeDetail.MORE);
+                if (node.getDescriptionLevel().moreDetailed() != null) {
+                    node.loadSubStripes(RelativeDetail.MORE);
                 }
             });
 
             //disabled if the given node is already at full description level of detail
-            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(DescriptionLoD.FULL));
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(TimelineEvent.DescriptionLevel.FULL));
         }
     }
 
@@ -312,22 +320,43 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
      * more detailed level of detail.
      */
     static private class CollapseClusterAction extends Action {
-        
+
         private static final Image MINUS = new Image("/org/sleuthkit/autopsy/timeline/images/minus-button.png"); // NON-NLS //NOI18N
 
         @NbBundle.Messages({"CollapseClusterAction.text=Collapse"})
         CollapseClusterAction(EventClusterNode node) {
             super(Bundle.CollapseClusterAction_text());
             setGraphic(new ImageView(MINUS));
-            
+
             setEventHandler(actionEvent -> {
-                if (node.getDescriptionLoD().lessDetailed() != null) {
-                    node.loadSubStripes(DescriptionLoD.RelativeDetail.LESS);
+                if (node.getDescriptionLevel().lessDetailed() != null) {
+                    node.loadSubStripes(RelativeDetail.LESS);
                 }
             });
 
             //disabled if node is at clusters level of detail
-            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEvent().getDescriptionLoD()));
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEvent().getDescriptionLevel()));
         }
     }
+
+    private enum RelativeDetail {
+
+        EQUAL,
+        MORE,
+        LESS;
+    }
+
+    private static TimelineEvent.DescriptionLevel withRelativeDetail(TimelineEvent.DescriptionLevel LoD, RelativeDetail relativeDetail) {
+        switch (relativeDetail) {
+            case EQUAL:
+                return LoD;
+            case MORE:
+                return LoD.moreDetailed();
+            case LESS:
+                return LoD.lessDetailed();
+            default:
+                throw new IllegalArgumentException("Unknown RelativeDetail value " + relativeDetail);
+        }
+    }
+
 }

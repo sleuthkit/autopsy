@@ -22,8 +22,8 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 
 /**
  * Action that resets the filters to their initial/default state.
@@ -44,12 +44,12 @@ public class ResetFilters extends Action {
         eventsModel = controller.getEventsModel();
         disabledProperty().bind(new BooleanBinding() {
             {
-                bind(eventsModel.zoomParametersProperty());
+                bind(eventsModel.zoomStateProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.zoomParametersProperty().getValue().getFilter().equals(eventsModel.getDefaultFilter());
+                return eventsModel.zoomStateProperty().getValue().getFilterState().equals(eventsModel.getDefaultFilter());
             }
         });
         setEventHandler((ActionEvent t) -> {
