@@ -36,11 +36,9 @@ import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -200,13 +198,18 @@ public final class CaseUcoFormatExporter {
     }
 
     /**
-     *
-     *
-     *
-     * @param tagTypes
-     * @param interestingItemSets
-     * @param outputFilePath
-     * @param progressPanel
+     * Exports files that are tagged w/ the following TagNames and that belong to 
+     * the following interesting file sets (set name attributes of TSK_INTERSTING_FILE_HIT
+     * and TSK_INTERESTING_ARTIFACT_HIT). Artifacts that are tagged with 
+     * the following TagNames also have their associated source files included.
+     * 
+     * Duplicate files are excluded.
+     * 
+     * @param tagTypes Collection of TagNames to match
+     * @param interestingItemSets Collection of SET_NAMEs to match on in TSK_INTERESTING_FILE_HITs
+     *                            and TSK_INTERESTING_ARTIFACT_HITs.
+     * @param outputFilePath Path to the folder that the CASE-UCO report should be written into
+     * @param progressPanel UI Component to be updated with current processing status
      */
     @NbBundle.Messages({
         "CaseUcoFormatExporter.startMsg=Generating CASE-UCO Report",
@@ -251,7 +254,6 @@ public final class CaseUcoFormatExporter {
                         saveUniqueFilesToCaseUcoFormat(ct.getContent(), tmpDir,
                                 jsonGenerator, timeZone, dataSourceTraceId);
                     }
-
                     for (BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn, ds.getId())) {
                         saveUniqueFilesToCaseUcoFormat(bat.getContent(), tmpDir,
                                 jsonGenerator, timeZone, dataSourceTraceId);
@@ -280,15 +282,15 @@ public final class CaseUcoFormatExporter {
     }
 
     /**
-     * Saves only unique abstract files to the case uco report file. Uniqueness is
-     * determined by object id. A folder in the case temp directory is used to
-     * store object id's that have already been visited.
+     * Saves only unique abstract files to the report. Uniqueness is
+     * determined by object id. The tmpDir Path is used to stored object 
+     * ids that have already been visited.
      *
-     * @param content
-     * @param tmpDir
-     * @param jsonGenerator
-     * @param timeZone
-     * @param dataSourceTraceId
+     * @param content Abstractfile isntance
+     * @param tmpDir Directory to write object ids
+     * @param jsonGenerator Report generator
+     * @param timeZone Time zore for ctime, atime, and mtime formatting
+     * @param dataSourceTraceId TraceID number for the parent data source
      * @throws IOException
      */
     private static void saveUniqueFilesToCaseUcoFormat(Content content, Path tmpDir, JsonGenerator jsonGenerator,
