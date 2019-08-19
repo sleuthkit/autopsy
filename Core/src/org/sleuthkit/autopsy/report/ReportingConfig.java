@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.report;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,10 +50,8 @@ final class ReportingConfig implements Serializable {
         return this.configName;
     }
 
-    void setModuleConfigs(List<ReportModuleConfig> moduleConfigs) {
-        for (ReportModuleConfig config : moduleConfigs) {
-            this.moduleConfigs.put(config.getModuleClassName(), config);
-        }
+    void setModuleConfigs(Map<String, ReportModuleConfig> moduleConfigs) {
+        this.moduleConfigs = moduleConfigs;
     }
 
     Map<String, ReportModuleConfig> getModuleConfigs() {

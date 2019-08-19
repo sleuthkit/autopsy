@@ -34,11 +34,10 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private WizardDescriptor wiz;
     private final boolean useCaseSpecificData;
 
-    ReportWizardPanel2(boolean useCaseSpecificData) {
+    ReportWizardPanel2(boolean useCaseSpecificData, TableReportSettings tableResportSettings) {
         this.useCaseSpecificData = useCaseSpecificData;
-        
+        wiz.putProperty("tableReportSettings", tableResportSettings);
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.finishButton.text"));
-
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel2.nextButton.text"));
         nextButton.setEnabled(true);
 
@@ -98,8 +97,7 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        wiz.putProperty("tagStates", getComponent().getTagStates()); //NON-NLS
-        wiz.putProperty("artifactStates", getComponent().getArtifactStates()); //NON-NLS
-        wiz.putProperty("isTagsSelected", getComponent().isSpecificTaggedResultsRadioButtonSelected()); //NON-NLS
+        TableReportSettings settings = new TableReportSettings(getComponent().getArtifactStates(), getComponent().getTagStates(), useCaseSpecificData, getComponent().getSelectedReportType());
+        wiz.putProperty("tableReportSettings", settings);
     }
 }

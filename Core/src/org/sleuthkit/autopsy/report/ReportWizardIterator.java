@@ -58,7 +58,7 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
     private final WizardDescriptor.Panel<WizardDescriptor>[] portableCaseConfigPanels;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    ReportWizardIterator(String reportingConfigurationName, boolean useCaseSpecificData, boolean runReports) {
+    ReportWizardIterator(String reportingConfigurationName, boolean useCaseSpecificData) {
         
         ReportingConfig config = null;
         try {
@@ -69,12 +69,12 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
         
         if (config != null) {
             firstPanel = new ReportWizardPanel1(config.getModuleConfigs());
-            tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData);
+            tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, config.getTableReportSettings());
             fileConfigPanel = new ReportWizardFileOptionsPanel(config.getFileReportSettings());
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs());
         } else {
             firstPanel = new ReportWizardPanel1(null);
-            tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData);
+            tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, null);
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null);            
         }

@@ -243,8 +243,13 @@ final class ReportVisualPanel2 extends JPanel {
     /**
      * @return true if the Specific Tags radio button is selected, false otherwise
      */
-    boolean isSpecificTaggedResultsRadioButtonSelected() {
-        return specificTaggedResultsRadioButton.isSelected();
+    TableReportSettings.TableReportType getSelectedReportType() {
+        if (allTaggedResultsRadioButton.isSelected()) {
+            return TableReportSettings.TableReportType.ALL_TAGGED_RESULTS;
+        } else if (specificTaggedResultsRadioButton.isSelected()) {
+            return TableReportSettings.TableReportType.SPECIFIC_TAGGED_RESULTS;
+        }        
+        return TableReportSettings.TableReportType.ALL_RESULTS;
     }
 
     /**

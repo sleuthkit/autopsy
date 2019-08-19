@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.DialogDisplayer;
@@ -45,7 +46,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.ReportWizardAction")
 @ActionRegistration(displayName = "#CTL_ReportWizardAction", lazy = false)
@@ -54,6 +55,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
     @ActionReference(path = "Toolbars/Case", position = 105)})
 public final class ReportWizardAction extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
 
+    private static final Logger logger = Logger.getLogger(ReportWizardAction.class.getName());
     private static final String REPORTING_CONFIGURATION_NAME = "ReportAction";
     private static final boolean DISPLAY_CASE_SPECIFIC_DATA = false; // ELTODO true;
     private static final boolean RUN_REPORTS = true;
@@ -64,10 +66,13 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
      * When the Generate Report button or menu item is selected, open the
      * reporting wizard. When the wizard is finished, create a ReportGenerator
      * with the wizard information, and start all necessary reports.
+     * @param configName Name of the reporting configuration to use
+     * @param displayCaseSpecificData Flag whether to use case specific data in UI panels or to use all possible result types
+     * @param runReports Flag whether to produce report(s) 
      */
     @SuppressWarnings("unchecked")
-    public static void doReportWizard() {
-        WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator(REPORTING_CONFIGURATION_NAME, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS));
+    public static void doReportWizard(String configName, boolean displayCaseSpecificData, boolean runReports) {
+        WizardDescriptor wiz = new WizardDescriptor(new ReportWizardIterator(configName, displayCaseSpecificData));
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
@@ -78,18 +83,69 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             PortableCaseReportModule portableCaseReport = (PortableCaseReportModule) wiz.getProperty("portableCaseModule");  // NON-NLS
             try {
                 if (tableReport != null) {
-                    generator.generateTableReport(tableReport, new TableReportSettings((Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates"))); //NON-NLS
-                } else if (generalReport != null) {
-                    generator.generateGeneralReport(generalReport);
+                    // get table report settings
+                    TableReportSettings settings = (TableReportSettings) wiz.getProperty("tableReportSettings");
+                    if (settings == null) {
+                        NotifyDescriptor descriptor = new NotifyDescriptor.Message(NbBundle.getMessage(ReportWizardAction.class, "ReportGenerator.errList.noReportSettings"), NotifyDescriptor.ERROR_MESSAGE);
+                        DialogDisplayer.getDefault().notify(descriptor);
+                        return;
+                    }
+                    
+                    // save reporting configuration
+                    saveReportingConfiguration(configName, wiz);
+                    
+                    if (runReports) {
+                        generator.generateTableReport(tableReport, settings); //NON-NLS
+                    }
+                } else if (generalReport != null) {                    
+                    // save reporting configuration
+                    saveReportingConfiguration(configName, wiz);
+                    
+                    if (runReports) {
+                        generator.generateGeneralReport(generalReport);
+                    }
                 } else if (fileReport != null) {
-                    generator.generateFileListReport(fileReport, new FileReportSettings((Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions"))); //NON-NLS
-                } else if (portableCaseReport != null) {
-                    generator.generatePortableCaseReport(portableCaseReport, (PortableCaseReportModule.PortableCaseOptions) wiz.getProperty("portableCaseReportOptions"));
+                    // get file report settings
+                    FileReportSettings settings = (FileReportSettings) wiz.getProperty("fileReportSettings");
+                    if (settings == null) {
+                        NotifyDescriptor descriptor = new NotifyDescriptor.Message(NbBundle.getMessage(ReportWizardAction.class, "ReportGenerator.errList.noReportSettings"), NotifyDescriptor.ERROR_MESSAGE);
+                        DialogDisplayer.getDefault().notify(descriptor);
+                        return;
+                    }
+                    // save reporting configuration
+                    saveReportingConfiguration(configName, wiz);
+                    
+                    if (runReports) {
+                        generator.generateFileListReport(fileReport, settings); //NON-NLS
+                    }
+                } else if (portableCaseReport != null) {                    
+                    // save reporting configuration
+                    saveReportingConfiguration(configName, wiz);
+                    
+                    if (runReports) {
+                        generator.generatePortableCaseReport(portableCaseReport, (PortableCaseReportModule.PortableCaseOptions) wiz.getProperty("portableCaseReportOptions"));
+                    }
                 }
             } catch (IOException e) {
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(e.getMessage(), NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(descriptor);
             }
+        }
+    }
+    
+    private static void saveReportingConfiguration(String configName, WizardDescriptor wiz) {
+
+        ReportingConfig reportingConfig = new ReportingConfig(configName);
+        reportingConfig.setModuleConfigs((Map<String, ReportModuleConfig>) wiz.getProperty("moduleConfigs"));
+        reportingConfig.setFileReportSettings((FileReportSettings) wiz.getProperty("fileReportSettings"));
+        reportingConfig.setTableReportSettings((TableReportSettings) wiz.getProperty("tableReportSettings")); 
+
+        try {
+            // save reporting configuration
+            ReportingConfigLoader.saveConfig(reportingConfig);
+        } catch (ReportConfigException ex) {
+            // ELTODO should we do more to let the user know?
+            logger.log(Level.SEVERE, "Failed to save reporting configuration " + reportingConfig.getName(), ex); //NON-NLS
         }
     }
 
@@ -109,7 +165,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
     @Override
     @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent e) {
-        doReportWizard();
+        doReportWizard(REPORTING_CONFIGURATION_NAME, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
     }
 
     @Override

@@ -67,36 +67,27 @@ class TableReportGenerator {
     private final Set<Content> images = new HashSet<>();
     private final ReportProgressPanel progressPanel;
     private final TableReportModule tableReport;
+    private final TableReportSettings settings;
     private final Map<Integer, List<Column>> columnHeaderMap;
     private static final Logger logger = Logger.getLogger(TableReportGenerator.class.getName());
 
     private final List<String> errorList;
 
-    TableReportGenerator(TableReportSettings settings, ReportProgressPanel progressPanel, TableReportModule tableReport) throws NoCurrentCaseException, TskCoreException {
+    TableReportGenerator(TableReportSettings settings, ReportProgressPanel progressPanel, TableReportModule tableReport) {
 
         this.progressPanel = progressPanel;
         this.tableReport = tableReport;
         this.columnHeaderMap = new HashMap<>();
-        errorList = new ArrayList<>();
-        
-        if (settings.isUseCaseSpecificData()) {
-            // Get the artifact types selected by the user.
-            artifactTypes = settings.getArtifactSelections();
-
-            // Get the tag names selected by the user and make a tag names filter.
-            tagNamesFilter = new HashSet<>(settings.getTagSelections());
-        } else {
-            // get all possible tag names and artifact types
-            getAllExistingTagsAndArtiacts(true); // ELTODO verify whether we should add (Notable) to tag names like we do in UI
-        }
+        errorList = new ArrayList<>();        
+        this.settings = settings;
     }
     
-    private void getAllExistingTagsAndArtiacts(boolean addNotableToTagNames) throws NoCurrentCaseException, TskCoreException {
+    private void getAllExistingTags(boolean addNotableToTagNames) throws NoCurrentCaseException, TskCoreException {
         List<String> tagNames = new ArrayList<>();
 
         // get all possible tag names
         List<TagName> tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getAllTagNames();
-        
+
         String notableString = "";
         for (TagName tagName : tagNamesInUse) {
             if (addNotableToTagNames) {
@@ -105,7 +96,9 @@ class TableReportGenerator {
             tagNames.add(tagName.getDisplayName() + notableString);
         }
         tagNamesFilter = new HashSet<>(tagNames);
-        
+    }
+
+    private void getAllExistingArtiactTypes() throws NoCurrentCaseException, TskCoreException {
         // get all possible artifact types
         ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
         doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
@@ -125,6 +118,30 @@ class TableReportGenerator {
         progressPanel.start();
         progressPanel.setIndeterminate(false);
         progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
+        
+        if (settings.isUseCaseSpecificData()) {
+            // Get the artifact types selected by the user.
+            artifactTypes = settings.getArtifactSelections();
+
+            // Get the tag names selected by the user and make a tag names filter.
+            tagNamesFilter = new HashSet<>(settings.getTagSelections());
+        } else {
+            try {
+                // If report type is "all tagged results", then read all possible tab names from database.
+                // Otherwise do not load tag names, i.e. run "all results" report
+                if (settings.getReportType() == TableReportSettings.TableReportType.ALL_TAGGED_RESULTS) {
+                    getAllExistingTags(true); // ELTODO verify whether we should add (Notable) to tag names like we do in UI
+                }
+                
+                // get all possible artifact types
+                getAllExistingArtiactTypes();
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAllTagsArtifacts"));
+                logger.log(Level.SEVERE, "Failed get all possible tag names and artifact types", ex); //NON-NLS
+                return;
+            }
+        }
+        
         // report on the blackboard results
         if (progressPanel.getStatus() != ReportProgressPanel.ReportStatus.CANCELED) {
             makeBlackboardArtifactTables();

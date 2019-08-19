@@ -120,6 +120,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             if (moduleConfigs == null) {
                 // ELTODO get default module configuration (API isn't implemented yet)
                 // settings = module.getDefaultConfiguration();
+                // update ReportModuleConfig config
             } else {
                 // get configuration for this module
                 ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
@@ -129,6 +130,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
                 } else {
                     // ELTODO get default module configuration (API isn't implemented yet)
                     // settings = module.getDefaultConfiguration();
+                    // update ReportModuleConfig config
                 }
             }
             // ELTODO set module configuration (API isn't implemented yet)
@@ -214,6 +216,23 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             return (PortableCaseReportModule) mod;
         }
         return null;
+    }
+
+    /**
+     * Get updated configuration for all report modules.
+     *
+     * @return
+     */
+    Map<String, ReportModuleConfig> getUpdatedModuleConfigs() {
+        // set module configurations
+        for (ReportModule module : modules) {
+            // ELTODO get updated module configuration (API isn't implemented yet)
+            // settings = module.getConfiguration();
+            
+            // update moduleConfigs
+            // moduleConfigs.pu(module.getName(), settings);
+        }
+        return moduleConfigs;
     }
 
     /**

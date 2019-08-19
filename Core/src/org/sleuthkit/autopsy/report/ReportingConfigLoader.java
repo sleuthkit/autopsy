@@ -28,6 +28,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
@@ -93,22 +95,22 @@ final class ReportingConfigLoader {
             throw new ReportConfigException("Unable to read file report settings " + filePath, ex);
         }
         
-        // read list of module configuration objects
-        List<ReportModuleConfig> moduleConfigs = null;
+        // read map of module configuration objects
+        Map<String, ReportModuleConfig> moduleConfigs = null;
         filePath = reportDirPath.toString() + File.separator + MODULE_CONFIG_FILE;
         try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
-            moduleConfigs = (List<ReportModuleConfig>) in.readObject();
+            moduleConfigs = (Map<String, ReportModuleConfig>) in.readObject();
         } catch (IOException | ClassNotFoundException ex) {
-            throw new ReportConfigException("Unable to read module configurations list " + filePath, ex);
+            throw new ReportConfigException("Unable to read module configurations map " + filePath, ex);
         }
         
         if (moduleConfigs == null) {
-            throw new ReportConfigException("Failed to read module configurations list " + filePath);
+            throw new ReportConfigException("Failed to read module configurations map " + filePath);
         }
         
         // read each ReportModuleSettings object individually
-        for (Iterator<ReportModuleConfig> iterator = moduleConfigs.iterator(); iterator.hasNext();) {
-            ReportModuleConfig moduleConfig = iterator.next();
+        for (Iterator<Entry<String, ReportModuleConfig>> iterator = moduleConfigs.entrySet().iterator(); iterator.hasNext();) {
+            ReportModuleConfig moduleConfig = (ReportModuleConfig) iterator.next().getValue();
             filePath = reportDirPath.toString() + File.separator + moduleConfig.getModuleClassName() + REPORT_SETTINGS_FILE_EXTENSION;
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
                 moduleConfig.setModuleSettings((ReportModuleSettings) in.readObject());
@@ -162,17 +164,12 @@ final class ReportingConfigLoader {
             throw new ReportConfigException("Unable to save file report configuration " + filePath, ex);
         }
 
-        // save list of module configuration objects
-        filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;
-        List<ReportModuleConfig> moduleConfigs = new ArrayList<>();
-        for (ReportModuleConfig config : reportConfig.getModuleConfigs().values()) {
-            moduleConfigs.add(config);
-        }
-        
+        // save map of module configuration objects
+        filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;        
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
-            out.writeObject(moduleConfigs);
+            out.writeObject(reportConfig.getModuleConfigs());
         } catch (IOException ex) {
-            throw new ReportConfigException("Unable to save module configurations list " + filePath, ex);
+            throw new ReportConfigException("Unable to save module configurations map " + filePath, ex);
         }
 
         // save each ReportModuleSettings object individually
@@ -180,7 +177,7 @@ final class ReportingConfigLoader {
         party report module settings. If we were to serialize the entire ReportingConfig 
         object, then a single error while reading in a 3rd party report module 
         would prevent us from reading the entire reporting configuration.*/
-        for (ReportModuleConfig moduleConfig : moduleConfigs) {
+        for (ReportModuleConfig moduleConfig : reportConfig.getModuleConfigs().values()) {
             ReportModuleSettings settings = moduleConfig.getModuleSettings();
             filePath = pathToConfigDir.toString() + File.separator + moduleConfig.getModuleClassName() + REPORT_SETTINGS_FILE_EXTENSION;
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {

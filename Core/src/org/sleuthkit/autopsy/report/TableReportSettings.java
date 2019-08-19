@@ -31,20 +31,32 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 final class TableReportSettings implements Serializable {
 
+    /**
+     * An enumeration of table report types.
+     */
+    enum TableReportType {
+        ALL_RESULTS, //NON-NLS
+        ALL_TAGGED_RESULTS, //NON-NLS
+        SPECIFIC_TAGGED_RESULTS;   //NON-NLS
+    }
+
     private static final long serialVersionUID = 1L;
     private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private List<String> tagNames = new ArrayList<>();
     private boolean useCaseSpecificData = false;
+    private TableReportType reportType = TableReportType.ALL_RESULTS;
 
     /**
-     * Creates TableReportSettings object.
+     * Creates TableReportSettings object. This constructor is used when user
+     * selects specific tags and artifacts in UI (which requires a case to be
+     * open).
      *
      * @param artifactTypeSelections The enabled/disabled state of the artifact
      * types to be included in the report. Only enabled entries will be kept.
      * @param tagNameSelections The enabled/disabled state of the tag names to
      * be included in the report. Only enabled entries will be kept.
      */
-    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean useCaseSpecificData) {
+    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean useCaseSpecificData, TableReportType reportType) {
         // Get the artifact types selected by the user
         for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
             if (entry.getValue()) {
@@ -53,24 +65,36 @@ final class TableReportSettings implements Serializable {
         }
 
         // Get the tag names selected by the user
+
         for (Map.Entry<String, Boolean> entry : tagNameSelections.entrySet()) {
             if (entry.getValue() == true) {
                 tagNames.add(entry.getKey());
             }
         }
-        
-        this.useCaseSpecificData = useCaseSpecificData;
-    }
-    
-    TableReportSettings(List<BlackboardArtifact.Type> artifactTypes, List<String> tagNames, boolean useCaseSpecificData) {
-        this.artifactTypes = artifactTypes;
-        this.tagNames = tagNames;
+
+        this.reportType = reportType;
         this.useCaseSpecificData = useCaseSpecificData;
     }
 
-    TableReportSettings(boolean useCaseSpecificData) {
+    // ELTODO remove this constructor?
+    /*TableReportSettings(List<BlackboardArtifact.Type> artifactTypes, List<String> tagNames, boolean useCaseSpecificData) {
+        this.artifactTypes = artifactTypes;
+        this.tagNames = tagNames;
         this.useCaseSpecificData = useCaseSpecificData;
-    }
+    }*/
+    /**
+     * Creates TableReportSettings object. This constructor is used when user
+     * configures command line ingest. Most likely there will be no case open at
+     * the time, so tags and artifacts will have to be read from database at the
+     * report execution time.
+     *
+     * @param useCaseSpecificData
+     * @param reportType
+     */
+    /*TableReportSettings(boolean useCaseSpecificData, TableReportType reportType) {
+        this.useCaseSpecificData = useCaseSpecificData;
+        this.reportType = reportType;
+    }*/
 
     List<BlackboardArtifact.Type> getArtifactSelections() {
         return artifactTypes;
@@ -82,5 +106,14 @@ final class TableReportSettings implements Serializable {
 
     boolean isUseCaseSpecificData() {
         return useCaseSpecificData;
+    }
+
+    /**
+     * Get report type.
+     * 
+     * @return the reportType
+     */
+    TableReportType getReportType() {
+        return reportType;
     }
 }

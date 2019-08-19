@@ -35,9 +35,10 @@ class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<W
 
     private WizardDescriptor wiz;
     private ReportWizardFileOptionsVisualPanel component;
-    private JButton finishButton;
+    private final JButton finishButton;
 
     ReportWizardFileOptionsPanel(FileReportSettings fileReportSettings) {
+        wiz.putProperty("fileReportSettings", fileReportSettings);
         finishButton = new JButton(
                 NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
         finishButton.setEnabled(false);
@@ -83,7 +84,7 @@ class ReportWizardFileOptionsPanel implements WizardDescriptor.FinishablePanel<W
 
     @Override
     public void storeSettings(WizardDescriptor data) {
-        data.putProperty("fileReportOptions", getComponent().getFileReportOptions()); //NON-NLS
+        wiz.putProperty("fileReportSettings", new FileReportSettings(getComponent().getFileReportOptions()));
     }
 
     @Override
