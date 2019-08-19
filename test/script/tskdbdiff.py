@@ -447,10 +447,9 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             field = "'" + field + "'"
         else:
             start = no_space_parens.find(field, ptr)
-            if(start != -1):
-                if((start - 1) >= 0 and no_space_parens[start - 1] == '\''):
-                    if((start + len(field)) < len(no_space_parens) and no_space_parens[start + len(field)] == '\''):
-                        field = "'" + field + "'"
+            if((start - 1) >= 0 and no_space_parens[start - 1] == '\''):
+                if((start + len(field)) < len(no_space_parens) and no_space_parens[start + len(field)] == '\''):
+                    field = "'" + field + "'"
         fields_list_with_quotes.append(field)
         if(ptr > 0):
             #Add one for each comma that is used to separate values in the original string
