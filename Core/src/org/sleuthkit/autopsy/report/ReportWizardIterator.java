@@ -76,7 +76,7 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             firstPanel = new ReportWizardPanel1(null);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, null);
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
-            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null);            
+            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null);
         }
 
         allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};

@@ -104,8 +104,8 @@ final class ReportingConfigLoader {
             throw new ReportConfigException("Unable to read module configurations map " + filePath, ex);
         }
         
-        if (moduleConfigs == null) {
-            throw new ReportConfigException("Failed to read module configurations map " + filePath);
+        if (moduleConfigs == null || moduleConfigs.isEmpty()) {
+            return config;
         }
         
         // read each ReportModuleSettings object individually
@@ -138,6 +138,10 @@ final class ReportingConfigLoader {
      */
     static synchronized void saveConfig(ReportingConfig reportConfig) throws ReportConfigException {
 
+        if (reportConfig == null) {
+            throw new ReportConfigException("Reporting configuration is NULL");
+        }
+        
         // construct the configuration directory path
         Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName());
 
@@ -177,6 +181,9 @@ final class ReportingConfigLoader {
         party report module settings. If we were to serialize the entire ReportingConfig 
         object, then a single error while reading in a 3rd party report module 
         would prevent us from reading the entire reporting configuration.*/
+        if (reportConfig.getModuleConfigs() == null) {
+            return;
+        }
         for (ReportModuleConfig moduleConfig : reportConfig.getModuleConfigs().values()) {
             ReportModuleSettings settings = moduleConfig.getModuleSettings();
             filePath = pathToConfigDir.toString() + File.separator + moduleConfig.getModuleClassName() + REPORT_SETTINGS_FILE_EXTENSION;
