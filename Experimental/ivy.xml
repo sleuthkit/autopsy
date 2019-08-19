@@ -12,5 +12,6 @@
         <dependency conf="experimental->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.7.0"/>
         <dependency conf="experimental->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
         <dependency conf="experimental->default" org="org.swinglabs.swingx" name="swingx-all" rev="1.6.4"/>
+        <dependency conf="experimental->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
     </dependencies>
 </ivy-module>
