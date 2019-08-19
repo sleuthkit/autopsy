@@ -23,8 +23,12 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Class containing the mime types that are supported by the text classifier.
  */
-public class SupportedFormats {
+public final class SupportedFormats {
 
+    private SupportedFormats() {
+        //This is a utility class that doesn't need to be instantiated.
+    }
+    
     /**
      * Document types for text classification.
      */

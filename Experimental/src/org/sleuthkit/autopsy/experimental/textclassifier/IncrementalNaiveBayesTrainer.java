@@ -37,6 +37,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This trains a naive Bayes classifier incrementally. It is modeled after the
+ * class NaiveBayseTrainer in OpenNLP. The difference is that it stores the
+ * model data in a Map that can easily be added to. It can upload a model from
+ * disk, add to it, and write to disk.
+ */
 public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
     public static final String INCREMENTAL_NAIVE_BAYES_VALUE = "INCREMENTALNAIVEBAYES";
@@ -51,10 +57,6 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     // word in the vocabulary, and the MutableContext contains the counts of how
     // many times the word coocurred with each class
     private List<MutableContext> parameters = new ArrayList<>();
-    // For the document classification task, this is the number of training
-    // documents in each category.
-    //private List<Integer> eventCountPerOutcome = new ArrayList<>();
-
     //These are the values that we don't need to serialize
     // For the document classification task, this maps each category name to a
     // unique integer for more compact memory usage.
@@ -62,13 +64,6 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     // For the document classification task, this maps each word in the
     // vocabulary name to a unique integer for more compact memory usage.
     private Map<String, Integer> masterPredMap = new HashMap<>();
-    // For the document classification task, this is the number of tokens
-    // in the training data. This is not to be confused with vocabulary size,
-    // since it includes duplicates.
-    private double numPredsNonUniq;
-    // For the document classification task, this is the number of documents
-    // in the training data
-    //private int numEvents;
 
     public IncrementalNaiveBayesTrainer() {
         this.setMasterPredLabels(new ArrayList<>());
@@ -141,7 +136,6 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         int[][] contexts = di.getContexts();
         float[][] values = di.getValues();
         int[] numTimesEventsSeen = di.getNumTimesEventsSeen();
-        int numEvents = di.getNumEvents();
         int numUniqueEvents = contexts.length;
 
         String[] newOutcomeLabels = di.getOutcomeLabels();
@@ -278,14 +272,5 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
     private void setParameters(List<MutableContext> counts) {
         this.parameters = counts;
-
-        //Set numPredsNonUniq
-        numPredsNonUniq = 0;
-        for (int predicateIndex = 0; predicateIndex < counts.size(); predicateIndex++) {
-            MutableContext context = counts.get(predicateIndex);
-            for (double parameter : context.getParameters()) {
-                numPredsNonUniq += parameter;
-            }
-        }
     }
 }

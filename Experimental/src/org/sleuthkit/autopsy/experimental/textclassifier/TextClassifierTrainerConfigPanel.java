@@ -20,6 +20,10 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import javax.swing.JPanel;
 
+/**
+ * A GUI object used to configure the ReportGenerator that trains the text
+ * classifier.
+ */
 class TextClassifierTrainerConfigPanel extends JPanel {
 
 }

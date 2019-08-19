@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 import java.io.IOException;
 import java.util.logging.Level;
 import opennlp.tools.doccat.DocumentCategorizerME;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -44,12 +43,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * labeled data.
  */
 public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
-
     private final static Logger logger = Logger.getLogger(TextClassifierFileIngestModule.class.getName());
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-
     private Blackboard blackboard;
-    private long jobId;
     private DocumentCategorizerME categorizer;
     private TextClassifierUtils utils;
 
@@ -58,8 +53,6 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         utils = new TextClassifierUtils();
-
-        jobId = context.getJobId();
 
         try {
             categorizer = TextClassifierUtils.loadModel();

@@ -50,10 +50,22 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * This is a ReportModule that trains a text classifier. The training data it 
+ * uses is all text-like documents in the current case. The two classes are the
+ * ones labeled as notable by the user and the ones not labeled as notable. It
+ * will not train a model if none of the documents were labeled as notable, if 
+ * all of the documents were labeled as notable, or if there are not enough
+ * documents in the case for the underlying model trainer to run.
+ * 
+ * The model is stored in %APPDATA%\autopsy\text_classifiers. If a model is
+ * already present in that location, the TextClassifierTrainer adds more
+ * examples to it.
+ */
 @ServiceProvider(service = GeneralReportModule.class)
 public class TextClassifierTrainer implements GeneralReportModule {
 
-    private TextClassifierTrainerConfigPanel configPanel;
+    private TextClassifierTrainerConfigPanel configPanel = new TextClassifierTrainerConfigPanel();;
 
     @Override
     @Messages({
@@ -121,15 +133,13 @@ public class TextClassifierTrainer implements GeneralReportModule {
     @Messages({"TextClassifierTrainer.getName.text=Text classifier model"})
     @Override
     public String getName() {
-        String name = NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getName.text");
-        return name;
+        return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getName.text");
     }
 
     @Messages({"TextClassifierTrainer.getDesc.text=Machine learning model to classify which documents are notable"})
     @Override
     public String getDescription() {
-        String desc = NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getDesc.text");
-        return desc;
+        return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getDesc.text");
     }
 
     @Override
@@ -139,7 +149,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        configPanel = new TextClassifierTrainerConfigPanel();
         return configPanel;
     }
 
@@ -180,9 +189,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
 
         Set<Long> notableObjectIDs = fetchNotableObjectIDs();
 
-        int notableDocCount = 0;
-        int nonnotableDocCount = 0;
-
         progressPanel.updateStatusLabel("Converting training data");
         progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
@@ -190,16 +196,13 @@ public class TextClassifierTrainer implements GeneralReportModule {
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
-                notableDocCount++;
             } else {
                 label = TextClassifierUtils.NONNOTABLE_LABEL;
-                nonnotableDocCount++;
             }
-
             String[] tokens;
             try {
                 tokens = TextClassifierUtils.extractTokens(doc);
-            } catch (Exception ex) {
+            } catch (IOException | TextExtractor.InitReaderException | TextExtractorFactory.NoTextExtractorFound ex) {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel("Cannot extract text from document of type " + doc.getMIMEType());
                 throw ex;
@@ -209,10 +212,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
 
             progressPanel.increment();
         }
-
-        ObjectStream<DocumentSample> objectStream = new ListObjectStream<>(docSamples);
-
-        return objectStream;
+        return new ListObjectStream<>(docSamples);
     }
 
     private Set<Long> fetchNotableObjectIDs() throws TskCoreException {
@@ -236,8 +236,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
         //and FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes() is that
         //this one contains contains message/rfc822 which is what our test
         //corpus( 20 Newsgroups) has.
-        List<AbstractFile> allDocs = fileManager.findFilesByMimeType(SupportedFormats.getDocumentMIMETypes());
-        return allDocs;
+        return fileManager.findFilesByMimeType(SupportedFormats.getDocumentMIMETypes());
     }
-
 }

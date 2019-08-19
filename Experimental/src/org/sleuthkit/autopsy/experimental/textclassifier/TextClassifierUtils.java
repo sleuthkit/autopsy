@@ -46,9 +46,14 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetecto
 import org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractorFound;
 
-public class TextClassifierUtils {
+/**
+ * A collection of helpful methods and objects for training and running the text
+ * classifier.
+ */
+class TextClassifierUtils {
 
-    private static final Tokenizer tokenizer = SimpleTokenizer.INSTANCE;
+    private static final Tokenizer TOKENIZER = SimpleTokenizer.INSTANCE;
+
     private FileTypeDetector fileTypeDetector;
 
     static final String NOTABLE_LABEL = "notable";
@@ -80,8 +85,7 @@ public class TextClassifierUtils {
     static String[] extractTokens(AbstractFile file) throws NoTextExtractorFound, InitReaderException, IOException {
         Reader reader = TextExtractorFactory.getExtractor(file, null).getReader();
         String text = IOUtils.toString(reader);
-        String[] tokens = tokenizer.tokenize(text);
-        return tokens;
+        return TOKENIZER.tokenize(text);
     }
 
     static DocumentCategorizerME loadModel() throws IOException {
