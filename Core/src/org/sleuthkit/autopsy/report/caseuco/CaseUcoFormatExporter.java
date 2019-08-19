@@ -264,13 +264,14 @@ public final class CaseUcoFormatExporter {
                             INTERESTING_FILE_HIT, INTERESTING_ARTIFACT_HIT);
                     for(BlackboardArtifact.ARTIFACT_TYPE artType : typesToQuery) {
                         for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(artType)) {
-                            if(bArt.getDataSource().getId() == ds.getId()) {
-                                BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
-                                if (interestingItemSets.contains(setAttr.getValueString())) {
-                                    Content content = skCase.getContentById(bArt.getObjectID());
-                                    saveUniqueFilesToCaseUcoFormat(content, tmpDir,
-                                            jsonGenerator, timeZone, dataSourceTraceId);
-                                }
+                            if(bArt.getDataSource().getId() != ds.getId()) {
+                                continue;
+                            }
+                            BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                            if (interestingItemSets.contains(setAttr.getValueString())) {
+                                Content content = skCase.getContentById(bArt.getObjectID());
+                                saveUniqueFilesToCaseUcoFormat(content, tmpDir,
+                                        jsonGenerator, timeZone, dataSourceTraceId);
                             }
                         }
                     }
