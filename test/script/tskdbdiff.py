@@ -440,7 +440,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     no_space_parens = parens.replace(" ", "")
     fields_list = list(csv.reader([no_space_parens], quotechar="'"))[0]
     #Add back in the quotechar for values that were originally wrapped (csv reader consumes this character)
-    fields_list_restored = []
+    fields_list_with_quotes = []
     ptr = 0
     for field in fields_list:
         if(len(field) == 0):
@@ -450,13 +450,14 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             if(start != -1):
                 if((start - 1) >= 0 and no_space_parens[start - 1] == '\''):
                     if((start + len(field)) < len(no_space_parens) and no_space_parens[start + len(field)] == '\''):
-                        field = "'"+field+"'"
-        fields_list_restored.append(field)
-        if(ptr > 0): 
+                        field = "'" + field + "'"
+        fields_list_with_quotes.append(field)
+        if(ptr > 0):
+            #Add one for each comma that is used to separate values in the original string
             ptr+=1
         ptr += len(field)
 
-    fields_list = fields_list_restored
+    fields_list = fields_list_with_quotes
 
     # remove object ID
     if files_index:
