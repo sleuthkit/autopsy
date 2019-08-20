@@ -82,7 +82,7 @@ class TableReportGenerator {
         this.settings = settings;
     }
     
-    private void getAllExistingTags(boolean addNotableToTagNames) throws NoCurrentCaseException, TskCoreException {
+    private void getAllExistingTags() throws NoCurrentCaseException, TskCoreException {
         List<String> tagNames = new ArrayList<>();
 
         // get all possible tag names
@@ -90,9 +90,7 @@ class TableReportGenerator {
 
         String notableString = "";
         for (TagName tagName : tagNamesInUse) {
-            if (addNotableToTagNames) {
-                notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-            }
+            notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             tagNames.add(tagName.getDisplayName() + notableString);
         }
         tagNamesFilter = new HashSet<>(tagNames);
@@ -130,7 +128,7 @@ class TableReportGenerator {
                 // If report type is "all tagged results", then read all possible tab names from database.
                 // Otherwise do not load tag names, i.e. run "all results" report
                 if (settings.getReportType() == TableReportSettings.TableReportType.ALL_TAGGED_RESULTS) {
-                    getAllExistingTags(true); // ELTODO verify whether we should add (Notable) to tag names like we do in UI
+                    getAllExistingTags();
                 }
                 
                 // get all possible artifact types

@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.report;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 import javax.swing.JButton;
@@ -35,7 +33,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
 
     private WizardDescriptor wiz;
     private ReportVisualPanel1 component;
-    private Map<String, ReportModuleConfig> moduleConfigs;
+    private final Map<String, ReportModuleConfig> moduleConfigs;
     private final JButton nextButton;
     private final JButton finishButton;
 
@@ -114,12 +112,11 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
         TableReportModule module = getComponent().getTableModule();
         GeneralReportModule general = getComponent().getGeneralModule();
         PortableCaseReportModule portable = getComponent().getPortableCaseModule();
-        Map<String, ReportModuleConfig> moduleConfigs = getComponent().getUpdatedModuleConfigs();
         wiz.putProperty("tableModule", module); //NON-NLS
         wiz.putProperty("generalModule", general); //NON-NLS
         wiz.putProperty("fileModule", getComponent().getFileModule()); //NON-NLS
         wiz.putProperty("portableCaseModule", portable); //NON-NLS
-        wiz.putProperty("moduleConfigs", moduleConfigs); //NON-NLS
+        wiz.putProperty("moduleConfigs", getComponent().getUpdatedModuleConfigs()); //NON-NLS
 
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
@@ -127,21 +124,5 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
         prefs.putBoolean("tableModule", module != null); //NON-NLS
         prefs.putBoolean("generalModule", general != null); //NON-NLS
         prefs.putBoolean("portableCaseModule", portable != null); //NON-NLS
-    }
-
-    /**
-     * Are any of the given booleans true?
-     *
-     * @param bools
-     *
-     * @return
-     */
-    private boolean any(Collection<Boolean> bools) {
-        for (Boolean b : bools) {
-            if (b) {
-                return true;
-            }
-        }
-        return false;
     }
 }
