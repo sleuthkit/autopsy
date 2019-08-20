@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,18 +18,23 @@
  */
 package org.sleuthkit.autopsy.modules.stix;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -38,18 +43,20 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class StixArtifactData {
 
+    private static final String MODULE_NAME = "Stix";
+
     private AbstractFile file;
     private final String observableId;
     private final String objType;
     private static final Logger logger = Logger.getLogger(StixArtifactData.class.getName());
 
-    public StixArtifactData(AbstractFile a_file, String a_observableId, String a_objType) {
+    StixArtifactData(AbstractFile a_file, String a_observableId, String a_objType) {
         file = a_file;
         observableId = a_observableId;
         objType = a_objType;
     }
 
-    public StixArtifactData(long a_objId, String a_observableId, String a_objType) {
+    StixArtifactData(long a_objId, String a_observableId, String a_objType) {
         try {
             Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
@@ -62,39 +69,35 @@ class StixArtifactData {
     }
 
     @Messages({"StixArtifactData.indexError.message=Failed to index STIX interesting file hit artifact for keyword search.",
-            "StixArtifactData.noOpenCase.errMsg=No open case available."})
+        "StixArtifactData.noOpenCase.errMsg=No open case available."})
     public void createArtifact(String a_title) throws TskCoreException {
-        Case currentCase;
+        Blackboard blackboard;
         try {
-            currentCase = Case.getCurrentCaseThrows();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_noOpenCase_errMsg(), ex.getLocalizedMessage());
             return;
         }
-        
-        String setName;
-        if (a_title != null) {
-            setName = "STIX Indicator - " + a_title; //NON-NLS
-        } else {
-            setName = "STIX Indicator - (no title)"; //NON-NLS
-        }
 
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, "Stix", setName)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, "Stix", observableId)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, "Stix", objType)); //NON-NLS
-        
-        org.sleuthkit.datamodel.Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
+        String setName = "STIX Indicator - " + StringUtils.defaultIfBlank(a_title, "(no title)"); //NON-NLS
+
+        Collection<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, setName),
+                new BlackboardAttribute(TSK_TITLE, MODULE_NAME, observableId),
+                new BlackboardAttribute(TSK_CATEGORY, MODULE_NAME, objType));
+
         // Create artifact if it doesn't already exist.
-        if (!tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
-            BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+        if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
+            BlackboardArtifact bba = file.newArtifact(TSK_INTERESTING_FILE_HIT);
             bba.addAttributes(attributes);
-            
+
             try {
-                // index the artifact for keyword search
-                Blackboard blackboard = currentCase.getServices().getBlackboard();
-                blackboard.indexArtifact(bba);
+                /*
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
+                 */
+                blackboard.postArtifact(bba, MODULE_NAME);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());

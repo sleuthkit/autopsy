@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Class to handle envent bus and events for file discovery tool.
+ * Class to handle event bus and events for file discovery tool.
  */
 final class DiscoveryEvents {
 
@@ -76,7 +76,7 @@ final class DiscoveryEvents {
      */
     static final class SearchCompleteEvent {
 
-        private final LinkedHashMap<String, Integer> groupMap;
+        private final Map<String, Integer> groupMap;
         private final List<FileSearchFiltering.FileFilter> searchFilters;
         private final FileSearch.AttributeType groupingAttribute;
         private final FileGroup.GroupSortingAlgorithm groupSort;
@@ -93,7 +93,7 @@ final class DiscoveryEvents {
          * @param groupSort         The sorting algorithm used for groups.
          * @param fileSortMethod    The sorting method used for files.
          */
-        SearchCompleteEvent(LinkedHashMap<String, Integer> groupMap, List<FileSearchFiltering.FileFilter> searchfilters,
+        SearchCompleteEvent(Map<String, Integer> groupMap, List<FileSearchFiltering.FileFilter> searchfilters,
                 FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
                 FileSorter.SortingMethod fileSortMethod) {
             this.groupMap = groupMap;
@@ -201,13 +201,19 @@ final class DiscoveryEvents {
         }
     }
 
+    /**
+     * Event to signal that there were no results for the search.
+     */
     static final class NoResultsEvent {
-        
-        NoResultsEvent(){
+
+        /**
+         * Construct a new NoResultsEvent.
+         */
+        NoResultsEvent() {
             //no arg conustructor
         }
     }
-    
+
     /**
      * Event to signal that a group has been selected.
      */

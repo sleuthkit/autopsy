@@ -58,6 +58,7 @@ import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
 
@@ -358,19 +359,7 @@ class MboxParser implements Iterator<EmailMessage> {
             logger.log(Level.SEVERE, Bundle.MboxParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
             return;
         }
-        String filename = e.getFilename();
-
-        // sanitize name.  Had an attachment with a Japanese encoded path that 
-        // invalid characters and attachment could not be saved.
-        filename = filename.replaceAll("\\?", "_");
-        filename = filename.replaceAll("<", "_");
-        filename = filename.replaceAll(">", "_");
-        filename = filename.replaceAll(":", "_");
-        filename = filename.replaceAll("\"", "_");
-        filename = filename.replaceAll("/", "_");
-        filename = filename.replaceAll("\\\\", "_");
-        filename = filename.replaceAll("|", "_");
-        filename = filename.replaceAll("\\*", "_");
+        String filename = FileUtil.escapeFileName(e.getFilename());
 
         // also had some crazy long names, so make random one if we get those.
         // also from Japanese image that had encoded name

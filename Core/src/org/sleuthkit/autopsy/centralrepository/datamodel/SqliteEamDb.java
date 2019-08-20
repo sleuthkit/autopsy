@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -153,10 +154,11 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * Setup a connection pool for db connections.
      *
      */
+    @Messages({"SqliteEamDb.databaseMissing.message=Central repository database missing"})
     private void setupConnectionPool(boolean foreignKeysEnabled) throws EamDbException {
 
         if (dbSettings.dbFileExists() == false) {
-            throw new EamDbException("Central repository database missing");
+            throw new EamDbException(Bundle.SqliteEamDb_databaseMissing_message());
         }
 
         connectionPool = new BasicDataSource();
@@ -179,17 +181,20 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Lazily setup Singleton connection on first request.
      *
-     * @param foreignKeys determines if foreign keys should be enforced during this connection for SQLite
+     * @param foreignKeys determines if foreign keys should be enforced during
+     *                    this connection for SQLite
      *
      * @return A connection from the connection pool.
      *
      * @throws EamDbException
      */
+    @Messages({"SqliteEamDb.connectionFailedMessage.message=Error getting connection to database.",
+        "SqliteEamDb.centralRepositoryDisabled.message=Central Repository module is not enabled."})
     @Override
     protected Connection connect(boolean foreignKeys) throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
+                throw new EamDbException(Bundle.SqliteEamDb_centralRepositoryDisabled_message()); // NON-NLS
             }
             if (connectionPool == null) {
                 setupConnectionPool(foreignKeys);
@@ -197,13 +202,14 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             try {
                 return connectionPool.getConnection();
             } catch (SQLException ex) {
-                throw new EamDbException("Error getting connection from connection pool.", ex); // NON-NLS
+                throw new EamDbException(Bundle.SqliteEamDb_connectionFailedMessage_message(), ex); // NON-NLS
             }
         }
     }
 
     /**
-     * Lazily setup Singleton connection on first request with foreign keys enforced.
+     * Lazily setup Singleton connection on first request with foreign keys
+     * enforced.
      *
      * @return A connection from the connection pool.
      *
@@ -213,7 +219,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     protected Connection connect() throws EamDbException {
         return connect(true);
     }
-    
+
     @Override
     protected String getConflictClause() {
         // For sqlite, our conflict clause is part of the table schema

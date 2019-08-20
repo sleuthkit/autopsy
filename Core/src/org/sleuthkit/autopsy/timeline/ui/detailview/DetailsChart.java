@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,12 +43,14 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 
 /**
  * A TimeLineChart that implements the visual aspects of the DetailView
@@ -76,7 +78,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      * a particular description, but it must include be in the selectedNodes
      * (selectedNodes::contains).
      */
-    private final SimpleObjectProperty<Predicate<EventNodeBase<?>>> highlightPredicate = new SimpleObjectProperty<>((x) -> false);
+    private final SimpleObjectProperty<Predicate<EventNodeBase<?>>> highlightPredicate = new SimpleObjectProperty<>(dummy -> false);
 
     /**
      * An ObservableList of the Nodes that are selected in this chart.
@@ -88,13 +90,18 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      * of events whose roots are in the eventStripes lists
      *
      */
-    private final ObservableList<TimeLineEvent> nestedEvents = FXCollections.observableArrayList();
+    private final ObservableList<DetailViewEvent> nestedEvents = FXCollections.observableArrayList();
 
     /**
      * Aggregates all the settings related to the layout of this chart as one
      * object.
      */
     private final DetailsChartLayoutSettings layoutSettings;
+    private final DetailsViewModel detailsViewModel;
+
+    DetailsViewModel getDetailsViewModel() {
+        return detailsViewModel;
+    }
 
     /**
      * The main controller object for this instance of the Timeline UI.
@@ -110,6 +117,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Constructor
      *
+     * @param detailsViewModel     The DetailsViewModel to use for this chart.
      * @param controller           The TimeLineController for this chart.
      * @param detailsChartDateAxis The DateAxis to use in this chart.
      * @param pinnedDateAxis       The DateAxis to use for the pinned lane. It
@@ -121,7 +129,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      *                             will be used to keep track of the nodes
      *                             selected in this chart.
      */
-    DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+    DetailsChart(DetailsViewModel detailsViewModel, TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+        this.detailsViewModel = detailsViewModel;
         this.controller = controller;
         this.layoutSettings = new DetailsChartLayoutSettings(controller);
         this.detailsChartDateAxis = detailsChartDateAxis;
@@ -135,10 +144,10 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
          * If the time range is changed, clear the guide line and the interval
          * selector, since they may not be in view any more.
          */
-        eventsModel.timeRangeProperty().addListener(o -> clearTimeBasedUIElements());
+        eventsModel.timeRangeProperty().addListener(observable -> clearTimeBasedUIElements());
 
         //if the view paramaters change, clear the selection
-        eventsModel.zoomParametersProperty().addListener(o -> getSelectedNodes().clear());
+        eventsModel.zoomStateProperty().addListener(observable -> getSelectedNodes().clear());
     }
 
     /**
@@ -212,7 +221,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Get the tree of event stripes flattened into a list
      */
-    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+    public ObservableList<DetailViewEvent> getAllNestedEvents() {
         return nestedEvents;
     }
 
@@ -268,9 +277,12 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             contextMenu.hide();
         }
 
+        long selectedTimeMillis = getXAxis().getValueForDisplay(getXAxis().parentToLocal(mouseEvent.getX(), 0).getX()).getMillis();
+
         //make and assign a new context menu based on the given mouseEvent
         setContextMenu(ActionUtils.createContextMenu(Arrays.asList(
                 new PlaceMarkerAction(this, mouseEvent),
+                new AddManualEvent(controller, selectedTimeMillis),
                 ActionUtils.ACTION_SEPARATOR,
                 TimeLineChart.newZoomHistoyActionGroup(getController())
         )));
@@ -311,8 +323,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         }
 
         @Override
-        protected Interval adjustInterval(Interval i) {
-            return i;
+        protected Interval adjustInterval(Interval interval) {
+            return interval;
         }
 
         @Override
