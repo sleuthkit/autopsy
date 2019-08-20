@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.report;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -39,15 +41,15 @@ import org.openide.util.NbBundle;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
 
-    private List<FileReportDataTypes> options;
+    private List<FileReportDataTypes> options = new ArrayList<>();
     private final Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
     private ListModel<FileReportDataTypes> model;
     private final ReportWizardFileOptionsPanel wizPanel;
 
-    public ReportWizardFileOptionsVisualPanel(ReportWizardFileOptionsPanel wizPanel) {
+    public ReportWizardFileOptionsVisualPanel(ReportWizardFileOptionsPanel wizPanel, FileReportSettings settings) {
         this.wizPanel = wizPanel;
         initComponents();
-        initOptionsList();
+        initOptionsList(settings);
     }
 
     @Override
@@ -58,10 +60,19 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
     /**
      * Populate the list of File Report Information that can be selected.
      */
-    private void initOptionsList() {
-        options = Arrays.asList(FileReportDataTypes.values());
-        for (FileReportDataTypes col : options) {
-            optionStates.put(col, Boolean.FALSE);
+    private void initOptionsList(FileReportSettings settings) {
+        if (settings != null && settings.getFileProperties() != null && !settings.getFileProperties().isEmpty()) {
+            // load the configuration
+            for (Entry<FileReportDataTypes, Boolean> entry : settings.getFileProperties().entrySet()) {
+                optionStates.put(entry.getKey(), entry.getValue());
+                options.add(entry.getKey());
+            }
+        } else {
+            // load defaults
+            options = Arrays.asList(FileReportDataTypes.values());
+            for (FileReportDataTypes entry : options) {
+                optionStates.put(entry, Boolean.FALSE);
+            }
         }
 
         model = new OptionsListModel();

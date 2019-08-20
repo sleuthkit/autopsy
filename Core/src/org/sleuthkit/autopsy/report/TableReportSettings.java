@@ -41,10 +41,10 @@ final class TableReportSettings implements Serializable {
     }
 
     private static final long serialVersionUID = 1L;
-    private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
-    private List<String> tagNames = new ArrayList<>();
-    private boolean useCaseSpecificData = false;
-    private TableReportType reportType = TableReportType.ALL_RESULTS;
+    private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
+    private final List<String> tagNames = new ArrayList<>();
+    private final boolean useCaseSpecificData;
+    private final TableReportType reportType;
 
     /**
      * Creates TableReportSettings object. This constructor is used when user
@@ -55,6 +55,8 @@ final class TableReportSettings implements Serializable {
      * types to be included in the report. Only enabled entries will be kept.
      * @param tagNameSelections The enabled/disabled state of the tag names to
      * be included in the report. Only enabled entries will be kept.
+     * @param useCaseSpecificData Flag whether to use case specific tag and artifact data.
+     * @param reportType Table report type.
      */
     TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean useCaseSpecificData, TableReportType reportType) {
         // Get the artifact types selected by the user
@@ -75,26 +77,6 @@ final class TableReportSettings implements Serializable {
         this.reportType = reportType;
         this.useCaseSpecificData = useCaseSpecificData;
     }
-
-    // ELTODO remove this constructor?
-    /*TableReportSettings(List<BlackboardArtifact.Type> artifactTypes, List<String> tagNames, boolean useCaseSpecificData) {
-        this.artifactTypes = artifactTypes;
-        this.tagNames = tagNames;
-        this.useCaseSpecificData = useCaseSpecificData;
-    }*/
-    /**
-     * Creates TableReportSettings object. This constructor is used when user
-     * configures command line ingest. Most likely there will be no case open at
-     * the time, so tags and artifacts will have to be read from database at the
-     * report execution time.
-     *
-     * @param useCaseSpecificData
-     * @param reportType
-     */
-    /*TableReportSettings(boolean useCaseSpecificData, TableReportType reportType) {
-        this.useCaseSpecificData = useCaseSpecificData;
-        this.reportType = reportType;
-    }*/
 
     List<BlackboardArtifact.Type> getArtifactSelections() {
         return artifactTypes;

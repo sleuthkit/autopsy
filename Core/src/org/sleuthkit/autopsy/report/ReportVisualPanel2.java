@@ -68,25 +68,20 @@ final class ReportVisualPanel2 extends JPanel {
     /**
      * Creates new form ReportVisualPanel2
      */
-    public ReportVisualPanel2(ReportWizardPanel2 wizPanel, boolean useCaseSpecificData) {
+    public ReportVisualPanel2(ReportWizardPanel2 wizPanel, boolean useCaseSpecificData, TableReportSettings settings) {
+        this.useCaseSpecificData = useCaseSpecificData;
         initComponents();
         initTags();
         initArtifactTypes();
-        tagsList.setEnabled(false);
-        selectAllButton.setEnabled(false);
-        deselectAllButton.setEnabled(false);
-        allResultsRadioButton.setSelected(true);
-        advancedButton.setEnabled(useCaseSpecificData);
-        specificTaggedResultsRadioButton.setEnabled(useCaseSpecificData);
         this.wizPanel = wizPanel;
-        this.useCaseSpecificData = useCaseSpecificData;
+
         this.allResultsRadioButton.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
-                advancedButton.setEnabled(!specificTaggedResultsRadioButton.isSelected() && useCaseSpecificData);
+                advancedButton.setEnabled(allResultsRadioButton.isSelected() && useCaseSpecificData);
                 updateFinishButton();
             }
         });
@@ -96,7 +91,7 @@ final class ReportVisualPanel2 extends JPanel {
                 tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
-                advancedButton.setEnabled(!specificTaggedResultsRadioButton.isSelected() && useCaseSpecificData);
+                advancedButton.setEnabled(allResultsRadioButton.isSelected() && useCaseSpecificData);
                 updateFinishButton();
             }
         });
@@ -106,16 +101,48 @@ final class ReportVisualPanel2 extends JPanel {
                 tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
-                advancedButton.setEnabled(!specificTaggedResultsRadioButton.isSelected() && useCaseSpecificData);
+                advancedButton.setEnabled(allResultsRadioButton.isSelected() && useCaseSpecificData);
                 updateFinishButton();
             }
         });
+        
+        // enable things based on input settings
+        advancedButton.setEnabled(useCaseSpecificData);
+        specificTaggedResultsRadioButton.setEnabled(useCaseSpecificData);
+        TableReportSettings.TableReportType type = TableReportSettings.TableReportType.ALL_RESULTS;
+        if (settings != null) {
+            type = settings.getReportType();
+        }
+        switch (type) {
+            case ALL_TAGGED_RESULTS:
+                allTaggedResultsRadioButton.setSelected(true);
+                tagsList.setEnabled(false);
+                selectAllButton.setEnabled(false);
+                deselectAllButton.setEnabled(false);
+                break;
+            case SPECIFIC_TAGGED_RESULTS:
+                specificTaggedResultsRadioButton.setSelected(useCaseSpecificData);
+                tagsList.setEnabled(useCaseSpecificData);
+                selectAllButton.setEnabled(useCaseSpecificData);
+                deselectAllButton.setEnabled(useCaseSpecificData);
+                break;
+            case ALL_RESULTS:
+            default:
+                allResultsRadioButton.setSelected(true);
+                tagsList.setEnabled(false);
+                selectAllButton.setEnabled(false);
+                deselectAllButton.setEnabled(false);
+                break;
+        }
     }
 
     // Initialize the list of Tags
     private void initTags() {
-        
+
         List<TagName> tagNamesInUse = new ArrayList<>();
+        // NOTE: we do not want to load tag names that came from persisted settings
+        // because there might have been new/additional tag names that have been added 
+        // by user. We should read tag names from the database each time.
         try {
             // only try to load tag names if we are displaying case specific data, otherwise
             // there may not be a case open.
@@ -162,6 +189,12 @@ final class ReportVisualPanel2 extends JPanel {
     @SuppressWarnings("deprecation")
     private void initArtifactTypes() {
 
+        // only try to load existing artifact types if we are displaying case 
+        // specific data, otherwise there may not be a case open.
+        if (!useCaseSpecificData) {
+            return;
+        }
+
         try {
             Case openCase = Case.getCurrentCaseThrows();
             ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
@@ -172,13 +205,8 @@ final class ReportVisualPanel2 extends JPanel {
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
 
-            if (useCaseSpecificData) {
-                // get artifact types that exist in the current case
-                artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
-            } else {
-                // get all possible artifact types
-                openCase.getSleuthkitCase().getArtifactTypes().forEach(artifacts::add);
-            }
+            // get artifact types that exist in the current case
+            artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
 
             artifacts.removeAll(doNotReport);
 
@@ -241,14 +269,15 @@ final class ReportVisualPanel2 extends JPanel {
     }
 
     /**
-     * @return true if the Specific Tags radio button is selected, false otherwise
+     * @return true if the Specific Tags radio button is selected, false
+     * otherwise
      */
     TableReportSettings.TableReportType getSelectedReportType() {
         if (allTaggedResultsRadioButton.isSelected()) {
             return TableReportSettings.TableReportType.ALL_TAGGED_RESULTS;
         } else if (specificTaggedResultsRadioButton.isSelected()) {
             return TableReportSettings.TableReportType.SPECIFIC_TAGGED_RESULTS;
-        }        
+        }
         return TableReportSettings.TableReportType.ALL_RESULTS;
     }
 
