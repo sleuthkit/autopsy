@@ -68,6 +68,7 @@ public interface TimeLineChart<X> extends ContextMenuProvider, IntervalSelectorP
     @Override
     public TimeLineController getController();
 
+   
     /**
      * Drag handler class used by TimeLineCharts to create IntervalSelectors
      *

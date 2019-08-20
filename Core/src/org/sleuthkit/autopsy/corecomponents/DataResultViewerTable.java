@@ -434,7 +434,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         setColumnWidths();
-
+        
         /*
          * Load column sorting information from preferences file and apply it to
          * columns.
@@ -516,12 +516,22 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     protected void setColumnWidths() {
         if (rootNode.getChildren().getNodesCount() != 0) {
             final Graphics graphics = outlineView.getGraphics();
+            
             if (graphics != null) {
+                // Current width of the outlineView
+                double outlineViewWidth = outlineView.getSize().getWidth();
+                // List of the column widths
+                List<Integer> columnWidths = new ArrayList<>();
                 final FontMetrics metrics = graphics.getFontMetrics();
 
                 int margin = 4;
                 int padding = 8;
-
+                
+                int totalColumnWidth = 0;
+                int cntMaxSizeColumns =0;
+                
+                // Calulate the width for each column keeping track of the number
+                // of columns that were set to columnwidthLimit.
                 for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
                     int columnWidthLimit = (column == 0) ? 350 : 300;
@@ -539,8 +549,43 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                     int columnWidth = Math.max(valuesWidth, headerWidth);
                     columnWidth += 2 * margin + padding; // add margin and regular padding
-                    columnWidth = Math.min(columnWidth, columnWidthLimit);
 
+                    columnWidth = Math.min(columnWidth, columnWidthLimit);
+                    columnWidths.add(columnWidth);
+                    
+                    totalColumnWidth += columnWidth;
+                    
+                    if( columnWidth == columnWidthLimit) {
+                        cntMaxSizeColumns++;
+                    }
+                }
+                
+                // Figure out how much extra, if any can be given to the columns
+                // so that the table is as wide as outlineViewWidth. If cntMaxSizeColumns
+                // is greater than 0 divide the extra space between the columns 
+                // that could use more space.  Otherwise divide evenly amoung 
+                // all columns.
+                int extraWidth = 0;
+                
+                if (totalColumnWidth < outlineViewWidth) {
+                    if  (cntMaxSizeColumns > 0) {
+                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth)/cntMaxSizeColumns);
+                    } else {
+                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth)/columnWidths.size());
+                    }
+                }
+                
+                for(int column = 0; column < columnWidths.size(); column++) {
+                    int columnWidth = columnWidths.get(column);
+                    
+                    if(cntMaxSizeColumns > 0) {
+                        if(columnWidth >= ((column == 0) ? 350 : 300)) {
+                            columnWidth += extraWidth;
+                        }
+                    } else {
+                        columnWidth += extraWidth;
+                    }
+                    
                     outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }
             }

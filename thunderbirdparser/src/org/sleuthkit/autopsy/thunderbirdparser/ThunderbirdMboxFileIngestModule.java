@@ -33,7 +33,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -45,10 +44,10 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -95,12 +94,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
 
-        try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            return ProcessResult.ERROR;
-        }
+        blackboard = currentCase.getSleuthkitCase().getBlackboard();
 
         // skip known
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
@@ -194,18 +188,17 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             case ENCRYPT:
                 // encrypted pst: Add encrypted file artifact
                 try {
+
                     BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
                     artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
 
                     try {
                         // index the artifact for keyword search
-                        blackboard.indexArtifact(artifact);
+                        blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
                     } catch (Blackboard.BlackboardException ex) {
                         MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     }
-
-                    services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
                 } catch (TskCoreException ex) {
                     logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
                 }
@@ -453,7 +446,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             }
         }
         context.addFilesToJob(derivedFiles);
-        services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
     }
     /**
      * Add the given attachments as derived files and reschedule them for
@@ -607,7 +599,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             
             try {
                 // index the artifact for keyword search
-                blackboard.indexArtifact(bbart);
+                blackboard.postArtifact(bbart,  EmailParserModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addArtifact_indexError_message(), bbart.getDisplayName());

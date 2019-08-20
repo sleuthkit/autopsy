@@ -160,6 +160,7 @@ KeywordHits.createSheet.numChildren.name=Number of Children
 KeywordHits.kwHits.text=Keyword Hits
 KeywordHits.simpleLiteralSearch.text=Single Literal Keyword Search
 KeywordHits.singleRegexSearch.text=Single Regular Expression Search
+LayoutFileNode.getActions.viewFileInDir.text=View File in Directory
 OpenIDE-Module-Name=DataModel
 AbstractContentChildren.CreateTSKNodeVisitor.exception.noNodeMsg=No Node defined for the given SleuthkitItem
 AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg=No Node defined for the given DisplayableItem

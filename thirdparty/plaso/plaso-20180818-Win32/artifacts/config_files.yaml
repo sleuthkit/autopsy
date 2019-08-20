@@ -1,0 +1,25 @@
+# Configuration file artifacts.
+
+name: NfsExportsFile
+doc: NFS Exports configuration
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/exports']}
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: SshdConfigFile
+doc: Sshd configuration
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/ssh/sshd_config']}
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: SshUserConfigFile
+doc: User ssh configuration file
+sources:
+- type: FILE
+  attributes: {paths: ['%%users.homedir%%/.ssh/config']}
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
