@@ -40,6 +40,7 @@ final class ReportModuleConfig implements Serializable {
     ReportModuleConfig(ReportModule module, boolean enabled) {
         this.moduleName = module.getClass().getCanonicalName();
         this.enabled = enabled;
+        this.settings = new NoReportModuleSettings();
     }
 
     /**

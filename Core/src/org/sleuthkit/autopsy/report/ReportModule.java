@@ -61,4 +61,31 @@ interface ReportModule {
     public default JPanel getConfigurationPanel() {
         return new DefaultReportConfigurationPanel();
     }
+    
+    /**
+     * Get default configuration for this report module.
+     *
+     * @return Object which contains default report module settings.
+     */
+    public default ReportModuleSettings getDefaultConfiguration() {
+        return new NoReportModuleSettings();
+    }
+
+     /**
+     * Get current configuration for this report module.
+     *
+     * @return Object which contains current report module settings.
+     */
+    public default ReportModuleSettings getConfiguration() {
+        return new NoReportModuleSettings();
+    }
+
+     /**
+     * Set report module configuration.
+     *
+     * @param settings Object which contains report module settings.
+     */
+    public default void setConfiguration(ReportModuleSettings settings) {
+        // NO-OP
+    }
 }

@@ -50,7 +50,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private List<TableReportModule> tableModules = new ArrayList<>();
     private List<FileReportModule> fileModules = new ArrayList<>();
     private PortableCaseReportModule portableCaseModule;
-    private Map<String, ReportModuleConfig> moduleConfigs;
+    private final Map<String, ReportModuleConfig> moduleConfigs;
     private Integer selectedIndex;
 
     /**
@@ -118,9 +118,12 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         for (ReportModule module : modules) {
             ReportModuleSettings settings;
             if (moduleConfigs == null) {
-                // ELTODO get default module configuration (API isn't implemented yet)
-                // settings = module.getDefaultConfiguration();
-                // update ReportModuleConfig config
+                // get default module configuration
+                settings = module.getDefaultConfiguration();
+                // update config for this module
+                ReportModuleConfig moduleConfig = new ReportModuleConfig(module, false);
+                moduleConfig.setModuleSettings(settings);
+                moduleConfigs.put(module.getName(), moduleConfig);
             } else {
                 // get configuration for this module
                 ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
@@ -128,13 +131,16 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
                     // there is an existing configuration for this module
                     settings = config.getModuleSettings();
                 } else {
-                    // ELTODO get default module configuration (API isn't implemented yet)
-                    // settings = module.getDefaultConfiguration();
-                    // update ReportModuleConfig config
+                    // get default module configuration
+                    settings = module.getDefaultConfiguration();
+                    // update config for this module
+                    ReportModuleConfig moduleConfig = new ReportModuleConfig(module, false);
+                    moduleConfig.setModuleSettings(settings);
+                    moduleConfigs.put(module.getName(), moduleConfig);
                 }
             }
-            // ELTODO set module configuration (API isn't implemented yet)
-            // module.setConfiguration(settings);
+            // set module configuration
+            module.setConfiguration(settings);
         }
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
@@ -224,13 +230,14 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
      * @return
      */
     Map<String, ReportModuleConfig> getUpdatedModuleConfigs() {
-        // set module configurations
         for (ReportModule module : modules) {
-            // ELTODO get updated module configuration (API isn't implemented yet)
-            // settings = module.getConfiguration();
+            // get updated module configuration
+            ReportModuleSettings settings = module.getConfiguration();
             
-            // update moduleConfigs
-            // moduleConfigs.pu(module.getName(), settings);
+            // update ReportModuleConfig for this module
+            ReportModuleConfig moduleConfig = new ReportModuleConfig(module, false);
+            moduleConfig.setModuleSettings(settings);
+            moduleConfigs.put(module.getName(), moduleConfig);
         }
         return moduleConfigs;
     }
