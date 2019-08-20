@@ -26,11 +26,12 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
-import java.awt.Component;
 import java.io.IOException;
+import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
+import org.sleuthkit.autopsy.texttranslation.TranslationConfigException;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
 /**
@@ -132,12 +133,12 @@ public class BingTranslator implements TextTranslator {
     }
 
     @Override
-    public Component getComponent() {
+    public JPanel getSettingsPanel() {
         return settingsPanel;
     }
 
     @Override
-    public void saveSettings() {
+    public void saveSettings() throws TranslationConfigException {
         settings.setAuthenticationKey(settingsPanel.getAuthenticationKey());
         settings.setTargetLanguageCode(settingsPanel.getTargetLanguageCode());
         settings.saveSettings();
@@ -173,7 +174,7 @@ public class BingTranslator implements TextTranslator {
     }
 
     @Override
-    public int getMaxPayloadSize() {
+    public int getMaxTextChars() {
         return MAX_STRING_LENGTH;
     }
 }

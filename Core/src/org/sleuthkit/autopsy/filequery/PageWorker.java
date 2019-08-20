@@ -88,10 +88,4 @@ final class PageWorker extends SwingWorker<Void, Void> {
         }
         return null;
     }
-
-    @Override
-    protected void done() {
-
-    }
-
 }

@@ -26,8 +26,6 @@ import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -35,7 +33,6 @@ import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Matcher;
@@ -49,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * @author Alex
+ * RecentActivity utility class.
  */
 class Util {
 

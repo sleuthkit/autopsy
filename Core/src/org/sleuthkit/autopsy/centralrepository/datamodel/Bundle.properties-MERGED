@@ -1,4 +1,14 @@
+# {0} - majorVersion
+AbstractSqlEamDb.badMajorSchema.message=Bad value for schema version ({0}) - database is corrupt.
+# {0} - minorVersion
+AbstractSqlEamDb.badMinorSchema.message=Bad value for schema minor version ({0}) - database is corrupt.
+# {0} - platformName
+AbstractSqlEamDb.cannotUpgrage.message=Currently selected database platform "{0}" can not be upgraded.
+AbstractSqlEamDb.failedToReadMajorVersion.message=Failed to read schema version for Central Repository.
+AbstractSqlEamDb.failedToReadMinorVersion.message=Failed to read schema minor version for Central Repository.
 AbstractSqlEamDb.upgradeSchema.incompatible=The selected Central Repository is not compatible with the current version of the application, please upgrade the application if you wish to use this Central Repository.
+CorrelationAttributeInstance.invalidName.message=Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'.
+CorrelationAttributeInstance.nullName.message=Database name is null.
 CorrelationType.DOMAIN.displayName=Domains
 CorrelationType.EMAIL.displayName=Email Addresses
 CorrelationType.FILES.displayName=Files
@@ -23,4 +33,12 @@ EamCase.title.examinerName=Examiner Name:
 EamCase.title.examinerPhone=Examiner Phone: 
 EamCase.title.notes=Notes: 
 EamCase.title.org=Organization: 
-EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled.
+EamDbUtil.centralRepoConnectionFailed.message=Unable to connect to Central Repository.
+EamDbUtil.centralRepoDisabled.message=\ The Central Repository has been disabled.
+EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade Central Repository.
+EamDbUtil.exclusiveLockAquisitionFailure.message=Unable to acquire exclusive lock for Central Repository.
+PostgresEamDb.centralRepoDisabled.message=Central Repository module is not enabled.
+PostgresEamDb.connectionFailed.message=Error getting connection to database.
+SqliteEamDb.centralRepositoryDisabled.message=Central Repository module is not enabled.
+SqliteEamDb.connectionFailedMessage.message=Error getting connection to database.
+SqliteEamDb.databaseMissing.message=Central repository database missing

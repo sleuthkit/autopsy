@@ -25,6 +25,7 @@ import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -183,11 +184,13 @@ final class PostgresEamDb extends AbstractSqlEamDb {
      *
      * @throws EamDbException
      */
+    @Messages({"PostgresEamDb.centralRepoDisabled.message=Central Repository module is not enabled.",
+        "PostgresEamDb.connectionFailed.message=Error getting connection to database."})
     @Override
     protected Connection connect() throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
+                throw new EamDbException(Bundle.PostgresEamDb_centralRepoDisabled_message()); // NON-NLS
             }
 
             if (connectionPool == null) {
@@ -197,7 +200,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
         try {
             return connectionPool.getConnection();
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting connection from connection pool.", ex); // NON-NLS
+            throw new EamDbException(Bundle.PostgresEamDb_connectionFailed_message(), ex); // NON-NLS
         }
     }
 

@@ -1,16 +1,16 @@
 /*
  * Sample module in the public domain.  Feel free to use this as a template
  * for your modules.
- * 
+ *
  *  Contact: Brian Carrier [carrier <at> sleuthkit [dot] org]
  *
  *  This is free and unencumbered software released into the public domain.
- *  
+ *
  *  Anyone is free to copy, modify, publish, use, compile, sell, or
  *  distribute this software, either in source code form or as a compiled
  *  binary, for any purpose, commercial or non-commercial, and by any
  *  means.
- *  
+ *
  *  In jurisdictions that recognize copyright laws, the author or authors
  *  of this software dedicate any and all copyright interest in the
  *  software to the public domain. We make this dedication for the benefit
@@ -18,34 +18,31 @@
  *  successors. We intend this dedication to be an overt act of
  *  relinquishment in perpetuity of all present and future rights to this
  *  software under copyright law.
- *  
+ *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  *  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
  *  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- *  OTHER DEALINGS IN THE SOFTWARE. 
+ *  OTHER DEALINGS IN THE SOFTWARE.
  */
 package org.sleuthkit.autopsy.examples;
 
 import java.util.HashMap;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -56,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
 class SampleFileIngestModule implements FileIngestModule {
 
     private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
-    private static BlackboardAttribute.ATTRIBUTE_TYPE attrType = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT;
+    private static final BlackboardAttribute.ATTRIBUTE_TYPE ATTR_TYPE = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -76,8 +73,8 @@ class SampleFileIngestModule implements FileIngestModule {
 
         // Skip anything other than actual file system files.
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (file.isFile() == false)) {
+            || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+            || (file.isFile() == false)) {
             return IngestModule.ProcessResult.OK;
         }
 
@@ -101,7 +98,7 @@ class SampleFileIngestModule implements FileIngestModule {
 
             // Make an attribute using the ID for the attribute attrType that 
             // was previously created.
-            BlackboardAttribute attr = new BlackboardAttribute(attrType, SampleIngestModuleFactory.getModuleName(), count);
+            BlackboardAttribute attr = new BlackboardAttribute(ATTR_TYPE, SampleIngestModuleFactory.getModuleName(), count);
 
             // Add the to the general info artifact for the file. In a
             // real module, you would likely have more complex data types 
@@ -113,13 +110,15 @@ class SampleFileIngestModule implements FileIngestModule {
             // management of shared data.
             addToBlackboardPostCount(context.getJobId(), 1L);
 
-            // Fire an event to notify any listeners for blackboard postings.
-            ModuleDataEvent event = new ModuleDataEvent(SampleIngestModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_GEN_INFO);
-            IngestServices.getInstance().fireModuleDataEvent(event);
+            /*
+             * post the artifact which will index the artifact for keyword
+             * search, and fire an event to notify UI of this new artifact
+             */
+            file.getSleuthkitCase().getBlackboard().postArtifact(art, SampleIngestModuleFactory.getModuleName());
 
             return IngestModule.ProcessResult.OK;
 
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | Blackboard.BlackboardException ex) {
             IngestServices ingestServices = IngestServices.getInstance();
             Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
             logger.log(Level.SEVERE, "Error processing file (id = " + file.getId() + ")", ex);

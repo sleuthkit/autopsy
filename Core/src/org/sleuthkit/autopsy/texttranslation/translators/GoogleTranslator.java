@@ -23,7 +23,6 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
-import java.awt.Component;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,12 +30,14 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
+import org.sleuthkit.autopsy.texttranslation.TranslationConfigException;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 
 /**
@@ -133,7 +134,7 @@ public final class GoogleTranslator implements TextTranslator {
     }
 
     @Override
-    public Component getComponent() {
+    public JPanel getSettingsPanel() {
         return settingsPanel;
     }
 
@@ -172,7 +173,7 @@ public final class GoogleTranslator implements TextTranslator {
     }
 
     @Override
-    public void saveSettings() {
+    public void saveSettings() throws TranslationConfigException {
         settings.setTargetLanguageCode(settingsPanel.getTargetLanguageCode());
         settings.setCredentialPath(settingsPanel.getCredentialsPath());
         settings.saveSettings();
@@ -180,7 +181,7 @@ public final class GoogleTranslator implements TextTranslator {
     }
 
     @Override
-    public int getMaxPayloadSize() {
+    public int getMaxTextChars() {
         return MAX_PAYLOAD_SIZE;
     }
 }

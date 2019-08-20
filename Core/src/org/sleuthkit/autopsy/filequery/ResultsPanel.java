@@ -181,10 +181,10 @@ public class ResultsPanel extends javax.swing.JPanel {
         currentPageLabel = new javax.swing.JLabel();
         nextPageButton = new javax.swing.JButton();
         pageSizeSpinner = new javax.swing.JSpinner();
-        pageControlsLabel = new javax.swing.JLabel();
-        gotoPageLabel = new javax.swing.JLabel();
+        javax.swing.JLabel pageControlsLabel = new javax.swing.JLabel();
+        javax.swing.JLabel gotoPageLabel = new javax.swing.JLabel();
         gotoPageField = new javax.swing.JTextField();
-        pageSizeLabel = new javax.swing.JLabel();
+        javax.swing.JLabel pageSizeLabel = new javax.swing.JLabel();
         resultsViewerPanel = new javax.swing.JPanel();
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -194,9 +194,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         previousPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
         previousPageButton.setEnabled(false);
         previousPageButton.setFocusable(false);
-        previousPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
-        previousPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
-        previousPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
         previousPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
         previousPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -214,9 +211,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
         nextPageButton.setEnabled(false);
         nextPageButton.setFocusable(false);
-        nextPageButton.setMaximumSize(new java.awt.Dimension(23, 23));
-        nextPageButton.setMinimumSize(new java.awt.Dimension(23, 23));
-        nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
         nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
         nextPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -261,9 +255,9 @@ public class ResultsPanel extends javax.swing.JPanel {
                 .addGap(18, 18, 18)
                 .addComponent(pageControlsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(previousPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(previousPageButton)
                 .addGap(0, 0, 0)
-                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(nextPageButton)
                 .addGap(18, 18, 18)
                 .addComponent(gotoPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -279,9 +273,9 @@ public class ResultsPanel extends javax.swing.JPanel {
             .addGroup(pagingPanelLayout.createSequentialGroup()
                 .addGap(4, 4, 4)
                 .addGroup(pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(nextPageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(nextPageButton, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(previousPageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(previousPageButton, javax.swing.GroupLayout.Alignment.TRAILING)
                         .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(pageControlsLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -384,10 +378,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JTextField gotoPageField;
-    private javax.swing.JLabel gotoPageLabel;
     private javax.swing.JButton nextPageButton;
-    private javax.swing.JLabel pageControlsLabel;
-    private javax.swing.JLabel pageSizeLabel;
     private javax.swing.JSpinner pageSizeSpinner;
     private javax.swing.JPanel pagingPanel;
     private javax.swing.JButton previousPageButton;

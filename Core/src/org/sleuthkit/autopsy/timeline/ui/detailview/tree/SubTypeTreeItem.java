@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 
 /**
  * EventTreeItem for sub event types
@@ -42,13 +42,13 @@ public class SubTypeTreeItem extends EventTypeTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    SubTypeTreeItem(TimeLineEvent event, Comparator<TreeItem<TimeLineEvent>> comparator) {
+    SubTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(event.getEventType(), comparator);
     }
 
     @Override
-    public void insert(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.remove(0);
+    public void insert(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.remove(0);
         DescriptionTreeItem treeItem = childMap.computeIfAbsent(head.getDescription(),
                 description -> configureNewTreeItem(new DescriptionTreeItem(head, getComparator()))
         );
@@ -60,8 +60,8 @@ public class SubTypeTreeItem extends EventTypeTreeItem {
     }
 
     @Override
-    void remove(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.remove(0);
+    void remove(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.remove(0);
         DescriptionTreeItem descTreeItem = childMap.get(head.getDescription());
 
         //remove path from child item

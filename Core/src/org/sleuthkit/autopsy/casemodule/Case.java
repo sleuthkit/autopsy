@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import com.google.common.annotations.Beta;
+import com.google.common.eventbus.Subscribe;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -26,7 +27,6 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +35,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -68,7 +67,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
-import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
@@ -108,12 +106,17 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
+import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
@@ -121,6 +124,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
@@ -155,6 +159,7 @@ public class Case {
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     private boolean hasDataSources;
+    private final TSKCaseRepublisher tskEventForwarder = new TSKCaseRepublisher();
 
     /*
      * Get a reference to the main window of the desktop application to use to
@@ -388,12 +393,43 @@ public class Case {
          */
         TAG_DEFINITION_CHANGED,
         /**
-         * An item in the central repository has had its comment modified. The
-         * old value is null, the new value is string for current comment.
+         * An timeline event, such mac time or web activity was added to the
+         * current case. The old value is null and the new value is the
+         * TimelineEvent that was added.
+         */
+        TIMELINE_EVENT_ADDED,
+        /* An item in the central repository has had its comment
+         * modified. The old value is null, the new value is string for current
+         * comment.
          */
         CR_COMMENT_CHANGED;
 
     };
+
+    private final class TSKCaseRepublisher {
+
+        @Subscribe
+        public void rebroadcastTimelineEventCreated(TimelineManager.TimelineEventAddedEvent event) {
+            eventPublisher.publish(new TimelineEventAddedEvent(event));
+        }
+
+        @SuppressWarnings("deprecation")
+        @Subscribe
+        public void rebroadcastArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
+            for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
+                /*
+                 * fireModuleDataEvent is deprecated so module writers don't use
+                 * it (they should use Blackboard.postArtifact(s) instead), but
+                 * we still need a way to rebroadcast the ArtifactsPostedEvent
+                 * as a ModuleDataEvent.
+                 */
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                        event.getModuleName(),
+                        artifactType,
+                        event.getArtifacts(artifactType)));
+            }
+        }
+    }
 
     /**
      * Adds a subscriber to all case events. To subscribe to only specific
@@ -499,8 +535,8 @@ public class Case {
      */
     public static boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
-                || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
-                || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
+                 || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
+                 || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
     }
 
     /**
@@ -2128,7 +2164,7 @@ public class Case {
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
             } else {
-                throw new CaseActionException(Case_open_exception_multiUserCaseNotEnabled());
+                throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
         } catch (TskUnsupportedSchemaVersionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_unsupportedSchemaVersionMessage(ex.getLocalizedMessage()), ex);
@@ -2150,6 +2186,8 @@ public class Case {
     private void openCaseLevelServices(ProgressIndicator progressIndicator) {
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseLevelServices());
         this.caseServices = new Services(caseDb);
+
+        caseDb.registerForEvents(tskEventForwarder);
     }
 
     /**
@@ -2373,7 +2411,6 @@ public class Case {
     @Messages({
         "Case.progressMessage.shuttingDownNetworkCommunications=Shutting down network communications...",
         "Case.progressMessage.closingApplicationServiceResources=Closing case-specific application service resources...",
-        "Case.progressMessage.closingCaseLevelServices=Closing case-level services...",
         "Case.progressMessage.closingCaseDatabase=Closing case database..."
     })
     private void close(ProgressIndicator progressIndicator) {
@@ -2399,22 +2436,11 @@ public class Case {
         closeAppServiceCaseResources();
 
         /*
-         * Close the case-level services.
-         */
-        if (null != caseServices) {
-            progressIndicator.progress(Bundle.Case_progressMessage_closingCaseLevelServices());
-            try {
-                this.caseServices.close();
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error closing internal case services for %s at %s", this.getName(), this.getCaseDirectory()), ex);
-            }
-        }
-
-        /*
-         * Close the case database
+         * Close the case database.
          */
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());
+            caseDb.unregisterForEvents(tskEventForwarder);
             caseDb.close();
         }
 
