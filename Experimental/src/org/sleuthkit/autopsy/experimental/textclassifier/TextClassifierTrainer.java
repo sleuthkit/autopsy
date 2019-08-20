@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.JPanel;
 import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
@@ -35,13 +34,13 @@ import opennlp.tools.util.TrainingParameters;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.report.GeneralReportModuleAdapter;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
@@ -51,21 +50,19 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * This is a ReportModule that trains a text classifier. The training data it 
+ * This is a ReportModule that trains a text classifier. The training data it
  * uses is all text-like documents in the current case. The two classes are the
  * ones labeled as notable by the user and the ones not labeled as notable. It
- * will not train a model if none of the documents were labeled as notable, if 
+ * will not train a model if none of the documents were labeled as notable, if
  * all of the documents were labeled as notable, or if there are not enough
  * documents in the case for the underlying model trainer to run.
- * 
+ *
  * The model is stored in %APPDATA%\autopsy\text_classifiers. If a model is
  * already present in that location, the TextClassifierTrainer adds more
  * examples to it.
  */
-@ServiceProvider(service = GeneralReportModule.class)
-public class TextClassifierTrainer implements GeneralReportModule {
-
-    private final TextClassifierTrainerConfigPanel CONFIG_PANEL = new TextClassifierTrainerConfigPanel();;
+@ServiceProvider(service = GeneralReportModuleAdapter.class)
+public class TextClassifierTrainer extends GeneralReportModuleAdapter {
 
     @Override
     @Messages({
@@ -142,16 +139,6 @@ public class TextClassifierTrainer implements GeneralReportModule {
         return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getDesc.text");
     }
 
-    @Override
-    public String getRelativeFilePath() {
-        return "classifierTrainerReport.txt";
-    }
-
-    @Override
-    public JPanel getConfigurationPanel() {
-        returnCONFIG_PANELl;
-    }
-
     public DoccatModel train(String oldModelPath, ObjectStream<DocumentSample> sampleStream) throws IOException {
         TrainingParameters params = new TrainingParameters();
         params.put(TrainingParameters.CUTOFF_PARAM, Integer.toString(0));
@@ -205,7 +192,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel("Cannot initialize reader for document of type " + doc.getMIMEType());
                 throw ex;
-            } catch(TextExtractorFactory.NoTextExtractorFound ex) {
+            } catch (TextExtractorFactory.NoTextExtractorFound ex) {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel("No text extractor found for document of type " + doc.getMIMEType());
                 throw ex;
