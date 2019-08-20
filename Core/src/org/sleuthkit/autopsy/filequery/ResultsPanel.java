@@ -210,10 +210,10 @@ public class ResultsPanel extends javax.swing.JPanel {
         currentPageLabel = new javax.swing.JLabel();
         nextPageButton = new javax.swing.JButton();
         pageSizeSpinner = new javax.swing.JSpinner();
-        pageControlsLabel = new javax.swing.JLabel();
-        gotoPageLabel = new javax.swing.JLabel();
+        javax.swing.JLabel pageControlsLabel = new javax.swing.JLabel();
+        javax.swing.JLabel gotoPageLabel = new javax.swing.JLabel();
         gotoPageField = new javax.swing.JTextField();
-        pageSizeLabel = new javax.swing.JLabel();
+        javax.swing.JLabel pageSizeLabel = new javax.swing.JLabel();
         resultsViewerPanel = new javax.swing.JPanel();
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -407,10 +407,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JTextField gotoPageField;
-    private javax.swing.JLabel gotoPageLabel;
     private javax.swing.JButton nextPageButton;
-    private javax.swing.JLabel pageControlsLabel;
-    private javax.swing.JLabel pageSizeLabel;
     private javax.swing.JSpinner pageSizeSpinner;
     private javax.swing.JPanel pagingPanel;
     private javax.swing.JButton previousPageButton;

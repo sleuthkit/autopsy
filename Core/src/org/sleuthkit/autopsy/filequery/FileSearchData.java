@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 
 /**
  * Utility enums for FileSearch
