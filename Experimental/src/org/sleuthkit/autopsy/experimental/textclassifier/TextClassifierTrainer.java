@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.TskData;
 @ServiceProvider(service = GeneralReportModule.class)
 public class TextClassifierTrainer implements GeneralReportModule {
 
-    private TextClassifierTrainerConfigPanel configPanel = new TextClassifierTrainerConfigPanel();;
+    private final TextClassifierTrainerConfigPanel CONFIG_PANEL = new TextClassifierTrainerConfigPanel();;
 
     @Override
     @Messages({
@@ -92,7 +92,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
         ObjectStream<DocumentSample> sampleStream;
         try {
             sampleStream = processTrainingData(progressPanel);
-        } catch (Exception ex) {
+        } catch (IOException | TextExtractor.InitReaderException | TextExtractorFactory.NoTextExtractorFound | TskCoreException ex) {
             new File(baseReportDir).delete();
             return;
         }
@@ -149,7 +149,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        return configPanel;
+        returnCONFIG_PANELl;
     }
 
     public DoccatModel train(String oldModelPath, ObjectStream<DocumentSample> sampleStream) throws IOException {
@@ -160,8 +160,7 @@ public class TextClassifierTrainer implements GeneralReportModule {
             params.put("MODEL_INPUT", oldModelPath);
         }
 
-        DoccatModel model = DocumentCategorizerME.train(TextClassifierUtils.LANGUAGE_CODE, sampleStream, params, new DoccatFactory());
-        return model;
+        return DocumentCategorizerME.train(TextClassifierUtils.LANGUAGE_CODE, sampleStream, params, new DoccatFactory());
     }
 
     /**
