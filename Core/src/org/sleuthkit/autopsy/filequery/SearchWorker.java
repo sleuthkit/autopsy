@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import java.util.LinkedHashMap;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
 import java.util.List;
@@ -64,12 +65,12 @@ final class SearchWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            SearchResults results = FileSearch.runFileSearchDebug(filters,
+            LinkedHashMap<String, Integer> results = FileSearch.getGroupSizes(filters,
                     groupingAttr,
                     groupSortAlgorithm,
                     fileSort,
                     Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(results));
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCompleteEvent(results, filters, groupingAttr, groupSortAlgorithm, fileSort));
         } catch (FileSearchException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
         }
