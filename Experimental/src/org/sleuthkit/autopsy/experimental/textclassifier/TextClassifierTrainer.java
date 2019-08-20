@@ -202,9 +202,13 @@ public class TextClassifierTrainer implements GeneralReportModule {
             String[] tokens;
             try {
                 tokens = TextClassifierUtils.extractTokens(doc);
-            } catch (IOException | TextExtractor.InitReaderException | TextExtractorFactory.NoTextExtractorFound ex) {
+            } catch (TextExtractor.InitReaderException ex) {
                 progressPanel.complete(ReportStatus.ERROR);
-                progressPanel.updateStatusLabel("Cannot extract text from document of type " + doc.getMIMEType());
+                progressPanel.updateStatusLabel("Cannot initialize reader for document of type " + doc.getMIMEType());
+                throw ex;
+            } catch(TextExtractorFactory.NoTextExtractorFound ex) {
+                progressPanel.complete(ReportStatus.ERROR);
+                progressPanel.updateStatusLabel("No text extractor found for document of type " + doc.getMIMEType());
                 throw ex;
             }
             DocumentSample docSample = new DocumentSample(label, tokens);

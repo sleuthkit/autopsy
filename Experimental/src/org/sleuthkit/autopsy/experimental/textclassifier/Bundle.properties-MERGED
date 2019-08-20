@@ -1,6 +1,15 @@
-ClassifierTrainerReportModule.srcModuleName.txt=Text classifier model
 # {0} - classifierDir
 TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed.
 TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.
 TextClassifierModuleFactory.moduleDescription.text=Use text classifiers to label potentially interesting files.
 TextClassifierModuleFactory.moduleName.text=Text Classifier
+TextClassifierTrainer.cannotSave.text=Cannot save model: 
+TextClassifierTrainer.completeModelLocation.text=Complete. Model location: 
+TextClassifierTrainer.getDesc.text=Machine learning model to classify which documents are notable
+TextClassifierTrainer.getName.text=Text classifier model
+TextClassifierTrainer.inProgress.text=In progress
+TextClassifierTrainer.needFileType.text=File type detection must complete before generating this report.
+TextClassifierTrainer.noModel.text=No model was trained.
+TextClassifierTrainer.srcModuleName.text=Text classifier model
+TextClassifierTrainer.training.text=Training model.
+TextClassifierTrainer.writingModel.text=Writing model: 

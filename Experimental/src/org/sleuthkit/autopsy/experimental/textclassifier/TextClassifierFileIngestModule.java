@@ -24,12 +24,11 @@ import opennlp.tools.doccat.DocumentCategorizerME;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractorFound;
@@ -61,7 +60,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         }
 
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getArtifactsBlackboard();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException("Exception while getting open case.", ex);
         }
@@ -84,13 +83,13 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         try {
             isNotable = classify(file);
         } catch (TextExtractorFactory.NoTextExtractorFound ex) {
-            logger.log(Level.SEVERE, "NoTextExtractorFound in categorizing : " + ex.getMessage());
+            logger.log(Level.SEVERE, "NoTextExtractorFound in categorizing : " + ex.getMessage(), ex);
             return ProcessResult.ERROR;
         } catch (InitReaderException ex) {
-            logger.log(Level.SEVERE, "InitReaderException in categorizing : " + ex.getMessage());
+            logger.log(Level.SEVERE, "InitReaderException in categorizing : " + ex.getMessage(), ex);
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "IOException in categorizing : " + ex.getMessage());
+            logger.log(Level.SEVERE, "IOException in categorizing : " + ex.getMessage(), ex);
             return ProcessResult.ERROR;
         }
 
@@ -102,13 +101,15 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
                         "Possible notable text"));
                 try {
                     //Index the artifact for keyword search
-                    blackboard.indexArtifact(artifact);
+                    blackboard.postArtifact(artifact, Bundle.TextClassifierModuleFactory_moduleName_text());
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NL
+                    logger.log(Level.SEVERE, "Unable to post blackboard artifact " + artifact.getArtifactID(), ex);
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage());
-            }
+                logger.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage(), ex);
+            } 
+            
+            
         }
         return ProcessResult.OK;
     }
