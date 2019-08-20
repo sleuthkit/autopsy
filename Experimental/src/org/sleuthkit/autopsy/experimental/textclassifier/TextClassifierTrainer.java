@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.GeneralReportModuleAdapter;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
@@ -61,7 +62,7 @@ import org.sleuthkit.datamodel.TskData;
  * already present in that location, the TextClassifierTrainer adds more
  * examples to it.
  */
-@ServiceProvider(service = GeneralReportModuleAdapter.class)
+@ServiceProvider(service = GeneralReportModule.class)
 public class TextClassifierTrainer extends GeneralReportModuleAdapter {
 
     @Override
