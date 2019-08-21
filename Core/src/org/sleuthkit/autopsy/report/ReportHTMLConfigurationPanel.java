@@ -33,11 +33,21 @@ final class ReportHTMLConfigurationPanel extends javax.swing.JPanel {
         initComponents();
         
         // Load settings
+        // ELTODO REMOVE
         String header = ModuleSettings.getConfigSetting("HTMLReport", "header"); //NON-NLS
         String footer = ModuleSettings.getConfigSetting("HTMLReport", "footer"); //NON-NLS
         
         headerTextField.setText(header != null ? header : "");
         footerTextField.setText(footer != null ? footer : "");
+    }
+    
+    void setConfiguration(HTMLReportModuleSettings settings) {
+        headerTextField.setText(settings.getHeader());
+        footerTextField.setText(settings.getFooter());
+    }
+    
+    HTMLReportModuleSettings getConfiguration() {
+        return new HTMLReportModuleSettings(headerTextField.getText(), footerTextField.getText());
     }
     
     /**

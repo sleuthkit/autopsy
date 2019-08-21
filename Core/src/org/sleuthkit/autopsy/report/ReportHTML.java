@@ -123,6 +123,36 @@ class ReportHTML implements TableReportModule {
         }
         return configPanel;
     }
+    
+    /**
+     * Get default configuration for this report module.
+     *
+     * @return Object which contains default report module settings.
+     */
+    @Override
+    public ReportModuleSettings getDefaultConfiguration() {
+        return new NoReportModuleSettings();
+    }
+
+     /**
+     * Get current configuration for this report module.
+     *
+     * @return Object which contains current report module settings.
+     */
+    @Override
+    public ReportModuleSettings getConfiguration() {
+        return new NoReportModuleSettings();
+    }
+
+     /**
+     * Set report module configuration.
+     *
+     * @param settings Object which contains report module settings.
+     */
+    @Override
+    public void setConfiguration(ReportModuleSettings settings) {
+        // NO-OP
+    }    
 
     // Refesh the member variables
     private void refresh() throws NoCurrentCaseException {
