@@ -481,7 +481,7 @@ class FileSearch {
      * Private helper method for creating video thumbnails, for use when no
      * thumbnails are created.
      *
-     * @return List containing the default thumbnail.s
+     * @return List containing the default thumbnail.
      */
     private static List<Image> createDefaultThumbnailList() {
         List<Image> videoThumbnails = new ArrayList<>();
