@@ -214,7 +214,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private synchronized static LinkedHashMap<String, List<AbstractFile>> runFileSearch(
+    private synchronized static Map<String, List<AbstractFile>> runFileSearch(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -244,7 +244,7 @@ class FileSearch {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
         // Return a version of the results in general Java objects
-        return searchResults.toLinkedHashMap();
+        return resultHashMap;
     }
 
     /**
