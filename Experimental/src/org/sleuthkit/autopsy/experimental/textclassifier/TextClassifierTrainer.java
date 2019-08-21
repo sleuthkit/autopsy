@@ -38,13 +38,13 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.GeneralReportModuleAdapter;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
-import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -64,7 +64,8 @@ import org.sleuthkit.datamodel.TskData;
  */
 @ServiceProvider(service = GeneralReportModule.class)
 public class TextClassifierTrainer extends GeneralReportModuleAdapter {
-
+    private final static Logger logger = Logger.getLogger(TextClassifierTrainer.class.getName());
+        
     @Override
     @Messages({
         "TextClassifierTrainer.srcModuleName.text=Text classifier model",
@@ -90,8 +91,9 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         ObjectStream<DocumentSample> sampleStream;
         try {
             sampleStream = processTrainingData(progressPanel);
-        } catch (IOException | TextExtractor.InitReaderException | TextExtractorFactory.NoTextExtractorFound | TskCoreException ex) {
+        } catch (IOException | TextExtractor.InitReaderException | TskCoreException ex) {
             new File(baseReportDir).delete();
+            
             return;
         }
 
@@ -156,7 +158,7 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
      *
      * @return training data usable by OpenNLP
      */
-    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException, TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException, IOException {
+    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException, TextExtractor.InitReaderException, IOException {
         progressPanel.updateStatusLabel("Fetching training data");
 
         List<AbstractFile> allDocs;
@@ -192,10 +194,6 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
             } catch (TextExtractor.InitReaderException ex) {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel("Cannot initialize reader for document of type " + doc.getMIMEType());
-                throw ex;
-            } catch (TextExtractorFactory.NoTextExtractorFound ex) {
-                progressPanel.complete(ReportStatus.ERROR);
-                progressPanel.updateStatusLabel("No text extractor found for document of type " + doc.getMIMEType());
                 throw ex;
             }
             DocumentSample docSample = new DocumentSample(label, tokens);

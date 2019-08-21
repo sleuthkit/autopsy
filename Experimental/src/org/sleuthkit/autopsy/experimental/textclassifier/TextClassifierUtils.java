@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -82,8 +83,13 @@ class TextClassifierUtils {
         return fileMimeType != null && SupportedFormats.contains(fileMimeType);
     }
 
-    static String[] extractTokens(AbstractFile file) throws NoTextExtractorFound, InitReaderException, IOException {
-        Reader reader = TextExtractorFactory.getExtractor(file, null).getReader();
+    static String[] extractTokens(AbstractFile file) throws InitReaderException, IOException {
+        Reader reader;
+        try {
+            reader = TextExtractorFactory.getExtractor(file).getReader();
+        } catch (NoTextExtractorFound ex) {
+            reader = TextExtractorFactory.getStringsExtractor(file, null).getReader();
+        }
         String text = IOUtils.toString(reader);
         return TOKENIZER.tokenize(text);
     }
