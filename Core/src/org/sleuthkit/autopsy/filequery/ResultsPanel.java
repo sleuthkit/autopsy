@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,6 +59,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final EamDb centralRepo;
     private int groupSize = 0;
     private PageWorker pageWorker;
+    private final List<ThumbnailWorker> thumbnailWorkers = new ArrayList<>();
 
     /**
      * Creates new form ResultsPanel.
@@ -77,7 +77,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     void addListSelectionListener(ListSelectionListener listener) {
         videoThumbnailViewer.addListSelectionListener(listener);
     }
-    
+
     AbstractFile getSelectedFile() {
         return videoThumbnailViewer.getSelectedFile();
     }
@@ -96,6 +96,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             tableViewer.resetComponent();
             resultsViewerPanel.remove(thumbnailViewer);
             resultsViewerPanel.remove(tableViewer);
+            resultsViewerPanel.remove(videoThumbnailViewer);
             if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
                 resultsViewerPanel.add(thumbnailViewer);
                 if (pageRetrievedEvent.getSearchResults().size() > 0) {
@@ -121,10 +122,20 @@ public class ResultsPanel extends javax.swing.JPanel {
     }
 
     void populateVideoViewer(List<ResultFile> files) {
+        //cancell any unfished thumb workers
+        for (ThumbnailWorker thumbWorker : thumbnailWorkers) {
+            if (!thumbWorker.isDone()) {
+                thumbWorker.cancel(true);
+            }
+        }
+        //clear old thumbnails
+        thumbnailWorkers.clear();
         videoThumbnailViewer.clearViewer();
-        System.out.println("POPULATE VIEWER");
         for (ResultFile file : files) {
-            new ThumbnailWorker(file, resultType).execute();
+            ThumbnailWorker thumbWorker = new ThumbnailWorker(file);
+            thumbWorker.execute();
+            //keep track of thumb worker for possible cancellation 
+            thumbnailWorkers.add(thumbWorker);
         }
     }
 
@@ -153,6 +164,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             groupSize = 0;
             currentPage = 0;
             updateControls();
+            videoThumbnailViewer.clearViewer();
             thumbnailViewer.resetComponent();
             thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
             tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
@@ -417,23 +429,23 @@ public class ResultsPanel extends javax.swing.JPanel {
     private class ThumbnailWorker extends SwingWorker<Void, Void> {
 
         private final ResultFile file;
-        private final FileSearchData.FileType type;
         private ThumbnailsWrapper thumbnailWrapper;
 
-        ThumbnailWorker(ResultFile file, FileSearchData.FileType resultType) {
+        ThumbnailWorker(ResultFile file) {
             this.file = file;
-            this.type = resultType;
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            thumbnailWrapper = ResultFile.createVideoThumbnails(file.getAbstractFile());
+            thumbnailWrapper = FileSearch.createVideoThumbnails(file.getAbstractFile());
             return null;
         }
 
         @Override
         protected void done() {
-            videoThumbnailViewer.addRow(thumbnailWrapper);
+            if (!isCancelled()) {
+                videoThumbnailViewer.addRow(thumbnailWrapper);
+            }
         }
     }
 

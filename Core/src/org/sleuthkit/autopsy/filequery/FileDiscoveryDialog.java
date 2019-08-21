@@ -68,10 +68,8 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
                     SwingUtilities.invokeLater(() -> {
                         AbstractFile file = resultsPanel.getSelectedFile();
                         if (file != null) {
-                            System.out.println("setup tabs with file");
                             dataContentPanel.setNode(new TableFilterNode(new FileNode(file), false));
                         } else {
-                            System.out.println("setup tabs");
                             dataContentPanel.setNode(null);
                         }
                     });

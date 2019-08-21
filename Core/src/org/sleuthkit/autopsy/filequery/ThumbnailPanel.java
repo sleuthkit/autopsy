@@ -9,7 +9,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.awt.GridBagConstraints;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -91,7 +90,7 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+                    .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
                     .addComponent(fileInfoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -99,7 +98,7 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(fileInfoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -116,6 +115,7 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
     public Component getListCellRendererComponent(JList<? extends ThumbnailsWrapper> list, ThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileInfoLabel.setText(value.getFileInfo());
         addThumbnails(value);
+        imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
     }

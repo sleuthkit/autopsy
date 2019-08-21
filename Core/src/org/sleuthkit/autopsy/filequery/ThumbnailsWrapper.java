@@ -35,7 +35,7 @@ public class ThumbnailsWrapper {
     }
     
     String getFileInfo() {
-        return abstractFile.getParentPath();
+        return abstractFile.getLocalAbsPath();
     }
 
     List<Image> getThumbnails() {

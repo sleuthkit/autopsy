@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filequery;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
@@ -243,7 +244,7 @@ class FileSearchData {
          * @return Collection of MIME type strings
          */
         Collection<String> getMediaTypes() {
-            return mediaTypes;
+            return Collections.unmodifiableCollection(mediaTypes);
         }
 
         @Override
