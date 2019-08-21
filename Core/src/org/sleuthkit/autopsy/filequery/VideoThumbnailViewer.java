@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.filequery;
 
@@ -10,13 +23,13 @@ import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
+ * A JPanel to display video thumbnails.
  *
- * @author wschaefer
  */
 public class VideoThumbnailViewer extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private final DefaultListModel<ThumbnailsWrapper> thumbnailListModel = new DefaultListModel<>();
+    private final DefaultListModel<VideoThumbnailsWrapper> thumbnailListModel = new DefaultListModel<>();
 
     /**
      * Creates new form VideoThumbnailViewer
@@ -25,10 +38,21 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
         initComponents();
     }
 
+    /**
+     * Add a selection listener to the list of thumbnails being displayed.
+     *
+     * @param listener The ListSelectionListener to add to the selection model.
+     */
     void addListSelectionListener(ListSelectionListener listener) {
         thumbnailList.getSelectionModel().addListSelectionListener(listener);
     }
 
+    /**
+     * Get the AbstractFile associated with the selected thumbnails.
+     *
+     * @return The AbstractFile associated with the selected thumbnails, or null
+     *         if no thumnails are selected.
+     */
     AbstractFile getSelectedFile() {
         if (thumbnailList.getSelectedIndex() == -1) {
             return null;
@@ -37,13 +61,22 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Clear the list of thumbnails being displayed.
+     */
     void clearViewer() {
         synchronized (this) {
             thumbnailListModel.removeAllElements();
         }
     }
 
-    void addRow(ThumbnailsWrapper thumbnailWrapper) {
+    /**
+     * Add thumbnails for a video to the panel.
+     *
+     * @param thumbnailWrapper The object which contains the thumbnails which
+     *                         will be displayed.
+     */
+    void addRow(VideoThumbnailsWrapper thumbnailWrapper) {
         synchronized (this) {
             thumbnailListModel.addElement(thumbnailWrapper);
         }
@@ -65,7 +98,7 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
 
         thumbnailList.setModel(thumbnailListModel);
         thumbnailList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        thumbnailList.setCellRenderer(new ThumbnailPanel());
+        thumbnailList.setCellRenderer(new VideoThumbnailPanel());
         thumbnailListScrollPane.setViewportView(thumbnailList);
 
         add(thumbnailListScrollPane, java.awt.BorderLayout.CENTER);
@@ -73,7 +106,7 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<ThumbnailsWrapper> thumbnailList;
+    private javax.swing.JList<VideoThumbnailsWrapper> thumbnailList;
     private javax.swing.JScrollPane thumbnailListScrollPane;
     // End of variables declaration//GEN-END:variables
 

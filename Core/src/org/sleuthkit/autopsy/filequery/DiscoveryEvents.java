@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 

@@ -335,20 +335,29 @@ class FileSearch {
                 + "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
     }
 
+    /**
+     * Get the video thumbnails for a specified AbstractFile.
+     *
+     * @param file Video file to generate thumbnails for.
+     *
+     * @return An object containing the list of video thumbnails, an array of
+     *         their timestamps, and the AbstractFile they were generated for.
+     */
     @NbBundle.Messages({"# {0} - file name",
         "FileSearch.genVideoThumb.progress.text=extracting temporary file {0}"})
-    static ThumbnailsWrapper createVideoThumbnails(AbstractFile file) {
+    static VideoThumbnailsWrapper getVideoThumbnails(AbstractFile file) {
+        //Currently this method always creates the thumbnails 
         java.io.File tempFile;
         try {
             tempFile = getVideoFileInTempDir(file);
         } catch (NoCurrentCaseException ex) {
-//            LOGGER.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
             int[] framePositions = new int[]{
                 0,
                 0,
                 0,
                 0};
-            return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+            return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
         }
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
             ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
@@ -361,11 +370,11 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                    return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
                 }
                 ContentUtils.writeToFile(file, tempFile, progress, null, true);
             } catch (IOException ex) {
-//                LOGGER.log(Level.WARNING, "Error extracting temporary file for " + ImageUtils.getContentPathSafe(file), ex); //NON-NLS
+                logger.log(Level.WARNING, "Error extracting temporary file for " + file.getParentPath() + "/" + file.getName(), ex); //NON-NLS
             } finally {
                 progress.finish();
             }
@@ -375,24 +384,24 @@ class FileSearch {
 
         try {
             if (!videoFile.open(tempFile.toString())) {
-//                LOGGER.log(Level.WARNING, "Error opening {0} for preview generation.", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                logger.log(Level.WARNING, "Error opening {0} for preview generation.", file.getParentPath() + "/" + file.getName()); //NON-NLS
                 int[] framePositions = new int[]{
                     0,
                     0,
                     0,
                     0};
-                return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
             }
             double fps = videoFile.get(5); // gets frame per second
             double totalFrames = videoFile.get(7); // gets total frames
             if (fps <= 0 || totalFrames <= 0) {
-//                LOGGER.log(Level.WARNING, "Error getting fps or total frames for {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                logger.log(Level.WARNING, "Error getting fps or total frames for {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
                 int[] framePositions = new int[]{
                     0,
                     0,
                     0,
                     0};
-                return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
             }
             if (Thread.interrupted()) {
                 int[] framePositions = new int[]{
@@ -400,22 +409,11 @@ class FileSearch {
                     0,
                     0,
                     0};
-                return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
             }
 
             double duration = 1000 * (totalFrames / fps); //total milliseconds
 
-            /*
-             * Four attempts are made to grab a frame from a video. The first
-             * attempt at 50% will give us a nice frame in the middle that gets
-             * to the heart of the content. If that fails, the next positions
-             * tried will be 25% and 75%. After three failed attempts, 1% will
-             * be tried in a last-ditch effort, the idea being the video may be
-             * corrupt and that our best chance at retrieving a frame is early
-             * on in the video.
-             *
-             * If no frame can be retrieved, no thumbnail will be created.
-             */
             int[] framePositions = new int[]{
                 (int) (duration * .01),
                 (int) (duration * .25),
@@ -426,7 +424,7 @@ class FileSearch {
             List<Image> videoThumbnails = new ArrayList<>();
             for (int i = 0; i < framePositions.length; i++) {
                 if (!videoFile.set(0, framePositions[i])) {
-//                    LOGGER.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                    logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
                     // If we can't set the time, continue to the next frame position and try again.
 
                     videoThumbnails.add(ImageUtils.getDefaultThumbnail());
@@ -434,7 +432,7 @@ class FileSearch {
                 }
                 // Read the frame into the image/matrix.
                 if (!videoFile.read(imageMatrix)) {
-//                    LOGGER.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                    logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
                     // If the image is bad for some reason, continue to the next frame position and try again.
                     videoThumbnails.add(ImageUtils.getDefaultThumbnail());
                     continue;
@@ -456,7 +454,6 @@ class FileSearch {
                 byte[] data = new byte[matrixRows * matrixColumns * (int) (imageMatrix.elemSize())];
                 imageMatrix.get(0, 0, data); //copy the image to data
 
-                //todo: this looks like we are swapping the first and third channels.  so we can use  BufferedImage.TYPE_3BYTE_BGR
                 if (imageMatrix.channels() == 3) {
                     for (int k = 0; k < data.length; k += 3) {
                         byte temp = data[k];
@@ -467,11 +464,11 @@ class FileSearch {
 
                 bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
                 if (Thread.interrupted()) {
-                    return new ThumbnailsWrapper(videoThumbnails, framePositions, file);
+                    return new VideoThumbnailsWrapper(videoThumbnails, framePositions, file);
                 }
-                videoThumbnails.add(bufferedImage == null ? ImageUtils.getDefaultThumbnail() : ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE));
+                videoThumbnails.add(ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE));
             }
-            return new ThumbnailsWrapper(videoThumbnails, framePositions, file);
+            return new VideoThumbnailsWrapper(videoThumbnails, framePositions, file);
         } finally {
             videoFile.release(); // close the file}
         }

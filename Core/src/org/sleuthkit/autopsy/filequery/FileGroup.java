@@ -21,9 +21,6 @@ package org.sleuthkit.autopsy.filequery;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Class for storing files that belong to a particular group.

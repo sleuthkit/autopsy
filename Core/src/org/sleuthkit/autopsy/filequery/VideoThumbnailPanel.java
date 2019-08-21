@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.filequery;
 
@@ -16,23 +29,28 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 
 /**
- *
+ * Class which displays thumbnails and information for a video file.
  */
-public final class ThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<ThumbnailsWrapper> {
+public final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<VideoThumbnailsWrapper> {
 
     private static final int GAP_SIZE = 4;
     private static final Color SELECTION_COLOR = new Color(100, 200, 255);
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form ThumbnailPanel
+     * Creates new form VideoThumbnailPanel
      */
-    public ThumbnailPanel() {
+    public VideoThumbnailPanel() {
         initComponents();
         this.setFocusable(true);
     }
 
-    private void addThumbnails(ThumbnailsWrapper thumbnailWrapper) {
+    /**
+     * Add the thumbnails to the panel.
+     *
+     * @param thumbnailWrapper
+     */
+    private void addThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
         imagePanel.removeAll();
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -81,8 +99,6 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
 
         imagePanel.setLayout(new java.awt.GridBagLayout());
 
-        org.openide.awt.Mnemonics.setLocalizedText(fileInfoLabel, org.openide.util.NbBundle.getMessage(ThumbnailPanel.class, "ThumbnailPanel.fileInfoLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -112,8 +128,8 @@ public final class ThumbnailPanel extends javax.swing.JPanel implements ListCell
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends ThumbnailsWrapper> list, ThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
-        fileInfoLabel.setText(value.getFileInfo());
+    public Component getListCellRendererComponent(JList<? extends VideoThumbnailsWrapper> list, VideoThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
+        fileInfoLabel.setText(value.getFilePath());
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());

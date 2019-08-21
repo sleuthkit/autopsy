@@ -61,6 +61,8 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         leftSplitPane.setRightComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
         rightSplitPane.setBottomComponent(dataContentPanel);
+        //add list selection listener so the content viewer will be updated with the selected file
+        //when a file is selected in the results panel
         resultsPanel.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {

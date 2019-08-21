@@ -25,30 +25,59 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author wschaefer
+ * Class to wrap all the information necessary for video thumbnails to be
+ * displayed.
  */
-public class ThumbnailsWrapper {
+public class VideoThumbnailsWrapper {
 
     private final List<Image> thumbnails;
     private final AbstractFile abstractFile;
     private final int[] timeStamps;
 
-    public ThumbnailsWrapper(List<Image> thumbnails, int[] timeStamps, AbstractFile file) {
+    /**
+     * Construct a new VideoThumbnailsWrapper.
+     *
+     * @param thumbnails The list of Images which are the thumbnails for the
+     *                   video.
+     * @param timeStamps An array containing the time in milliseconds into the
+     *                   video that each thumbnail created for.
+     * @param file       The AbstractFile which represents the video file which
+     *                   the thumbnails were created for.
+     */
+    public VideoThumbnailsWrapper(List<Image> thumbnails, int[] timeStamps, AbstractFile file) {
         this.thumbnails = thumbnails;
         this.timeStamps = timeStamps;
         this.abstractFile = file;
     }
 
+    /**
+     * Get the AbstractFile which represents the video file which the thumbnails
+     * were created for.
+     *
+     * @return The AbstractFile which represents the video file which the
+     *         thumbnails were created for.
+     */
     AbstractFile getAbstractFile() {
         return abstractFile;
     }
 
+    /**
+     * Get the array containing thumbnail timestamps. Each timestamp is stored
+     * as the number of milliseconds into the video each thumbnail was created
+     * at.
+     *
+     * @return The array of timestamps in milliseconds from start of video.
+     */
     int[] getTimeStamps() {
         return timeStamps.clone();
     }
 
-    String getFileInfo() {
+    /**
+     * Get the path to the file including the file name.
+     *
+     * @return The path to the file including the file name.
+     */
+    String getFilePath() {
         try {
             return abstractFile.getUniquePath();
         } catch (TskCoreException ingored) {
@@ -56,6 +85,11 @@ public class ThumbnailsWrapper {
         }
     }
 
+    /**
+     * Get the list of thumbnails for the video.
+     *
+     * @return The list of Images which are the thumbnails for the video.
+     */
     List<Image> getThumbnails() {
         return Collections.unmodifiableList(thumbnails);
     }

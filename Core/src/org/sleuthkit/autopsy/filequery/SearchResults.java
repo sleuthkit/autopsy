@@ -24,9 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Class to hold the results of the filtering/grouping/sorting operations

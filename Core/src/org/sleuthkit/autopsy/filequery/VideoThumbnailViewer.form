@@ -35,11 +35,11 @@
             </Property>
             <Property name="selectionMode" type="int" value="0"/>
             <Property name="cellRenderer" type="javax.swing.ListCellRenderer" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="new ThumbnailPanel()" type="code"/>
+              <Connection code="new org.sleuthkit.autopsy.filequery.VideoThumbnailPanel()" type="code"/>
             </Property>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ThumbnailsWrapper&gt;"/>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;org.sleuthkit.autopsy.filequery.VideoThumbnailsWrapper&gt;"/>
           </AuxValues>
         </Component>
       </SubComponents>

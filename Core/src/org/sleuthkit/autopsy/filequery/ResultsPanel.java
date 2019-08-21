@@ -59,7 +59,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final EamDb centralRepo;
     private int groupSize = 0;
     private PageWorker pageWorker;
-    private final List<ThumbnailWorker> thumbnailWorkers = new ArrayList<>();
+    private final List<SwingWorker> thumbnailWorkers = new ArrayList<>();
 
     /**
      * Creates new form ResultsPanel.
@@ -122,8 +122,8 @@ public class ResultsPanel extends javax.swing.JPanel {
     }
 
     void populateVideoViewer(List<ResultFile> files) {
-        //cancell any unfished thumb workers
-        for (ThumbnailWorker thumbWorker : thumbnailWorkers) {
+        //cancel any unfished thumb workers
+        for (SwingWorker thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
                 thumbWorker.cancel(true);
             }
@@ -132,9 +132,9 @@ public class ResultsPanel extends javax.swing.JPanel {
         thumbnailWorkers.clear();
         videoThumbnailViewer.clearViewer();
         for (ResultFile file : files) {
-            ThumbnailWorker thumbWorker = new ThumbnailWorker(file);
+            VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
             thumbWorker.execute();
-            //keep track of thumb worker for possible cancellation 
+            //keep track of thumb worker for possible cancelation 
             thumbnailWorkers.add(thumbWorker);
         }
     }
@@ -426,18 +426,18 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
 
-    private class ThumbnailWorker extends SwingWorker<Void, Void> {
+    private class VideoThumbnailWorker extends SwingWorker<Void, Void> {
 
         private final ResultFile file;
-        private ThumbnailsWrapper thumbnailWrapper;
+        private VideoThumbnailsWrapper thumbnailWrapper;
 
-        ThumbnailWorker(ResultFile file) {
+        VideoThumbnailWorker(ResultFile file) {
             this.file = file;
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            thumbnailWrapper = FileSearch.createVideoThumbnails(file.getAbstractFile());
+            thumbnailWrapper = FileSearch.getVideoThumbnails(file.getAbstractFile());
             return null;
         }
 
