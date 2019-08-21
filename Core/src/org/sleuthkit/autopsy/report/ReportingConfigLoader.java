@@ -108,7 +108,7 @@ final class ReportingConfigLoader {
         
         // read each ReportModuleSettings object individually
         for (Iterator<Entry<String, ReportModuleConfig>> iterator = moduleConfigs.entrySet().iterator(); iterator.hasNext();) {
-            ReportModuleConfig moduleConfig = (ReportModuleConfig) iterator.next().getValue();
+            ReportModuleConfig moduleConfig = iterator.next().getValue();
             filePath = reportDirPath.toString() + File.separator + moduleConfig.getModuleClassName() + REPORT_SETTINGS_FILE_EXTENSION;
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
                 moduleConfig.setModuleSettings((ReportModuleSettings) in.readObject());

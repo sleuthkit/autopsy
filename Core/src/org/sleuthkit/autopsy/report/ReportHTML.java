@@ -64,7 +64,6 @@ import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagsUtil;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -98,8 +97,8 @@ class ReportHTML implements TableReportModule {
     private String currentDataType; // name of current data type
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
-    
-    private ReportHTMLConfigurationPanel configPanel;
+
+    private final ReportHTMLConfigurationPanel configPanel = new ReportHTMLConfigurationPanel();
 
     private final ReportBranding reportBranding;
 
@@ -115,15 +114,12 @@ class ReportHTML implements TableReportModule {
     private ReportHTML() {
         reportBranding = new ReportBranding();
     }
-    
+
     @Override
     public JPanel getConfigurationPanel() {
-        if (configPanel == null) {
-            configPanel = new ReportHTMLConfigurationPanel();
-        }
         return configPanel;
     }
-    
+
     /**
      * Get default configuration for this report module.
      *
@@ -131,28 +127,38 @@ class ReportHTML implements TableReportModule {
      */
     @Override
     public ReportModuleSettings getDefaultConfiguration() {
-        return new NoReportModuleSettings();
+        return new HTMLReportModuleSettings();
     }
 
-     /**
+    /**
      * Get current configuration for this report module.
      *
      * @return Object which contains current report module settings.
      */
     @Override
     public ReportModuleSettings getConfiguration() {
-        return new NoReportModuleSettings();
+        return configPanel.getConfiguration();
     }
 
-     /**
+    /**
      * Set report module configuration.
      *
      * @param settings Object which contains report module settings.
      */
     @Override
     public void setConfiguration(ReportModuleSettings settings) {
-        // NO-OP
-    }    
+        if (settings instanceof HTMLReportModuleSettings) {
+            configPanel.setConfiguration((HTMLReportModuleSettings) settings);
+            return;
+        }
+
+        if (settings instanceof NoReportModuleSettings) {
+            configPanel.setConfiguration((HTMLReportModuleSettings) getDefaultConfiguration());
+            return;
+        }
+
+        throw new IllegalArgumentException("Expected settings argument to be an instance of HTMLReportModuleSettings");
+    }
 
     // Refesh the member variables
     private void refresh() throws NoCurrentCaseException {
@@ -337,7 +343,7 @@ class ReportHTML implements TableReportModule {
                     break;
                 case TSK_VERIFICATION_FAILED:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/validationFailed.png"); //NON-NLS
-                    break;    
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
@@ -396,10 +402,7 @@ class ReportHTML implements TableReportModule {
      */
     @Override
     public void startReport(String baseReportDir) {
-        // Save settings
-        ModuleSettings.setConfigSetting("HTMLReport", "header", configPanel.getHeader()); //NON-NLS
-        ModuleSettings.setConfigSetting("HTMLReport", "footer", configPanel.getFooter()); //NON-NLS
-        
+
         // Refresh the HTML report
         try {
             refresh();
@@ -444,7 +447,7 @@ class ReportHTML implements TableReportModule {
      * to this page, and setup the web page header. Note: This method is a
      * temporary workaround to avoid modifying the TableReportModule interface.
      *
-     * @param name    Name of the data type
+     * @param name Name of the data type
      * @param comment Comment on the data type, may be the empty string
      */
     @Override
@@ -461,9 +464,9 @@ class ReportHTML implements TableReportModule {
         try {
             StringBuilder page = new StringBuilder();
             page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n") //NON-NLS
-            .append(writePageHeader())
-            .append("<div id=\"header\">").append(name).append("</div>\n")
-            .append("<div id=\"content\">\n"); //NON-NLS
+                    .append(writePageHeader())
+                    .append("<div id=\"header\">").append(name).append("</div>\n")
+                    .append("<div id=\"content\">\n"); //NON-NLS
             if (!description.isEmpty()) {
                 page.append("<p><strong>"); //NON-NLS
                 page.append(description);
@@ -503,11 +506,11 @@ class ReportHTML implements TableReportModule {
             }
         }
     }
-    
+
     /**
      * Write HTML-formatted page header text based on the text provided in the
      * configuration panel.
-     * 
+     *
      * @return The HTML-formatted text.
      */
     private String writePageHeader() {
@@ -520,11 +523,11 @@ class ReportHTML implements TableReportModule {
         }
         return output.toString();
     }
-    
+
     /**
      * Write HTML-formatted page footer text based on the text provided in the
      * configuration panel.
-     * 
+     *
      * @return The HTML-formatted text.
      */
     private String writePageFooter() {
@@ -627,7 +630,7 @@ class ReportHTML implements TableReportModule {
      * Start a new table with the given column headers. Note: This method is a
      * temporary workaround to avoid modifying the TableReportModule interface.
      *
-     * @param columnHeaders  column headers
+     * @param columnHeaders column headers
      * @param sourceArtifact source blackboard artifact for the table data
      */
     public void startContentTagsTable(List<String> columnHeaders) {
@@ -677,9 +680,9 @@ class ReportHTML implements TableReportModule {
     /**
      * Add a row to the current table.
      *
-     * @param row        values for each cell in the row
+     * @param row values for each cell in the row
      * @param escapeText whether or not the text of the row should be escaped,
-     *                   true for escaped, false for not escaped
+     * true for escaped, false for not escaped
      */
     private void addRow(List<String> row, boolean escapeText) {
         StringBuilder builder = new StringBuilder();
@@ -704,10 +707,9 @@ class ReportHTML implements TableReportModule {
      * Saves a local copy of a tagged file and adds a row with a hyper link to
      * the file. The content of the hyperlink is provided in linkHTMLContent.
      *
-     * @param row             Values for each data cell in the row
-     * @param file            The file to link to in the report.
-     * @param tagName         the name of the tag that the content was flagged
-     *                        by
+     * @param row Values for each data cell in the row
+     * @param file The file to link to in the report.
+     * @param tagName the name of the tag that the content was flagged by
      * @param linkHTMLContent the html that will be the body of the link
      */
     public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
@@ -762,12 +764,12 @@ class ReportHTML implements TableReportModule {
             logger.log(Level.SEVERE, "Output writer is null. Page was not initialized before writing.", ex); //NON-NLS
         }
     }
-    
+
     /**
      * Finds all associated image tags.
-     * 
+     *
      * @param contentTags
-     * @return 
+     * @return
      */
     private List<ImageTagRegion> getTaggedRegions(List<ContentTag> contentTags) {
         ArrayList<ImageTagRegion> tagRegions = new ArrayList<>();
@@ -825,7 +827,7 @@ class ReportHTML implements TableReportModule {
 
             AbstractFile file = (AbstractFile) content;
             List<ContentTag> contentTags = new ArrayList<>();
-            
+
             String thumbnailPath = null;
             String imageWithTagsFullPath = null;
             try {
@@ -833,26 +835,26 @@ class ReportHTML implements TableReportModule {
                 contentTags = Case.getCurrentCase().getServices()
                         .getTagsManager().getContentTagsByContent(file);
                 List<ImageTagRegion> imageTags = getTaggedRegions(contentTags);
-                
-                if(!imageTags.isEmpty()) {
+
+                if (!imageTags.isEmpty()) {
                     //Write the tags to the fullsize and thumbnail images
                     BufferedImage fullImageWithTags = ImageTagsUtil.getImageWithTags(file, imageTags);
-                    
-                    BufferedImage thumbnailWithTags = ImageTagsUtil.getThumbnailWithTags(file, 
+
+                    BufferedImage thumbnailWithTags = ImageTagsUtil.getThumbnailWithTags(file,
                             imageTags, ImageTagsUtil.IconSize.MEDIUM);
-                    
+
                     String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(file.getName());
-                    
+
                     //Create paths in report to write tagged images
                     File thumbnailImageWithTagsFile = Paths.get(thumbsPath, FilenameUtils.removeExtension(fileName) + ".png").toFile();
                     String fullImageWithTagsPath = makeCustomUniqueFilePath(file, "thumbs_fullsize");
                     fullImageWithTagsPath = FilenameUtils.removeExtension(fullImageWithTagsPath) + ".png";
                     File fullImageWithTagsFile = Paths.get(fullImageWithTagsPath).toFile();
-                    
+
                     //Save images
                     ImageIO.write(thumbnailWithTags, "png", thumbnailImageWithTagsFile);
                     ImageIO.write(fullImageWithTags, "png", fullImageWithTagsFile);
-                    
+
                     thumbnailPath = THUMBS_REL_PATH + thumbnailImageWithTagsFile.getName();
                     //Relative path
                     imageWithTagsFullPath = fullImageWithTagsPath.substring(subPath.length());
@@ -864,10 +866,10 @@ class ReportHTML implements TableReportModule {
             }
 
             // save copies of the orginal image and thumbnail image
-            if(thumbnailPath == null) {
+            if (thumbnailPath == null) {
                 thumbnailPath = prepareThumbnail(file);
             }
-            
+
             if (thumbnailPath == null) {
                 continue;
             }
@@ -885,7 +887,7 @@ class ReportHTML implements TableReportModule {
                     .append("\" target=\"_top\"><img src=\"")
                     .append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/></a><br>") //NON-NLS
                     .append(file.getName()).append("<br>"); //NON-NLS
-            if(imageWithTagsFullPath != null) {
+            if (imageWithTagsFullPath != null) {
                 linkToThumbnail.append("<a href=\"").append(contentPath).append("\" target=\"_top\">View Original</a><br>");
             }
 
@@ -900,7 +902,7 @@ class ReportHTML implements TableReportModule {
                     linkToThumbnail.append(", ");
                 }
             }
-                
+
             linkToThumbnail.append("</div>");
             currentRow.add(linkToThumbnail.toString());
 
@@ -929,7 +931,7 @@ class ReportHTML implements TableReportModule {
                 || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
                 || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS;
     }
-    
+
     private String makeCustomUniqueFilePath(AbstractFile file, String dirName) {
         // clean up the dir name passed in
         String dirName2 = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dirName);
@@ -964,21 +966,21 @@ class ReportHTML implements TableReportModule {
         }
         localFilePath.append(File.separator);
         localFilePath.append(fileName);
-        
+
         return localFilePath.toString();
     }
 
     /**
      * Save a local copy of the given file in the reports folder.
      *
-     * @param file    File to save
+     * @param file File to save
      * @param dirName Custom top-level folder to use to store the files in (tag
-     *                name, etc.)
+     * name, etc.)
      *
      * @return Path to where file was stored (relative to root of HTML folder)
      */
     public String saveContent(AbstractFile file, String dirName) {
-        
+
         String localFilePath = makeCustomUniqueFilePath(file, dirName);
 
         // If the local file doesn't already exist, create it now.
@@ -1342,9 +1344,9 @@ class ReportHTML implements TableReportModule {
      */
     private StringBuilder writeSummaryCaseDetails() {
         StringBuilder summary = new StringBuilder();
-        
+
         final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
-        
+
         // Case
         String caseName = currentCase.getDisplayName();
         String caseNumber = currentCase.getNumber();
@@ -1355,10 +1357,10 @@ class ReportHTML implements TableReportModule {
             imagecount = 0;
         }
         String caseNotes = currentCase.getCaseNotes();
-        
+
         // Examiner
         String examinerName = currentCase.getExaminer();
-        
+
         // Start the layout.
         summary.append("<div class=\"title\">\n"); //NON-NLS
         if (agencyLogoSet) {
@@ -1371,30 +1373,30 @@ class ReportHTML implements TableReportModule {
         final String align = agencyLogoSet ? "right" : "left"; //NON-NLS NON-NLS
         summary.append("<div class=\"").append(align).append("\">\n"); //NON-NLS
         summary.append("<table>\n"); //NON-NLS
-        
+
         // Case details
         summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_case()).append("</td><td>") //NON-NLS
                 .append(formatHtmlString(caseName)).append("</td></tr>\n"); //NON-NLS
-        
+
         if (!caseNumber.isEmpty()) {
             summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNumber()).append("</td><td>") //NON-NLS
                     .append(formatHtmlString(caseNumber)).append("</td></tr>\n"); //NON-NLS
         }
-        
+
         summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNumImages()).append("</td><td>") //NON-NLS
                 .append(imagecount).append("</td></tr>\n"); //NON-NLS
-        
+
         if (!caseNotes.isEmpty()) {
             summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNotes()).append("</td><td>") //NON-NLS
                     .append(formatHtmlString(caseNotes)).append("</td></tr>\n"); //NON-NLS
         }
-        
+
         // Examiner details
         if (!examinerName.isEmpty()) {
             summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_examiner()).append("</td><td>") //NON-NLS
                     .append(formatHtmlString(examinerName)).append("</td></tr>\n"); //NON-NLS
         }
-        
+
         // End the layout.
         summary.append("</table>\n"); //NON-NLS
         summary.append("</div>\n"); //NON-NLS
@@ -1516,7 +1518,7 @@ class ReportHTML implements TableReportModule {
      * @param file The file from which to create the thumbnail.
      *
      * @return The path to the thumbnail file, or null if a thumbnail couldn't
-     *         be created.
+     * be created.
      */
     private String prepareThumbnail(AbstractFile file) {
         BufferedImage bufferedThumb = ImageUtils.getThumbnail(file, ImageUtils.ICON_SIZE_MEDIUM);

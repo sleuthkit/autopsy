@@ -32,7 +32,7 @@ final class ReportModuleConfig implements Serializable {
     private boolean enabled;
 
     /**
-     * Creates ModuleStatus object.
+     * Creates ReportModuleConfig object.
      *
      * @param module Implementation of a ReportModule interface
      * @param enabled Boolean flag whether the module is enabled
@@ -41,6 +41,19 @@ final class ReportModuleConfig implements Serializable {
         this.moduleName = module.getClass().getCanonicalName();
         this.enabled = enabled;
         this.settings = new NoReportModuleSettings();
+    }
+    
+    /**
+     * Creates ReportModuleConfig object.
+     *
+     * @param module Implementation of a ReportModule interface
+     * @param enabled Boolean flag whether the module is enabled
+     * @param settings Report module settings object
+     */
+    ReportModuleConfig(ReportModule module, boolean enabled, ReportModuleSettings settings) {
+        this.moduleName = module.getClass().getCanonicalName();
+        this.enabled = enabled;
+        this.settings = settings;
     }
 
     /**

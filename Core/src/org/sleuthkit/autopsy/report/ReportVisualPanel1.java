@@ -22,6 +22,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.ArrayList;
 import static java.util.Collections.swap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -50,7 +51,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private List<TableReportModule> tableModules = new ArrayList<>();
     private List<FileReportModule> fileModules = new ArrayList<>();
     private PortableCaseReportModule portableCaseModule;
-    private final Map<String, ReportModuleConfig> moduleConfigs;
+    private Map<String, ReportModuleConfig> moduleConfigs;
     private Integer selectedIndex;
 
     /**
@@ -120,10 +121,6 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             if (moduleConfigs == null) {
                 // get default module configuration
                 settings = module.getDefaultConfiguration();
-                // update config for this module
-                ReportModuleConfig moduleConfig = new ReportModuleConfig(module, false);
-                moduleConfig.setModuleSettings(settings);
-                moduleConfigs.put(module.getName(), moduleConfig);
             } else {
                 // get configuration for this module
                 ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
@@ -133,10 +130,6 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
                 } else {
                     // get default module configuration
                     settings = module.getDefaultConfiguration();
-                    // update config for this module
-                    ReportModuleConfig moduleConfig = new ReportModuleConfig(module, false);
-                    moduleConfig.setModuleSettings(settings);
-                    moduleConfigs.put(module.getName(), moduleConfig);
                 }
             }
             // set module configuration
@@ -230,14 +223,11 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
      * @return
      */
     Map<String, ReportModuleConfig> getUpdatedModuleConfigs() {
+        moduleConfigs = new HashMap<>();
         for (ReportModule module : modules) {
             // get updated module configuration
             ReportModuleSettings settings = module.getConfiguration();
-            
-            // update ReportModuleConfig for this module
-            ReportModuleConfig moduleConfig = new ReportModuleConfig(module, false);
-            moduleConfig.setModuleSettings(settings);
-            moduleConfigs.put(module.getName(), moduleConfig);
+            moduleConfigs.put(module.getClass().getCanonicalName(), new ReportModuleConfig(module, false, settings));
         }
         return moduleConfigs;
     }

@@ -28,6 +28,11 @@ class HTMLReportModuleSettings implements ReportModuleSettings {
     private String header;
     private String footer;
     
+    HTMLReportModuleSettings() {
+        this.header = "";
+        this.footer = "";
+    }
+    
     HTMLReportModuleSettings(String header, String footer) {
         this.header = header;
         this.footer = footer;

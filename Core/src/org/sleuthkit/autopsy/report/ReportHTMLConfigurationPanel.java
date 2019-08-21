@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-
 /**
  * The panel shown for all TableReportModules when configuring report modules.
  */
@@ -30,15 +28,9 @@ final class ReportHTMLConfigurationPanel extends javax.swing.JPanel {
      * Creates new form DefaultReportConfigurationPanel
      */
     ReportHTMLConfigurationPanel() {
-        initComponents();
-        
-        // Load settings
-        // ELTODO REMOVE
-        String header = ModuleSettings.getConfigSetting("HTMLReport", "header"); //NON-NLS
-        String footer = ModuleSettings.getConfigSetting("HTMLReport", "footer"); //NON-NLS
-        
-        headerTextField.setText(header != null ? header : "");
-        footerTextField.setText(footer != null ? footer : "");
+        initComponents();        
+        headerTextField.setText("");
+        footerTextField.setText("");
     }
     
     void setConfiguration(HTMLReportModuleSettings settings) {
