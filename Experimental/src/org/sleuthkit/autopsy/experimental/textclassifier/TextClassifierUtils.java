@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.logging.Level;
 import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
@@ -34,11 +35,11 @@ import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
 import org.apache.commons.io.IOUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -52,6 +53,8 @@ import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractor
  * classifier.
  */
 class TextClassifierUtils {
+
+    private final static Logger LOGGER = Logger.getLogger(TextClassifierUtils.class.getName());
 
     private static final Tokenizer TOKENIZER = SimpleTokenizer.INSTANCE;
 
@@ -83,12 +86,18 @@ class TextClassifierUtils {
         return fileMimeType != null && SupportedFormats.contains(fileMimeType);
     }
 
-    static String[] extractTokens(AbstractFile file) throws InitReaderException, IOException {
+    static String[] extractTokens(AbstractFile file) throws IOException {
         Reader reader;
         try {
-            reader = TextExtractorFactory.getExtractor(file).getReader();
-        } catch (NoTextExtractorFound ex) {
-            reader = TextExtractorFactory.getStringsExtractor(file, null).getReader();
+            try {
+                reader = TextExtractorFactory.getExtractor(file).getReader();
+            } catch (NoTextExtractorFound ex) {
+                LOGGER.log(Level.INFO, "Using StringsExtractor for file \"" + file.getMIMEType() + "\" of type " + file.getLocalPath());
+                reader = TextExtractorFactory.getStringsExtractor(file, null).getReader();
+            }
+        } catch (InitReaderException ex) {
+            LOGGER.log(Level.WARNING, "Cannot initialize reader for " + file.getLocalPath() + " of type " + file.getMIMEType(), ex);
+            return new String[0];
         }
         String text = IOUtils.toString(reader);
         return TOKENIZER.tokenize(text);
