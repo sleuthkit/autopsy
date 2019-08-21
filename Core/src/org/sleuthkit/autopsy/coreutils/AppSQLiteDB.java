@@ -104,12 +104,8 @@ public final class AppSQLiteDB implements Closeable {
             SleuthkitCase skCase = openCase.getSleuthkitCase();
             String parentPath = parentPathSubstr.replace("\\", "/");
             parentPath = SleuthkitCase.escapeSingleQuotes(parentPath);
-            final String whereClause = String.format("LOWER(name) LIKE LOWER(\'%%%1$s%%\') AND LOWER(parent_path) LIKE LOWER(\'%%%2$s%%\') AND data_source_obj_id = %s", dbNamePattern, parentPath, dataSource.getId());
-            absFiles = skCase.findAllFilesWhere(whereClause); //NON-NLS //get exact file names
-            if (absFiles.isEmpty()) {
-                return appDbs;
-            }
-            
+            final String whereClause = String.format("LOWER(name) LIKE LOWER(\'%%%1$s%%\') AND LOWER(name) NOT LIKE LOWER(\'%%journal%%\') AND LOWER(parent_path) LIKE LOWER(\'%%%2$s%%\') AND data_source_obj_id = " + dataSource.getId(), dbNamePattern, parentPath);
+            absFiles = skCase.findAllFilesWhere(whereClause);
             for (AbstractFile absFile : absFiles) {
                 try {
                     localDiskPath = openCase.getTempDirectory()
@@ -173,11 +169,20 @@ public final class AppSQLiteDB implements Closeable {
      * @param queryStr SQL string for the query to run
      * 
      * @return ResultSet from running the query. 
+     * 
+     * @throws TskCoreException in case of an error.
      *         
      */
-    public ResultSet runQuery(String queryStr) {
-        // RAMAN TBD
-        return null;
+    public ResultSet runQuery(String queryStr) throws TskCoreException {
+        ResultSet resultSet = null;
+        try {
+            resultSet = statement.executeQuery(queryStr); //NON-NLS
+        }
+        catch (SQLException ex) {
+            throw new TskCoreException("Error running app SQLite query. " + ex.getMessage(), ex);
+        }
+        
+        return resultSet;
     }
     
     /**
@@ -185,7 +190,6 @@ public final class AppSQLiteDB implements Closeable {
      * 
      * @throws IOException 
      */
-    
     @Override
     public void close() throws IOException {
         
