@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -39,14 +40,15 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.utils.LocalFileImporter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * A runnable that - copy the logical image folder to a destination folder - add
@@ -186,17 +188,13 @@ final class AddLogicalImageTask implements Runnable {
                 return;
             }
 
-            // ingest the root directory
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             try {
-                LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, "", "", imagePaths, new ProgressUpdater());
-                newDataSources.add(newDataSource);
-            } catch (TskCoreException | TskDataException ex) {
+                addExtractedFiles(dest, Paths.get(dest.toString(), resultsFilename), newDataSources);
+            } catch (TskCoreException | IOException ex) {
                 errorList.add(ex.getMessage());
                 LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex); // NON-NLS
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             }
-
         } else {
             createVHD = true;
             // ingest the VHDs
@@ -293,9 +291,9 @@ final class AddLogicalImageTask implements Runnable {
             int lineNumber = 2;
             while ((line = br.readLine()) != null) {
                 String[] fields = line.split("\t", -1); // NON-NLS
-                if (fields.length != 9) {
-                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
-                }
+//                if (fields.length != 9) {
+//                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
+//                }
                 String vhdFilename = fields[0];
 //                String fileSystemOffsetStr = fields[1];
                 String fileMetaAddressStr = fields[2];
@@ -317,12 +315,9 @@ final class AddLogicalImageTask implements Runnable {
                         dataSourceObjId.toString(), fileMetaAddressStr, filename.replace("'", "''"));
                 } else {
                     String parentPath = fields[8];
-                    targetImagePath = Paths.get(ROOT_STR, vhdFilename).toString();
-                    // vhdFilename have .vhd extension, we don't
-                    String tmpRootPath = targetImagePath.replace("\\", "/");
-                    String searchParentPath = "/" + tmpRootPath + "/" + parentPath;
+                    parentPath = "/" + ROOT_STR + "/" + vhdFilename + "/" + parentPath;
                     query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
-                        filename.replace("'", "''"), searchParentPath.replace("'", "''"));
+                        filename.replace("'", "''"), parentPath.replace("'", "''"));
                 }
 
                 // TODO - findAllFilesWhere should SQL-escape the query
@@ -352,6 +347,70 @@ final class AddLogicalImageTask implements Runnable {
             BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             artifact.addAttributes(attributes);
             artifacts.add(artifact);
+        }
+    }
+
+    private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, UnsupportedEncodingException, IOException {
+
+        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        SleuthkitCase.CaseDbTransaction trans = null;
+        try {
+            trans = skCase.beginTransaction();
+            LocalFilesDataSource localFilesDataSource = skCase.addLocalFilesDataSource(deviceId, this.src.getName(), timeZone, trans);
+            LocalFileImporter fileImporter = new LocalFileImporter(skCase, trans);
+
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
+                String line;
+                br.readLine(); // skip the header line
+                int lineNumber = 2;
+                while ((line = br.readLine()) != null) {
+                    String[] fields = line.split("\t", -1); // NON-NLS
+                    if (fields.length != 14) {
+                        throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 14));
+                    }
+                    String vhdFilename = fields[0];
+//                String fileSystemOffsetStr = fields[1];
+                    String fileMetaAddressStr = fields[2];
+//                String extractStatusStr = fields[3];
+                    String ruleSetName = fields[4];
+                    String ruleName = fields[5];
+//                String description = fields[6];
+                    String filename = fields[7];
+                    String parentPath = fields[8];
+                    String extractedFilePath = fields[9];
+                    String crtime = fields[10];
+                    String mtime = fields[11];
+                    String atime = fields[12];
+                    String ctime = fields[13];
+                    parentPath = ROOT_STR + "/" + vhdFilename + "/" + parentPath;
+
+                    //addLocalFile here 
+                    AbstractFile localFile = fileImporter.addLocalFile(
+                            Paths.get(src.toString(), extractedFilePath).toFile(),
+                            filename, 
+                            parentPath,
+                            Long.parseLong(ctime),
+                            Long.parseLong(crtime),
+                            Long.parseLong(atime),
+                            Long.parseLong(mtime),
+                            localFilesDataSource);
+
+                    lineNumber++;
+                } // end reading file
+
+                trans.commit();
+                newDataSources.add(localFilesDataSource);
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error adding local files", ex); // NON-NLS
+            if (null != trans) {
+                try {
+                    trans.rollback();
+                } catch (TskCoreException ex2) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to rollback transaction after exception: %s", ex.getMessage()), ex2); // NON-NLS
+                }
+            }
         }
     }
 
