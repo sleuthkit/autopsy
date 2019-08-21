@@ -348,12 +348,7 @@ class FileSearch {
                 0,
                 0,
                 0};
-            List<Image> videoThumbnails = new ArrayList<>();
-            videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-            videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-            videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-            videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-            return new ThumbnailsWrapper(videoThumbnails, framePositions, file);
+            return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
         }
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
             ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
@@ -366,12 +361,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    List<Image> videoThumbnails = new ArrayList<>();
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                    return new ThumbnailsWrapper(videoThumbnails, framePositions, file);
+                    return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
                 }
                 ContentUtils.writeToFile(file, tempFile, progress, null, true);
             } catch (IOException ex) {
@@ -391,12 +381,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                List<Image> videoThumbnails = new ArrayList<>();
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                return new ThumbnailsWrapper(videoThumbnails, framePositions, file);
+                return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
             }
             double fps = videoFile.get(5); // gets frame per second
             double totalFrames = videoFile.get(7); // gets total frames
@@ -407,12 +392,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                List<Image> videoThumbnails = new ArrayList<>();
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                return new ThumbnailsWrapper(videoThumbnails, framePositions, file);
+                return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
             }
             if (Thread.interrupted()) {
                 int[] framePositions = new int[]{
@@ -420,12 +400,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                List<Image> videoThumbnails = new ArrayList<>();
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                videoThumbnails.add(ImageUtils.getDefaultThumbnail());
-                return new ThumbnailsWrapper(videoThumbnails, framePositions, file);
+                return new ThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
             }
 
             double duration = 1000 * (totalFrames / fps); //total milliseconds
@@ -500,6 +475,21 @@ class FileSearch {
         } finally {
             videoFile.release(); // close the file}
         }
+    }
+
+    /**
+     * Private helper method for creating video thumbnails, for use when no
+     * thumbnails are created.
+     *
+     * @return List containing the default thumbnail.s
+     */
+    private static List<Image> createDefaultThumbnailList() {
+        List<Image> videoThumbnails = new ArrayList<>();
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        return videoThumbnails;
     }
 
     /**
