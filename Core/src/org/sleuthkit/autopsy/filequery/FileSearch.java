@@ -134,7 +134,7 @@ class FileSearch {
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+        Map<String, List<AbstractFile>> searchResults = runFileSearch(filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
         for (String groupName : searchResults.keySet()) {
