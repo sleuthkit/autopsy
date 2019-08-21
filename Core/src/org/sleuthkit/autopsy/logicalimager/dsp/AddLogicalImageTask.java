@@ -371,10 +371,10 @@ final class AddLogicalImageTask implements Runnable {
                     }
                     String vhdFilename = fields[0];
 //                String fileSystemOffsetStr = fields[1];
-                    String fileMetaAddressStr = fields[2];
+//                    String fileMetaAddressStr = fields[2];
 //                String extractStatusStr = fields[3];
-                    String ruleSetName = fields[4];
-                    String ruleName = fields[5];
+//                    String ruleSetName = fields[4];
+//                    String ruleName = fields[5];
 //                String description = fields[6];
                     String filename = fields[7];
                     String parentPath = fields[8];
@@ -386,7 +386,7 @@ final class AddLogicalImageTask implements Runnable {
                     parentPath = ROOT_STR + "/" + vhdFilename + "/" + parentPath;
 
                     //addLocalFile here 
-                    AbstractFile localFile = fileImporter.addLocalFile(
+                    fileImporter.addLocalFile(
                             Paths.get(src.toString(), extractedFilePath).toFile(),
                             filename, 
                             parentPath,
