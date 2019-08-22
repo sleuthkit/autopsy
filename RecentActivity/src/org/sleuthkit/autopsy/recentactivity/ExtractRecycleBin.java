@@ -201,15 +201,15 @@ final class ExtractRecycleBin extends Extract {
                 if (iFile.getParentPath().equals(rFile.getParentPath())
                         && iFile.getMetaFlagsAsString().equals(rFile.getMetaFlagsAsString())) {
                     try {
-                        postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFileName(), userName, metaData.getDeletedTimeStamp()));
+                        postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFullWindowsPath(), userName, metaData.getDeletedTimeStamp()));
                         if (rFile instanceof FsContent) {
                             if (rFile.isDir()) {
-                                AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile, metaData.getFileName());
-                                popuplateDeletedDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFileName(), metaData.getDeletedTimeStamp());
+                                AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile, metaData.getFullWindowsPath());
+                                popuplateDeletedDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFullWindowsPath(), metaData.getDeletedTimeStamp());
 
                             } else {
-                                AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile.getParent(), Paths.get(metaData.getFileName()).getParent().toString());
-                                addFileSystemFile(skCase, (FsContent)rFile, folder, Paths.get(metaData.getFileName()).getFileName().toString(), metaData.getDeletedTimeStamp());
+                                AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile.getParent(), Paths.get(metaData.getFullWindowsPath()).getParent().toString());
+                                addFileSystemFile(skCase, (FsContent)rFile, folder, Paths.get(metaData.getFullWindowsPath()).getFileName().toString(), metaData.getDeletedTimeStamp());
                             }
                         }
                     } catch (TskCoreException ex) {
