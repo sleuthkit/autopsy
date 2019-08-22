@@ -101,8 +101,9 @@ final class ExtractRecycleBin extends Extract {
             // If this doesn't work bail.
             return;
         }
+        
+        // map SIDs to user names so that we can include that in the artifact
         Map<String, String> userNameMap;
-
         try {
             userNameMap = makeUserNameMap(dataSource);
         } catch (TskCoreException ex) {
@@ -114,6 +115,7 @@ final class ExtractRecycleBin extends Extract {
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
+        // Collect all of the $R files so that we can later easily map them to corresponding $I file
         Map<String, List<AbstractFile>> rFileMap;
         try {
             rFileMap = makeRFileMap(dataSource);
@@ -122,8 +124,8 @@ final class ExtractRecycleBin extends Extract {
             return; // No $R files, no need to continue;
         }
 
+        // Get the $I files
         List<AbstractFile> iFiles;
-
         try {
             iFiles = fileManager.findFiles(dataSource, "$I%"); //NON-NLS            
         } catch (TskCoreException ex) {
@@ -133,6 +135,7 @@ final class ExtractRecycleBin extends Extract {
 
         String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
 
+        // cycle through the $I files and process each. 
         for (AbstractFile iFile : iFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
@@ -166,6 +169,7 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
 
+            // get the original name, dates, etc. from the $I file
             RecycledFileMetaData metaData;
             try {
                 metaData = parseIFile(tempFilePath);
@@ -175,6 +179,7 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
 
+            // each user has its own Recyle Bin folder.  Figure out the user name based on its name .
             String userID = getUserIDFromPath(iFile.getParentPath());
             String userName = "";
             if (!userID.isEmpty()) {
@@ -185,10 +190,9 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
 
+            // get the corresponding $R file, which is in the same folder and has the file content
             String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
-
             List<AbstractFile> rFiles = rFileMap.get(rFileName);
-
             if (rFiles == null) {
                 return;
             }
@@ -202,7 +206,13 @@ final class ExtractRecycleBin extends Extract {
                         && iFile.getMetaFlagsAsString().equals(rFile.getMetaFlagsAsString())) {
                     try {
                         postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFileName(), userName, metaData.getDeletedTimeStamp()));
+                        
+                        // If we are processing a disk image, we will also make a deleted file entry so that the user
+                        // sees the deleted file in its original folder.  We re-use the metadata address so that the user 
+                        // can see the content. 
                         if (rFile instanceof FsContent) {
+                            // if the user deleted a folder, then we need to recusively go into it.  Note the contents of the $R folder
+                            // do not have corresponding $I files anymore.  Only the $R folder does.
                             if (rFile.isDir()) {
                                 AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile, metaData.getFileName());
                                 popuplateDeletedDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFileName(), metaData.getDeletedTimeStamp());
@@ -280,7 +290,7 @@ final class ExtractRecycleBin extends Extract {
      * For versions of Windows prior to 10, header = 0x01. Windows 10+ header ==
      * 0x02
      *
-     * @param iFilePath
+     * @param iFilePath Path to local copy of file in temp folder
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -440,7 +450,7 @@ final class ExtractRecycleBin extends Extract {
 
     /**
      * Returns a folder for the given path.  If the path does not exist the
-     * the folder is created.
+     * the folder is created.  Recursively makes as many parent folders as needed.
      * 
      * @param skCase
      * @param dataSource
