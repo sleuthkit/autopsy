@@ -71,7 +71,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
             friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", "com.imo.android.imous")
             for friendsDb in friendsDbs:
                 friendsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(),
-                                                    Account.Type.MESSAGING_APP, Account.Type.MESSAGING_APP, selfAccountId )
+                                                    Account.Type.IMO, Account.Type.IMO, selfAccountId )
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
