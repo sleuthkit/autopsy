@@ -146,7 +146,7 @@ class FileSearch {
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        LinkedHashMap<String, List<ResultFile>> searchResults = runFileSearch(filters,
+        Map<String, List<ResultFile>> searchResults = runFileSearch(filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
         for (String groupName : searchResults.keySet()) {
@@ -226,7 +226,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private synchronized static LinkedHashMap<String, List<ResultFile>> runFileSearch(
+    private synchronized static Map<String, List<ResultFile>> runFileSearch(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -256,7 +256,7 @@ class FileSearch {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
         // Return a version of the results in general Java objects
-        return searchResults.toLinkedHashMap();
+        return resultHashMap;
     }
 
     /**
