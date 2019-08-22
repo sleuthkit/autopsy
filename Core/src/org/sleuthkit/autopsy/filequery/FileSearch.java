@@ -189,7 +189,7 @@ class FileSearch {
             logger.log(Level.WARNING, "Group only contains {0} files, starting entry of {1} is too large.", new Object[]{filesInGroup.size(), startingEntry});
             return page;
         }
-        // Add each page in the range
+        // Add files to the page
         for (int i = startingEntry; (i < startingEntry + numberOfEntries)
                 && (i < filesInGroup.size()); i++) {
             page.add(filesInGroup.get(i));
