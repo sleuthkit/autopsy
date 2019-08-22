@@ -82,7 +82,7 @@ hs_err_pid*.log
 /RecentActivity/release/
 /CentralRepository/release/
 
-/.idea/
+.idea/
 *.iml
 
 *.img
