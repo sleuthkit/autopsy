@@ -59,10 +59,6 @@ class AddMultipleImageTask implements Runnable {
 
     private boolean criticalErrorOccurred;
     private volatile boolean cancelled;
-    
-    private List<Content> newDataSources;
-    private List<String> errorMessages;
-    private DataSourceProcessorResult result;
 
     /**
      * Constructs a runnable that adds multiple image files to a case database.
@@ -94,19 +90,16 @@ class AddMultipleImageTask implements Runnable {
         this.callback = callback;
         this.progressMonitor = progressMonitor;
         currentCase = Case.getCurrentCaseThrows();
-        this.criticalErrorOccurred = false;
-        this.result = DataSourceProcessorResult.NO_ERRORS;
     }
 
     @Override
     public void run() {
-        newDataSources = new ArrayList<>();
-        errorMessages = new ArrayList<>();
-        
         /*
          * Try to add the input image files as images.
          */
+        List<Content> newDataSources = new ArrayList<>();
         List<String> corruptedImageFilePaths = new ArrayList<>();
+        List<String> errorMessages = new ArrayList<>();
         currentCase.getSleuthkitCase().acquireSingleUserCaseWriteLock();
         try {
             progressMonitor.setIndeterminate(true);
@@ -170,6 +163,7 @@ class AddMultipleImageTask implements Runnable {
         /*
          * Pass the results back via the callback.
          */
+        DataSourceProcessorResult result;
         if (criticalErrorOccurred) {
             result = DataSourceProcessorResult.CRITICAL_ERRORS;
         } else if (!errorMessages.isEmpty()) {
@@ -177,6 +171,8 @@ class AddMultipleImageTask implements Runnable {
         } else {
             result = DataSourceProcessorResult.NO_ERRORS;
         }
+        callback.done(result, errorMessages, newDataSources);
+        criticalErrorOccurred = false;
     }
 
     /**
@@ -272,18 +268,6 @@ class AddMultipleImageTask implements Runnable {
             errorMessages.add(Bundle.AddMultipleImageTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
             criticalErrorOccurred = true;
         }
-    }
-
-    public List<Content> getNewDataSources() {
-        return newDataSources;
-    }
-
-    public List<String> getErrorMessages() {
-        return errorMessages;
-    }
-
-    public DataSourceProcessorResult getResult() {
-        return result;
     }
 
 }

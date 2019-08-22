@@ -24,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -61,6 +62,8 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
     private static final String DISPLAY_NAME = Bundle.CTL_CaseOpenAction();
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
+    private static JDialog multiUserCaseWindow;
+    private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter caseMetadataFileFilter;
 
     /**
@@ -71,15 +74,6 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      */
     public CaseOpenAction() {
         caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), CaseMetadata.getFileExtension()), CaseMetadata.getFileExtension().substring(1));
-    }
-
-    /**
-     * Open the case selection window to allow the user to select a case
-     * metadata file (.aut file). Upon confirming the selection, it will attempt
-     * to open the case described by the file.
-     */
-    void openCaseSelectionWindow() {        
-        JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
@@ -87,7 +81,14 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
         if (null != ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE)) {
             fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
         }
-        
+    }
+
+    /**
+     * Open the case selection window to allow the user to select a case
+     * metadata file (.aut file). Upon confirming the selection, it will attempt
+     * to open the case described by the file.
+     */
+    void openCaseSelectionWindow() {
         String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
         String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
@@ -105,7 +106,9 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                 /*
                  * Close the Open Multi-User Case window, if it is open.
                  */
-                OpenMultiUserCaseDialog.getInstance().setVisible(false);
+                if (multiUserCaseWindow != null) {
+                    multiUserCaseWindow.setVisible(false);
+                }
 
                 /*
                  * Try to open the case associated with the case metadata file
@@ -157,7 +160,9 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
         if (UserPreferences.getIsMultiUserModeEnabled()) {
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-            OpenMultiUserCaseDialog multiUserCaseWindow = OpenMultiUserCaseDialog.getInstance();
+            if (multiUserCaseWindow == null) {
+                multiUserCaseWindow = OpenMultiUserCaseDialog.getInstance();
+            }
             multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
             multiUserCaseWindow.setVisible(true);
 

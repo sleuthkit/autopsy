@@ -561,13 +561,10 @@
         leading wildcard queries. -->
    <!--<field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>-->
    
-   <!-- field with white-space tokenized words for TermsComponent regex search.
-        No longer being populated by Autopsy, but remains for backward compatability.
-        content_str is used instead to better deal with regex that have white space. -->
+   <!-- field with white-space tokenized words for TermsComponent regex search (useful for fast search of IP addresses, URLs, certain phone numbers)
+		also be useful for Lucene based queries containing special characters-->
+   <!-- populated via copyField -->
    <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true" /> 
-   
-   <!-- field that contains the raw string form of the chunk. Used for regular expression
-        matching.  Populated by Autopsy using lower-case text and a copyField for file name. -->
    <field name="content_str" type="string" indexed="true" stored="true" multiValued="true" />
    
    <!-- Uncommenting the following will create a "timestamp" field using
