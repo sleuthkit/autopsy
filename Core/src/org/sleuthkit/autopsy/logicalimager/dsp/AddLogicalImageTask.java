@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -193,7 +192,7 @@ final class AddLogicalImageTask implements Runnable {
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFiles());
                 addExtractedFiles(dest, Paths.get(dest.toString(), resultsFilename), newDataSources);
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingExtractedFiles());
-            } catch (TskCoreException | IOException ex) {
+            } catch (TskCoreException ex) {
                 errorList.add(ex.getMessage());
                 LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex); // NON-NLS
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
@@ -358,7 +357,7 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
-    private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, UnsupportedEncodingException, IOException {
+    private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
         try {
@@ -426,7 +425,6 @@ final class AddLogicalImageTask implements Runnable {
                 trans.rollback();
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Failed to rollback transaction: %s", ex.getMessage()), ex); // NON-NLS
-                throw new TskCoreException("Error cancelling", ex);
             }
         }
     }
