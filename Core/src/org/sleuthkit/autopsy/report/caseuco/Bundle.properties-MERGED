@@ -1,3 +1,6 @@
+CaseUcoFormatExporter.datasourceMsg=Generating CASE-UCO Report for %s
+CaseUcoFormatExporter.finishMsg=Finished generating CASE-UCO Report
+CaseUcoFormatExporter.startMsg=Generating CASE-UCO Report
 OpenIDE-Module-Name=CaseUcoModule
 ReportCaseUco.getName.text=CASE-UCO
 ReportCaseUco.getDesc.text=CASE-UCO format report with basic property fields for every file.
