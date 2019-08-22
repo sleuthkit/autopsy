@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import org.joda.time.Instant;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -154,7 +155,7 @@ final class ExtractRecycleBin extends Extract {
      * @param tempRARecycleBinPath   Temp directory path
      */
     private void processIFile(IngestJobContext context, BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile, Map<String, String> userNameMap, Map<String, List<AbstractFile>> rFileMap, String tempRARecycleBinPath) {
-        String tempFilePath = tempRARecycleBinPath + File.separator + iFile.getName();
+        String tempFilePath = tempRARecycleBinPath + File.separator + Instant.now().toString() + iFile.getName();
         try {
             try {
                 ContentUtils.writeToFile(iFile, new File(tempFilePath));
