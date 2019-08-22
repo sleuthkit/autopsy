@@ -98,7 +98,7 @@ class ReportHTML implements TableReportModule {
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
 
-    private final ReportHTMLConfigurationPanel configPanel = new ReportHTMLConfigurationPanel();
+    private ReportHTMLConfigurationPanel configPanel;
 
     private final ReportBranding reportBranding;
 
@@ -117,7 +117,14 @@ class ReportHTML implements TableReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
+        initializePanel();
         return configPanel;
+    }
+
+    private void initializePanel() {
+        if (configPanel == null) {
+            configPanel = new ReportHTMLConfigurationPanel();
+        }
     }
 
     /**
@@ -137,6 +144,7 @@ class ReportHTML implements TableReportModule {
      */
     @Override
     public ReportModuleSettings getConfiguration() {
+        initializePanel();
         return configPanel.getConfiguration();
     }
 
@@ -147,13 +155,14 @@ class ReportHTML implements TableReportModule {
      */
     @Override
     public void setConfiguration(ReportModuleSettings settings) {
-        if (settings instanceof HTMLReportModuleSettings) {
-            configPanel.setConfiguration((HTMLReportModuleSettings) settings);
+        initializePanel();
+        if (settings == null || settings instanceof NoReportModuleSettings) {
+            configPanel.setConfiguration((HTMLReportModuleSettings) getDefaultConfiguration());
             return;
         }
 
-        if (settings instanceof NoReportModuleSettings) {
-            configPanel.setConfiguration((HTMLReportModuleSettings) getDefaultConfiguration());
+        if (settings instanceof HTMLReportModuleSettings) {
+            configPanel.setConfiguration((HTMLReportModuleSettings) settings);
             return;
         }
 

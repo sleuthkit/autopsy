@@ -33,6 +33,8 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.NoReportModuleSettings;
+import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -67,6 +69,48 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
     public String getRelativeFilePath() {
         return null;
     }
+    
+    /**
+     * Get default configuration for this report module.
+     *
+     * @return Object which contains default report module settings.
+     */
+    @Override
+    public ReportModuleSettings getDefaultConfiguration() {
+        return new HashesReportModuleSettings();
+    }
+
+    /**
+     * Get current configuration for this report module.
+     *
+     * @return Object which contains current report module settings.
+     */
+    @Override
+    public ReportModuleSettings getConfiguration() {
+        initializePanel();
+        return configPanel.getConfiguration();
+    }
+
+    /**
+     * Set report module configuration.
+     *
+     * @param settings Object which contains report module settings.
+     */
+    @Override
+    public void setConfiguration(ReportModuleSettings settings) {
+        initializePanel();
+        if (settings == null || settings instanceof NoReportModuleSettings) {
+            configPanel.setConfiguration((HashesReportModuleSettings) getDefaultConfiguration());
+            return;
+        }
+        
+        if (settings instanceof HashesReportModuleSettings) {
+            configPanel.setConfiguration((HashesReportModuleSettings) settings);
+            return;
+        }
+
+        throw new IllegalArgumentException("Expected settings argument to be an instance of HashesReportModuleSettings");
+    }    
 
     @Messages({
         "AddTaggedHashesToHashDb.error.noHashSetsSelected=No hash set selected for export.",
@@ -158,7 +202,13 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        configPanel = new AddTaggedHashesToHashDbConfigPanel();
+        initializePanel();
         return configPanel;
+    }
+    
+    private void initializePanel() {
+        if (configPanel == null) {
+            configPanel = new AddTaggedHashesToHashDbConfigPanel();
+        }
     }
 }

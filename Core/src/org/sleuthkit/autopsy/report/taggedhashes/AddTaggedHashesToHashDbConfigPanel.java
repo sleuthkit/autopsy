@@ -32,6 +32,8 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -59,6 +61,31 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     AddTaggedHashesToHashDbConfigPanel() {
         initComponents();
         customizeComponents();
+        
+        this.jAllTagsCheckBox.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                tagNamesListBox.setEnabled(!jAllTagsCheckBox.isSelected());
+                selectAllButton.setEnabled(!jAllTagsCheckBox.isSelected());
+                deselectAllButton.setEnabled(!jAllTagsCheckBox.isSelected());
+                selectAllTags(jAllTagsCheckBox.isSelected());
+            }
+        });
+    }
+    
+    HashesReportModuleSettings getConfiguration() {
+        return new HashesReportModuleSettings(jAllTagsCheckBox.isSelected(), selectedHashSet);
+    }
+    
+    void setConfiguration(HashesReportModuleSettings settings) {
+        // update tag selection
+        jAllTagsCheckBox.setSelected(settings.isExportAllTags());
+        
+        // update hash database selection
+        if (settings.getHashDb() != null) {
+            populateHashSetComponents();
+            hashSetsComboBox.setSelectedItem(settings.getHashDb());
+        }
     }
 
     private void customizeComponents() {
@@ -68,14 +95,17 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
     private void populateTagNameComponents() {
         // Get the tag names in use for the current case.
+        tagNames = new ArrayList<>();
         try {
+            // There may not be a case open when configuring report modules for Command Line execution
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
             Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
-            JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Tag Names Not Found", JOptionPane.ERROR_MESSAGE);
+            // ELTODO remove all these JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Tag Names Not Found", JOptionPane.ERROR_MESSAGE);
         } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
-            JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);
+            // There may not be a case open when configuring report modules for Command Line execution
+            Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex);
+            // ELTODO JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);
         }
 
         // Mark the tag names as unselected. Note that tagNameSelections is a
@@ -94,6 +124,9 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         tagNamesListBox.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
+                if (!jAllTagsCheckBox.isSelected()) {
+                    return;
+                }
                 JList<?> list = (JList) evt.getSource();
                 int index = list.locationToIndex(evt.getPoint());
                 if (index > -1) {
@@ -205,6 +238,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         hashSetsComboBox = new javax.swing.JComboBox<>();
         configureHashDatabasesButton = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
+        jAllTagsCheckBox = new javax.swing.JCheckBox();
 
         jScrollPane1.setViewportView(tagNamesListBox);
 
@@ -239,6 +273,13 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.jLabel2.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jAllTagsCheckBox, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.jAllTagsCheckBox.text")); // NOI18N
+        jAllTagsCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jAllTagsCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -246,19 +287,22 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel1)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(hashSetsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(configureHashDatabasesButton)))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jAllTagsCheckBox)
+                            .addComponent(jLabel1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(hashSetsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(configureHashDatabasesButton))
+                            .addComponent(jLabel2))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -267,30 +311,28 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jAllTagsCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(selectAllButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(deselectAllButton))
-                    .addComponent(jScrollPane1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(hashSetsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(configureHashDatabasesButton))
-                .addContainerGap())
+                .addGap(34, 34, 34))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
-        for (TagName tagName : tagNames) {
-            tagNameSelections.put(tagName.getDisplayName(), Boolean.TRUE);
-        }
-        tagNamesListBox.repaint();
+        selectAllTags(true);
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void hashSetsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashSetsComboBoxActionPerformed
@@ -298,10 +340,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_hashSetsComboBoxActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
-        for (TagName tagName : tagNames) {
-            tagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
-        }
-        tagNamesListBox.repaint();
+        selectAllTags(false);
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
     private void configureHashDatabasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configureHashDatabasesButtonActionPerformed
@@ -316,10 +355,25 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_configureHashDatabasesButtonActionPerformed
 
+    private void selectAllTags(boolean select) {
+        Boolean state = Boolean.TRUE;
+        if (!select) {
+            state = Boolean.FALSE;
+        }
+        for (TagName tagName : tagNames) {
+            tagNameSelections.put(tagName.getDisplayName(), state);
+        }
+        tagNamesListBox.repaint();
+    }
+    private void jAllTagsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jAllTagsCheckBoxActionPerformed
+        selectAllTags(true);
+    }//GEN-LAST:event_jAllTagsCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton configureHashDatabasesButton;
     private javax.swing.JButton deselectAllButton;
     private javax.swing.JComboBox<HashDb> hashSetsComboBox;
+    private javax.swing.JCheckBox jAllTagsCheckBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
