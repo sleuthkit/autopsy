@@ -60,6 +60,38 @@ class ReportExcel implements TableReportModule {
     }
 
     /**
+     * Get default configuration for this report module.
+     *
+     * @return Object which contains default report module settings.
+     */
+    @Override
+    public ReportModuleSettings getDefaultConfiguration() {
+        // This module does not have configuration
+        return new NoReportModuleSettings();
+    }
+
+    /**
+     * Get current configuration for this report module.
+     *
+     * @return Object which contains current report module settings.
+     */
+    @Override
+    public ReportModuleSettings getConfiguration() {
+        // This module does not have configuration
+        return new NoReportModuleSettings();
+    }
+
+    /**
+     * Set report module configuration.
+     *
+     * @param settings Object which contains report module settings.
+     */
+    @Override
+    public void setConfiguration(ReportModuleSettings settings) {
+        // This module does not have configuration
+    }
+
+    /**
      * Start the Excel report by creating the Workbook, initializing styles, and
      * writing the summary.
      *
@@ -69,7 +101,7 @@ class ReportExcel implements TableReportModule {
     public void startReport(String baseReportDir) {
         // Set the path and save it for when the report is written to disk.
         this.reportPath = baseReportDir + getRelativeFilePath();
- 
+
         // Make a workbook.
         wb = new XSSFWorkbook();
 
@@ -137,7 +169,7 @@ class ReportExcel implements TableReportModule {
      * Start a new worksheet for the given data type. Note: This method is a
      * temporary workaround to avoid modifying the TableReportModule interface.
      *
-     * @param name    Name of the data type
+     * @param name Name of the data type
      * @param comment Comment on the data type, may be the empty string
      */
     @Override
