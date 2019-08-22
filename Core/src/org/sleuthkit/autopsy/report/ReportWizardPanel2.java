@@ -98,7 +98,6 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        TableReportSettings settings = new TableReportSettings(getComponent().getArtifactStates(), getComponent().getTagStates(), useCaseSpecificData, getComponent().getSelectedReportType());
-        wiz.putProperty("tableReportSettings", settings);
+        wiz.putProperty("tableReportSettings", new TableReportSettings(getComponent().getArtifactStates(), getComponent().getTagStates(), useCaseSpecificData, getComponent().getSelectedReportType()));
     }
 }
