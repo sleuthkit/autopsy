@@ -220,17 +220,6 @@ public class FileTypeDetector {
         }
 
         /*
-         * If the file does not match an Autopsy-defined type, try to detect a
-         * text encoding with Decodetect.
-         */
-        if (null == mimeType && file.getNameExtension().equals("txt")) {
-            Charset detectedCharset = TextExtractor.getDecodetectCharset(file);
-            if (detectedCharset != null) {
-                mimeType = MimeTypes.PLAIN_TEXT;
-            }
-        }
-
-        /*
          * If the file does not match a user-defined type, send the initial
          * bytes to Tika.
          */
@@ -261,6 +250,17 @@ public class FileTypeDetector {
                         tikaType = tika.detect(secondPassTikaStream, file.getName());
                         mimeType = tikaType.replace("tika-", ""); //NON-NLS
                         mimeType = removeOptionalParameter(mimeType);
+                    }
+                } else {
+                    /*
+                     * If the file was marked as an octet stream and the extension is .txt, try to detect a text
+                     * encoding with Decodetect.
+                     */
+                    if (file.getNameExtension().equals("txt")) {
+                        Charset detectedCharset = TextExtractor.getDecodetectCharset(file);
+                        if (detectedCharset != null) {
+                            mimeType = MimeTypes.PLAIN_TEXT;
+                        }
                     }
                 }
 
