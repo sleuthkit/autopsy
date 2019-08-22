@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -51,7 +53,10 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PAT
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
@@ -134,7 +139,7 @@ final class ExtractRecycleBin extends Extract {
                 return;
             }
             
-            processIFiles(context, recycleBinArtifactType, iFile, userNameMap, rFileMap, tempRARecycleBinPath);
+            processIFiles(dataSource, context, recycleBinArtifactType, iFile, userNameMap, rFileMap, tempRARecycleBinPath);
         }
 
         (new File(tempRARecycleBinPath)).delete();
@@ -150,7 +155,7 @@ final class ExtractRecycleBin extends Extract {
      * @param userNameMap Map of user ids to names
      * @param tempRARecycleBinPath Temp directory path
      */
-    private void processIFiles(IngestJobContext context,  BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile,  Map<String, String> userNameMap, Map<String, List<AbstractFile>> rFileMap, String tempRARecycleBinPath) {
+    private void processIFiles(Content dataSource, IngestJobContext context,  BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile,  Map<String, String> userNameMap, Map<String, List<AbstractFile>> rFileMap, String tempRARecycleBinPath) {
         String tempFilePath = tempRARecycleBinPath + File.separator + iFile.getName();
         try {
             try {
@@ -188,7 +193,7 @@ final class ExtractRecycleBin extends Extract {
             if(rFiles == null) {
                 return;
             }
-
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             for (AbstractFile rFile : rFiles) {
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
@@ -198,6 +203,16 @@ final class ExtractRecycleBin extends Extract {
                         && iFile.getMetaFlagsAsString().equals(rFile.getMetaFlagsAsString())) {
                     try {
                         postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFileName(), userName, metaData.getDeletedTimeStamp()));
+                        if(rFile instanceof FsContent) {
+                            if(rFile.isDir()) {
+                                AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent)rFile, metaData.getFileName());
+                                popuplateDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFileName(), metaData.getDeletedTimeStamp());
+                                
+                            } else {
+                                AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent)rFile.getParent(), Paths.get(metaData.getFileName()).getParent().toString());
+                                addFileToDirectory(skCase, rFile, folder, Paths.get(metaData.getFileName()).getFileName().toString(), metaData.getDeletedTimeStamp());
+                            }
+                        }
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Unable to add attributes to artifact %s", rFile.getName()), ex); //NON-NLS
                     }
@@ -205,6 +220,34 @@ final class ExtractRecycleBin extends Extract {
             }
         } finally {
             (new File(tempFilePath)).delete();
+        }
+    }
+    
+    /**
+     * 
+     * @param skCase
+     * @param folder
+     * @param children
+     * @param parentPath
+     * @param deletedTimeStamp
+     * @throws TskCoreException 
+     */
+    private void popuplateDirectory(SleuthkitCase skCase, AbstractFile folder, List<Content> recycledChildren, String parentPath, long deletedTimeStamp) throws TskCoreException {
+        if (recycledChildren == null) {
+            return;
+        }
+        
+        for(Content child: recycledChildren) {
+            if(child instanceof AbstractFile) {
+                AbstractFile fileChild = (AbstractFile) child;
+                if(fileChild.isFile()) {
+                    addFileToDirectory(skCase, fileChild, folder, fileChild.getName(), deletedTimeStamp);
+                } else if(fileChild.isDir()) {
+                    String newPath = parentPath + File.separator + fileChild.getName();
+                    AbstractFile childFolder = getOrMakeFolder(skCase, (FsContent)fileChild, parentPath);
+                    popuplateDirectory(skCase, childFolder, fileChild.getChildren(), newPath, deletedTimeStamp);
+                }
+            }
         }
     }
 
@@ -383,7 +426,80 @@ final class ExtractRecycleBin extends Extract {
         
         return bba;
     }
-
+    
+    private AbstractFile getOrMakeFolder(SleuthkitCase skCase, FsContent dataSource, String path) throws TskCoreException {
+        
+        String parentPath = getParentPath(path);
+        String folderName = getFileName(path);
+        
+        List<AbstractFile> files = null;
+        if(parentPath != null) {
+            if(!parentPath.equals("/")) {
+                parentPath = parentPath + "/";
+            }
+            files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='%s' AND name='%s'", dataSource.getFileSystemId(), parentPath, folderName != null ? folderName : ""));
+        } else {
+            files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='/' AND name=''", dataSource.getFileSystemId()));
+        }
+        
+        if(files == null || files.isEmpty()) {
+            AbstractFile parent = getOrMakeFolder(skCase, dataSource, parentPath); 
+            return skCase.addVirtualDirectory(parent.getId(), folderName);
+           
+        } else {
+            return files.get(0);
+        }
+    }
+    
+    private void addFileToDirectory (SleuthkitCase skCase, AbstractFile rFile, Content parentDir, String fileName, long deletedTime) throws TskCoreException {
+        FsContent fsContent = (FsContent)rFile;
+        
+        skCase.addFileSystemFile(fsContent.getFileSystemId(), 
+                                rFile.getDataSourceObjectId(),
+                                rFile.getAttrType(),
+                                rFile.getAttributeId(),
+                                fileName,
+                                TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
+                                rFile.getSize(),
+                                0,0,0,deletedTime,
+                                rFile.getMetaAddr(),
+                                (int)rFile.getMetaSeq(),
+                                true, parentDir);
+    }
+    
+    /**
+     * 
+     * @param path
+     * @return 
+     */
+    String normalizeFilePath(String pathString) {
+        if (pathString == null || pathString.isEmpty()) {
+            return null;
+        }
+        
+        Path path = Paths.get(pathString);
+        Path rootPath = path.getRoot();
+        
+        String rootless = pathString.replace(rootPath.toString().replace("\\", ""), "");
+        return rootless.replace("\\", "/");
+    }
+    
+    String getFileName(String filePath) {
+        Path fileNamePath = Paths.get(filePath).getFileName();
+        if(fileNamePath != null) {
+            return fileNamePath.toString();
+        }
+        return filePath;
+    }
+    
+    String getParentPath(String path) {
+        Path parentPath = Paths.get(path).getParent();
+        if(parentPath != null) {
+            return normalizeFilePath(parentPath.toString());
+        }
+        return null;
+    }
+    
     /**
      * Stores the data from the $I files.
      */
@@ -430,7 +546,7 @@ final class ExtractRecycleBin extends Extract {
          * @return String name of the deleted file
          */
         String getFileName() {
-            return fileName;
+            return fileName.trim();
         }
     }
 }
