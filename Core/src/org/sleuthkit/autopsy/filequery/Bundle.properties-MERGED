@@ -165,4 +165,5 @@ ResultsPanel.invalidPageNumber.title=Invalid Page Number
 ResultsPanel.pageControlsLabel.text=Pages:
 ResultsPanel.gotoPageLabel.text=Go to Page:
 ResultsPanel.pageSizeLabel.text=Page size:
+ResultsPanel.duplicatesList.border.title=Duplicate Files
 SearchNode.getName.text=Search Result

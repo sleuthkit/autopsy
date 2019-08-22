@@ -21,17 +21,16 @@ package org.sleuthkit.autopsy.filequery;
 import java.awt.Image;
 import java.util.Collections;
 import java.util.List;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Class to wrap all the information necessary for video thumbnails to be
  * displayed.
  */
-public class VideoThumbnailsWrapper {
+final class VideoThumbnailsWrapper {
 
     private final List<Image> thumbnails;
-    private final AbstractFile abstractFile;
+    private final ResultFile resultFile;
     private final int[] timeStamps;
 
     /**
@@ -41,24 +40,24 @@ public class VideoThumbnailsWrapper {
      *                   video.
      * @param timeStamps An array containing the time in milliseconds into the
      *                   video that each thumbnail created for.
-     * @param file       The AbstractFile which represents the video file which
+     * @param file       The ResultFile which represents the video file which
      *                   the thumbnails were created for.
      */
-    public VideoThumbnailsWrapper(List<Image> thumbnails, int[] timeStamps, AbstractFile file) {
+    VideoThumbnailsWrapper(List<Image> thumbnails, int[] timeStamps, ResultFile file) {
         this.thumbnails = thumbnails;
         this.timeStamps = timeStamps;
-        this.abstractFile = file;
+        this.resultFile = file;
     }
 
     /**
-     * Get the AbstractFile which represents the video file which the thumbnails
+     * Get the ResultFile which represents the video file which the thumbnails
      * were created for.
      *
-     * @return The AbstractFile which represents the video file which the
+     * @return The ResultFile which represents the video file which the
      *         thumbnails were created for.
      */
-    AbstractFile getAbstractFile() {
-        return abstractFile;
+    ResultFile getResultFile() {
+        return resultFile;
     }
 
     /**
@@ -79,9 +78,9 @@ public class VideoThumbnailsWrapper {
      */
     String getFilePath() {
         try {
-            return abstractFile.getUniquePath();
+            return resultFile.getAbstractFile().getUniquePath();
         } catch (TskCoreException ingored) {
-            return abstractFile.getParentPath() + "/" + abstractFile.getName();
+            return resultFile.getAbstractFile().getParentPath() + "/" + resultFile.getAbstractFile().getName();
         }
     }
 

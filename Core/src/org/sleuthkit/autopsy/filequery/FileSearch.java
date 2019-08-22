@@ -345,7 +345,8 @@ class FileSearch {
      */
     @NbBundle.Messages({"# {0} - file name",
         "FileSearch.genVideoThumb.progress.text=extracting temporary file {0}"})
-    static VideoThumbnailsWrapper getVideoThumbnails(AbstractFile file) {
+    static VideoThumbnailsWrapper getVideoThumbnails(ResultFile resultFile) {
+        AbstractFile file = resultFile.getAbstractFile();
         //Currently this method always creates the thumbnails 
         java.io.File tempFile;
         try {
@@ -357,7 +358,7 @@ class FileSearch {
                 0,
                 0,
                 0};
-            return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+            return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, resultFile);
         }
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
             ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
@@ -370,7 +371,7 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                    return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, resultFile);
                 }
                 ContentUtils.writeToFile(file, tempFile, progress, null, true);
             } catch (IOException ex) {
@@ -390,7 +391,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, resultFile);
             }
             double fps = videoFile.get(5); // gets frame per second
             double totalFrames = videoFile.get(7); // gets total frames
@@ -401,7 +402,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, resultFile);
             }
             if (Thread.interrupted()) {
                 int[] framePositions = new int[]{
@@ -409,7 +410,7 @@ class FileSearch {
                     0,
                     0,
                     0};
-                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, resultFile);
             }
 
             double duration = 1000 * (totalFrames / fps); //total milliseconds
@@ -464,11 +465,11 @@ class FileSearch {
 
                 bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
                 if (Thread.interrupted()) {
-                    return new VideoThumbnailsWrapper(videoThumbnails, framePositions, file);
+                    return new VideoThumbnailsWrapper(videoThumbnails, framePositions, resultFile);
                 }
                 videoThumbnails.add(ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE));
             }
-            return new VideoThumbnailsWrapper(videoThumbnails, framePositions, file);
+            return new VideoThumbnailsWrapper(videoThumbnails, framePositions, resultFile);
         } finally {
             videoFile.release(); // close the file}
         }

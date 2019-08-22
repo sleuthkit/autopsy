@@ -22,6 +22,8 @@ import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.DefaultListModel;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
@@ -37,6 +39,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel for displaying of file discovery results and handling the paging of
@@ -60,6 +63,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private int groupSize = 0;
     private PageWorker pageWorker;
     private final List<SwingWorker> thumbnailWorkers = new ArrayList<>();
+    private final DefaultListModel<String> duplicatesListModel = new DefaultListModel<>();
 
     /**
      * Creates new form ResultsPanel.
@@ -71,6 +75,20 @@ public class ResultsPanel extends javax.swing.JPanel {
         tableViewer = new DataResultViewerTable(explorerManager);
         videoThumbnailViewer = new VideoThumbnailViewer();
         // Disable manual editing of page size spinner
+        videoThumbnailViewer.addListSelectionListener((e) -> {
+            SwingUtilities.invokeLater(() -> {
+                duplicatesListModel.removeAllElements();
+                for (AbstractFile file : getSelectedDuplicates()) {
+                    String name;
+                    try {
+                        name = file.getUniquePath();
+                    } catch (TskCoreException ingored) {
+                        name = file.getParentPath() + "/" + file.getName();
+                    }
+                    duplicatesListModel.addElement(name);
+                }
+            });
+        });
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
 
@@ -80,6 +98,13 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     AbstractFile getSelectedFile() {
         return videoThumbnailViewer.getSelectedFile();
+    }
+
+    private List<AbstractFile> getSelectedDuplicates() {
+        if (resultType == FileSearchData.FileType.VIDEO) {
+            return videoThumbnailViewer.getDuplicatesForSelected();
+        }
+        return new ArrayList<>();
     }
 
     /**
@@ -226,6 +251,10 @@ public class ResultsPanel extends javax.swing.JPanel {
         javax.swing.JLabel gotoPageLabel = new javax.swing.JLabel();
         gotoPageField = new javax.swing.JTextField();
         javax.swing.JLabel pageSizeLabel = new javax.swing.JLabel();
+        resultsSplitPane = new javax.swing.JSplitPane();
+        duplicatesPanel = new javax.swing.JPanel();
+        duplicatesScrollPane = new javax.swing.JScrollPane();
+        duplicatesList = new javax.swing.JList<>();
         resultsViewerPanel = new javax.swing.JPanel();
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -307,7 +336,7 @@ public class ResultsPanel extends javax.swing.JPanel {
                 .addComponent(pageSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pageSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(81, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pagingPanelLayout.setVerticalGroup(
             pagingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -327,21 +356,49 @@ public class ResultsPanel extends javax.swing.JPanel {
                 .addGap(4, 4, 4))
         );
 
+        resultsSplitPane.setDividerLocation(250);
+        resultsSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        resultsSplitPane.setResizeWeight(0.9);
+        resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 125));
+
+        duplicatesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.duplicatesList.border.title"))); // NOI18N
+        duplicatesList.setModel(duplicatesListModel);
+        duplicatesScrollPane.setViewportView(duplicatesList);
+
+        javax.swing.GroupLayout duplicatesPanelLayout = new javax.swing.GroupLayout(duplicatesPanel);
+        duplicatesPanel.setLayout(duplicatesPanelLayout);
+        duplicatesPanelLayout.setHorizontalGroup(
+            duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 775, Short.MAX_VALUE)
+            .addGroup(duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(duplicatesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+        );
+        duplicatesPanelLayout.setVerticalGroup(
+            duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 52, Short.MAX_VALUE)
+            .addGroup(duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(duplicatesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE))
+        );
+
+        resultsSplitPane.setRightComponent(duplicatesPanel);
+
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
+        resultsSplitPane.setLeftComponent(resultsViewerPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(pagingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 62, Short.MAX_VALUE))
+                .addComponent(resultsSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -418,11 +475,15 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel currentPageLabel;
+    private javax.swing.JList<String> duplicatesList;
+    private javax.swing.JPanel duplicatesPanel;
+    private javax.swing.JScrollPane duplicatesScrollPane;
     private javax.swing.JTextField gotoPageField;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JSpinner pageSizeSpinner;
     private javax.swing.JPanel pagingPanel;
     private javax.swing.JButton previousPageButton;
+    private javax.swing.JSplitPane resultsSplitPane;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
 
@@ -437,7 +498,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            thumbnailWrapper = FileSearch.getVideoThumbnails(file.getAbstractFile());
+            thumbnailWrapper = FileSearch.getVideoThumbnails(file);
             return null;
         }
 
