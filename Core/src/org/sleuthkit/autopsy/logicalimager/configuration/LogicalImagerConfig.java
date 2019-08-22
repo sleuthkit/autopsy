@@ -85,13 +85,13 @@ class LogicalImagerConfig {
         String version,
         boolean finalizeImageWriter,
         boolean promptBeforeExit,
-        boolean creatVHD,
+        boolean createVHD,
         List<LogicalImagerRuleSet> ruleSets
     ) {
         this.version = version;
         this.finalizeImageWriter = finalizeImageWriter;
         this.promptBeforeExit = promptBeforeExit;
-        this.createVHD = creatVHD;
+        this.createVHD = createVHD;
         this.ruleSets = ruleSets;
     }
 

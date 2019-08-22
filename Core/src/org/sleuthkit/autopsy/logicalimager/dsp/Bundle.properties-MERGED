@@ -2,6 +2,7 @@
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
 
+AddLogicalImageTask.addingExtractedFiles=Adding extracted files
 AddLogicalImageTask.addingInterestingFiles=Adding search results as interesting files
 # {0} - file
 AddLogicalImageTask.addingToReport=Adding {0} to report
@@ -15,6 +16,7 @@ AddLogicalImageTask.cannotFindFiles=Cannot find {0} in {1}
 AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}
 # {0} - sparseImageDirectory
 AddLogicalImageTask.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
+AddLogicalImageTask.doneAddingExtractedFiles=Done adding extracted files
 AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as interesting files
 # {0} - file
 AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
@@ -30,9 +32,6 @@ AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
 # {0} - file
 AddLogicalImageTask.failToGetCanonicalPath=Fail to get canonical path for {0}
 AddLogicalImageTask.ingestionCancelled=Ingestion cancelled
-# {0} - parent path
-# {1} - filename
-AddLogicalImageTask.localFileAddProgress=Adding: {0}/{1}
 AddLogicalImageTask.noCurrentCase=No current case
 # {0} - line number
 # {1} - fields length

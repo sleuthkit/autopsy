@@ -36,7 +36,6 @@ import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -107,7 +106,9 @@ final class AddLogicalImageTask implements Runnable {
         "AddLogicalImageTask.addingInterestingFiles=Adding search results as interesting files",
         "AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as interesting files",
         "# {0} - SearchResults.txt", "# {1} - directory", "AddLogicalImageTask.cannotFindFiles=Cannot find {0} in {1}",
-        "# {0} - reason", "AddLogicalImageTask.failedToAddInterestingFiles=Failed to add interesting files: {0}"
+        "# {0} - reason", "AddLogicalImageTask.failedToAddInterestingFiles=Failed to add interesting files: {0}",
+        "AddLogicalImageTask.addingExtractedFiles=Adding extracted files",
+        "AddLogicalImageTask.doneAddingExtractedFiles=Done adding extracted files",
     })
     @Override
     public void run() {
@@ -189,11 +190,14 @@ final class AddLogicalImageTask implements Runnable {
             }
 
             try {
+                progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFiles());
                 addExtractedFiles(dest, Paths.get(dest.toString(), resultsFilename), newDataSources);
+                progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingExtractedFiles());
             } catch (TskCoreException | IOException ex) {
                 errorList.add(ex.getMessage());
                 LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex); // NON-NLS
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                return;
             }
         } else {
             createVHD = true;
@@ -209,6 +213,7 @@ final class AddLogicalImageTask implements Runnable {
                 String msg = Bundle.AddLogicalImageTask_noCurrentCase();
                 errorList.add(msg);
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                return;
             }
         }
 
@@ -290,10 +295,13 @@ final class AddLogicalImageTask implements Runnable {
             br.readLine(); // skip the header line
             int lineNumber = 2;
             while ((line = br.readLine()) != null) {
+                if (cancelled) {
+                    return;
+                }
                 String[] fields = line.split("\t", -1); // NON-NLS
-//                if (fields.length != 9) {
-//                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
-//                }
+                if (fields.length != 14) {
+                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
+                }
                 String vhdFilename = fields[0];
 //                String fileSystemOffsetStr = fields[1];
                 String fileMetaAddressStr = fields[2];
@@ -344,14 +352,13 @@ final class AddLogicalImageTask implements Runnable {
         BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName);
         attributes.add(ruleNameAttribute);
         if (!blackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
-            BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            BlackboardArtifact artifact = this.currentCase.getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, file.getId());
             artifact.addAttributes(attributes);
             artifacts.add(artifact);
         }
     }
 
     private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, UnsupportedEncodingException, IOException {
-
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
         try {
@@ -365,16 +372,20 @@ final class AddLogicalImageTask implements Runnable {
                 br.readLine(); // skip the header line
                 int lineNumber = 2;
                 while ((line = br.readLine()) != null) {
+                    if (cancelled) {
+                        rollbackTransaction(trans);
+                        return;
+                    }
                     String[] fields = line.split("\t", -1); // NON-NLS
                     if (fields.length != 14) {
                         throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 14));
                     }
                     String vhdFilename = fields[0];
 //                String fileSystemOffsetStr = fields[1];
-//                    String fileMetaAddressStr = fields[2];
+//                String fileMetaAddressStr = fields[2];
 //                String extractStatusStr = fields[3];
-//                    String ruleSetName = fields[4];
-//                    String ruleName = fields[5];
+//                String ruleSetName = fields[4];
+//                String ruleName = fields[5];
 //                String description = fields[6];
                     String filename = fields[7];
                     String parentPath = fields[8];
@@ -398,48 +409,26 @@ final class AddLogicalImageTask implements Runnable {
 
                     lineNumber++;
                 } // end reading file
-
-                trans.commit();
-                newDataSources.add(localFilesDataSource);
             }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding local files", ex); // NON-NLS
-            if (null != trans) {
-                try {
-                    trans.rollback();
-                } catch (TskCoreException ex2) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to rollback transaction after exception: %s", ex.getMessage()), ex2); // NON-NLS
-                }
+            trans.commit();
+            newDataSources.add(localFilesDataSource);
+
+        } catch (IOException | NumberFormatException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error adding extracted files", ex); // NON-NLS
+            rollbackTransaction(trans);
+            throw new TskCoreException("Error adding extracted files", ex);
+        }
+    }
+
+    private void rollbackTransaction(SleuthkitCase.CaseDbTransaction trans) throws TskCoreException {
+        if (null != trans) {
+            try {
+                trans.rollback();
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Failed to rollback transaction: %s", ex.getMessage()), ex); // NON-NLS
+                throw new TskCoreException("Error cancelling", ex);
             }
         }
     }
 
-    /**
-     * Updates task progress as the file manager adds the local/logical files
-     * and/or directories to the case database.
-     */
-    @Messages({
-        "# {0} - parent path", "# {1} - filename", "AddLogicalImageTask.localFileAddProgress=Adding: {0}/{1}",
-    })    
-    private class ProgressUpdater implements FileManager.FileAddProgressUpdater {
-
-        private int count;
-
-        /**
-         * Updates task progress (called by the file manager after it adds each
-         * local file/directory to the case database).
-         */
-        @Override
-        public void fileAdded(final AbstractFile file) {
-            ++count;
-            if (count % 10 == 0) {
-                progressMonitor.setProgressText(
-                    Bundle.AddLogicalImageTask_localFileAddProgress(
-                        file.getParentPath(),
-                        file.getName()
-                    )
-                );
-            }
-        }
-    }
 }

@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskDataException;
  * case database, grouped under a virtual directory that serves as the data
  * source.
  */
-public class AddLocalFilesTask implements Runnable {
+class AddLocalFilesTask implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(AddLocalFilesTask.class.getName());
     private final String deviceId;
@@ -68,7 +68,7 @@ public class AddLocalFilesTask implements Runnable {
      *                                 during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    public AddLocalFilesTask(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddLocalFilesTask(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.rootVirtualDirectoryName = rootVirtualDirectoryName;
         this.localFilePaths = localFilePaths;
@@ -88,7 +88,7 @@ public class AddLocalFilesTask implements Runnable {
         try {
             progress.setIndeterminate(true);
             FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
-            LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, "", "", localFilePaths, new ProgressUpdater());
+            LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, "", localFilePaths, new ProgressUpdater());
             newDataSources.add(newDataSource);
         } catch (TskDataException | TskCoreException | NoCurrentCaseException ex) {
             errors.add(ex.getMessage());
