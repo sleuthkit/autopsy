@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -87,7 +86,7 @@ final class ExtractRecycleBin extends Extract {
         // At this time it was decided that we would not include TSK_RECYCLE_BIN
         // in the default list of BlackboardArtifact types.
         try {
-           createRecycleBinArtifactType();
+            createRecycleBinArtifactType();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("%s may not have been created.", RECYCLE_BIN_ARTIFACT_NAME), ex);
         }
@@ -102,16 +101,16 @@ final class ExtractRecycleBin extends Extract {
             return;
         }
         Map<String, String> userNameMap;
-        
+
         try {
             userNameMap = makeUserNameMap(dataSource);
         } catch (TskCoreException ex) {
-           logger.log(Level.WARNING, "Unable to create OS Account user name map", ex);
-           // This is not the end of the world we will just continue without 
-           // user names
-           userNameMap = new HashMap<>();
+            logger.log(Level.WARNING, "Unable to create OS Account user name map", ex);
+            // This is not the end of the world we will just continue without 
+            // user names
+            userNameMap = new HashMap<>();
         }
-        
+
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
         Map<String, List<AbstractFile>> rFileMap;
@@ -130,7 +129,7 @@ final class ExtractRecycleBin extends Extract {
             logger.log(Level.WARNING, "Unable to find recycle bin I files.", ex); //NON-NLS
             return;  // No need to continue
         }
-        
+
         String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
 
         for (AbstractFile iFile : iFiles) {
@@ -138,24 +137,23 @@ final class ExtractRecycleBin extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
-            
-            processIFiles(dataSource, context, recycleBinArtifactType, iFile, userNameMap, rFileMap, tempRARecycleBinPath);
+
+            processIFile(context, recycleBinArtifactType, iFile, userNameMap, rFileMap, tempRARecycleBinPath);
         }
 
         (new File(tempRARecycleBinPath)).delete();
     }
-    
+
     /**
      * Process each individual iFile.
-     * 
-     * @param dataSource
+     *
      * @param context
      * @param recycleBinArtifactType Module created artifact type
-     * @param iFile The AbstractFile to process
-     * @param userNameMap Map of user ids to names
-     * @param tempRARecycleBinPath Temp directory path
+     * @param iFile                  The AbstractFile to process
+     * @param userNameMap            Map of user ids to names
+     * @param tempRARecycleBinPath   Temp directory path
      */
-    private void processIFiles(Content dataSource, IngestJobContext context,  BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile,  Map<String, String> userNameMap, Map<String, List<AbstractFile>> rFileMap, String tempRARecycleBinPath) {
+    private void processIFile(IngestJobContext context, BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile, Map<String, String> userNameMap, Map<String, List<AbstractFile>> rFileMap, String tempRARecycleBinPath) {
         String tempFilePath = tempRARecycleBinPath + File.separator + iFile.getName();
         try {
             try {
@@ -187,10 +185,10 @@ final class ExtractRecycleBin extends Extract {
             }
 
             String rFileName = iFile.getName().replace("$I", "$R"); //NON-NLS
-            
+
             List<AbstractFile> rFiles = rFileMap.get(rFileName);
-            
-            if(rFiles == null) {
+
+            if (rFiles == null) {
                 return;
             }
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -199,18 +197,18 @@ final class ExtractRecycleBin extends Extract {
                     return;
                 }
 
-                if (iFile.getParentPath().equals(rFile.getParentPath()) 
+                if (iFile.getParentPath().equals(rFile.getParentPath())
                         && iFile.getMetaFlagsAsString().equals(rFile.getMetaFlagsAsString())) {
                     try {
                         postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFileName(), userName, metaData.getDeletedTimeStamp()));
-                        if(rFile instanceof FsContent) {
-                            if(rFile.isDir()) {
-                                AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent)rFile, metaData.getFileName());
-                                popuplateDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFileName(), metaData.getDeletedTimeStamp());
-                                
+                        if (rFile instanceof FsContent) {
+                            if (rFile.isDir()) {
+                                AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile, metaData.getFileName());
+                                popuplateDeletedDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFileName(), metaData.getDeletedTimeStamp());
+
                             } else {
-                                AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent)rFile.getParent(), Paths.get(metaData.getFileName()).getParent().toString());
-                                addFileToDirectory(skCase, rFile, folder, Paths.get(metaData.getFileName()).getFileName().toString(), metaData.getDeletedTimeStamp());
+                                AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile.getParent(), Paths.get(metaData.getFileName()).getParent().toString());
+                                addFileSystemFile(skCase, (FsContent)rFile, folder, Paths.get(metaData.getFileName()).getFileName().toString(), metaData.getDeletedTimeStamp());
                             }
                         }
                     } catch (TskCoreException ex) {
@@ -222,30 +220,35 @@ final class ExtractRecycleBin extends Extract {
             (new File(tempFilePath)).delete();
         }
     }
-    
+
     /**
-     * 
-     * @param skCase
-     * @param folder
-     * @param children
-     * @param parentPath
-     * @param deletedTimeStamp
-     * @throws TskCoreException 
+     * Add the children of recycled $R folder to the folder.
+     *
+     * @param skCase           The current Sleuthkit case
+     * @param parentFolder     The folder to folder the deleted files are to be
+     *                         added.
+     * @param children         The recycled children of the $R folder
+     * @param parentPath       String path to the directory the children were
+     *                         deleted from
+     * @param deletedTimeStamp The time at which the files were deleted,
+     *                         inherited from the $R file.
+     *
+     * @throws TskCoreException
      */
-    private void popuplateDirectory(SleuthkitCase skCase, AbstractFile folder, List<Content> recycledChildren, String parentPath, long deletedTimeStamp) throws TskCoreException {
+    private void popuplateDeletedDirectory(SleuthkitCase skCase, AbstractFile parentFolder, List<Content> recycledChildren, String parentPath, long deletedTimeStamp) throws TskCoreException {
         if (recycledChildren == null) {
             return;
         }
-        
-        for(Content child: recycledChildren) {
-            if(child instanceof AbstractFile) {
-                AbstractFile fileChild = (AbstractFile) child;
-                if(fileChild.isFile()) {
-                    addFileToDirectory(skCase, fileChild, folder, fileChild.getName(), deletedTimeStamp);
-                } else if(fileChild.isDir()) {
-                    String newPath = parentPath + File.separator + fileChild.getName();
-                    AbstractFile childFolder = getOrMakeFolder(skCase, (FsContent)fileChild, parentPath);
-                    popuplateDirectory(skCase, childFolder, fileChild.getChildren(), newPath, deletedTimeStamp);
+
+        for (Content child : recycledChildren) {
+            if (child instanceof FsContent) {
+                FsContent fsContent = (FsContent) child;
+                if (fsContent.isFile()) {
+                    addFileSystemFile(skCase, fsContent, parentFolder, fsContent.getName(), deletedTimeStamp);
+                } else if (fsContent.isDir()) {
+                    String newPath = parentPath + "\\" + fsContent.getName();
+                    AbstractFile childFolder = getOrMakeFolder(skCase, (FsContent) fsContent, parentPath);
+                    popuplateDeletedDirectory(skCase, childFolder, fsContent.getChildren(), newPath, deletedTimeStamp);
                 }
             }
         }
@@ -290,7 +293,7 @@ final class ExtractRecycleBin extends Extract {
         long version = byteBuffer.getLong();
         long fileSize = byteBuffer.getLong();
         long timestamp = byteBuffer.getLong();
-  
+
         // Convert from windows FILETIME to Unix Epoch seconds
         timestamp = Util.filetimeToMillis(timestamp) / 1000;
 
@@ -307,71 +310,73 @@ final class ExtractRecycleBin extends Extract {
 
         return new RecycledFileMetaData(fileSize, timestamp, fileName);
     }
-    
+
     /**
      * Create a map of userids to usernames from the OS Accounts.
-     * 
+     *
      * @param dataSource
-     * 
+     *
      * @return A Map of userIDs and userNames
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException{
+    private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
         Map<String, String> userNameMap = new HashMap<>();
-      
+
         List<BlackboardArtifact> accounts = blackboard.getArtifacts(TSK_OS_ACCOUNT.getTypeID(), dataSource.getId());
-        
-        for (BlackboardArtifact account: accounts) {
+
+        for (BlackboardArtifact account : accounts) {
             BlackboardAttribute nameAttribute = getAttributeForArtifact(account, TSK_USER_NAME);
             BlackboardAttribute idAttribute = getAttributeForArtifact(account, TSK_USER_ID);
-            
+
             String userName = nameAttribute != null ? nameAttribute.getDisplayString() : "";
             String userID = idAttribute != null ? idAttribute.getDisplayString() : "";
-            
+
             if (!userID.isEmpty()) {
                 userNameMap.put(userID, userName);
             }
         }
-        
+
         return userNameMap;
     }
-    
+
     /**
-     * Get a list of files that start with $R and create a map of the file to 
+     * Get a list of files that start with $R and create a map of the file to
      * their name.
-     * 
+     *
      * @param dataSource
+     *
      * @return File map
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    private Map<String, List<AbstractFile>> makeRFileMap(Content dataSource) throws TskCoreException{
+    private Map<String, List<AbstractFile>> makeRFileMap(Content dataSource) throws TskCoreException {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         List<AbstractFile> rFiles = fileManager.findFiles(dataSource, "$R%");
         Map<String, List<AbstractFile>> fileMap = new HashMap<>();
-        
-        for (AbstractFile rFile: rFiles) {
+
+        for (AbstractFile rFile : rFiles) {
             String fileName = rFile.getName();
             List<AbstractFile> fileList = fileMap.get(fileName);
-            
-            if(fileList == null) {
+
+            if (fileList == null) {
                 fileList = new ArrayList<>();
                 fileMap.put(fileName, fileList);
             }
-            
+
             fileList.add(rFile);
         }
-        
+
         return fileMap;
     }
-    
+
     /**
      * Helper functions to get the user ID from the iFile parent path. User ids
      * will be of the form S-<more characters>.
-     * 
+     *
      * @param iFileParentPath String parent path of the iFile
-     * 
-     * @return String user id 
+     *
+     * @return String user id
      */
     private String getUserIDFromPath(String iFileParentPath) {
         int index = iFileParentPath.indexOf('-') - 1;
@@ -381,125 +386,175 @@ final class ExtractRecycleBin extends Extract {
             return "";
         }
     }
-    
+
     /**
      * Gets the attribute for the given type from the given artifact.
-     * 
+     *
      * @param artifact BlackboardArtifact to get the attribute from
-     * @param type The BlackboardAttribute Type to get
-     * 
+     * @param type     The BlackboardAttribute Type to get
+     *
      * @return BlackboardAttribute for given artifact and type
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    private BlackboardAttribute getAttributeForArtifact(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException{
-       return artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(type.getTypeID())));
+    private BlackboardAttribute getAttributeForArtifact(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException {
+        return artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(type.getTypeID())));
     }
-    
+
+    /**
+     * Create TSK_RECYCLE_BIN artifact type.
+     *
+     * @throws TskCoreException
+     */
     private void createRecycleBinArtifactType() throws TskCoreException {
-         try {
+        try {
             tskCase.addBlackboardArtifactType(RECYCLE_BIN_ARTIFACT_NAME, "Recycle Bin"); //NON-NLS
         } catch (TskDataException ex) {
             logger.log(Level.INFO, String.format("%s may have already been defined for this case", RECYCLE_BIN_ARTIFACT_NAME));
         }
 
     }
-    
+
     /**
      * Create the new artifact for the give rFile
-     * 
-     * @param rFile AbstractFile to create the artifact for
-     * @param type Type of artifact to create
+     *
+     * @param rFile    AbstractFile to create the artifact for
+     * @param type     Type of artifact to create
      * @param fileName The original path of the deleted file
      * @param userName The name of the user that deleted the file
      * @param dateTime The time in epoch seconds that the file was deleted
-     * 
+     *
      * @return Newly created artifact
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    private BlackboardArtifact createArtifact(AbstractFile rFile, BlackboardArtifact.Type type, String fileName, String userName, long dateTime) throws TskCoreException{
+    private BlackboardArtifact createArtifact(AbstractFile rFile, BlackboardArtifact.Type type, String fileName, String userName, long dateTime) throws TskCoreException {
         BlackboardArtifact bba = rFile.newArtifact(type.getTypeID());
         bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), fileName));
         bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
         bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
-        
+
         return bba;
     }
-    
+
+    /**
+     * Returns a folder for the given path.  If the path does not exist the
+     * the folder is created.
+     * 
+     * @param skCase
+     * @param dataSource
+     * @param path
+     *
+     * @return AbstractFile for the given path.
+     *
+     * @throws TskCoreException
+     */
     private AbstractFile getOrMakeFolder(SleuthkitCase skCase, FsContent dataSource, String path) throws TskCoreException {
-        
+
         String parentPath = getParentPath(path);
         String folderName = getFileName(path);
-        
+
         List<AbstractFile> files = null;
-        if(parentPath != null) {
-            if(!parentPath.equals("/")) {
+        if (parentPath != null) {
+            if (!parentPath.equals("/")) {
                 parentPath = parentPath + "/";
             }
-            files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='%s' AND name='%s'", dataSource.getFileSystemId(), parentPath, folderName != null ? folderName : ""));
+            
+            files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='%s' AND name='%s'", 
+                    dataSource.getFileSystemId(), SleuthkitCase.escapeSingleQuotes(parentPath), folderName != null ? SleuthkitCase.escapeSingleQuotes(folderName) : ""));
         } else {
             files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='/' AND name=''", dataSource.getFileSystemId()));
         }
-        
-        if(files == null || files.isEmpty()) {
-            AbstractFile parent = getOrMakeFolder(skCase, dataSource, parentPath); 
+
+        if (files == null || files.isEmpty()) {
+            AbstractFile parent = getOrMakeFolder(skCase, dataSource, parentPath);
             return skCase.addVirtualDirectory(parent.getId(), folderName);
-           
         } else {
             return files.get(0);
         }
     }
-    
-    private void addFileToDirectory (SleuthkitCase skCase, AbstractFile rFile, Content parentDir, String fileName, long deletedTime) throws TskCoreException {
-        FsContent fsContent = (FsContent)rFile;
-        
-        skCase.addFileSystemFile(fsContent.getFileSystemId(), 
-                                rFile.getDataSourceObjectId(),
-                                rFile.getAttrType(),
-                                rFile.getAttributeId(),
-                                fileName,
-                                TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
-                                rFile.getSize(),
-                                0,0,0,deletedTime,
-                                rFile.getMetaAddr(),
-                                (int)rFile.getMetaSeq(),
-                                true, parentDir);
-    }
-    
+
     /**
+     * Adds a new file system file that is unallocated and maps to the original 
+     * file in recycle bin directory.
      * 
-     * @param path
-     * @return 
+     * @param skCase         The current case.
+     * @param recycleBinFile The file from the recycle bin.
+     * @param parentDir      The directory that the recycled file was deleted.
+     * @param fileName       The name of the file.
+     * @param deletedTime    The time the file was deleted.
+     *
+     * @throws TskCoreException
+     */
+    private void addFileSystemFile(SleuthkitCase skCase, FsContent recycleBinFile, Content parentDir, String fileName, long deletedTime) throws TskCoreException {
+        skCase.addFileSystemFile(recycleBinFile.getFileSystemId(),
+                recycleBinFile.getDataSourceObjectId(),
+                recycleBinFile.getAttrType(),
+                recycleBinFile.getAttributeId(),
+                fileName,
+                TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
+                recycleBinFile.getSize(),
+                0, 0, 0, deletedTime,
+                recycleBinFile.getMetaAddr(),
+                (int) recycleBinFile.getMetaSeq(),
+                true, parentDir);
+    }
+
+    /**
+     * Clean up the windows path string to match what the autopsy db uses.
+     *
+     * @param path The file\folder path to normalize
+     *
+     * @return New path string with the root removed (ie X:) and the slashes
+     *         changed from windows to unix.
      */
     String normalizeFilePath(String pathString) {
         if (pathString == null || pathString.isEmpty()) {
             return null;
         }
-        
+
         Path path = Paths.get(pathString);
-        Path rootPath = path.getRoot();
-        
-        String rootless = pathString.replace(rootPath.toString().replace("\\", ""), "");
-        return rootless.replace("\\", "/");
+        int nameCount = path.getNameCount();
+        if(nameCount > 0) {
+            String rootless = "/" + path.subpath(0, nameCount);
+            return rootless.replace("\\", "/");
+        } else {
+            return "/";
+        }
     }
-    
+
+    /**
+     * Helper function get from the given path either the file name or
+     * the last directory in the path.
+     * 
+     * @param filePath The file\directory path
+     *
+     * @return  If file path, returns the file name.  If directory path the 
+     *          The last directory in the path is returned.
+     */
     String getFileName(String filePath) {
         Path fileNamePath = Paths.get(filePath).getFileName();
-        if(fileNamePath != null) {
+        if (fileNamePath != null) {
             return fileNamePath.toString();
         }
         return filePath;
     }
-    
+
+    /**
+     * Returns the parent path for the given path.
+     * 
+     * @param path Path string
+     * 
+     * @return The parent path for the given path. 
+     */
     String getParentPath(String path) {
         Path parentPath = Paths.get(path).getParent();
-        if(parentPath != null) {
+        if (parentPath != null) {
             return normalizeFilePath(parentPath.toString());
         }
         return null;
     }
-    
+
     /**
      * Stores the data from the $I files.
      */
@@ -524,7 +579,7 @@ final class ExtractRecycleBin extends Extract {
 
         /**
          * Returns the size of the recycled file.
-         * 
+         *
          * @return Size of deleted file
          */
         long getFileSize() {
@@ -533,7 +588,7 @@ final class ExtractRecycleBin extends Extract {
 
         /**
          * Returns the time the file was deleted.
-         * 
+         *
          * @return deleted time in epoch seconds.
          */
         long getDeletedTimeStamp() {
@@ -542,7 +597,7 @@ final class ExtractRecycleBin extends Extract {
 
         /**
          * Returns the name of the deleted file.
-         * 
+         *
          * @return String name of the deleted file
          */
         String getFileName() {
