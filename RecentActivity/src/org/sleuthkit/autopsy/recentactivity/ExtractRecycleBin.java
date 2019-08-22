@@ -597,11 +597,12 @@ final class ExtractRecycleBin extends Extract {
         }
 
         /**
-         * Returns the name of the deleted file.
+         * Returns the full path to the deleted file or folder.  This path will 
+         * include the drive letter, ie C:\
          *
          * @return String name of the deleted file
          */
-        String getFileName() {
+        String  getFullWindowsPath() {
             return fileName.trim();
         }
     }
