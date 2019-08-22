@@ -124,7 +124,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         tagNamesListBox.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-                if (!jAllTagsCheckBox.isSelected()) {
+                if (jAllTagsCheckBox.isSelected()) {
                     return;
                 }
                 JList<?> list = (JList) evt.getSource();
@@ -327,7 +327,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(hashSetsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(configureHashDatabasesButton))
-                .addGap(34, 34, 34))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
