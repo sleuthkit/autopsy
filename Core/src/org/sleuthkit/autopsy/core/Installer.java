@@ -344,15 +344,6 @@ public class Installer extends ModuleInstall {
     }
     
     /**
-     * Make a folder in the config directory for test classifiers if one does not
-     * exist.
-     */
-    private static void ensureTextClassifierFolderExists() {
-        File textClassifierDir = new File(PlatformUtil.getTextClassifierPath());
-        textClassifierDir.mkdir();
-    }
-
-    /**
      * Make a folder in the config directory for Python Modules if one does not
      * exist.
      */
@@ -387,7 +378,6 @@ public class Installer extends ModuleInstall {
         super.restored();
         ensurePythonModulesFolderExists();
         ensureClassifierFolderExists();
-        ensureTextClassifierFolderExists();
         ensureOcrLanguagePacksFolderExists();
         initJavaFx();
         for (ModuleInstall mi : packageInstallers) {

@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getUserDirectory;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
@@ -54,19 +54,35 @@ import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractor
  */
 class TextClassifierUtils {
 
-    private final static Logger LOGGER = Logger.getLogger(TextClassifierUtils.class.getName());
-
+    private static final Logger LOGGER = Logger.getLogger(TextClassifierUtils.class.getName());
+    private static final String TEXT_CLASSIFIERS_SUBDIRECTORY = "text_classifiers"; //NON-NLS
     private static final Tokenizer TOKENIZER = SimpleTokenizer.INSTANCE;
-
     private FileTypeDetector fileTypeDetector;
-
     static final String NOTABLE_LABEL = "notable";
     static final String NONNOTABLE_LABEL = "nonnotable";
     static final int MAX_FILE_SIZE = 100000000;
-    static final String MODEL_DIR = PlatformUtil.getTextClassifierPath();
+    static final String MODEL_DIR = getTextClassifierPath();
     static final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
     static final String LANGUAGE_CODE = "en";
     static final String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
+
+    /**
+     * Get root path where the user's text classifiers are stored.
+     * 
+     * @return Absolute path to the text classifiers root directory. 
+     */
+    public static String getTextClassifierPath() {
+        return getUserDirectory().getAbsolutePath() + File.separator + TEXT_CLASSIFIERS_SUBDIRECTORY;
+    }
+    
+    /**
+     * Make a folder in the config directory for test classifiers if one does not
+     * exist.
+     */
+    private static void ensureTextClassifierFolderExists() {
+        File textClassifierDir = new File(getTextClassifierPath());
+        textClassifierDir.mkdir();
+    }
 
     TextClassifierUtils() throws IngestModuleException {
         try {
@@ -109,6 +125,7 @@ class TextClassifierUtils {
     }
 
     static DocumentCategorizerME loadModel() throws IOException {
+        ensureTextClassifierFolderExists();
         FileReader fr = new FileReader(new File(MODEL_PATH));
         NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
         reader.checkModelType();
@@ -119,6 +136,7 @@ class TextClassifierUtils {
     }
 
     static void writeModel(NaiveBayesModel model, String modelPath) throws IOException {
+        ensureTextClassifierFolderExists();
         FileWriter fw = new FileWriter(new File(modelPath));
         //TODO: Try the binary naive Bayes model writer
         PlainTextNaiveBayesModelWriter modelWriter;
