@@ -144,7 +144,14 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getName.text");
     }
 
-    @Messages({"TextClassifierTrainer.getDesc.text=Machine learning model to classify which documents are notable"})
+    @Messages({"TextClassifierTrainer.getDesc.text=Train a machine learning "
+        + "model to classify which documents are notable. Before training, "
+        + "you will need to\n"
+        + "1. run the Ingest Module for File Type Identification\n"
+        + "2. add the file tag \"Notable item (notable)\" to documents you "
+        + "know are notable.\n"
+        + "Once you've trained a model, you can classify documents by "
+        + "running the \"Text Classifier\" Ingest Module."})
     @Override
     public String getDescription() {
         return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getDesc.text");
@@ -166,14 +173,13 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         "TextClassifierTrainer.fetching.text=Fetching training documents",
         "TextClassifierTrainer.converting.text=Converting training documents",
         "TextClassifierTrainer.needNotable.text=Training set must contain at least one notable document",
-        "TextClassifierTrainer.needNonnotable.text=Training set must contain at least one nonnotable document",
-    })
+        "TextClassifierTrainer.needNonnotable.text=Training set must contain at least one nonnotable document",})
     /**
      * Fetches the training data and converts it to a format OpenNLP can use.
      *
      * @return training data usable by OpenNLP
      */
-    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException{
+    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException {
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.fetching.text"));
 
