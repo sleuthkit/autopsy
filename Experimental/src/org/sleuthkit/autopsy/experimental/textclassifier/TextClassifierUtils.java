@@ -86,21 +86,26 @@ class TextClassifierUtils {
         return fileMimeType != null && SupportedFormats.contains(fileMimeType);
     }
 
-    static String[] extractTokens(AbstractFile file) throws IOException {
+    static String[] extractTokens(AbstractFile file) {
         Reader reader;
         try {
             try {
                 reader = TextExtractorFactory.getExtractor(file).getReader();
             } catch (NoTextExtractorFound ex) {
-                LOGGER.log(Level.INFO, "Using StringsExtractor for file \"" + file.getMIMEType() + "\" of type " + file.getLocalPath());
+                LOGGER.log(Level.INFO, "Using StringsExtractor for file \"{0}\" of type {1}", new Object[]{file.getName(), file.getMIMEType()});
                 reader = TextExtractorFactory.getStringsExtractor(file, null).getReader();
             }
         } catch (InitReaderException ex) {
-            LOGGER.log(Level.WARNING, "Cannot initialize reader for " + file.getLocalPath() + " of type " + file.getMIMEType(), ex);
+            LOGGER.log(Level.WARNING, "Cannot initialize reader for file \"{0}\" of type {1}", new Object[]{file.getName(), file.getMIMEType()});
             return new String[0];
         }
-        String text = IOUtils.toString(reader);
-        return TOKENIZER.tokenize(text);
+        try {
+            String text = IOUtils.toString(reader);
+            return TOKENIZER.tokenize(text);
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Cannot extract tokens from file " + file.getName(), ex);
+            return new String[0];
+        }
     }
 
     static DocumentCategorizerME loadModel() throws IOException {

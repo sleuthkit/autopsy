@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
@@ -34,6 +35,7 @@ import opennlp.tools.util.TrainingParameters;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -63,18 +65,23 @@ import org.sleuthkit.datamodel.TskData;
 @ServiceProvider(service = GeneralReportModule.class)
 public class TextClassifierTrainer extends GeneralReportModuleAdapter {
 
+    private final static Logger LOGGER = Logger.getLogger(TextClassifierTrainer.class.getName());
+
     @Override
     @Messages({
         "TextClassifierTrainer.srcModuleName.text=Text classifier model",
         "TextClassifierTrainer.inProgress.text=In progress",
         "TextClassifierTrainer.needFileType.text=File type detection must complete before generating this report.",
+        "TextClassifierTrainer.cannotProcess.text=Exception whileProcessing training data",
         "TextClassifierTrainer.training.text=Training model.",
         "TextClassifierTrainer.noModel.text=No model was trained.",
         "TextClassifierTrainer.writingModel.text=Writing model: ",
         "TextClassifierTrainer.completeModelLocation.text=Complete. Model location: ",
-        "TextClassifierTrainer.cannotSave.text=Cannot save model: "
+        "TextClassifierTrainer.cannotSave.text=Cannot save model: ",
+        "TextClassifierTrainer.trainIOException.text=IOException while training model"
     })
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
+
         if (IngestManager.getInstance().isIngestRunning()) {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needFileType.text"));
         }
@@ -88,20 +95,24 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         ObjectStream<DocumentSample> sampleStream;
         try {
             sampleStream = processTrainingData(progressPanel);
-        } catch (IOException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Exception while processing training data", ex);
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.cannotProcess.text"));
             new File(baseReportDir).delete();
             return;
         }
 
-        DoccatModel model = null;
+        DoccatModel model;
 
         progressPanel.setIndeterminate(true);
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.training.text"));
         try {
             model = train(TextClassifierUtils.MODEL_PATH, sampleStream);
         } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "IOException during training", ex);
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.noModel.text"));
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.trainIOException.text"));
             new File(baseReportDir).delete();
             return;
         }
@@ -119,6 +130,7 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
             progressPanel.complete(ReportStatus.COMPLETE);
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.completeModelLocation.text") + TextClassifierUtils.MODEL_PATH);
         } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Cannot save model.", ex);
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.cannotSave.text") + TextClassifierUtils.MODEL_PATH);
             new File(baseReportDir).delete();
@@ -149,46 +161,63 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         return DocumentCategorizerME.train(TextClassifierUtils.LANGUAGE_CODE, sampleStream, params, new DoccatFactory());
     }
 
+    @Messages({
+        "TextClassifierTrainer.noDocs.text=No documents found. You may need to run the Ingest Module for File Type Detection",
+        "TextClassifierTrainer.fetching.text=Fetching training documents",
+        "TextClassifierTrainer.converting.text=Converting training documents"
+    })
     /**
      * Fetches the training data and converts it to a format OpenNLP can use.
      *
      * @return training data usable by OpenNLP
      */
-    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException, IOException {
-        progressPanel.updateStatusLabel("Fetching training data");
+    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException {
+
+        boolean containsNotableDocument = false;
+        boolean containsNonNotableDocument = false;
+
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.fetching.text"));
 
         List<AbstractFile> allDocs;
-        try {
-            allDocs = fetchAllDocuments();
-        } catch (TskCoreException ex) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("Cannot fetch documents.");
-            throw ex;
-        }
+        allDocs = fetchAllDocuments();
+
+        LOGGER.log(Level.INFO, "There are {0} documents", allDocs.size());
 
         if (allDocs.isEmpty()) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel("No documents found. You may need to run the Ingest Module for File Type Detection.");
-            throw new TskCoreException();
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.noDocs.text"));
+            throw new TskCoreException("No documents found. You may need to run the Ingest Module for File Type Detection.");
         }
 
         Set<Long> notableObjectIDs = fetchNotableObjectIDs();
 
-        progressPanel.updateStatusLabel("Converting training data");
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.converting.text"));
         progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
+        int i = 0;
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
+                containsNotableDocument = true;
             } else {
                 label = TextClassifierUtils.NONNOTABLE_LABEL;
+                containsNonNotableDocument = true;
             }
             DocumentSample docSample = new DocumentSample(label, TextClassifierUtils.extractTokens(doc));
             docSamples.add(docSample);
 
             progressPanel.increment();
+            i++;
         }
+
+        if (!containsNotableDocument) {
+            throw new TskCoreException("Training set must contain at least one notable document");
+        }
+        if (!containsNonNotableDocument) {
+            throw new TskCoreException("Training set must contain at least one nonnotable document");
+        }
+
         return new ListObjectStream<>(docSamples);
     }
 
@@ -209,7 +238,7 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
     private List<AbstractFile> fetchAllDocuments() throws TskCoreException {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
-        //The only difference between SupportedFormats's getDocumentMIMETypes() 
+        //The only difference between SupportedFormats's getDocumentMIMETypes()
         //and FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes() is that
         //this one contains contains message/rfc822 which is what our test
         //corpus( 20 Newsgroups) has.

@@ -1,15 +1,20 @@
-# {0} - classifierDir
 TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed.
 TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.
 TextClassifierModuleFactory.moduleDescription.text=Use text classifiers to label potentially interesting files.
 TextClassifierModuleFactory.moduleName.text=Text Classifier
+TextClassifierTrainer.cannotProcess.text=Exception whileProcessing training data
 TextClassifierTrainer.cannotSave.text=Cannot save model: 
+TextClassifierTrainer.caonnotConvert.text=Exception well converting training data
 TextClassifierTrainer.completeModelLocation.text=Complete. Model location: 
+TextClassifierTrainer.converting.text=Converting training documents
+TextClassifierTrainer.fetching.text=Fetching training documents
 TextClassifierTrainer.getDesc.text=Machine learning model to classify which documents are notable
 TextClassifierTrainer.getName.text=Text classifier model
 TextClassifierTrainer.inProgress.text=In progress
 TextClassifierTrainer.needFileType.text=File type detection must complete before generating this report.
+TextClassifierTrainer.noDocs.text=No documents found. You may need to run the Ingest Module for File Type Detection
 TextClassifierTrainer.noModel.text=No model was trained.
 TextClassifierTrainer.srcModuleName.text=Text classifier model
 TextClassifierTrainer.training.text=Training model.
+TextClassifierTrainer.trainIOException.text=IOException while training model
 TextClassifierTrainer.writingModel.text=Writing model: 
