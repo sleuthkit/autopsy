@@ -498,16 +498,18 @@ final class ExtractRecycleBin extends Extract {
      * @throws TskCoreException
      */
     private void addFileSystemFile(SleuthkitCase skCase, FsContent recycleBinFile, Content parentDir, String fileName, long deletedTime) throws TskCoreException {
-        skCase.addFileSystemFile(recycleBinFile.getFileSystemId(),
+        skCase.addFileSystemFile(
                 recycleBinFile.getDataSourceObjectId(),
-                recycleBinFile.getAttrType(),
-                recycleBinFile.getAttributeId(),
+                recycleBinFile.getFileSystemId(),
                 fileName,
-                TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
-                recycleBinFile.getSize(),
-                0, 0, 0, deletedTime,
                 recycleBinFile.getMetaAddr(),
                 (int) recycleBinFile.getMetaSeq(),
+                recycleBinFile.getAttrType(),
+                recycleBinFile.getAttributeId(),
+                TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
+                (short) (TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue() | TskData.TSK_FS_META_FLAG_ENUM.USED.getValue()),
+                recycleBinFile.getSize(),
+                0, 0, 0, deletedTime,
                 true, parentDir);
     }
 
