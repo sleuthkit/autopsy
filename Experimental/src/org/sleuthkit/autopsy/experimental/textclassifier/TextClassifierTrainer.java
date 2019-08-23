@@ -72,7 +72,7 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         "TextClassifierTrainer.srcModuleName.text=Text classifier model",
         "TextClassifierTrainer.inProgress.text=In progress",
         "TextClassifierTrainer.needFileType.text=File type detection must complete before generating this report.",
-        "TextClassifierTrainer.cannotProcess.text=Exception whileProcessing training data",
+        "TextClassifierTrainer.cannotProcess.text=Exception while processing training data",
         "TextClassifierTrainer.training.text=Training model.",
         "TextClassifierTrainer.noModel.text=No model was trained.",
         "TextClassifierTrainer.writingModel.text=Writing model: ",
@@ -96,9 +96,9 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         try {
             sampleStream = processTrainingData(progressPanel);
         } catch (TskCoreException ex) {
+            //prograssPanel was updated in processTrainingData, so no need
+            //to do it here.
             LOGGER.log(Level.SEVERE, "Exception while processing training data", ex);
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.cannotProcess.text"));
             new File(baseReportDir).delete();
             return;
         }
@@ -164,17 +164,16 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
     @Messages({
         "TextClassifierTrainer.noDocs.text=No documents found. You may need to run the Ingest Module for File Type Detection",
         "TextClassifierTrainer.fetching.text=Fetching training documents",
-        "TextClassifierTrainer.converting.text=Converting training documents"
+        "TextClassifierTrainer.converting.text=Converting training documents",
+        "TextClassifierTrainer.needNotable.text=Training set must contain at least one notable document",
+        "TextClassifierTrainer.needNonnotable.text=Training set must contain at least one nonnotable document",
     })
     /**
      * Fetches the training data and converts it to a format OpenNLP can use.
      *
      * @return training data usable by OpenNLP
      */
-    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException {
-
-        boolean containsNotableDocument = false;
-        boolean containsNonNotableDocument = false;
+    private ObjectStream<DocumentSample> processTrainingData(ReportProgressPanel progressPanel) throws TskCoreException{
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.fetching.text"));
 
@@ -195,7 +194,8 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
-        int i = 0;
+        boolean containsNotableDocument = false;
+        boolean containsNonNotableDocument = false;
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
@@ -208,13 +208,16 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
             docSamples.add(docSample);
 
             progressPanel.increment();
-            i++;
         }
 
         if (!containsNotableDocument) {
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needNotable.text"));
             throw new TskCoreException("Training set must contain at least one notable document");
         }
         if (!containsNonNotableDocument) {
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needNonnotable.text"));
             throw new TskCoreException("Training set must contain at least one nonnotable document");
         }
 
