@@ -19,14 +19,14 @@
 package org.sleuthkit.autopsy.textextractors;
 
 import com.ethteck.decodetect.core.Decodetect;
-import com.ethteck.decodetect.core.Model;
+import com.ethteck.decodetect.core.DecodetectResult;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.Content;
@@ -109,10 +109,12 @@ public interface TextExtractor {
             int numBytes = Math.min(stream.available(), maxBytes);
             byte[] targetArray = new byte[numBytes];
             stream.read(targetArray);
-            LinkedHashMap<Model, Double> detectedCharsets = Decodetect.getResults(targetArray);
-            Map.Entry<Model, Double> bestCharset = detectedCharsets.entrySet().iterator().next();
-            if (bestCharset.getValue() > 0.4) {
-                detectedCharset = bestCharset.getKey().getEncoding();
+            List<DecodetectResult> results = Decodetect.DECODETECT.getResults(targetArray);
+            if (results.size() > 0) {
+                DecodetectResult topResult = results.get(0);
+                if (topResult.getConfidence() > 0.4) {
+                    detectedCharset = topResult.getEncoding();
+                }
             }
             stream.reset();
         } catch (IOException ignored) {

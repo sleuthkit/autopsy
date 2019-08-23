@@ -43,8 +43,8 @@
         <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
         <dependency conf="core->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
 
-        <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.1"/>
-        <dependency conf="core->default" org="net.freeutils" name="jcharset" rev="2.1"/>
+        <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
+        <dependency conf="core->default" org="com.beetstra.jutf7" name="jutf7" rev="1.0.0"/>
         
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
