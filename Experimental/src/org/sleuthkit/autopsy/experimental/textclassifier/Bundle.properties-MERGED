@@ -1,10 +1,10 @@
+# {0} - classifierDir
 TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed.
 TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.
 TextClassifierModuleFactory.moduleDescription.text=Use text classifiers to label potentially interesting files.
 TextClassifierModuleFactory.moduleName.text=Text Classifier
 TextClassifierTrainer.cannotProcess.text=Exception while processing training data
 TextClassifierTrainer.cannotSave.text=Cannot save model: 
-TextClassifierTrainer.caonnotConvert.text=Exception well converting training data
 TextClassifierTrainer.completeModelLocation.text=Complete. Model location: 
 TextClassifierTrainer.converting.text=Converting training documents
 TextClassifierTrainer.fetching.text=Fetching training documents

@@ -30,7 +30,6 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException;
-import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractorFound;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -82,14 +81,8 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         boolean isNotable;
         try {
             isNotable = classify(file);
-        } catch (TextExtractorFactory.NoTextExtractorFound ex) {
-            logger.log(Level.SEVERE, "NoTextExtractorFound in categorizing : " + ex.getMessage(), ex);
-            return ProcessResult.ERROR;
-        } catch (InitReaderException ex) {
-            logger.log(Level.SEVERE, "InitReaderException in categorizing : " + ex.getMessage(), ex);
-            return ProcessResult.ERROR;
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "IOException in categorizing : " + ex.getMessage(), ex);
+        } catch (IOException | InitReaderException | NoTextExtractorFound ex) {
+            logger.log(Level.SEVERE, "Exception while categorizing : " + ex.getMessage(), ex);
             return ProcessResult.ERROR;
         }
 

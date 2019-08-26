@@ -77,7 +77,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
      *
      * @param modelInputPath
      */
-    public void uploadModel(String modelInputPath) throws IOException {
+    private void uploadModel(String modelInputPath) throws IOException {
         FileReader fr = new FileReader(modelInputPath);
         NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
         reader.checkModelType();
@@ -131,7 +131,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         return this.trainModel(indexer);
     }
 
-    public MaxentModel trainModel(DataIndexer di) {
+    private MaxentModel trainModel(DataIndexer di) {
         display("Incorporating indexed data for training...  \n");
         int[][] contexts = di.getContexts();
         float[][] values = di.getValues();

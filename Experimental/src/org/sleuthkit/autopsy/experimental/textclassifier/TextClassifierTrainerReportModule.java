@@ -52,20 +52,20 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  * This is a ReportModule that trains a text classifier. The training data it
- * uses is all text-like documents in the current case. The two classes are the
- * ones labeled as notable by the user and the ones not labeled as notable. It
- * will not train a model if none of the documents were labeled as notable, if
- * all of the documents were labeled as notable, or if there are not enough
- * documents in the case for the underlying model trainer to run.
- *
- * The model is stored in %APPDATA%\autopsy\text_classifiers. If a model is
- * already present in that location, the TextClassifierTrainer adds more
- * examples to it.
+ uses is all text-like documents in the current case. The two classes are the
+ ones labeled as notable by the user and the ones not labeled as notable. It
+ will not train a model if none of the documents were labeled as notable, if
+ all of the documents were labeled as notable, or if there are not enough
+ documents in the case for the underlying model trainer to run.
+
+ The model is stored in %APPDATA%\autopsy\text_classifiers. If a model is
+ already present in that location, the TextClassifierTrainerReportModule adds more
+ examples to it.
  */
 @ServiceProvider(service = GeneralReportModule.class)
-public class TextClassifierTrainer extends GeneralReportModuleAdapter {
+public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapter {
 
-    private final static Logger LOGGER = Logger.getLogger(TextClassifierTrainer.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(TextClassifierTrainerReportModule.class.getName());
 
     @Override
     @Messages({
@@ -157,7 +157,7 @@ public class TextClassifierTrainer extends GeneralReportModuleAdapter {
         return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getDesc.text");
     }
 
-    public DoccatModel train(String oldModelPath, ObjectStream<DocumentSample> sampleStream) throws IOException {
+    private DoccatModel train(String oldModelPath, ObjectStream<DocumentSample> sampleStream) throws IOException {
         TrainingParameters params = new TrainingParameters();
         params.put(TrainingParameters.CUTOFF_PARAM, Integer.toString(0));
         params.put(TrainingParameters.ALGORITHM_PARAM, TextClassifierUtils.ALGORITHM);

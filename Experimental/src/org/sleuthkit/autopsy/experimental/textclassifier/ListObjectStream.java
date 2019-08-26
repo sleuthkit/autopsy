@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @param <T> For the document classification task, this is DocumentSample.
  */
-public class ListObjectStream<T> implements ObjectStream<T> {
+class ListObjectStream<T> implements ObjectStream<T> {
 
     private List<T> items;
     private int i;
