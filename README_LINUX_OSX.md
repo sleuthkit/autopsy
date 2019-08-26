@@ -1,22 +1,25 @@
-Most of the Autopsy development occurs to be run on Windows systems, but it is possible to run Autopsy on Linux and OS X.  This file contains the instructions for building Autopsy on those platforms and getting it working.
+# Linux/OSX Quick Developer Setup
 
-# Prerequisites
+**Requirements / assumptions**:
+* git installed on the development machine (can be obtained via apt-get, brew, etc)
+* All commands are run from the root of the autopsy repo
+* autopsy repo forked and cloned
 
-You need the following:
-- X
-- Y
+`git clone git@github.com:[YOUR_GIT_USERNAME]/autopsy.git`
+* JAVA_HOME environment variable - set this to the location of a JDK 8 installation that includes JavaFX
 
-TODO
+`export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/`
+* TSK_HOME environment variable - set this to any directory; this will become the location of the sleuthkit repo
 
+`export TSK_HOME=/home/[user]/sleuthkit`
 
-# Building
-## Building The Sleuth Kit
+**Setup instructions**
 
-TODO
+1. Run the setup script:
+`./easy_setup_linux_osx.sh`
 
-## Building Autopsy
+2. Build autopsy:
+`ant`
 
-TODO
-
-
-
+3. Run autopsy:
+`ant run`
