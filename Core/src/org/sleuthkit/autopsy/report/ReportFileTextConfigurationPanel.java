@@ -35,6 +35,33 @@ class ReportFileTextConfigurationPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Set module configuration
+     *
+     * @param settings File report module settings object
+     */
+    void setConfiguration(FileReportModuleSettings settings) {
+        if (settings.getReportType() == FileReportModuleSettings.ReportType.COMA_DELIMITED) {
+            commaDelimitedButton.setSelected(true);
+        } else {
+            // default to tab since it was previously the only option
+            tabDelimitedButton.setSelected(true);
+        }
+    }
+
+    /**
+     * Get current report module settings.
+     *
+     * @return Current report module settings.
+     */
+    FileReportModuleSettings getConfiguration() {
+        if (commaDelimitedButton.isSelected()) {
+            return new FileReportModuleSettings(FileReportModuleSettings.ReportType.COMA_DELIMITED);
+        } else {
+            return new FileReportModuleSettings(FileReportModuleSettings.ReportType.TAB_DELIMITED);
+        }
+    }
+
+    /**
      * Get the delimiter that was selected on this panel
      *
      * @return the selected delimiter

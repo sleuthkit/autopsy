@@ -60,6 +60,48 @@ class FileReportText implements FileReportModule {
         return instance;
     }
 
+    /**
+     * Get default configuration for this report module.
+     *
+     * @return Object which contains default report module settings.
+     */
+    @Override
+    public ReportModuleSettings getDefaultConfiguration() {
+        return new HTMLReportModuleSettings();
+    }
+
+    /**
+     * Get current configuration for this report module.
+     *
+     * @return Object which contains current report module settings.
+     */
+    @Override
+    public ReportModuleSettings getConfiguration() {
+        initializePanel();
+        return configPanel.getConfiguration();
+    }
+
+    /**
+     * Set report module configuration.
+     *
+     * @param settings Object which contains report module settings.
+     */
+    @Override
+    public void setConfiguration(ReportModuleSettings settings) {
+        initializePanel();
+        if (settings == null || settings instanceof NoReportModuleSettings) {
+            configPanel.setConfiguration((FileReportModuleSettings) getDefaultConfiguration());
+            return;
+        }
+
+        if (settings instanceof FileReportModuleSettings) {
+            configPanel.setConfiguration((FileReportModuleSettings) settings);
+            return;
+        }
+
+        throw new IllegalArgumentException("Expected settings argument to be an instance of FileReportModuleSettings");
+    }
+
     @Override
     public void startReport(String baseReportDir) {
         this.reportPath = baseReportDir + FILE_NAME;
@@ -153,9 +195,13 @@ class FileReportText implements FileReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
+        initializePanel();
+        return configPanel;
+    }
+
+    private void initializePanel() {
         if (configPanel == null) {
             configPanel = new ReportFileTextConfigurationPanel();
         }
-        return configPanel;
     }
 }

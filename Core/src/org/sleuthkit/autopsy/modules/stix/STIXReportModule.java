@@ -55,8 +55,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.NoReportModuleSettings;
+import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -72,8 +73,8 @@ public class STIXReportModule implements GeneralReportModule {
     private String reportPath;
     private boolean reportAllResults;
 
-    private Map<String, ObjectType> idToObjectMap = new HashMap<String, ObjectType>();
-    private Map<String, ObservableResult> idToResult = new HashMap<String, ObservableResult>();
+    private Map<String, ObjectType> idToObjectMap = new HashMap<>();
+    private Map<String, ObservableResult> idToResult = new HashMap<>();
 
     private List<EvalRegistryObj.RegistryFileInfo> registryFileData = null;
 
@@ -148,8 +149,6 @@ public class STIXReportModule implements GeneralReportModule {
         }
 
         try (BufferedWriter output = new BufferedWriter(new FileWriter(reportFile))) {
-            // Store the path
-            ModuleSettings.setConfigSetting("STIX", "defaultPath", stixFileName); //NON-NLS
 
             // Create array of stix file(s)
             File[] stixFiles;
@@ -180,8 +179,8 @@ public class STIXReportModule implements GeneralReportModule {
                     break;
                 }
                 // Clear out the ID maps before loading the next file
-                idToObjectMap = new HashMap<String, ObjectType>();
-                idToResult = new HashMap<String, ObservableResult>();
+                idToObjectMap = new HashMap<>();
+                idToResult = new HashMap<>();
             }
 
             // Set the progress bar to done. If any errors occurred along the way, modify
@@ -661,8 +660,56 @@ public class STIXReportModule implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        configPanel = new STIXReportModuleConfigPanel();
+        initializePanel();
         return configPanel;
+    }
+
+    private void initializePanel() {
+        if (configPanel == null) {
+            configPanel = new STIXReportModuleConfigPanel();
+        }
+    }
+
+    /**
+     * Get default configuration for this report module.
+     *
+     * @return Object which contains default report module settings.
+     */
+    @Override
+    public ReportModuleSettings getDefaultConfiguration() {
+        return new STIXReportModuleSettings();
+    }
+
+    /**
+     * Get current configuration for this report module.
+     *
+     * @return Object which contains current report module settings.
+     */
+    @Override
+    public ReportModuleSettings getConfiguration() {
+        initializePanel();
+        return configPanel.getConfiguration();
+    }
+
+    /**
+     * Set report module configuration.
+     *
+     * @param settings Object which contains report module settings.
+     */
+    @Override
+    public void setConfiguration(ReportModuleSettings settings) {
+        initializePanel();
+        if (settings == null || settings instanceof NoReportModuleSettings) {
+            configPanel.setConfiguration((STIXReportModuleSettings) getDefaultConfiguration());
+            return;
+        }
+
+        if (settings instanceof STIXReportModuleSettings) {
+            configPanel.setConfiguration((STIXReportModuleSettings) settings);
+            return;
+        }
+
+        throw new IllegalArgumentException("Expected settings argument to be an instance of STIXReportModuleSettings");
     }
 
 }

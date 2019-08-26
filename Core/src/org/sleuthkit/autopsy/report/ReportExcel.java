@@ -60,38 +60,6 @@ class ReportExcel implements TableReportModule {
     }
 
     /**
-     * Get default configuration for this report module.
-     *
-     * @return Object which contains default report module settings.
-     */
-    @Override
-    public ReportModuleSettings getDefaultConfiguration() {
-        // This module does not have configuration
-        return new NoReportModuleSettings();
-    }
-
-    /**
-     * Get current configuration for this report module.
-     *
-     * @return Object which contains current report module settings.
-     */
-    @Override
-    public ReportModuleSettings getConfiguration() {
-        // This module does not have configuration
-        return new NoReportModuleSettings();
-    }
-
-    /**
-     * Set report module configuration.
-     *
-     * @param settings Object which contains report module settings.
-     */
-    @Override
-    public void setConfiguration(ReportModuleSettings settings) {
-        // This module does not have configuration
-    }
-
-    /**
      * Start the Excel report by creating the Workbook, initializing styles, and
      * writing the summary.
      *
