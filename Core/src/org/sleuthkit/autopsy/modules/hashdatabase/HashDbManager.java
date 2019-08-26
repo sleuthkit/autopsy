@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -692,7 +693,7 @@ public class HashDbManager implements PropertyChangeListener {
         return filePath;
     }
     
-    public static abstract class HashDb {
+    public static abstract class HashDb implements Serializable {
         
         /**
          * Indicates how files with hashes stored in a particular hash database
@@ -791,7 +792,7 @@ public class HashDbManager implements PropertyChangeListener {
      * Instances of this class represent hash databases used to classify files
      * as known or know bad.
      */
-    class SleuthkitHashSet extends HashDb{
+    class SleuthkitHashSet extends HashDb {
         
         private static final long serialVersionUID = 1L;
         private final int handle;

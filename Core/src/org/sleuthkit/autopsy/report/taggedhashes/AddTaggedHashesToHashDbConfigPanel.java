@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.report.taggedhashes;
 
 import java.awt.Component;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -32,8 +34,6 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -62,9 +62,9 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
         
-        this.jAllTagsCheckBox.addChangeListener(new ChangeListener() {
+        this.jAllTagsCheckBox.addItemListener(new ItemListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void itemStateChanged(ItemEvent e) {
                 tagNamesListBox.setEnabled(!jAllTagsCheckBox.isSelected());
                 selectAllButton.setEnabled(!jAllTagsCheckBox.isSelected());
                 deselectAllButton.setEnabled(!jAllTagsCheckBox.isSelected());

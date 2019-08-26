@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Component;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -35,8 +37,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -75,9 +75,9 @@ final class ReportVisualPanel2 extends JPanel {
         initArtifactTypes();
         this.wizPanel = wizPanel;
 
-        this.allResultsRadioButton.addChangeListener(new ChangeListener() {
+        this.allResultsRadioButton.addItemListener(new ItemListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void itemStateChanged(ItemEvent e) {
                 tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
@@ -85,9 +85,9 @@ final class ReportVisualPanel2 extends JPanel {
                 updateFinishButton();
             }
         });
-        this.allTaggedResultsRadioButton.addChangeListener(new ChangeListener() {
+        this.allTaggedResultsRadioButton.addItemListener(new ItemListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void itemStateChanged(ItemEvent e) {
                 tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
@@ -95,9 +95,9 @@ final class ReportVisualPanel2 extends JPanel {
                 updateFinishButton();
             }
         });
-        this.specificTaggedResultsRadioButton.addChangeListener(new ChangeListener() {
+        this.specificTaggedResultsRadioButton.addItemListener(new ItemListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void itemStateChanged(ItemEvent e) {
                 tagsList.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 selectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
                 deselectAllButton.setEnabled(specificTaggedResultsRadioButton.isSelected());
