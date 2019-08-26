@@ -243,6 +243,18 @@
       </analyzer>
     </fieldType>
 
+    <fieldType name="text_ja" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="false">
+      <analyzer>
+        <tokenizer class="solr.JapaneseTokenizerFactory" mode="search"/>
+        <filter class="solr.JapaneseBaseFormFilterFactory"/>
+        <filter class="solr.JapanesePartOfSpeechStopFilterFactory" tags="lang/stoptags_ja.txt" />
+        <filter class="solr.CJKWidthFilterFactory"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_ja.txt" />
+        <filter class="solr.JapaneseKatakanaStemFilterFactory" minimumLength="4"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
     <!-- A text field with defaults appropriate for English: it
          tokenizes with StandardTokenizer, removes English stop words
          (stopwords_en.txt), down cases, protects words from protwords.txt, and
@@ -556,6 +568,11 @@
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->
    <field name="text" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
+
+   <!-- Store language detection result. Only parents of text documents have this -->
+   <field name="language" type="string" indexed="false" stored="true" required="false"/>
+
+   <field name="content_ja" type="text_ja" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
