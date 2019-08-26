@@ -158,7 +158,7 @@ final class ExtractRecycleBin extends Extract {
      * @param tempRARecycleBinPath   Temp directory path
      */
     private void processIFile(IngestJobContext context, BlackboardArtifact.Type recycleBinArtifactType, AbstractFile iFile, Map<String, String> userNameMap, Map<String, List<AbstractFile>> rFileMap, String tempRARecycleBinPath) {
-        String tempFilePath = tempRARecycleBinPath + File.separator + Instant.now().toString() + iFile.getName();
+        String tempFilePath = tempRARecycleBinPath + File.separator + Instant.now().getMillis() + iFile.getName();
         try {
             try {
                 ContentUtils.writeToFile(iFile, new File(tempFilePath));
@@ -205,8 +205,8 @@ final class ExtractRecycleBin extends Extract {
                 if (iFile.getParentPath().equals(rFile.getParentPath())
                         && iFile.getMetaFlagsAsString().equals(rFile.getMetaFlagsAsString())) {
                     try {
-                        postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFileName(), userName, metaData.getDeletedTimeStamp()));
-                        
+                        postArtifact(createArtifact(rFile, recycleBinArtifactType, metaData.getFullWindowsPath(), userName, metaData.getDeletedTimeStamp()));
+
                         // If we are processing a disk image, we will also make a deleted file entry so that the user
                         // sees the deleted file in its original folder.  We re-use the metadata address so that the user 
                         // can see the content. 
@@ -214,12 +214,12 @@ final class ExtractRecycleBin extends Extract {
                             // if the user deleted a folder, then we need to recusively go into it.  Note the contents of the $R folder
                             // do not have corresponding $I files anymore.  Only the $R folder does.
                             if (rFile.isDir()) {
-                                AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile, metaData.getFileName());
-                                popuplateDeletedDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFileName(), metaData.getDeletedTimeStamp());
+                                AbstractFile directory = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile, metaData.getFullWindowsPath());
+                                popuplateDeletedDirectory(Case.getCurrentCase().getSleuthkitCase(), directory, rFile.getChildren(), metaData.getFullWindowsPath(), metaData.getDeletedTimeStamp());
 
                             } else {
-                                AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile.getParent(), Paths.get(metaData.getFileName()).getParent().toString());
-                                addFileSystemFile(skCase, (FsContent)rFile, folder, Paths.get(metaData.getFileName()).getFileName().toString(), metaData.getDeletedTimeStamp());
+                                AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile.getParent(), Paths.get(metaData.getFullWindowsPath()).getParent().toString());
+                                addFileSystemFile(skCase, (FsContent)rFile, folder, Paths.get(metaData.getFullWindowsPath()).getFileName().toString(), metaData.getDeletedTimeStamp());
                             }
                         }
                     } catch (TskCoreException ex) {
@@ -498,16 +498,18 @@ final class ExtractRecycleBin extends Extract {
      * @throws TskCoreException
      */
     private void addFileSystemFile(SleuthkitCase skCase, FsContent recycleBinFile, Content parentDir, String fileName, long deletedTime) throws TskCoreException {
-        skCase.addFileSystemFile(recycleBinFile.getFileSystemId(),
+        skCase.addFileSystemFile(
                 recycleBinFile.getDataSourceObjectId(),
-                recycleBinFile.getAttrType(),
-                recycleBinFile.getAttributeId(),
+                recycleBinFile.getFileSystemId(),
                 fileName,
-                TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
-                recycleBinFile.getSize(),
-                0, 0, 0, deletedTime,
                 recycleBinFile.getMetaAddr(),
                 (int) recycleBinFile.getMetaSeq(),
+                recycleBinFile.getAttrType(),
+                recycleBinFile.getAttributeId(),
+                TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
+                (short) (TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue() | TskData.TSK_FS_META_FLAG_ENUM.USED.getValue()),
+                recycleBinFile.getSize(),
+                0, 0, 0, deletedTime,
                 true, parentDir);
     }
 
@@ -607,11 +609,12 @@ final class ExtractRecycleBin extends Extract {
         }
 
         /**
-         * Returns the name of the deleted file.
+         * Returns the full path to the deleted file or folder.  This path will 
+         * include the drive letter, ie C:\
          *
          * @return String name of the deleted file
          */
-        String getFileName() {
+        String  getFullWindowsPath() {
             return fileName.trim();
         }
     }
