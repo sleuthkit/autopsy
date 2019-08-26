@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.james.mime4j.MimeException;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -113,12 +114,15 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         // check its signature
         boolean isMbox = false;
+        boolean isEMLFile = false;
+        
         try {
             byte[] t = new byte[64];
             if (abstractFile.getSize() > 64) {
                 int byteRead = abstractFile.read(t, 0, 64);
                 if (byteRead > 0) {
                     isMbox = MboxParser.isValidMimeTypeMbox(t);
+                    isEMLFile = EMLParser.isEMLFile(abstractFile, t);
                 }
             }
         } catch (TskException ex) {
@@ -127,6 +131,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         if (isMbox) {
             return processMBox(abstractFile);
+        }
+        
+        if(isEMLFile) {
+            return processEMLFile(abstractFile);
         }
 
         if (PstParser.isPstFile(abstractFile)) {
@@ -348,6 +356,69 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         
         if (file.delete() == false) {
             logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+        }
+        
+        return ProcessResult.OK;
+    }
+    
+    private ProcessResult processEMLFile(AbstractFile abstractFile) {
+        String fileName;
+        try {
+            fileName = getTempPath() + File.separator + abstractFile.getName()
+                + "-" + String.valueOf(abstractFile.getId());
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return ProcessResult.ERROR;
+        }
+        File file = new File(fileName);
+
+        long freeSpace = services.getFreeDiskSpace();
+        if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (abstractFile.getSize() >= freeSpace)) {
+            logger.log(Level.WARNING, String.format("Not enough disk space to write file '%s' (id=%d) to disk.",
+                    abstractFile.getName(), abstractFile.getId())); //NON-NLS
+//            IngestMessage msg = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
+//                    Bundle.ThunderbirdMboxFileIngestModule_errorMessage_outOfDiskSpace(abstractFile.getName(), abstractFile.getId()));
+//            services.postMessage(msg);
+            return ProcessResult.OK;
+        }
+
+        try {
+            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, String.format("Failed writing the vCard file '%s' (id=%d) to disk.",
+                    abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
+            return ProcessResult.OK;
+        }
+        
+        try {
+            EmailMessage message = EMLParser.parse(abstractFile, fileName);
+            
+            if(message == null) {
+                return ProcessResult.OK;
+            }
+            
+            List<AbstractFile> derivedFiles = new ArrayList<>();
+
+            BlackboardArtifact msgArtifact = addEmailArtifact(message, abstractFile);
+            
+            if ((msgArtifact != null) && (message.hasAttachment()))  {
+                derivedFiles.addAll(handleAttachments(message.getAttachments(), abstractFile, msgArtifact ));
+            }
+        
+
+            if (derivedFiles.isEmpty() == false) {
+                for (AbstractFile derived : derivedFiles) {
+                    services.fireModuleContentEvent(new ModuleContentEvent(derived));
+                }
+            }
+            context.addFilesToJob(derivedFiles);
+            
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, String.format("Error reading eml file %s", abstractFile.getName()), ex);
+            return ProcessResult.ERROR;
+        } catch (MimeException ex) {
+            logger.log(Level.WARNING, String.format("Error reading eml file %s", abstractFile.getName()), ex);
+            return ProcessResult.ERROR;
         }
         
         return ProcessResult.OK;
