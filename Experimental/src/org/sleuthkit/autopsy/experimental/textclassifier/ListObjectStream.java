@@ -35,7 +35,7 @@ class ListObjectStream<T> implements ObjectStream<T> {
     private List<T> items;
     private int i;
 
-    public ListObjectStream(List<T> items) {
+    ListObjectStream(List<T> items) {
         this.items = items;
         this.i = 0;
     }
@@ -85,7 +85,7 @@ class ListObjectStream<T> implements ObjectStream<T> {
         i = 0;
     }
 
-    public int size() {
+    int size() {
         return items.size();
     }
 }

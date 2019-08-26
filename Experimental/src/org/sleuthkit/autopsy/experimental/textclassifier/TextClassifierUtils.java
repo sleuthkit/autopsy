@@ -44,7 +44,6 @@ import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getUserDirectory;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
-
 import org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoTextExtractorFound;
 
@@ -66,24 +65,6 @@ class TextClassifierUtils {
     static final String LANGUAGE_CODE = "en";
     static final String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
 
-    /**
-     * Get root path where the user's text classifiers are stored.
-     * 
-     * @return Absolute path to the text classifiers root directory. 
-     */
-    public static String getTextClassifierPath() {
-        return getUserDirectory().getAbsolutePath() + File.separator + TEXT_CLASSIFIERS_SUBDIRECTORY;
-    }
-    
-    /**
-     * Make a folder in the config directory for test classifiers if one does not
-     * exist.
-     */
-    private static void ensureTextClassifierFolderExists() {
-        File textClassifierDir = new File(getTextClassifierPath());
-        textClassifierDir.mkdir();
-    }
-
     TextClassifierUtils() throws IngestModuleException {
         try {
             this.fileTypeDetector = new FileTypeDetector();
@@ -92,7 +73,33 @@ class TextClassifierUtils {
         }
     }
 
-    boolean isSupported(AbstractFile abstractFile, TextClassifierFileIngestModule textClassifierFileIngestModule) {
+    /**
+     * Get root path where the user's text classifiers are stored.
+     *
+     * @return Absolute path to the text classifiers root directory.
+     */
+    static String getTextClassifierPath() {
+        return getUserDirectory().getAbsolutePath() + File.separator + TEXT_CLASSIFIERS_SUBDIRECTORY;
+    }
+
+    /**
+     * Make a folder in the config directory for test classifiers if one does
+     * not exist.
+     */
+    static void ensureTextClassifierFolderExists() {
+        File textClassifierDir = new File(getTextClassifierPath());
+        textClassifierDir.mkdir();
+    }
+
+    /**
+     * Checks whether the text classifier supports a file of this MIME type.
+     * Supported MIME types are document types that tend to contain natural
+     * language text.
+     *
+     * @param abstractFile A file
+     * @return true if this file's MIME type is supported.
+     */
+    boolean isSupported(AbstractFile abstractFile) {
         String fileMimeType;
         if (fileTypeDetector != null) {
             fileMimeType = fileTypeDetector.getMIMEType(abstractFile);
@@ -102,12 +109,21 @@ class TextClassifierUtils {
         return fileMimeType != null && SupportedFormats.contains(fileMimeType);
     }
 
+    /**
+     * Divides a file into tokens
+     *
+     * @param a file
+     * @return An array of all tokens in the file
+     */
     static String[] extractTokens(AbstractFile file) {
+        //Build the Reader we will use to read the file.
         Reader reader;
         try {
             try {
+                //If a TextExtractor exists for this file type, use that one.
                 reader = TextExtractorFactory.getExtractor(file).getReader();
             } catch (NoTextExtractorFound ex) {
+                //Else, use the StringsExtractor.
                 LOGGER.log(Level.INFO, "Using StringsExtractor for file \"{0}\" of type {1}", new Object[]{file.getName(), file.getMIMEType()});
                 reader = TextExtractorFactory.getStringsExtractor(file, null).getReader();
             }
@@ -115,8 +131,12 @@ class TextClassifierUtils {
             LOGGER.log(Level.WARNING, "Cannot initialize reader for file \"{0}\" of type {1}", new Object[]{file.getName(), file.getMIMEType()});
             return new String[0];
         }
+
+        //Read the file, and tokenize it.
         try {
+            //Read the text
             String text = IOUtils.toString(reader);
+            //Tokenize the file.
             return TOKENIZER.tokenize(text);
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "Cannot extract tokens from file " + file.getName(), ex);
@@ -124,7 +144,14 @@ class TextClassifierUtils {
         }
     }
 
-    static DocumentCategorizerME loadModel() throws IOException {
+    /**
+     * Loads a Naive Bayes categorizer from disk.
+     *
+     * @return the categorizer
+     * @throws IOException if the model cannot be found on disk, or if the file
+     * does not seem to be a model file
+     */
+    static DocumentCategorizerME loadCategorizer() throws IOException {
         ensureTextClassifierFolderExists();
         FileReader fr = new FileReader(new File(MODEL_PATH));
         NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
@@ -135,10 +162,16 @@ class TextClassifierUtils {
         return new DocumentCategorizerME(doccatModel);
     }
 
-    static void writeModel(NaiveBayesModel model, String modelPath) throws IOException {
+    /**
+     * Writes a naive Bayes classifier model to disk.
+     *
+     * @param model the model
+     * @throws IOException If the model file cannot be written. Large files can
+     * cause this.
+     */
+    static void writeModel(NaiveBayesModel model) throws IOException {
         ensureTextClassifierFolderExists();
-        FileWriter fw = new FileWriter(new File(modelPath));
-        //TODO: Try the binary naive Bayes model writer
+        FileWriter fw = new FileWriter(new File(MODEL_PATH));
         PlainTextNaiveBayesModelWriter modelWriter;
         modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
         modelWriter.persist();

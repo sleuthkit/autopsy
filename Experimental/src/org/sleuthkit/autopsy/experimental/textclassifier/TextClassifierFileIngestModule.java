@@ -41,6 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * labeled data.
  */
 public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
+
     private final static Logger logger = Logger.getLogger(TextClassifierFileIngestModule.class.getName());
     private Blackboard blackboard;
     private DocumentCategorizerME categorizer;
@@ -53,7 +54,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         utils = new TextClassifierUtils();
 
         try {
-            categorizer = TextClassifierUtils.loadModel();
+            this.categorizer = TextClassifierUtils.loadCategorizer();
         } catch (IOException ex) {
             throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.", ex);
         }
@@ -67,7 +68,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
 
     @Override
     public ProcessResult process(AbstractFile file) {
-        if (!utils.isSupported(file, this)) {
+        if (!utils.isSupported(file)) {
             return ProcessResult.OK;
         }
 
@@ -100,9 +101,8 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage(), ex);
-            } 
-            
-            
+            }
+
         }
         return ProcessResult.OK;
     }

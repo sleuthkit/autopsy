@@ -45,8 +45,6 @@ import java.util.Map;
  */
 public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
-    public static final String INCREMENTAL_NAIVE_BAYES_VALUE = "INCREMENTALNAIVEBAYES";
-
     //These are the values that we need to serialize
     //For the document classification task, this is the list of categories.
     private List<String> masterOutcomeLabels = new ArrayList<>();
@@ -87,8 +85,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         Object[] data = initialModel.getDataStructures();
 
         //We have no use for data[0], because we can't reconstruct which row goes with which predicate string.
-        Context[] params = (Context[]) data[0];
-        //pmap has the same data as params, except it also contains the predicate string.
+        //pmap has the same data as data[0], except it also contains the predicate string.
         Map<String, Context> pmap = (Map<String, Context>) data[1];
         String[] outcomeNames = (String[]) data[2];
 
@@ -169,8 +166,6 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
         List<Integer> mappingNewOutcomeToOldOutcome = new ArrayList<>();
         for (int newIndex = 0; newIndex < newOutcomeLabels.length; newIndex++) {
-            //TODO: Make a single method that adds a new outcome label, because
-            //there are a lot of things to update.
             String newLabel = newOutcomeLabels[newIndex];
             if (!masterOutcomeMap.containsKey(newLabel)) {
                 masterOutcomeMap.put(newLabel, masterOutcomeLabels.size());
@@ -186,8 +181,6 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
         List<Integer> mappingNewPredToOldPred = new ArrayList<>();
         for (int newIndex = 0; newIndex < newPredLabels.length; newIndex++) {
-            //TODO: Make a single method that adds a new predicate label, because
-            //there are a lot of things to update.
             String newLabel = newPredLabels[newIndex];
             if (!masterPredMap.containsKey(newLabel)) {
                 masterPredMap.put(newLabel, masterPredLabels.size());
@@ -203,13 +196,11 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
             for (int newOutcomeIndex : newContext.getOutcomes()) {
                 int masterOutcomeIndex = mappingNewOutcomeToOldOutcome.get(newOutcomeIndex);
                 double toAdd = newContext.getParameters()[newOutcomeIndex];
-                //TODO: This will fail if masterOutcomeIndex is beyond the range of what we've seen before.
-                //That is, it will only work if all of the outcomes (categories)
-                //were in the model before we added this batch.
+                //This will fail if masterOutcomeIndex is beyond the range of what we've seen before.
+                //In other words, the first batch needs to include all classes.
                 parameters.get(masterPredIndex).updateParameter(masterOutcomeIndex, toAdd);
             }
         }
-
     }
 
     private int getNumOutcomes() {
