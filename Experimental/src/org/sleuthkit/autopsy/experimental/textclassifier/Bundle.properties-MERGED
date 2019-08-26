@@ -1,12 +1,12 @@
-# {0} - classifierDir
 TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed.
 TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.
 TextClassifierModuleFactory.moduleDescription.text=Use text classifiers to label potentially interesting files.
 TextClassifierModuleFactory.moduleName.text=Text Classifier
-TextClassifierTrainer.cannotProcess.text=Exception while processing training data
+TextClassifierTrainer.cannotProcess.text=Exception while converting training data
 TextClassifierTrainer.cannotSave.text=Cannot save model: 
 TextClassifierTrainer.completeModelLocation.text=Complete. Model location: 
 TextClassifierTrainer.converting.text=Converting training documents
+TextClassifierTrainer.fetchFailed.text=Exception while fetching training data
 TextClassifierTrainer.fetching.text=Fetching training documents
 TextClassifierTrainer.getDesc.text=Train a machine learning model to classify which documents are notable. Before training, you will need to\n1. run the Ingest Module for File Type Identification\n2. add the file tag "Notable item (notable)" to documents you know are notable.\nOnce you've trained a model, you can classify documents by running the "Text Classifier" Ingest Module.
 TextClassifierTrainer.getName.text=Text classifier model
@@ -20,3 +20,4 @@ TextClassifierTrainer.srcModuleName.text=Text classifier model
 TextClassifierTrainer.training.text=Training model.
 TextClassifierTrainer.trainIOException.text=IOException while training model
 TextClassifierTrainer.writingModel.text=Writing model: 
+TextCllassifierTrainer.inProgress.text=In progress
