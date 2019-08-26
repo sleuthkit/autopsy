@@ -1,52 +1,48 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
 import org.apache.james.mime4j.MimeException;
-import org.apache.james.mime4j.dom.BinaryBody;
-import org.apache.james.mime4j.dom.Body;
-import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
-import org.apache.james.mime4j.dom.Multipart;
-import org.apache.james.mime4j.dom.TextBody;
-import org.apache.james.mime4j.dom.address.AddressList;
-import org.apache.james.mime4j.dom.address.Mailbox;
-import org.apache.james.mime4j.dom.address.MailboxList;
-import org.apache.james.mime4j.dom.field.ContentDispositionField;
-import org.apache.james.mime4j.dom.field.ContentTypeField;
-import org.apache.james.mime4j.message.DefaultMessageBuilder;
-import org.apache.james.mime4j.stream.Field;
-import org.apache.james.mime4j.stream.MimeConfig;
-import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.EncodedFileOutputStream;
-import org.sleuthkit.datamodel.TskData;
 
 /**
- *
- * @author kelly
+ * EML file parser.  An .eml file contains a single email message.
+ * 
  */
 public class EMLParser extends MimeJ4MessageParser{
     
     private static final Logger logger = Logger.getLogger(EMLParser.class.getName());
     
-
+    /**
+     * If the extention of the AbstractFile is eml and 'To:' is found close to the
+     * beginning of the file, then its probably an eml file.
+     * 
+     * @param abFile AbstractFile to test
+     * @param buffer A byte buffer of the begining of the file.
+     * 
+     * @return True, if we think this is an eml file, false otherwise. 
+     */
     static boolean isEMLFile(AbstractFile abFile, byte[] buffer) {
         String ext = abFile.getNameExtension();
         boolean isEMLFile = ext != null ? ext.equals("eml") : false;
@@ -57,21 +53,22 @@ public class EMLParser extends MimeJ4MessageParser{
         return isEMLFile;
     }
     
+    /**
+     * 
+     * @param sourceFile AbstractFile source file for eml message
+     * @param localPath The local path to the eml file
+     * 
+     * @return EmailMessage object for message in eml file
+     * 
+     * @throws FileNotFoundException
+     * @throws IOException
+     * @throws MimeException 
+     */
     static EmailMessage parse(AbstractFile sourceFile, String localPath) throws FileNotFoundException, IOException, MimeException {
         try (FileInputStream fis = new FileInputStream(localPath)){  
-            //Create message with stream from file  
-            //If you want to parse String, you can use:  
-            //Message mimeMsg = new Message(new ByteArrayInputStream(mimeSource.getBytes()));  
-            
-            DefaultMessageBuilder messageBuilder = new DefaultMessageBuilder();
-            MimeConfig config = MimeConfig.custom().setMaxLineLen(-1).setMaxHeaderLen(-1).setMaxHeaderCount(-1).build();
-            // disable line length checks.
-            messageBuilder.setMimeEntityConfig(config);
-            Message mimeMsg = messageBuilder.parseMessage(fis);
-
-
-            return (new EMLParser()).extractEmail(mimeMsg, localPath, sourceFile.getId());
+            EMLParser parser = new EMLParser();
+            Message mimeMsg = parser.getMessageBuilder().parseMessage(fis);
+            return parser.extractEmail(mimeMsg, localPath, sourceFile.getId());
         }
     }
-
 }

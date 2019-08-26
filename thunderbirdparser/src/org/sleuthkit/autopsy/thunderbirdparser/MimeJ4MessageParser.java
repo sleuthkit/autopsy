@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
@@ -24,7 +37,9 @@ import org.apache.james.mime4j.dom.address.Mailbox;
 import org.apache.james.mime4j.dom.address.MailboxList;
 import org.apache.james.mime4j.dom.field.ContentDispositionField;
 import org.apache.james.mime4j.dom.field.ContentTypeField;
+import org.apache.james.mime4j.message.DefaultMessageBuilder;
 import org.apache.james.mime4j.stream.Field;
+import org.apache.james.mime4j.stream.MimeConfig;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
@@ -33,25 +48,83 @@ import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
- * @author kelly
+ * Super class for email parsers that can use the james.mime4J.Message objects.
  */
-public abstract class MimeJ4MessageParser {
+abstract class MimeJ4MessageParser {
      private static final Logger logger = Logger.getLogger(MimeJ4MessageParser.class.getName());
      
     /**
      * The mime type string for html text.
      */
-
     private static final String HTML_TYPE = "text/html"; //NON-NLS
+    private DefaultMessageBuilder messageBuilder = null;
+    private final List<String> errorList = new ArrayList<>();
+    
+    /**
+     * The local path of the email message(s) file.
+     */
+    private String localPath;
+    
+    DefaultMessageBuilder getMessageBuilder() {
+        if(messageBuilder == null) {
+            messageBuilder = new DefaultMessageBuilder();
+            MimeConfig config = MimeConfig.custom().setMaxLineLen(-1).setMaxHeaderLen(-1).setMaxHeaderCount(-1).build();
+            // disable line length checks.
+            messageBuilder.setMimeEntityConfig(config);
+        }
+        
+        return messageBuilder;
+    }
+    
+    /**
+     * Sets the local path of the email messages file.
+     * 
+     * @param localPath Local path of the file the email messages
+     */
+    final void setLocalPath(String localPath) {
+        this.localPath = localPath;
+    }
+    
+    /**
+     * Gets the local path.
+     * 
+     * @return 
+     */
+    String getLocalPath() {
+        return localPath;
+    }
+    
+    /**
+     * Get a list of the parsing error message.
+     * 
+     * @return String containing all of the parse error message.  Empty string
+     * is returned if there are no error messages.
+     */
+    String getErrors() {
+        String result = "";
+        for (String msg: errorList) {
+            result += "<li>" + msg + "</li>"; 
+        }
+        return result;
+    }
+    
+    /**
+     * Adds a message to the error Message list.
+     * 
+     * @param msg Message to add to the list.
+     */
+    void addErrorMessage(String msg) {
+        errorList.add(msg);
+    }
+
      
      /**
      * Use the information stored in the given mime4j message to populate an
      * EmailMessage.
      *
-     * @param msg
+     * @param msg The Message to extract data from.
      *
-     * @return
+     * @return EmailMessage for the Message.
      */
     EmailMessage extractEmail(Message msg, String localPath, long sourceFileID) {
         EmailMessage email = new EmailMessage();
@@ -215,7 +288,7 @@ public abstract class MimeJ4MessageParser {
      * @param email
      * @param e
      */
-    @NbBundle.Messages({"EMLParser.handleAttch.noOpenCase.errMsg=Exception while getting open case."})
+    @NbBundle.Messages({"MimeJ4MessageParser.handleAttch.noOpenCase.errMsg=Exception while getting open case."})
     private static void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
         String outputDirPath;
         String relModuleOutputPath;
@@ -223,7 +296,7 @@ public abstract class MimeJ4MessageParser {
             outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
             relModuleOutputPath = ThunderbirdMboxFileIngestModule.getRelModuleOutputPath() + File.separator;
         } catch (NoCurrentCaseException ex) {
-//            logger.log(Level.SEVERE, Bundle.MboxParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
+            logger.log(Level.SEVERE, Bundle.MimeJ4MessageParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
             return;
         }
         String filename = FileUtil.escapeFileName(e.getFilename());
@@ -278,7 +351,8 @@ public abstract class MimeJ4MessageParser {
      *
      * @param mailboxList
      *
-     * @return
+     * @return String list of email addresses separated by a ; or empty string
+     * if no addresses were found.
      */
     private static String getAddresses(MailboxList mailboxList) {
         if (mailboxList == null) {
@@ -297,7 +371,8 @@ public abstract class MimeJ4MessageParser {
      *
      * @param addressList
      *
-     * @return
+     * @return String list of email addresses separated by a ; or empty string
+     * if no addresses were found.
      */
     private static String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());
