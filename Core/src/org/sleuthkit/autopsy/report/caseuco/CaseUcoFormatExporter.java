@@ -75,7 +75,6 @@ public final class CaseUcoFormatExporter {
     /**
      * Generates CASE-UCO report for the selected data source.
      *
-     * @param selectedDataSourceId Object ID of the data source
      * @param reportOutputPath Full path to directory where to save CASE-UCO
      * report file
      * @param progressPanel ReportProgressPanel to update progress
@@ -86,11 +85,11 @@ public final class CaseUcoFormatExporter {
         "ReportCaseUco.initializing=Creating directories...",
         "ReportCaseUco.querying=Querying files...",
         "ReportCaseUco.ingestWarning=Warning, this report will be created before ingest services completed",
-        "ReportCaseUco.processing=Saving files in CASE-UCO format...",
+        "ReportCaseUco.datasourceMsg=Generating CASE-UCO Report for %s",
         "ReportCaseUco.srcModuleName.text=CASE-UCO Report"
     })
     @SuppressWarnings("deprecation")
-    public static void generateReport(Long selectedDataSourceId, String reportOutputPath, ReportProgressPanel progressPanel) {
+    public static void generateReport(String reportOutputPath, ReportProgressPanel progressPanel) {
 
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
@@ -131,40 +130,45 @@ public final class CaseUcoFormatExporter {
             // create CASE-UCO entry for the Autopsy case
             String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
 
-            // create CASE-UCO data source entry
-            String dataSourceTraceId = saveDataSourceInfo(selectedDataSourceId, caseTraceId, skCase, jsonGenerator);
+            // loop over all data sources in the case
+            for (DataSource ds : skCase.getDataSources()) {
+                progressPanel.updateStatusLabel(String.format(
+                        Bundle.ReportCaseUco_datasourceMsg(), ds.getName()));
+                
+                // create CASE-UCO data source entry
+                long selectedDataSourceId = ds.getId();
+                String dataSourceTraceId = saveDataSourceInfo(selectedDataSourceId, caseTraceId, skCase, jsonGenerator);
 
-            // Run getAllFilesQuery to get all files, exclude directories
-            final String getAllFilesQuery = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
-                    + "data_source_obj_id = " + Long.toString(selectedDataSourceId)
-                    + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
-                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
-                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + "))"; //NON-NLS
+                // Run getAllFilesQuery to get all files, exclude directories
+                final String getAllFilesQuery = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
+                        + "data_source_obj_id = " + Long.toString(selectedDataSourceId)
+                        + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
+                        + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
+                        + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + "))"; //NON-NLS
 
-            try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery)) {
-                ResultSet resultSet = queryResult.getResultSet();
+                try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery)) {
+                    ResultSet resultSet = queryResult.getResultSet();
 
-                progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
+                    // Loop files and write info to CASE-UCO report
+                    while (resultSet.next()) {
 
-                // Loop files and write info to CASE-UCO report
-                while (resultSet.next()) {
+                        if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                            break;
+                        }
 
-                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-                        break;
+                        Long objectId = resultSet.getLong(1);
+                        String fileName = resultSet.getString(2);
+                        long size = resultSet.getLong("size");
+                        String crtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("crtime"), timeZone);
+                        String atime = ContentUtils.getStringTimeISO8601(resultSet.getLong("atime"), timeZone);
+                        String mtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("mtime"), timeZone);
+                        String md5Hash = resultSet.getString("md5");
+                        String parent_path = resultSet.getString("parent_path");
+                        String mime_type = resultSet.getString("mime_type");
+                        String extension = resultSet.getString("extension");
+
+                        saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
                     }
-
-                    Long objectId = resultSet.getLong(1);
-                    String fileName = resultSet.getString(2);
-                    long size = resultSet.getLong("size");
-                    String crtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("crtime"), timeZone);
-                    String atime = ContentUtils.getStringTimeISO8601(resultSet.getLong("atime"), timeZone);
-                    String mtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("mtime"), timeZone);
-                    String md5Hash = resultSet.getString("md5");
-                    String parent_path = resultSet.getString("parent_path");
-                    String mime_type = resultSet.getString("mime_type");
-                    String extension = resultSet.getString("extension");
-
-                    saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
                 }
             }
 
@@ -198,22 +202,24 @@ public final class CaseUcoFormatExporter {
     }
 
     /**
-     * Exports files that are tagged w/ the following TagNames and that belong to 
-     * the following interesting file sets (set name attributes of TSK_INTERSTING_FILE_HIT
-     * and TSK_INTERESTING_ARTIFACT_HIT). Artifacts that are tagged with 
-     * the following TagNames also have their associated source files included.
-     * 
+     * Exports files that are tagged w/ the following TagNames and that belong
+     * to the following interesting file sets (set name attributes of
+     * TSK_INTERSTING_FILE_HIT and TSK_INTERESTING_ARTIFACT_HIT). Artifacts that
+     * are tagged with the following TagNames also have their associated source
+     * files included.
+     *
      * Duplicate files are excluded.
-     * 
+     *
      * @param tagTypes Collection of TagNames to match
-     * @param interestingItemSets Collection of SET_NAMEs to match on in TSK_INTERESTING_FILE_HITs
-     *                            and TSK_INTERESTING_ARTIFACT_HITs.
-     * @param outputFilePath Path to the folder that the CASE-UCO report should be written into
-     * @param progressPanel UI Component to be updated with current processing status
+     * @param interestingItemSets Collection of SET_NAMEs to match on in
+     * TSK_INTERESTING_FILE_HITs and TSK_INTERESTING_ARTIFACT_HITs.
+     * @param outputFilePath Path to the folder that the CASE-UCO report should
+     * be written into
+     * @param progressPanel UI Component to be updated with current processing
+     * status
      */
     @NbBundle.Messages({
         "CaseUcoFormatExporter.startMsg=Generating CASE-UCO Report",
-        "CaseUcoFormatExporter.datasourceMsg=Generating CASE-UCO Report for %s",
         "CaseUcoFormatExporter.finishMsg=Finished generating CASE-UCO Report"
     })
     public static void export(List<TagName> tagTypes, List<String> interestingItemSets,
@@ -233,21 +239,21 @@ public final class CaseUcoFormatExporter {
         Files.createDirectory(tmpDir);
 
         //Create our report file
-        Path reportFile = Paths.get(caseReportFolder.toString(), 
+        Path reportFile = Paths.get(caseReportFolder.toString(),
                 ReportCaseUco.getReportFileName());
 
         //Timezone for formatting file creation, modification, and accessed times
         SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
 
-        try (JsonGenerator jsonGenerator = createJsonGenerator(reportFile.toFile())) {   
+        try (JsonGenerator jsonGenerator = createJsonGenerator(reportFile.toFile())) {
             initializeJsonOutputFile(jsonGenerator);
             //Make the case the first entity in the report file.
             String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
 
             for (DataSource ds : skCase.getDataSources()) {
                 progressPanel.updateStatusLabel(String.format(
-                        Bundle.CaseUcoFormatExporter_datasourceMsg(), ds.getName()));
-                String dataSourceTraceId = saveDataSourceInfo(ds.getId(), 
+                        Bundle.ReportCaseUco_datasourceMsg(), ds.getName()));
+                String dataSourceTraceId = saveDataSourceInfo(ds.getId(),
                         caseTraceId, skCase, jsonGenerator);
                 for (TagName tn : tagTypes) {
                     for (ContentTag ct : tagsManager.getContentTagsByTagName(tn, ds.getId())) {
@@ -259,12 +265,12 @@ public final class CaseUcoFormatExporter {
                                 jsonGenerator, timeZone, dataSourceTraceId);
                     }
                 }
-                if(!interestingItemSets.isEmpty()) {
+                if (!interestingItemSets.isEmpty()) {
                     List<BlackboardArtifact.ARTIFACT_TYPE> typesToQuery = Lists.newArrayList(
                             INTERESTING_FILE_HIT, INTERESTING_ARTIFACT_HIT);
-                    for(BlackboardArtifact.ARTIFACT_TYPE artType : typesToQuery) {
-                        for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(artType)) {
-                            if(bArt.getDataSource().getId() != ds.getId()) {
+                    for (BlackboardArtifact.ARTIFACT_TYPE artType : typesToQuery) {
+                        for (BlackboardArtifact bArt : skCase.getBlackboardArtifacts(artType)) {
+                            if (bArt.getDataSource().getId() != ds.getId()) {
                                 continue;
                             }
                             BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
@@ -283,9 +289,9 @@ public final class CaseUcoFormatExporter {
     }
 
     /**
-     * Saves only unique abstract files to the report. Uniqueness is
-     * determined by object id. The tmpDir Path is used to stored object 
-     * ids that have already been visited.
+     * Saves only unique abstract files to the report. Uniqueness is determined
+     * by object id. The tmpDir Path is used to stored object ids that have
+     * already been visited.
      *
      * @param content Abstractfile isntance
      * @param tmpDir Directory to write object ids

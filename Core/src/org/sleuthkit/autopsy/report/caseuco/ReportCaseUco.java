@@ -19,17 +19,13 @@
  */
 package org.sleuthkit.autopsy.report.caseuco;
 
-import java.util.logging.Level;
 import javax.swing.JPanel;
-import java.sql.SQLException;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.NoReportModuleSettings;
+import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
-import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
-import org.sleuthkit.datamodel.*;
 
 /**
  * ReportCaseUco generates a report in the CASE-UCO format. It saves basic file
@@ -39,7 +35,6 @@ public final class ReportCaseUco implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportCaseUco.class.getName());
     private static ReportCaseUco instance = null;
-    private ReportCaseUcoConfigPanel configPanel;
 
     private static final String REPORT_FILE_NAME = "CASE_UCO_output.json-ld";
 
@@ -54,11 +49,48 @@ public final class ReportCaseUco implements GeneralReportModule {
         }
         return instance;
     }
-    
+
+    /**
+     * Get default configuration for this report module.
+     *
+     * @return Object which contains default report module settings.
+     */
+    @Override
+    public ReportModuleSettings getDefaultConfiguration() {
+        // This module does not have configuration
+        return new NoReportModuleSettings();
+    }
+
+    /**
+     * Get current configuration for this report module.
+     *
+     * @return Object which contains current report module settings.
+     */
+    @Override
+    public ReportModuleSettings getConfiguration() {
+        // This module does not have configuration
+        return new NoReportModuleSettings();
+    }
+
+    /**
+     * Set report module configuration.
+     *
+     * @param settings Object which contains report module settings.
+     */
+    @Override
+    public void setConfiguration(ReportModuleSettings settings) {
+        // This module does not have configuration
+    }
+
     @Override
     public String getName() {
         String name = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getName.text");
         return name;
+    }
+    
+    @Override
+    public JPanel getConfigurationPanel() {
+        return null; // No configuration panel
     }
 
     @Override
@@ -71,18 +103,6 @@ public final class ReportCaseUco implements GeneralReportModule {
         String desc = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getDesc.text");
         return desc;
     }
-
-    @Override
-    public JPanel getConfigurationPanel() {
-        try {
-            configPanel = new ReportCaseUcoConfigPanel();
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to initialize CASE-UCO settings panel", ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_notInitialized());
-            configPanel = null;
-        }
-        return configPanel;
-    }    
 
     /**
      * Returns CASE-UCO report file name
@@ -106,23 +126,7 @@ public final class ReportCaseUco implements GeneralReportModule {
     @Override
     @SuppressWarnings("deprecation")
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
-
-        if (configPanel == null) {
-            logger.log(Level.SEVERE, "CASE-UCO settings panel has not been initialized"); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_notInitialized());
-            progressPanel.complete(ReportStatus.ERROR);
-            return;
-        }
-
-        Long selectedDataSourceId = configPanel.getSelectedDataSourceId();
-        if (selectedDataSourceId == ReportCaseUcoConfigPanel.NO_DATA_SOURCE_SELECTED) {
-            logger.log(Level.SEVERE, "No data source selected for CASE-UCO report"); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noDataSourceSelected());
-            progressPanel.complete(ReportStatus.ERROR);
-            return;
-        }
-
         String reportPath = baseReportDir + getRelativeFilePath();
-        CaseUcoFormatExporter.generateReport(selectedDataSourceId, reportPath, progressPanel);
+        CaseUcoFormatExporter.generateReport(reportPath, progressPanel);
     }
 }
