@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.awt.Cursor;
 import java.util.LinkedHashMap;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -85,6 +83,5 @@ final class SearchWorker extends SwingWorker<Void, Void> {
         if (searchButtonToEnable != null) {
             searchButtonToEnable.setEnabled(true);
         }
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 }

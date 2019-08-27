@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -36,7 +35,6 @@ import javax.swing.JList;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
@@ -1172,7 +1170,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         searchButton.setEnabled(false);
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         FileType searchType = fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex());
         DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(searchType));
         // For testing, allow the user to run different searches in loop
