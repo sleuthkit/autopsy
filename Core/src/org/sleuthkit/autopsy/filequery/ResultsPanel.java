@@ -19,11 +19,13 @@
 package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
-import javax.swing.DefaultListSelectionModel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
@@ -62,8 +64,8 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final EamDb centralRepo;
     private int groupSize = 0;
     private PageWorker pageWorker;
-    private final List<SwingWorker> thumbnailWorkers = new ArrayList<>();
-    private final DefaultListModel<String> duplicatesListModel = new DefaultListModel<>();
+    private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
+    private final DefaultListModel<AbstractFile> instancesListModel = new DefaultListModel<>();
 
     /**
      * Creates new form ResultsPanel.
@@ -76,33 +78,40 @@ public class ResultsPanel extends javax.swing.JPanel {
         videoThumbnailViewer = new VideoThumbnailViewer();
         // Disable manual editing of page size spinner
         videoThumbnailViewer.addListSelectionListener((e) -> {
-            SwingUtilities.invokeLater(() -> {
-                duplicatesListModel.removeAllElements();
-                for (AbstractFile file : getSelectedDuplicates()) {
-                    String name;
-                    try {
-                        name = file.getUniquePath();
-                    } catch (TskCoreException ingored) {
-                        name = file.getParentPath() + "/" + file.getName();
-                    }
-                    duplicatesListModel.addElement(name);
-                }
-            });
+            if (!e.getValueIsAdjusting()) {
+                populateInstancesList();
+            }
         });
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
 
     void addListSelectionListener(ListSelectionListener listener) {
-        videoThumbnailViewer.addListSelectionListener(listener);
+        instancesList.addListSelectionListener(listener);
     }
 
-    AbstractFile getSelectedFile() {
-        return videoThumbnailViewer.getSelectedFile();
+    private synchronized void populateInstancesList() {
+        SwingUtilities.invokeLater(() -> {
+            instancesListModel.removeAllElements();
+            for (AbstractFile file : getInstancesForSelected()) {
+                instancesListModel.addElement(file);
+            }
+            if (!instancesListModel.isEmpty()) {
+                instancesList.setSelectedIndex(0);
+            }
+        });
     }
 
-    private List<AbstractFile> getSelectedDuplicates() {
+    synchronized AbstractFile getSelectedFile() {
+        if (instancesList.getSelectedIndex() == -1) {
+            return null;
+        } else {
+            return instancesListModel.getElementAt(instancesList.getSelectedIndex());
+        }
+    }
+
+    private List<AbstractFile> getInstancesForSelected() {
         if (resultType == FileSearchData.FileType.VIDEO) {
-            return videoThumbnailViewer.getDuplicatesForSelected();
+            return videoThumbnailViewer.getInstancesForSelected();
         }
         return new ArrayList<>();
     }
@@ -125,7 +134,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
                 resultsViewerPanel.add(thumbnailViewer);
                 if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getFirstInstance()).collect(Collectors.toList());
                     thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(filesList))), true));
                 } else {
                     thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
@@ -137,7 +146,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             } else {
                 resultsViewerPanel.add(tableViewer);
                 if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getFirstInstance()).collect(Collectors.toList());
                     tableViewer.setNode(new TableFilterNode(new SearchNode(filesList), true));
                 } else {
                     tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
@@ -146,7 +155,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         });
     }
 
-    void populateVideoViewer(List<ResultFile> files) {
+    synchronized void populateVideoViewer(List<ResultFile> files) {
         //cancel any unfished thumb workers
         for (SwingWorker thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
@@ -204,7 +213,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param startingEntry The index of the first file in the group to include
      *                      in this page.
      */
-    private void setPage(int startingEntry) {
+    private synchronized void setPage(int startingEntry) {
         int pageSize = (int) pageSizeSpinner.getValue();
         synchronized (this) {
             if (pageWorker != null && !pageWorker.isDone()) {
@@ -252,9 +261,9 @@ public class ResultsPanel extends javax.swing.JPanel {
         gotoPageField = new javax.swing.JTextField();
         javax.swing.JLabel pageSizeLabel = new javax.swing.JLabel();
         resultsSplitPane = new javax.swing.JSplitPane();
-        duplicatesPanel = new javax.swing.JPanel();
-        duplicatesScrollPane = new javax.swing.JScrollPane();
-        duplicatesList = new javax.swing.JList<>();
+        instancesPanel = new javax.swing.JPanel();
+        instancesScrollPane = new javax.swing.JScrollPane();
+        instancesList = new javax.swing.JList<>();
         resultsViewerPanel = new javax.swing.JPanel();
 
         pagingPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -361,26 +370,27 @@ public class ResultsPanel extends javax.swing.JPanel {
         resultsSplitPane.setResizeWeight(0.9);
         resultsSplitPane.setPreferredSize(new java.awt.Dimension(777, 125));
 
-        duplicatesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.duplicatesList.border.title"))); // NOI18N
-        duplicatesList.setModel(duplicatesListModel);
-        duplicatesScrollPane.setViewportView(duplicatesList);
+        instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.instancesList.border.title"))); // NOI18N
+        instancesList.setModel(instancesListModel);
+        instancesList.setCellRenderer(new InstancesCellRenderer());
+        instancesScrollPane.setViewportView(instancesList);
 
-        javax.swing.GroupLayout duplicatesPanelLayout = new javax.swing.GroupLayout(duplicatesPanel);
-        duplicatesPanel.setLayout(duplicatesPanelLayout);
-        duplicatesPanelLayout.setHorizontalGroup(
-            duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout instancesPanelLayout = new javax.swing.GroupLayout(instancesPanel);
+        instancesPanel.setLayout(instancesPanelLayout);
+        instancesPanelLayout.setHorizontalGroup(
+            instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 775, Short.MAX_VALUE)
-            .addGroup(duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(duplicatesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
+            .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE))
         );
-        duplicatesPanelLayout.setVerticalGroup(
-            duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        instancesPanelLayout.setVerticalGroup(
+            instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 52, Short.MAX_VALUE)
-            .addGroup(duplicatesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(duplicatesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE))
+            .addGroup(instancesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(instancesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE))
         );
 
-        resultsSplitPane.setRightComponent(duplicatesPanel);
+        resultsSplitPane.setRightComponent(instancesPanel);
 
         resultsViewerPanel.setLayout(new java.awt.BorderLayout());
         resultsSplitPane.setLeftComponent(resultsViewerPanel);
@@ -475,10 +485,10 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel currentPageLabel;
-    private javax.swing.JList<String> duplicatesList;
-    private javax.swing.JPanel duplicatesPanel;
-    private javax.swing.JScrollPane duplicatesScrollPane;
     private javax.swing.JTextField gotoPageField;
+    private javax.swing.JList<AbstractFile> instancesList;
+    private javax.swing.JPanel instancesPanel;
+    private javax.swing.JScrollPane instancesScrollPane;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JSpinner pageSizeSpinner;
     private javax.swing.JPanel pagingPanel;
@@ -508,6 +518,29 @@ public class ResultsPanel extends javax.swing.JPanel {
                 videoThumbnailViewer.addRow(thumbnailWrapper);
             }
         }
+
     }
 
+    private class InstancesCellRenderer extends DefaultListCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            String name = "";
+            if (value instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) value;
+                try {
+                    name = file.getUniquePath();
+                } catch (TskCoreException ingored) {
+                    name = file.getParentPath() + "/" + file.getName();
+                }
+
+            }
+            setText(name);
+            return this;
+        }
+
+    }
 }

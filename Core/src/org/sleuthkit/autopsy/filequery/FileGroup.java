@@ -53,7 +53,7 @@ class FileGroup implements Comparable<FileGroup> {
     void addFile(ResultFile file) {
         if (files.contains(file)) {
             ResultFile existingCopy = files.get(files.indexOf(file)); //get the copy of this which exists in the list
-            existingCopy.addDuplicate(file.getAbstractFile());
+            existingCopy.addDuplicate(file.getFirstInstance());
         }
         else {
             files.add(file);

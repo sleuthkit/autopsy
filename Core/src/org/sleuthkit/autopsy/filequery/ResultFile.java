@@ -30,14 +30,14 @@ import org.sleuthkit.datamodel.HashUtility;
  */
 class ResultFile {
 
-    private final AbstractFile abstractFile;
     private FileSearchData.Frequency frequency;
     private final List<String> keywordListNames;
     private final List<String> hashSetNames;
     private final List<String> tagNames;
     private final List<String> interestingSetNames;
     private final List<String> objectDetectedNames;
-    private final List<AbstractFile> duplicates;
+    private final List<AbstractFile> instances = new ArrayList<>();
+    ;
     private FileType fileType;
 
     /**
@@ -46,14 +46,14 @@ class ResultFile {
      * @param abstractFile
      */
     ResultFile(AbstractFile abstractFile) {
-        this.abstractFile = abstractFile;
+        //store the file the ResultFile was created for as the first value in the instances list
+        instances.add(abstractFile);
         this.frequency = FileSearchData.Frequency.UNKNOWN;
         keywordListNames = new ArrayList<>();
         hashSetNames = new ArrayList<>();
         tagNames = new ArrayList<>();
         interestingSetNames = new ArrayList<>();
         objectDetectedNames = new ArrayList<>();
-        duplicates = new ArrayList<>();
         fileType = FileType.OTHER;
     }
 
@@ -76,24 +76,24 @@ class ResultFile {
     }
 
     /**
-     * Add an AbstractFile to the list of files which are duplicates of this
+     * Add an AbstractFile to the list of files which are instances of this
      * file.
      *
      * @param duplicate The abstract file to add as a duplicate.
      */
     void addDuplicate(AbstractFile duplicate) {
-        duplicates.add(duplicate);
+        instances.add(duplicate);
     }
 
     /**
-     * Get the list of AbstractFiles which have been identified as duplicates of
+     * Get the list of AbstractFiles which have been identified as instances of
      * this file.
      *
-     * @return The list of AbstractFiles which have been identified as
-     *         duplicates of this file.
+     * @return The list of AbstractFiles which have been identified as instances
+     *         of this file.
      */
-    List<AbstractFile> getDuplicates() {
-        return Collections.unmodifiableList(duplicates);
+    List<AbstractFile> getAllInstances() {
+        return Collections.unmodifiableList(instances);
     }
 
     /**
@@ -234,27 +234,27 @@ class ResultFile {
      *
      * @return the AbstractFile object
      */
-    AbstractFile getAbstractFile() {
-        return abstractFile;
+    AbstractFile getFirstInstance() {
+        return instances.get(0);
     }
 
     @Override
     public String toString() {
-        return abstractFile.getName() + "(" + abstractFile.getId() + ") - "
-                + abstractFile.getSize() + ", " + abstractFile.getParentPath() + ", "
-                + abstractFile.getDataSourceObjectId() + ", " + frequency.toString() + ", "
-                + String.join(",", keywordListNames) + ", " + abstractFile.getMIMEType();
+        return getFirstInstance().getName() + "(" + getFirstInstance().getId() + ") - "
+                + getFirstInstance().getSize() + ", " + getFirstInstance().getParentPath() + ", "
+                + getFirstInstance().getDataSourceObjectId() + ", " + frequency.toString() + ", "
+                + String.join(",", keywordListNames) + ", " + getFirstInstance().getMIMEType();
     }
 
     @Override
     public int hashCode() {
-        if (this.getAbstractFile().getMd5Hash() == null
-                || HashUtility.isNoDataMd5(this.getAbstractFile().getMd5Hash())
-                || !HashUtility.isValidMd5Hash(this.getAbstractFile().getMd5Hash())) {
+        if (this.getFirstInstance().getMd5Hash() == null
+                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())
+                || !HashUtility.isValidMd5Hash(this.getFirstInstance().getMd5Hash())) {
             return super.hashCode();
         } else {
             //if the file has a valid MD5 use the hashcode of the MD5 for deduping files with the same MD5
-            return this.getAbstractFile().getMd5Hash().hashCode();
+            return this.getFirstInstance().getMd5Hash().hashCode();
         }
 
     }
@@ -262,13 +262,13 @@ class ResultFile {
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof ResultFile)
-                || this.getAbstractFile().getMd5Hash() == null
-                || HashUtility.isNoDataMd5(this.getAbstractFile().getMd5Hash())
-                || !HashUtility.isValidMd5Hash(this.getAbstractFile().getMd5Hash())) {
+                || this.getFirstInstance().getMd5Hash() == null
+                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())
+                || !HashUtility.isValidMd5Hash(this.getFirstInstance().getMd5Hash())) {
             return super.equals(obj);
         } else {
             //if the file has a valid MD5 compare use the MD5 for equality check
-            return this.getAbstractFile().getMd5Hash().equals(((ResultFile) obj).getAbstractFile().getMd5Hash());
+            return this.getFirstInstance().getMd5Hash().equals(((ResultFile) obj).getFirstInstance().getMd5Hash());
         }
     }
 }

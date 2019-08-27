@@ -56,18 +56,22 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
      *         if no thumbnails are selected.
      */
     AbstractFile getSelectedFile() {
-        if (thumbnailList.getSelectedIndex() == -1) {
-            return null;
-        } else {
-            return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getAbstractFile();
+        synchronized (this) {
+            if (thumbnailList.getSelectedIndex() == -1) {
+                return null;
+            } else {
+                return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getFirstInstance();
+            }
         }
     }
-    
-    List<AbstractFile> getDuplicatesForSelected() {
-         if (thumbnailList.getSelectedIndex() == -1) {
-            return new ArrayList<>();
-        } else {
-           return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getDuplicates();
+
+    List<AbstractFile> getInstancesForSelected() {
+        synchronized (this) {
+            if (thumbnailList.getSelectedIndex() == -1) {
+                return new ArrayList<>();
+            } else {
+                return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getAllInstances();
+            }
         }
     }
 

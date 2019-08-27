@@ -848,10 +848,10 @@ class FileSearchFiltering {
                 CorrelationAttributeInstance.Type type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
             
                 for (ResultFile file : currentResults) {
-                    if (file.getAbstractFile().getMd5Hash() != null && ! file.getAbstractFile().getMd5Hash().isEmpty()) {
+                    if (file.getFirstInstance().getMd5Hash() != null && ! file.getFirstInstance().getMd5Hash().isEmpty()) {
                         
                         // Check if this file hash is marked as notable in the CR
-                        String value = file.getAbstractFile().getMd5Hash();
+                        String value = file.getFirstInstance().getMd5Hash();
                         if (centralRepoDb.getCountArtifactInstancesKnownBad(type, value) > 0) {
                             notableResults.add(file);
                         }

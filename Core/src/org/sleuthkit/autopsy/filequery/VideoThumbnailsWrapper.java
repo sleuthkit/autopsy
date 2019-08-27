@@ -78,9 +78,9 @@ final class VideoThumbnailsWrapper {
      */
     String getFilePath() {
         try {
-            return resultFile.getAbstractFile().getUniquePath();
+            return resultFile.getFirstInstance().getUniquePath();
         } catch (TskCoreException ingored) {
-            return resultFile.getAbstractFile().getParentPath() + "/" + resultFile.getAbstractFile().getName();
+            return resultFile.getFirstInstance().getParentPath() + "/" + resultFile.getFirstInstance().getName();
         }
     }
 
