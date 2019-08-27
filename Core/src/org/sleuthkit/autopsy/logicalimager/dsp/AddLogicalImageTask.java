@@ -71,7 +71,11 @@ final class AddLogicalImageTask implements Runnable {
     private final Case currentCase;
     
     private volatile boolean cancelled;
-
+    private boolean addingInterestingFiles;
+    private AddMultipleImageTask addMultipleImageTask;
+    private Thread multipleImageThread;
+    private boolean createVHD;
+    
     AddLogicalImageTask(String deviceId,
             String timeZone,
             File src, File dest,
@@ -134,10 +138,6 @@ final class AddLogicalImageTask implements Runnable {
             return;
         }
 
-        if (cancelled) {
-            return;
-        }
-
         progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingToReport(resultsFilename));
         String status = addReport(Paths.get(dest.toString(), resultsFilename), resultsFilename + " " + src.getName());
         if (status != null) {
@@ -171,13 +171,13 @@ final class AddLogicalImageTask implements Runnable {
             }
         }
 
-        AddMultipleImageTask addMultipleImageTask = null;
+        addMultipleImageTask = null;
+        AddDataSourceCallback privateCallback = null;
         List<Content> newDataSources = new ArrayList<>();
-        boolean createVHD;
         
         if (imagePaths.isEmpty()) {
             createVHD = false;
-            // No VHD in src directory, try ingest the root directory using Logical File Set
+            // No VHD in src directory, try ingest the root directory as local files
             File root = Paths.get(dest.toString(), ROOT_STR).toFile();
             if (root.exists() && root.isDirectory()) {
                 imagePaths.add(root.getAbsolutePath());
@@ -202,12 +202,10 @@ final class AddLogicalImageTask implements Runnable {
             createVHD = true;
             // ingest the VHDs
             try {
-                addMultipleImageTask = new AddMultipleImageTask(deviceId, imagePaths, timeZone , progressMonitor, callback);
-                addMultipleImageTask.run();
-                if (addMultipleImageTask.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
-                    callback.done(addMultipleImageTask.getResult(), addMultipleImageTask.getErrorMessages(), addMultipleImageTask.getNewDataSources());
-                    return;
-                }
+                privateCallback = new AddDataSourceCallback();
+                addMultipleImageTask = new AddMultipleImageTask(deviceId, imagePaths, timeZone , progressMonitor, privateCallback);
+                multipleImageThread = new Thread(addMultipleImageTask);
+                multipleImageThread.start();
             } catch (NoCurrentCaseException ex) {
                 String msg = Bundle.AddLogicalImageTask_noCurrentCase();
                 errorList.add(msg);
@@ -217,11 +215,40 @@ final class AddLogicalImageTask implements Runnable {
         }
 
         try {
+            if (createVHD) {
+                // Wait for addMultipleImageTask to finish, via its privateCallback
+                while (privateCallback.inProgress()) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        // Got the addMultipleImageTask stop (cancel)
+                        LOGGER.log(Level.INFO, "AddMultipleImageTask interrupted", ex); // NON-NLS
+                        // now wait for addMultipleImageTask to revert and finally callback
+                        while (privateCallback.inProgress()) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException ex2) {
+                                LOGGER.log(Level.INFO, "AddMultipleImageTask interrupted 2", ex2); // NON-NLS
+                            }
+                        }
+                    }
+                }
+                // TODO: Delete destination directory when 5453 (VHD file is not closed upon revert) is fixed.
+                // if (cancelled) {
+                //     deleteDestinationDirectory();
+                // }
+                if (privateCallback.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
+                    // bait out
+                    callback.done(privateCallback.getResult(), privateCallback.getErrorMessages(), privateCallback.getNewDataSources());
+                    return;
+                }
+            }
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFiles());
+            addingInterestingFiles = true;
             addInterestingFiles(dest, Paths.get(dest.toString(), resultsFilename), createVHD);
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingInterestingFiles());
-            if (addMultipleImageTask != null) {
-                callback.done(addMultipleImageTask.getResult(), addMultipleImageTask.getErrorMessages(), addMultipleImageTask.getNewDataSources());
+            if (addMultipleImageTask != null && privateCallback != null) {
+                callback.done(privateCallback.getResult(), privateCallback.getErrorMessages(), privateCallback.getNewDataSources());
             } else {
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS, errorList, newDataSources);
             }
@@ -265,6 +292,17 @@ final class AddLogicalImageTask implements Runnable {
     void cancelTask() {
         LOGGER.log(Level.WARNING, "AddLogicalImageTask cancelled, processing may be incomplete"); // NON-NLS
         cancelled = true;
+        if (addMultipleImageTask != null) {
+            multipleImageThread.interrupt();
+            addMultipleImageTask.cancelTask();
+        }
+        if (!createVHD) {
+            // Don't delete destination directory once we started adding interesting files.
+            // At this point the database and destination directory are complete.
+            if (!addingInterestingFiles) {
+                deleteDestinationDirectory();
+            }
+        }
     }
 
     private Map<String, Long> imagePathsToDataSourceObjId(Map<Long, List<String>> imagePaths) {
@@ -429,4 +467,51 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
+    private boolean deleteDestinationDirectory() {
+        try {
+            FileUtils.deleteDirectory(dest);
+            LOGGER.log(Level.INFO, String.format("Cancellation: Deleted directory %s", dest.toString())); // NON-NLS
+            return true;
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, String.format("Cancellation: Failed to delete directory %s", dest.toString()), ex);  // NON-NLS
+            return false;
+        }
+    }
+
+    private class AddDataSourceCallback extends DataSourceProcessorCallback {
+        private List<String> errorMessages;
+        private List<Content> newDataSources;
+        private DataSourceProcessorResult result;
+        private boolean inProgress  = true;
+
+        @Override
+        public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> newDataSources) {
+            LOGGER.log(Level.INFO, "privateCallback done"); // NON-NLS
+            this.errorMessages = errorMessages;
+            this.newDataSources = newDataSources;
+            this.result = result;
+            this.inProgress = false;
+        }        
+
+        @Override
+        public void doneEDT(DataSourceProcessorResult result, List<String> errorMessages, List<Content> newDataSources) {
+            done(result, errorMessages, newDataSources);
+        }
+
+        public List<Content> getNewDataSources() {
+            return newDataSources;
+        }
+
+        public List<String> getErrorMessages() {
+            return errorMessages;
+        }
+
+        public DataSourceProcessorResult getResult() {
+            return result;
+        }
+
+        private boolean inProgress() {
+            return inProgress;
+        }
+    }
 }
