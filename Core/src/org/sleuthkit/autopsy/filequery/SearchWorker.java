@@ -85,6 +85,6 @@ final class SearchWorker extends SwingWorker<Void, Void> {
         if (searchButtonToEnable != null) {
             searchButtonToEnable.setEnabled(true);
         }
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR_CURSOR));
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 }

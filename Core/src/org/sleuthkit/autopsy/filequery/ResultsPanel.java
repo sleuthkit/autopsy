@@ -158,7 +158,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     synchronized void populateVideoViewer(List<ResultFile> files) {
         //cancel any unfished thumb workers
-        for (SwingWorker thumbWorker : thumbnailWorkers) {
+        for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
                 thumbWorker.cancel(true);
             }
