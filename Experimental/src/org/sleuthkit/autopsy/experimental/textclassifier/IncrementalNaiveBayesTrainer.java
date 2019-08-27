@@ -62,7 +62,9 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     // For the document classification task, this maps each word in the
     // vocabulary name to a unique integer for more compact memory usage.
     private Map<String, Integer> masterPredMap = new HashMap<>();
-
+    private boolean oldModelExists = false;
+    
+    
     public IncrementalNaiveBayesTrainer() {
         this.setMasterPredLabels(new ArrayList<>());
         this.setMasterOutcomeLabels(new ArrayList<>());
@@ -98,8 +100,10 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
             paramsList.add(mutableContext);
         }
         this.setParameters(paramsList);
+        
+        this.oldModelExists = true;
     }
-
+    
     @Override
     public void init(TrainingParameters trainingParameters, Map<String, String> reportMap) {
         super.init(trainingParameters, reportMap);
@@ -112,6 +116,8 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
             } catch (IOException ex) {
                 //If the model doesn't exist, start with a blank one.
                 this.setParameters(new ArrayList<>());
+                //String[] outcomes = trainingParameters.getStringParameter(TextClassifierUtils.OUTCOMES_FIELD_NAME, TextClassifierUtils.DEFAULT_OUTCOMES_STRING).split("\t");
+                //this.setMasterOutcomeLabels(Arrays.asList(outcomes));
             }
         }
     }
@@ -127,8 +133,8 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     public MaxentModel doTrain(DataIndexer indexer) throws IOException {
         return this.trainModel(indexer);
     }
-
-    private MaxentModel trainModel(DataIndexer di) {
+    
+    private MaxentModel trainModel(DataIndexer di) throws IOException {
         display("Incorporating indexed data for training...  \n");
         int[][] contexts = di.getContexts();
         float[][] values = di.getValues();
@@ -159,15 +165,27 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         Context[] finalParameters = parameters.toArray(new Context[parameters.size()]);
         String[] predLabels = masterPredLabels.toArray(new String[masterPredLabels.size()]);
         String[] outcomeLabels = masterOutcomeLabels.toArray(new String[masterOutcomeLabels.size()]);
+        
+        this.oldModelExists = true;
+        
         return new NaiveBayesModel(finalParameters, predLabels, outcomeLabels);
     }
 
-    private void mergeInParameters(MutableContext[] newParameters, String[] newOutcomeLabels, String[] newPredLabels) {
-
+    private void mergeInParameters(MutableContext[] newParameters, String[] newOutcomeLabels, String[] newPredLabels) throws IOException {
+        
         List<Integer> mappingNewOutcomeToOldOutcome = new ArrayList<>();
         for (int newIndex = 0; newIndex < newOutcomeLabels.length; newIndex++) {
             String newLabel = newOutcomeLabels[newIndex];
             if (!masterOutcomeMap.containsKey(newLabel)) {
+                //Unless this is a brand new model, it cannot introduce new
+                //labels. For some applications, it would be great if we could
+                //continue to gain new labels as we go, but that would involve
+                //going back and changing the size of a lot of existing arrays.
+                //For the current use case, we always have the same two labels
+                //in every collection.
+                if (oldModelExists) {
+                    throw new IOException("Cannot merge new training data. Outcome label " + newLabel + " is not in " + masterOutcomeLabels);        
+                }
                 masterOutcomeMap.put(newLabel, masterOutcomeLabels.size());
                 masterOutcomeLabels.add(newLabel);
             }
@@ -201,6 +219,8 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
                 parameters.get(masterPredIndex).updateParameter(masterOutcomeIndex, toAdd);
             }
         }
+        
+        this.oldModelExists = true;
     }
 
     private int getNumOutcomes() {
