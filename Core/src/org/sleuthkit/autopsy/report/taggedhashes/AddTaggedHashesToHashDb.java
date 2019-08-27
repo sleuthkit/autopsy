@@ -22,15 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.NoReportModuleSettings;
@@ -123,7 +120,8 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
             openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "No open Case", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);
+            progressPanel.updateStatusLabel("Exception while getting open case.");
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
             return;
         }
         progressPanel.setIndeterminate(true);
@@ -133,7 +131,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         HashDb hashSet = configPanel.getSelectedHashDatabase();
         if (hashSet == null) {
             logger.log(Level.WARNING, "No hash set selected for export."); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.AddTaggedHashesToHashDb_error_noHashSetsSelected());
+            progressPanel.updateStatusLabel(Bundle.AddTaggedHashesToHashDb_error_noHashSetsSelected());
             progressPanel.setIndeterminate(false);
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
             return;
@@ -145,7 +143,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         List<TagName> tagNames = configPanel.getSelectedTagNames();
         if (tagNames.isEmpty()) {
             logger.log(Level.WARNING, "No tags selected for export."); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.AddTaggedHashesToHashDb_error_noTagsSelected());
+            progressPanel.updateStatusLabel(Bundle.AddTaggedHashesToHashDb_error_noTagsSelected());
             progressPanel.setIndeterminate(false);
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
             return;
@@ -172,14 +170,14 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                                 failedExports.add(tag.getContent().getName());
                             }
                         } else {
-                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Set Error", JOptionPane.ERROR_MESSAGE);
+                            progressPanel.updateStatusLabel("Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.");
                             break;
                         }
                     }
                 }
             } catch (TskCoreException ex) {
                 Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+                progressPanel.updateStatusLabel("Error getting selected tags for case.");
             }
         }
         if (!failedExports.isEmpty()) {
@@ -193,7 +191,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                     errorMessage.append(".");
                 }
             }
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), errorMessage.toString(), "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+            progressPanel.updateStatusLabel(errorMessage.toString());
         }
         
         progressPanel.setIndeterminate(false);

@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -103,14 +102,14 @@ public final class CaseUcoFormatExporter {
             Files.createDirectories(Paths.get(reportFile.getParent()));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to create directory for CASE-UCO report", ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_unableToCreateDirectories());
+            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_unableToCreateDirectories());
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
             return;
         }
 
         // Check if ingest has finished
         if (IngestManager.getInstance().isIngestRunning()) {
-            MessageNotifyUtil.Message.warn(Bundle.ReportCaseUco_ingestWarning());
+            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_ingestWarning());
         }
 
         JsonGenerator jsonGenerator = null;

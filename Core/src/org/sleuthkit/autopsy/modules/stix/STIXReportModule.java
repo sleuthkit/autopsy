@@ -54,7 +54,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.NoReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
@@ -116,8 +115,6 @@ public class STIXReportModule implements GeneralReportModule {
 
         if (stixFileName == null) {
             logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
-            MessageNotifyUtil.Message.error(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
@@ -126,8 +123,6 @@ public class STIXReportModule implements GeneralReportModule {
         }
         if (stixFileName.isEmpty()) {
             logger.log(Level.SEVERE, "No STIX file/directory provided "); //NON-NLS
-            MessageNotifyUtil.Message.error(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.notifyErr.noFildDirProvided"));
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
@@ -138,9 +133,6 @@ public class STIXReportModule implements GeneralReportModule {
 
         if (!stixFile.exists()) {
             logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName)); //NON-NLS
-            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
-                    "STIXReportModule.notifyMsg.unableToOpenFileDir",
-                    stixFileName));
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
@@ -172,9 +164,7 @@ public class STIXReportModule implements GeneralReportModule {
                 } catch (TskCoreException | JAXBException ex) {
                     String errMsg = String.format("Unable to process STIX file %s", file);
                     logger.log(Level.SEVERE, errMsg, ex); //NON-NLS
-                    MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                            errMsg,
-                            MessageNotifyUtil.MessageType.ERROR);
+                    progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), errMsg));
                     hadErrors = true;
                     break;
                 }
@@ -195,10 +185,6 @@ public class STIXReportModule implements GeneralReportModule {
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to complete STIX report.", ex); //NON-NLS
-            MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                    NbBundle.getMessage(this.getClass(),
-                            "STIXReportModule.notifyMsg.unableToOpenReportFile"),
-                    MessageNotifyUtil.MessageType.ERROR);
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
@@ -234,7 +220,7 @@ public class STIXReportModule implements GeneralReportModule {
         registryFileData = EvalRegistryObj.copyRegistryFiles();
 
         // Process the indicators
-        processIndicators(stix, output);
+        processIndicators(stix, output, progressPanel);
         progressPanel.increment();
 
     }
@@ -282,7 +268,7 @@ public class STIXReportModule implements GeneralReportModule {
      * @param stix STIXPackage
      * @param output
      */
-    private void processIndicators(STIXPackage stix, BufferedWriter output) throws TskCoreException {
+    private void processIndicators(STIXPackage stix, BufferedWriter output, ReportProgressPanel progressPanel) throws TskCoreException {
         if (stix.getIndicators() != null) {
             List<IndicatorBaseType> s = stix.getIndicators().getIndicators();
             for (IndicatorBaseType t : s) {
@@ -295,7 +281,7 @@ public class STIXReportModule implements GeneralReportModule {
                                 writeResultsToFile(ind, result.getDescription(), result.isTrue(), output);
                             }
                             if (result.isTrue()) {
-                                saveResultsAsArtifacts(ind, result);
+                                saveResultsAsArtifacts(ind, result, progressPanel);
                             }
                         } else if (ind.getObservable().getObservableComposition() != null) {
                             ObservableResult result = evaluateObservableComposition(ind.getObservable().getObservableComposition(), "  ");
@@ -304,7 +290,7 @@ public class STIXReportModule implements GeneralReportModule {
                                 writeResultsToFile(ind, result.getDescription(), result.isTrue(), output);
                             }
                             if (result.isTrue()) {
-                                saveResultsAsArtifacts(ind, result);
+                                saveResultsAsArtifacts(ind, result, progressPanel);
                             }
                         }
                     }
@@ -321,7 +307,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @throws TskCoreException
      */
-    private void saveResultsAsArtifacts(Indicator ind, ObservableResult result) throws TskCoreException {
+    private void saveResultsAsArtifacts(Indicator ind, ObservableResult result, ReportProgressPanel progressPanel) throws TskCoreException {
 
         if (result.getArtifacts() == null) {
             return;
@@ -347,11 +333,8 @@ public class STIXReportModule implements GeneralReportModule {
             // for a single observable because the condition was not restrictive enough
             count++;
             if (count > 1000) {
-                MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                        NbBundle.getMessage(this.getClass(),
-                                "STIXReportModule.notifyMsg.tooManyArtifactsgt1000",
-                                ind.getId()),
-                        MessageNotifyUtil.MessageType.INFO);
+                progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), 
+                                "STIXReportModule.notifyMsg.tooManyArtifactsgt1000"));
                 break;
             }
         }

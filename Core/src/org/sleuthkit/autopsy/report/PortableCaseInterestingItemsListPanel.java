@@ -116,8 +116,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             setCounts = callback.getSetCountMap();
             setNames.addAll(setCounts.keySet());
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Failed to get interesting item set names", ex); // NON-NLS
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
+            // There may not be a case open when configuring report modules for Command Line execution
             Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); // NON-NLS
         }
         Collections.sort(setNames);

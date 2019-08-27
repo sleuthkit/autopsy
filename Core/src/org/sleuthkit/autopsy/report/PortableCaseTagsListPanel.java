@@ -119,8 +119,9 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
                 }
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Failed to get tag names", ex); // NON-NLS
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
+            // There may not be a case open when configuring report modules for Command Line execution
             Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); // NON-NLS
         }
 

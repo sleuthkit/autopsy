@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
@@ -153,7 +152,7 @@ class PortableCaseReportModule implements ReportModule {
         } else {
             logger.log(Level.SEVERE, logWarning, ex);
         }
-        MessageNotifyUtil.Message.error(dialogWarning);
+        progressPanel.updateStatusLabel(dialogWarning);
         progressPanel.setIndeterminate(false);
         progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
         cleanup();
