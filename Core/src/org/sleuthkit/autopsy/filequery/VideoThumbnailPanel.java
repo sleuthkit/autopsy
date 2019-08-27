@@ -27,6 +27,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Class which displays thumbnails and information for a video file.
@@ -93,7 +94,8 @@ public final class VideoThumbnailPanel extends javax.swing.JPanel implements Lis
     private void initComponents() {
 
         imagePanel = new javax.swing.JPanel();
-        fileInfoLabel = new javax.swing.JLabel();
+        fileSizeLabel = new javax.swing.JLabel();
+        countLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -107,7 +109,10 @@ public final class VideoThumbnailPanel extends javax.swing.JPanel implements Lis
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(imagePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
-                    .addComponent(fileInfoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(fileSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -116,20 +121,28 @@ public final class VideoThumbnailPanel extends javax.swing.JPanel implements Lis
                 .addContainerGap()
                 .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(fileInfoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(fileSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 19, Short.MAX_VALUE)
+                    .addComponent(countLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel fileInfoLabel;
+    private javax.swing.JLabel countLabel;
+    private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JPanel imagePanel;
     // End of variables declaration//GEN-END:variables
 
+    @Messages({"# {0} - fileSize",
+        "VideoThumbnailPanel.sizeLabel.text=Size: {0} bytes",
+        "# {0} - numberOfInstances",
+        "VideoThumbnailPanel.countLabel.text=Numbber of Instances: {0}"})
     @Override
     public Component getListCellRendererComponent(JList<? extends VideoThumbnailsWrapper> list, VideoThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
-        fileInfoLabel.setText(value.getFilePath());
+        fileSizeLabel.setText(Bundle.VideoThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));
+        countLabel.setText(Bundle.VideoThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());

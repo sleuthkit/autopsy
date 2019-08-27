@@ -72,19 +72,6 @@ final class VideoThumbnailsWrapper {
     }
 
     /**
-     * Get the path to the file including the file name.
-     *
-     * @return The path to the file including the file name.
-     */
-    String getFilePath() {
-        try {
-            return resultFile.getFirstInstance().getUniquePath();
-        } catch (TskCoreException ingored) {
-            return resultFile.getFirstInstance().getParentPath() + "/" + resultFile.getFirstInstance().getName();
-        }
-    }
-
-    /**
      * Get the list of thumbnails for the video.
      *
      * @return The list of Images which are the thumbnails for the video.
