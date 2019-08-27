@@ -132,6 +132,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
+        "LogicalImagerDSProcessor.destinationDirectoryConfirmation=Destination directory confirmation",
+        "# {0} - directory", "LogicalImagerDSProcessor.destinationDirectoryConfirmationMsg=The logical imager folder %s already exists,\ndo you want to add it again using a new folder name?",
         "LogicalImagerDSProcessor.noCurrentCase=No current case",
     })
     @Override
@@ -166,8 +168,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         if (dest.exists()) {
             // Destination directory already exists
             int showConfirmDialog = JOptionPane.showConfirmDialog(configPanel, 
-                    String.format("The logical imager folder %s already exists,\ndo you want to add it again using a new folder name?", dest.toString()),
-                    "Destination directory confirmation",
+                    Bundle.LogicalImagerDSProcessor_destinationDirectoryConfirmationMsg(dest.toString()),
+                    Bundle.LogicalImagerDSProcessor_destinationDirectoryConfirmation(),
                     JOptionPane.YES_NO_OPTION);
             if (showConfirmDialog == YES_OPTION) {
                 // Get unique dest directory
