@@ -89,7 +89,7 @@ public class ResultsPanel extends javax.swing.JPanel {
         instancesList.addListSelectionListener(listener);
     }
 
-    private synchronized void populateInstancesList() {
+    synchronized void populateInstancesList() {
         SwingUtilities.invokeLater(() -> {
             instancesListModel.removeAllElements();
             for (AbstractFile file : getInstancesForSelected()) {
@@ -124,6 +124,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     @Subscribe
     void handlePageRetrievedEvent(DiscoveryEvents.PageRetrievedEvent pageRetrievedEvent) {
         SwingUtilities.invokeLater(() -> {
+            populateInstancesList();
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             thumbnailViewer.resetComponent();
