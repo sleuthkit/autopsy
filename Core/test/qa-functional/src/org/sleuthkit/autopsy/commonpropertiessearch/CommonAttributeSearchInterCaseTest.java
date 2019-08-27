@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,36 +67,36 @@ public class CommonAttributeSearchInterCaseTest extends NbTestCase {
         this.utils = new InterCaseTestUtils(this);
     }
 
-    @Override
-    public void setUp() {
-        this.utils.clearTestDir();
-        try {
-            this.utils.enableCentralRepo();
-
-            String[] cases = new String[]{
-                CASE1,
-                CASE2,
-                CASE3,
-                CASE4};
-
-            Path[][] paths = {
-                {this.utils.attrCase1Path},
-                {this.utils.attrCase2Path},
-                {this.utils.attrCase3Path},
-                {this.utils.attrCase4Path}};
-
-            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForKitchenSink(), InterCaseTestUtils.CASE1);
-        } catch (TskCoreException | EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-        }
-    }
-
-    @Override
-    public void tearDown() {
-        this.utils.clearTestDir();
-        this.utils.tearDown();
-    }
+//    @Override
+//    public void setUp() {
+//        this.utils.clearTestDir();
+//        try {
+//            this.utils.enableCentralRepo();
+//
+//            String[] cases = new String[]{
+//                CASE1,
+//                CASE2,
+//                CASE3,
+//                CASE4};
+//
+//            Path[][] paths = {
+//                {this.utils.attrCase1Path},
+//                {this.utils.attrCase2Path},
+//                {this.utils.attrCase3Path},
+//                {this.utils.attrCase4Path}};
+//
+//            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForKitchenSink(), InterCaseTestUtils.CASE1);
+//        } catch (TskCoreException | EamDbException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex.getMessage());
+//        }
+//    }
+//
+//    @Override
+//    public void tearDown() {
+//        this.utils.clearTestDir();
+//        this.utils.tearDown();
+//    }
 
     /**
      * Run a search on the given type and ensure that all results are off that
@@ -106,25 +106,25 @@ public class CommonAttributeSearchInterCaseTest extends NbTestCase {
      *
      * @param type
      */
-    private void assertResultsAreOfType(CorrelationAttributeInstance.Type type) {
-
-        try {
-
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, type, 0);
-
-            CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
-
-            metadata.size();
-
-            assertFalse(verifyInstanceCount(metadata, 0));
-
-            assertTrue(this.utils.areAllResultsOfType(metadata, type));
-
-        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-        }
-    }
+//    private void assertResultsAreOfType(CorrelationAttributeInstance.Type type) {
+//
+//        try {
+//
+//            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, type, 0);
+//
+//            CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
+//
+//            metadata.size();
+//
+//            assertFalse(verifyInstanceCount(metadata, 0));
+//
+//            assertTrue(this.utils.areAllResultsOfType(metadata, type));
+//
+//        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex.getMessage());
+//        }
+//    }
 
     /**
      * Test that a search for each type returns results of that type only.
@@ -142,29 +142,29 @@ public class CommonAttributeSearchInterCaseTest extends NbTestCase {
      * than the file type.
      */
     public void testTwo() {
-        try {
-
-            AbstractCommonAttributeSearcher builder;
-            CommonAttributeCountSearchResults metadata;
-
-            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 100);
-            metadata = builder.findMatchesByCount();
-            metadata.size();
-            //assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
-
-            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 20);
-            metadata = builder.findMatchesByCount();
-            metadata.size();
-            //assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
-
-            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 90);
-            metadata = builder.findMatchesByCount();
-            metadata.size();
-            //assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));
-
-        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-        }
+//        try {
+//
+//            AbstractCommonAttributeSearcher builder;
+//            CommonAttributeCountSearchResults metadata;
+//
+//            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 100);
+//            metadata = builder.findMatchesByCount();
+//            metadata.size();
+//            //assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
+//
+//            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 20);
+//            metadata = builder.findMatchesByCount();
+//            metadata.size();
+//            //assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
+//
+//            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 90);
+//            metadata = builder.findMatchesByCount();
+//            metadata.size();
+//            //assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));
+//
+//        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex.getMessage());
+//        }
     }
 }

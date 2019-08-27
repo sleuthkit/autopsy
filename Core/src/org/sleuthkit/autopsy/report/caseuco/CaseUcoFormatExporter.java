@@ -23,24 +23,39 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.google.common.collect.Lists;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import java.util.logging.Level;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Generates CASE-UCO report file for a data source
@@ -48,6 +63,11 @@ import org.sleuthkit.datamodel.TskData;
 public final class CaseUcoFormatExporter {
 
     private static final Logger logger = Logger.getLogger(CaseUcoFormatExporter.class.getName());
+
+    private static final BlackboardAttribute.Type SET_NAME = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
+    private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_FILE_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
+    private static final BlackboardArtifact.ARTIFACT_TYPE INTERESTING_ARTIFACT_HIT = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
+    private static final String TEMP_DIR_NAME = "case_uco_tmp";
 
     private CaseUcoFormatExporter() {
     }
@@ -175,6 +195,136 @@ public final class CaseUcoFormatExporter {
                 }
             }
         }
+    }
+
+    /**
+     * Exports files that are tagged w/ the following TagNames and that belong to 
+     * the following interesting file sets (set name attributes of TSK_INTERSTING_FILE_HIT
+     * and TSK_INTERESTING_ARTIFACT_HIT). Artifacts that are tagged with 
+     * the following TagNames also have their associated source files included.
+     * 
+     * Duplicate files are excluded.
+     * 
+     * @param tagTypes Collection of TagNames to match
+     * @param interestingItemSets Collection of SET_NAMEs to match on in TSK_INTERESTING_FILE_HITs
+     *                            and TSK_INTERESTING_ARTIFACT_HITs.
+     * @param outputFilePath Path to the folder that the CASE-UCO report should be written into
+     * @param progressPanel UI Component to be updated with current processing status
+     */
+    @NbBundle.Messages({
+        "CaseUcoFormatExporter.startMsg=Generating CASE-UCO Report",
+        "CaseUcoFormatExporter.datasourceMsg=Generating CASE-UCO Report for %s",
+        "CaseUcoFormatExporter.finishMsg=Finished generating CASE-UCO Report"
+    })
+    public static void export(List<TagName> tagTypes, List<String> interestingItemSets,
+            File caseReportFolder, ReportProgressPanel progressPanel) throws IOException, SQLException,
+            NoCurrentCaseException, TskCoreException {
+
+        progressPanel.updateStatusLabel(Bundle.CaseUcoFormatExporter_startMsg());
+        //Acquire references for file discovery
+        Case currentCase = Case.getCurrentCaseThrows();
+        String caseTempDirectory = currentCase.getTempDirectory();
+        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        TagsManager tagsManager = currentCase.getServices().getTagsManager();
+
+        //Create temp directory to filter out duplicate files.
+        Path tmpDir = Paths.get(caseTempDirectory, TEMP_DIR_NAME);
+        FileUtils.deleteDirectory(tmpDir.toFile());
+        Files.createDirectory(tmpDir);
+
+        //Create our report file
+        Path reportFile = Paths.get(caseReportFolder.toString(), 
+                ReportCaseUco.getReportFileName());
+
+        //Timezone for formatting file creation, modification, and accessed times
+        SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
+
+        try (JsonGenerator jsonGenerator = createJsonGenerator(reportFile.toFile())) {   
+            initializeJsonOutputFile(jsonGenerator);
+            //Make the case the first entity in the report file.
+            String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
+
+            for (DataSource ds : skCase.getDataSources()) {
+                progressPanel.updateStatusLabel(String.format(
+                        Bundle.CaseUcoFormatExporter_datasourceMsg(), ds.getName()));
+                String dataSourceTraceId = saveDataSourceInfo(ds.getId(), 
+                        caseTraceId, skCase, jsonGenerator);
+                for (TagName tn : tagTypes) {
+                    for (ContentTag ct : tagsManager.getContentTagsByTagName(tn, ds.getId())) {
+                        saveUniqueFilesToCaseUcoFormat(ct.getContent(), tmpDir,
+                                jsonGenerator, timeZone, dataSourceTraceId);
+                    }
+                    for (BlackboardArtifactTag bat : tagsManager.getBlackboardArtifactTagsByTagName(tn, ds.getId())) {
+                        saveUniqueFilesToCaseUcoFormat(bat.getContent(), tmpDir,
+                                jsonGenerator, timeZone, dataSourceTraceId);
+                    }
+                }
+                if(!interestingItemSets.isEmpty()) {
+                    List<BlackboardArtifact.ARTIFACT_TYPE> typesToQuery = Lists.newArrayList(
+                            INTERESTING_FILE_HIT, INTERESTING_ARTIFACT_HIT);
+                    for(BlackboardArtifact.ARTIFACT_TYPE artType : typesToQuery) {
+                        for(BlackboardArtifact bArt : skCase.getBlackboardArtifacts(artType)) {
+                            if(bArt.getDataSource().getId() != ds.getId()) {
+                                continue;
+                            }
+                            BlackboardAttribute setAttr = bArt.getAttribute(SET_NAME);
+                            if (interestingItemSets.contains(setAttr.getValueString())) {
+                                Content content = skCase.getContentById(bArt.getObjectID());
+                                saveUniqueFilesToCaseUcoFormat(content, tmpDir,
+                                        jsonGenerator, timeZone, dataSourceTraceId);
+                            }
+                        }
+                    }
+                }
+            }
+            finilizeJsonOutputFile(jsonGenerator);
+            progressPanel.updateStatusLabel(Bundle.CaseUcoFormatExporter_finishMsg());
+        }
+    }
+
+    /**
+     * Saves only unique abstract files to the report. Uniqueness is
+     * determined by object id. The tmpDir Path is used to stored object 
+     * ids that have already been visited.
+     *
+     * @param content Abstractfile isntance
+     * @param tmpDir Directory to write object ids
+     * @param jsonGenerator Report generator
+     * @param timeZone Time zore for ctime, atime, and mtime formatting
+     * @param dataSourceTraceId TraceID number for the parent data source
+     * @throws IOException
+     */
+    private static void saveUniqueFilesToCaseUcoFormat(Content content, Path tmpDir, JsonGenerator jsonGenerator,
+            TimeZone timeZone, String dataSourceTraceId) throws IOException {
+        if (content instanceof AbstractFile && !(content instanceof DataSource)) {
+            AbstractFile absFile = (AbstractFile) content;
+            Path filePath = tmpDir.resolve(Long.toString(absFile.getId()));
+            if (!Files.exists(filePath) && !absFile.isDir()) {
+                saveFileInCaseUcoFormat(
+                        absFile.getId(),
+                        absFile.getName(),
+                        absFile.getParentPath(),
+                        absFile.getMd5Hash(),
+                        absFile.getMIMEType(),
+                        absFile.getSize(),
+                        ContentUtils.getStringTimeISO8601(absFile.getCtime(), timeZone),
+                        ContentUtils.getStringTimeISO8601(absFile.getAtime(), timeZone),
+                        ContentUtils.getStringTimeISO8601(absFile.getMtime(), timeZone),
+                        absFile.getNameExtension(),
+                        jsonGenerator,
+                        dataSourceTraceId
+                );
+                filePath.toFile().createNewFile();
+            }
+        }
+    }
+
+    private static JsonGenerator createJsonGenerator(File reportFile) throws IOException {
+        JsonFactory jsonGeneratorFactory = new JsonFactory();
+        JsonGenerator jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
+        // instert \n after each field for more readable formatting
+        jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
+        return jsonGenerator;
     }
 
     private static void initializeJsonOutputFile(JsonGenerator catalog) throws IOException {
