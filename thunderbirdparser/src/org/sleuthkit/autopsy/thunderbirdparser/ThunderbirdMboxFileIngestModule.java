@@ -133,7 +133,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             return processMBox(abstractFile);
         }
         
-        if(isEMLFile) {
+        if (isEMLFile) {
             return processEMLFile(abstractFile);
         }
 
@@ -318,93 +318,31 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         "ThunderbirdMboxFileIngestModule.errorMessage.outOfDiskSpace=Out of disk space. Cannot copy '{0}' (id={1}) to parse."
     })
     private ProcessResult processVcard(AbstractFile abstractFile) {
-        String fileName;
-        try {
-            fileName = getTempPath() + File.separator + abstractFile.getName()
-                + "-" + String.valueOf(abstractFile.getId());
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            return ProcessResult.ERROR;
-        }
-        File file = new File(fileName);
-
-        long freeSpace = services.getFreeDiskSpace();
-        if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (abstractFile.getSize() >= freeSpace)) {
-            logger.log(Level.WARNING, String.format("Not enough disk space to write file '%s' (id=%d) to disk.",
-                    abstractFile.getName(), abstractFile.getId())); //NON-NLS
-            IngestMessage msg = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
-                    Bundle.ThunderbirdMboxFileIngestModule_errorMessage_outOfDiskSpace(abstractFile.getName(), abstractFile.getId()));
-            services.postMessage(msg);
-            return ProcessResult.OK;
-        }
-
-        try {
-            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("Failed writing the vCard file '%s' (id=%d) to disk.",
-                    abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
-            return ProcessResult.OK;
-        }
-        
         try {
             VcardParser parser = new VcardParser(currentCase, context);
-            parser.parse(file, abstractFile);
+            parser.parse(abstractFile);
         } catch (IOException | NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, String.format("Exception while parsing the file '%s' (id=%d).", file.getName(), abstractFile.getId()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Exception while parsing the file '%s' (id=%d).", abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
             return ProcessResult.OK;
         }
-        
-        if (file.delete() == false) {
-            logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
-        }
-        
         return ProcessResult.OK;
     }
     
-    private ProcessResult processEMLFile(AbstractFile abstractFile) {
-        String fileName;
+    private ProcessResult processEMLFile(AbstractFile abstractFile) {        
         try {
-            fileName = getTempPath() + File.separator + abstractFile.getName()
-                + "-" + String.valueOf(abstractFile.getId());
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            return ProcessResult.ERROR;
-        }
-        File file = new File(fileName);
+            EmailMessage message = EMLParser.parse(abstractFile);
 
-        long freeSpace = services.getFreeDiskSpace();
-        if ((freeSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN) && (abstractFile.getSize() >= freeSpace)) {
-            logger.log(Level.WARNING, String.format("Not enough disk space to write file '%s' (id=%d) to disk.",
-                    abstractFile.getName(), abstractFile.getId())); //NON-NLS
-//            IngestMessage msg = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleName(),
-//                    Bundle.ThunderbirdMboxFileIngestModule_errorMessage_outOfDiskSpace(abstractFile.getName(), abstractFile.getId()));
-//            services.postMessage(msg);
-            return ProcessResult.OK;
-        }
-
-        try {
-            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("Failed writing the vCard file '%s' (id=%d) to disk.",
-                    abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
-            return ProcessResult.OK;
-        }
-        
-        try {
-            EmailMessage message = EMLParser.parse(abstractFile, fileName);
-            
-            if(message == null) {
+            if (message == null) {
                 return ProcessResult.OK;
             }
-            
+
             List<AbstractFile> derivedFiles = new ArrayList<>();
 
             BlackboardArtifact msgArtifact = addEmailArtifact(message, abstractFile);
-            
-            if ((msgArtifact != null) && (message.hasAttachment()))  {
-                derivedFiles.addAll(handleAttachments(message.getAttachments(), abstractFile, msgArtifact ));
+
+            if ((msgArtifact != null) && (message.hasAttachment())) {
+                derivedFiles.addAll(handleAttachments(message.getAttachments(), abstractFile, msgArtifact));
             }
-        
 
             if (derivedFiles.isEmpty() == false) {
                 for (AbstractFile derived : derivedFiles) {
@@ -412,7 +350,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 }
             }
             context.addFilesToJob(derivedFiles);
-            
+
         } catch (IOException ex) {
             logger.log(Level.WARNING, String.format("Error reading eml file %s", abstractFile.getName()), ex);
             return ProcessResult.ERROR;
@@ -420,7 +358,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, String.format("Error reading eml file %s", abstractFile.getName()), ex);
             return ProcessResult.ERROR;
         }
-        
+
         return ProcessResult.OK;
     }
 
@@ -651,7 +589,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         addArtifactAttribute(((id < 0L) ? NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.notAvail") : String.valueOf(id)), 
                 ATTRIBUTE_TYPE.TSK_MSG_ID, bbattributes);
         
-        addArtifactAttribute(((localPath.isEmpty() == false) ? localPath : "/foo/bar"), 
+        addArtifactAttribute(((localPath.isEmpty() == false) ? localPath : ""), 
                 ATTRIBUTE_TYPE.TSK_PATH, bbattributes);
         
         addArtifactAttribute(cc, ATTRIBUTE_TYPE.TSK_EMAIL_CC, bbattributes);

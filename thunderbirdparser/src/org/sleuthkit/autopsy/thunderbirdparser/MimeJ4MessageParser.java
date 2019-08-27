@@ -51,74 +51,74 @@ import org.sleuthkit.datamodel.TskData;
  * Super class for email parsers that can use the james.mime4J.Message objects.
  */
 abstract class MimeJ4MessageParser {
-     private static final Logger logger = Logger.getLogger(MimeJ4MessageParser.class.getName());
-     
+
+    private static final Logger logger = Logger.getLogger(MimeJ4MessageParser.class.getName());
+
     /**
      * The mime type string for html text.
      */
     private static final String HTML_TYPE = "text/html"; //NON-NLS
     private DefaultMessageBuilder messageBuilder = null;
     private final List<String> errorList = new ArrayList<>();
-    
+
     /**
      * The local path of the email message(s) file.
      */
     private String localPath;
-    
+
     DefaultMessageBuilder getMessageBuilder() {
-        if(messageBuilder == null) {
+        if (messageBuilder == null) {
             messageBuilder = new DefaultMessageBuilder();
             MimeConfig config = MimeConfig.custom().setMaxLineLen(-1).setMaxHeaderLen(-1).setMaxHeaderCount(-1).build();
             // disable line length checks.
             messageBuilder.setMimeEntityConfig(config);
         }
-        
+
         return messageBuilder;
     }
-    
+
     /**
      * Sets the local path of the email messages file.
-     * 
+     *
      * @param localPath Local path of the file the email messages
      */
     final void setLocalPath(String localPath) {
         this.localPath = localPath;
     }
-    
+
     /**
      * Gets the local path.
-     * 
-     * @return 
+     *
+     * @return
      */
     String getLocalPath() {
         return localPath;
     }
-    
+
     /**
      * Get a list of the parsing error message.
-     * 
-     * @return String containing all of the parse error message.  Empty string
-     * is returned if there are no error messages.
+     *
+     * @return String containing all of the parse error message. Empty string is
+     *         returned if there are no error messages.
      */
     String getErrors() {
         String result = "";
-        for (String msg: errorList) {
-            result += "<li>" + msg + "</li>"; 
+        for (String msg : errorList) {
+            result += "<li>" + msg + "</li>";
         }
         return result;
     }
-    
+
     /**
      * Adds a message to the error Message list.
-     * 
+     *
      * @param msg Message to add to the list.
      */
     void addErrorMessage(String msg) {
         errorList.add(msg);
     }
 
-     
-     /**
+    /**
      * Use the information stored in the given mime4j message to populate an
      * EmailMessage.
      *
@@ -169,8 +169,7 @@ abstract class MimeJ4MessageParser {
 
         return email;
     }
-    
-    
+
     /**
      * Extract the subject, inReplyTo, message-ID and references from the
      * Message object and returns them in a new EmailMessage object.
@@ -208,8 +207,8 @@ abstract class MimeJ4MessageParser {
 
         return email;
     }
-    
-     /**
+
+    /**
      * Handle a multipart mime message. Recursively calls handleMultipart if one
      * of the body parts is another multipart. Otherwise, calls the correct
      * method to extract information out of each part of the body.
@@ -344,15 +343,15 @@ abstract class MimeJ4MessageParser {
         attach.setEncodingType(TskData.EncodingType.XOR1);
         email.addAttachment(attach);
     }
-    
-     /**
+
+    /**
      * Get a String representation of the MailboxList (which is a list of email
      * addresses).
      *
      * @param mailboxList
      *
      * @return String list of email addresses separated by a ; or empty string
-     * if no addresses were found.
+     *         if no addresses were found.
      */
     private static String getAddresses(MailboxList mailboxList) {
         if (mailboxList == null) {
@@ -372,7 +371,7 @@ abstract class MimeJ4MessageParser {
      * @param addressList
      *
      * @return String list of email addresses separated by a ; or empty string
-     * if no addresses were found.
+     *         if no addresses were found.
      */
     private static String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());

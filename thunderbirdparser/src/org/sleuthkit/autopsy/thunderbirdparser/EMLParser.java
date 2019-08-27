@@ -18,57 +18,57 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.dom.Message;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * EML file parser.  An .eml file contains a single email message.
- * 
+ * EML file parser. An .eml file contains a single email message.
+ *
  */
-public class EMLParser extends MimeJ4MessageParser{
-    
+class EMLParser extends MimeJ4MessageParser {
+
     private static final Logger logger = Logger.getLogger(EMLParser.class.getName());
-    
+
     /**
-     * If the extention of the AbstractFile is eml and 'To:' is found close to the
-     * beginning of the file, then its probably an eml file.
-     * 
+     * If the extention of the AbstractFile is eml and 'To:' is found close to
+     * the beginning of the file, then its probably an eml file.
+     *
      * @param abFile AbstractFile to test
-     * @param buffer A byte buffer of the begining of the file.
-     * 
-     * @return True, if we think this is an eml file, false otherwise. 
+     * @param buffer A byte buffer of the beginning of the file.
+     *
+     * @return True, if we think this is an eml file, false otherwise.
      */
     static boolean isEMLFile(AbstractFile abFile, byte[] buffer) {
         String ext = abFile.getNameExtension();
         boolean isEMLFile = ext != null ? ext.equals("eml") : false;
-        if(isEMLFile) {
-             isEMLFile =  (new String(buffer)).contains("To:"); //NON-NLS
+        if (isEMLFile) {
+            isEMLFile = (new String(buffer)).contains("To:"); //NON-NLS
         }
-        
+
         return isEMLFile;
     }
-    
+
     /**
-     * 
+     *
      * @param sourceFile AbstractFile source file for eml message
-     * @param localPath The local path to the eml file
-     * 
+     * @param localPath  The local path to the eml file
+     *
      * @return EmailMessage object for message in eml file
-     * 
+     *
      * @throws FileNotFoundException
      * @throws IOException
-     * @throws MimeException 
+     * @throws MimeException
      */
-    static EmailMessage parse(AbstractFile sourceFile, String localPath) throws FileNotFoundException, IOException, MimeException {
-        try (FileInputStream fis = new FileInputStream(localPath)){  
+    static EmailMessage parse(AbstractFile sourceFile) throws FileNotFoundException, IOException, MimeException {
+        try (ReadContentInputStream fis = new ReadContentInputStream(sourceFile)) {
             EMLParser parser = new EMLParser();
             Message mimeMsg = parser.getMessageBuilder().parseMessage(fis);
-            return parser.extractEmail(mimeMsg, localPath, sourceFile.getId());
+            return parser.extractEmail(mimeMsg, "", sourceFile.getId());
         }
     }
 }
