@@ -36,8 +36,10 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
     private WizardDescriptor wiz;
     private ReportWizardPortableCaseOptionsVisualPanel component;
     private final JButton finishButton;
+    private Map<String, ReportModuleConfig> moduleConfigs;
 
     ReportWizardPortableCaseOptionsPanel(Map<String, ReportModuleConfig> moduleConfigs) {
+        this.moduleConfigs = moduleConfigs;
         finishButton = new JButton(
                 NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
         finishButton.setEnabled(false);
@@ -67,7 +69,7 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
     @Override
     public ReportWizardPortableCaseOptionsVisualPanel getComponent() {
         if (component == null) {
-            component = new ReportWizardPortableCaseOptionsVisualPanel(this);
+            component = new ReportWizardPortableCaseOptionsVisualPanel(this, moduleConfigs);
         }
         return component;
     }
@@ -85,7 +87,7 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
 
     @Override
     public void storeSettings(WizardDescriptor data) {
-        data.putProperty("portableCaseReportOptions", getComponent().getPortableCaseReportOptions()); //NON-NLS
+        data.putProperty("portableCaseReportSettings", getComponent().getPortableCaseReportSettings()); //NON-NLS
     }
 
     @Override

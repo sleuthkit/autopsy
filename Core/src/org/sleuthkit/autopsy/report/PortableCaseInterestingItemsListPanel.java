@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Component;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.ResultSet;
@@ -59,16 +61,33 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     private Map<String, Long> setCounts;
     
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
-    private final PortableCaseReportModule.PortableCaseOptions options;
+    private final PortableCaseReportModuleSettings settings;
     
     /**
      * Creates new form PortableCaseListPanel
      */
-    PortableCaseInterestingItemsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModule.PortableCaseOptions options) {
+    PortableCaseInterestingItemsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModuleSettings options) {
         this.wizPanel = wizPanel;
-        this.options = options;
+        this.settings = options;
         initComponents();
         customizeComponents();
+        
+        // update tag selection
+        jAllSetsCheckBox.setSelected(settings.isAllTagsSelected());
+        setNamesListBox.setEnabled(!jAllSetsCheckBox.isSelected());
+        selectButton.setEnabled(!jAllSetsCheckBox.isSelected());
+        deselectButton.setEnabled(!jAllSetsCheckBox.isSelected());
+        selectAllSets(jAllSetsCheckBox.isSelected());
+        
+        this.jAllSetsCheckBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                setNamesListBox.setEnabled(!jAllSetsCheckBox.isSelected());
+                selectButton.setEnabled(!jAllSetsCheckBox.isSelected());
+                deselectButton.setEnabled(!jAllSetsCheckBox.isSelected());
+                selectAllSets(jAllSetsCheckBox.isSelected());
+            }
+        });
     }
 
     @NbBundle.Messages({
@@ -80,7 +99,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         
         // Get the set names in use for the current case.
         setNames = new ArrayList<>();
+        setCounts = new HashMap<>();
         try {
+            // There may not be a case open when configuring report modules for Command Line execution
             // Get all SET_NAMEs from interesting item artifacts
             String innerSelect = "SELECT (value_text) AS set_name FROM blackboard_attributes WHERE (artifact_type_id = '" + 
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + "' OR artifact_type_id = '" +
@@ -95,11 +116,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             setCounts = callback.getSetCountMap();
             setNames.addAll(setCounts.keySet());
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex); // NON-NLS
-            JOptionPane.showMessageDialog(this, Bundle.PortableCaseInterestingItemsListPanel_error_errorLoadingTags(), Bundle.PortableCaseInterestingItemsListPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Failed to get interesting item set names", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-            JOptionPane.showMessageDialog(this, Bundle.PortableCaseInterestingItemsListPanel_error_noOpenCase(), Bundle.PortableCaseInterestingItemsListPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); // NON-NLS
         }
         Collections.sort(setNames);
 
@@ -135,8 +154,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
      * Save the current selections and enabled/disable the finish button as needed.
      */
     private void updateSetNameList() {
-        options.updateSetNames(getSelectedSetNames());
-        wizPanel.setFinish(options.isValid());
+        settings.updateSetNames(getSelectedSetNames());
+        settings.setAllSetsSelected(jAllSetsCheckBox.isSelected());
+        wizPanel.setFinish(settings.isValid());
     }    
 
     /**
@@ -253,6 +273,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         descLabel = new javax.swing.JLabel();
         selectButton = new javax.swing.JButton();
         deselectButton = new javax.swing.JButton();
+        jAllSetsCheckBox = new javax.swing.JCheckBox();
 
         jScrollPane1.setViewportView(setNamesListBox);
 
@@ -274,6 +295,13 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jAllSetsCheckBox, org.openide.util.NbBundle.getMessage(PortableCaseInterestingItemsListPanel.class, "PortableCaseInterestingItemsListPanel.jAllSetsCheckBox.text")); // NOI18N
+        jAllSetsCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jAllSetsCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -288,17 +316,20 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deselectButton)))
+                                .addComponent(deselectButton))
+                            .addComponent(jAllSetsCheckBox))
                         .addGap(0, 8, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(6, 6, 6)
                 .addComponent(descLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jAllSetsCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -318,25 +349,33 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deselectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectButtonActionPerformed
-        for (String setName : setNames) {
-            setNameSelections.put(setName, Boolean.FALSE);
-        }
-        updateSetNameList();
-        setNamesListBox.repaint();
+        selectAllSets(false);
     }//GEN-LAST:event_deselectButtonActionPerformed
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
-        for (String setName : setNames) {
-            setNameSelections.put(setName, Boolean.TRUE);
-        }
-        updateSetNameList();
-        setNamesListBox.repaint();
+        selectAllSets(true);
     }//GEN-LAST:event_selectButtonActionPerformed
 
+    private void jAllSetsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jAllSetsCheckBoxActionPerformed
+        selectAllSets(true);
+    }//GEN-LAST:event_jAllSetsCheckBoxActionPerformed
+
+    private void selectAllSets(boolean select) {
+        Boolean state = Boolean.TRUE;
+        if (!select) {
+            state = Boolean.FALSE;
+        }
+        for (String setName : setNames) {
+            setNameSelections.put(setName, state);
+        }
+        updateSetNameList();
+        setNamesListBox.repaint();        
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel descLabel;
     private javax.swing.JButton deselectButton;
+    private javax.swing.JCheckBox jAllSetsCheckBox;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton selectButton;

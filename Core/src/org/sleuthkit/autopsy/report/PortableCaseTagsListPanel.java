@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Component;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.ResultSet;
@@ -32,7 +34,6 @@ import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
@@ -57,16 +58,32 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
     private final Map<String, Long> tagCounts = new HashMap<>();
     
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
-    private final PortableCaseReportModule.PortableCaseOptions options;
+    private final PortableCaseReportModuleSettings settings;
     
     /**
      * Creates new form PortableCaseListPanel
      */
-    PortableCaseTagsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModule.PortableCaseOptions options) {
+    PortableCaseTagsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModuleSettings options) {
         this.wizPanel = wizPanel;
-        this.options = options;
+        this.settings = options;
         initComponents();
         customizeComponents();
+        // update tag selection
+        jAllTagsCheckBox.setSelected(settings.isAllTagsSelected());
+        tagNamesListBox.setEnabled(!jAllTagsCheckBox.isSelected());
+        selectButton.setEnabled(!jAllTagsCheckBox.isSelected());
+        deselectButton.setEnabled(!jAllTagsCheckBox.isSelected());
+        selectAllTags(jAllTagsCheckBox.isSelected());
+
+        this.jAllTagsCheckBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                tagNamesListBox.setEnabled(!jAllTagsCheckBox.isSelected());
+                selectButton.setEnabled(!jAllTagsCheckBox.isSelected());
+                deselectButton.setEnabled(!jAllTagsCheckBox.isSelected());
+                selectAllTags(jAllTagsCheckBox.isSelected());
+            }
+        });
     }
 
     @NbBundle.Messages({
@@ -76,7 +93,9 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
     })    
     private void customizeComponents() {
         // Get the tag names in use for the current case.
+        tagNames = new ArrayList<>();
         try {
+            // There may not be a case open when configuring report modules for Command Line execution
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
       
             // Get the counts for each tag ID
@@ -100,14 +119,10 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
                 }
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); // NON-NLS
-            JOptionPane.showMessageDialog(this, Bundle.PortableCaseTagsListPanel_error_errorLoadingTags(), Bundle.PortableCaseTagsListPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
-            return;
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Failed to get tag names", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-            JOptionPane.showMessageDialog(this, Bundle.PortableCaseTagsListPanel_error_noOpenCase(), Bundle.PortableCaseTagsListPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
-            return;
-        }            
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); // NON-NLS
+        }
 
         // Set up the tag names JList component to be a collection of check boxes
         // for selecting tag names. The mouse click listener updates tagNameSelections
@@ -134,8 +149,9 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
      * Save the current selections and enabled/disable the finish button as needed.
      */
     private void updateTagList() {
-        options.updateTagNames(getSelectedTagNames());
-        wizPanel.setFinish(options.isValid());
+        settings.updateTagNames(getSelectedTagNames());
+        settings.setAllTagsSelected(jAllTagsCheckBox.isSelected());
+        wizPanel.setFinish(settings.isValid());
     }    
     
     /**
@@ -252,6 +268,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
         descLabel = new javax.swing.JLabel();
         selectButton = new javax.swing.JButton();
         deselectButton = new javax.swing.JButton();
+        jAllTagsCheckBox = new javax.swing.JCheckBox();
 
         jScrollPane1.setViewportView(tagNamesListBox);
 
@@ -273,6 +290,13 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jAllTagsCheckBox, org.openide.util.NbBundle.getMessage(PortableCaseTagsListPanel.class, "PortableCaseTagsListPanel.jAllTagsCheckBox.text")); // NOI18N
+        jAllTagsCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jAllTagsCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -280,24 +304,26 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(descLabel)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deselectButton)))
+                                .addComponent(deselectButton))
+                            .addComponent(jAllTagsCheckBox))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
                 .addComponent(descLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jAllTagsCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -317,25 +343,33 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deselectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectButtonActionPerformed
-        for (TagName tagName : tagNames) {
-            tagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
-        }
-        updateTagList();
-        tagNamesListBox.repaint();
+        selectAllTags(false);
     }//GEN-LAST:event_deselectButtonActionPerformed
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
+        selectAllTags(true);
+    }//GEN-LAST:event_selectButtonActionPerformed
+
+    private void jAllTagsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jAllTagsCheckBoxActionPerformed
+        selectAllTags(true);
+    }//GEN-LAST:event_jAllTagsCheckBoxActionPerformed
+
+    private void selectAllTags(boolean select) {
+        Boolean state = Boolean.TRUE;
+        if (!select) {
+            state = Boolean.FALSE;
+        }
         for (TagName tagName : tagNames) {
-            tagNameSelections.put(tagName.getDisplayName(), Boolean.TRUE);
+            tagNameSelections.put(tagName.getDisplayName(), state);
         }
         updateTagList();
         tagNamesListBox.repaint();
-    }//GEN-LAST:event_selectButtonActionPerformed
-
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel descLabel;
     private javax.swing.JButton deselectButton;
+    private javax.swing.JCheckBox jAllTagsCheckBox;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton selectButton;

@@ -19,10 +19,10 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.GridLayout;
+import java.util.Map;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.report.PortableCaseReportModule.ChunkSize;
-import org.sleuthkit.autopsy.report.PortableCaseReportModule.PortableCaseOptions;
+import org.sleuthkit.autopsy.report.PortableCaseReportModuleSettings.ChunkSize;
 
 /**
  * The UI portion of the Portable Case config panel
@@ -31,36 +31,60 @@ import org.sleuthkit.autopsy.report.PortableCaseReportModule.PortableCaseOptions
 class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
 
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
-    private final PortableCaseOptions options = new PortableCaseOptions();
+    private PortableCaseReportModuleSettings settings = null;
+    private Map<String, ReportModuleConfig> moduleConfigs;
     
     /**
      * Creates new form ReportWizardPortableCaseOptionsVisualPanel
      */
-    ReportWizardPortableCaseOptionsVisualPanel(ReportWizardPortableCaseOptionsPanel wizPanel) {
+    ReportWizardPortableCaseOptionsVisualPanel(ReportWizardPortableCaseOptionsPanel wizPanel, Map<String, ReportModuleConfig> moduleConfigs) {
         this.wizPanel = wizPanel;
+        this.moduleConfigs = moduleConfigs;
         initComponents();
         customizeComponents();
     }
     
     private void customizeComponents() {
         
-        if ( ! PlatformUtil.isWindowsOS()) {
+        if (!PlatformUtil.isWindowsOS()) {
             errorLabel.setVisible(true);
             compressCheckbox.setEnabled(false);
         } else {
             errorLabel.setVisible(false);
         }
-        
-        for (ChunkSize chunkSize:ChunkSize.values()) {
+
+        for (ChunkSize chunkSize : ChunkSize.values()) {
             chunkSizeComboBox.addItem(chunkSize);
         }
-        chunkSizeComboBox.setSelectedItem(ChunkSize.NONE);
-        chunkSizeComboBox.setEnabled(false);
-        options.updateCompression(false, ChunkSize.NONE);        
+               
+        // initialize settings
+        if (moduleConfigs != null) {
+            // get configuration for this module
+            ReportModuleConfig config = moduleConfigs.get(PortableCaseReportModule.class.getCanonicalName());
+            if (config != null) {
+                // there is an existing configuration for this module
+                ReportModuleSettings reportSettings = config.getModuleSettings();
+                // check if the settings are for this module, it could be NoReportModuleSettings
+                if (reportSettings instanceof PortableCaseReportModuleSettings) {
+                    settings = (PortableCaseReportModuleSettings) reportSettings;
+                }
+            }
+        }
         
+        if (settings == null) {
+            // get default module configuration
+            settings = new PortableCaseReportModuleSettings();
+        }
+                        
+        // update according to input configuration
+        compressCheckbox.setSelected(settings.shouldCompress());
+        chunkSizeComboBox.setEnabled(settings.shouldCompress());
+        chunkSizeComboBox.setSelectedItem(settings.getChunkSize());
+        
+        // initialize other panels and pass them the settings
         listPanel.setLayout(new GridLayout(1,2));
-        listPanel.add(new PortableCaseTagsListPanel(wizPanel, options));
-        listPanel.add(new PortableCaseInterestingItemsListPanel(wizPanel, options));
+        listPanel.add(new PortableCaseTagsListPanel(wizPanel, settings));
+        listPanel.add(new PortableCaseInterestingItemsListPanel(wizPanel, settings));
     }
     
     @NbBundle.Messages({
@@ -84,8 +108,10 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
      * Update the selected compression options and enable/disable the finish button
      */
     private void updateCompression() {
-        options.updateCompression(compressCheckbox.isSelected(), getChunkSize());
-        wizPanel.setFinish(options.isValid());
+        if (settings != null) {
+            settings.updateCompression(compressCheckbox.isSelected(), getChunkSize());
+            wizPanel.setFinish(settings.isValid());
+        }
     }
     
     /**
@@ -93,8 +119,8 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
      *
      * @return the current settings
      */
-    PortableCaseOptions getPortableCaseReportOptions() {
-        return options;
+    PortableCaseReportModuleSettings getPortableCaseReportSettings() {
+        return settings;
     }    
 
     /**

@@ -334,5 +334,7 @@ ReportProgressDialog.statusMessageLabel.text=processingLabel
 ReportVisualPanel2.specificTaggedResultsRadioButton.text=Specific Tagged Results
 ReportVisualPanel2.allTaggedResultsRadioButton.text=All Tagged Results
 ArtifactSelectionDialog.titleLabel.toolTipText=
+PortableCaseTagsListPanel.jAllTagsCheckBox.text=All Tagged Results
+PortableCaseInterestingItemsListPanel.jAllSetsCheckBox.text=All Interesting Items
 ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
 TableReportGenerator.StatusColumn.Header=Review Status

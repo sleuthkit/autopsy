@@ -117,20 +117,18 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         
         // set module configurations
         for (ReportModule module : modules) {
-            ReportModuleSettings settings;
-            if (moduleConfigs == null) {
-                // get default module configuration
-                settings = module.getDefaultConfiguration();
-            } else {
+            ReportModuleSettings settings = null;
+            if (moduleConfigs != null) {
                 // get configuration for this module
                 ReportModuleConfig config = moduleConfigs.get(module.getClass().getCanonicalName());                
                 if (config != null) {
                     // there is an existing configuration for this module
                     settings = config.getModuleSettings();
-                } else {
-                    // get default module configuration
-                    settings = module.getDefaultConfiguration();
                 }
+            }
+            if (settings == null) {
+                // get default module configuration
+                settings = module.getDefaultConfiguration();
             }
             // set module configuration
             module.setConfiguration(settings);

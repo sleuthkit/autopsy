@@ -70,7 +70,7 @@ class PortableCaseReportModule implements ReportModule {
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";  // NON-NLS
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";  // NON-NLS
     private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";  // NON-NLS
-    private PortableCaseOptions options;
+    private PortableCaseReportModuleSettings settings;
     
     // These are the types for the exported file subfolders
     private static final List<FileTypeCategory> FILE_TYPE_CATEGORIES = Arrays.asList(FileTypeCategory.AUDIO, FileTypeCategory.DOCUMENTS,
@@ -184,8 +184,8 @@ class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
     })
 
-    void generateReport(String reportPath, PortableCaseOptions options, ReportProgressPanel progressPanel) {
-        this.options = options;
+    void generateReport(String reportPath, PortableCaseReportModuleSettings options, ReportProgressPanel progressPanel) {
+        this.settings = options;
         progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_verifying());
@@ -911,8 +911,8 @@ class PortableCaseReportModule implements ReportModule {
         
         // Create the chunk option
         String chunkOption = "";
-        if (options.getChunkSize() != ChunkSize.NONE) {
-            chunkOption = "-v" + options.getChunkSize().getSevenZipParam();
+        if (settings.getChunkSize() != PortableCaseReportModuleSettings.ChunkSize.NONE) {
+            chunkOption = "-v" + settings.getChunkSize().getSevenZipParam();
         }
         
         File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".zip").toFile(); // NON-NLS
@@ -988,104 +988,5 @@ class PortableCaseReportModule implements ReportModule {
         }
 
         return exeFile;
-    }
-    
-    /**
-     * Enum for storing the display name for each chunk type and the
-     * parameter needed for 7-Zip.
-     */
-    enum ChunkSize {
-        
-        NONE("Do not split", ""), // NON-NLS
-        ONE_HUNDRED_MB("Split into 100 MB chunks", "100m"),
-        CD("Split into 700 MB chunks (CD)", "700m"),
-        ONE_GB("Split into 1 GB chunks", "1000m"),
-        DVD("Split into 4.5 GB chunks (DVD)", "4500m"); // NON-NLS
-        
-        private final String displayName;
-        private final String sevenZipParam;
-
-        /**
-         * Create a chunk size object.
-         * 
-         * @param displayName
-         * @param sevenZipParam 
-         */
-        private ChunkSize(String displayName, String sevenZipParam) {
-            this.displayName = displayName;
-            this.sevenZipParam = sevenZipParam;
-        }
-        
-        String getDisplayName() {
-            return displayName;
-        }
-        
-        String getSevenZipParam() {
-            return sevenZipParam;
-        }
-        
-        @Override
-        public String toString() {
-            return displayName;
-        }
-    }
-    
-    /**
-     * Convenience class to hold the options from the config panel.
-     */
-    static class PortableCaseOptions {
-        
-        private final List<TagName> tagNames = new ArrayList<>();
-        private final List<String> setNames = new ArrayList<>();
-        private boolean compress;
-        private ChunkSize chunkSize;
-        
-        PortableCaseOptions(List<String> setNames, List<TagName> tagNames,
-                boolean compress, ChunkSize chunkSize) {
-            this.setNames.addAll(setNames);
-            this.tagNames.addAll(tagNames);
-            this.compress = compress;
-            this.chunkSize = chunkSize;
-        }
-        
-        PortableCaseOptions() {
-            this.compress = false;
-            this.chunkSize = ChunkSize.NONE;
-        }
-        
-        void updateSetNames(List<String> setNames) {
-            this.setNames.clear();
-            this.setNames.addAll(setNames);
-        }
-        
-        void updateTagNames(List<TagName> tagNames) {
-            this.tagNames.clear();
-            this.tagNames.addAll(tagNames);
-        }
-        
-        void updateCompression(boolean compress, ChunkSize chunkSize) {
-            this.compress = compress;
-            this.chunkSize = chunkSize;
-        }
-        
-        boolean isValid() {
-            return (( !setNames.isEmpty()) || ( ! tagNames.isEmpty()));
-        }
-        
-        List<String> getSelectedSetNames() {
-            return new ArrayList<>(setNames);
-        }
-        
-        List<TagName> getSelectedTagNames() {
-            return new ArrayList<>(tagNames);
-        }
-        
-        boolean shouldCompress() {
-            return compress;
-        }
-        
-        ChunkSize getChunkSize() {
-            return chunkSize;
-        }
     }
 }

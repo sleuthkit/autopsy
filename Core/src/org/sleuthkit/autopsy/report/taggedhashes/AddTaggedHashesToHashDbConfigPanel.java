@@ -100,12 +100,13 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
             // There may not be a case open when configuring report modules for Command Line execution
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
-            Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
+            Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.WARNING, "Failed to get tag names", ex);
             // ELTODO remove all these JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Tag Names Not Found", JOptionPane.ERROR_MESSAGE);
+            // import javax.swing.JOptionPane;
+            // import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         } catch (NoCurrentCaseException ex) {
             // There may not be a case open when configuring report modules for Command Line execution
             Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex);
-            // ELTODO JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);
         }
 
         // Mark the tag names as unselected. Note that tagNameSelections is a

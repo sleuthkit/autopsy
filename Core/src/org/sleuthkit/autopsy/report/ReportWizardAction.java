@@ -118,12 +118,20 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
                     if (runReports) {
                         generator.generateFileListReport(fileReport, settings); //NON-NLS
                     }
-                } else if (portableCaseReport != null) {                    
+                } else if (portableCaseReport != null) {
+                    // get table report settings
+                    PortableCaseReportModuleSettings settings = (PortableCaseReportModuleSettings) wiz.getProperty("portableCaseReportSettings");
+                    if (settings == null) {
+                        NotifyDescriptor descriptor = new NotifyDescriptor.Message(NbBundle.getMessage(ReportWizardAction.class, "ReportGenerator.errList.noReportSettings"), NotifyDescriptor.ERROR_MESSAGE);
+                        DialogDisplayer.getDefault().notify(descriptor);
+                        return;
+                    }
+                    
                     // save reporting configuration
                     saveReportingConfiguration(configName, wiz);
                     
                     if (runReports) {
-                        generator.generatePortableCaseReport(portableCaseReport, (PortableCaseReportModule.PortableCaseOptions) wiz.getProperty("portableCaseReportOptions"));
+                        generator.generatePortableCaseReport(portableCaseReport, settings);
                     }
                 }
             } catch (IOException e) {
@@ -136,10 +144,29 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
     private static void saveReportingConfiguration(String configName, WizardDescriptor wiz) {
 
         ReportingConfig reportingConfig = new ReportingConfig(configName);
-        reportingConfig.setModuleConfigs((Map<String, ReportModuleConfig>) wiz.getProperty("moduleConfigs"));
         reportingConfig.setFileReportSettings((FileReportSettings) wiz.getProperty("fileReportSettings"));
-        reportingConfig.setTableReportSettings((TableReportSettings) wiz.getProperty("tableReportSettings")); 
-
+        reportingConfig.setTableReportSettings((TableReportSettings) wiz.getProperty("tableReportSettings"));
+        
+        Map<String, ReportModuleConfig> moduleConfigs = (Map<String, ReportModuleConfig>) wiz.getProperty("moduleConfigs");
+        
+        // update portable case settings
+        ReportModuleConfig config = moduleConfigs.get(PortableCaseReportModule.class.getCanonicalName());
+        PortableCaseReportModuleSettings portableCaseReportSettings = (PortableCaseReportModuleSettings) wiz.getProperty("portableCaseReportSettings");
+        if (config != null) {
+            config.setModuleSettings(portableCaseReportSettings);
+        } else {
+            PortableCaseReportModule portableCaseReport = (PortableCaseReportModule) wiz.getProperty("portableCaseModule");  // NON-NLS
+            if (portableCaseReport != null) {
+                config = new ReportModuleConfig(portableCaseReport, true, portableCaseReportSettings);
+            }
+        }
+        if (config != null) {
+            moduleConfigs.put(PortableCaseReportModule.class.getCanonicalName(), config);
+        }
+        
+        // set module configs
+        reportingConfig.setModuleConfigs(moduleConfigs);
+        
         try {
             // save reporting configuration
             ReportingConfigLoader.saveConfig(reportingConfig);

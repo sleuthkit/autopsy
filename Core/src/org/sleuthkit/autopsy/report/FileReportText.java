@@ -67,7 +67,7 @@ class FileReportText implements FileReportModule {
      */
     @Override
     public ReportModuleSettings getDefaultConfiguration() {
-        return new HTMLReportModuleSettings();
+        return new FileReportModuleSettings();
     }
 
     /**

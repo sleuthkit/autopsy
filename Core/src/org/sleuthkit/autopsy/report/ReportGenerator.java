@@ -217,12 +217,12 @@ class ReportGenerator {
     /**
      * Run the Portable Case Report Module
      */
-    void generatePortableCaseReport(PortableCaseReportModule portableCaseReportModule, PortableCaseReportModule.PortableCaseOptions options) throws IOException {
+    void generatePortableCaseReport(PortableCaseReportModule portableCaseReportModule, PortableCaseReportModuleSettings settings) throws IOException {
         if (portableCaseReportModule != null) {
             String reportDir = createReportDirectory(portableCaseReportModule);
             setupProgressPanel(portableCaseReportModule, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
-                portableCaseReportModule.generateReport(reportDir, options, progressPanel);
+                portableCaseReportModule.generateReport(reportDir, settings, progressPanel);
             });
             worker.execute();
             displayProgressPanel();
