@@ -32,7 +32,7 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Class which displays thumbnails and information for a video file.
  */
-public final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<VideoThumbnailsWrapper> {
+final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<VideoThumbnailsWrapper> {
 
     private static final int GAP_SIZE = 4;
     private static final Color SELECTION_COLOR = new Color(100, 200, 255);
@@ -41,7 +41,7 @@ public final class VideoThumbnailPanel extends javax.swing.JPanel implements Lis
     /**
      * Creates new form VideoThumbnailPanel
      */
-    public VideoThumbnailPanel() {
+    VideoThumbnailPanel() {
         initComponents();
         this.setFocusable(true);
     }

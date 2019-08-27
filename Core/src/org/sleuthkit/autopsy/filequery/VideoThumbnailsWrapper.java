@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.filequery;
 import java.awt.Image;
 import java.util.Collections;
 import java.util.List;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Class to wrap all the information necessary for video thumbnails to be
