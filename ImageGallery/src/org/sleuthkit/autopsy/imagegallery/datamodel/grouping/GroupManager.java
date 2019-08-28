@@ -64,7 +64,6 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -658,7 +657,7 @@ public class GroupManager {
                 
                 updateCurrentPathGroup(pathGroupKey);
             } catch (TskCoreException | TskDataException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error getting drawabledb for fileId " + fileId, ex);
             }   
                     
             // Update all the groups that this file belongs to
@@ -986,7 +985,7 @@ public class GroupManager {
                                         .findAny().ifPresent(obj_id -> types.add(mimeType));
                             }
                         } catch (SQLException | TskCoreException ex) {
-                            Exceptions.printStackTrace(ex);
+                            logger.log(Level.WARNING, "Error getting group by MIME type", ex);
                         }
                         results.putAll(null, types);
 
