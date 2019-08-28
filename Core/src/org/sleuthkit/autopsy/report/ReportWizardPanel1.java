@@ -109,20 +109,13 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        TableReportModule module = getComponent().getTableModule();
-        GeneralReportModule general = getComponent().getGeneralModule();
-        PortableCaseReportModule portable = getComponent().getPortableCaseModule();
-        wiz.putProperty("tableModule", module); //NON-NLS
-        wiz.putProperty("generalModule", general); //NON-NLS
-        wiz.putProperty("fileModule", getComponent().getFileModule()); //NON-NLS
-        wiz.putProperty("portableCaseModule", portable); //NON-NLS
         wiz.putProperty("moduleConfigs", getComponent().getUpdatedModuleConfigs()); //NON-NLS
 
         // Store preferences that WizardIterator will use to determine what 
         // panels need to be shown
         Preferences prefs = NbPreferences.forModule(ReportWizardPanel1.class);
-        prefs.putBoolean("tableModule", module != null); //NON-NLS
-        prefs.putBoolean("generalModule", general != null); //NON-NLS
-        prefs.putBoolean("portableCaseModule", portable != null); //NON-NLS
+        prefs.putBoolean("tableModule", getComponent().getTableModule() != null); //NON-NLS
+        prefs.putBoolean("generalModule", getComponent().getGeneralModule() != null); //NON-NLS
+        prefs.putBoolean("portableCaseModule", getComponent().getPortableCaseModule() != null); //NON-NLS
     }
 }

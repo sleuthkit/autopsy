@@ -29,7 +29,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -57,10 +59,12 @@ class ReportGenerator {
      * Progress reportGenerationPanel that can be used to check for
      * cancellation.
      */
-    private ReportProgressPanel progressPanel;
-
+    private ReportProgressPanel progressPanel = null;
+    private ReportGenerationPanel reportGenerationPanel = null;
+    
     private static final String REPORT_PATH_FMT_STR = "%s" + File.separator + "%s %s %s" + File.separator;
-    private final ReportGenerationPanel reportGenerationPanel = new ReportGenerationPanel();
+
+    private final String configName;
 
     static final String REPORTS_DIR = "Reports"; //NON-NLS
 
@@ -71,6 +75,7 @@ class ReportGenerator {
      * way. MessageNotifyUtil used to display bubble notification.
      */
     private void displayReportErrors() {
+        // ELTODO 
         if (!errorList.isEmpty()) {
             String errorString = "";
             for (String error : errorList) {
@@ -83,9 +88,128 @@ class ReportGenerator {
 
     /**
      * Creates a report generator.
+     *
+     * ReportGenerator() { this.errorList = new ArrayList<>(); }
      */
-    ReportGenerator() {
+    public ReportGenerator(String configName, ReportProgressLogger progress) {
         this.errorList = new ArrayList<>();
+        this.progressPanel = progress;
+        this.reportGenerationPanel = null;
+        this.configName = configName;
+    }
+
+    public ReportGenerator(String configName, ReportGenerationPanel panel) {
+        this.errorList = new ArrayList<>();
+        this.reportGenerationPanel = panel;
+        this.progressPanel = null;
+        this.configName = configName;
+    }
+
+    public void generateReports() {
+        ReportingConfig config = null;
+        try {
+            config = ReportingConfigLoader.loadConfig(configName);
+        } catch (ReportConfigException ex) {
+            // ELTODO log these in appropriate pannel or logger
+            logger.log(Level.SEVERE, "Unable to load reporting configuration " + configName + ". Exiting", ex);
+            return;
+        }
+
+        if (config == null) {
+            logger.log(Level.SEVERE, "Unable to load reporting configuration {0}. Exiting", configName);
+            return;
+        }
+
+        // load all report modules 
+        Map<String, ReportModule> modules = new HashMap<>();
+        for (TableReportModule module : ReportModuleLoader.getTableReportModules()) {
+            modules.put(module.getClass().getCanonicalName(), module);
+        }
+
+        for (GeneralReportModule module : ReportModuleLoader.getGeneralReportModules()) {
+            modules.put(module.getClass().getCanonicalName(), module);
+        }
+
+        for (FileReportModule module : ReportModuleLoader.getFileReportModules()) {
+            modules.put(module.getClass().getCanonicalName(), module);
+        }
+
+        // special case for PortableCaseReportModule
+        modules.put(PortableCaseReportModule.class.getCanonicalName(), new PortableCaseReportModule());
+
+        // generate reports for enabled modules
+        for (Map.Entry<String, ReportModuleConfig> entry : config.getModuleConfigs().entrySet()) {
+            ReportModuleConfig moduleConfig = entry.getValue();
+            if (moduleConfig == null || !moduleConfig.isEnabled()) {
+                continue;
+            }
+
+            // found enabled module
+            String moduleName = entry.getKey();
+            ReportModule module = modules.get(moduleName);
+            if (module == null) {
+                logger.log(Level.SEVERE, "Report module {0} not found", moduleName);
+                continue;
+            }
+            
+            // get persisted module settings
+            ReportModuleSettings settings = moduleConfig.getModuleSettings();
+            if (settings == null) {
+                // use default configuration for this module
+                settings = module.getDefaultConfiguration();
+            }
+
+            // set module configuration
+            module.setConfiguration(settings);
+
+            try {
+                // generate report according to report module type
+                if (module instanceof GeneralReportModule) {
+
+                    // generate report
+                    generateGeneralReport((GeneralReportModule) module);
+
+                } else if (module instanceof TableReportModule) {
+                    
+                    // get table report settings
+                    TableReportSettings tableSettings = config.getTableReportSettings();
+                    if (tableSettings == null) {
+                        logger.log(Level.SEVERE, "No table report settings for report module {0}", moduleName);
+                        continue;
+                    }
+
+                    generateTableReport((TableReportModule) module, tableSettings); //NON-NLS
+
+                } else if (module instanceof FileReportModule) {
+
+                    // get file report settings
+                    FileReportSettings fileSettings = config.getFileReportSettings();
+                    if (fileSettings == null) {
+                        logger.log(Level.SEVERE, "No file report settings for report module {0}", moduleName);
+                        continue;
+                    }
+
+                    generateFileListReport((FileReportModule) module, fileSettings); //NON-NLS
+
+                } else if (module instanceof PortableCaseReportModule) {
+                    // get report settings
+                    if (settings instanceof NoReportModuleSettings) {
+                        settings = new PortableCaseReportModuleSettings();
+                    } else if (!(settings instanceof PortableCaseReportModuleSettings)) {
+                        logger.log(Level.SEVERE, "Invalid settings for report module {0}", moduleName);
+                        continue;                        
+                    }
+
+                    generatePortableCaseReport((PortableCaseReportModule) module, (PortableCaseReportModuleSettings) settings);
+
+                } else {
+                    logger.log(Level.SEVERE, "Report module {0} has unsupported report module type", moduleName);
+                    continue;
+                }
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Exception while running report module {0}: {1}", new Object[]{moduleName, e.getMessage()});
+            }
+        }
     }
 
     /**
@@ -93,6 +217,10 @@ class ReportGenerator {
      * parent dialog.
      */
     private void displayProgressPanel() {
+        if (reportGenerationPanel == null) {
+            return;
+        }
+
         final JDialog dialog = new JDialog((JFrame) WindowManager.getDefault().getMainWindow(), true);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.setTitle(NbBundle.getMessage(this.getClass(), "ReportGenerator.displayProgress.title.text"));
@@ -120,7 +248,7 @@ class ReportGenerator {
     /**
      * Run the GeneralReportModules using a SwingWorker.
      */
-    void generateGeneralReport(GeneralReportModule generalReportModule) throws IOException {
+    private void generateGeneralReport(GeneralReportModule generalReportModule) throws IOException {
         if (generalReportModule != null) {
             String reportDir = createReportDirectory(generalReportModule);
             setupProgressPanel(generalReportModule, reportDir);
@@ -137,7 +265,7 @@ class ReportGenerator {
      *
      * @param tableReportSettings settings for the table report
      */
-    void generateTableReport(TableReportModule tableReport, TableReportSettings tableReportSettings) throws IOException {
+    private void generateTableReport(TableReportModule tableReport, TableReportSettings tableReportSettings) throws IOException {
         if (tableReport != null && tableReportSettings != null && null != tableReportSettings.getArtifactSelections()) {
             String reportDir = createReportDirectory(tableReport);
             setupProgressPanel(tableReport, reportDir);
@@ -160,7 +288,7 @@ class ReportGenerator {
      *
      * @param fileReportSettings settings for the file report
      */
-    void generateFileListReport(FileReportModule fileReportModule, FileReportSettings fileReportSettings) throws IOException {
+    private void generateFileListReport(FileReportModule fileReportModule, FileReportSettings fileReportSettings) throws IOException {
         if (fileReportModule != null && fileReportSettings != null && null != fileReportSettings.getFileProperties()) {
             String reportDir = createReportDirectory(fileReportModule);
             List<FileReportDataTypes> enabled = new ArrayList<>();
@@ -217,7 +345,7 @@ class ReportGenerator {
     /**
      * Run the Portable Case Report Module
      */
-    void generatePortableCaseReport(PortableCaseReportModule portableCaseReportModule, PortableCaseReportModuleSettings settings) throws IOException {
+    private void generatePortableCaseReport(PortableCaseReportModule portableCaseReportModule, PortableCaseReportModuleSettings settings) throws IOException {
         if (portableCaseReportModule != null) {
             String reportDir = createReportDirectory(portableCaseReportModule);
             setupProgressPanel(portableCaseReportModule, reportDir);
@@ -251,13 +379,15 @@ class ReportGenerator {
     }
 
     private void setupProgressPanel(ReportModule module, String reportDir) {
-        String reportFilePath = module.getRelativeFilePath();
-        if (reportFilePath == null) {
-            this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
-        } else if (reportFilePath.isEmpty()) {
-            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir);
-        } else {
-            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
+        if (reportGenerationPanel != null) {
+            String reportFilePath = module.getRelativeFilePath();
+            if (reportFilePath == null) {
+                this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
+            } else if (reportFilePath.isEmpty()) {
+                this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir);
+            } else {
+                this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
+            }
         }
     }
 

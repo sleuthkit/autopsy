@@ -227,6 +227,12 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             ReportModuleSettings settings = module.getConfiguration();
             moduleConfigs.put(module.getClass().getCanonicalName(), new ReportModuleConfig(module, false, settings));
         }
+        
+        // set "enabled" flag for the selected module
+        ReportModule mod = getSelectedModule();
+        ReportModuleConfig config = moduleConfigs.get(mod.getClass().getCanonicalName());
+        config.setEnabled(true);
+        
         return moduleConfigs;
     }
 
