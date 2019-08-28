@@ -53,6 +53,11 @@ class ReportGenerationPanel extends javax.swing.JPanel {
         constraints.gridy = 0;
         constraints.weightx = 1.0;
         glue = Box.createVerticalGlue();
+        progressPanel = new ReportProgressDialog();
+    }
+    
+    ReportProgressDialog getProgressPanel() {
+        return progressPanel;
     }
 
     /**
@@ -61,16 +66,14 @@ class ReportGenerationPanel extends javax.swing.JPanel {
      *
      * @param reportName The report name.
      * @param reportPath The report file path
-     *
-     * @return The report generation progress panel.
      */
-    ReportProgressDialog addReport(String reportName, String reportPath) {
+    void addReport(String reportName, String reportPath) {
         /*
          * Remove the "glue."
          */
         reportPanel.remove(glue);
 
-        progressPanel = new ReportProgressDialog(reportName, reportPath);
+        progressPanel.setLabels(reportName, reportPath);
         constraints.weighty = 0.0;
         constraints.anchor = GridBagConstraints.NORTH;
         reportPanel.add(progressPanel, constraints);
@@ -98,7 +101,6 @@ class ReportGenerationPanel extends javax.swing.JPanel {
                 });
             }
         });
-        return progressPanel;
     }
 
     /**

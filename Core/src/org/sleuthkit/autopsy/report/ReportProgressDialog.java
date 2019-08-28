@@ -41,20 +41,28 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
     private static final Color GREEN = new Color(50, 205, 50);
     private static final Color RED = new Color(178, 34, 34);
     private volatile ReportProgressPanel.ReportStatus status;
-    
+
     /**
      * Constructs a panel used by report generation module to show progress.
+     */
+    ReportProgressDialog() {
+        initComponents();
+        reportProgressBar.setIndeterminate(true);
+        reportProgressBar.setMaximum(100);
+        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.progress.queuing"));
+        status = ReportStatus.QUEUING;
+        reportLabel.setText("");
+        pathLabel.setText(""); //NON-NLS
+    }
+
+    /**
+     * Sets label text.
      *
      * @param reportName The name of the report being generated.
      * @param reportPath The path to the report file.
      */
-    ReportProgressDialog(String reportName, String reportPath) {
-        initComponents();
-        reportProgressBar.setIndeterminate(true);
-        reportProgressBar.setMaximum(100);
+    void setLabels(String reportName, String reportPath) {
         reportLabel.setText(reportName);
-        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.progress.queuing"));
-        status = ReportStatus.QUEUING;
         if (null != reportPath) {
             pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>"); //NON-NLS
             pathLabel.setToolTipText(reportPath);
@@ -170,7 +178,7 @@ public class ReportProgressDialog extends javax.swing.JPanel implements ReportPr
      * indeterminate.
      *
      * @param indeterminate True if the progress bar should be set to
-     *                      indeterminate.
+     * indeterminate.
      */
     @Override
     public void setIndeterminate(boolean indeterminate) {

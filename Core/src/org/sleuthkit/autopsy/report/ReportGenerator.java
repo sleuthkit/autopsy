@@ -44,7 +44,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil; // ELTODO do we need to remove this?
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -75,21 +74,17 @@ class ReportGenerator {
      * way. MessageNotifyUtil used to display bubble notification.
      */
     private void displayReportErrors() {
-        // ELTODO 
         if (!errorList.isEmpty()) {
             String errorString = "";
             for (String error : errorList) {
                 errorString += error + "\n";
             }
-            MessageNotifyUtil.Notify.error(
-                    NbBundle.getMessage(this.getClass(), "ReportGenerator.notifyErr.errsDuringRptGen"), errorString);
+            progressPanel.updateStatusLabel(errorString);
         }
     }
 
     /**
      * Creates a report generator.
-     *
-     * ReportGenerator() { this.errorList = new ArrayList<>(); }
      */
     public ReportGenerator(String configName, ReportProgressLogger progress) {
         this.errorList = new ArrayList<>();
@@ -101,7 +96,7 @@ class ReportGenerator {
     public ReportGenerator(String configName, ReportGenerationPanel panel) {
         this.errorList = new ArrayList<>();
         this.reportGenerationPanel = panel;
-        this.progressPanel = null;
+        this.progressPanel = panel.getProgressPanel();
         this.configName = configName;
     }
 
@@ -110,13 +105,14 @@ class ReportGenerator {
         try {
             config = ReportingConfigLoader.loadConfig(configName);
         } catch (ReportConfigException ex) {
-            // ELTODO log these in appropriate pannel or logger
             logger.log(Level.SEVERE, "Unable to load reporting configuration " + configName + ". Exiting", ex);
+            progressPanel.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
             return;
         }
 
         if (config == null) {
             logger.log(Level.SEVERE, "Unable to load reporting configuration {0}. Exiting", configName);
+            progressPanel.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
             return;
         }
 
@@ -149,6 +145,7 @@ class ReportGenerator {
             ReportModule module = modules.get(moduleName);
             if (module == null) {
                 logger.log(Level.SEVERE, "Report module {0} not found", moduleName);
+                progressPanel.updateStatusLabel("Report module " + moduleName + " not found");
                 continue;
             }
             
@@ -175,6 +172,7 @@ class ReportGenerator {
                     TableReportSettings tableSettings = config.getTableReportSettings();
                     if (tableSettings == null) {
                         logger.log(Level.SEVERE, "No table report settings for report module {0}", moduleName);
+                        progressPanel.updateStatusLabel("No table report settings for report module " + moduleName);
                         continue;
                     }
 
@@ -186,6 +184,7 @@ class ReportGenerator {
                     FileReportSettings fileSettings = config.getFileReportSettings();
                     if (fileSettings == null) {
                         logger.log(Level.SEVERE, "No file report settings for report module {0}", moduleName);
+                        progressPanel.updateStatusLabel("No file report settings for report module " + moduleName);
                         continue;
                     }
 
@@ -197,6 +196,7 @@ class ReportGenerator {
                         settings = new PortableCaseReportModuleSettings();
                     } else if (!(settings instanceof PortableCaseReportModuleSettings)) {
                         logger.log(Level.SEVERE, "Invalid settings for report module {0}", moduleName);
+                        progressPanel.updateStatusLabel("Invalid settings for report module " + moduleName);
                         continue;                        
                     }
 
@@ -204,10 +204,12 @@ class ReportGenerator {
 
                 } else {
                     logger.log(Level.SEVERE, "Report module {0} has unsupported report module type", moduleName);
+                    progressPanel.updateStatusLabel("Report module " + moduleName + " has unsupported report module type");
                     continue;
                 }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Exception while running report module {0}: {1}", new Object[]{moduleName, e.getMessage()});
+                progressPanel.updateStatusLabel("Exception while running report module " + moduleName);
             }
         }
     }
@@ -369,10 +371,7 @@ class ReportGenerator {
             absFiles = skCase.findAllFilesWhere("meta_type != " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
             return absFiles;
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            MessageNotifyUtil.Notify.show(
-                    NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
-                    NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
-                    MessageNotifyUtil.MessageType.ERROR);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage());
             logger.log(Level.SEVERE, "failed to generate reports. Unable to get all files in the image.", ex); //NON-NLS
             return Collections.<AbstractFile>emptyList();
         }
@@ -382,11 +381,11 @@ class ReportGenerator {
         if (reportGenerationPanel != null) {
             String reportFilePath = module.getRelativeFilePath();
             if (reportFilePath == null) {
-                this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
+                reportGenerationPanel.addReport(module.getName(), null);
             } else if (reportFilePath.isEmpty()) {
-                this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir);
+                reportGenerationPanel.addReport(module.getName(), reportDir);
             } else {
-                this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
+                reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
             }
         }
     }
@@ -431,10 +430,7 @@ class ReportGenerator {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
-                        NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
-                        MessageNotifyUtil.MessageType.ERROR);
+                progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage());
                 logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
