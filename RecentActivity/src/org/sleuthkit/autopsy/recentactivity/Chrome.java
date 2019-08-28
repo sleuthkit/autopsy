@@ -29,7 +29,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
 import java.util.*;
@@ -46,7 +45,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -230,17 +228,17 @@ class Chrome extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         (NetworkUtils.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
 
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
             }
             dbFile.delete();
         }
-
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+        
+        if( !bbartifacts.isEmpty() ){
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -366,8 +364,6 @@ class Chrome extends Extract {
                             RecentActivityExtracterModuleFactory.getModuleName(), domain));
                     bbart.addAttributes(bbattributes);
 
-                    // index the artifact for keyword search
-                    this.indexArtifact(bbart);
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact{0}", ex); //NON-NLS
@@ -376,12 +372,9 @@ class Chrome extends Extract {
                                     this.getName(), bookmarkFile.getName()));
                 }
             }
+            postArtifacts(bbartifacts);
             dbFile.delete();
         }
-
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
     }
 
     /**
@@ -460,7 +453,7 @@ class Chrome extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
 
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -468,10 +461,10 @@ class Chrome extends Extract {
 
             dbFile.delete();
         }
-
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
+        
+        if( !bbartifacts.isEmpty() ) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -561,7 +554,7 @@ class Chrome extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
 
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -582,10 +575,10 @@ class Chrome extends Extract {
 
             dbFile.delete();
         }
-
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
+        
+        if( !bbartifacts.isEmpty() ) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -664,19 +657,18 @@ class Chrome extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         ((result.get("signon_realm").toString() != null) ? result.get("signon_realm").toString() : ""))); //NON-NLS
                         
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes);
                 if (bbart != null) {
-                    this.indexArtifact(bbart);
                     bbartifacts.add(bbart);
                 }
             }
 
             dbFile.delete();
         }
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT, bbartifacts));
         
+        if( !bbartifacts.isEmpty() ) {
+            postArtifacts(bbartifacts);
+        }
     }
     
     /**
@@ -741,10 +733,10 @@ class Chrome extends Extract {
             
             dbFile.delete();
         }
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, bbartifacts));
         
+        if( !bbartifacts.isEmpty() ){
+            postArtifacts(bbartifacts);
+        }
     }
     
     /**
@@ -794,9 +786,8 @@ class Chrome extends Extract {
             }            
 
             // Add an artifact
-            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes);
+            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes);
             if (bbart != null) {
-                this.indexArtifact(bbart);
                 bbartifacts.add(bbart);
             }
         }
@@ -919,13 +910,11 @@ class Chrome extends Extract {
             }
 
             // Create artifact
-            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS, webDataFile, bbattributes);
+            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS, webDataFile, bbattributes);
             if (bbart != null) {
-                this.indexArtifact(bbart);
                 bbartifacts.add(bbart);
             }
         }
-            
         // return all extracted artifacts
         return bbartifacts;
     }

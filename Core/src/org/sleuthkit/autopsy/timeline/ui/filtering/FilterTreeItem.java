@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,81 +19,64 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.filters.CompoundFilter;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.CompoundFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.datamodel.TimelineFilter;
 
 /**
- * A TreeItem for a filter.
+ * A TreeItem for a FilterState.
  */
-final public class FilterTreeItem extends TreeItem<Filter> {
+class FilterTreeItem extends TreeItem<FilterState<?>> {
 
     /**
-     * recursively construct a tree of TreeItems to parallel the filter tree of
-     * the given filter
+     * Recursively construct a tree of TreeItems to parallel the filter tree of
+     * the given FilterState.
      *
      *
-     * @param filter       the filter for this item. if f has sub-filters, tree
-     *                     items will be made for them added added to the
+     * @param filterState  The FilterState for this item. If it has sub-filters,
+     *                     tree items will be made for them added added to the
      *                     children of this FilterTreeItem
-     * @param expansionMap
+     * @param expansionMap Map from filter to whether it is expanded or not.
      */
-    public FilterTreeItem(Filter filter, ObservableMap<Filter, Boolean> expansionMap) {
-        super(filter);
-
-        //listen to changes in the expansion map, and update expansion state of filter object
-        expansionMap.addListener((MapChangeListener.Change<? extends Filter, ? extends Boolean> change) -> {
-            if (change.getKey().equals(filter)) {
-                setExpanded(expansionMap.get(change.getKey()));
-            }
-        });
-
-        if (expansionMap.containsKey(filter)) {
-            setExpanded(expansionMap.get(filter));
-        }
+    FilterTreeItem(FilterState<?> filterState, ObservableMap<Object, Boolean> expansionMap) {
+        super(filterState);
 
         //keep expanion map upto date if user expands/collapses filter
-        expandedProperty().addListener(expandedProperty -> expansionMap.put(filter, isExpanded()));
+        expandedProperty().addListener(expandedProperty -> expansionMap.put(filterState.getFilter(), isExpanded()));
+        setExpanded(expansionMap.getOrDefault(filterState.getFilter(), false));
 
         //if the filter is a compound filter, add its subfilters to the tree
-        if (filter instanceof CompoundFilter<?>) {
-            final CompoundFilter<?> compoundFilter = (CompoundFilter<?>) filter;
+        if (filterState instanceof CompoundFilterState<?, ?>) {
+            CompoundFilterState<?, ?> compoundFilter = (CompoundFilterState<?, ?>) filterState;
 
             //add all sub filters
-            compoundFilter.getSubFilters().forEach(subFilter -> getChildren().add(new FilterTreeItem(subFilter, expansionMap)));
-
+            compoundFilter.getSubFilterStates().forEach(subFilterState -> {
+                /*
+                 * We removed the known_status column from the tsk_events table
+                 * but have not yet added back the logic to implement that
+                 * filter. For now, just hide it in the UI.
+                 */
+                if (subFilterState.getFilter() instanceof TimelineFilter.HideKnownFilter == false) {
+                    getChildren().add(new FilterTreeItem(subFilterState, expansionMap));
+                }
+            });
             //listen to changes in sub filters and keep tree in sync
-            compoundFilter.getSubFilters().addListener((ListChangeListener.Change<? extends Filter> c) -> {
-                while (c.next()) {
-                    for (Filter subfFilter : c.getAddedSubList()) {
+            compoundFilter.getSubFilterStates().addListener((ListChangeListener.Change<? extends FilterState<?>> change) -> {
+                while (change.next()) {
+                    for (FilterState<?> subFilterState : change.getAddedSubList()) {
                         setExpanded(true); //emphasize new filters by expanding parent to make sure they are visible
-                        getChildren().add(new FilterTreeItem(subfFilter, expansionMap));
+                        getChildren().add(new FilterTreeItem(subFilterState, expansionMap));
                     }
                 }
             });
 
-            /*
-             * enforce the following relationship between a compound filter and
-             * its subfilters: if a compound filter's active property changes,
-             * disable the subfilters if the compound filter is not active.
-             */
-            compoundFilter.activeProperty().addListener(activeProperty -> {
-                disableSubFiltersIfNotActive(compoundFilter);
+            compoundFilter.selectedProperty().addListener(observable -> {
+                if (compoundFilter.isSelected()) {
+                    setExpanded(true);
+                }
             });
-
-            disableSubFiltersIfNotActive(compoundFilter);
         }
-    }
-
-    /**
-     * disable the sub-filters of the given compound filter if it is not active
-     *
-     * @param compoundFilter the compound filter
-     */
-    static private void disableSubFiltersIfNotActive(CompoundFilter<?> compoundFilter) {
-        boolean inactive = compoundFilter.isActive() == false;
-        compoundFilter.getSubFilters().forEach(subFilter -> subFilter.setDisabled(inactive));
     }
 }

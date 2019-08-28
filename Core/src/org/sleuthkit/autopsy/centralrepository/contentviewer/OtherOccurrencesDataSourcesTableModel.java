@@ -21,9 +21,13 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Model for cells in the data sources section of the other occurrences data
@@ -32,6 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(OtherOccurrencesDataSourcesTableModel.class.getName());
     private final Set<DataSourceColumnItem> dataSourceSet = new LinkedHashSet<>();
 
     /**
@@ -140,8 +145,14 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
         try {
             caseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
         } catch (EamDbException ignored) {
-            caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
-            //place holder value will be used since correlation attribute was unavailble
+            //non central repo nodeData won't have a correlation case
+            try {
+                caseUUID = Case.getCurrentCaseThrows().getName();
+                //place holder value will be used since correlation attribute was unavailble
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get current case", ex);
+                caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
+            }
         }
         dataSourceSet.add(new DataSourceColumnItem(nodeData.getCaseName(), nodeData.getDeviceID(), nodeData.getDataSourceName(), caseUUID));
         fireTableDataChanged();

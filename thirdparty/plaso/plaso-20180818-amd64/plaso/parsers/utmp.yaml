@@ -1,0 +1,108 @@
+name: utmp
+type: format
+description: Utmp login records format
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/Utmp%20login%20records%20format.asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: int16
+type: integer
+attributes:
+  format: signed
+  size: 2
+  units: bytes
+---
+name: int32
+type: integer
+attributes:
+  format: signed
+  size: 4
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: linux_libc6_utmp_entry
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: type
+  data_type: int32
+- name: pid
+  data_type: uint32
+- name: terminal
+  type: stream
+  element_data_type: byte
+  number_of_elements: 32
+- name: terminal_identifier
+  data_type: uint32
+- name: username
+  type: stream
+  element_data_type: byte
+  number_of_elements: 32
+- name: hostname
+  type: stream
+  element_data_type: byte
+  number_of_elements: 256
+- name: termination_status
+  data_type: int16
+- name: exit_status
+  data_type: int16
+- name: session
+  data_type: int32
+- name: timestamp
+  data_type: int32
+- name: microseconds
+  data_type: int32
+- name: ip_address
+  type: sequence
+  element_data_type: byte
+  number_of_elements: 16
+- name: unknown1
+  type: stream
+  element_data_type: byte
+  number_of_elements: 20
+---
+name: macosx_utmpx_entry
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: username
+  type: stream
+  element_data_type: byte
+  number_of_elements: 256
+- name: terminal_identifier
+  data_type: uint32
+- name: terminal
+  type: stream
+  element_data_type: byte
+  number_of_elements: 32
+- name: pid
+  data_type: uint32
+- name: type
+  data_type: int16
+- name: unknown1
+  data_type: int16
+- name: timestamp
+  data_type: int32
+- name: microseconds
+  data_type: int32
+- name: hostname
+  type: stream
+  element_data_type: byte
+  number_of_elements: 256
+- name: unknown2
+  type: stream
+  element_data_type: byte
+  number_of_elements: 64

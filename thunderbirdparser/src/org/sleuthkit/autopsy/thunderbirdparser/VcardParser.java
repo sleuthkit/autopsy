@@ -42,18 +42,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -102,7 +101,7 @@ final class VcardParser {
         this.context = context;
         this.currentCase = currentCase;
         tskCase = currentCase.getSleuthkitCase();
-        blackboard = currentCase.getServices().getBlackboard();
+        blackboard = tskCase.getBlackboard();
         fileManager = currentCase.getServices().getFileManager();
     }
 
@@ -164,8 +163,6 @@ final class VcardParser {
     private BlackboardArtifact addContactArtifact(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
         List<AccountFileInstance> accountInstances = new ArrayList<>();
-        
-        extractPhotos(vcard, abstractFile);
        
         String name = "";
         if (vcard.getFormattedName() != null) {
@@ -229,6 +226,8 @@ final class VcardParser {
                 List<BlackboardArtifact> blackboardArtifacts = new ArrayList<>();
                 blackboardArtifacts.add(artifact);
                 
+                 extractPhotos(vcard, abstractFile, artifact);
+                
                 // Add account relationships.
                 if (deviceAccountInstance != null) {
                     try {
@@ -242,16 +241,11 @@ final class VcardParser {
                 
                 // Index the artifact for keyword search.
                 try {
-                    blackboard.indexArtifact(artifact);
+                    blackboard.postArtifact(artifact,  EmailParserModuleFactory.getModuleName());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(Bundle.VcardParser_addContactArtifact_indexError(), artifact.getDisplayName());
                 }
-                
-                // Fire event to notify UI of this new artifact.
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                        EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT,
-                        blackboardArtifacts));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed to create contact artifact for vCard file '%s' (id=%d).",
@@ -269,7 +263,7 @@ final class VcardParser {
      * 
      * @throws NoCurrentCaseException if there is no open case.
      */
-    private void extractPhotos(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
+    private void extractPhotos(VCard vcard, AbstractFile abstractFile, BlackboardArtifact artifact) throws NoCurrentCaseException {
         String parentFileName = getUniqueName(abstractFile);
         // Skip files that already have been extracted.
         try {
@@ -306,7 +300,7 @@ final class VcardParser {
                         writeExtractedImage(extractedFilePath, data);
                         derivedFilesCreated.add(fileManager.addDerivedFile(extractedFileName, getFileRelativePath(parentFileName, extractedFileName), data.length,
                                 abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getAtime(),
-                                true, abstractFile, null, EmailParserModuleFactory.getModuleName(), null, null, TskData.EncodingType.NONE));
+                                true, artifact, null, EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "", TskData.EncodingType.NONE));
                     } catch (IOException | TskCoreException ex) {
                         logger.log(Level.WARNING, String.format("Could not write image to '%s' (id=%d).", extractedFilePath, abstractFile.getId()), ex); //NON-NLS
                     }

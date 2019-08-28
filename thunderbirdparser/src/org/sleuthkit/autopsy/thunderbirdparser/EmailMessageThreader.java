@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Given a list of email messages arranges the message into threads using the
@@ -41,7 +42,7 @@ final class EmailMessageThreader {
     
     private EmailMessageThreader(){}
 
-    public static void threadMessages(List<EmailMessage> emailMessages, String threadIDPrefix) {
+    public static void threadMessages(List<EmailMessage> emailMessages) {
         EmailMessageThreader instance = new EmailMessageThreader();
         
         Map<String, EmailContainer> id_table = instance.createIDTable(emailMessages);
@@ -51,7 +52,7 @@ final class EmailMessageThreader {
 
         Set<EmailContainer> finalRootSet = instance.groupBySubject(rootSet);
 
-        instance.assignThreadIDs(finalRootSet, threadIDPrefix);
+        instance.assignThreadIDs(finalRootSet);
     }
 
     /**
@@ -413,12 +414,10 @@ final class EmailMessageThreader {
      * 
      * @param IDPrefix A string to make the threadIDs unique.
      */
-    private void assignThreadIDs(Set<EmailContainer> containerSet, String IDPrefix) {
-        int threadCounter = 0;
-        
+    private void assignThreadIDs(Set<EmailContainer> containerSet) {
         for(EmailContainer container: containerSet) {
             // Generate a threadID
-            String threadID = String.format("%s-%d", IDPrefix, threadCounter++);
+            String threadID = UUID.randomUUID().toString();
             // Add the IDs to this thread
             addThreadID(container, threadID);
         }

@@ -33,8 +33,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -149,7 +151,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * OutlineView to the actions global context.
      *
      * @param explorerManager The explorer manager of the ancestor top
-     *                        component.
+     * component.
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
         this(explorerManager, Bundle.DataResultViewerTable_title());
@@ -162,8 +164,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * in the OutlineView to the actions global context.
      *
      * @param explorerManager The explorer manager of the ancestor top
-     *                        component.
-     * @param title           The title.
+     * component.
+     * @param title The title.
      */
     public DataResultViewerTable(ExplorerManager explorerManager, String title) {
         super(explorerManager);
@@ -177,7 +179,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initComponents();
 
         initializePagingSupport();
-        
+
         /*
          * Disable the CSV export button for the common properties results 
          */
@@ -432,7 +434,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         setColumnWidths();
-
+        
         /*
          * Load column sorting information from preferences file and apply it to
          * columns.
@@ -514,12 +516,22 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     protected void setColumnWidths() {
         if (rootNode.getChildren().getNodesCount() != 0) {
             final Graphics graphics = outlineView.getGraphics();
+            
             if (graphics != null) {
+                // Current width of the outlineView
+                double outlineViewWidth = outlineView.getSize().getWidth();
+                // List of the column widths
+                List<Integer> columnWidths = new ArrayList<>();
                 final FontMetrics metrics = graphics.getFontMetrics();
 
                 int margin = 4;
                 int padding = 8;
-
+                
+                int totalColumnWidth = 0;
+                int cntMaxSizeColumns =0;
+                
+                // Calulate the width for each column keeping track of the number
+                // of columns that were set to columnwidthLimit.
                 for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
                     int columnWidthLimit = (column == 0) ? 350 : 300;
@@ -537,8 +549,43 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                     int columnWidth = Math.max(valuesWidth, headerWidth);
                     columnWidth += 2 * margin + padding; // add margin and regular padding
-                    columnWidth = Math.min(columnWidth, columnWidthLimit);
 
+                    columnWidth = Math.min(columnWidth, columnWidthLimit);
+                    columnWidths.add(columnWidth);
+                    
+                    totalColumnWidth += columnWidth;
+                    
+                    if( columnWidth == columnWidthLimit) {
+                        cntMaxSizeColumns++;
+                    }
+                }
+                
+                // Figure out how much extra, if any can be given to the columns
+                // so that the table is as wide as outlineViewWidth. If cntMaxSizeColumns
+                // is greater than 0 divide the extra space between the columns 
+                // that could use more space.  Otherwise divide evenly amoung 
+                // all columns.
+                int extraWidth = 0;
+                
+                if (totalColumnWidth < outlineViewWidth) {
+                    if  (cntMaxSizeColumns > 0) {
+                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth)/cntMaxSizeColumns);
+                    } else {
+                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth)/columnWidths.size());
+                    }
+                }
+                
+                for(int column = 0; column < columnWidths.size(); column++) {
+                    int columnWidth = columnWidths.get(column);
+                    
+                    if(cntMaxSizeColumns > 0) {
+                        if(columnWidth >= ((column == 0) ? 350 : 300)) {
+                            columnWidth += extraWidth;
+                        }
+                    } else {
+                        columnWidth += extraWidth;
+                    }
+                    
                     outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }
             }
@@ -700,7 +747,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * order.
      *
      * @return a List<Node.Property<?>> of the properties in the persisted
-     *         order.
+     * order.
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
 
@@ -721,7 +768,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * property at the end.
          */
         int offset = props.size();
-        boolean noPreviousSettings = true;
 
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
@@ -729,23 +775,51 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             Integer value = preferences.getInt(ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName()), -1);
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
-                noPreviousSettings = false;
             } else {
                 propertiesMap.put(offset, prop);
                 offset++;
             }
         }
 
-        // If none of the properties had previous settings, we should decrement
-        // each value by the number of properties to make the values 0-indexed.
-        if (noPreviousSettings) {
-            ArrayList<Integer> keys = new ArrayList<>(propertiesMap.keySet());
-            for (int key : keys) {
-                propertiesMap.put(key - props.size(), propertiesMap.remove(key));
+        /*
+        NOTE: it is possible to have "discontinuities" in the keys (i.e. column numbers)
+        of the map. This happens when some of the columns had a previous setting, and 
+        other columns did not. We need to make the keys 0-indexed and continuous.
+         */
+        compactPropertiesMap();
+
+        return new ArrayList<>(propertiesMap.values());
+    }
+
+    /**
+     * Makes properties map 0-indexed and re-arranges elements to make sure the
+     * indexes are continuous.
+     */
+    private void compactPropertiesMap() {
+
+        // check if there are discontinuities in the map keys. 
+        int size = propertiesMap.size();
+        Queue<Integer> availablePositions = new LinkedList<>();
+        for (int i = 0; i < size; i++) {
+            if (!propertiesMap.containsKey(i)) {
+                availablePositions.add(i);
             }
         }
 
-        return new ArrayList<>(propertiesMap.values());
+        // if there are no discontinuities, we are done
+        if (availablePositions.isEmpty()) {
+            return;
+        }
+
+        // otherwise, move map elements into the available positions. 
+        // we don't want to just move down all elements, as we want to preserve the order
+        // of the ones that had previous setting (i.e. ones that have key < size)
+        ArrayList<Integer> keys = new ArrayList<>(propertiesMap.keySet());
+        for (int key : keys) {
+            if (key >= size) {
+                propertiesMap.put(availablePositions.remove(), propertiesMap.remove(key));
+            }
+        }
     }
 
     /**
@@ -1420,7 +1494,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
 
     @NbBundle.Messages({"DataResultViewerTable.exportCSVButtonActionPerformed.empty=No data to export"
-        })
+    })
     private void exportCSVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCSVButtonActionPerformed
         Node currentRoot = this.getExplorerManager().getRootContext();
         if (currentRoot != null && currentRoot.getChildren().getNodesCount() > 0) {

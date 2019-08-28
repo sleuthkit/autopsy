@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ButtonType?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import jfxtras.scene.control.LocalDateTimeTextField?>
+
+<fx:root expanded="true" maxHeight="159.0" maxWidth="555.0" minHeight="159.0" minWidth="555.0" prefHeight="159.0" prefWidth="555.0" type="DialogPane" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+   <buttonTypes>
+      <ButtonType fx:constant="OK" />
+      <ButtonType fx:constant="CANCEL" />
+   </buttonTypes>
+   <content>
+        <GridPane fx:id="gridPane" hgap="5.0" vgap="5.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="NEVER" maxWidth="93.0" minWidth="10.0" />
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="193.0" minWidth="10.0" />
+                <ColumnConstraints hgrow="NEVER" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+            </columnConstraints>
+            <rowConstraints>
+            <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+            <children>
+                <Label text="Description:" GridPane.rowIndex="1" />
+                <TextField fx:id="descriptionTextField" prefHeight="26.0" prefWidth="278.0" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="1" />
+                <Label text="DateTime" GridPane.rowIndex="2" />
+                <Label text="Time Zone" GridPane.columnIndex="2" GridPane.rowIndex="2">
+               <padding>
+                  <Insets left="15.0" />
+               </padding>
+            </Label>
+                <ComboBox fx:id="timeZoneChooser" editable="true" prefHeight="28.0" prefWidth="214.0" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                <LocalDateTimeTextField fx:id="timePicker" prefHeight="26.0" prefWidth="166.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Label text="DataSource:" />
+            <ChoiceBox fx:id="dataSourceChooser" prefHeight="25.0" prefWidth="168.0" GridPane.columnIndex="1" GridPane.columnSpan="3" />
+            </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+        </GridPane>
+   </content>
+</fx:root>

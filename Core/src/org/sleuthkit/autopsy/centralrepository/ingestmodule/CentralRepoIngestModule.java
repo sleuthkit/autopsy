@@ -19,41 +19,44 @@
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
-import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
-import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -62,6 +65,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 @Messages({"CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
     "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
 final class CentralRepoIngestModule implements FileIngestModule {
+
+    private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
 
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = true;
@@ -74,10 +79,10 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private long jobId;
     private CorrelationCase eamCase;
     private CorrelationDataSource eamDataSource;
-    private Blackboard blackboard;
     private CorrelationAttributeInstance.Type filesType;
     private final boolean flagTaggedNotableItems;
     private final boolean flagPreviouslySeenDevices;
+    private Blackboard blackboard;
     private final boolean createCorrelationProperties;
 
     /**
@@ -104,7 +109,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         }
 
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return ProcessResult.ERROR;
@@ -158,7 +163,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
             }
         }
 
-        // insert this file into the central repository
+        // insert this file into the central repository 
         if (createCorrelationProperties) {
             try {
                 CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
@@ -271,7 +276,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
-                && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
+            && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
             logger.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
@@ -308,7 +313,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         // if we are the first thread / module for this job, then make sure the case
         // and image exist in the DB before we associate artifacts with it.
         if (refCounter.incrementAndGet(jobId)
-                == 1) {
+            == 1) {
             // ensure we have this data source in the EAM DB
             try {
                 if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDataSourceObjectID())) {
@@ -330,41 +335,32 @@ final class CentralRepoIngestModule implements FileIngestModule {
      */
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
 
+        Collection<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(
+                        TSK_SET_NAME, MODULE_NAME,
+                        Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
+                new BlackboardAttribute(
+                        TSK_COMMENT, MODULE_NAME,
+                        Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         try {
-            String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
 
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.CentralRepoIngestModule_prevTaggedSet_text()));
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                    Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
-
-            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
-                BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact tifArtifact = abstractFile.newArtifact(TSK_INTERESTING_FILE_HIT);
                 tifArtifact.addAttributes(attributes);
-
                 try {
                     // index the artifact for keyword search
-                    blackboard.indexArtifact(tifArtifact);
+                    blackboard.postArtifact(tifArtifact, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }
-
                 // send inbox message
                 sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash());
-
-                // fire event to notify UI of this new artifact
-                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         }
     }
 

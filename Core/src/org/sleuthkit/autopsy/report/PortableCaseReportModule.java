@@ -41,7 +41,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.autopsy.report.caseuco.CaseUcoFormatExporter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -353,6 +354,19 @@ class PortableCaseReportModule implements ReportModule {
         if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
             handleCancellation(progressPanel);
             return;
+        }
+        
+        File reportsFolder = Paths.get(caseFolder.toString(), "Reports").toFile();
+        if(!reportsFolder.mkdir()) {
+            handleError("Could not make report folder", "Could not make report folder", null, progressPanel); // NON-NLS
+            return;
+        }
+        
+        try {
+            CaseUcoFormatExporter.export(tagNames, setNames, reportsFolder, progressPanel);
+        } catch (IOException | SQLException | NoCurrentCaseException | TskCoreException ex) {
+            handleError("Problem while generating CASE-UCO report", 
+                    "Problem while generating CASE-UCO report", ex, progressPanel); // NON-NLS
         }
         
         // Compress the case (if desired)
@@ -983,6 +997,9 @@ class PortableCaseReportModule implements ReportModule {
     enum ChunkSize {
         
         NONE("Do not split", ""), // NON-NLS
+        ONE_HUNDRED_MB("Split into 100 MB chunks", "100m"),
+        CD("Split into 700 MB chunks (CD)", "700m"),
+        ONE_GB("Split into 1 GB chunks", "1000m"),
         DVD("Split into 4.5 GB chunks (DVD)", "4500m"); // NON-NLS
         
         private final String displayName;

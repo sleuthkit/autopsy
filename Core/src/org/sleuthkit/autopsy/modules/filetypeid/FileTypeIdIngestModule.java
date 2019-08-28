@@ -18,40 +18,42 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFileTypesException;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
  * to the blackboard.
  */
-@NbBundle.Messages({
-    "CannotRunFileTypeDetection=Unable to run file type detection."
-})
+@NbBundle.Messages({"CannotRunFileTypeDetection=Unable to run file type detection."})
 public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
-    private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+
+    private long jobId;
     private FileTypeDetector fileTypeDetector;
 
     /**
@@ -146,26 +148,34 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * @param fileType The file type rule for categorizing the hit.
      */
     private void createInterestingFileHit(AbstractFile file, FileType fileType) {
+
+        List<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(
+                        TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(),
+                        fileType.getInterestingFilesSetName()),
+                new BlackboardAttribute(
+                        TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(),
+                        fileType.getMimeType()));
         try {
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            attributes.add(new BlackboardAttribute(
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getInterestingFilesSetName()));
-            attributes.add(new BlackboardAttribute(
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType()));
-            
             Case currentCase = Case.getCurrentCaseThrows();
-            org.sleuthkit.datamodel.Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
+
+            Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
-                BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            if (!tskBlackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact artifact = file.newArtifact(TSK_INTERESTING_FILE_HIT);
                 artifact.addAttributes(attributes);
-                
                 try {
-                    currentCase.getServices().getBlackboard().indexArtifact(artifact);
+                    /*
+                     * post the artifact which will index the artifact for
+                     * keyword search, and fire an event to notify UI of this
+                     * new artifact
+                     */
+                    tskBlackboard.postArtifact(artifact, FileTypeIdModuleFactory.getModuleName());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
                 }
             }
+
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
@@ -227,5 +237,4 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         long matchTime = 0;
         long numFiles = 0;
     }
-
 }

@@ -1,0 +1,202 @@
+name: java_idx
+type: format
+description: Java WebStart Cache IDX file format.
+urls: ["https://www.forensicswiki.org/wiki/Java#IDX_file_format"]
+---
+name: bool8
+type: boolean
+attributes:
+  size: 1
+  units: bytes
+  false_value: 0
+  true_value: 1
+---
+name: char
+type: character
+attributes:
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: java_idx_http_header
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: name_size
+  data_type: uint16
+- name: name
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_http_header.name_size
+- name: value_size
+  data_type: uint16
+- name: value
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_http_header.value_size
+---
+name: java_idx_file_header
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: busy_flag
+  data_type: bool8
+- name: incomplete_flag
+  data_type: bool8
+- name: format_version
+  data_type: uint32
+---
+name: java_idx_602_section1
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: unknown1
+  data_type: uint16
+- name: is_shortcut_image_flag
+  data_type: bool8
+- name: content_size
+  data_type: uint32
+- name: modification_time
+  data_type: uint64
+- name: expiration_time
+  data_type: uint64
+---
+name: java_idx_602_section2
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: version_size
+  data_type: uint16
+- name: version
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_602_section2.version_size
+- name: url_size
+  data_type: uint16
+- name: url
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_602_section2.url_size
+- name: namespace_size
+  data_type: uint16
+- name: namespace
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_602_section2.namespace_size
+- name: number_of_http_headers
+  data_type: uint32
+---
+name: java_idx_603_section1
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: unknown1
+  data_type: uint16
+- name: is_shortcut_image_flag
+  data_type: bool8
+- name: content_size
+  data_type: uint32
+- name: modification_time
+  data_type: uint64
+- name: expiration_time
+  data_type: uint64
+- name: validiation_time
+  data_type: uint64
+- name: known_to_be_signed_flag
+  data_type: bool8
+- name: section2_size
+  data_type: uint32
+- name: section3_size
+  data_type: uint32
+- name: section4_size
+  data_type: uint32
+---
+name: java_idx_603_section2
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: version_size
+  data_type: uint16
+- name: version
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_603_section2.version_size
+- name: url_size
+  data_type: uint16
+- name: url
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_603_section2.url_size
+- name: namespace_size
+  data_type: uint16
+- name: namespace
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_603_section2.namespace_size
+- name: ip_address_size
+  data_type: uint16
+- name: ip_address
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: java_idx_603_section2.ip_address_size
+- name: number_of_http_headers
+  data_type: uint32
+---
+name: java_idx_605_section1
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: is_shortcut_image_flag
+  data_type: bool8
+- name: content_size
+  data_type: uint32
+- name: modification_time
+  data_type: uint64
+- name: expiration_time
+  data_type: uint64
+- name: validiation_time
+  data_type: uint64
+- name: known_to_be_signed_flag
+  data_type: bool8
+- name: section2_size
+  data_type: uint32
+- name: section3_size
+  data_type: uint32
+- name: section4_size
+  data_type: uint32

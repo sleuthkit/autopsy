@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,22 +24,22 @@ import java.util.List;
 import java.util.Optional;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * A node in the nav tree. Manages inserts and resorts. Has parents and
  * children. Does not have graphical properties these are configured in
- * EventsTree.EventTreeCell. Each EventsTreeItem has a TimeLineEvent which has a
+ * EventsTree.EventTreeCell. Each EventsTreeItem has a DetailViewEvent which has a
  * type, description , count, etc.
  */
-abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
+abstract class EventsTreeItem extends TreeItem<DetailViewEvent> {
 
     /**
      * the comparator if any used to sort the children of this item
      */
-    private Comparator<TreeItem<TimeLineEvent>> comparator;
+    private Comparator<TreeItem<DetailViewEvent>> comparator;
 
     /**
      * Constructor
@@ -47,7 +47,7 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    EventsTreeItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
+    EventsTreeItem(Comparator<TreeItem<DetailViewEvent>> comparator) {
         this.comparator = comparator;
     }
 
@@ -56,11 +56,11 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      *
      * @return the comparator currently used to sort this tree items children.
      */
-    public Comparator<TreeItem<TimeLineEvent>> getComparator() {
+    public Comparator<TreeItem<DetailViewEvent>> getComparator() {
         return comparator;
     }
 
-    final protected void setComparator(Comparator<TreeItem<TimeLineEvent>> comparator) {
+    final protected void setComparator(Comparator<TreeItem<DetailViewEvent>> comparator) {
         this.comparator = comparator;
     }
 
@@ -71,7 +71,7 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      * @param recursive  if true: sort the children's children , etc using the
      *                   same given comparator
      */
-    abstract void sort(Comparator<TreeItem<TimeLineEvent>> comparator, Boolean recursive);
+    abstract void sort(Comparator<TreeItem<DetailViewEvent>> comparator, Boolean recursive);
 
     /**
      * Get the tree item for the given event if on exists in this tree (item)
@@ -81,8 +81,8 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      * @return an EventsTreeItem for the given eventm or null if there is none
      *         in this tree (item). Could return this tree item.
      */
-    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
-        for (TreeItem<TimeLineEvent> child : getChildren()) {
+    public EventsTreeItem findTreeItemForEvent(DetailViewEvent event) {
+        for (TreeItem<DetailViewEvent> child : getChildren()) {
             final EventsTreeItem findTreeItemForEvent = ((EventsTreeItem) child).findTreeItemForEvent(event);
             if (findTreeItemForEvent != null) {
                 return findTreeItemForEvent;
@@ -103,7 +103,7 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      *
      * @return the EventType of this tree item.
      */
-    abstract EventType getEventType();
+    abstract TimelineEventType getEventType();
 
     /**
      * Remove the event represented by the given path from this tree item and
@@ -114,7 +114,7 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      *             getTreePath(event)
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    abstract void remove(List<TimeLineEvent> path);
+    abstract void remove(List<DetailViewEvent> path);
 
     /**
      * Insert the event represented by the given path into this tree item and
@@ -125,7 +125,7 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      *             getTreePath(event)
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    abstract void insert(List<TimeLineEvent> path);
+    abstract void insert(List<DetailViewEvent> path);
 
     /**
      * Get the tree path from the root event stripe of the given event to the
@@ -137,8 +137,8 @@ abstract class EventsTreeItem extends TreeItem<TimeLineEvent> {
      *         though the tree. The root is the first item and the event itself
      *         is the last item in the list.
      */
-    static List<TimeLineEvent> getTreePath(TimeLineEvent event) {
-        List<TimeLineEvent> path = new ArrayList<>();
+    static List<DetailViewEvent> getTreePath(DetailViewEvent event) {
+        List<DetailViewEvent> path = new ArrayList<>();
         path.add(0, event);
         Optional<EventStripe> parentOptional = event.getParentStripe();
         while (parentOptional.isPresent()) {

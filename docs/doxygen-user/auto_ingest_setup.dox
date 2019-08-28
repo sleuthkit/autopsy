@@ -90,6 +90,11 @@ Some notes on shared configuration:
 <li>Shared copies of the hash databases are also not currently supported. Each node will download its own copy of each database.
 </ul>
 
+\subsection auto_ingest_test_button Testing
+
+Once everything is configured, you can use the "Test" button near the bottom of the panel to test if everything is set up correctly. The button will test whether the services are available, whether a case can be created, and if the ingest settings are valid. If the test passes you'll see a green check. If it fails you'll see a message giving a short description of what error occurred. Depending on the error you may also see a pop-up message. You can check the logs for additional information (close the Options panel and click on "Help" then "Open Log Folder"). 
+
+\image html AutoIngest/test_button_failure.png
 
 \subsection auto_ingest_error_suppression Error Suppression
 

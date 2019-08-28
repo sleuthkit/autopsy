@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,12 +56,12 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * FXML Controller class for a StackedBarChart<String,Number> based
@@ -81,7 +81,7 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
  */
 public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, EventCountsChart> {
 
-    private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
+    private static final Logger logger = Logger.getLogger(CountsViewPane.class.getName());
 
     private final NumberAxis countAxis = new NumberAxis();
     private final CategoryAxis dateAxis = new CategoryAxis(FXCollections.<String>observableArrayList());
@@ -178,7 +178,7 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
 
     @Override
     protected boolean hasCustomTimeNavigationControls() {
-      return false;
+        return false;
     }
 
     @Override
@@ -350,7 +350,7 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
 
     /**
      * Task that clears the Chart, fetches new data according to the current
-     * ZoomParams and loads it into the Chart
+     * ZoomState and loads it into the Chart
      *
      */
     @NbBundle.Messages({
@@ -376,12 +376,12 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
             }
             FilteredEventsModel eventsModel = getEventsModel();
 
-            final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(eventsModel.getTimeRange());
+            final RangeDivision rangeInfo = RangeDivision.getRangeDivision(eventsModel.getTimeRange(), TimeLineController.getJodaTimeZone());
             getChart().setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
-            List<Interval> intervals = rangeInfo.getIntervals();
+            List<Interval> intervals = rangeInfo.getIntervals(TimeLineController.getJodaTimeZone());
 
             //clear old data, and reset ranges and series
-            resetView(Lists.transform(intervals, rangeInfo::formatForTick));
+            resetView(Lists.transform(intervals, interval -> interval.getStart().toString(rangeInfo.getTickFormatter())));
 
             updateMessage(Bundle.CountsViewPane_loggedTask_updatingCounts());
             int chartMax = 0;
@@ -403,21 +403,21 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
                 int maxPerInterval = 0;
 
                 //query for current interval
-                Map<EventType, Long> eventCounts = eventsModel.getEventCounts(interval);
+                Map<TimelineEventType, Long> eventCounts = eventsModel.getEventCounts(interval);
 
                 //for each type add data to graph
-                for (final EventType eventType : eventCounts.keySet()) {
+                for (final TimelineEventType eventType : eventCounts.keySet()) {
                     if (isCancelled()) {
                         return null;
                     }
 
                     final Long count = eventCounts.get(eventType);
                     if (count > 0) {
-                        final String intervalCategory = rangeInfo.formatForTick(interval);
+                        final String intervalCategory = interval.getStart().toString(rangeInfo.getTickFormatter());
                         final double adjustedCount = activeScale.apply(count);
 
-                        final XYChart.Data<String, Number> dataItem =
-                                new XYChart.Data<>(intervalCategory, adjustedCount,
+                        final XYChart.Data<String, Number> dataItem
+                                = new XYChart.Data<>(intervalCategory, adjustedCount,
                                         new EventCountsChart.ExtraData(interval, eventType, count));
                         Platform.runLater(() -> getSeries(eventType).getData().add(dataItem));
                         maxPerInterval += adjustedCount;
@@ -431,10 +431,12 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
             double tickUnit = Scale.LINEAR.equals(activeScale)
                     ? Math.pow(10, Math.max(0, Math.floor(Math.log10(chartMax)) - 1))
                     : Double.MAX_VALUE;
+
             Platform.runLater(() -> {
                 countAxis.setTickUnit(tickUnit);
                 countAxis.setUpperBound(countAxisUpperbound);
             });
+
             return chartMax > 0;  // are there events
         }
 
