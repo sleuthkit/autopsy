@@ -86,10 +86,10 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         setVisible(true);
     }
 
-
     @Override
     public void dispose() {
         fileSearchPanel.cancelSearch();
+        FileSearch.clearCache();
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(resultsPanel);
         super.dispose();

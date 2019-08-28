@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -55,9 +57,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
+    private static final Cache<String, List<AbstractFile>> groupCache = CacheBuilder.newBuilder().build();
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
+     * Clears cache of search results, caching new results for access at later
+     * time.
      *
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
@@ -72,13 +77,13 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static SearchResults runFileSearchDebug(
+    static synchronized SearchResults runFileSearchDebug(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-
+        clearCache();
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -99,12 +104,16 @@ class FileSearch {
 
         // Sort and group the results
         searchResults.sortGroupsAndFiles();
-
+        LinkedHashMap<String, List<AbstractFile>> resultHashMap = searchResults.toLinkedHashMap();
+        for (String groupName : resultHashMap.keySet()) {
+            groupCache.put(groupName, resultHashMap.get(groupName));
+        }
         return searchResults;
     }
 
     /**
-     * Run the file search to get the group names and sizes.
+     * Run the file search to get the group names and sizes. Clears cache of
+     * search results, caching new results for access at later time.
      *
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
@@ -125,10 +134,8 @@ class FileSearch {
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-
-        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+        Map<String, List<AbstractFile>> searchResults = runFileSearch(filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
-
         LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
         for (String groupName : searchResults.keySet()) {
             groupSizes.put(groupName, searchResults.get(groupName).size());
@@ -137,7 +144,8 @@ class FileSearch {
     }
 
     /**
-     * Run the file search to get the files in a given group.
+     * Get the files from the specified group from the cache, if the the group
+     * was not cached perform a search caching the groups.
      *
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
@@ -155,7 +163,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static List<AbstractFile> getFilesInGroup(
+    static synchronized List<AbstractFile> getFilesInGroup(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -164,32 +172,34 @@ class FileSearch {
             int startingEntry,
             int numberOfEntries,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-
-        LinkedHashMap<String, List<AbstractFile>> searchResults = runFileSearch(filters,
-                groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
-
+        //the group should be in the cache at this point
+        List<AbstractFile> filesInGroup = groupCache.getIfPresent(groupName);
         List<AbstractFile> page = new ArrayList<>();
-
-        // Check that the group exists
-        if (!searchResults.containsKey(groupName)) {
-            return page;
+        if (filesInGroup == null) {
+            logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupName);
+            runFileSearch(filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+            filesInGroup = groupCache.getIfPresent(groupName);
+            if (filesInGroup == null) {
+                logger.log(Level.WARNING, "Group {0} did not exist in cache or new search results", groupName);
+                return page; //group does not exist
+            }
         }
-
         // Check that there is data after the starting point
-        if (searchResults.get(groupName).size() < startingEntry) {
+        if (filesInGroup.size() < startingEntry) {
+            logger.log(Level.WARNING, "Group only contains {0} files, starting entry of {1} is too large.", new Object[]{filesInGroup.size(), startingEntry});
             return page;
         }
-
-        // Add each page in the range
+        // Add files to the page
         for (int i = startingEntry; (i < startingEntry + numberOfEntries)
-                && (i < searchResults.get(groupName).size()); i++) {
-            page.add(searchResults.get(groupName).get(i));
+                && (i < filesInGroup.size()); i++) {
+            page.add(filesInGroup.get(i));
         }
         return page;
     }
 
     /**
-     * Run the file search.
+     * Run the file search. Clears cache of search results, caching new results
+     * for access at later time.
      *
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
@@ -204,13 +214,14 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static LinkedHashMap<String, List<AbstractFile>> runFileSearch(
+    private synchronized static Map<String, List<AbstractFile>> runFileSearch(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
 
+        clearCache();
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -228,9 +239,12 @@ class FileSearch {
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         searchResults.add(resultFiles);
-
+        LinkedHashMap<String, List<AbstractFile>> resultHashMap = searchResults.toLinkedHashMap();
+        for (String groupName : resultHashMap.keySet()) {
+            groupCache.put(groupName, resultHashMap.get(groupName));
+        }
         // Return a version of the results in general Java objects
-        return searchResults.toLinkedHashMap();
+        return resultHashMap;
     }
 
     /**
@@ -246,7 +260,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, EamDb centralRepoDb)
+    private static void addAttributes(List<AttributeType> attrs, List<ResultFile> resultFiles, SleuthkitCase caseDb, EamDb centralRepoDb)
             throws FileSearchException {
         for (AttributeType attr : attrs) {
             attr.addAttributeToResultFiles(resultFiles, caseDb, centralRepoDb);
@@ -254,48 +268,70 @@ class FileSearch {
     }
 
     /**
-     * Enum for the attribute types that can be used for grouping.
+     * Computes the CR frequency of all the given hashes and updates the list of
+     * files.
+     *
+     * @param hashesToLookUp Hashes to find the frequency of
+     * @param currentFiles   List of files to update with frequencies
      */
-    @NbBundle.Messages({
-        "FileSearch.GroupingAttributeType.fileType.displayName=File type",
-        "FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences",
-        "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names",
-        "FileSearch.GroupingAttributeType.size.displayName=Size",
-        "FileSearch.GroupingAttributeType.datasource.displayName=Data source",
-        "FileSearch.GroupingAttributeType.parent.displayName=Parent folder",
-        "FileSearch.GroupingAttributeType.hash.displayName=Hash set",
-        "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting item set",
-        "FileSearch.GroupingAttributeType.tag.displayName=File tag",
-        "FileSearch.GroupingAttributeType.object.displayName=Object detected",
-        "FileSearch.GroupingAttributeType.none.displayName=None"})
-    enum GroupingAttributeType {
-        FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),
-        FREQUENCY(new FrequencyAttribute(), Bundle.FileSearch_GroupingAttributeType_frequency_displayName()),
-        KEYWORD_LIST_NAME(new KeywordListAttribute(), Bundle.FileSearch_GroupingAttributeType_keywordList_displayName()),
-        DATA_SOURCE(new DataSourceAttribute(), Bundle.FileSearch_GroupingAttributeType_datasource_displayName()),
-        PARENT_PATH(new ParentPathAttribute(), Bundle.FileSearch_GroupingAttributeType_parent_displayName()),
-        HASH_LIST_NAME(new HashHitsAttribute(), Bundle.FileSearch_GroupingAttributeType_hash_displayName()),
-        INTERESTING_ITEM_SET(new InterestingItemAttribute(), Bundle.FileSearch_GroupingAttributeType_interestingItem_displayName()),
-        FILE_TAG(new FileTagAttribute(), Bundle.FileSearch_GroupingAttributeType_tag_displayName()),
-        OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.FileSearch_GroupingAttributeType_object_displayName()),
-        NO_GROUPING(new NoGroupingAttribute(), Bundle.FileSearch_GroupingAttributeType_none_displayName());
+    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, EamDb centralRepoDb) {
 
-        private final AttributeType attributeType;
-        private final String displayName;
-
-        GroupingAttributeType(AttributeType attributeType, String displayName) {
-            this.attributeType = attributeType;
-            this.displayName = displayName;
+        if (hashesToLookUp.isEmpty()) {
+            return;
         }
 
-        @Override
-        public String toString() {
-            return displayName;
+        String hashes = String.join("','", hashesToLookUp);
+        hashes = "'" + hashes + "'";
+        try {
+            CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
+            String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
+
+            String selectClause = " value, COUNT(value) FROM "
+                    + "(SELECT DISTINCT case_id, value FROM " + tableName
+                    + " WHERE value IN ("
+                    + hashes
+                    + ")) AS foo GROUP BY value";
+
+            FrequencyCallback callback = new FrequencyCallback(currentFiles);
+            centralRepoDb.processSelectClause(selectClause, callback);
+
+        } catch (EamDbException ex) {
+            logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
         }
 
-        AttributeType getAttributeType() {
-            return attributeType;
+    }
+
+    private static String createSetNameClause(List<ResultFile> files,
+            int artifactTypeID, int setNameAttrID) throws FileSearchException {
+
+        // Concatenate the object IDs in the list of files
+        String objIdList = ""; // NON-NLS
+        for (ResultFile file : files) {
+            if (!objIdList.isEmpty()) {
+                objIdList += ","; // NON-NLS
+            }
+            objIdList += "\'" + file.getAbstractFile().getId() + "\'"; // NON-NLS
         }
+
+        // Get pairs of (object ID, set name) for all files in the list of files that have
+        // the given artifact type.
+        return "blackboard_artifacts.obj_id AS object_id, blackboard_attributes.value_text AS set_name "
+                + "FROM blackboard_artifacts "
+                + "INNER JOIN blackboard_attributes ON blackboard_artifacts.artifact_id=blackboard_attributes.artifact_id "
+                + "WHERE blackboard_attributes.artifact_type_id=\'" + artifactTypeID + "\' "
+                + "AND blackboard_attributes.attribute_type_id=\'" + setNameAttrID + "\' "
+                + "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
+    }
+
+    /**
+     * Clear the cache used to store search results by group.
+     */
+    synchronized static void clearCache() {
+        groupCache.invalidateAll();
+    }
+
+    private FileSearch() {
+        // Class should not be instantiated
     }
 
     /**
@@ -774,7 +810,7 @@ class FileSearch {
      * Attribute for grouping/sorting by frequency in the central repository
      */
     static class FrequencyAttribute extends AttributeType {
-        
+
         static final int BATCH_SIZE = 50; // Number of hashes to look up at one time
 
         @Override
@@ -783,13 +819,13 @@ class FileSearch {
         }
 
         @Override
-        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb, 
+        void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
                 EamDb centralRepoDb) throws FileSearchException {
-            
+
             if (centralRepoDb == null) {
                 throw new FileSearchException("Central Repository is not enabled - can not add frequency data"); // NON-NLS
             }
-            
+
             // Set frequency in batches
             Set<String> hashesToLookUp = new HashSet<>();
             List<ResultFile> currentFiles = new ArrayList<>();
@@ -800,49 +836,16 @@ class FileSearch {
                     hashesToLookUp.add(file.getAbstractFile().getMd5Hash());
                     currentFiles.add(file);
                 }
-                
+
                 if (hashesToLookUp.size() >= BATCH_SIZE) {
                     computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
-                    
+
                     hashesToLookUp.clear();
                     currentFiles.clear();
                 }
             }
             computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
-        }        
-    }
-    
-    /**
-     * Computes the CR frequency of all the given hashes and updates the list of files.
-     * 
-     * @param hashesToLookUp Hashes to find the frequency of
-     * @param currentFiles   List of files to update with frequencies
-     */
-    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, EamDb centralRepoDb) {
-        
-        if (hashesToLookUp.isEmpty()) {
-            return;
         }
-        
-        String hashes = String.join("','", hashesToLookUp);
-        hashes = "'" + hashes + "'";
-        try {
-            CorrelationAttributeInstance.Type attributeType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
-            String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
-            
-            String selectClause = " value, COUNT(value) FROM "
-                    + "(SELECT DISTINCT case_id, value FROM " + tableName
-                    + " WHERE value IN ("
-                    + hashes
-                    + ")) AS foo GROUP BY value";
-            
-            FrequencyCallback callback = new FrequencyCallback(currentFiles);
-            centralRepoDb.processSelectClause(selectClause, callback);
-            
-        } catch (EamDbException ex) {
-            logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
-        }
-        
     }
 
     /**
@@ -860,7 +863,7 @@ class FileSearch {
         @Override
         public void process(ResultSet resultSet) {
             try {
-                
+
                 while (resultSet.next()) {
                     String hash = resultSet.getString(1);
                     int count = resultSet.getInt(2);
@@ -872,7 +875,7 @@ class FileSearch {
                         }
                     }
                 }
-                
+
                 // The files left had no matching entries in the CR, so mark them as unique
                 for (ResultFile file : files) {
                     file.setFrequency(Frequency.UNIQUE);
@@ -882,7 +885,7 @@ class FileSearch {
             }
         }
     }
-    
+
     /**
      * Key representing a central repository frequency group
      */
@@ -1499,29 +1502,48 @@ class FileSearch {
         }
     }
 
-    private static String createSetNameClause(List<ResultFile> files,
-            int artifactTypeID, int setNameAttrID) throws FileSearchException {
+    /**
+     * Enum for the attribute types that can be used for grouping.
+     */
+    @NbBundle.Messages({
+        "FileSearch.GroupingAttributeType.fileType.displayName=File type",
+        "FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences",
+        "FileSearch.GroupingAttributeType.keywordList.displayName=Keyword list names",
+        "FileSearch.GroupingAttributeType.size.displayName=Size",
+        "FileSearch.GroupingAttributeType.datasource.displayName=Data source",
+        "FileSearch.GroupingAttributeType.parent.displayName=Parent folder",
+        "FileSearch.GroupingAttributeType.hash.displayName=Hash set",
+        "FileSearch.GroupingAttributeType.interestingItem.displayName=Interesting item set",
+        "FileSearch.GroupingAttributeType.tag.displayName=File tag",
+        "FileSearch.GroupingAttributeType.object.displayName=Object detected",
+        "FileSearch.GroupingAttributeType.none.displayName=None"})
+    enum GroupingAttributeType {
+        FILE_SIZE(new FileSizeAttribute(), Bundle.FileSearch_GroupingAttributeType_size_displayName()),
+        FREQUENCY(new FrequencyAttribute(), Bundle.FileSearch_GroupingAttributeType_frequency_displayName()),
+        KEYWORD_LIST_NAME(new KeywordListAttribute(), Bundle.FileSearch_GroupingAttributeType_keywordList_displayName()),
+        DATA_SOURCE(new DataSourceAttribute(), Bundle.FileSearch_GroupingAttributeType_datasource_displayName()),
+        PARENT_PATH(new ParentPathAttribute(), Bundle.FileSearch_GroupingAttributeType_parent_displayName()),
+        HASH_LIST_NAME(new HashHitsAttribute(), Bundle.FileSearch_GroupingAttributeType_hash_displayName()),
+        INTERESTING_ITEM_SET(new InterestingItemAttribute(), Bundle.FileSearch_GroupingAttributeType_interestingItem_displayName()),
+        FILE_TAG(new FileTagAttribute(), Bundle.FileSearch_GroupingAttributeType_tag_displayName()),
+        OBJECT_DETECTED(new ObjectDetectedAttribute(), Bundle.FileSearch_GroupingAttributeType_object_displayName()),
+        NO_GROUPING(new NoGroupingAttribute(), Bundle.FileSearch_GroupingAttributeType_none_displayName());
 
-        // Concatenate the object IDs in the list of files
-        String objIdList = ""; // NON-NLS
-        for (ResultFile file : files) {
-            if (!objIdList.isEmpty()) {
-                objIdList += ","; // NON-NLS
-            }
-            objIdList += "\'" + file.getAbstractFile().getId() + "\'"; // NON-NLS
+        private final AttributeType attributeType;
+        private final String displayName;
+
+        GroupingAttributeType(AttributeType attributeType, String displayName) {
+            this.attributeType = attributeType;
+            this.displayName = displayName;
         }
 
-        // Get pairs of (object ID, set name) for all files in the list of files that have
-        // the given artifact type.
-        return "blackboard_artifacts.obj_id AS object_id, blackboard_attributes.value_text AS set_name "
-                + "FROM blackboard_artifacts "
-                + "INNER JOIN blackboard_attributes ON blackboard_artifacts.artifact_id=blackboard_attributes.artifact_id "
-                + "WHERE blackboard_attributes.artifact_type_id=\'" + artifactTypeID + "\' "
-                + "AND blackboard_attributes.attribute_type_id=\'" + setNameAttrID + "\' "
-                + "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
-    }
+        @Override
+        public String toString() {
+            return displayName;
+        }
 
-    private FileSearch() {
-        // Class should not be instantiated
+        AttributeType getAttributeType() {
+            return attributeType;
+        }
     }
 }
