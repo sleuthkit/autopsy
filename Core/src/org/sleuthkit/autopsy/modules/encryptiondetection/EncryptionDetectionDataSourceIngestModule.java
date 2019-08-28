@@ -19,26 +19,24 @@
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
-import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -57,8 +55,9 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
     /**
      * Create an EncryptionDetectionDataSourceIngestModule object that will
      * detect volumes that are encrypted and create blackboard artifacts as
-     * appropriate. The supplied EncryptionDetectionIngestJobSettings object is
-     * used to configure the module.
+     * appropriate.
+     *
+     * @param settings The Settings used to configure the module.
      */
     EncryptionDetectionDataSourceIngestModule(EncryptionDetectionIngestJobSettings settings) {
         minimumEntropy = settings.getMinimumEntropy();
@@ -67,7 +66,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         validateSettings();
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
         this.context = context;
     }
 
@@ -144,9 +143,9 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
     /**
      * Create a blackboard artifact.
      *
-     * @param volume The volume to be processed.
+     * @param volume       The volume to be processed.
      * @param artifactType The type of artifact to create.
-     * @param comment A comment to be attached to the artifact.
+     * @param comment      A comment to be attached to the artifact.
      *
      * @return 'OK' if the volume was processed successfully, or 'ERROR' if
      *         there was a problem.
@@ -163,17 +162,13 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
 
             try {
                 /*
-                 * Index the artifact for keyword search.
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
                  */
-                blackboard.indexArtifact(artifact);
+                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
-
-            /*
-             * Send an event to update the view with the new result.
-             */
-            services.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), artifactType, Collections.singletonList(artifact)));
 
             /*
              * Make an ingest inbox message.

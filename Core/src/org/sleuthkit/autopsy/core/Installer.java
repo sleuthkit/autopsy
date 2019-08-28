@@ -299,6 +299,10 @@ public class Installer extends ModuleInstall {
      * initialized later.
      */
     private static void addGstreamerPathsToEnv() {
+        if (System.getProperty("jna.nosys") == null) {
+            System.setProperty("jna.nosys", "true");
+        }
+
         Path gstreamerPath = InstalledFileLocator.getDefault().locate("gstreamer", Installer.class.getPackage().getName(), false).toPath();
 
         if (gstreamerPath == null) {

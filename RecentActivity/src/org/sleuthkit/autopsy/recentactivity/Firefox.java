@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
-
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -54,8 +53,6 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -98,7 +95,6 @@ class Firefox extends Extract {
                                                         + " AND moz_anno_attributes.name='downloads/destinationFileURI'"; //NON-NLS
     private static final String FORMHISTORY_QUERY = "SELECT fieldname, value FROM moz_formhistory";
     private static final String FORMHISTORY_QUERY_V64 = "SELECT fieldname, value, timesUsed, firstUsed, lastUsed FROM moz_formhistory";
-    private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
 
@@ -219,7 +215,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
 
                 }
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -228,9 +224,7 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+        postArtifacts(bbartifacts);
     }
 
     /**
@@ -315,7 +309,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
 
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -324,9 +318,7 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
+        postArtifacts(bbartifacts);
     }
 
     /**
@@ -427,7 +419,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
                 }
 
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -436,9 +428,7 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
+        postArtifacts(bbartifacts);
     }
 
     /**
@@ -554,7 +544,7 @@ class Firefox extends Extract {
                             domain)); //NON-NLS
                 }
 
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -582,9 +572,7 @@ class Firefox extends Extract {
             break;
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
+        postArtifacts(bbartifacts);
     }
 
     /**
@@ -693,7 +681,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
 
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
                 }
@@ -720,9 +708,7 @@ class Firefox extends Extract {
             break;
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
+        postArtifacts(bbartifacts);
     }
     
     /**
@@ -831,9 +817,8 @@ class Firefox extends Extract {
                
                 }
                 // Add artifact
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes);
+                BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes);
                 if (bbart != null) {
-                    this.indexArtifact(bbart);
                     bbartifacts.add(bbart);
                 }
             }
@@ -841,9 +826,7 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, bbartifacts));
+        postArtifacts(bbartifacts);
     }
      
      
@@ -1002,10 +985,8 @@ class Firefox extends Extract {
 
                     BlackboardArtifact bbart = profileFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS);  
                     
-                    // index the artifact for keyword search
                     if (bbart != null) {
                         bbart.addAttributes(bbattributes);
-                        this.indexArtifact(bbart);
                         bbartifacts.add(bbart);
                     }
                     
@@ -1039,9 +1020,7 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS, bbartifacts));
+        postArtifacts(bbartifacts);
     }
        
     /**

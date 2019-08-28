@@ -276,9 +276,11 @@ public class CorrelationAttributeInstance implements Serializable {
          * @param supported   Is this Type currently supported
          * @param enabled     Is this Type currently enabled.
          */
+        @Messages({"CorrelationAttributeInstance.nullName.message=Database name is null.",
+                   "CorrelationAttributeInstance.invalidName.message=Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."})
         public Type(int typeId, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             if (dbTableName == null) {
-                throw new EamDbException("dbTableName is null");
+                throw new EamDbException(Bundle.CorrelationAttributeInstance_nullName_message());
             }
             this.typeId = typeId;
             this.displayName = displayName;
@@ -286,7 +288,7 @@ public class CorrelationAttributeInstance implements Serializable {
             this.supported = supported;
             this.enabled = enabled;
             if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
-                throw new EamDbException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+                throw new EamDbException(Bundle.CorrelationAttributeInstance_invalidName_message()); // NON-NLS
             }
         }
 

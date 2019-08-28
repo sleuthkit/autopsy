@@ -136,7 +136,10 @@ class DataSourceUsageAnalyzer extends Extract {
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                 Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                 dataSourceUsageDescription)); //NON-NLS
-        addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+        BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+        if(bba != null) {
+            postArtifact(bba);
+        }
     }
 
     /**
