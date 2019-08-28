@@ -54,10 +54,6 @@ class ReportGenerator {
 
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
 
-    /**
-     * Progress reportGenerationPanel that can be used to check for
-     * cancellation.
-     */
     private ReportProgressPanel progressPanel = null;
     private ReportGenerationPanel reportGenerationPanel = null;
     

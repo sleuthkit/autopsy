@@ -26,7 +26,6 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.EnumSet;
 import java.util.Map;
@@ -34,7 +33,6 @@ import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -81,11 +79,8 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             saveReportingConfiguration(configName, wiz);
                     
             if (runReports) {
+                // generate reports
                 ReportGenerator generator = new ReportGenerator(configName, new ReportGenerationPanel()); //NON-NLS
-                generator.generateReports();
-                
-                // ELTODO remove
-                generator = new ReportGenerator(configName, new ReportProgressLogger()); //NON-NLS
                 generator.generateReports();
             }
         }
