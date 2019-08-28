@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -40,7 +41,7 @@ public final class IngestProfiles {
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
     private static final String PROFILE_FILE_EXT = ".properties";
-
+    private static final Logger logger = Logger.getLogger(IngestProfiles.class.getName());
     /**
      * Gets the collection of profiles which currently exist.
      *
@@ -143,7 +144,7 @@ public final class IngestProfiles {
                 Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + PROFILE_FILE_EXT));
                 FileUtils.deleteDirectory(IngestJobSettings.getSavedModuleSettingsFolder(selectedProfile.getName() + File.separator).toFile());
             } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error deleting directory for profile " + selectedProfile.getName(), ex);
             }
         }
 
