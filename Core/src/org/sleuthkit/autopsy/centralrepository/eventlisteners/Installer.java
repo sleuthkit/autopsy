@@ -51,7 +51,7 @@ public class Installer extends ModuleInstall {
         super();
     }
 
-    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository upgrade failed"})
+    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository disabled"})
     @Override
     public void restored() {
         Case.addPropertyChangeListener(pcl);

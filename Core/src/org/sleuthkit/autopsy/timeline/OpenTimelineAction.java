@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.awt.Component;
-import java.io.IOException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javax.swing.ImageIcon;
@@ -47,10 +46,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An Action that opens the Timeline window. Has methods to open the window in
  * various specific states (e.g., showing a specific artifact in the List View)
  */
+
+
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102),
+    @ActionReference(path = "Menu/Tools", position = 102)
+    ,
     @ActionReference(path = "Toolbars/Case", position = 102)})
 public final class OpenTimelineAction extends CallableSystemAction {
 
@@ -58,19 +60,10 @@ public final class OpenTimelineAction extends CallableSystemAction {
     private static final Logger logger = Logger.getLogger(OpenTimelineAction.class.getName());
     private static final int FILE_LIMIT = 6_000_000;
 
-    private static TimeLineController timeLineController = null;
-
     private final JMenuItem menuItem;
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
 
-    /**
-     * Invalidate the reference to the controller so that a new one will be
-     * instantiated the next time this action is invoked
-     */
-    synchronized static void invalidateController() {
-        timeLineController = null;
-    }
 
     public OpenTimelineAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
@@ -93,24 +86,24 @@ public final class OpenTimelineAction extends CallableSystemAction {
     public void performAction() {
         if (tooManyFiles()) {
             Platform.runLater(PromptDialogManager::showTooManyFiles);
-            synchronized (OpenTimelineAction.this) {
-                if (timeLineController != null) {
-                    timeLineController.shutDownTimeLine();
-                }
-            }
             setEnabled(false);
-        }else if("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
+        } else if ("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
             Platform.runLater(PromptDialogManager::showTimeLineDisabledMessage);
             setEnabled(false);
-        }else {
-            showTimeline();
+        } else {
+            try {
+                showTimeline();
+            } catch (TskCoreException ex) {
+                MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
+                logger.log(Level.SEVERE, "Error showingtimeline.", ex);
+            }
         }
     }
 
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
+    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) throws TskCoreException {
         try {
             Case currentCase = Case.getCurrentCaseThrows();
             if (currentCase.hasData() == false) {
@@ -118,20 +111,8 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
                 return;
             }
-            try {
-                if (timeLineController == null) {
-                    timeLineController = new TimeLineController(currentCase);
-                } else if (timeLineController.getAutopsyCase() != currentCase) {
-                    timeLineController.shutDownTimeLine();
-                    timeLineController = new TimeLineController(currentCase);
-                }
-
-                timeLineController.showTimeLine(file, artifact);
-
-            } catch (IOException iOException) {
-                MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
-                logger.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
-            }
+            TimeLineController controller = TimeLineModule.getController();
+            controller.showTimeLine(file, artifact);
         } catch (NoCurrentCaseException e) {
             //there is no case...   Do nothing.
         }
@@ -141,7 +122,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      * Open the Timeline window with the default initial view.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void showTimeline() {
+    public void showTimeline() throws TskCoreException {
         showTimeline(null, null);
     }
 
@@ -153,7 +134,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      * @param file The AbstractFile to show in the Timeline.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void showFileInTimeline(AbstractFile file) {
+    public void showFileInTimeline(AbstractFile file) throws TskCoreException {
         showTimeline(file, null);
     }
 
@@ -164,7 +145,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      * @param artifact The BlackboardArtifact to show in the Timeline.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void showArtifactInTimeline(BlackboardArtifact artifact) {
+    public void showArtifactInTimeline(BlackboardArtifact artifact) throws TskCoreException {
         showTimeline(null, artifact);
     }
 

@@ -34,8 +34,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
@@ -114,19 +112,8 @@ final class ExtractZoneIdentifier extends Extract {
             }
         }
 
-        IngestServices services = IngestServices.getInstance();
-
-        if (!sourceArtifacts.isEmpty()) {
-            services.fireModuleDataEvent(new ModuleDataEvent(
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    TSK_DOWNLOAD_SOURCE, sourceArtifacts));
-        }
-
-        if (!downloadArtifacts.isEmpty()) {
-            services.fireModuleDataEvent(new ModuleDataEvent(
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    TSK_WEB_DOWNLOAD, downloadArtifacts));
-        }
+        postArtifacts(sourceArtifacts);
+        postArtifacts(downloadArtifacts);
     }
 
     /**
@@ -182,7 +169,7 @@ final class ExtractZoneIdentifier extends Extract {
     }
 
     /**
-     * Find the file that the Zone.Identifer file was created alongside.
+     * Find the file that the Zone.Identifier file was created alongside.
      *
      * @param dataSource Content
      * @param zoneFile   The zone identifier case file
@@ -220,8 +207,8 @@ final class ExtractZoneIdentifier extends Extract {
      * object.
      *
      * @param downloadFile AbstractFile representing the file downloaded, not
-     *                     the zone indentifier file.
-     * @param zoneInfo     Zone Indentifer file wrapper object
+     *                     the zone identifier file.
+     * @param zoneInfo     Zone identifier file wrapper object
      *
      * @return TSK_DOWNLOAD_SOURCE object for given parameters
      */
@@ -242,11 +229,11 @@ final class ExtractZoneIdentifier extends Extract {
                 RecentActivityExtracterModuleFactory.getModuleName(),
                 StringUtils.defaultString(zoneInfo.getZoneIdAsString(), "")))); //NON-NLS
 
-        return addArtifact(TSK_DOWNLOAD_SOURCE, downloadFile, bbattributes);
+        return createArtifactWithAttributes(TSK_DOWNLOAD_SOURCE, downloadFile, bbattributes);
     }
 
     /**
-     * Create a TSK_WEB_DOWNLOAD Artifact for the given zone indentifier file.
+     * Create a TSK_WEB_DOWNLOAD Artifact for the given zone identifier file.
      *
      * @param zoneFile Zone identifier file
      * @param zoneInfo ZoneIdentifierInfo file wrapper object
@@ -260,7 +247,7 @@ final class ExtractZoneIdentifier extends Extract {
                 zoneInfo.getURL(), null,
                 (zoneInfo.getURL() != null ? NetworkUtils.extractDomain(zoneInfo.getURL()) : ""),
                 null);
-        return addArtifact(TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
+        return createArtifactWithAttributes(TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
     }
 
     /**

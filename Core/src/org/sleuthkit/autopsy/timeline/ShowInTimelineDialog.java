@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,10 +25,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -58,14 +60,15 @@ import org.controlsfx.validation.Validator;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  * A Dialog that, given an AbstractFile or BlackBoardArtifact, allows the user
@@ -93,13 +96,13 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
             ChronoField.SECOND_OF_MINUTE);
 
     @FXML
-    private TableView<SingleEvent> eventTable;
+    private TableView<TimelineEvent> eventTable;
 
     @FXML
-    private TableColumn<SingleEvent, EventType> typeColumn;
+    private TableColumn<TimelineEvent, TimelineEventType> typeColumn;
 
     @FXML
-    private TableColumn<SingleEvent, Long> dateTimeColumn;
+    private TableColumn<TimelineEvent, Long> dateTimeColumn;
 
     @FXML
     private Spinner<Integer> amountSpinner;
@@ -112,8 +115,6 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
     private final VBox contentRoot = new VBox();
 
-    private final TimeLineController controller;
-
     private final ValidationSupport validationSupport = new ValidationSupport();
 
     /**
@@ -124,10 +125,8 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      *                   from.
      */
     @NbBundle.Messages({
-        "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."
-    })
-    private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) {
-        this.controller = controller;
+        "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."})
+    private ShowInTimelineDialog(TimeLineController controller, Collection<Long> eventIDS) throws TskCoreException {
 
         //load dialog content fxml
         final String name = "nbres:/" + StringUtils.replace(ShowInTimelineDialog.class.getPackage().getName(), ".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS
@@ -195,7 +194,16 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         dateTimeColumn.setCellFactory(param -> new DateTimeTableCell<>());
 
         //add events to table
-        eventTable.getItems().setAll(eventIDS.stream().map(controller.getEventsModel()::getEventById).collect(Collectors.toSet()));
+        Set<TimelineEvent> events = new HashSet<>();
+        FilteredEventsModel eventsModel = controller.getEventsModel();
+        for (Long eventID : eventIDS) {
+            try {
+                events.add(eventsModel.getEventById(eventID));
+            } catch (TskCoreException ex) {
+                throw new TskCoreException("Error getting event by id.", ex);
+            }
+        }
+        eventTable.getItems().setAll(events);
         eventTable.setPrefHeight(Math.min(200, 24 * eventTable.getItems().size() + 28));
     }
 
@@ -207,7 +215,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * @param artifact   The BlackboardArtifact to configure this dialog for.
      */
     @NbBundle.Messages({"ShowInTimelineDialog.artifactTitle=View Result in Timeline."})
-    ShowInTimelineDialog(TimeLineController controller, BlackboardArtifact artifact) {
+    ShowInTimelineDialog(TimeLineController controller, BlackboardArtifact artifact) throws TskCoreException {
         //get events IDs from artifact
         this(controller, controller.getEventsModel().getEventIDsForArtifact(artifact));
 
@@ -237,7 +245,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     @NbBundle.Messages({"# {0} - file path",
         "ShowInTimelineDialog.fileTitle=View {0} in timeline.",
         "ShowInTimelineDialog.eventSelectionValidator.message=You must select an event."})
-    ShowInTimelineDialog(TimeLineController controller, AbstractFile file) {
+    ShowInTimelineDialog(TimeLineController controller, AbstractFile file) throws TskCoreException {
         this(controller, controller.getEventsModel().getEventIDsForFile(file, false));
 
         /*
@@ -293,11 +301,11 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     /**
      * Construct this Dialog's "result" from the given event.
      *
-     * @param selectedEvent The SingleEvent to include in the EventInTimeRange
+     * @param selectedEvent The TimeLineEvent to include in the EventInTimeRange
      *
      * @return The EventInTimeRange that is the "result" of this dialog.
      */
-    private ViewInTimelineRequestedEvent makeEventInTimeRange(SingleEvent selectedEvent) {
+    private ViewInTimelineRequestedEvent makeEventInTimeRange(TimelineEvent selectedEvent) {
         Duration selectedDuration = unitComboBox.getSelectionModel().getSelectedItem().getBaseUnit().getDuration().multipliedBy(amountSpinner.getValue());
         Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
         return new ViewInTimelineRequestedEvent(Collections.singleton(selectedEvent.getEventID()), range);
@@ -341,14 +349,14 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     }
 
     /**
-     * TableCell that shows a EventType including the associated icon.
+     * TableCell that shows a TimelineEventType including the associated icon.
      *
      * @param <X> Anything
      */
-    static private class TypeTableCell<X> extends TableCell<X, EventType> {
+    static private class TypeTableCell<X> extends TableCell<X, TimelineEventType> {
 
         @Override
-        protected void updateItem(EventType item, boolean empty) {
+        protected void updateItem(TimelineEventType item, boolean empty) {
             super.updateItem(item, empty);
 
             if (item == null || empty) {
@@ -356,7 +364,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
                 setGraphic(null);
             } else {
                 setText(item.getDisplayName());
-                setGraphic(new ImageView(item.getFXImage()));
+                setGraphic(new ImageView(EventTypeUtils.getImagePath(item)));
             }
         }
     }

@@ -1,0 +1,189 @@
+# WMI specific artifacts.
+
+name: WMIAccountUsersDomain
+doc: |
+  Fill out user AD domain information based on username.
+
+  We expect this artifact to be collected with WindowsRegistryProfiles
+  to supply the rest of the user information. This artifact optimizes retrieval
+  of user information by limiting the WMI query to users for which we have
+  a username for. Specifically this solves the issue that in a domain setting,
+  querying for all users via WMI will give you the list of all local and domain
+  accounts which means a large data transfer from an Active Directory server.
+  This artifact relies on having the users.username field populated in the knowledge
+  base. Unfortunately even limiting by username this query can be slow, and
+  this artifact runs it for each user present on the system.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_UserAccount WHERE name='%%users.username%%'}
+labels: [Users]
+provides: [users.userdomain]
+supported_os: [Windows]
+urls: ['http://msdn.microsoft.com/en-us/library/windows/desktop/aa394507(v=vs.85).aspx']
+---
+name: WMIAntivirusProduct
+doc: Enumerate the registered antivirus.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM AntivirusProduct, base_object: 'winmgmts:\root\SecurityCenter2'}
+supported_os: [Windows]
+---
+name: WMIComputerSystemProduct
+doc: Computer System Product including Identifiying number queried from WMI.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_ComputerSystemProduct}
+labels: [System]
+supported_os: [Windows]
+urls: ['http://msdn.microsoft.com/en-us/library/aa394105(v=vs.85).aspx']
+---
+name: WMIDrivers
+doc: Installed drivers via Windows Management Instrumentation (WMI).
+sources:
+- type: WMI
+  attributes: {query: 'SELECT DisplayName, Description, InstallDate, Name, PathName, Status,
+      State, ServiceType from Win32_SystemDriver'}
+conditions: [os_major_version >= 6]
+labels: [Software]
+supported_os: [Windows]
+---
+name: WMIEnumerateASEC
+doc: Enumerate instances of ActiveScriptEventConsumer.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM ActiveScriptEventConsumer, base_object: 'winmgmts:\root\subscription'}
+supported_os: [Windows]
+---
+name: WMIEnumerateCLEC
+doc: Enumerate instances of CommandLineEventConsumer.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM CommandLineEventConsumer, base_object: 'winmgmts:\root\subscription'}
+supported_os: [Windows]
+---
+name: WMIHotFixes
+doc: Installed hotfixes via Windows Management Instrumentation (WMI).
+sources:
+- type: WMI
+  attributes: {query: SELECT * from Win32_QuickFixEngineering}
+conditions: [os_major_version >= 6]
+labels: [Software]
+supported_os: [Windows]
+---
+name: WMIInstalledSoftware
+doc: Installed software via Windows Management Instrumentation (WMI).
+sources:
+- type: WMI
+  attributes: {query: 'SELECT Name, Vendor, Description, InstallDate, InstallDate2, Version
+      from Win32_Product'}
+conditions: [os_major_version >= 6]
+labels: [Software]
+supported_os: [Windows]
+---
+name: WMILastBootupTime
+doc: Last system boot time (UTC) retrieved from WMI.
+sources:
+- type: WMI
+  attributes: {query: SELECT LastBootUpTime FROM Win32_OperatingSystem}
+labels: [System]
+supported_os: [Windows]
+urls: ['https://msdn.microsoft.com/en-us/library/windows/desktop/aa394239(v=vs.85).aspx']
+---
+name: WMILogicalDisks
+doc: Disk information via Windows Management Instrumentation (WMI).
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_LogicalDisk}
+labels: [System]
+supported_os: [Windows]
+urls: ['http://msdn.microsoft.com/en-us/library/aa394173(v=vs.85).aspx']
+---
+name: WMILoggedOnSessions
+doc: Logged on users queried from WMI.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_LogonSession}
+supported_os: [Windows]
+---
+name: WMILoggedOnUsers
+doc: Logged on users queried from WMI.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_LoggedonUser}
+supported_os: [Windows]
+---
+name: WMILoginUsers
+doc: |
+  Login Users via Windows Management Instrumentation (WMI).
+
+  This WMI query may take a long time to complete when run on a domain and
+  will create load on a domain controller.
+sources:
+- type: WMI
+  attributes: {query: SELECT * from Win32_GroupUser where Name = "login_users"}
+conditions: [os_major_version >= 6]
+labels: [Software]
+supported_os: [Windows]
+---
+name: WMIPhysicalMemory
+doc: Physical memory information via Windows Management Instrumentation (WMI).
+sources:
+- type: WMI
+  attributes: {query: SELECT * from Win32_PhysicalMemory}
+conditions: [os_major_version >= 6]
+labels: [System]
+supported_os: [Windows]
+urls: ["http://msdn.microsoft.com/en-us/library/aa394347%28v=vs.85%29.aspx"]
+---
+name: WMIProcessList
+doc: Process listing via Windows Management Instrumentation (WMI).
+sources:
+- type: WMI
+  attributes: {query: SELECT * from Win32_Process}
+conditions: [os_major_version >= 6]
+labels: [Software]
+supported_os: [Windows]
+---
+name: WMIProfileUsersHomeDir
+doc: |
+  Get user homedir from Win32_UserProfile based on a known user's SID.
+
+  This artifact relies on having the SID field users.sid populated in the knowledge
+  base. We expect it to be collected with WindowsRegistryProfiles to
+  supply the rest of the user information.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_UserProfile WHERE SID='%%users.sid%%'}
+labels: [Users]
+provides: [users.homedir]
+supported_os: [Windows]
+urls: ['http://msdn.microsoft.com/en-us/library/windows/desktop/ee886409(v=vs.85).aspx']
+---
+name: WMIServices
+doc: Services queried from WMI.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_Service}
+supported_os: [Windows]
+---
+name: WMIUsers
+doc: |
+  Users via Windows Management Instrumentation (WMI).
+
+  Note that in a domain setup, this will probably return all users in the
+  domain which will be expensive and slow. Consider limiting by SID like
+  WMIProfileUsersHomeDir.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_UserAccount}
+labels: [Users]
+supported_os: [Windows]
+urls: ['http://msdn.microsoft.com/en-us/library/windows/desktop/aa394507(v=vs.85).aspx']
+---
+name: WMIVolumeShadowCopies
+doc: A List of Volume Shadow Copies from WMI.
+sources:
+- type: WMI
+  attributes: {query: SELECT * FROM Win32_ShadowCopy}
+labels: [System]
+supported_os: [Windows]

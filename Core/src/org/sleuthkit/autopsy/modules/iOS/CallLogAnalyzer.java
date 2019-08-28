@@ -30,12 +30,12 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
@@ -58,7 +58,7 @@ final class CallLogAnalyzer {
 
     /**
      * Find call logs given an ingest job context and index the results.
-     * 
+     *
      * @param context The ingest job context.
      */
     public void findCallLogs(IngestJobContext context) {
@@ -69,7 +69,7 @@ final class CallLogAnalyzer {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
-        blackboard = openCase.getServices().getBlackboard();
+        blackboard = openCase.getSleuthkitCase().getBlackboard();
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = openCase.getSleuthkitCase();
@@ -98,7 +98,7 @@ final class CallLogAnalyzer {
 
     /**
      * Index results for call logs found in the database.
-     * 
+     *
      * @param DatabasePath The path to the database.
      * @param fileId       The ID of the file associated with artifacts.
      */
@@ -162,8 +162,12 @@ final class CallLogAnalyzer {
 
                     bba.addAttributes(attributes);
                     try {
-                        // index the artifact for keyword search
-                        blackboard.indexArtifact(bba);
+                        /*
+                         * post the artifact which will index the artifact for
+                         * keyword search, and fire an event to notify UI of
+                         * this new artifact
+                         */
+                        blackboard.postArtifact(bba, moduleName);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
@@ -184,7 +188,5 @@ final class CallLogAnalyzer {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e); //NON-NLS
         }
-
     }
-
 }

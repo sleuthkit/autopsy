@@ -96,7 +96,7 @@ public final class TranslatedTextViewer implements TextViewer {
             }
         }
         
-        int payloadMaxInKB = TextTranslationService.getInstance().getMaxPayloadSize() / 1000;
+        int payloadMaxInKB = TextTranslationService.getInstance().getMaxTextChars() / 1000;
         panel.setWarningLabelMsg(String.format(Bundle.TranslatedTextViewer_maxPayloadSize(), payloadMaxInKB));
 
         //Force a background task.

@@ -1,0 +1,80 @@
+# Filter file for log2timeline for triaging Windows systems.
+#
+# This file can be used by image_export or log2timeline to selectively export
+# few key files of a Windows system. This file will collect:
+# * The MFT file, LogFile and the UsnJrnl
+# * Contents of the Recycle Bin/Recycler.
+# * Windows Registry files, e.g. SYSTEM and NTUSER.DAT.
+# * Shortcut (LNK) files from recent files.
+# * Jump list files, automatic and custom destination.
+# * Windows Event Log files.
+# * Prefetch files.
+# * SetupAPI file.
+# * Application Compatibility files, the Recentfilecache and AmCachefile.
+# * Windows At job files.
+# * Browser history: IE, Firefox and Chrome.
+# * Browser cookie files: IE.
+# * Flash cookies, or LSO/SOL files from the Flash player.
+#
+# File system metadata files.
+/[$]MFT
+/[$]LogFile
+/[$]Extend/$UsnJrnl
+# Recycle Bin and Recycler.
+/[$]Recycle.Bin
+/[$]Recycle.Bin/.+
+/[$]Recycle.Bin/.+/.+
+/RECYCLER
+/RECYCLER/.+
+/RECYCLER/.+/.+
+# Windows Registry files.
+/(Users|Documents And Settings)/.+/NTUSER[.]DAT
+/Users/.+/AppData/Local/Microsoft/Windows/Usrclass[.]dat
+/Documents And Settings/.+/Local Settings/Application Data/Microsoft/Windows/Usrclass[.]dat
+{systemroot}/System32/config/(SAM|SOFTWARE|SECURITY|SYSTEM)
+# Recent file activity.
+/Users/.+/AppData/Roaming/Microsoft/Windows/Recent/.+[.]lnk
+/Users/.+/AppData/Roaming/Microsoft/Office/Recent/.+[.]lnk
+/Documents And Settings/.+/Recent/.+[.]lnk
+# Jump List files.
+/Users/.+/AppData/Roaming/Microsoft/Windows/Recent/Automaticdestinations/.+[.]automaticDestinations-ms
+/Users/.+/AppData/Roaming/Microsoft/Windows/Recent/Customdestinations/.+[.].customDestinations-ms
+# Windows Event Logs.
+{systemroot}/System32/winevt/Logs/.+[.]evtx
+{systemroot}/System32/config/.+[.]evt
+# Various log files.
+{systemroot}/inf/setupapi[.].+[.]log
+{systemroot}/setupapi.log
+{systemroot}/System32/LogFiles/.+/.+[.]txt
+# Windows artifacts.
+{systemroot}/Tasks/.+[.]job
+{systemroot}/Appcompat/Programs/Recentfilecache[.]bcf
+{systemroot}/Appcompat/Programs/AMcache[.]hve
+# Prefetch files.
+{systemroot}/Prefetch/.+[.]pf
+# Browser history artifacts.
+/Users/.+/AppData/Local/Microsoft/Windows/History/History.IE5/index[.]dat
+/Users/.+/AppData/Local/Microsoft/Windows/History/History.IE5/MSHist.+/index[.]dat
+/Users/.+/AppData/Local/Microsoft/Windows/History/Low/History.IE5/index[.]dat
+/Users/.+/AppData/Local/Microsoft/Windows/History/Low/History.IE5/MSHist.+/index[.]dat
+/Users/.+/AppData/Local/Microsoft/Windows/Temporary Internet Files/Content.IE5/index[.]dat
+/Users/.+/AppData/Local/Microsoft/Windows/Temporary Internet Files/Low/Content.IE5/index[.]dat
+/Users/.+/AppData/Roaming/Microsoft/Windows/Cookies/index[.]dat
+/Users/.+/AppData/Roaming/Microsoft/Windows/Cookies/Low/index[.]dat
+/Users/.+/AppData/Local/Microsoft/Internet Explorer/Recovery/.+/.+[.]dat
+/Users/.+/AppData/Local/Microsoft/Internet Explorer/Recovery/Immersive/.+/.+[.]dat
+/Users/.+/AppData/Roaming/Mozilla/Firefox/Profiles/.+/.+[.]sqlite
+/Users/.+/AppData/Local/Microsoft/Windows/WebCache/.+[.]dat
+/Users/.+/AppData/Local/Google/Chrome/User Data/.+/History
+/Users/.+/AppData/Local/Google/Chrome/User Data/.+/Current Session
+/Users/.+/AppData/Local/Google/Chrome/User Data/.+/Last Session
+/Users/.+/AppData/Local/Google/Chrome/User Data/.+/Current Tabs
+/Users/.+/AppData/Local/Google/Chrome/User Data/.+/Last Tabs
+/Users/.+/AppData/Roaming/Macromedia/FlashPlayer/#SharedObjects/.+/.+/.+[.]sol
+/Documents And Settings/.+/Local Settings/History/History.IE5/index[.]dat
+/Documents And Settings/.+/Local Settings/History/History.IE5/MSHist.+/index[.]dat
+/Documents And Settings/.+/Local Settings/Temporary Internet Files/Content.IE5/index[.]dat
+/Documents And Settings/.+/Cookies/index[.]dat
+/Documents And Settings/.+/Application Data/Mozilla/Firefox/Profiles/.+/.+[.]sqlite
+/Documents And Settings/.+/Local Settings/Application Data/Google/Chrome/User Data/.+/History
+/Documents And Settings/.+/Local Settings/Application Data/Google/Chrome/.+
