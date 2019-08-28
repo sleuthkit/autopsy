@@ -67,6 +67,7 @@ class EMLParser extends MimeJ4MessageParser {
     static EmailMessage parse(AbstractFile sourceFile) throws FileNotFoundException, IOException, MimeException {
         try (ReadContentInputStream fis = new ReadContentInputStream(sourceFile)) {
             EMLParser parser = new EMLParser();
+            parser.setLocalPath(sourceFile.getParentPath());
             Message mimeMsg = parser.getMessageBuilder().parseMessage(fis);
             return parser.extractEmail(mimeMsg, "", sourceFile.getId());
         }

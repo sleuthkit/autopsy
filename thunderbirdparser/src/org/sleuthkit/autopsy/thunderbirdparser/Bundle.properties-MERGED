@@ -1,4 +1,3 @@
-MboxParser.handleAttch.noOpenCase.errMsg=Exception while getting open case.
 MimeJ4MessageParser.handleAttch.noOpenCase.errMsg=Exception while getting open case.
 OpenIDE-Module-Display-Category=Ingest Module
 OpenIDE-Module-Long-Description=Email Parser ingest module.\n\nThe module extracts MBOX and PST e-mail files and posts the results to the blackboard.\nIt knows about the Thunderbird folder structure for MBOX files.
