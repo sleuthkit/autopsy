@@ -1,0 +1,99 @@
+# Modules for interpreted languages.
+
+name: PythonDistInfo
+doc: |
+  Python module files distributed in the dist-info format of PEP-0376
+  (currently linux only).
+
+  dist-info is always a directory that must contain METADATA, RECORD and
+  INSTALLER. It may also contain REQUESTED.
+sources:
+- type: FILE
+  attributes:
+    paths:
+    - '%%users.homedir%%/.local/lib/python*/{dist,site}-packages/*.dist-info/*'
+    - '/usr/{lib,lib64}/python*/{dist,site}-packages/*.dist-info/*'
+    - '/usr/local/{lib,lib64}/python*/{dist,site}-packages/*.dist-info/*'
+  supported_os: [Linux]
+supported_os: [Linux]
+labels: [Software]
+urls: ['https://www.python.org/dev/peps/pep-0376/']
+---
+name: PythonEggInfo
+doc: |
+  Python module files distributed in .egg formats (currently linux only).
+
+  Python eggs can have multiple formats, as described by setuptools.
+
+  .egg files can be either a zipfile or a directory that contains an info file.
+  .egg-info files can be either a directory or a file. If they are directories,
+  they should contain a MANIFEST that identifies the installed module.
+
+  PEP-0370 describes a default install location for per-user modules.
+sources:
+- type: FILE
+  attributes:
+    paths:
+    # Files containing the install metadata in either a flat file or zipfile.
+    - '%%users.homedir%%/.local/lib/python*/site-packages/*.{egg,egg-info}'
+    - '%%users.homedir%%/.cache/pip/*.{egg,egg-info}'
+    - '/usr/{lib,lib64}/python*/{dist,site}-packages/*.{egg,egg-info}'
+    - '/usr/local/{lib,lib64}/python*/{dist,site}-packages/*.{egg,egg-info}'
+    - '/usr/share/pyshared/*.{egg,egg-info}'
+    # Directories containing the install metadata as separate files.
+    - '%%users.homedir%%/.local/lib/python*/site-packages/*.{egg,egg-info}/*'
+    - '%%users.homedir%%/.cache/pip/*.{egg,egg-info}/*'
+    - '/usr/{lib,lib64}/python*/{dist,site}-packages/*.{egg,egg-info}/*'
+    - '/usr/local/{lib,lib64}/python*/{dist,site}-packages/*.{egg,egg-info}/*'
+    - '/usr/share/pyshared/*.{egg,egg-info}/*'
+  supported_os: [Linux]
+supported_os: [Linux]
+labels: [Software]
+urls:
+- 'https://pythonhosted.org/setuptools/formats.html'
+- 'https://www.python.org/dev/peps/pep-0370/'
+---
+name: PythonModuleInfo
+doc: Python module installation information.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - PythonDistInfo
+      - PythonEggInfo
+      - PythonWheelInfo
+labels: [Software]
+---
+name: PythonWheelInfo
+doc: |
+  Python module files distributed in the wheel format (currently linux only).
+
+  Zip archives with the .whl extension.
+
+  Wheels are installed per the standard installer described in PEP-0376, so
+  should mostly be discoverable as dist-info entries.
+sources:
+- type: FILE
+  attributes:
+    paths:
+    - '/usr/share/python-wheels/*.whl'
+    - '%%users.homedir%%/.cache/pip/wheels/*.whl'
+  supported_os: [Linux]
+supported_os: [Linux]
+labels: [Software]
+urls:
+- 'https://wheel.readthedocs.org/en/latest/'
+- 'http://pip.readthedocs.org/en/stable/reference/pip_install/'
+---
+name: RubyGems
+doc: Ruby Gems (currently linux only).
+sources:
+- type: FILE
+  attributes:
+    paths:
+    - '%%users.homedir%%/.gem/ruby/**2/*.gemspec'
+    - '/var/lib/gems/**2/*.gemspec'
+    - '/usr/share/rubygems-integration/**2/*.gemspec'
+  supported_os: [Linux]
+supported_os: [Linux]
+urls: ['http://guides.rubygems.org']

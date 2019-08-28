@@ -1,0 +1,49 @@
+name: rp_log
+type: format
+description: Windows restore point log (rp.log) format
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/Restore%20point%20formats.asciidoc"]
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: wchar16
+type: character
+attributes:
+  size: 2
+  units: bytes
+---
+name: rp_log_file_header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: event_type
+  data_type: uint32
+- name: restore_point_type
+  data_type: uint32
+- name: sequence_number
+  data_type: uint64
+- name: description
+  type: string
+  encoding: utf-16-le
+  element_data_type: wchar16
+  elements_terminator: "\x00\x00"
+---
+name: rp_log_file_footer
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: creation_time
+  data_type: uint64

@@ -1,26 +1,8 @@
-/*
- * Autopsy Forensic Browser
- *
- * Copyright 2013-15 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 AbstractTimelineChart.defaultTooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.
 HistoryToolBar.historyLabel.text=History
 IntervalSelector.ClearSelectedIntervalAction.tooltTipText=Clear Selected Interval
 IntervalSelector.ZoomAction.name=Zoom
+IntervalSelector.zoomToSelectedInterval.errorMessage=Error zooming in to the selected interval.
 NoEventsDialog.titledPane.text=No Visible Events
 Timeline.node.root=Root
 # {0} - start timestamp
@@ -46,6 +28,7 @@ Timeline.ui.ZoomRanges.all.text=All
 TimeLineChart.zoomHistoryActionGroup.name=Zoom History
 TimeZonePanel.title=Display Times In:
 ViewFrame.countsToggle.text=Counts
+ViewFrame.dateTimeValidator.errorMessage=Error getting spanning interval.
 ViewFrame.detailsToggle.text=Details
 ViewFrame.endLabel.text=End:
 ViewFrame.histogramTask.preparing=Preparing
@@ -54,13 +37,14 @@ ViewFrame.histogramTask.resetUI=Resetting UI
 ViewFrame.histogramTask.title=Rebuilding Histogram
 ViewFrame.histogramTask.updateUI2=Updating UI
 ViewFrame.listToggle.text=List
+ViewFrame.localDateDisabler.errorMessage=Error getting spanning interval.
 ViewFrame.noEventsDialogLabel.text=There are no events visible with the current zoom / filter settings.
-# {0} - datasource name
-ViewFrame.notification.analysisComplete=Analysis has finished for {0}.  The Timeline DB may be out of date.
-# {0} - datasource name
-ViewFrame.notification.newDataSource={0} has been added as a new datasource.  The Timeline DB may be out of date.
+ViewFrame.notification.cacheInvalidated=The event data has been updated, the visualization may be out of date.
+ViewFrame.pickerListener.errorMessage=Error responding to date/time picker change.
+ViewFrame.rangeSliderListener.errorMessage=Error responding to range slider.
 ViewFrame.refresh.longText=Refresh the view to include information that is in the DB but not displayed, such as newly updated tags.
 ViewFrame.refresh.text=Refresh View
+ViewFrame.refreshTimeUI.errorMessage=Error gettig the spanning interval.
 ViewFrame.startLabel.text=Start:
 ViewFrame.tagsAddedOrDeleted=Tags have been created and/or deleted.  The view may not be up to date.
 ViewFrame.viewModeLabel.text=View Mode:
@@ -68,5 +52,6 @@ ViewFrame.zoomButton.text=Zoom to events
 TimeZonePanel.localRadio.text=Local Time Zone
 TimeZonePanel.otherRadio.text=GMT / UTC
 ViewFrame.resetFiltersButton.text=Reset all filters
+ViewFrame.zoomMenuButton.errorMessage=Error pushing time range.
 ViewFrame.zoomMenuButton.text=Zoom in/out to
 ViewRefreshTask.preparing=Analyzing zoom and filter settings

@@ -46,8 +46,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -59,7 +57,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class ExtractEdge extends Extract {
 
     private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
-    private final IngestServices services = IngestServices.getInstance();
     private final Path moduleTempResultPath;
     private Content dataSource;
     private IngestJobContext context;
@@ -342,7 +339,6 @@ final class ExtractEdge extends Extract {
                         BlackboardArtifact ba = getHistoryArtifact(origFile, headers, line);
                         if (ba != null) {
                             bbartifacts.add(ba);
-                            this.indexArtifact(ba);
                         }
                     }
                 }
@@ -351,9 +347,7 @@ final class ExtractEdge extends Extract {
             }
 
             if (!bbartifacts.isEmpty()) {
-                services.fireModuleDataEvent(new ModuleDataEvent(
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+                postArtifacts(bbartifacts);
             }
         }
     }
@@ -392,7 +386,6 @@ final class ExtractEdge extends Extract {
                 BlackboardArtifact ba = getBookmarkArtifact(origFile, headers, line);
                 if (ba != null) {
                     bbartifacts.add(ba);
-                    this.indexArtifact(ba);
                 }
             }
         } finally {
@@ -400,9 +393,7 @@ final class ExtractEdge extends Extract {
         }
 
         if (!bbartifacts.isEmpty()) {
-            services.fireModuleDataEvent(new ModuleDataEvent(
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+            postArtifacts(bbartifacts);
         }
     }
 
@@ -451,7 +442,6 @@ final class ExtractEdge extends Extract {
                     BlackboardArtifact ba = getCookieArtifact(origFile, headers, line);
                     if (ba != null) {
                         bbartifacts.add(ba);
-                        this.indexArtifact(ba);
                     }
                 }
             } finally {
@@ -459,9 +449,7 @@ final class ExtractEdge extends Extract {
             }
 
             if (!bbartifacts.isEmpty()) {
-                services.fireModuleDataEvent(new ModuleDataEvent(
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+                postArtifacts(bbartifacts);
             }
         }
     }
@@ -515,7 +503,6 @@ final class ExtractEdge extends Extract {
                         BlackboardArtifact ba = getDownloadArtifact(origFile, headers, line);
                         if (ba != null) {
                             bbartifacts.add(ba);
-                            this.indexArtifact(ba);
                         }
                     }
                 }
@@ -523,11 +510,7 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            if (!bbartifacts.isEmpty()) {
-                services.fireModuleDataEvent(new ModuleDataEvent(
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
-            }
+            postArtifacts(bbartifacts);
         }
     }
 
@@ -833,7 +816,7 @@ final class ExtractEdge extends Extract {
 
     /**
      * Opens and reads the Containers table to create a table of information
-     * about which of the Continer_xx files contain which type of information.
+     * about which of the Container_xx files contain which type of information.
      *
      * Each row of the "Containers" table describes one of the Container_xx
      * files.
