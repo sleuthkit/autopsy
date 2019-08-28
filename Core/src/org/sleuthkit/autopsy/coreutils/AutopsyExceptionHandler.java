@@ -26,9 +26,6 @@ import java.util.logging.SimpleFormatter;
 import javax.swing.JOptionPane;
 import org.openide.util.lookup.ServiceProvider;
 import org.netbeans.core.NbErrorManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Replaces default NetBeans exception handler. Displays messages in a dialog.
