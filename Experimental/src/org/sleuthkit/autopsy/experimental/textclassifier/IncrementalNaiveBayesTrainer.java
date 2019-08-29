@@ -80,11 +80,12 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
      * @param modelInputPath
      */
     private void uploadModel(String modelInputPath) throws IOException {
-        FileReader fr = new FileReader(modelInputPath);
-        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
-        reader.checkModelType();
-        NaiveBayesModel initialModel = (NaiveBayesModel) reader.constructModel();
-        fr.close();
+        NaiveBayesModel initialModel;
+        try (FileReader fr = new FileReader(modelInputPath)) {
+            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
+            reader.checkModelType();
+            initialModel = (NaiveBayesModel) reader.constructModel();
+        }
 
         Object[] data = initialModel.getDataStructures();
 
@@ -148,16 +149,16 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
 
         LOGGER.log(Level.INFO, "done.");
 
-        LOGGER.log(Level.INFO, "\tNumber of Event Tokens: " + numUniqueEvents);
-        LOGGER.log(Level.INFO, "\t    Number of Outcomes: " + numOutcomes);
-        LOGGER.log(Level.INFO, "\t  Number of Predicates: " + numPreds);
+        LOGGER.log(Level.INFO, "\tNumber of Event Tokens: {0}", numUniqueEvents);
+        LOGGER.log(Level.INFO, "\t    Number of Outcomes: {0}", numOutcomes);
+        LOGGER.log(Level.INFO, "\t  Number of Predicates: {0}", numPreds);
 
         LOGGER.log(Level.INFO, "Computing model parameters...");
 
         MutableContext[] newParameters = findParameters(numOutcomes, outcomeList, contexts, values, numTimesEventsSeen, numPreds);
         mergeInParameters(newParameters, newOutcomeLabels, newPredLabels);
 
-        LOGGER.log(Level.INFO, "...done.");
+        LOGGER.log(Level.INFO, "...done training.");
 
         /* Create and return the model ****/
         Context[] finalParameters = parameters.toArray(new Context[parameters.size()]);
@@ -169,8 +170,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     private void mergeInParameters(MutableContext[] newParameters, String[] newOutcomeLabels, String[] newPredLabels) {
 
         List<Integer> mappingNewOutcomeToOldOutcome = new ArrayList<>();
-        for (int newIndex = 0; newIndex < newOutcomeLabels.length; newIndex++) {
-            String newLabel = newOutcomeLabels[newIndex];
+        for (String newLabel : newOutcomeLabels) {
             if (!masterOutcomeMap.containsKey(newLabel)) {
                 masterOutcomeMap.put(newLabel, masterOutcomeLabels.size());
                 masterOutcomeLabels.add(newLabel);
@@ -184,8 +184,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         }
 
         List<Integer> mappingNewPredToOldPred = new ArrayList<>();
-        for (int newIndex = 0; newIndex < newPredLabels.length; newIndex++) {
-            String newLabel = newPredLabels[newIndex];
+        for (String newLabel : newPredLabels) {
             if (!masterPredMap.containsKey(newLabel)) {
                 masterPredMap.put(newLabel, masterPredLabels.size());
                 masterPredLabels.add(newLabel);

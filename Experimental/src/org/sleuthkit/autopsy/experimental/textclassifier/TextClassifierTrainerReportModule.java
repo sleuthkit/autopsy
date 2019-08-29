@@ -72,7 +72,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         "TextClassifierTrainer.noDocs.text=No documents found. You may need to run the Ingest Module for File Type Detection",
         "TextClassifierTrainer.fetching.text=Fetching training documents",
         "TextClassifierTrainer.srcModuleName.text=Text classifier model",
-        "TextCllassifierTrainer.inProgress.text=In progress",
+        "TextClassifierTrainer.inProgress.text=In progress",
         "TextClassifierTrainer.needFileType.text=File type detection must complete before generating this report.",
         "TextClassifierTrainer.fetchFailed.text=Exception while fetching training data",
         "TextClassifierTrainer.cannotProcess.text=Exception while converting training data",
