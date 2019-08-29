@@ -47,8 +47,6 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     private DocumentCategorizerME categorizer;
     private TextClassifierUtils utils;
 
-    @Messages({"TextClassifierFileIngestModule.noClassifiersFound.subject=No classifiers found.",
-        "# {0} - classifierDir", "TextClassifierFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, text classifier will not be executed."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         utils = new TextClassifierUtils();
