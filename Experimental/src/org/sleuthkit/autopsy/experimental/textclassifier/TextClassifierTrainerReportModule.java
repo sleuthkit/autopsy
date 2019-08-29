@@ -32,7 +32,6 @@ import opennlp.tools.doccat.DocumentSample;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -95,7 +94,6 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         progressPanel.start();
         progressPanel.complete(ReportStatus.RUNNING);
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.inProgress.text"));
-        
 
         List<AbstractFile> allDocs;
         Set<Long> notableObjectIDs;
@@ -118,7 +116,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
             new File(baseReportDir).delete();
             return;
         }
- 
+
         //Convert allDocs to the format that OpenNLP needs.
         ObjectStream<DocumentSample> sampleStream;
         try {
@@ -151,7 +149,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
             new File(baseReportDir).delete();
             return;
         }
-        
+
         //Write the model to disk
         progressPanel.setIndeterminate(true);
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.writingModel.text") + TextClassifierUtils.MODEL_PATH);
@@ -200,12 +198,12 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
 
     /**
      * Converts all documents to a format OpenNLP can use.
-     * 
+     *
      * @param allDocs
      * @param notableObjectIDs
      * @param progressPanel
      * @return training data usable by OpenNLP
-     * @throws TskCoreException 
+     * @throws TskCoreException
      */
     @Messages({
         "TextClassifierTrainer.converting.text=Converting training documents",
@@ -272,7 +270,6 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         List<AbstractFile> allDocs = fileManager.findFilesByMimeType(SupportedFormats.getDocumentMIMETypes());
         LOGGER.log(Level.INFO, "There are {0} documents", allDocs.size());
         return allDocs;
-        
-        
+
     }
 }
