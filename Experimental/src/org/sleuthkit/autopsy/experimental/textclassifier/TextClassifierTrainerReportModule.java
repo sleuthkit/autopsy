@@ -69,31 +69,31 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
 
     @Override
     @Messages({
-        "TextClassifierTrainer.noDocs.text=No documents found. You may need to run the Ingest Module for File Type Detection",
-        "TextClassifierTrainer.fetching.text=Fetching training documents",
-        "TextClassifierTrainer.srcModuleName.text=Text classifier model",
-        "TextClassifierTrainer.inProgress.text=In progress",
-        "TextClassifierTrainer.needFileType.text=File type detection must complete before generating this report.",
-        "TextClassifierTrainer.fetchFailed.text=Exception while fetching training data",
-        "TextClassifierTrainer.cannotProcess.text=Exception while converting training data",
-        "TextClassifierTrainer.training.text=Training model.",
-        "TextClassifierTrainer.noModel.text=No model was trained.",
-        "TextClassifierTrainer.writingModel.text=Writing model: ",
-        "TextClassifierTrainer.completeModelLocation.text=Complete. Model location: ",
-        "TextClassifierTrainer.cannotSave.text=Cannot save model: ",
-        "TextClassifierTrainer.trainIOException.text=IOException while training model"
+        "TextClassifierTrainerReportModule.noDocs.text=No documents found. You may need to run the Ingest Module for File Type Detection",
+        "TextClassifierTrainerReportModule.fetching.text=Fetching training documents",
+        "TextClassifierTrainerReportModule.srcModuleName.text=Text classifier model",
+        "TextClassifierTrainerReportModule.inProgress.text=In progress",
+        "TextClassifierTrainerReportModule.needFileType.text=File type detection must complete before generating this report.",
+        "TextClassifierTrainerReportModule.fetchFailed.text=Exception while fetching training data",
+        "TextClassifierTrainerReportModule.cannotProcess.text=Exception while converting training data",
+        "TextClassifierTrainerReportModule.training.text=Training model.",
+        "TextClassifierTrainerReportModule.noModel.text=No model was trained.",
+        "TextClassifierTrainerReportModule.writingModel.text=Writing model: ",
+        "TextClassifierTrainerReportModule.completeModelLocation.text=Complete. Model location: ",
+        "TextClassifierTrainerReportModule.cannotSave.text=Cannot save model: ",
+        "TextClassifierTrainerReportModule.trainIOException.text=IOException while training model"
     })
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         //Fail early if ingest is still running
         if (IngestManager.getInstance().isIngestRunning()) {
-            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needFileType.text"));
+            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.needFileType.text"));
         }
 
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.complete(ReportStatus.RUNNING);
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.inProgress.text"));
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.inProgress.text"));
 
         List<AbstractFile> allDocs;
         Set<Long> notableObjectIDs;
@@ -105,14 +105,14 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
             notableObjectIDs = fetchNotableObjectIDs();
         } catch (TskCoreException ex) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.fetchFailed.text"));
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.fetchFailed.text"));
             LOGGER.log(Level.SEVERE, "Exception while fetching training data", ex);
             new File(baseReportDir).delete();
             return;
         }
         if (allDocs.isEmpty()) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.noDocs.text"));
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.noDocs.text"));
             new File(baseReportDir).delete();
             return;
         }
@@ -131,48 +131,48 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
 
         //Train the model
         progressPanel.setIndeterminate(true);
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.training.text"));
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.training.text"));
         DoccatModel model;
         try {
             model = train(progressPanel, TextClassifierUtils.MODEL_PATH, sampleStream);
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "IOException during training", ex);
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.trainIOException.text"));
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.trainIOException.text"));
             new File(baseReportDir).delete();
             return;
         }
         //If there was an uncaught training error, stop here.
         if (model == null) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.noModel.text"));
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.noModel.text"));
             new File(baseReportDir).delete();
             return;
         }
 
         //Write the model to disk
         progressPanel.setIndeterminate(true);
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.writingModel.text") + TextClassifierUtils.MODEL_PATH);
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.writingModel.text") + TextClassifierUtils.MODEL_PATH);
         try {
             TextClassifierUtils.writeModel((NaiveBayesModel) model.getMaxentModel());
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Cannot save model.", ex);
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.cannotSave.text") + TextClassifierUtils.MODEL_PATH);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.cannotSave.text") + TextClassifierUtils.MODEL_PATH);
             new File(baseReportDir).delete();
             return;
         }
         progressPanel.complete(ReportStatus.COMPLETE);
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.completeModelLocation.text") + TextClassifierUtils.MODEL_PATH);
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.completeModelLocation.text") + TextClassifierUtils.MODEL_PATH);
     }
 
-    @Messages({"TextClassifierTrainer.getName.text=Text classifier model"})
+    @Messages({"TextClassifierTrainerReportModule.getName.text=Text classifier model"})
     @Override
     public String getName() {
-        return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getName.text");
+        return NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.getName.text");
     }
 
-    @Messages({"TextClassifierTrainer.getDesc.text=Train a machine learning "
+    @Messages({"TextClassifierTrainerReportModule.getDesc.text=Train a machine learning "
         + "model to classify which documents are notable. Before training, "
         + "you will need to\n"
         + "1. run the Ingest Module for File Type Identification\n"
@@ -182,7 +182,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         + "running the \"Text Classifier\" Ingest Module."})
     @Override
     public String getDescription() {
-        return NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.getDesc.text");
+        return NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.getDesc.text");
     }
 
     private DoccatModel train(ReportProgressPanel progressPanel, String oldModelPath, ObjectStream<DocumentSample> sampleStream) throws IOException {
@@ -206,12 +206,12 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
      * @throws TskCoreException
      */
     @Messages({
-        "TextClassifierTrainer.converting.text=Converting training documents",
-        "TextClassifierTrainer.needNotable.text=Training set must contain at least one notable document",
-        "TextClassifierTrainer.needNonnotable.text=Training set must contain at least one nonnotable document",})
+        "TextClassifierTrainerReportModule.converting.text=Converting training documents",
+        "TextClassifierTrainerReportModule.needNotable.text=Training set must contain at least one notable document",
+        "TextClassifierTrainerReportModule.needNonnotable.text=Training set must contain at least one nonnotable document",})
     private ObjectStream<DocumentSample> convertTrainingData(List<AbstractFile> allDocs, Set<Long> notableObjectIDs, ReportProgressPanel progressPanel) throws TskCoreException {
 
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.converting.text"));
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.converting.text"));
         progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
@@ -233,12 +233,12 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
 
         if (!containsNotableDocument) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needNotable.text"));
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.needNotable.text"));
             throw new TskCoreException("Training set must contain at least one notable document");
         }
         if (!containsNonNotableDocument) {
             progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needNonnotable.text"));
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.needNonnotable.text"));
             throw new TskCoreException("Training set must contain at least one nonnotable document");
         }
 
@@ -260,7 +260,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
     }
 
     private List<AbstractFile> fetchAllDocuments(ReportProgressPanel progressPanel) throws TskCoreException {
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.fetching.text"));
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.fetching.text"));
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
         //The only difference between SupportedFormats's getDocumentMIMETypes()
