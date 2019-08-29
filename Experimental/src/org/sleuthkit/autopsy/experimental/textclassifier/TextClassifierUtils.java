@@ -25,9 +25,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.logging.Level;
 import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
@@ -66,8 +64,6 @@ class TextClassifierUtils {
     static final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
     static final String LANGUAGE_CODE = "en";
     static final String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
-    //static final String OUTCOMES_FIELD_NAME = "OUTCOME_FIELDS";
-    //static final String DEFAULT_OUTCOMES_STRING = NONNOTABLE_LABEL + "\t" + NOTABLE_LABEL;
 
     TextClassifierUtils() throws IngestModuleException {
         try {

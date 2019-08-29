@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +32,7 @@ import opennlp.tools.doccat.DocumentSample;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -191,7 +191,6 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         TrainingParameters params = new TrainingParameters();
         params.put(TrainingParameters.CUTOFF_PARAM, Integer.toString(0));
         params.put(TrainingParameters.ALGORITHM_PARAM, TextClassifierUtils.ALGORITHM);
-        //params.put(TextClassifierUtils.OUTCOMES_FIELD_NAME, TextClassifierUtils.DEFAULT_OUTCOMES_STRING);
         if (oldModelPath != null) {
             params.put("MODEL_INPUT", oldModelPath);
         }
@@ -217,23 +216,34 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.converting.text"));
         progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
-        
-        //Make sure there's at least one document of each type.
-        docSamples.add(new DocumentSample(TextClassifierUtils.NOTABLE_LABEL, new String[0]));
-        docSamples.add(new DocumentSample(TextClassifierUtils.NONNOTABLE_LABEL, new String[0]));       
-
         String label;
+        boolean containsNotableDocument = false;
+        boolean containsNonNotableDocument = false;
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
+                containsNotableDocument = true;
             } else {
                 label = TextClassifierUtils.NONNOTABLE_LABEL;
+                containsNonNotableDocument = true;
             }
             DocumentSample docSample = new DocumentSample(label, TextClassifierUtils.extractTokens(doc));
             docSamples.add(docSample);
+
             progressPanel.increment();
         }
-        
+
+        if (!containsNotableDocument) {
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needNotable.text"));
+            throw new TskCoreException("Training set must contain at least one notable document");
+        }
+        if (!containsNonNotableDocument) {
+            progressPanel.complete(ReportStatus.ERROR);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainer.needNonnotable.text"));
+            throw new TskCoreException("Training set must contain at least one nonnotable document");
+        }
+
         return new ListObjectStream<>(docSamples);
     }
 
