@@ -91,7 +91,7 @@ class AddMultipleImageTask implements Runnable {
     @Messages({
         "# {0} - file", "AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.",
         "# {0} - deviceId", "# {1} - exceptionMessage",
-        "AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device %s: %s",})
+        "AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}",})
     AddMultipleImageTask(String deviceId, List<String> imageFilePaths, String timeZone,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) throws NoCurrentCaseException {
         this.deviceId = deviceId;

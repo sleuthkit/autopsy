@@ -133,7 +133,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
         "LogicalImagerDSProcessor.destinationDirectoryConfirmation=Destination directory confirmation",
-        "# {0} - directory", "LogicalImagerDSProcessor.destinationDirectoryConfirmationMsg=The logical imager folder %s already exists,\ndo you want to add it again using a new folder name?",
+        "# {0} - directory", "LogicalImagerDSProcessor.destinationDirectoryConfirmationMsg=The logical imager folder {0} already exists,\ndo you want to add it again using a new folder name?",
         "LogicalImagerDSProcessor.noCurrentCase=No current case",
     })
     @Override

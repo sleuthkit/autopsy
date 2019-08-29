@@ -81,12 +81,12 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
  * A tabular result viewer that displays the children of the given root node
@@ -880,18 +880,23 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         void nextPage() {
             currentPage++;
+            DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             postPageChangeEvent();
+            DataResultViewerTable.this.setCursor(null);
         }
 
         void previousPage() {
             currentPage--;
+            DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             postPageChangeEvent();
+            DataResultViewerTable.this.setCursor(null);
         }
 
         @NbBundle.Messages({"# {0} - totalPages",
             "DataResultViewerTable.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}",
             "DataResultViewerTable.goToPageTextField.err=Invalid page number"})
         void gotoPage() {
+            int saveCurrentPage = currentPage;
             try {
                 currentPage = Integer.decode(gotoPageTextField.getText());
             } catch (NumberFormatException e) {
@@ -900,7 +905,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
 
             if (currentPage > totalPages || currentPage < 1) {
-                currentPage = 1;
+                currentPage = saveCurrentPage;
                 JOptionPane.showMessageDialog(DataResultViewerTable.this,
                         Bundle.DataResultViewerTable_goToPageTextField_msgDlg(totalPages),
                         Bundle.DataResultViewerTable_goToPageTextField_err(),

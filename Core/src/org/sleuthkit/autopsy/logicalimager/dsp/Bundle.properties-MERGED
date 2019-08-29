@@ -41,6 +41,7 @@ AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line 
 AddMultipleImageTask.adding=Adding: {0}
 # {0} - file
 AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.
+AddMultipleImageTask.cancelled=Cancellation: Add image process reverted
 # {0} - imageFilePath
 # {1} - deviceId
 # {2} - exceptionMessage
@@ -51,13 +52,16 @@ AddMultipleImageTask.criticalErrorAdding=Critical error adding {0} for device {1
 AddMultipleImageTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}
 # {0} - deviceId
 # {1} - exceptionMessage
-AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device %s: %s
+AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}
 AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type
 # {0} - imageFilePath
 # {1} - deviceId
 # {2} - exceptionMessage
 AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}
 LogicalImagerDSProcessor.dataSourceType=Autopsy Logical Imager Results
+LogicalImagerDSProcessor.destinationDirectoryConfirmation=Destination directory confirmation
+# {0} - directory
+LogicalImagerDSProcessor.destinationDirectoryConfirmationMsg=The logical imager folder {0} already exists,\ndo you want to add it again using a new folder name?
 # {0} - directory
 LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists
 # {0} - directory
