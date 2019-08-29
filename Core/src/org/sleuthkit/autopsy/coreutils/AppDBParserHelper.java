@@ -160,7 +160,7 @@ public final class AppDBParserHelper  {
      * 
      * @param additionalAttributes additional attributes for contact
      * 
-     * @return artifact created
+     * @return contact artifact created
      * 
      */
     public BlackboardArtifact addContact(String contactAccountUniqueID, String contactName, 
@@ -176,14 +176,18 @@ public final class AppDBParserHelper  {
             // Add basic attributes for name phonenumber email, if specified
             contactArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, contactName));
             
-            if (!StringUtils.isEmpty(phoneNumber)) 
+            if (!StringUtils.isEmpty(phoneNumber)) {
                   contactArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, moduleName, phoneNumber));
-            if (!StringUtils.isEmpty(homePhoneNumber)) 
+            }
+            if (!StringUtils.isEmpty(homePhoneNumber)) {
                   contactArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME, moduleName, homePhoneNumber));
-            if (!StringUtils.isEmpty(mobilePhoneNumber)) 
+            }
+            if (!StringUtils.isEmpty(mobilePhoneNumber)) {
                   contactArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE, moduleName, mobilePhoneNumber));
-            if (!StringUtils.isEmpty(emailAddr)) 
+            }
+            if (!StringUtils.isEmpty(emailAddr)) {
                 contactArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL, moduleName, emailAddr));
+            }
             
             // Add additional specified attributes
             for (BlackboardAttribute additionalAttribute: additionalAttributes) {
@@ -290,7 +294,7 @@ public final class AppDBParserHelper  {
      * 
      * @param otherAttributesList additional attributes 
      * 
-     * @return 
+     * @return message artifact
      */
     public BlackboardArtifact addMessage(String otherAccountUniqueID, 
                                         String messageType, String direction, String fromAddress, 
@@ -302,25 +306,34 @@ public final class AppDBParserHelper  {
         try {
             // Create TSK_MESSAGE artifact
             msgArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_MESSAGE);
-            msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, dateTime));
+            if (dateTime > 0) {
+                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, dateTime));
+            }
             msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_READ_STATUS, moduleName, readStatus));
             
             // Add basic attribute, if the correspond value is specified
-            if (!StringUtils.isEmpty(messageType)) 
+            if (!StringUtils.isEmpty(messageType)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, moduleName, messageType));
-            if (!StringUtils.isEmpty(direction)) 
+            }
+            if (!StringUtils.isEmpty(direction)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction));
-            if (!StringUtils.isEmpty(fromAddress)) 
+            }
+            if (!StringUtils.isEmpty(fromAddress)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromAddress));
-            if (!StringUtils.isEmpty(toAddress)) 
+            }
+            if (!StringUtils.isEmpty(toAddress)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, toAddress));
+            }
          
-            if (!StringUtils.isEmpty(subject)) 
+            if (!StringUtils.isEmpty(subject)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT, moduleName, subject));
-            if (!StringUtils.isEmpty(messageText)) 
+            }
+            if (!StringUtils.isEmpty(messageText)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT, moduleName, messageText));
-            if (!StringUtils.isEmpty(threadId)) 
+            }
+            if (!StringUtils.isEmpty(threadId)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_THREAD_ID, moduleName, threadId));
+            }
             
             
             // Add other specified attributes
@@ -346,7 +359,7 @@ public final class AppDBParserHelper  {
             logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((msgArtifact != null)? msgArtifact.getArtifactID() : "")), ex);  //NON-NLS
         }
         
-        // return the message artifact
+        // return the artifact
         return msgArtifact;       
     }
     
@@ -364,7 +377,7 @@ public final class AppDBParserHelper  {
      * @param endDateTime end date/time
      * @param contactName contact name, may be empty
      * 
-     * @return 
+     * @return call log artifact
      */
     public BlackboardArtifact addCalllog( String otherAccountUniqueID, 
                                           String direction, String fromPhoneNumber, String toPhoneNumber, 
@@ -389,7 +402,7 @@ public final class AppDBParserHelper  {
      * @param contactName
      * @param otherAttributesList
      * 
-     * @return 
+     * @return calllog artifact
      */
     public BlackboardArtifact addCalllog(String otherAccountUniqueID, 
                                             String direction, String fromPhoneNumber, String toPhoneNumber, 
@@ -401,17 +414,25 @@ public final class AppDBParserHelper  {
             callLogArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_CALLLOG);
             
             // Add basic attributes 
-            callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START, moduleName, startDateTime));
-            callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END, moduleName, endDateTime));
+            if (startDateTime > 0) {
+                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START, moduleName, startDateTime));
+            }
+            if (endDateTime > 0) {
+                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END, moduleName, endDateTime));
+            }
             
-            if (!StringUtils.isEmpty(direction)) 
+            if (!StringUtils.isEmpty(direction)) {
                 callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction));
-            if (!StringUtils.isEmpty(fromPhoneNumber)) 
+            }
+            if (!StringUtils.isEmpty(fromPhoneNumber)) {
                 callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromPhoneNumber));
-            if (!StringUtils.isEmpty(toPhoneNumber)) 
+            }
+            if (!StringUtils.isEmpty(toPhoneNumber)) {
                 callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, toPhoneNumber));
-            if (!StringUtils.isEmpty(contactName)) 
+            }
+            if (!StringUtils.isEmpty(contactName)) {
                 callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, contactName));
+            }
             
             // Add other specified attributes
             for (BlackboardAttribute otherAttribute: otherAttributesList) {
@@ -435,51 +456,600 @@ public final class AppDBParserHelper  {
             logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((callLogArtifact != null)? callLogArtifact.getArtifactID() : "")), ex);  //NON-NLS
         }
         
-        // return the message artifact
+        // return the artifact
         return callLogArtifact;      
     }
     
-    // RAMAN TBD
+   
+    // TBD
     public void addAttachment(BlackboardArtifact parentArtifact) {
         // RAMAN TBD
     }
     
-    
-    public BlackboardArtifact addWebBookmark() {
-        return null;
+    /**
+     *  Adds a TSK_WEB_BOOKMARK artifact. 
+     * 
+     * @param url bookmark URL 
+     * @param title bookmark title, may be empty
+     * @param creationTime date/time created
+     * @param progName application/program that created bookmark
+     * 
+     * @return bookmark artifact
+     */
+    public BlackboardArtifact addWebBookmark(String url, String title, long creationTime, String progName) {
+          return addWebBookmark(url, title,  creationTime, progName,
+                            Collections.<BlackboardAttribute>emptyList());
     }
     
-    public BlackboardArtifact addWebCookie() {
-        return null;
-    }
-    
-    public BlackboardArtifact addWebHistory() {
-        return null;
-    }
-    
-    public BlackboardArtifact addWebDownload() {
-        return null;
-    }
-    
-    public BlackboardArtifact addWebFormAutofill() {
-        return null;
-    }
-    
-    public BlackboardArtifact addWebFormAddress() {
-        return null;
-    }
-    
-    public BlackboardArtifact addWebCache() {
-        return null;
-    }
-    
-    public BlackboardArtifact addInstalledProgram() {
-        return null;
-    }
-    
-    public BlackboardArtifact addGPSTrackPoint() {
-        return null;
-    }
-    
+    /**
+     *  Adds a TSK_WEB_BOOKMARK artifact. 
+     * 
+     * @param url bookmark URL 
+     * @param title bookmark title, may be empty
+     * @param creationTime date/time created
+     * @param progName application/program that created bookmark
+     * @param otherAttributesList other attributes
 
+     * @return bookmark artifact
+     */
+    public BlackboardArtifact addWebBookmark(String url, String title, long creationTime, String progName,
+             Collection<BlackboardAttribute> otherAttributesList) {
+        
+        BlackboardArtifact bookMarkArtifact = null;
+        try {
+            // Create artifact
+            bookMarkArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+            
+            // Add basic attributes 
+            bookMarkArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, moduleName, url));
+            if (creationTime > 0) {
+                bookMarkArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, moduleName, creationTime));
+            }
+            
+            if (!StringUtils.isEmpty(title)) {
+                bookMarkArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE, moduleName, title));
+            }
+            if (!StringUtils.isEmpty(url)) {
+                bookMarkArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(url)));
+            }
+            if (!StringUtils.isEmpty(progName)) {
+                bookMarkArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, moduleName, progName));
+            }
+            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                bookMarkArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(bookMarkArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add bookmark artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((bookMarkArtifact != null)? bookMarkArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return bookMarkArtifact;  
+    }
+    
+    
+    /**
+     * Adds a TSK_WEB_COOKIE artifact
+     * 
+     * @param url url of the site that created the cookie
+     * @param creationTime create time of cookie
+     * @param name cookie name 
+     * @param value cookie value
+     * @param programName name of the application that created the cookie
+     * 
+     * @return WebCookie artifact
+     */
+     public BlackboardArtifact addWebCookie(String url, long creationTime, 
+             String name, String value, String programName) {
+        
+        return addWebCookie(url, creationTime, name, value, programName,
+                 Collections.<BlackboardAttribute>emptyList());
+    }
+     
+    /**
+     * Adds a TSK_WEB_COOKIE artifact
+     * 
+     * @param url url of the site that created the cookie
+     * @param creationTime create time of cookie
+     * @param name cookie name 
+     * @param value cookie value
+     * @param programName name of the application that created the cookie
+     * 
+     * @param otherAttributesList other attributes
+     * 
+     * @return WebCookie artifact
+     */
+    public BlackboardArtifact addWebCookie(String url,
+            long creationTime, String name, String value, String programName,
+            Collection<BlackboardAttribute> otherAttributesList) {
+        
+        
+        BlackboardArtifact cookieArtifact = null;
+        try {
+            // Create artifact
+            cookieArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
+            
+            // Add basic attributes 
+            cookieArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, moduleName, url));
+            if (creationTime > 0) {
+                cookieArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, creationTime));
+            }
+            
+            if (!StringUtils.isEmpty(name)) {
+                cookieArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
+            }
+            if (!StringUtils.isEmpty(value)) {
+                cookieArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE, moduleName, value));
+            }
+            if (!StringUtils.isEmpty(url)) {
+                cookieArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(url)));
+            }
+            if (!StringUtils.isEmpty(programName)) {
+                cookieArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, moduleName, programName));
+            }
+            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                cookieArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(cookieArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add bookmark artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((cookieArtifact != null)? cookieArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return cookieArtifact;  
+    }
+    
+    /**
+     * Adds a Web History artifact
+     * 
+     * @param url url visited
+     * @param accessTime last access time
+     * @param referrer referrer, may be empty
+     * @param title website title, may be empty
+     * @param programName, application recording the history
+     * 
+     * @return artifact created
+     */
+    public BlackboardArtifact addWebHistory(String url, long accessTime, 
+            String referrer, String title, String programName) {
+        return addWebHistory(url, accessTime, referrer, title, programName,
+                Collections.<BlackboardAttribute>emptyList());
+    }
+    
+    /**
+     * Adds a Web History artifact
+     * 
+     * @param url url visited
+     * @param accessTime last access time
+     * @param referrer referrer, may be empty
+     * @param title website title, may be empty
+     * @param programName, application recording the history
+     * @param otherAttributesList other attributes
+     * 
+     * 
+     * 
+     * @return artifact created
+     */
+    public BlackboardArtifact addWebHistory(String url, long accessTime, 
+            String referrer, String title, String programName, 
+            Collection<BlackboardAttribute> otherAttributesList) {
+        
+        BlackboardArtifact webHistoryArtifact = null;
+        try {
+            // Create artifact
+            webHistoryArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+            
+            // Add basic attributes 
+            webHistoryArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, moduleName, url));
+            if (accessTime > 0) {
+                webHistoryArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, moduleName, accessTime));
+            }
+            
+            if (!StringUtils.isEmpty(title)) {
+                webHistoryArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE, moduleName, title));
+            }
+            if (!StringUtils.isEmpty(referrer)) {
+                webHistoryArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER, moduleName, referrer));
+            }
+   
+            if (!StringUtils.isEmpty(programName)) {
+                webHistoryArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, moduleName, programName));
+            }
+             if (!StringUtils.isEmpty(url)) {
+                webHistoryArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(url)));
+            }
+            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                webHistoryArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(webHistoryArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add bookmark artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((webHistoryArtifact != null)? webHistoryArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return webHistoryArtifact;  
+    }
+    
+    /**
+     * Created a TSK_WEB_DOWNNLOAD artifact
+     * 
+     * @param path path of downloaded file
+     * @param startTime date/time downloaded
+     * @param url URL downloaded from
+     * @param progName program that initiated download
+     * 
+     * @return artifact created
+     */
+    public BlackboardArtifact addWebDownload(String path, long startTime, String url, String progName) {
+        return addWebDownload(path, startTime, url, progName, Collections.<BlackboardAttribute>emptyList() );
+    }
+    
+    /**
+     * Created a TSK_WEB_DOWNNLOAD artifact
+     * 
+     * @param path path of downloaded file
+     * @param startTime date/time downloaded
+     * @param url URL downloaded from
+     * @param programName program that initiated download
+     * @param otherAttributesList other attributes
+     * 
+     * 
+     * @return artifact created
+     */
+     public BlackboardArtifact addWebDownload(String path, long startTime, String url, String programName, 
+             Collection<BlackboardAttribute> otherAttributesList ) {
+         
+        BlackboardArtifact webDownloadArtifact = null;
+        try {
+            // Create artifact
+            webDownloadArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
+            
+            // Add basic attributes 
+            webDownloadArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, moduleName, url));
+            if (startTime > 0) {
+                webDownloadArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, moduleName, startTime));
+            }
+            webDownloadArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, moduleName, path));
+            
+            /** Convert path to pathID ****/
+//            long pathID = Util.findID(dataSource, downloadedFilePath);
+//            if (pathID != -1) {
+//                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID, moduleName, pathID));
+//            }
+                        
+            if (!StringUtils.isEmpty(programName)) {
+                webDownloadArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, moduleName, programName));
+            }
+            if (!StringUtils.isEmpty(url)) {
+                webDownloadArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, NetworkUtils.extractDomain(url)));
+            }
+            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                webDownloadArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(webDownloadArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add web download artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((webDownloadArtifact != null)? webDownloadArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return webDownloadArtifact;  
+    }
+    
+     
+   /**
+    * Adds a TSK_WEB_FORM_AUTOFILL artifact
+    * 
+    * @param name name of autofill field
+    * @param value value of autofill field
+    * @param creationTime create date/time
+    * @param accessTime last access date/time
+    * @param count count of times used
+    * 
+    * @return artifact created
+    */
+    public BlackboardArtifact addWebFormAutofill(String name, String value, 
+            long creationTime, long accessTime, int count) {
+        return addWebFormAutofill(name, value, creationTime, accessTime, count, 
+                    Collections.<BlackboardAttribute>emptyList() );
+    }
+    
+    /**
+    * Adds a TSK_WEB_FORM_AUTOFILL artifact
+    * 
+    * @param name name of autofill field
+    * @param value value of autofill field
+    * @param creationTime create date/time
+    * @param accessTime last access date/time
+    * @param count count of times used
+    * @param otherAttributesList additional attributes
+    * 
+    * @return artifact created
+    */
+    public BlackboardArtifact addWebFormAutofill(String name, String value, 
+            long creationTime, long accessTime, int count,  
+            Collection<BlackboardAttribute> otherAttributesList ) {
+        BlackboardArtifact webFormAutofillArtifact = null;
+        try {
+            // Create artifact
+            webFormAutofillArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL);
+            
+            // Add basic attributes 
+            webFormAutofillArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
+            webFormAutofillArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE, moduleName, value));
+            if (creationTime > 0) {
+                webFormAutofillArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, moduleName, creationTime));
+            }
+            if (accessTime > 0) {
+                webFormAutofillArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, moduleName, accessTime));
+            }
+            if (count > 0) {
+                webFormAutofillArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, moduleName, count));
+            }
+                            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                webFormAutofillArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(webFormAutofillArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add web form autofill artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((webFormAutofillArtifact != null)? webFormAutofillArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return webFormAutofillArtifact;  
+    }
+     
+    
+    /**
+     * Adds a TSK_WEB_FORM_AUTOFILL artifact.
+     * 
+     * @param personName person name
+     * @param email email address
+     * @param phoneNumber phone number
+     * @param mailingAddress mailing address
+     * @param creationTime creation time
+     * @param accessTime last access time
+     * @param count use count
+     * 
+     * @return artifact created
+     */
+    public BlackboardArtifact addWebFormAddress(String personName, String email, 
+                                String phoneNumber, String mailingAddress, 
+                                long creationTime, long accessTime, int count ) {
+       return addWebFormAddress(personName, email, phoneNumber, 
+                    mailingAddress, creationTime, accessTime, count, 
+                    Collections.<BlackboardAttribute>emptyList() );
+    }
+    
+    /**
+     * Adds a TSK_WEB_FORM_AUTOFILL artifact.
+     * 
+     * @param personName person name
+     * @param email email address
+     * @param phoneNumber phone number
+     * @param mailingAddress mailing address
+     * @param creationTime creation time
+     * @param accessTime last access time
+     * @param count use count
+     * @param otherAttributesList other attributes
+     * 
+     * @return artifact created
+     */
+    public BlackboardArtifact addWebFormAddress(String personName, String email, 
+            String phoneNumber, String mailingAddress, 
+            long creationTime, long accessTime, int count,
+            Collection<BlackboardAttribute> otherAttributesList ) {
+        
+        BlackboardArtifact webFormAddressArtifact = null;
+        try {
+            // Create artifact
+            webFormAddressArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL);
+            
+            // Add basic attributes 
+            webFormAddressArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, personName));
+            if (creationTime > 0) {
+                webFormAddressArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, moduleName, creationTime));
+            }
+            if (accessTime > 0) {
+                webFormAddressArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, moduleName, accessTime));
+            }
+            if (count > 0) {
+                webFormAddressArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT, moduleName, count));
+            }
+            
+            if (!StringUtils.isEmpty(email)) {
+                webFormAddressArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL, moduleName, email));
+            }
+            if (!StringUtils.isEmpty(phoneNumber)) {
+                webFormAddressArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, moduleName, phoneNumber));
+            }
+            if (!StringUtils.isEmpty(mailingAddress)) {
+                webFormAddressArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCATION, moduleName, mailingAddress));
+            }
+                            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                webFormAddressArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(webFormAddressArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add web form address artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((webFormAddressArtifact != null)? webFormAddressArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return webFormAddressArtifact;
+    }
+    
+    /**
+     * Adds a TSK_INSTALLED_PROGRAM artifact
+     * 
+     * @param programName name of program 
+     * @param dateInstalled date of install
+     * 
+     * @return artifact added
+     */
+    public BlackboardArtifact addInstalledProgram(String programName, long dateInstalled) {
+        return addInstalledProgram(programName, dateInstalled,
+                Collections.<BlackboardAttribute>emptyList() );
+    }
+    
+    /**
+     * Adds a TSK_INSTALLED_PROGRAM artifact
+     * 
+     * @param programName name of program 
+     * @param dateInstalled date of install
+     * @param otherAttributesList additional attributes
+     * 
+     * @return artifact added
+     */
+    public BlackboardArtifact addInstalledProgram(String programName, long dateInstalled, 
+            Collection<BlackboardAttribute> otherAttributesList ) {
+        
+        BlackboardArtifact installedProgramArtifact = null;
+        try {
+            // Create artifact
+            installedProgramArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+            
+            // Add basic attributes 
+            installedProgramArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, moduleName, programName));
+            if (dateInstalled > 0) {
+                installedProgramArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, dateInstalled));
+            }
+                            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                installedProgramArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(installedProgramArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add installed program artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((installedProgramArtifact != null)? installedProgramArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return installedProgramArtifact;
+    }
+    
+    
+    /**
+     * Adds a TSK_GPS_TRACKPOINT artifact
+     * 
+     * @param latitude location latitude
+     * @param longitude location longitude
+     * @param timeStamp date/time trackpoint recoded
+     * @param poiName trackpoint name
+     * @param programName name of program that recorded trackpoint
+     * 
+     * @return artifact added
+     */
+    public BlackboardArtifact addGPSLocation(double latitude, double longitude, 
+            long timeStamp, String poiName, String programName) {
+        
+        return addGPSLocation(latitude, longitude, timeStamp, poiName, programName,
+                Collections.<BlackboardAttribute>emptyList());
+    }
+    
+    /**
+     * Adds a TSK_GPS_TRACKPOINT artifact
+     * 
+     * @param latitude location latitude
+     * @param longitude location longitude
+     * @param timeStamp date/time trackpoint recorded
+     * @param name trackpoint name
+     * @param programName name of program that recorded trackpoint 
+     * @param otherAttributesList other attributes
+     * 
+     * @return artifact added
+     */
+    public BlackboardArtifact addGPSLocation(double latitude, double longitude, long timeStamp, String name, String programName, 
+            Collection<BlackboardAttribute> otherAttributesList) {
+       
+        BlackboardArtifact gpsTrackpointArtifact = null;
+        try {
+            // Create artifact
+            gpsTrackpointArtifact = dbAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
+            
+            // Add basic attributes 
+            gpsTrackpointArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, moduleName, latitude));
+            gpsTrackpointArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, moduleName, longitude));
+            if (timeStamp > 0) {
+                gpsTrackpointArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, timeStamp));
+            }
+            
+            if (!StringUtils.isEmpty(name)) {
+                gpsTrackpointArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
+            }
+            
+            if (!StringUtils.isEmpty(programName)) {
+                gpsTrackpointArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, moduleName, programName));
+            }
+                            
+            // Add other specified attributes
+            for (BlackboardAttribute otherAttribute: otherAttributesList) {
+                gpsTrackpointArtifact.addAttribute(otherAttribute);
+            }
+            
+            // post artifact 
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(gpsTrackpointArtifact, this.moduleName);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to add GPS trackpoint artifact", ex); //NON-NLS
+            return null;
+        } 
+        catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, String.format("Unable to post artifact %s", ((gpsTrackpointArtifact != null)? gpsTrackpointArtifact.getArtifactID() : "")), ex);  //NON-NLS
+        }
+        
+        // return the artifact
+        return gpsTrackpointArtifact;              
+    }
+    
 }

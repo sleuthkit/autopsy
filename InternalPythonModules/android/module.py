@@ -47,6 +47,10 @@ import tangomessage
 import textmessage
 import wwfmessage
 import imo
+import sbrowser
+import installedapps
+import oruxmaps
+import operabrowser
 
 class AndroidModuleFactory(IngestModuleFactoryAdapter):
 
@@ -88,7 +92,12 @@ class AndroidIngestModule(DataSourceIngestModule):
 
         errors = []
         fileManager = Case.getCurrentCase().getServices().getFileManager()
-        analyzers = [contact.ContactAnalyzer(), calllog.CallLogAnalyzer(), textmessage.TextMessageAnalyzer(), tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(), googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(), cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer()]
+        analyzers = [contact.ContactAnalyzer(), calllog.CallLogAnalyzer(), textmessage.TextMessageAnalyzer(),
+                     tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(),
+                     googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(),
+                     cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(),
+                     sbrowser.SBrowserAnalyzer(), installedapps.InstalledApplicationsAnalyzer(),
+                     oruxmaps.OruxMapsAnalyzer(), operabrowser.OperaAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 

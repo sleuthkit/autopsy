@@ -54,10 +54,10 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
         self._logger = Logger.getLogger(self.__class__.__name__)
 
     def analyze(self, dataSource, fileManager, context):
-        try:
-            selfAccountId = None
-            accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", "com.imo.android.imous")
-            for accountDb in accountDbs:
+        selfAccountId = None
+        accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", "com.imo.android.imous")
+        for accountDb in accountDbs:
+            try:
                 accountResultSet = accountDb.runQuery("SELECT uid, name FROM account")
                 if accountResultSet:
                     # We can determine the IMO user ID of the device owner. 
@@ -65,11 +65,15 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                     # as a 'self' account instead of a Device account
                     if not selfAccountId:
                         selfAccountId = accountResultSet.getString("name")
-                    accountResultSet.close()
-                accountDb.close();
+            
+            except SQLException as ex:
+                self._logger.log(Level.SEVERE, "Error processing query result for account", ex)       
+            finally:
+                accountDb.close()
                         
-            friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", "com.imo.android.imous")
-            for friendsDb in friendsDbs:
+        friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", "com.imo.android.imous")
+        for friendsDb in friendsDbs:
+            try:
                 friendsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(),
                                                     Account.Type.IMO, Account.Type.IMO, selfAccountId )
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
@@ -81,8 +85,9 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                                                     "", 	## home phone
                                                     "", 	## mobile
                                                     "")	        ## email
-                                        
-                messagesResultSet = friendsDb.runQuery("SELECT imdata, last_message, timestamp, message_type, message_read, name FROM messages INNER JOIN friends ON friends.buid = messages.buid")
+                queryString = "SELECT imdata, last_message, timestamp, message_type, message_read, name FROM messages "\
+                                  "INNER JOIN friends ON friends.buid = messages.buid"
+                messagesResultSet = friendsDb.runQuery(queryString)
                 if messagesResultSet is not None:
                     while messagesResultSet.next():
                         direction = ""
@@ -112,11 +117,11 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         # TBD: parse the imdata JSON structure to figure out if there is an attachment.
                         #      If one exists, add the attachment as a derived file and a child of the message artifact.
 
-                friendsDb.close()		
-        except TskCoreException as ex:
-            # Error parsing IMO databases.
-            self._logger.log(Level.SEVERE, "Error Parsing IMO Databases", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
-            pass
+            
+            except SQLException as ex:
+                self._logger.log(Level.SEVERE, "Error processing query result for IMO friends", ex)       
+            finally:
+                friendsDb.close()
+                
 
     
