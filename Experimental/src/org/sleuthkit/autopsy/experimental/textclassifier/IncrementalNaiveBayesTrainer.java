@@ -36,6 +36,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * This trains a naive Bayes classifier incrementally. It is modeled after the
@@ -44,6 +46,8 @@ import java.util.Map;
  * disk, add to it, and write to disk.
  */
 public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
+
+    private final static Logger LOGGER = Logger.getLogger(IncrementalNaiveBayesTrainer.class.getName());
 
     //These are the values that we need to serialize
     //For the document classification task, this is the list of categories.
@@ -129,7 +133,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     }
 
     private MaxentModel trainModel(DataIndexer di) {
-        display("Incorporating indexed data for training...  \n");
+        LOGGER.log(Level.INFO, "Incorporating indexed data for training...  ");
         int[][] contexts = di.getContexts();
         float[][] values = di.getValues();
         int[] numTimesEventsSeen = di.getNumTimesEventsSeen();
@@ -142,18 +146,18 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         int numPreds = newPredLabels.length; //Number of uniq predicates / vocab size
         int numOutcomes = newOutcomeLabels.length;
 
-        display("done.\n");
+        LOGGER.log(Level.INFO, "done.");
 
-        display("\tNumber of Event Tokens: " + numUniqueEvents + "\n");
-        display("\t    Number of Outcomes: " + numOutcomes + "\n");
-        display("\t  Number of Predicates: " + numPreds + "\n");
+        LOGGER.log(Level.INFO, "\tNumber of Event Tokens: " + numUniqueEvents);
+        LOGGER.log(Level.INFO, "\t    Number of Outcomes: " + numOutcomes);
+        LOGGER.log(Level.INFO, "\t  Number of Predicates: " + numPreds);
 
-        display("Computing model parameters...\n");
+        LOGGER.log(Level.INFO, "Computing model parameters...");
 
         MutableContext[] newParameters = findParameters(numOutcomes, outcomeList, contexts, values, numTimesEventsSeen, numPreds);
         mergeInParameters(newParameters, newOutcomeLabels, newPredLabels);
 
-        display("...done.\n");
+        LOGGER.log(Level.INFO, "...done.");
 
         /* Create and return the model ****/
         Context[] finalParameters = parameters.toArray(new Context[parameters.size()]);
