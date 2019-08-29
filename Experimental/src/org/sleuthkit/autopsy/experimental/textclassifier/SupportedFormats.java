@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * Class containing the mime types that are supported by the texxt classifier.
+ * Class containing the mime types that are supported by the text classifier.
  */
-public class SupportedFormats {
+final class SupportedFormats {
 
+    private SupportedFormats() {
+        //This is a utility class that doesn't need to be instantiated.
+    }
+    
     /**
      * Document types for text classification.
      */
@@ -54,10 +58,15 @@ public class SupportedFormats {
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
                     "application/vnd.oasis.opendocument.presentation", //NON-NLS
                     "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
-                    "application/vnd.oasis.opendocument.text" //NON-NLS
+                    "application/vnd.oasis.opendocument.text", //NON-NLS
+                    "message/rfc822" //NON-NLS
             ).build();
 
     public static boolean contains(String mimeType) {
         return DOCUMENT_MIME_TYPES.contains(mimeType);
+    }
+
+    static ImmutableSet<String> getDocumentMIMETypes() {
+        return DOCUMENT_MIME_TYPES;
     }
 }

@@ -157,7 +157,7 @@ public class PlatformUtil {
     public static String getObjectDetectionClassifierPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + CLASSIFIERS_SUBDIRECTORY;
     }
-
+    
     /**
      * get file path to the java executable binary use embedded java if
      * available, otherwise use system java in PATH no validation is done if

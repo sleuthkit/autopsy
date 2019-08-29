@@ -342,7 +342,7 @@ public class Installer extends ModuleInstall {
         File objectDetectionClassifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         objectDetectionClassifierDir.mkdir();
     }
-
+    
     /**
      * Make a folder in the config directory for Python Modules if one does not
      * exist.
