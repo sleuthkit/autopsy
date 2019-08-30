@@ -49,8 +49,8 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
 
     private ArtifactModel model;
     private ArtifactRenderer renderer;
-    private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections;
-    private List<BlackboardArtifact.Type> artifactTypes;
+    private Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections = new HashMap<>();
+    private List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
 
     /**
      * Creates new form ArtifactSelectionDialog
@@ -95,7 +95,8 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
         } catch (TskCoreException ex) {
             Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: {0}", ex.getLocalizedMessage()); //NON-NLS
         } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex.getLocalizedMessage()); //NON-NLS
+            // There may not be a case open, for example when configuring Command Line reports
+            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex.getLocalizedMessage()); //NON-NLS
         }
     }
 

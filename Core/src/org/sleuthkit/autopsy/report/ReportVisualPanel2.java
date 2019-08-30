@@ -291,7 +291,6 @@ final class ReportVisualPanel2 extends JPanel {
             tagStates.put(tag, (selected ? Boolean.TRUE : Boolean.FALSE));
         }
         tagsList.repaint();
-        wizPanel.setFinish(selected);
     }
 
     /**
@@ -414,10 +413,12 @@ final class ReportVisualPanel2 extends JPanel {
 
     private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
         setAllTaggedResultsSelected(true);
+        wizPanel.setFinish(true);
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
         setAllTaggedResultsSelected(false);
+        wizPanel.setFinish(false);
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed

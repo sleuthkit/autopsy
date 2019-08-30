@@ -114,7 +114,7 @@ class PortableCaseReportModuleSettings implements ReportModuleSettings {
     }
 
     boolean isValid() {
-        return ((!setNames.isEmpty()) || (!tagNames.isEmpty()));
+        return ((allTagsSelected || allSetsSelected || (!tagNames.isEmpty()) || (!setNames.isEmpty())));
     }
 
     List<String> getSelectedSetNames() {

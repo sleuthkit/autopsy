@@ -77,7 +77,7 @@ class PortableCaseReportModule implements ReportModule {
     
     private Case currentCase = null;
     private SleuthkitCase portableSkCase = null;
-    private final String caseName;
+    private String caseName;
     private File caseFolder = null;
     private File copiedFilesFolder = null;
     
@@ -100,7 +100,6 @@ class PortableCaseReportModule implements ReportModule {
     private final Map<Long, BlackboardArtifact> oldArtifactIdToNewArtifact = new HashMap<>();
     
     PortableCaseReportModule() {
-        caseName = Case.getCurrentCase().getDisplayName() + " (Portable)"; // NON-NLS
     }
 
     @NbBundle.Messages({
@@ -209,6 +208,7 @@ class PortableCaseReportModule implements ReportModule {
         // Save the current case object
         try {
             currentCase = Case.getCurrentCaseThrows();
+            caseName = currentCase.getDisplayName() + " (Portable)"; // NON-NLS
         } catch (NoCurrentCaseException ex) {
             handleError("Current case has been closed",
                     Bundle.PortableCaseReportModule_generateReport_caseClosed(), null, progressPanel); // NON-NLS
