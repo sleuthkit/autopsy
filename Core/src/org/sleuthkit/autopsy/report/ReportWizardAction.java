@@ -29,9 +29,11 @@ import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.SwingWorker;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
@@ -49,7 +51,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.ReportWizardAction")
 @ActionRegistration(displayName = "#CTL_ReportWizardAction", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 301, separatorAfter = 399),
+    @ActionReference(path = "Menu/Tools", position = 301, separatorAfter = 399)
+    ,
     @ActionReference(path = "Toolbars/Case", position = 105)})
 public final class ReportWizardAction extends CallableSystemAction implements Presenter.Toolbar, ActionListener {
 
@@ -59,14 +62,17 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
     private static final boolean RUN_REPORTS = true;
     private final JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.actionName.text");
+    private static ReportGenerationPanel panel;
 
     /**
      * When the Generate Report button or menu item is selected, open the
      * reporting wizard. When the wizard is finished, create a ReportGenerator
      * with the wizard information, and start all necessary reports.
+     *
      * @param configName Name of the reporting configuration to use
-     * @param displayCaseSpecificData Flag whether to use case specific data in UI panels or to use all possible result types
-     * @param runReports Flag whether to produce report(s) 
+     * @param displayCaseSpecificData Flag whether to use case specific data in
+     * UI panels or to use all possible result types
+     * @param runReports Flag whether to produce report(s)
      */
     @SuppressWarnings("unchecked")
     public static void doReportWizard(String configName, boolean displayCaseSpecificData, boolean runReports) {
@@ -74,37 +80,41 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
-            
+
             // save reporting configuration
             saveReportingConfiguration(configName, wiz);
-                    
+
             if (runReports) {
-                // generate reports
-                ReportGenerator generator = new ReportGenerator(configName, new ReportGenerationPanel()); //NON-NLS
-                generator.generateReports();
+                // generate reports in a separate thread
+                ReportWorker worker = new ReportWorker(() -> {
+                    panel = new ReportGenerationPanel();
+                    ReportGenerator generator = new ReportGenerator(configName, panel); //NON-NLS
+                    generator.generateReports();
+                });
+                worker.execute();
             }
         }
     }
-    
+
     private static void saveReportingConfiguration(String configName, WizardDescriptor wiz) {
 
         ReportingConfig reportingConfig = new ReportingConfig(configName);
         reportingConfig.setFileReportSettings((FileReportSettings) wiz.getProperty("fileReportSettings"));
         reportingConfig.setTableReportSettings((TableReportSettings) wiz.getProperty("tableReportSettings"));
-        
+
         Map<String, ReportModuleConfig> moduleConfigs = (Map<String, ReportModuleConfig>) wiz.getProperty("moduleConfigs");
-        
+
         // update portable case settings
         ReportModuleConfig config = moduleConfigs.get(PortableCaseReportModule.class.getCanonicalName());
         PortableCaseReportModuleSettings portableCaseReportSettings = (PortableCaseReportModuleSettings) wiz.getProperty("portableCaseReportSettings");
         if (portableCaseReportSettings != null) {
             config.setModuleSettings(portableCaseReportSettings);
             moduleConfigs.put(PortableCaseReportModule.class.getCanonicalName(), config);
-        }        
-        
+        }
+
         // set module configs
         reportingConfig.setModuleConfigs(moduleConfigs);
-        
+
         try {
             // save reporting configuration
             ReportingConfigLoader.saveConfig(reportingConfig);
@@ -169,5 +179,32 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
     public void setEnabled(boolean value) {
         super.setEnabled(value);
         toolbarButton.setEnabled(value);
+    }
+
+    private static class ReportWorker extends SwingWorker<Void, Void> {
+
+        private final Runnable doInBackground;
+
+        private ReportWorker(Runnable doInBackground) {
+            this.doInBackground = doInBackground;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            doInBackground.run();
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                panel.getProgressPanel().updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage());
+                logger.log(Level.SEVERE, "failed to generate reports", ex); //NON-NLS
+            } // catch and ignore if we were cancelled
+            catch (java.util.concurrent.CancellationException ex) {
+            }
+        }
     }
 }

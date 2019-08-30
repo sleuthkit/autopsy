@@ -24,12 +24,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Writes progress and status messages to the application log.
  */
-class ReportProgressLogger implements ReportProgressPanel {
+public class ReportProgressLogger implements ReportProgressPanel {
 
     private static final Logger logger = Logger.getLogger(ReportProgressLogger.class.getName());
     private volatile ReportProgressPanel.ReportStatus status;
 
-    ReportProgressLogger() {
+    public ReportProgressLogger() {
         status = ReportStatus.QUEUING;
     }
 
