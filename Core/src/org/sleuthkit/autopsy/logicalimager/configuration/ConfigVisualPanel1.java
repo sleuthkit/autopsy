@@ -22,6 +22,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
+import com.sun.jna.platform.win32.WinDef.DWORD;
+import com.sun.jna.ptr.IntByReference;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -241,10 +243,51 @@ final class ConfigVisualPanel1 extends JPanel {
         firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
     }//GEN-LAST:event_driveListMouseReleasedSelection
 
+    /*
+     * Return the Windows file system name of the drive
+     * @param drive File system drive, should be of the form "C:\"
+     *
+     */
+    @Messages({"ConfigVisualPanel1.unknown=Unknown"})
+    private String getFileSystemName(String drive){
+        char[] lpVolumeNameBuffer = new char[256];
+        DWORD nVolumeNameSize = new DWORD(256);
+        IntByReference lpVolumeSerialNumber = new IntByReference();
+        IntByReference lpMaximumComponentLength = new IntByReference();
+        IntByReference lpFileSystemFlags = new IntByReference();
+
+        char[] lpFileSystemNameBuffer = new char[256];
+        DWORD nFileSystemNameSize = new DWORD(256);
+
+        lpVolumeSerialNumber.setValue(0);
+        lpMaximumComponentLength.setValue(256);
+        lpFileSystemFlags.setValue(0);
+
+        Kernel32.INSTANCE.GetVolumeInformation(
+                drive, 
+                lpVolumeNameBuffer, 
+                nVolumeNameSize, 
+                lpVolumeSerialNumber, 
+                lpMaximumComponentLength, 
+                lpFileSystemFlags, 
+                lpFileSystemNameBuffer, 
+                nFileSystemNameSize);
+        if (Kernel32.INSTANCE.GetLastError() != 0) {
+            logger.log(Level.INFO, String.format("Last error: %d", Kernel32.INSTANCE.GetLastError())); // NON-NLS
+            return Bundle.ConfigVisualPanel1_unknown();
+        }
+
+        String fs = new String(lpFileSystemNameBuffer);
+        return fs.trim();
+    }
+
     /**
      * Refresh the list of local drives on the current machine
      */
-    @Messages({"ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found"})
+    @NbBundle.Messages({
+        "ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found",
+        "ConfigVisualPanel1.fileSystem=File system"
+    })
     private void refreshDriveList() {
         List<String> listData = new ArrayList<>();
         File[] roots = File.listRoots();
@@ -257,7 +300,8 @@ final class ConfigVisualPanel1 extends JPanel {
             String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
             long spaceInBytes = root.getTotalSpace();
             String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
-            listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
+            String fileSystem = getFileSystemName(root.toString());
+            listData.add(root + " (" + description + ") (" + sizeWithUnit + ") - " + Bundle.ConfigVisualPanel1_fileSystem() + ": " + fileSystem);
             if (firstRemovableDrive == -1) {
                 try {
                     FileStore fileStore = Files.getFileStore(root.toPath());
@@ -266,7 +310,7 @@ final class ConfigVisualPanel1 extends JPanel {
                     }
                 } catch (IOException ignored) {
                     //unable to get this removable drive for default selection will try and select next removable drive by default 
-                    logger.log(Level.INFO, "Unable to select first removable drive found", ignored);
+                    logger.log(Level.INFO, String.format("Unable to select first removable drive found %s", root.toString())); // NON-NLS
                 }
             }
             i++;
@@ -431,8 +475,7 @@ final class ConfigVisualPanel1 extends JPanel {
         return UPDATE_UI_EVENT_NAME;
     }
 
-    void setConfigFilename(String filename
-    ) {
+    void setConfigFilename(String filename) {
         configFileTextField.setText(filename);
     }
 
@@ -442,9 +485,11 @@ final class ConfigVisualPanel1 extends JPanel {
      * @return true if panel has valid settings selected, false otherwise
      */
     boolean isPanelValid() {
-        return !StringUtils.isBlank(getConfigPath()) && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
-                || (configureFolderRadioButton.isSelected() && (!configFileTextField.getText().isEmpty())));
-
+        return !StringUtils.isBlank(getConfigPath()) 
+                && (getFileSystemName(getConfigPath().substring(0, 3)).equals("NTFS") // NON-NLS
+                    || getFileSystemName(getConfigPath().substring(0, 3)).equals("exFAT")) // NON-NLS
+                && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
+                    || (configureFolderRadioButton.isSelected() && (!configFileTextField.getText().isEmpty())));
     }
 
     /**
