@@ -50,6 +50,8 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="bnEditIngestSettings" alignment="0" min="-2" pref="155" max="-2" attributes="0"/>
                           <Component id="jLabelBaselineConfig" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabelReportConfig" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="bnEditReportSettings" alignment="0" min="-2" pref="155" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace pref="1362" max="32767" attributes="0"/>
                   </Group>
@@ -62,7 +64,11 @@
                       <Component id="jLabelBaselineConfig" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="bnEditIngestSettings" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="442" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="jLabelReportConfig" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="bnEditReportSettings" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="376" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -90,6 +96,29 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.jLabelBaselineConfig.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabelReportConfig">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.jLabelReportConfig.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="bnEditReportSettings">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditReportSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditReportSettings.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditReportSettings.actionCommand" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnEditReportSettingsActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>
