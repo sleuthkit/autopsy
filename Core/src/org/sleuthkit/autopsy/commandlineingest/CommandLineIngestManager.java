@@ -60,13 +60,15 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
+import org.sleuthkit.autopsy.report.ReportProgressLogger;
+import org.sleuthkit.autopsy.report.ReportGenerator;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Allows Autopsy to be invoked with a command line arguments. Causes Autopsy to
- * create a case, add a specified data source, run ingest on that data source,
- * produce a CASE/UCO report and exit.
+ * create a case, add a specified data source, run ingest on that data source, 
+ * list all data source in a case, generate reports.
  */
 public class CommandLineIngestManager {
 
@@ -257,6 +259,30 @@ public class CommandLineIngestManager {
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
                                     OutputGenerator.listAllDataSources(caseForJob, outputDirPath);
+                                } catch (CaseActionException ex) {
+                                    String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                    LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
+                                    System.err.println("Error opening case in case directory: " + caseDirPath);
+                                    // Do not process any other commands
+                                    return;
+                                }
+                                break;
+
+                            case GENERATE_REPORTS:
+                                try {
+                                    LOGGER.log(Level.INFO, "Processing 'Generate Reports' command");
+                                    System.out.println("Processing 'Generate Reports' command");
+                                    Map<String, String> inputs = command.getInputs();
+
+                                    // open the case, if it hasn't been already opened by previous command
+                                    if (caseForJob == null) {
+                                        String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                        openCase(caseDirPath);
+                                    }
+
+                                    // generate reports
+                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.REPORTING_CONFIGURATION_NAME, new ReportProgressLogger()); //NON-NLS
+                                    generator.generateReports();
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
