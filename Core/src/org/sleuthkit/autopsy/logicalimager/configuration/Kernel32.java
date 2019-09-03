@@ -28,12 +28,12 @@ import com.sun.jna.win32.W32APITypeMapper;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
+/**
  * Windows Kernel32 interface
  */
 public interface Kernel32 extends StdCallLibrary {
 
-    Map<String, Object> WIN32API_OPTIONS = new HashMap<String, Object>() {
+    static Map<String, Object> WIN32API_OPTIONS = new HashMap<String, Object>() {
         private static final long serialVersionUID = 1L;
         {
             put(Library.OPTION_FUNCTION_MAPPER, W32APIFunctionMapper.UNICODE);
