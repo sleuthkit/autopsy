@@ -284,8 +284,6 @@ final class AddLogicalImageTask implements Runnable {
         "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}"
     })
     private void addInterestingFiles(File src, Path resultsPath, boolean createVHD) throws IOException, TskCoreException {
-        Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
-        Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                       new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
@@ -309,23 +307,9 @@ final class AddLogicalImageTask implements Runnable {
                 String ruleName = fields[5];
 //                String description = fields[6];
                 String filename = fields[7];
+                String parentPath = fields[8];
 
-                String query;
-                String targetImagePath;
-                if (createVHD) {
-                    targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
-                    Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
-                    if (dataSourceObjId == null) {
-                        throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
-                    }
-                    query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
-                        dataSourceObjId.toString(), fileMetaAddressStr, filename.replace("'", "''"));
-                } else {
-                    String parentPath = fields[8];
-                    parentPath = "/" + ROOT_STR + "/" + vhdFilename + "/" + parentPath;
-                    query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
-                        filename.replace("'", "''"), parentPath.replace("'", "''"));
-                }
+                String query = makeQuery(createVHD, vhdFilename, fileMetaAddressStr, parentPath, filename);
 
                 // TODO - findAllFilesWhere should SQL-escape the query
                 List<AbstractFile> matchedFiles = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(query);
@@ -430,4 +414,24 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
+    String makeQuery(boolean createVHD, String vhdFilename, String fileMetaAddressStr, String parentPath, String filename) throws TskCoreException {
+        String query;
+        if (createVHD) {
+            Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
+            Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
+            String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
+            Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
+            if (dataSourceObjId == null) {
+                throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
+            }
+            query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
+                    dataSourceObjId.toString(), fileMetaAddressStr, filename.replace("'", "''"));
+        } else {
+            parentPath = "/" + ROOT_STR + "/" + vhdFilename + "/" + parentPath;
+            query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
+                    filename.replace("'", "''"), parentPath.replace("'", "''"));
+        }
+        return query;
+    }
+    
 }
