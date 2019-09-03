@@ -22,8 +22,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
-import com.sun.jna.platform.win32.WinDef.DWORD;
-import com.sun.jna.ptr.IntByReference;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -31,7 +29,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -249,36 +251,15 @@ final class ConfigVisualPanel1 extends JPanel {
      *
      */
     @Messages({"ConfigVisualPanel1.unknown=Unknown"})
-    private String getFileSystemName(String drive){
-        char[] lpVolumeNameBuffer = new char[256];
-        DWORD nVolumeNameSize = new DWORD(256);
-        IntByReference lpVolumeSerialNumber = new IntByReference();
-        IntByReference lpMaximumComponentLength = new IntByReference();
-        IntByReference lpFileSystemFlags = new IntByReference();
-
-        char[] lpFileSystemNameBuffer = new char[256];
-        DWORD nFileSystemNameSize = new DWORD(256);
-
-        lpVolumeSerialNumber.setValue(0);
-        lpMaximumComponentLength.setValue(256);
-        lpFileSystemFlags.setValue(0);
-
-        Kernel32.INSTANCE.GetVolumeInformation(
-                drive, 
-                lpVolumeNameBuffer, 
-                nVolumeNameSize, 
-                lpVolumeSerialNumber, 
-                lpMaximumComponentLength, 
-                lpFileSystemFlags, 
-                lpFileSystemNameBuffer, 
-                nFileSystemNameSize);
-        if (Kernel32.INSTANCE.GetLastError() != 0) {
-            logger.log(Level.INFO, String.format("Last error: %d", Kernel32.INSTANCE.GetLastError())); // NON-NLS
+    private String getFileSystemName(String drive) {
+        FileSystem fileSystem = FileSystems.getDefault();
+        FileSystemProvider provider = fileSystem.provider();
+        try {
+            FileStore fileStore = provider.getFileStore(Paths.get(drive));
+            return fileStore.type();
+        } catch (IOException ex) {
             return Bundle.ConfigVisualPanel1_unknown();
         }
-
-        String fs = new String(lpFileSystemNameBuffer);
-        return fs.trim();
     }
 
     /**
