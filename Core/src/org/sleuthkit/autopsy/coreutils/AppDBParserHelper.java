@@ -62,9 +62,9 @@ public final class AppDBParserHelper  {
      * 
      * It creates a DeviceAccount instance to use as a self account.
      * 
-     * @param moduleName
-     * @param dbFile
-     * @param accountsType
+     * @param moduleName name module using the helper
+     * @param dbFile database file being parsed by the module
+     * @param accountsType account types created by this module
      * 
      * @throws TskCoreException 
      */
@@ -85,11 +85,11 @@ public final class AppDBParserHelper  {
      * It creates a an account instance with specified type & id and uses it as
      * a self account.
      * 
-     * @param moduleName
-     * @param dbFile
-     * @param accountsType
-     * @param selfAccountType
-     * @param selfAccountId
+     * @param moduleName name module using the helper
+     * @param dbFile database file being parsed by the module
+     * @param accountsType account types created by this module
+     * @param selfAccountType self account type to be created for this module
+     * @param selfAccountId account unique id for the self account
      * 
      * @throws TskCoreException 
      */
@@ -309,7 +309,9 @@ public final class AppDBParserHelper  {
             if (dateTime > 0) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, dateTime));
             }
-            msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_READ_STATUS, moduleName, readStatus));
+            if (readStatus > 0) {
+                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_READ_STATUS, moduleName, readStatus));
+            }
             
             // Add basic attribute, if the correspond value is specified
             if (!StringUtils.isEmpty(messageType)) {

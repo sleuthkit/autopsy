@@ -51,6 +51,9 @@ import sbrowser
 import installedapps
 import oruxmaps
 import operabrowser
+import xender
+import zapya
+import shareit
 
 class AndroidModuleFactory(IngestModuleFactoryAdapter):
 
@@ -97,7 +100,9 @@ class AndroidIngestModule(DataSourceIngestModule):
                      googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(),
                      cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(),
                      sbrowser.SBrowserAnalyzer(), installedapps.InstalledApplicationsAnalyzer(),
-                     oruxmaps.OruxMapsAnalyzer(), operabrowser.OperaAnalyzer()]
+                     oruxmaps.OruxMapsAnalyzer(), operabrowser.OperaAnalyzer(),
+                     xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(),
+                     shareit.ShareItAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 
