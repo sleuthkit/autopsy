@@ -117,6 +117,10 @@ FileSorter.SortingMethod.filetype.displayName=By file type
 FileSorter.SortingMethod.frequency.displayName=By central repo frequency
 FileSorter.SortingMethod.keywordlist.displayName=By keyword list names
 FileSorter.SortingMethod.parent.displayName=By parent path
+# {0} - numberOfInstances
+ImageThumbnailPanel.countLabel.text=Numbber of Instances: {0}
+# {0} - fileSize
+ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes
 ResultsDialog.dialogTitle.text=File search results
 ResultsDialog.exitButton.text=Exit
 ResultsDialog.searchButton.text=Run another search
