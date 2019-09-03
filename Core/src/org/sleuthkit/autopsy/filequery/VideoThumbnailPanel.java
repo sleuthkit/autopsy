@@ -138,7 +138,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     @Messages({"# {0} - fileSize",
         "VideoThumbnailPanel.sizeLabel.text=Size: {0} bytes",
         "# {0} - numberOfInstances",
-        "VideoThumbnailPanel.countLabel.text=Numbber of Instances: {0}"})
+        "VideoThumbnailPanel.countLabel.text=Number of Instances: {0}"})
     @Override
     public Component getListCellRendererComponent(JList<? extends VideoThumbnailsWrapper> list, VideoThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(Bundle.VideoThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));

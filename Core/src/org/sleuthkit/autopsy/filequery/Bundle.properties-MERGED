@@ -173,6 +173,6 @@ ResultsPanel.pageSizeLabel.text=Page size:
 ResultsPanel.instancesList.border.title=Instances
 SearchNode.getName.text=Search Result
 # {0} - numberOfInstances
-VideoThumbnailPanel.countLabel.text=Numbber of Instances: {0}
+VideoThumbnailPanel.countLabel.text=Number of Instances: {0}
 # {0} - fileSize
 VideoThumbnailPanel.sizeLabel.text=Size: {0} bytes
