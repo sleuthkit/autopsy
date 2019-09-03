@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
+import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -551,7 +552,11 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            thumbnailWrapper = new ImageThumbnailWrapper(ImageUtils.getThumbnail(file.getFirstInstance(), ImageUtils.ICON_SIZE_LARGE), file);
+            Image thumbnail = ImageUtils.getThumbnail(file.getFirstInstance(), ImageUtils.ICON_SIZE_LARGE);
+            if (thumbnail == null) {
+                thumbnail = ImageUtils.getDefaultThumbnail();
+            }
+            thumbnailWrapper = new ImageThumbnailWrapper(thumbnail, file);
             return null;
         }
 
