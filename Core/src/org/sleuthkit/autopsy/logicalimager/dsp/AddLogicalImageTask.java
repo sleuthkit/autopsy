@@ -192,7 +192,7 @@ final class AddLogicalImageTask implements Runnable {
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFiles());
                 addExtractedFiles(dest, Paths.get(dest.toString(), resultsFilename), newDataSources);
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingExtractedFiles());
-            } catch (TskCoreException ex) {
+            } catch (IOException | TskCoreException ex) {
                 errorList.add(ex.getMessage());
                 LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex); // NON-NLS
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
@@ -357,7 +357,7 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
-    private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException {
+    private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, IOException {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
         try {
@@ -377,6 +377,7 @@ final class AddLogicalImageTask implements Runnable {
                     }
                     String[] fields = line.split("\t", -1); // NON-NLS
                     if (fields.length != 14) {
+                        rollbackTransaction(trans);
                         throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 14));
                     }
                     String vhdFilename = fields[0];
@@ -412,7 +413,7 @@ final class AddLogicalImageTask implements Runnable {
             trans.commit();
             newDataSources.add(localFilesDataSource);
 
-        } catch (IOException | NumberFormatException | TskCoreException ex) {
+        } catch (NumberFormatException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error adding extracted files", ex); // NON-NLS
             rollbackTransaction(trans);
             throw new TskCoreException("Error adding extracted files", ex);
