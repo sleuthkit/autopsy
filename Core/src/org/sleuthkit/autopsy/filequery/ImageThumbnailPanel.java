@@ -94,7 +94,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     @NbBundle.Messages({"# {0} - fileSize",
         "ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes",
         "# {0} - numberOfInstances",
-        "ImageThumbnailPanel.countLabel.text=Numbber of Instances: {0}"})
+        "ImageThumbnailPanel.countLabel.text=Number of Instances: {0}"})
     @Override
     public Component getListCellRendererComponent(JList<? extends ImageThumbnailWrapper> list, ImageThumbnailWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(Bundle.ImageThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));
