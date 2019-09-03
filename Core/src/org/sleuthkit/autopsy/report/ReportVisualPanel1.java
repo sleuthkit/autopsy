@@ -116,6 +116,8 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         swap(modules, indexOfHTMLReportModule, 0);
         
         // set module configurations
+        selectedIndex = 0;
+        int indx = 0;
         for (ReportModule module : modules) {
             ReportModuleSettings settings = null;
             if (moduleConfigs != null) {
@@ -124,6 +126,12 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
                 if (config != null) {
                     // there is an existing configuration for this module
                     settings = config.getModuleSettings();
+                    
+                    // check if this module is enabled
+                    if (config.isEnabled()) {
+                        // make sure this module is the selected module in the UI panel
+                        selectedIndex = indx;
+                    }
                 }
             }
             if (settings == null) {
@@ -132,12 +140,12 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             }
             // set module configuration
             module.setConfiguration(settings);
+            indx++;
         }
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
         modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));
-        selectedIndex = 0;
         modulesJList.setSelectedIndex(selectedIndex);
     }
 
