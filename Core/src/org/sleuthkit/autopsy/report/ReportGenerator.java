@@ -232,7 +232,7 @@ public class ReportGenerator {
      * Display the progress panels to the user, and add actions to close the
      * parent dialog.
      */
-    private void displayProgressPanel() {
+    void displayProgressPanel() {
         if (reportGenerationPanel == null) {
             return;
         }
@@ -269,7 +269,6 @@ public class ReportGenerator {
             String reportDir = createReportDirectory(generalReportModule);
             setupProgressPanel(generalReportModule, reportDir);
             generalReportModule.generateReport(reportDir, progressPanel);
-            displayProgressPanel();
         }
     }
 
@@ -289,7 +288,6 @@ public class ReportGenerator {
             // finish progress, wrap up
             progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
             errorList = generator.getErrorList();
-            displayProgressPanel();
         }
     }
 
@@ -345,7 +343,6 @@ public class ReportGenerator {
             fileReportModule.endTable();
             fileReportModule.endReport();
             progressPanel.complete(ReportStatus.COMPLETE);
-            displayProgressPanel();
         }
     }
 
@@ -357,7 +354,6 @@ public class ReportGenerator {
             String reportDir = createReportDirectory(portableCaseReportModule);
             setupProgressPanel(portableCaseReportModule, reportDir);
             portableCaseReportModule.generateReport(reportDir, settings, progressPanel);
-            displayProgressPanel();
         }
     }
 

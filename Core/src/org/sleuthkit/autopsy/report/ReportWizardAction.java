@@ -86,12 +86,13 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
 
             if (runReports) {
                 // generate reports in a separate thread
+                panel = new ReportGenerationPanel();
+                ReportGenerator generator = new ReportGenerator(configName, panel); //NON-NLS
                 ReportWorker worker = new ReportWorker(() -> {
-                    panel = new ReportGenerationPanel();
-                    ReportGenerator generator = new ReportGenerator(configName, panel); //NON-NLS
                     generator.generateReports();
                 });
                 worker.execute();
+                generator.displayProgressPanel();
             }
         }
     }
