@@ -77,7 +77,7 @@ class PortableCaseReportModule implements ReportModule {
     
     private Case currentCase = null;
     private SleuthkitCase portableSkCase = null;
-    private String caseName;
+    private String caseName = "";
     private File caseFolder = null;
     private File copiedFilesFolder = null;
     
@@ -171,6 +171,8 @@ class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder",
         "PortableCaseReportModule.generateReport.caseClosed=Current case has been closed",
         "PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items",
+        "PortableCaseReportModule.generateReport.errorReadingTags=Error while reading tags from case database",
+        "PortableCaseReportModule.generateReport.errorReadingSets=Error while reading interesting items sets from case database",
         "PortableCaseReportModule.generateReport.noContentToCopy=No interesting files, results, or tagged items to copy",
         "PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags",
         "PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files",
@@ -216,8 +218,32 @@ class PortableCaseReportModule implements ReportModule {
         } 
         
         // Check that there will be something to copy
-        List<TagName> tagNames = options.getSelectedTagNames();
-        List<String> setNames = options.getSelectedSetNames();
+        List<TagName> tagNames;
+        if (options.isAllTagsSelected()) {
+            try {
+                tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                handleError("Unable to get all tags", 
+                    Bundle.PortableCaseReportModule_generateReport_errorReadingTags(), ex, progressPanel); // NON-NLS
+                return;
+            }
+        } else {
+            tagNames = options.getSelectedTagNames();
+        }
+        
+        List<String> setNames;
+        if (options.isAllSetsSelected()) {
+            try {
+                setNames = getAllInterestingItemsSets();
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                handleError("Unable to get all interesting items sets", 
+                    Bundle.PortableCaseReportModule_generateReport_errorReadingSets(), ex, progressPanel); // NON-NLS
+                return;
+            }
+        } else {
+            setNames = options.getSelectedSetNames();
+        }
+        
         if (tagNames.isEmpty() && setNames.isEmpty()) {  
             handleError("No content to copy", 
                     Bundle.PortableCaseReportModule_generateReport_noContentToCopy(), null, progressPanel); // NON-NLS
@@ -392,6 +418,30 @@ class PortableCaseReportModule implements ReportModule {
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         
     }
+    
+    private List<String> getAllInterestingItemsSets() throws NoCurrentCaseException, TskCoreException {
+
+        // Get the set names in use for the current case.
+        List<String> setNames = new ArrayList<>();
+        Map<String, Long> setCounts;
+
+        // There may not be a case open when configuring report modules for Command Line execution
+        // Get all SET_NAMEs from interesting item artifacts
+        String innerSelect = "SELECT (value_text) AS set_name FROM blackboard_attributes WHERE (artifact_type_id = '"
+                + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + "' OR artifact_type_id = '"
+                + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() + "') AND attribute_type_id = '"
+                + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "'"; // NON-NLS
+
+        // Get the count of each SET_NAME
+        String query = "set_name, count(1) AS set_count FROM (" + innerSelect + ") set_names GROUP BY set_name"; // NON-NLS
+
+        GetInterestingItemSetNamesCallback callback = new GetInterestingItemSetNamesCallback();
+        Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
+        setCounts = callback.getSetCountMap();
+        setNames.addAll(setCounts.keySet());
+        return setNames;
+    }
+            
 
     /**
      * Create the case directory and case database. 
@@ -987,5 +1037,42 @@ class PortableCaseReportModule implements ReportModule {
         }
 
         return exeFile;
+    }
+    
+    /**
+     * Processes the result sets from the interesting item set name query.
+     */
+    static class GetInterestingItemSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+        private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GetInterestingItemSetNamesCallback.class.getName());
+        private final Map<String, Long> setCounts = new HashMap<>();
+        
+        @Override
+        public void process(ResultSet rs) {
+            try {
+                while (rs.next()) {
+                    try {
+                        Long setCount = rs.getLong("set_count"); // NON-NLS
+                        String setName = rs.getString("set_name"); // NON-NLS
+
+                        setCounts.put(setName, setCount);
+                        
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "Unable to get data_source_obj_id or value from result set", ex); // NON-NLS
+                    }
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Failed to get next result for values by datasource", ex); // NON-NLS
+            }
+        }   
+        
+        /**
+         * Gets the counts for each interesting items set
+         * 
+         * @return A map from each set name to the number of items in it
+         */
+        Map<String, Long> getSetCountMap() {
+            return setCounts;
+        }
     }
 }

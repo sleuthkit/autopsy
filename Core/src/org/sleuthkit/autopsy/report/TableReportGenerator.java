@@ -85,8 +85,8 @@ class TableReportGenerator {
     private void getAllExistingTags() throws NoCurrentCaseException, TskCoreException {
         List<String> tagNames = new ArrayList<>();
 
-        // get all possible tag names
-        List<TagName> tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getAllTagNames();
+        // get all tag names from this case
+        List<TagName> tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
 
         String notableString = "";
         for (TagName tagName : tagNamesInUse) {

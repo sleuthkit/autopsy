@@ -23,8 +23,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +33,6 @@ import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
@@ -43,9 +40,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.report.PortableCaseReportModule.GetInterestingItemSetNamesCallback;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -220,43 +217,6 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             }
         }
         return selectedSetNames;
-    }    
-    
-    /**
-     * Processes the result sets from the interesting item set name query.
-     */
-    private static class GetInterestingItemSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
-
-        private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GetInterestingItemSetNamesCallback.class.getName());
-        private final Map<String, Long> setCounts = new HashMap<>();
-        
-        @Override
-        public void process(ResultSet rs) {
-            try {
-                while (rs.next()) {
-                    try {
-                        Long setCount = rs.getLong("set_count"); // NON-NLS
-                        String setName = rs.getString("set_name"); // NON-NLS
-
-                        setCounts.put(setName, setCount);
-                        
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Unable to get data_source_obj_id or value from result set", ex); // NON-NLS
-                    }
-                }
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Failed to get next result for values by datasource", ex); // NON-NLS
-            }
-        }   
-        
-        /**
-         * Gets the counts for each interesting items set
-         * 
-         * @return A map from each set name to the number of items in it
-         */
-        Map<String, Long> getSetCountMap() {
-            return setCounts;
-        }
     }
 
     /**

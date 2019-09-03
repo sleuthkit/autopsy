@@ -33,6 +33,8 @@ PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error cop
 PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
 # {0} - attribute type name
 PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
+PortableCaseReportModule.generateReport.errorReadingSets=Error while reading interesting items sets from case database
+PortableCaseReportModule.generateReport.errorReadingTags=Error while reading tags from case database
 PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items
 PortableCaseReportModule.generateReport.noContentToCopy=No interesting files, results, or tagged items to copy
 # {0} - output folder
