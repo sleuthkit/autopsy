@@ -120,6 +120,12 @@ class PortableCaseReportModule implements ReportModule {
 
     @Override
     public String getRelativeFilePath() {
+        try {
+            caseName = Case.getCurrentCaseThrows().getDisplayName() + " (Portable)"; // NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            // a case may not be open yet
+            return "";
+        }
         return caseName;
     }
     
