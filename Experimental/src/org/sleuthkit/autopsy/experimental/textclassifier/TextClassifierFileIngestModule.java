@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
@@ -53,11 +54,28 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         utils = new TextClassifierUtils();
+        Map<String, Double> categoryToTokenCount;
         try {
             NaiveBayesModel model = TextClassifierUtils.loadModel();
+            categoryToTokenCount = TextClassifierUtils.countTokens(model);
             this.categorizer = new DocumentCategorizerME(new DoccatModel(TextClassifierUtils.LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory()));
         } catch (IOException ex) {
             throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.", ex);
+        }
+
+        LOGGER.log(Level.INFO, "notable token count is {0}", categoryToTokenCount.get(TextClassifierUtils.NOTABLE_LABEL));
+        LOGGER.log(Level.INFO, "nonnotable token count is {0}", categoryToTokenCount.get(TextClassifierUtils.NONNOTABLE_LABEL));
+
+        //Check whether there's enough data
+        final int notableCountMinimum = 50000;
+        final int nonnotableCountMinimum = 100000;
+        double notableCount = categoryToTokenCount.get(TextClassifierUtils.NOTABLE_LABEL);
+        double nonnotableCount = categoryToTokenCount.get(TextClassifierUtils.NONNOTABLE_LABEL);
+        if (notableCount < notableCountMinimum) {
+            throw new IngestModule.IngestModuleException("Need more tokens in notable training data. Have " + notableCount + ", require " + notableCountMinimum);
+        }
+        if (nonnotableCount < nonnotableCountMinimum) {
+            throw new IngestModule.IngestModuleException("Need more tokens in nonnotable training data. Have " + nonnotableCount + ", require " + nonnotableCountMinimum);
         }
 
         try {
@@ -102,7 +120,6 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage(), ex);
             }
-
         }
         return ProcessResult.OK;
     }
