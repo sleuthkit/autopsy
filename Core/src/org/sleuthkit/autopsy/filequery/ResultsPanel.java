@@ -519,26 +519,19 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     private class VideoThumbnailWorker extends SwingWorker<Void, Void> {
 
-        private final ResultFile file;
-        private VideoThumbnailsWrapper thumbnailWrapper;
+        private final VideoThumbnailsWrapper thumbnailWrapper;
 
         VideoThumbnailWorker(ResultFile file) {
-            this.file = file;
+            thumbnailWrapper = new VideoThumbnailsWrapper(new ArrayList<Image>(), new int[4], file);
+            videoThumbnailViewer.addRow(thumbnailWrapper);
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            thumbnailWrapper = FileSearch.getVideoThumbnails(file);
+            FileSearch.getVideoThumbnails(thumbnailWrapper);
+            videoThumbnailViewer.repaint();
             return null;
         }
-
-        @Override
-        protected void done() {
-            if (!isCancelled()) {
-                videoThumbnailViewer.addRow(thumbnailWrapper);
-            }
-        }
-
     }
 
     private class ImageThumbnailWorker extends SwingWorker<Void, Void> {
