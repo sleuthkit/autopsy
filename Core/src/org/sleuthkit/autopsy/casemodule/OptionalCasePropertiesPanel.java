@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Cursor;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -573,7 +572,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                         examinerTextField.getText(), tfExaminerPhoneText.getText(),
                         tfExaminerEmailText.getText(), taNotesText.getText()));
             } catch (CaseActionException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error updating case details", ex);
             }
         }
     }
