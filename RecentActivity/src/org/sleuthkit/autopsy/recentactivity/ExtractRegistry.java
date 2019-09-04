@@ -90,7 +90,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "Progress_Message_Analyze_Registry=Analyzing Registry Files"
 })
 class ExtractRegistry extends Extract {
-    
+
     private static final String USERNAME_KEY = "Username"; //NON-NLS
     private static final String SID_KEY = "SID"; //NON-NLS
     private static final String RID_KEY = "RID"; //NON-NLS
@@ -116,7 +116,7 @@ class ExtractRegistry extends Extract {
     private static final String SERVER_TRUST_ACCOUNT = "Server trust account";
     private static final String ACCOUNT_AUTO_LOCKED = "Account auto locked";
     private static final String PASSWORD_HINT = "Password Hint";
-    
+
     private static final String[] PASSWORD_SETTINGS_FLAGS = {PWD_DOES_NOT_EXPIRE_KEY, PWD_NOT_REQUIRED_KEY};
     private static final String[] ACCOUNT_SETTINGS_FLAGS = {ACCOUNT_AUTO_LOCKED, HOME_DIRECTORY_REQUIRED_KEY, ACCOUNT_DISABLED_KEY};
     private static final String[] ACCOUNT_TYPE_FLAGS = {NORMAL_ACCOUNT_KEY, SERVER_TRUST_ACCOUNT, WORKSTATION_TRUST_ACCOUNT, INTERDOMAIN_TRUST_ACCOUNT_KEY, MNS_LOGON_ACCOUNT_KEY, TEMPORARY_DUPLICATE_ACCOUNT};
@@ -849,7 +849,7 @@ class ExtractRegistry extends Extract {
                         break;
                 }
             } // for
-            
+
             postArtifacts(usbBBartifacts);
             postArtifacts(wifiBBartifacts);
             return true;
@@ -894,17 +894,17 @@ class ExtractRegistry extends Extract {
                 if (line.contains(SECTION_DIVIDER) && previousLine != null && previousLine.contains(userInfoSection)) {
                     readUsers(bufferedReader, userSet);
                 }
-                
-                if(line.contains(SECTION_DIVIDER) && previousLine != null && previousLine.contains("Group Membership Information")) {
-                   groupMap = readGroups(bufferedReader);
+
+                if (line.contains(SECTION_DIVIDER) && previousLine != null && previousLine.contains("Group Membership Information")) {
+                    groupMap = readGroups(bufferedReader);
                 }
-                
+
                 previousLine = line;
                 line = bufferedReader.readLine();
             }
-            Map<String, HashMap<String,String>> userInfoMap = new HashMap<>();
+            Map<String, HashMap<String, String>> userInfoMap = new HashMap<>();
             //load all the user info which was read into a map
-            for (HashMap<String,String> userInfo : userSet) {
+            for (HashMap<String, String> userInfo : userSet) {
                 userInfoMap.put(userInfo.get(SID_KEY), userInfo);
             }
             //get all existing OS account artifacts
@@ -915,7 +915,7 @@ class ExtractRegistry extends Extract {
                     BlackboardAttribute existingUserId = osAccount.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
                     if (existingUserId != null) {
                         String userID = existingUserId.getValueString().trim();
-                        HashMap<String,String> userInfo = userInfoMap.remove(userID);
+                        HashMap<String, String> userInfo = userInfoMap.remove(userID);
                         //if the existing user id matches a user id which we parsed information for check if that information exists and if it doesn't add it
                         if (userInfo != null) {
                             osAccount.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userID), true));
@@ -924,7 +924,7 @@ class ExtractRegistry extends Extract {
                 }
             }
             //add remaining userinfos as accounts;
-            for (HashMap<String, String> userInfo: userInfoMap.values()) {
+            for (HashMap<String, String> userInfo : userInfoMap.values()) {
                 BlackboardArtifact bbart = regAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
                 bbart.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userInfo.get(SID_KEY)), false));
                 // index the artifact for keyword search
@@ -943,183 +943,150 @@ class ExtractRegistry extends Extract {
         }
         return false;
     }
-    
-    Collection<BlackboardAttribute> getAttributesForAccount(HashMap<String,String> userInfo, List<String> groupList, boolean existingUser) throws ParseException {
+
+    /**
+     * Creates the attribute list for the given user information and group list.
+     * 
+     * @param userInfo Map of key\value pairs of user information
+     * @param groupList List of the groups that user belongs
+     * @param existingUser
+     * 
+     * @return List 
+     * 
+     * @throws ParseException 
+     */
+    Collection<BlackboardAttribute> getAttributesForAccount(HashMap<String, String> userInfo, List<String> groupList, boolean existingUser) throws ParseException {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
-        
-        if (! existingUser) {
+
+        if (!existingUser) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
                     getRAModuleName(), userInfo.get(SID_KEY)));
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                this.moduleName, userInfo.get(USERNAME_KEY)));
+                    this.moduleName, userInfo.get(USERNAME_KEY)));
         }
-        
+
         String value = userInfo.get(ACCOUNT_CREATED_KEY);
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                     getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
         }
-        
+
         value = userInfo.get(LAST_LOGIN_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE) ) {
+        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                     getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
         }
-        
+
         value = userInfo.get(LOGIN_COUNT_KEY);
-        if(value != null && !value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
                     getRAModuleName(), Integer.parseInt(value)));
         }
-        
+
         value = userInfo.get(ACCOUNT_TYPE_KEY);
-        if(value != null && !value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE,
                     getRAModuleName(), value));
         }
-        
+
         value = userInfo.get(USER_COMMENT_KEY);
-        if(value != null && !value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                     getRAModuleName(), value));
         }
-        
+
         value = userInfo.get(NAME_KEY);
-        if(value != null && !value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
                     getRAModuleName(), value));
         }
-        
+
         value = userInfo.get(INTERNET_NAME_KEY);
-        if(value != null && !value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
                     getRAModuleName(), value));
         }
-        
+
         value = userInfo.get(FULL_NAME_KEY);
-        if(value != null && !value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DISPLAY_NAME,
                     getRAModuleName(), value));
         }
-        
+
         value = userInfo.get(PWD_RESET_KEY);
-        if(value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
+        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_RESET,
                     getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
         }
-        
+
         value = userInfo.get(PASSWORD_HINT);
-        if(value != null && !value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_HINT,
                     getRAModuleName(), value));
         }
-        
+
         value = userInfo.get(PWD_FAILE_KEY);
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_FAIL,
                     getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
         }
-        
+
         String settingString = "";
-        for (String setting: PASSWORD_SETTINGS_FLAGS) {
+        for (String setting : PASSWORD_SETTINGS_FLAGS) {
             if (userInfo.containsKey(setting)) {
                 settingString += setting + ", ";
             }
         }
-        
+
         if (!settingString.isEmpty()) {
             settingString = settingString.substring(0, settingString.length() - 2);
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
                     getRAModuleName(), settingString));
         }
-        
+
         settingString = "";
-        for (String setting: ACCOUNT_SETTINGS_FLAGS) {
+        for (String setting : ACCOUNT_SETTINGS_FLAGS) {
             if (userInfo.containsKey(setting)) {
                 settingString += setting + ", ";
             }
         }
-        
+
         if (!settingString.isEmpty()) {
             settingString = settingString.substring(0, settingString.length() - 2);
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
                     getRAModuleName(), settingString));
         }
-        
+
         settingString = "";
-        for (String setting: ACCOUNT_TYPE_FLAGS) {
+        for (String setting : ACCOUNT_TYPE_FLAGS) {
             if (userInfo.containsKey(setting)) {
                 settingString += setting + ", ";
             }
         }
-        
+
         if (!settingString.isEmpty()) {
             settingString = settingString.substring(0, settingString.length() - 2);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FLAGS,
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
                     getRAModuleName(), settingString));
-        } 
-        
+        }
+
         if (groupList != null && groupList.size() > 0) {
             String groups = new String();
-            for (String group: groupList) {
+            for (String group : groupList) {
                 groups += group + ", ";
             }
-            groups = groups.substring(0, groups.length() - 2);
+
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GROUPS,
-                getRAModuleName(), groups));
+                    getRAModuleName(), groups.substring(0, groups.length() - 2)));
         }
-        
+
         return bbattributes;
     }
     
-    Map<String, List<String>> readGroups(BufferedReader bufferedReader) throws IOException {
-       HashMap<String, List<String>> groupMap = new HashMap<>();
-       
-       String line = bufferedReader.readLine();
-       
-       int userCount = 0;
-       String groupName = null;
-       
-       while (line != null && !line.contains(SECTION_DIVIDER)) {
-           
-           if(line.contains("Group Name")) {
-               String value = line.replaceAll("Group Name\\s*?:", "").trim();
-               groupName = (value.replaceAll("\\[\\d*?\\]", "")).trim();
-               int startIndex = value.indexOf('[');
-               int endIndex = value.indexOf(']');
-               
-               if(startIndex != -1 && endIndex != -1) {
-                   String countStr = value.substring(startIndex+1, endIndex);
-                   userCount = Integer.parseInt(countStr);
-               }               
-           } else if(line.matches("Users\\s*?:")) {
-                for(int i = 0; i < userCount; i++) {
-                    line = bufferedReader.readLine();
-                    if(line != null) {
-                        String sid = line.trim();
-                        List<String> groupList = groupMap.get(sid);
-                        if(groupList == null) {
-                            groupList = new ArrayList<>();
-                            groupMap.put(sid, groupList);
-                        }
-                        
-                        groupList.add(groupName);
-                    }
-                }
-               
-               groupName = null;
-           }
-           
-           line = bufferedReader.readLine();
-       }
-       
-       return groupMap;
-    }
-
     /**
      * Read the User Information section of the SAM regripper plugin's output
      * and collect user account information from the file.
@@ -1131,7 +1098,7 @@ class ExtractRegistry extends Extract {
      *
      * @throws IOException
      */
-    private void readUsers(BufferedReader bufferedReader, Set<HashMap<String,String>> users) throws IOException {
+    private void readUsers(BufferedReader bufferedReader, Set<HashMap<String, String>> users) throws IOException {
         String line = bufferedReader.readLine();
         //read until end of file or next section divider
         String userName = "";
@@ -1145,12 +1112,12 @@ class ExtractRegistry extends Extract {
                 user_rid = userNameAndIdString.substring(userNameAndIdString.lastIndexOf('['), userNameAndIdString.lastIndexOf(']'));
             } else if (line.contains(SID_KEY) && !userName.isEmpty()) {
                 Map.Entry<String, String> entry = getSAMKeyValue(line);
-                
-                HashMap<String,String> userInfo = new HashMap<>();
+
+                HashMap<String, String> userInfo = new HashMap<>();
                 userInfo.put(USERNAME_KEY, userName);
                 userInfo.put(RID_KEY, user_rid);
                 userInfo.put(entry.getKey(), entry.getValue());
-               
+
                 //continue reading this users information until end of file or a blank line between users
                 line = bufferedReader.readLine();
                 while (line != null && !line.isEmpty()) {
@@ -1159,38 +1126,96 @@ class ExtractRegistry extends Extract {
                     line = bufferedReader.readLine();
                 }
                 users.add(userInfo);
-                
+
                 userName = "";
             }
             line = bufferedReader.readLine();
         }
     }
     
+    /**
+     * Maps the user groups to the sid that are a part of them.
+     * 
+     * @param bufferedReader
+     * 
+     * @return A map if sid and the groups they map too
+     * 
+     * @throws IOException 
+     */
+    Map<String, List<String>> readGroups(BufferedReader bufferedReader) throws IOException {
+        HashMap<String, List<String>> groupMap = new HashMap<>();
+
+        String line = bufferedReader.readLine();
+
+        int userCount = 0;
+        String groupName = null;
+
+        while (line != null && !line.contains(SECTION_DIVIDER)) {
+
+            if (line.contains("Group Name")) {
+                String value = line.replaceAll("Group Name\\s*?:", "").trim();
+                groupName = (value.replaceAll("\\[\\d*?\\]", "")).trim();
+                int startIndex = value.indexOf('[');
+                int endIndex = value.indexOf(']');
+
+                if (startIndex != -1 && endIndex != -1) {
+                    String countStr = value.substring(startIndex + 1, endIndex);
+                    userCount = Integer.parseInt(countStr);
+                }
+            } else if (line.matches("Users\\s*?:")) {
+                for (int i = 0; i < userCount; i++) {
+                    line = bufferedReader.readLine();
+                    if (line != null) {
+                        String sid = line.trim();
+                        List<String> groupList = groupMap.get(sid);
+                        if (groupList == null) {
+                            groupList = new ArrayList<>();
+                            groupMap.put(sid, groupList);
+                        }
+                        groupList.add(groupName);
+                    }
+                }
+                groupName = null;
+            }
+            line = bufferedReader.readLine();
+        }
+        return groupMap;
+    }
+
+    /**
+     * Gets the key value from user account strings of the format
+     * key:value or 
+     * --> value
+     * 
+     * @param line String to parse
+     * 
+     * @return key value pair
+     */
     private Map.Entry<String, String> getSAMKeyValue(String line) {
         int index = line.indexOf(':');
         Map.Entry<String, String> returnValue = null;
         String key = null;
         String value = null;
-        
+
         if (index != -1) {
             key = line.substring(0, index).trim();
             if (index + 1 < line.length()) {
-                value = line.substring(index+1).trim();
+                value = line.substring(index + 1).trim();
             } else {
                 value = "";
             }
-            
+
             return new AbstractMap.SimpleEntry<>(key, value);
-            
+
         } else if (line.contains("-->")) {
             key = line.replace("-->", "").trim();
             value = "true";
         }
-        
+
         if (key != null) {
-           returnValue = new AbstractMap.SimpleEntry<>(key, value);
+            returnValue = new AbstractMap.SimpleEntry<>(key, value);
         }
-        
+
         return returnValue;
     }
 
