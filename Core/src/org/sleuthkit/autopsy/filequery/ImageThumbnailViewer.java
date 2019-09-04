@@ -56,7 +56,7 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
         setLayout(new java.awt.BorderLayout());
 
         thumbnailList.setModel(thumbnailListModel);
-        thumbnailList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        thumbnailList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         thumbnailList.setCellRenderer(new ImageThumbnailPanel());
         thumbnailList.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         thumbnailList.setVisibleRowCount(0);
