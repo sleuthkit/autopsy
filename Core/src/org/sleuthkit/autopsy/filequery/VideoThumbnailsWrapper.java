@@ -28,9 +28,9 @@ import java.util.List;
  */
 final class VideoThumbnailsWrapper {
 
-    private final List<Image> thumbnails;
+    private List<Image> thumbnails;
     private final ResultFile resultFile;
-    private final int[] timeStamps;
+    private int[] timeStamps;
 
     /**
      * Construct a new VideoThumbnailsWrapper.
@@ -77,6 +77,11 @@ final class VideoThumbnailsWrapper {
      */
     List<Image> getThumbnails() {
         return Collections.unmodifiableList(thumbnails);
+    }
+
+    void setThumbnails(List<Image> videoThumbnails, int[] framePositions) {
+        this.thumbnails = videoThumbnails;
+        this.timeStamps = framePositions;
     }
 
 }
