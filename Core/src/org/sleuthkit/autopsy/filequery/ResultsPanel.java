@@ -514,11 +514,6 @@ public class ResultsPanel extends javax.swing.JPanel {
             videoThumbnailViewer.repaint();
             return null;
         }
-
-        @Override
-        protected void done() {
-        }
-
     }
 
     private class InstancesCellRenderer extends DefaultListCellRenderer {
