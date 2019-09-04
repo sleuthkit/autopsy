@@ -267,7 +267,8 @@ final class ConfigVisualPanel1 extends JPanel {
      */
     @NbBundle.Messages({
         "ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found",
-        "ConfigVisualPanel1.fileSystem=File system"
+        "# {0} - root", "# {1} - description", "# {2} - size with unit", "# {3} - file system",
+        "ConfigVisualPanel1.driveListItem={0} ({1}) ({2}) - File system: {3}"
     })
     private void refreshDriveList() {
         List<String> listData = new ArrayList<>();
@@ -282,7 +283,7 @@ final class ConfigVisualPanel1 extends JPanel {
             long spaceInBytes = root.getTotalSpace();
             String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
             String fileSystem = getFileSystemName(root.toString());
-            listData.add(root + " (" + description + ") (" + sizeWithUnit + ") - " + Bundle.ConfigVisualPanel1_fileSystem() + ": " + fileSystem);
+            listData.add(Bundle.ConfigVisualPanel1_driveListItem(root, description, sizeWithUnit, fileSystem));
             if (firstRemovableDrive == -1) {
                 try {
                     FileStore fileStore = Files.getFileStore(root.toPath());
@@ -467,8 +468,8 @@ final class ConfigVisualPanel1 extends JPanel {
      */
     boolean isPanelValid() {
         return !StringUtils.isBlank(getConfigPath()) 
-                && (getFileSystemName(getConfigPath().substring(0, 3)).equals("NTFS") // NON-NLS
-                    || getFileSystemName(getConfigPath().substring(0, 3)).equals("exFAT")) // NON-NLS
+                && !(getFileSystemName(getConfigPath().substring(0, 3)).equals("FAT") // NON-NLS
+                    || getFileSystemName(getConfigPath().substring(0, 3)).equals("FAT32")) // NON-NLS
                 && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
                     || (configureFolderRadioButton.isSelected() && (!configFileTextField.getText().isEmpty())));
     }

@@ -26,8 +26,12 @@ ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration
 # {0} - filename
 ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty
 ConfigVisualPanel1.configurationError=Configuration error
+# {0} - root
+# {1} - description
+# {2} - size with unit
+# {3} - file system
+ConfigVisualPanel1.driveListItem={0} ({1}) ({2}) - File system: {3}
 ConfigVisualPanel1.fileNameExtensionFilter=Configuration JSON File
-ConfigVisualPanel1.fileSystem=File system
 ConfigVisualPanel1.invalidConfigJson=Invalid config JSON: 
 ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found
 ConfigVisualPanel1.selectConfigurationFile=Select location
