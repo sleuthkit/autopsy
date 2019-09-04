@@ -427,9 +427,9 @@ final class AddLogicalImageTask implements Runnable {
             query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
                     dataSourceObjId.toString(), fileMetaAddressStr, filename.replace("'", "''"));
         } else {
-            parentPath = "/" + ROOT_STR + "/" + vhdFilename + "/" + parentPath;
+            String newParentPath = "/" + ROOT_STR + "/" + vhdFilename + "/" + parentPath;
             query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
-                    filename.replace("'", "''"), parentPath.replace("'", "''"));
+                    filename.replace("'", "''"), newParentPath.replace("'", "''"));
         }
         return query;
     }
