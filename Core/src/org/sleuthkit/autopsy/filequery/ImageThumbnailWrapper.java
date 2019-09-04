@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filequery;
 
 import java.awt.Image;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 
 /**
  *
@@ -26,14 +27,19 @@ import java.awt.Image;
  */
 public class ImageThumbnailWrapper {
 
-    private final Image thumbnail;
+    private Image thumbnail;
     private final ResultFile resultFile;
 
-    ImageThumbnailWrapper(Image thumbnail, ResultFile file) {
-        this.thumbnail = thumbnail;
+
+    ImageThumbnailWrapper(ResultFile file) {
+        this.thumbnail = ImageUtils.getDefaultThumbnail();
         this.resultFile = file;
     }
 
+    void setImageThumbnail(Image thumbnail){
+        this.thumbnail = thumbnail;
+    }
+    
     /**
      * Get the ResultFile which represents the image file which the thumbnail
      * was created for.

@@ -529,34 +529,39 @@ public class ResultsPanel extends javax.swing.JPanel {
         @Override
         protected Void doInBackground() throws Exception {
             FileSearch.getVideoThumbnails(thumbnailWrapper);
-            videoThumbnailViewer.repaint();
-            return null;
-        }
-    }
-
-    private class ImageThumbnailWorker extends SwingWorker<Void, Void> {
-
-        private final ResultFile file;
-        private ImageThumbnailWrapper thumbnailWrapper;
-
-        ImageThumbnailWorker(ResultFile file) {
-            this.file = file;
-        }
-
-        @Override
-        protected Void doInBackground() throws Exception {
-            Image thumbnail = ImageUtils.getThumbnail(file.getFirstInstance(), ImageUtils.ICON_SIZE_LARGE);
-            if (thumbnail == null) {
-                thumbnail = ImageUtils.getDefaultThumbnail();
-            }
-            thumbnailWrapper = new ImageThumbnailWrapper(thumbnail, file);
             return null;
         }
 
         @Override
         protected void done() {
             if (!isCancelled()) {
-                imageThumbnailViewer.addFile(thumbnailWrapper);
+                videoThumbnailViewer.repaint();
+            }
+        }
+    }
+
+    private class ImageThumbnailWorker extends SwingWorker<Void, Void> {
+
+        private ImageThumbnailWrapper thumbnailWrapper;
+
+        ImageThumbnailWorker(ResultFile file) {
+            thumbnailWrapper = new ImageThumbnailWrapper(file);
+            imageThumbnailViewer.addFile(thumbnailWrapper);
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            Image thumbnail = ImageUtils.getThumbnail(thumbnailWrapper.getResultFile().getFirstInstance(), ImageUtils.ICON_SIZE_LARGE);
+            if (thumbnail != null) {
+                thumbnailWrapper.setImageThumbnail(thumbnail);
+            }
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            if (!isCancelled()) {
+                imageThumbnailViewer.repaint();
             }
         }
 
