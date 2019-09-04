@@ -29,7 +29,7 @@ import java.util.List;
  */
 final class VideoThumbnailsWrapper {
 
-    private List<Image> thumbnails;
+    private final List<Image> thumbnails;
     private final ResultFile resultFile;
     private int[] timeStamps;
 
