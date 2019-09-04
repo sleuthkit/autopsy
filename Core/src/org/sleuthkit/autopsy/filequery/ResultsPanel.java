@@ -76,7 +76,6 @@ public class ResultsPanel extends javax.swing.JPanel {
         tableViewer = new DataResultViewerTable(explorerManager);
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
-        // Disable manual editing of page size spinner
         videoThumbnailViewer.addListSelectionListener((e) -> {
             if (!e.getValueIsAdjusting()) {
                 populateInstancesList();
@@ -87,13 +86,22 @@ public class ResultsPanel extends javax.swing.JPanel {
                 populateInstancesList();
             }
         });
+        // Disable manual editing of page size spinner
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
 
+    /**
+     * Add a list selection listener to the instances list.
+     *
+     * @param listener The ListSelectionListener to add to the instances list.
+     */
     void addListSelectionListener(ListSelectionListener listener) {
         instancesList.addListSelectionListener(listener);
     }
 
+    /**
+     * Populate the instances list.
+     */
     synchronized void populateInstancesList() {
         SwingUtilities.invokeLater(() -> {
             instancesListModel.removeAllElements();
@@ -106,6 +114,12 @@ public class ResultsPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Get the AbstractFile for the item currently selected in the instances
+     * list.
+     *
+     * @return The AbstractFile which is currently selected.
+     */
     synchronized AbstractFile getSelectedFile() {
         if (instancesList.getSelectedIndex() == -1) {
             return null;
@@ -114,6 +128,13 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Get the list of all instances for the the currently selected item in the
+     * results viewer area.
+     *
+     * @return The list of AbstractFiles which are represented by the item
+     *         selected in the results viewer area.
+     */
     private List<AbstractFile> getInstancesForSelected() {
         if (resultType == FileSearchData.FileType.VIDEO) {
             return videoThumbnailViewer.getInstancesForSelected();
@@ -135,6 +156,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
             imageThumbnailViewer.clearViewer();
+            videoThumbnailViewer.clearViewer();
             tableViewer.resetComponent();
             resultsViewerPanel.remove(imageThumbnailViewer);
             resultsViewerPanel.remove(tableViewer);
@@ -158,6 +180,12 @@ public class ResultsPanel extends javax.swing.JPanel {
         );
     }
 
+    /**
+     * Populate the video thumbnail viewer, cancelling any thumbnails which are
+     * currently being created first.
+     *
+     * @param files The list of ResultFiles to populate the video viewer with.
+     */
     synchronized void populateVideoViewer(List<ResultFile> files) {
         //cancel any unfished thumb workers
         for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
@@ -176,8 +204,13 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Populate the image thumbnail viewer, cancelling any thumbnails which are
+     * currently being created first.
+     *
+     * @param files The list of ResultFiles to populate the image viewer with.
+     */
     synchronized void populateImageViewer(List<ResultFile> files) {
-
         for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
                 thumbWorker.cancel(true);
@@ -517,13 +550,23 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Swing worker to handle the retrieval of video thumbnails and population
+     * of the Video Thumbnail Viewer.
+     */
     private class VideoThumbnailWorker extends SwingWorker<Void, Void> {
 
         private final VideoThumbnailsWrapper thumbnailWrapper;
 
+        /**
+         * Construct a new VideoThumbnailWorker.
+         *
+         * @param file The ResultFile which represents the video file thumbnails
+         *             are being retrieved for.
+         */
         VideoThumbnailWorker(ResultFile file) {
-            thumbnailWrapper = new VideoThumbnailsWrapper(new ArrayList<Image>(), new int[4], file);
-            videoThumbnailViewer.addRow(thumbnailWrapper);
+            thumbnailWrapper = new VideoThumbnailsWrapper(file);
+            videoThumbnailViewer.addVideo(thumbnailWrapper);
         }
 
         @Override
@@ -540,13 +583,23 @@ public class ResultsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Swing worker to handle the retrieval of image thumbnails and population
+     * of the Image Thumbnail Viewer.
+     */
     private class ImageThumbnailWorker extends SwingWorker<Void, Void> {
 
-        private ImageThumbnailWrapper thumbnailWrapper;
+        private final ImageThumbnailWrapper thumbnailWrapper;
 
+        /**
+         * Construct a new ImageThumbnailWorker.
+         *
+         * @param file The ResultFile which represents the image file thumbnails
+         *             are being retrieved for.
+         */
         ImageThumbnailWorker(ResultFile file) {
             thumbnailWrapper = new ImageThumbnailWrapper(file);
-            imageThumbnailViewer.addFile(thumbnailWrapper);
+            imageThumbnailViewer.addImage(thumbnailWrapper);
         }
 
         @Override
@@ -567,6 +620,9 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     }
 
+    /**
+     * Cell renderer for the instances list.
+     */
     private class InstancesCellRenderer extends DefaultListCellRenderer {
 
         private static final long serialVersionUID = 1L;

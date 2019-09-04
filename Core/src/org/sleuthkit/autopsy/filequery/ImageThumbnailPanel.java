@@ -26,8 +26,7 @@ import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
 
 /**
- *
- * @author wschaefer
+ * Class which displays a thumbnail and information for an image file.
  */
 public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<ImageThumbnailWrapper> {
 

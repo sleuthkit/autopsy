@@ -22,24 +22,34 @@ import java.awt.Image;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 
 /**
- *
- * @author wschaefer
+ * Class to wrap all the information necessary for an image thumbnail to be
+ * displayed.
  */
 public class ImageThumbnailWrapper {
 
     private Image thumbnail;
     private final ResultFile resultFile;
 
-
+    /**
+     * Construct a new ImageThumbnailsWrapper.
+     *
+     * @param file The ResultFile which represents the image file which the
+     *             thumbnails were created for.
+     */
     ImageThumbnailWrapper(ResultFile file) {
         this.thumbnail = ImageUtils.getDefaultThumbnail();
         this.resultFile = file;
     }
 
-    void setImageThumbnail(Image thumbnail){
+    /**
+     * Set the image thumbnail which exists.
+     *
+     * @param thumbnail The thumbnail which exists for this file.
+     */
+    void setImageThumbnail(Image thumbnail) {
         this.thumbnail = thumbnail;
     }
-    
+
     /**
      * Get the ResultFile which represents the image file which the thumbnail
      * was created for.

@@ -25,8 +25,8 @@ import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
+ * A JPanel to display image thumbnails.
  *
- * @author wschaefer
  */
 public class ImageThumbnailViewer extends javax.swing.JPanel {
 
@@ -79,7 +79,14 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
     void addListSelectionListener(ListSelectionListener listener) {
         thumbnailList.getSelectionModel().addListSelectionListener(listener);
     }
-
+    
+    /**
+     * Get the list of AbstractFiles which are represented by the selected image
+     * thumbnail.
+     *
+     * @return The list of AbstractFiles which are represented by the selected image
+     * thumbnail.
+     */
     List<AbstractFile> getInstancesForSelected() {
         synchronized (this) {
             if (thumbnailList.getSelectedIndex() == -1) {
@@ -90,13 +97,22 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Clear the list of thumbnails being displayed.
+     */
     void clearViewer() {
         synchronized (this) {
             thumbnailListModel.removeAllElements();
         }
     }
 
-    void addFile(ImageThumbnailWrapper thumbnailWrapper) {
+    /**
+     * Add the thumbnail for an image to the panel.
+     *
+     * @param thumbnailWrapper The object which contains the thumbnail which
+     *                         will be displayed.
+     */
+    void addImage(ImageThumbnailWrapper thumbnailWrapper) {
         synchronized (this) {
             thumbnailListModel.addElement(thumbnailWrapper);
         }

@@ -49,6 +49,13 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
         thumbnailList.getSelectionModel().addListSelectionListener(listener);
     }
 
+    /**
+     * Get the list of AbstractFiles which are represented by the selected Video
+     * thumbnails.
+     *
+     * @return The list of AbstractFiles which are represented by the selected Video
+     * thumbnails.
+     */
     List<AbstractFile> getInstancesForSelected() {
         synchronized (this) {
             if (thumbnailList.getSelectedIndex() == -1) {
@@ -74,7 +81,7 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
      * @param thumbnailWrapper The object which contains the thumbnails which
      *                         will be displayed.
      */
-    void addRow(VideoThumbnailsWrapper thumbnailWrapper) {
+    void addVideo(VideoThumbnailsWrapper thumbnailWrapper) {
         synchronized (this) {
             thumbnailListModel.addElement(thumbnailWrapper);
         }
