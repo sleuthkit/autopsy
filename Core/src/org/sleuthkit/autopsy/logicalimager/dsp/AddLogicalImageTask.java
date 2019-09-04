@@ -217,14 +217,14 @@ final class AddLogicalImageTask implements Runnable {
         try {
             if (createVHD) {
                 // Wait for addMultipleImageTask to finish, via its privateCallback
-                while (privateCallback.inProgress()) {
+                while (privateCallback.isInProgress()) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {
                         // Got the addMultipleImageTask stop (cancel)
                         LOGGER.log(Level.INFO, "AddMultipleImageTask interrupted", ex); // NON-NLS
                         // now wait for addMultipleImageTask to revert and finally callback
-                        while (privateCallback.inProgress()) {
+                        while (privateCallback.isInProgress()) {
                             try {
                                 Thread.sleep(1000);
                             } catch (InterruptedException ex2) {
@@ -296,12 +296,10 @@ final class AddLogicalImageTask implements Runnable {
             multipleImageThread.interrupt();
             addMultipleImageTask.cancelTask();
         }
-        if (!createVHD) {
+        if (!createVHD && !addingInterestingFiles) {
             // Don't delete destination directory once we started adding interesting files.
             // At this point the database and destination directory are complete.
-            if (!addingInterestingFiles) {
-                deleteDestinationDirectory();
-            }
+            deleteDestinationDirectory();
         }
     }
 
@@ -478,6 +476,9 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
+    /**
+     * AddDataSourceCallback private class for adding VHD source 
+     */
     private class AddDataSourceCallback extends DataSourceProcessorCallback {
         private List<String> errorMessages;
         private List<Content> newDataSources;
@@ -510,7 +511,7 @@ final class AddLogicalImageTask implements Runnable {
             return result;
         }
 
-        private boolean inProgress() {
+        private boolean isInProgress() {
             return inProgress;
         }
     }
