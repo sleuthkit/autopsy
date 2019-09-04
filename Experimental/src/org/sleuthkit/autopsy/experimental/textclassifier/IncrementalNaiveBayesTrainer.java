@@ -82,12 +82,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
      * @param modelInputPath
      */
     private void uploadModel(String modelInputPath) throws IOException {
-        NaiveBayesModel initialModel;
-        try (FileReader fr = new FileReader(modelInputPath)) {
-            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
-            reader.checkModelType();
-            initialModel = (NaiveBayesModel) reader.constructModel();
-        }
+        NaiveBayesModel initialModel = TextClassifierUtils.loadModel();
 
         Object[] data = initialModel.getDataStructures();
 

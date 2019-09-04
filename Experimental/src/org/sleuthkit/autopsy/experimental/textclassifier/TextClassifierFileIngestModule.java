@@ -19,9 +19,12 @@
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.logging.Level;
+import opennlp.tools.doccat.DoccatFactory;
+import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
-import org.openide.util.NbBundle.Messages;
+import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Blackboard;
@@ -42,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
 
-    private final static Logger logger = Logger.getLogger(TextClassifierFileIngestModule.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(TextClassifierFileIngestModule.class.getName());
     private Blackboard blackboard;
     private DocumentCategorizerME categorizer;
     private TextClassifierUtils utils;
@@ -50,9 +53,9 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         utils = new TextClassifierUtils();
-
         try {
-            this.categorizer = TextClassifierUtils.loadCategorizer();
+            NaiveBayesModel model = TextClassifierUtils.loadModel();
+            this.categorizer = new DocumentCategorizerME(new DoccatModel(TextClassifierUtils.LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory()));
         } catch (IOException ex) {
             throw new IngestModule.IngestModuleException("Unable to load model for text classifier module.", ex);
         }
@@ -72,8 +75,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
 
         if (file.getSize() > TextClassifierUtils.MAX_FILE_SIZE) {
             //prevent it from allocating gigabytes of memory for extremely large files
-            logger.log(Level.INFO, "Encountered file " + file.getParentPath() + file.getName() + " with object id of "
-                    + file.getId() + " which exceeds max file size of " + TextClassifierUtils.MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
+            LOGGER.log(Level.INFO, "Encountered file {0}{1} with object id of {2} which exceeds max file size of {3} bytes, with a size of {4}", new Object[]{file.getParentPath(), file.getName(), file.getId(), TextClassifierUtils.MAX_FILE_SIZE, file.getSize()});
             return IngestModule.ProcessResult.OK;
         }
 
@@ -81,7 +83,7 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         try {
             isNotable = classify(file);
         } catch (IOException | InitReaderException | NoTextExtractorFound ex) {
-            logger.log(Level.SEVERE, "Exception while categorizing : " + ex.getMessage(), ex);
+            LOGGER.log(Level.SEVERE, "Exception while categorizing : " + ex.getMessage(), ex);
             return ProcessResult.ERROR;
         }
 
@@ -95,10 +97,10 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
                     //Index the artifact for keyword search
                     blackboard.postArtifact(artifact, Bundle.TextClassifierModuleFactory_moduleName_text());
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to post blackboard artifact " + artifact.getArtifactID(), ex);
+                    LOGGER.log(Level.SEVERE, "Unable to post blackboard artifact " + artifact.getArtifactID(), ex);
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage(), ex);
+                LOGGER.log(Level.SEVERE, "TskCoreException in categorizing : " + ex.getMessage(), ex);
             }
 
         }

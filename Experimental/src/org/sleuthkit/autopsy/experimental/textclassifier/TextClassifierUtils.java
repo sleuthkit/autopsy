@@ -145,21 +145,18 @@ class TextClassifierUtils {
     }
 
     /**
-     * Loads a Naive Bayes categorizer from disk.
+     * Loads a Naive Bayes model from disk.
      *
-     * @return the categorizer
+     * @return the model
      * @throws IOException if the model cannot be found on disk, or if the file
      * does not seem to be a model file
      */
-    static DocumentCategorizerME loadCategorizer() throws IOException {
-        ensureTextClassifierFolderExists();
-        FileReader fr = new FileReader(new File(MODEL_PATH));
-        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
-        reader.checkModelType();
-        NaiveBayesModel model = (NaiveBayesModel) reader.constructModel();
-        fr.close();
-        DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory());
-        return new DocumentCategorizerME(doccatModel);
+    static NaiveBayesModel loadModel() throws IOException {
+        try (FileReader fr = new FileReader(MODEL_PATH)) {
+            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
+            reader.checkModelType();
+            return (NaiveBayesModel) reader.constructModel();
+        }
     }
 
     /**
@@ -171,11 +168,11 @@ class TextClassifierUtils {
      */
     static void writeModel(NaiveBayesModel model) throws IOException {
         ensureTextClassifierFolderExists();
-        FileWriter fw = new FileWriter(new File(MODEL_PATH));
-        PlainTextNaiveBayesModelWriter modelWriter;
-        modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
-        modelWriter.persist();
-        fw.close();
+        try (FileWriter fw = new FileWriter(new File(MODEL_PATH))) {
+            PlainTextNaiveBayesModelWriter modelWriter;
+            modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
+            modelWriter.persist();
+        }
     }
 
 }
