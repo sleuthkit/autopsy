@@ -336,16 +336,18 @@ class FileSearch {
     }
 
     /**
-     * Get the video thumbnails for a specified AbstractFile.
+     * Get the video thumbnails for a file which exists in a
+     * VideoThumbnailsWrapper and update the VideoThumbnailsWrapper to include
+     * them.
      *
-     * @param file Video file to generate thumbnails for.
+     * @param thumbnailWrapper the object which contains the file to generate
+     *                         thumbnails for.
      *
-     * @return An object containing the list of video thumbnails, an array of
-     *         their timestamps, and the AbstractFile they were generated for.
      */
     @NbBundle.Messages({"# {0} - file name",
         "FileSearch.genVideoThumb.progress.text=extracting temporary file {0}"})
-    static VideoThumbnailsWrapper getVideoThumbnails(AbstractFile file) {
+    static void getVideoThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
+        AbstractFile file = thumbnailWrapper.getAbstractFile();
         //Currently this method always creates the thumbnails 
         java.io.File tempFile;
         try {
@@ -357,7 +359,8 @@ class FileSearch {
                 0,
                 0,
                 0};
-            return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+            thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+            return;
         }
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
             ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
@@ -370,7 +373,8 @@ class FileSearch {
                         0,
                         0,
                         0};
-                    return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    return;
                 }
                 ContentUtils.writeToFile(file, tempFile, progress, null, true);
             } catch (IOException ex) {
@@ -390,7 +394,8 @@ class FileSearch {
                     0,
                     0,
                     0};
-                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
             }
             double fps = videoFile.get(5); // gets frame per second
             double totalFrames = videoFile.get(7); // gets total frames
@@ -401,7 +406,8 @@ class FileSearch {
                     0,
                     0,
                     0};
-                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
             }
             if (Thread.interrupted()) {
                 int[] framePositions = new int[]{
@@ -409,7 +415,8 @@ class FileSearch {
                     0,
                     0,
                     0};
-                return new VideoThumbnailsWrapper(createDefaultThumbnailList(), framePositions, file);
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
             }
 
             double duration = 1000 * (totalFrames / fps); //total milliseconds
@@ -464,11 +471,13 @@ class FileSearch {
 
                 bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
                 if (Thread.interrupted()) {
-                    return new VideoThumbnailsWrapper(videoThumbnails, framePositions, file);
+
+                    thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
+                    return;
                 }
                 videoThumbnails.add(ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE));
             }
-            return new VideoThumbnailsWrapper(videoThumbnails, framePositions, file);
+            thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
         } finally {
             videoFile.release(); // close the file}
         }

@@ -30,9 +30,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class VideoThumbnailsWrapper {
 
-    private final List<Image> thumbnails;
+    private List<Image> thumbnails;
     private final AbstractFile abstractFile;
-    private final int[] timeStamps;
+    private int[] timeStamps;
 
     /**
      * Construct a new VideoThumbnailsWrapper.
@@ -92,6 +92,11 @@ public class VideoThumbnailsWrapper {
      */
     List<Image> getThumbnails() {
         return Collections.unmodifiableList(thumbnails);
+    }
+
+    void setThumbnails(List<Image> videoThumbnails, int[] framePositions) {
+        this.thumbnails = videoThumbnails;
+        this.timeStamps = framePositions;
     }
 
 }

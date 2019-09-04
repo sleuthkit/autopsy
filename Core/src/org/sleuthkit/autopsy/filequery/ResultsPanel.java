@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,7 +60,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final EamDb centralRepo;
     private int groupSize = 0;
     private PageWorker pageWorker;
-    private final List<SwingWorker> thumbnailWorkers = new ArrayList<>();
+    private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
 
     /**
      * Creates new form ResultsPanel.
@@ -123,7 +124,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     void populateVideoViewer(List<ResultFile> files) {
         //cancel any unfished thumb workers
-        for (SwingWorker thumbWorker : thumbnailWorkers) {
+        for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
                 thumbWorker.cancel(true);
             }
@@ -429,23 +430,23 @@ public class ResultsPanel extends javax.swing.JPanel {
     private class VideoThumbnailWorker extends SwingWorker<Void, Void> {
 
         private final ResultFile file;
-        private VideoThumbnailsWrapper thumbnailWrapper;
+        private final VideoThumbnailsWrapper thumbnailWrapper;
 
         VideoThumbnailWorker(ResultFile file) {
             this.file = file;
+            thumbnailWrapper = new VideoThumbnailsWrapper(new ArrayList<Image>(), new int[4], file.getAbstractFile());
+            videoThumbnailViewer.addRow(thumbnailWrapper);
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            thumbnailWrapper = FileSearch.getVideoThumbnails(file.getAbstractFile());
+            FileSearch.getVideoThumbnails(thumbnailWrapper);
+            videoThumbnailViewer.repaint();
             return null;
         }
 
         @Override
         protected void done() {
-            if (!isCancelled()) {
-                videoThumbnailViewer.addRow(thumbnailWrapper);
-            }
         }
     }
 
