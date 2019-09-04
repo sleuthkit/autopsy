@@ -67,6 +67,8 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     // vocabulary name to a unique integer for more compact memory usage.
     private Map<String, Integer> masterPredMap = new HashMap<>();
 
+    private boolean enoughData = false;
+
     public IncrementalNaiveBayesTrainer() {
         this.setMasterPredLabels(new ArrayList<>());
         this.setMasterOutcomeLabels(new ArrayList<>());
@@ -93,7 +95,6 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         //pmap has the same data as data[0], except it also contains the predicate string.
         Map<String, Context> pmap = (Map<String, Context>) data[1];
         String[] outcomeNames = (String[]) data[2];
-
         this.setMasterOutcomeLabels(Arrays.asList(outcomeNames));
         this.setMasterPredLabels(new ArrayList<>(pmap.keySet()));
         List<MutableContext> paramsList = new ArrayList<>();
@@ -103,6 +104,37 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
             paramsList.add(mutableContext);
         }
         this.setParameters(paramsList);
+
+        enoughData = isEnoughData(paramsList, masterOutcomeLabels);
+    }
+
+    private boolean isEnoughData(List<MutableContext> paramsList, List<String> outcomeNames) {
+        final int notableCountThreshold = 50000;
+        final int nonnotableCountThreshold = 100000;
+
+        Map<String, Double> categoryToTokenCount = new HashMap<>();
+        categoryToTokenCount.put(TextClassifierUtils.NOTABLE_LABEL, 0.0);
+        categoryToTokenCount.put(TextClassifierUtils.NONNOTABLE_LABEL, 0.0);
+
+        for (int predIndex = 0; predIndex < paramsList.size(); predIndex++) {
+            MutableContext context = paramsList.get(predIndex);
+            int outcomeIndex = 0;
+            for (String outcomeName : outcomeNames) {
+                double oldValue = categoryToTokenCount.get(outcomeName);
+                double toAdd = context.getParameters()[outcomeIndex];
+                categoryToTokenCount.put(outcomeName, oldValue + toAdd);
+                outcomeIndex++;
+            }
+        }
+
+        LOGGER.log(Level.INFO, "notable token count is " + categoryToTokenCount.get(TextClassifierUtils.NOTABLE_LABEL));
+        LOGGER.log(Level.INFO, "nonnotable token count is " + categoryToTokenCount.get(TextClassifierUtils.NONNOTABLE_LABEL));
+
+        if (categoryToTokenCount.get(TextClassifierUtils.NOTABLE_LABEL) > notableCountThreshold
+                && categoryToTokenCount.get(TextClassifierUtils.NONNOTABLE_LABEL) > nonnotableCountThreshold) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -204,6 +236,8 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
                 parameters.get(masterPredIndex).updateParameter(masterOutcomeIndex, toAdd);
             }
         }
+
+        enoughData = isEnoughData(parameters, masterOutcomeLabels);
     }
 
     private int getNumOutcomes() {
