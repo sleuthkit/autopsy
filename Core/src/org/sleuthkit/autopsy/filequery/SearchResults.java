@@ -150,8 +150,8 @@ class SearchResults {
      * 
      * @return the grouped and sorted results
      */
-    LinkedHashMap<String, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
-        LinkedHashMap<String, List<ResultFile>> map = new LinkedHashMap<>();
+    Map<String, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
+        Map<String, List<ResultFile>> map = new LinkedHashMap<>();
         
         // Sort the groups and files
         sortGroupsAndFiles();

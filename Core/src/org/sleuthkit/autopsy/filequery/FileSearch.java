@@ -116,7 +116,7 @@ class FileSearch {
 
         // Sort and group the results
         searchResults.sortGroupsAndFiles();
-        LinkedHashMap<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
+        Map<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
         for (String groupName : resultHashMap.keySet()) {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
@@ -251,7 +251,7 @@ class FileSearch {
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         searchResults.add(resultFiles);
-        LinkedHashMap<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
+        Map<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
         for (String groupName : resultHashMap.keySet()) {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
