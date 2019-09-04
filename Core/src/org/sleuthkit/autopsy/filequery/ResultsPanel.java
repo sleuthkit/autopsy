@@ -429,11 +429,9 @@ public class ResultsPanel extends javax.swing.JPanel {
 
     private class VideoThumbnailWorker extends SwingWorker<Void, Void> {
 
-        private final ResultFile file;
         private final VideoThumbnailsWrapper thumbnailWrapper;
 
         VideoThumbnailWorker(ResultFile file) {
-            this.file = file;
             thumbnailWrapper = new VideoThumbnailsWrapper(new ArrayList<Image>(), new int[4], file.getAbstractFile());
             videoThumbnailViewer.addRow(thumbnailWrapper);
         }
@@ -445,9 +443,6 @@ public class ResultsPanel extends javax.swing.JPanel {
             return null;
         }
 
-        @Override
-        protected void done() {
-        }
     }
 
 }
