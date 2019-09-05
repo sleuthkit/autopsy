@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.FileReportDataTypes;
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModuleSettings;
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModule;
+import org.sleuthkit.autopsy.report.modules.file.FileReportDataTypes;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModuleSettings;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModule;
 import org.sleuthkit.autopsy.report.NoReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportModule;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;

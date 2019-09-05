@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModuleSettings;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModuleSettings;
 import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -41,7 +41,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModule.GetInterestingItemSetNamesCallback;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModule.GetInterestingItemSetNamesCallback;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;

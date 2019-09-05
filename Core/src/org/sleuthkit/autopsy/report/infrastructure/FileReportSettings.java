@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.FileReportDataTypes;
+import org.sleuthkit.autopsy.report.modules.file.FileReportDataTypes;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;

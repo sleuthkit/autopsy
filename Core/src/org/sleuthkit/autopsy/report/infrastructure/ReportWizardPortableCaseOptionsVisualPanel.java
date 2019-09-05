@@ -18,14 +18,14 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModuleSettings;
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModule;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModuleSettings;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModule;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import java.awt.GridLayout;
 import java.util.Map;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModuleSettings.ChunkSize;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModuleSettings.ChunkSize;
 
 /**
  * The UI portion of the Portable Case config panel

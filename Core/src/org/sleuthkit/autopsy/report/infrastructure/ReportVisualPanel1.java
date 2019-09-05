@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModule;
-import org.sleuthkit.autopsy.report.modules.ReportHTML;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModule;
+import org.sleuthkit.autopsy.report.modules.html.ReportHTML;
 import org.sleuthkit.autopsy.report.ReportModule;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.GeneralReportModule;

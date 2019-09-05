@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.PortableCaseReportModuleSettings;
+import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModuleSettings;
 import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
