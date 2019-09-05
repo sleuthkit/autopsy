@@ -85,8 +85,7 @@ public class BingTranslatorTest {
 //        /*
 //        //It's unrealistic to expect the same answer every time, but sometimes
 //        //it's helpful to have this in your debug process.
-//        System.out.println(translation);
-//        assertEquals(expectedTranslation, translation);
+//        assertEquals("Result did not match expected result", expectedTranslation, translation);
 //        */
 //    }
 }
