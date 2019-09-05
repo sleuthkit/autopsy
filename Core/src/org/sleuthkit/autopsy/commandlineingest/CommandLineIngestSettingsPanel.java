@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.report.ReportWizardAction.doReportWizard;
+import static org.sleuthkit.autopsy.report.infrastructure.ReportWizardAction.doReportWizard;
 
 /**
  * Configuration panel for auto ingest settings.

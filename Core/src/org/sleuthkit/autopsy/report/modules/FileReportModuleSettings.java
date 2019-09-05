@@ -16,18 +16,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report;
+package org.sleuthkit.autopsy.report.modules;
 
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 
 /**
- * Implementation of the ReportModuleSettings interface for use by report
- * modules that do not have settings.
+ * Settings for the File report module.
  */
-public final class NoReportModuleSettings implements ReportModuleSettings {
+class FileReportModuleSettings implements ReportModuleSettings {
 
     private static final long serialVersionUID = 1L;
-    private final String setting = "None"; //NON-NLS
+    
+    enum ReportType {
+        TAB_DELIMITED,
+        COMA_DELIMITED
+    }
+    private final ReportType type;
+
+    /**
+     * Default File report module settings. Default to tab delimited since it
+     * was previously the only option.
+     */
+    FileReportModuleSettings() {
+        this.type = ReportType.TAB_DELIMITED;
+    }
+
+    FileReportModuleSettings(ReportType type) {
+        this.type = type;
+    }
 
     @Override
     public long getVersionNumber() {
@@ -35,12 +51,11 @@ public final class NoReportModuleSettings implements ReportModuleSettings {
     }
 
     /**
-     * Gets the string used as a report options placeholder for serialization
-     * purposes.
+     * Get type of the report.
      *
-     * @return The string "None"
+     * @return Type of the report.
      */
-    String getSetting() {
-        return setting;
+    ReportType getReportType() {
+        return type;
     }
 }

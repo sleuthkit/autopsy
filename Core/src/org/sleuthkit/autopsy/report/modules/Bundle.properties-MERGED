@@ -1,0 +1,129 @@
+OpenIDE-Module-Name=Report
+PortableCaseReportModule.compressCase.canceled=Compression canceled by user
+PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case
+# {0} - Temp folder path
+PortableCaseReportModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}
+PortableCaseReportModule.compressCase.errorFinding7zip=Could not locate 7-Zip executable
+# {0} - File name
+PortableCaseReportModule.copyContentToPortableCase.copyingFile=Copying file {0}
+# {0} - case folder
+PortableCaseReportModule.createCase.caseDirExists=Case folder {0} already exists
+PortableCaseReportModule.createCase.errorCreatingCase=Error creating case
+# {0} - folder
+PortableCaseReportModule.createCase.errorCreatingFolder=Error creating folder {0}
+PortableCaseReportModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
+PortableCaseReportModule.generateReport.caseClosed=Current case has been closed
+PortableCaseReportModule.generateReport.compressingCase=Compressing case...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingFiles=Copying files tagged as {0}...
+PortableCaseReportModule.generateReport.copyingTags=Copying tags...
+PortableCaseReportModule.generateReport.creatingCase=Creating portable case database...
+PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
+PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files
+PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files
+PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results
+PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
+# {0} - attribute type name
+PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
+PortableCaseReportModule.generateReport.errorReadingSets=Error while reading interesting items sets from case database
+PortableCaseReportModule.generateReport.errorReadingTags=Error while reading tags from case database
+PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items
+PortableCaseReportModule.generateReport.noContentToCopy=No interesting files, results, or tagged items to copy
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
+PortableCaseReportModule.generateReport.verifying=Verifying selected parameters...
+PortableCaseReportModule.getDescription.description=Copies selected items to a new single-user case that can be easily shared
+PortableCaseReportModule.getName.name=Portable Case
+ReportExcel.exceptionMessage.dataTooLarge=Value is too long to fit into an Excel cell. 
+ReportExcel.exceptionMessage.errorText=Error showing data into an Excel cell.
+ReportExcel.writeSummary.caseName=Case Name:
+ReportExcel.writeSummary.caseNotes=Case Notes:
+ReportExcel.writeSummary.caseNum=Case Number:
+ReportExcel.writeSummary.examiner=Examiner:
+ReportExcel.writeSummary.numImages=Number of Images:
+ReportExcel.writeSummary.sheetName=Summary
+ReportExcel.writeSummary.summary=Summary
+ReportHTML.writeSum.case=Case:
+ReportHTML.writeSum.caseNotes=Notes:
+ReportHTML.writeSum.caseNumber=Case Number:
+ReportHTML.writeSum.caseNumImages=Number of Images:
+ReportHTML.writeSum.examiner=Examiner:
+ReportHTMLConfigurationPanel.headerLabel.text=Header:
+ReportHTMLConfigurationPanel.footerTextField.text=
+ReportHTMLConfigurationPanel.headerTextField.text=
+ReportHTMLConfigurationPanel.footerLabel.text=Footer:
+ReportFileTextConfigurationPanel.tabDelimitedButton.text=Tab delimited
+ReportFileTextConfigurationPanel.commaDelimitedButton.text=Comma delimited
+FileReportText.getName.text=Files - Text
+FileReportText.getDesc.text=A delimited text file containing information about individual files in the case.
+ReportBodyFile.progress.querying=Querying files...
+ReportBodyFile.ingestWarning.text=Warning, this report was run before ingest services completed\!
+ReportBodyFile.progress.loading=Loading files...
+ReportBodyFile.progress.processing=Now processing {0}...
+ReportBodyFile.getName.text=TSK Body File
+ReportBodyFile.getDesc.text=Body file format report with MAC times for every file. This format can be used for a timeline view.
+ReportBodyFile.getFilePath.text=BodyFile.txt
+ReportKML.progress.querying=Querying files...
+ReportKML.progress.loading=Loading files...
+ReportKML.getName.text=Google Earth KML
+ReportKML.getDesc.text=KML format report with coordinates for relevant files. This format can be used for google earth views.
+ReportKML.getFilePath.text=ReportKML.kml
+ReportExcel.numAartifacts.text=Number of artifacts:
+ReportExcel.getName.text=Excel Report
+ReportExcel.getDesc.text=A report about results and tagged items in Excel (XLS) format.
+ReportExcel.sheetName.text=Summary
+ReportExcel.cellVal.summary=Summary
+ReportExcel.cellVal.caseName=Case Name:
+ReportExcel.cellVal.caseNum=Case Number:
+ReportExcel.cellVal.examiner=Examiner:
+ReportExcel.cellVal.numImages=Number of Images:
+ReportHTML.addThumbRows.dataType.title=Tagged Images - {0}
+ReportHTML.addThumbRows.dataType.msg=Tagged Results and Contents that contain images.
+ReportHTML.thumbLink.tags=Tags:
+ReportHTML.getName.text=HTML Report
+ReportHTML.getDesc.text=A report about results and tagged items in HTML format.
+ReportHTML.writeIndex.title=for case {0}
+ReportHTML.writeIndex.noFrames.msg=Your browser is not compatible with our frame setup.
+ReportHTML.writeIndex.noFrames.seeNav=Please see <a href\="content\nav.html">the navigation page</a> for artifact links,
+ReportHTML.writeIndex.seeSum=and <a href\="content\summary.html">the summary page</a> for a case summary.
+ReportHTML.writeNav.title=Report Navigation
+ReportHTML.writeNav.h1=Report Navigation
+ReportHTML.writeNav.summary=Case Summary
+ReportHTML.writeSum.title=Case Summary
+ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed\!</span>
+#
+# autopsy/test/scripts/regression.py._html_report_diff() uses reportGenOn.text, caseName, caseNum, 
+# examiner as a regex signature to skip report.html and summary.html
+#
+ReportHTML.writeSum.reportGenOn.text=HTML Report Generated on {0}
+ReportHTML.writeSum.imageInfoHeading=<h2>Image Information:</h2>
+ReportHTML.writeSum.softwareInfoHeading=<h2>Software Information:</h2>
+ReportHTML.writeSum.ingestHistoryHeading=<h2>Ingest History:</h2>
+ReportHTML.writeSum.modulesEnabledHeading=Enabled Modules:
+ReportHTML.writeSum.autopsyVersion=Autopsy Version:
+ReportHTML.writeSum.timezone=Timezone:
+ReportHTML.writeSum.path=Path:
+ReportBodyFile.generateReport.srcModuleName.text=TSK Body File
+ReportExcel.endReport.srcModuleName.text=Excel Report
+ReportHTML.writeIndex.srcModuleName.text=HTML Report
+ReportKML.genReport.srcModuleName.text=Geospatial Data
+ReportKML.genReport.reportName=KML Report
+ReportKML.latLongStartPoint={0};{1};;{2} (Start)\n
+ReportKML.latLongEndPoint={0};{1};;{2} (End)\n
+FileReportDataTypes.filename.text=Name
+FileReportDataTypes.fileExt.text=File Extension
+FileReportDataTypes.fileType.text=File Type
+FileReportDataTypes.isDel.text=Is Deleted
+FileReportDataTypes.aTime.text=Last Accessed
+FileReportDataTypes.crTime.text=File Created
+FileReportDataTypes.mTime.text=Last Modified
+FileReportDataTypes.size.text=Size
+FileReportDataTypes.address.text=Address
+FileReportDataTypes.hash.text=Hash Value
+FileReportDataTypes.knownStatus.text=Known Status
+FileReportDataTypes.perms.text=Permissions
+FileReportDataTypes.path.text=Full Path

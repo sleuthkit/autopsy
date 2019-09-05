@@ -16,31 +16,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report;
-
-import org.sleuthkit.autopsy.report.ReportModuleSettings;
+package org.sleuthkit.autopsy.report.infrastructure;
 
 /**
- * Implementation of the ReportModuleSettings interface for use by report
- * modules that do not have settings.
+ * Instances of this exception class are thrown when there is an error during
+ * serialization and deserialization of a reporting configuration.
  */
-public final class NoReportModuleSettings implements ReportModuleSettings {
+final class ReportConfigException extends Exception {
 
     private static final long serialVersionUID = 1L;
-    private final String setting = "None"; //NON-NLS
 
-    @Override
-    public long getVersionNumber() {
-        return serialVersionUID;
+    /**
+     * Constructs a new exception with the specified message.
+     *
+     * @param message The message.
+     */
+    public ReportConfigException(String message) {
+        super(message);
     }
 
     /**
-     * Gets the string used as a report options placeholder for serialization
-     * purposes.
+     * Constructs a new exception with the specified message and cause.
      *
-     * @return The string "None"
+     * @param message The message.
+     * @param cause The cause.
      */
-    String getSetting() {
-        return setting;
+    public ReportConfigException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

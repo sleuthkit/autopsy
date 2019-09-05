@@ -16,31 +16,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report;
+package org.sleuthkit.autopsy.report.modules;
 
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 
 /**
- * Implementation of the ReportModuleSettings interface for use by report
- * modules that do not have settings.
+ * Settings for the HTML report module.
  */
-public final class NoReportModuleSettings implements ReportModuleSettings {
-
+class HTMLReportModuleSettings implements ReportModuleSettings {
+    
     private static final long serialVersionUID = 1L;
-    private final String setting = "None"; //NON-NLS
-
+    
+    private String header;
+    private String footer;
+    
+    HTMLReportModuleSettings() {
+        this.header = "";
+        this.footer = "";
+    }
+    
+    HTMLReportModuleSettings(String header, String footer) {
+        this.header = header;
+        this.footer = footer;
+    }
+    
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
     }
+    
+    /**
+     * @return the header
+     */
+    String getHeader() {
+        return header;
+    }
 
     /**
-     * Gets the string used as a report options placeholder for serialization
-     * purposes.
-     *
-     * @return The string "None"
+     * @param header the header to set
      */
-    String getSetting() {
-        return setting;
+    void setHeader(String header) {
+        this.header = header;
+    }
+
+    /**
+     * @return the footer
+     */
+    String getFooter() {
+        return footer;
+    }
+
+    /**
+     * @param footer the footer to set
+     */
+    void setFooter(String footer) {
+        this.footer = footer;
     }
 }

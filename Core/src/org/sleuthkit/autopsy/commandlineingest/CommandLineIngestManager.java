@@ -60,8 +60,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
-import org.sleuthkit.autopsy.report.ReportProgressLogger;
-import org.sleuthkit.autopsy.report.ReportGenerator;
+import org.sleuthkit.autopsy.report.infrastructure.ReportProgressLogger;
+import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
