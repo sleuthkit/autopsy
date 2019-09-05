@@ -174,7 +174,6 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
                     Image icon = (Image) item.getClass().getMethod("getIcon").invoke(item);
                     setGraphic(new ImageView(icon));
                 } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-//                    Exceptions.printStackTrace(ex);
                     setText(item.toString());
                     setGraphic(null);
                 }

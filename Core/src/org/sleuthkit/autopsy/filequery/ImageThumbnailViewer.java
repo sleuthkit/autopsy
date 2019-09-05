@@ -50,7 +50,7 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        thumbnailListScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JScrollPane thumbnailListScrollPane = new javax.swing.JScrollPane();
         thumbnailList = new javax.swing.JList<>();
 
         setLayout(new java.awt.BorderLayout());
@@ -68,7 +68,6 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JList<ImageThumbnailWrapper> thumbnailList;
-    private javax.swing.JScrollPane thumbnailListScrollPane;
     // End of variables declaration//GEN-END:variables
 
     /**

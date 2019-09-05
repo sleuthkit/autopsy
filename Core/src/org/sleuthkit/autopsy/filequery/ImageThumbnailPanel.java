@@ -49,7 +49,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        thumbnailPanel = new javax.swing.JPanel();
+        javax.swing.JPanel thumbnailPanel = new javax.swing.JPanel();
         thumbnailLabel = new javax.swing.JLabel();
         fileSizeLabel = new javax.swing.JLabel();
         countLabel = new javax.swing.JLabel();
@@ -87,7 +87,6 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     private javax.swing.JLabel countLabel;
     private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JLabel thumbnailLabel;
-    private javax.swing.JPanel thumbnailPanel;
     // End of variables declaration//GEN-END:variables
 
     @NbBundle.Messages({"# {0} - fileSize",

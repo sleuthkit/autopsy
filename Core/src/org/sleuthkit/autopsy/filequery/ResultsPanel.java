@@ -155,12 +155,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             populateInstancesList();
             currentPage = pageRetrievedEvent.getPageNumber();
             updateControls();
-            imageThumbnailViewer.clearViewer();
-            videoThumbnailViewer.clearViewer();
-            tableViewer.resetComponent();
-            resultsViewerPanel.remove(imageThumbnailViewer);
-            resultsViewerPanel.remove(tableViewer);
-            resultsViewerPanel.remove(videoThumbnailViewer);
+            resetResultViewer();
             if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
                 populateImageViewer(pageRetrievedEvent.getSearchResults());
                 resultsViewerPanel.add(imageThumbnailViewer);
@@ -176,17 +171,22 @@ public class ResultsPanel extends javax.swing.JPanel {
                     tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
                 }
             }
+            resultsViewerPanel.revalidate();
+            resultsViewerPanel.repaint();
         }
         );
     }
 
     /**
-     * Populate the video thumbnail viewer, cancelling any thumbnails which are
-     * currently being created first.
-     *
-     * @param files The list of ResultFiles to populate the video viewer with.
+     * Reset the result viewer and any associate workers to a default empty
+     * state.
      */
-    synchronized void populateVideoViewer(List<ResultFile> files) {
+    private synchronized void resetResultViewer() {
+        resultsViewerPanel.remove(imageThumbnailViewer);
+        tableViewer.resetComponent();
+        resultsViewerPanel.remove(tableViewer);
+        resultsViewerPanel.remove(videoThumbnailViewer);
+
         //cancel any unfished thumb workers
         for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
             if (!thumbWorker.isDone()) {
@@ -196,6 +196,16 @@ public class ResultsPanel extends javax.swing.JPanel {
         //clear old thumbnails
         thumbnailWorkers.clear();
         videoThumbnailViewer.clearViewer();
+        imageThumbnailViewer.clearViewer();
+    }
+
+    /**
+     * Populate the video thumbnail viewer, cancelling any thumbnails which are
+     * currently being created first.
+     *
+     * @param files The list of ResultFiles to populate the video viewer with.
+     */
+    synchronized void populateVideoViewer(List<ResultFile> files) {
         for (ResultFile file : files) {
             VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
             thumbWorker.execute();
@@ -211,14 +221,6 @@ public class ResultsPanel extends javax.swing.JPanel {
      * @param files The list of ResultFiles to populate the image viewer with.
      */
     synchronized void populateImageViewer(List<ResultFile> files) {
-        for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
-            if (!thumbWorker.isDone()) {
-                thumbWorker.cancel(true);
-            }
-        }
-        //clear old thumbnails
-        thumbnailWorkers.clear();
-        imageThumbnailViewer.clearViewer();
         for (ResultFile file : files) {
             ImageThumbnailWorker thumbWorker = new ImageThumbnailWorker(file);
             thumbWorker.execute();
@@ -313,9 +315,9 @@ public class ResultsPanel extends javax.swing.JPanel {
         javax.swing.JLabel gotoPageLabel = new javax.swing.JLabel();
         gotoPageField = new javax.swing.JTextField();
         javax.swing.JLabel pageSizeLabel = new javax.swing.JLabel();
-        resultsSplitPane = new javax.swing.JSplitPane();
-        instancesPanel = new javax.swing.JPanel();
-        instancesScrollPane = new javax.swing.JScrollPane();
+        javax.swing.JSplitPane resultsSplitPane = new javax.swing.JSplitPane();
+        javax.swing.JPanel instancesPanel = new javax.swing.JPanel();
+        javax.swing.JScrollPane instancesScrollPane = new javax.swing.JScrollPane();
         instancesList = new javax.swing.JList<>();
         resultsViewerPanel = new javax.swing.JPanel();
 
@@ -540,13 +542,10 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JTextField gotoPageField;
     private javax.swing.JList<AbstractFile> instancesList;
-    private javax.swing.JPanel instancesPanel;
-    private javax.swing.JScrollPane instancesScrollPane;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JSpinner pageSizeSpinner;
     private javax.swing.JPanel pagingPanel;
     private javax.swing.JButton previousPageButton;
-    private javax.swing.JSplitPane resultsSplitPane;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
 
@@ -577,9 +576,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
-            if (!isCancelled()) {
-                videoThumbnailViewer.repaint();
-            }
+            videoThumbnailViewer.repaint();
         }
     }
 
@@ -613,9 +610,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
-            if (!isCancelled()) {
-                imageThumbnailViewer.repaint();
-            }
+            imageThumbnailViewer.repaint();
         }
 
     }

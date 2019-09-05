@@ -101,25 +101,29 @@ public class Server {
                 return "image_id"; //NON-NLS
             }
         },
-        // This is not stored or index . it is copied to Text and Content_Ws
+        // This is not stored or indexed. it is copied to text by the schema
         CONTENT {
             @Override
             public String toString() {
                 return "content"; //NON-NLS
             }
         },
+        // String representation for regular expression searching
         CONTENT_STR {
             @Override
             public String toString() {
                 return "content_str"; //NON-NLS
             }
         },
+        // default search field.  Populated by schema
         TEXT {
             @Override
             public String toString() {
                 return "text"; //NON-NLS
             }
         },
+        // no longer populated.  Was used for regular expression searching.
+        // Should not be used. 
         CONTENT_WS {
             @Override
             public String toString() {
@@ -132,28 +136,28 @@ public class Server {
                 return "file_name"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         CTIME {
             @Override
             public String toString() {
                 return "ctime"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         ATIME {
             @Override
             public String toString() {
                 return "atime"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         MTIME {
             @Override
             public String toString() {
                 return "mtime"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         CRTIME {
             @Override
             public String toString() {
