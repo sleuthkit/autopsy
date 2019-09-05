@@ -656,11 +656,16 @@ class FileSearch {
      */
     private static class ParentPathGroupKey extends GroupKey {
 
-        private final String parentPath;
+        private String parentPath;
 
         ParentPathGroupKey(ResultFile file) {
             if (file.getFirstInstance().getParentPath() != null) {
-                parentPath = file.getFirstInstance().getParentPath();
+
+                try {
+                    parentPath = file.getFirstInstance().getParent().getUniquePath();
+                } catch (TskCoreException ingored) {
+                    parentPath = file.getFirstInstance().getParentPath();
+                }
             } else {
                 parentPath = ""; // NON-NLS
             }
