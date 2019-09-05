@@ -27,6 +27,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -170,9 +171,21 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         }
         File src = imageDirPath.toFile();
 
+        try {
+            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_copyingImageFromTo(src.toString(), dest.toString()));
+            FileUtils.copyDirectory(src, dest);
+            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneCopying());
+        } catch (IOException ex) {
+            // Copy directory failed
+            String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
+            errorList.add(msg);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
+        
         // Get all VHD files in the src directory
         List<String> imagePaths = new ArrayList<>();
-        for (File f : src.listFiles()) {
+        for (File f : dest.listFiles()) {
             if (f.getName().endsWith(".vhd")) {
                 try {
                     imagePaths.add(f.getCanonicalPath());
@@ -194,7 +207,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
             errorList.add(msg);
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,6 @@ public class StartupWindowProvider implements StartupWindowInterface {
             if (isRunningFromCommandLine()) {
                 // Autopsy is running from command line
                 logger.log(Level.INFO, "Running from command line"); //NON-NLS
-                System.out.println("Running from command line");
                 startupWindowToUse = new CommandLineStartupWindow();
                 // kick off command line processing
                 new CommandLineIngestManager().start();
