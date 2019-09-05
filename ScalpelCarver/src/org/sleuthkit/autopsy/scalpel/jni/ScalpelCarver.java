@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,11 +79,9 @@ public class ScalpelCarver {
             success = true;
         } catch (UnsatisfiedLinkError ex) {
             String msg = NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.loadLib.errMsg.cannotLoadLib", id);
-            System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         } catch (Exception ex) {
             String msg = NbBundle.getMessage(ScalpelCarver.class, "ScalpelCarver.loadLib.errMsg.cannotLoadLib2", id);
-            System.out.println(msg + ex.toString());
             logger.log(Level.SEVERE, msg, ex);
         }
 

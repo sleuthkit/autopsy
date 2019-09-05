@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-18 Basis Technology Corp.
+ * Copyright 2011-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
@@ -197,7 +196,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                         }
 
                     } catch (IllegalAccessException | InvocationTargetException ex) {
-                        Exceptions.printStackTrace(ex);
+                        logger.log(Level.WARNING, "Error getting value for thumbnail children", ex);
                     }
                 }
             }
