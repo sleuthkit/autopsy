@@ -60,12 +60,14 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
     
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
     private final PortableCaseReportModuleSettings settings;
+    private final boolean useCaseSpecificData;
     
     /**
      * Creates new form PortableCaseListPanel
      */
-    PortableCaseTagsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModuleSettings options) {
+    PortableCaseTagsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModuleSettings options, boolean useCaseSpecificData) {
         this.wizPanel = wizPanel;
+        this.useCaseSpecificData = useCaseSpecificData;
         this.settings = options;
         initComponents();
         customizeComponents();
@@ -95,18 +97,23 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
     private void customizeComponents() {
         // Get the tag names in use for the current case.
         tagNames = new ArrayList<>();
+        Map<Long, Long> tagCountsByID = new HashMap<>();
         try {
-            // There may not be a case open when configuring report modules for Command Line execution
-            tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
-      
-            // Get the counts for each tag ID
-            String query = "tag_name_id, count(1) AS tag_count " + 
-                        "FROM (" + 
-                        "SELECT tag_name_id FROM content_tags UNION ALL SELECT tag_name_id FROM blackboard_artifact_tags" + 
-                        ") tag_ids GROUP BY tag_name_id"; // NON-NLS
-            GetTagCountsCallback callback = new GetTagCountsCallback();
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
-            Map<Long, Long> tagCountsByID = callback.getTagCountMap();        
+            // only try to load tag names if we are displaying case specific data, otherwise
+            // we will be displaying case specific data in command line wizard if there is 
+            // a case open in the background
+            if (useCaseSpecificData) {
+                tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+
+                // Get the counts for each tag ID
+                String query = "tag_name_id, count(1) AS tag_count "
+                        + "FROM ("
+                        + "SELECT tag_name_id FROM content_tags UNION ALL SELECT tag_name_id FROM blackboard_artifact_tags"
+                        + ") tag_ids GROUP BY tag_name_id"; // NON-NLS
+                GetTagCountsCallback callback = new GetTagCountsCallback();
+                Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
+                tagCountsByID = callback.getTagCountMap();
+            }
 
             // Mark the tag names as unselected. Note that tagNameSelections is a
             // LinkedHashMap so that order is preserved and the tagNames and tagNameSelections

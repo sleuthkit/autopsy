@@ -60,12 +60,14 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
     private final PortableCaseReportModuleSettings settings;
+    private final boolean useCaseSpecificData;
     
     /**
      * Creates new form PortableCaseListPanel
      */
-    PortableCaseInterestingItemsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModuleSettings options) {
+    PortableCaseInterestingItemsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModuleSettings options, boolean useCaseSpecificData) {
         this.wizPanel = wizPanel;
+        this.useCaseSpecificData = useCaseSpecificData;
         this.settings = options;
         initComponents();
         customizeComponents();
@@ -98,26 +100,31 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         // Get the set names in use for the current case.
         setNames = new ArrayList<>();
         setCounts = new HashMap<>();
-        try {
-            // There may not be a case open when configuring report modules for Command Line execution
-            // Get all SET_NAMEs from interesting item artifacts
-            String innerSelect = "SELECT (value_text) AS set_name FROM blackboard_attributes WHERE (artifact_type_id = '" + 
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + "' OR artifact_type_id = '" +
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() + "') AND attribute_type_id = '" + 
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "'"; // NON-NLS
-            
-            // Get the count of each SET_NAME
-            String query = "set_name, count(1) AS set_count FROM (" + innerSelect + ") set_names GROUP BY set_name"; // NON-NLS
-            
-            GetInterestingItemSetNamesCallback callback = new GetInterestingItemSetNamesCallback();
-            Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
-            setCounts = callback.getSetCountMap();
-            setNames.addAll(setCounts.keySet());
-        } catch (TskCoreException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex); // NON-NLS
-        } catch (NoCurrentCaseException ex) {
-            // There may not be a case open when configuring report modules for Command Line execution
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); // NON-NLS
+        
+        // only try to load tag names if we are displaying case specific data, otherwise
+        // we will be displaying case specific data in command line wizard if there is 
+        // a case open in the background
+        if (useCaseSpecificData) {
+            try {
+                // Get all SET_NAMEs from interesting item artifacts
+                String innerSelect = "SELECT (value_text) AS set_name FROM blackboard_attributes WHERE (artifact_type_id = '"
+                        + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + "' OR artifact_type_id = '"
+                        + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() + "') AND attribute_type_id = '"
+                        + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "'"; // NON-NLS
+
+                // Get the count of each SET_NAME
+                String query = "set_name, count(1) AS set_count FROM (" + innerSelect + ") set_names GROUP BY set_name"; // NON-NLS
+
+                GetInterestingItemSetNamesCallback callback = new GetInterestingItemSetNamesCallback();
+                Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
+                setCounts = callback.getSetCountMap();
+                setNames.addAll(setCounts.keySet());
+            } catch (TskCoreException ex) {
+                Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex); // NON-NLS
+            } catch (NoCurrentCaseException ex) {
+                // There may not be a case open when configuring report modules for Command Line execution
+                Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); // NON-NLS
+            }
         }
         Collections.sort(setNames);
 

@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.infrastructure.ReportingConfigLoader;
-import org.sleuthkit.autopsy.report.infrastructure.ReportConfigException;
-import org.sleuthkit.autopsy.report.infrastructure.ReportingConfig;
 import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
@@ -74,12 +71,12 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             firstPanel = new ReportWizardPanel1(config.getModuleConfigs());
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, config.getTableReportSettings());
             fileConfigPanel = new ReportWizardFileOptionsPanel(config.getFileReportSettings());
-            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs());
+            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs(), useCaseSpecificData);
         } else {
             firstPanel = new ReportWizardPanel1(null);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, null);
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
-            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null);
+            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null, useCaseSpecificData);
         }
 
         allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};

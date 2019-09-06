@@ -36,12 +36,14 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
     private PortableCaseReportModuleSettings settings = null;
     private Map<String, ReportModuleConfig> moduleConfigs;
+    private final boolean useCaseSpecificData;
     
     /**
      * Creates new form ReportWizardPortableCaseOptionsVisualPanel
      */
-    ReportWizardPortableCaseOptionsVisualPanel(ReportWizardPortableCaseOptionsPanel wizPanel, Map<String, ReportModuleConfig> moduleConfigs) {
+    ReportWizardPortableCaseOptionsVisualPanel(ReportWizardPortableCaseOptionsPanel wizPanel, Map<String, ReportModuleConfig> moduleConfigs, boolean useCaseSpecificData) {
         this.wizPanel = wizPanel;
+        this.useCaseSpecificData = useCaseSpecificData;
         this.moduleConfigs = moduleConfigs;
         initComponents();
         customizeComponents();
@@ -86,8 +88,8 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         
         // initialize other panels and pass them the settings
         listPanel.setLayout(new GridLayout(1,2));
-        listPanel.add(new PortableCaseTagsListPanel(wizPanel, settings));
-        listPanel.add(new PortableCaseInterestingItemsListPanel(wizPanel, settings));
+        listPanel.add(new PortableCaseTagsListPanel(wizPanel, settings, useCaseSpecificData));
+        listPanel.add(new PortableCaseInterestingItemsListPanel(wizPanel, settings, useCaseSpecificData));
     }
     
     @NbBundle.Messages({

@@ -37,9 +37,11 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
     private ReportWizardPortableCaseOptionsVisualPanel component;
     private final JButton finishButton;
     private Map<String, ReportModuleConfig> moduleConfigs;
+    private final boolean useCaseSpecificData;
 
-    ReportWizardPortableCaseOptionsPanel(Map<String, ReportModuleConfig> moduleConfigs) {
+    ReportWizardPortableCaseOptionsPanel(Map<String, ReportModuleConfig> moduleConfigs, boolean useCaseSpecificData) {
         this.moduleConfigs = moduleConfigs;
+        this.useCaseSpecificData = useCaseSpecificData;
         finishButton = new JButton(
                 NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
         finishButton.setEnabled(false);
@@ -69,7 +71,7 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
     @Override
     public ReportWizardPortableCaseOptionsVisualPanel getComponent() {
         if (component == null) {
-            component = new ReportWizardPortableCaseOptionsVisualPanel(this, moduleConfigs);
+            component = new ReportWizardPortableCaseOptionsVisualPanel(this, moduleConfigs, useCaseSpecificData);
         }
         return component;
     }

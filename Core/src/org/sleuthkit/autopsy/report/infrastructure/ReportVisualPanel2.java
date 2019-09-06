@@ -146,7 +146,8 @@ final class ReportVisualPanel2 extends JPanel {
         // by user. We should read tag names from the database each time.
         try {
             // only try to load tag names if we are displaying case specific data, otherwise
-            // there may not be a case open.
+            // we will be displaying case specific data in command line wizard if there is 
+            // a case open in the background
             if (useCaseSpecificData) {
                 // get tags and artifact types from current case
                 tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
