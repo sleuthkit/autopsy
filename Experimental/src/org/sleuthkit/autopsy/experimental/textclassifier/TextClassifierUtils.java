@@ -37,12 +37,10 @@ import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
-import opennlp.tools.sentdetect.NewlineSentenceDetector;
 import opennlp.tools.sentdetect.SentenceDetector;
 import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
 import org.apache.commons.io.IOUtils;
-import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -72,9 +70,9 @@ class TextClassifierUtils {
     static final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
     static final String LANGUAGE_CODE = "en";
     static final String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
-    
+
     private static SentenceDetector sentenceDetector;
-        
+
     TextClassifierUtils() throws IngestModuleException {
         try {
             this.fileTypeDetector = new FileTypeDetector();
@@ -156,37 +154,26 @@ class TextClassifierUtils {
     private static String[] cleanAndTokenize(String text) throws IOException {
         //Initialize the sentenceDetector if that hasn't been done yet.
         if (sentenceDetector == null) {
-            sentenceDetector = new NewlineSentenceDetector();
             //Define the sentence detector, trained on the train section of the EWT corpus, from Universal Dependencies
             final File sentenceModelFile = new File("C:\\cygwin64\\home\\Brian Kjersten\\repos\\git\\autopsy\\Experimental\\src\\resources\\en-sent-ewt.bin");
             //final File sentenceModelFile = InstalledFileLocator.getDefault().locate("doc_summary_models/en-sent-ewt.bin", TextClassifierUtils.class.getPackage().getName(), false); //NON-NLS
             if (sentenceModelFile == null) {
                 throw new IOException("Error finding sentence detector module");
             }
-            sentenceDetector = new SentenceDetectorME(new SentenceModel(new FileInputStream(sentenceModelFile)));
+            sentenceDetector = new NewlineHeuristicSentenceDetector(new SentenceDetectorME(new SentenceModel(new FileInputStream(sentenceModelFile))));
         }
-        
-        //TODO: Delete this
-        //System.out.println("***** START OF FILE *****");
-        
         ArrayList<String> tokens = new ArrayList<>();
         String[] sentences = sentenceDetector.sentDetect(text);
         for (String sentence : sentences) {
             //Tokenize the file.
             String[] sentenceTokens = TOKENIZER.tokenize(sentence);
-            if (sentenceTokens.length > 7) {
+            ArrayList<String> tokensToKeep = new ArrayList<>();
+            if (sentenceTokens.length > 5) {
                 tokens.addAll(Arrays.asList(sentenceTokens));
-                
-                //TODO: Delete this
-                //System.out.println(sentence);
             }
         }
-        //TODO: Delete this        
-        //System.out.println("****** END OF FILE ******");
-        return tokens.toArray(new String[0]);
     }
-    
-    
+
     /**
      * Loads a Naive Bayes categorizer from disk.
      *
