@@ -72,25 +72,6 @@ public final class AppSQLiteDB implements Closeable {
    
     /**
      * Looks for the given SQLIte database filename, with matching path substring. 
-     * It makes a copy of each matching file, and creates an instance of 
-     * AppSQLiteDB to help query the DB. 
-     * 
-     * A list of AppSQLiteDB instances is returned, one for each 
-     * match found., 
-     * .
-     * @param dataSource data source to search in 
-     * @param dbName db file name to search
-     * @param parentPathSubstr path substring to match
-     * 
-     * @return AbstractFile for the DB if the database file is found.
-     *         Returns NULL if no such database is found.
-     */
-   public static Collection<AppSQLiteDB> findAppDatabases(DataSource dataSource, String dbName, String parentPathSubstr) {
-       return AppSQLiteDB.findAppDatabases(dataSource, dbName, false, parentPathSubstr);
-   }
-   
-    /**
-     * Looks for the given SQLIte database filename, with matching path substring. 
      * It looks for exact name or a pattern match based on 
      * It makes a copy of each matching file, and creates an instance of 
      * AppSQLiteDB to help query the DB. 
@@ -100,13 +81,13 @@ public final class AppSQLiteDB implements Closeable {
      * .
      * @param dataSource data source to search in 
      * @param dbName db file name to search
-     * @param matchPattern whether to look for a pattern match or an exact match
+     * @param matchExactName whether to look for exact file name or a pattern match
      * @param parentPathSubstr path substring to match
      * 
      * @return AbstractFile for the DB if the database file is found.
      *         Returns NULL if no such database is found.
      */
-    public static Collection<AppSQLiteDB> findAppDatabases(DataSource dataSource, String dbName, boolean matchPattern, String parentPathSubstr) {
+    public static Collection<AppSQLiteDB> findAppDatabases(DataSource dataSource, String dbName, boolean matchExactName, String parentPathSubstr) {
         
         List<AppSQLiteDB> appDbs = new ArrayList<> ();
         Case openCase;
@@ -126,10 +107,10 @@ public final class AppSQLiteDB implements Closeable {
             String parentPath = parentPathSubstr.replace("\\", "/");
             parentPath = SleuthkitCase.escapeSingleQuotes(parentPath);
             String whereClause;
-            if (matchPattern) {
-                whereClause = String.format("LOWER(name) LIKE LOWER(\'%%%1$s%%\') AND LOWER(name) NOT LIKE LOWER(\'%%journal%%\') AND LOWER(parent_path) LIKE LOWER(\'%%%2$s%%\') AND data_source_obj_id = " + dataSource.getId(), dbName, parentPath);
-            } else {
+            if (matchExactName) {
                 whereClause = String.format("LOWER(name) LIKE LOWER(\'%1$s\') AND LOWER(parent_path) LIKE LOWER(\'%%%2$s%%\') AND data_source_obj_id = " + dataSource.getId(), dbName, parentPath);
+            } else {
+                whereClause = String.format("LOWER(name) LIKE LOWER(\'%%%1$s%%\') AND LOWER(name) NOT LIKE LOWER(\'%%journal%%\') AND LOWER(parent_path) LIKE LOWER(\'%%%2$s%%\') AND data_source_obj_id = " + dataSource.getId(), dbName, parentPath);
             }
             absFiles = skCase.findAllFilesWhere(whereClause);
             for (AbstractFile absFile : absFiles) {

@@ -55,7 +55,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         selfAccountId = None
-        accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", "com.imo.android.imous")
+        accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", True, "com.imo.android.imous")
         for accountDb in accountDbs:
             try:
                 accountResultSet = accountDb.runQuery("SELECT uid, name FROM account")
@@ -71,7 +71,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
             finally:
                 accountDb.close()
                         
-        friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", "com.imo.android.imous")
+        friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", True, "com.imo.android.imous")
         for friendsDb in friendsDbs:
             try:
                 friendsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(),
@@ -79,40 +79,52 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
-                        friendsDBHelper.addContact( contactsResultSet.getString("name"),  ## name for account
+                        friendsDBHelper.addContact( contactsResultSet.getString("buid"),  ##  unique id for account
                                                     contactsResultSet.getString("name"),  ## contact name
                                                     "", 	## phone
                                                     "", 	## home phone
                                                     "", 	## mobile
                                                     "")	        ## email
-                queryString = "SELECT imdata, last_message, timestamp, message_type, message_read, name FROM messages "\
+                queryString = "SELECT messages.buid AS buid, imdata, last_message, timestamp, message_type, message_read, name FROM messages "\
                                   "INNER JOIN friends ON friends.buid = messages.buid"
                 messagesResultSet = friendsDb.runQuery(queryString)
                 if messagesResultSet is not None:
                     while messagesResultSet.next():
                         direction = ""
                         fromAddress = None
-                        toAdddress = None
+                        toAddress = None
+                        name = messagesResultSet.getString("name")
+                        uniqueId = messagesResultSet.getString("buid")
+
                         if (messagesResultSet.getInt("message_type") == 1):
                             direction = "Incoming"
-                            fromAddress = messagesResultSet.getString("name")
+                            fromAddress = Account.Address(uniqueId, name)
                         else:
                             direction = "Outgoing"
-                            toAddress = messagesResultSet.getString("name")
+                            toAddress = Account.Address(uniqueId, name)
+                        
+                        
+                        message_read = messagesResultSet.getInt("message_read")
+                        if (message_read == 1):
+                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.READ
+                        elif (message_read == 0):
+                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.UNREAD
+                        else:
+                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.UNKNOWN
                                                 
                         timeStamp = messagesResultSet.getLong("timestamp") / 1000000000
+
+
                         messageArtifact = friendsDBHelper.addMessage( 
-                                                            contactsResultSet.getString("name"),
                                                             "IMO Message",
                                                             direction,
                                                             fromAddress,
                                                             toAddress,
                                                             timeStamp,
-                                                            messagesResultSet.getInt("message_read"),
-                                                            "", 
+                                                            msgReadStatus,
+                                                            "",     # subject
                                                             messagesResultSet.getString("last_message"),
-                                                            "", 
-                                                            "" )
+                                                            "")   # thread id
                                                                                                 
                         # TBD: parse the imdata JSON structure to figure out if there is an attachment.
                         #      If one exists, add the attachment as a derived file and a child of the message artifact.

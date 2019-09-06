@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -45,6 +47,16 @@ public final class AppDBParserHelper  {
     
     private static final Logger logger = Logger.getLogger(AppDBParserHelper.class.getName());
     
+    /**
+     * Enum for message read status
+     */
+    public enum MessageReadStatusEnum {
+
+        UNKNOWN,    /// read status is unknown
+        UNREAD,     /// message has not been read
+        READ        /// message has been read
+    }
+        
     private final AbstractFile dbAbstractFile;
     private final String moduleName;
     
@@ -253,11 +265,10 @@ public final class AppDBParserHelper  {
      * Also creates an account instance for the sender/receiver, and creates a 
      * relationship between the self account and the sender/receiver account.
      * 
-     * @param otherAccountUniqueID unique id for the sender/receiver account
      * @param messageType message type
      * @param direction message direction
-     * @param fromAddress sender address, may be empty
-     * @param toAddress recipient address, may be empty
+     * @param fromAddress sender address, may be null
+     * @param toAddress recipient address, may be null
      * @param dateTime date/time of message, 
      * @param readStatus message read or not
      * @param subject message subject, may be empty
@@ -266,10 +277,13 @@ public final class AppDBParserHelper  {
      * 
      * @return message artifact 
      */
-    public BlackboardArtifact addMessage(String otherAccountUniqueID, 
-                                         String messageType, String direction, String fromAddress, String toAddress, 
-                                         long dateTime, int readStatus, String subject, String messageText, String threadId) {
-        return addMessage(otherAccountUniqueID, messageType,  direction,  
+    public BlackboardArtifact addMessage( 
+                                String messageType, String direction, 
+                                Account.Address fromAddress, 
+                                Account.Address toAddress, 
+                                long dateTime, MessageReadStatusEnum readStatus, 
+                                String subject, String messageText, String threadId) {
+        return addMessage(messageType,  direction,  
                           fromAddress,  toAddress, dateTime,  readStatus,  
                           subject, messageText,  threadId, 
                           Collections.<BlackboardAttribute>emptyList());
@@ -281,7 +295,6 @@ public final class AppDBParserHelper  {
      * Also creates an account instance for the sender/receiver, and creates a 
      * relationship between the self account and the sender/receiver account.
      * 
-     * @param otherAccountUniqueID unique id for the sender/receiver account
      * @param messageType message type
      * @param direction message direction
      * @param fromAddress sender address, may be empty
@@ -296,12 +309,75 @@ public final class AppDBParserHelper  {
      * 
      * @return message artifact
      */
-    public BlackboardArtifact addMessage(String otherAccountUniqueID, 
-                                        String messageType, String direction, String fromAddress, 
-                                        String toAddress, long dateTime, int readStatus, String subject, 
-                                        String messageText, String threadId,
-                                        Collection<BlackboardAttribute> otherAttributesList) {
+    public BlackboardArtifact addMessage( String messageType, String direction, 
+                                Account.Address fromAddress, 
+                                Account.Address toAddress, 
+                                long dateTime, MessageReadStatusEnum readStatus, String subject, 
+                                String messageText, String threadId,
+                                Collection<BlackboardAttribute> otherAttributesList) {
         
+        return addMessage(messageType, direction,
+                fromAddress,
+                Arrays.asList(toAddress),
+                dateTime, readStatus,
+                subject, messageText, threadId,
+                otherAttributesList);
+    }
+    
+     /**
+     * Adds a TSK_MESSAGE artifact. 
+     * 
+     * Also creates an account instance for the sender/receiver, and creates a 
+     * relationship between the self account and the sender/receiver account.
+     * 
+     * This method is for messages with a multiple recipients.
+     * 
+     * @param messageType message type
+     * @param direction message direction
+     * @param fromAddress sender address, may be null
+     * @param recipientsList recipient address list, may be null or empty list
+     * @param dateTime date/time of message, 
+     * @param readStatus message read or not
+     * @param subject message subject, may be empty
+     * @param messageText message body, may be empty
+     * @param threadId, message thread id
+     * 
+     * 
+     * @return message artifact
+     */
+    public BlackboardArtifact addMessage( String messageType, String direction, 
+                Account.Address fromAddress, 
+                List<Account.Address> recipientsList, 
+                long dateTime, MessageReadStatusEnum readStatus, 
+                String subject, String messageText, String threadId) {
+        return addMessage( messageType,  direction,  
+                          fromAddress,  recipientsList, 
+                          dateTime,  readStatus,  
+                          subject, messageText,  threadId, 
+                          Collections.<BlackboardAttribute>emptyList());
+    }
+    
+    
+    public BlackboardArtifact addMessage( String messageType, String direction, 
+                Account.Address fromAddress, 
+                List<Account.Address> recipientsList, 
+                long dateTime, MessageReadStatusEnum readStatus, 
+                String subject, String messageText, 
+                String threadId, 
+                Collection<BlackboardAttribute> otherAttributesList) {
+       
+         
+        // Create a comma separated string of recipients
+        String toAddresses =  null;
+        if (recipientsList != null && (!recipientsList.isEmpty())) {
+            StringBuilder toAddressesSb = new StringBuilder();
+            for(Account.Address recipient : recipientsList) {
+                toAddressesSb = toAddressesSb.length() > 0 ? toAddressesSb.append(",").append(recipient.getDisplayName()) : toAddressesSb.append(recipient.getDisplayName());
+            }
+            toAddresses =  toAddressesSb.toString();
+        }
+    
+        // Created message artifact.  
         BlackboardArtifact msgArtifact = null;
         try {
             // Create TSK_MESSAGE artifact
@@ -309,10 +385,10 @@ public final class AppDBParserHelper  {
             if (dateTime > 0) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, moduleName, dateTime));
             }
-            if (readStatus > 0) {
-                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_READ_STATUS, moduleName, readStatus));
+            if (readStatus != MessageReadStatusEnum.UNKNOWN) {
+                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_READ_STATUS, moduleName, (readStatus == MessageReadStatusEnum.READ) ? 1 : 0));
             }
-            
+
             // Add basic attribute, if the correspond value is specified
             if (!StringUtils.isEmpty(messageType)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, moduleName, messageType));
@@ -320,13 +396,13 @@ public final class AppDBParserHelper  {
             if (!StringUtils.isEmpty(direction)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction));
             }
-            if (!StringUtils.isEmpty(fromAddress)) {
-                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromAddress));
+            if (fromAddress != null && !StringUtils.isEmpty(fromAddress.getDisplayName())) {
+                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromAddress.getDisplayName()));
             }
-            if (!StringUtils.isEmpty(toAddress)) {
-                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, toAddress));
+            if (toAddresses != null && !StringUtils.isEmpty(toAddresses)) {
+                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, toAddresses));
             }
-         
+
             if (!StringUtils.isEmpty(subject)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT, moduleName, subject));
             }
@@ -336,23 +412,40 @@ public final class AppDBParserHelper  {
             if (!StringUtils.isEmpty(threadId)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_THREAD_ID, moduleName, threadId));
             }
-            
-            
+
+
             // Add other specified attributes
             for (BlackboardAttribute otherAttribute: otherAttributesList) {
                 msgArtifact.addAttribute(otherAttribute);
             }
-            
-            // Find/Create an account instance for the sender/recipient
-            AccountFileInstance contactAccountInstance = createAccountInstance(accountsType, otherAccountUniqueID);
-            
-            // Create a relationship between selfAccount and contactAccount
-            if (selfAccountInstance != null) {
-                addRelationship (selfAccountInstance, contactAccountInstance, msgArtifact, Relationship.Type.MESSAGE, 0 );
+
+            // Find/create an account instance for sender
+            if (fromAddress != null) {
+                AccountFileInstance senderAccountInstance = createAccountInstance(accountsType, fromAddress.getUniqueID());
+
+               // Create a relationship between selfAccount and sender account
+               if (selfAccountInstance != null) {
+                   addRelationship (selfAccountInstance, senderAccountInstance, msgArtifact, Relationship.Type.MESSAGE, dateTime );
+               }
             }
-            
+
+            // Find/create an account instance for each recipient  
+            if (recipientsList != null) {
+                for(Account.Address recipient : recipientsList) {
+
+                   AccountFileInstance recipientAccountInstance = createAccountInstance(accountsType, recipient.getUniqueID());
+
+                   // Create a relationship between selfAccount and recipient account
+                   if (selfAccountInstance != null) {
+                       addRelationship (selfAccountInstance, recipientAccountInstance, msgArtifact, Relationship.Type.MESSAGE, dateTime );
+                   }
+                }
+            }
+
             // post artifact 
             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(msgArtifact, this.moduleName);
+        
+        
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Unable to add message artifact", ex); //NON-NLS
             return null;
@@ -362,9 +455,9 @@ public final class AppDBParserHelper  {
         }
         
         // return the artifact
-        return msgArtifact;       
+        return msgArtifact; 
     }
-    
+     
     /**
      * Adds a TSK_CALLLOG artifact. 
      * 
@@ -463,11 +556,6 @@ public final class AppDBParserHelper  {
     }
     
    
-    // TBD
-    public void addAttachment(BlackboardArtifact parentArtifact) {
-        // RAMAN TBD
-    }
-    
     /**
      *  Adds a TSK_WEB_BOOKMARK artifact. 
      * 
