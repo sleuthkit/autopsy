@@ -76,8 +76,8 @@ public class LocalFileImporter {
      * Will not fail if the fileOnDisk does not exist.
      * 
      * @param fileOnDisk  The local file on disk
-     * @param nameInImage The name to use in the data source
-     * @param pathInImage The path to use in the data source
+     * @param name        The name to use in the data source
+     * @param parentPath  The path to use in the data source
      * @param ctime       Change time
      * @param crtime      Created time
      * @param atime       Access time
@@ -88,12 +88,12 @@ public class LocalFileImporter {
      * 
      * @throws TskCoreException 
      */
-    public AbstractFile addLocalFile(File fileOnDisk, String nameInImage, String pathInImage, 
+    public AbstractFile addLocalFile(File fileOnDisk, String name, String parentPath, 
             Long ctime, Long crtime, Long atime, Long mtime,
             DataSource dataSource) throws TskCoreException {
         
         // Get the parent folder, creating it and any of its parent folders if necessary
-        SpecialDirectory parentDir = getLocalFilesDir(new File(pathInImage), dataSource);
+        SpecialDirectory parentDir = getOrMakeDirInDataSource(new File(parentPath), dataSource);
         
         SleuthkitCase.CaseDbTransaction trans = null;
         try {
@@ -110,7 +110,7 @@ public class LocalFileImporter {
             }
              
             // Create the new file
-            AbstractFile file = sleuthkitCase.addLocalFile(nameInImage, fileOnDisk.getAbsolutePath(), size,
+            AbstractFile file = sleuthkitCase.addLocalFile(name, fileOnDisk.getAbsolutePath(), size,
                     ctime, crtime, atime, mtime,
                     true, TskData.EncodingType.NONE, parentDir, trans);
 
@@ -131,38 +131,38 @@ public class LocalFileImporter {
     }
     
     /**
-     * Returns the SpecialDirectory object corresponding to the given file, creating
+     * Returns the SpecialDirectory object corresponding to the given directory, creating
      * it and its parents as needed.
      * 
-     * @param file       The file to get the SpecialDirectory for
+     * @param directory       The file to get the SpecialDirectory for
      * @param dataSource The data source
      * 
      * @return The SpecialDirectory object corresponding to the given file
      * 
      * @throws TskCoreException 
      */
-    private SpecialDirectory getLocalFilesDir(File file, Content dataSource) throws TskCoreException {
-        if ((file == null) || file.getPath().isEmpty()) {
+    private SpecialDirectory getOrMakeDirInDataSource(File directory, Content dataSource) throws TskCoreException {
+        if ((directory == null) || directory.getPath().isEmpty()) {
             throw new TskCoreException("Can not create directory from null path");
         }
 
         // Check if we've already created it
-        if (localFileDirMap.containsKey(file.toString())) {
-            return localFileDirMap.get(file.toString());
+        if (localFileDirMap.containsKey(directory.toString())) {
+            return localFileDirMap.get(directory.toString());
         }
 
-        File parent = file.getParentFile();
+        File parent = directory.getParentFile();
         if (parent == null) {
             // This is the root of the path and it isn't in the map, so create it
-            SpecialDirectory dir = createLocalFilesDir(dataSource.getId(), file.getName());
-            localFileDirMap.put(file.getName(), dir);
+            SpecialDirectory dir = createLocalFilesDir(dataSource.getId(), directory.getName());
+            localFileDirMap.put(directory.getName(), dir);
             return dir;
 
         } else {
             // Create everything above this in the tree, and then add the parent folder
-            SpecialDirectory parentDir = getLocalFilesDir(parent, dataSource);
-            SpecialDirectory dir = createLocalFilesDir(parentDir.getId(), file.getName());
-            localFileDirMap.put(file.getPath(), dir);
+            SpecialDirectory parentDir = getOrMakeDirInDataSource(parent, dataSource);
+            SpecialDirectory dir = createLocalFilesDir(parentDir.getId(), directory.getName());
+            localFileDirMap.put(directory.getPath(), dir);
             return dir;
         }
     }

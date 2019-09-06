@@ -69,13 +69,13 @@ final class AddLogicalImageTask implements Runnable {
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final Blackboard blackboard;
     private final Case currentCase;
-    
+
     private volatile boolean cancelled;
     private boolean addingInterestingFiles;
     private AddMultipleImageTask addMultipleImageTask;
     private Thread multipleImageThread;
     private boolean createVHD;
-    
+
     AddLogicalImageTask(String deviceId,
             String timeZone,
             File src, File dest,
@@ -174,7 +174,7 @@ final class AddLogicalImageTask implements Runnable {
         addMultipleImageTask = null;
         AddDataSourceCallback privateCallback = null;
         List<Content> newDataSources = new ArrayList<>();
-        
+
         if (imagePaths.isEmpty()) {
             createVHD = false;
             // No VHD in src directory, try ingest the root directory as local files
@@ -192,7 +192,7 @@ final class AddLogicalImageTask implements Runnable {
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFiles());
                 addExtractedFiles(dest, Paths.get(dest.toString(), resultsFilename), newDataSources);
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingExtractedFiles());
-            } catch (TskCoreException ex) {
+            } catch (IOException | TskCoreException ex) {
                 errorList.add(ex.getMessage());
                 LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex); // NON-NLS
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
@@ -320,8 +320,6 @@ final class AddLogicalImageTask implements Runnable {
         "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}"
     })
     private void addInterestingFiles(File src, Path resultsPath, boolean createVHD) throws IOException, TskCoreException {
-        Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
-        Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                       new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
@@ -345,23 +343,9 @@ final class AddLogicalImageTask implements Runnable {
                 String ruleName = fields[5];
 //                String description = fields[6];
                 String filename = fields[7];
+                String parentPath = fields[8];
 
-                String query;
-                String targetImagePath;
-                if (createVHD) {
-                    targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
-                    Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
-                    if (dataSourceObjId == null) {
-                        throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
-                    }
-                    query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
-                        dataSourceObjId.toString(), fileMetaAddressStr, filename.replace("'", "''"));
-                } else {
-                    String parentPath = fields[8];
-                    parentPath = "/" + ROOT_STR + "/" + vhdFilename + "/" + parentPath;
-                    query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
-                        filename.replace("'", "''"), parentPath.replace("'", "''"));
-                }
+                String query = makeQuery(createVHD, vhdFilename, fileMetaAddressStr, parentPath, filename);
 
                 // TODO - findAllFilesWhere should SQL-escape the query
                 List<AbstractFile> matchedFiles = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(query);
@@ -393,7 +377,7 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
-    private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException {
+    private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, IOException {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
         try {
@@ -413,6 +397,7 @@ final class AddLogicalImageTask implements Runnable {
                     }
                     String[] fields = line.split("\t", -1); // NON-NLS
                     if (fields.length != 14) {
+                        rollbackTransaction(trans);
                         throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 14));
                     }
                     String vhdFilename = fields[0];
@@ -431,10 +416,10 @@ final class AddLogicalImageTask implements Runnable {
                     String ctime = fields[13];
                     parentPath = ROOT_STR + "/" + vhdFilename + "/" + parentPath;
 
-                    //addLocalFile here 
+                    //addLocalFile here
                     fileImporter.addLocalFile(
                             Paths.get(src.toString(), extractedFilePath).toFile(),
-                            filename, 
+                            filename,
                             parentPath,
                             Long.parseLong(ctime),
                             Long.parseLong(crtime),
@@ -448,7 +433,7 @@ final class AddLogicalImageTask implements Runnable {
             trans.commit();
             newDataSources.add(localFilesDataSource);
 
-        } catch (IOException | NumberFormatException | TskCoreException ex) {
+        } catch (NumberFormatException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error adding extracted files", ex); // NON-NLS
             rollbackTransaction(trans);
             throw new TskCoreException("Error adding extracted files", ex);
@@ -477,7 +462,7 @@ final class AddLogicalImageTask implements Runnable {
     }
 
     /**
-     * AddDataSourceCallback private class for adding VHD source 
+     * AddDataSourceCallback private class for adding VHD source
      */
     private class AddDataSourceCallback extends DataSourceProcessorCallback {
         private List<String> errorMessages;
@@ -492,7 +477,7 @@ final class AddLogicalImageTask implements Runnable {
             this.newDataSources = newDataSources;
             this.result = result;
             this.inProgress = false;
-        }        
+        }
 
         @Override
         public void doneEDT(DataSourceProcessorResult result, List<String> errorMessages, List<Content> newDataSources) {
@@ -515,4 +500,25 @@ final class AddLogicalImageTask implements Runnable {
             return inProgress;
         }
     }
+
+    String makeQuery(boolean createVHD, String vhdFilename, String fileMetaAddressStr, String parentPath, String filename) throws TskCoreException {
+        String query;
+        if (createVHD) {
+            Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
+            Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
+            String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
+            Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
+            if (dataSourceObjId == null) {
+                throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
+            }
+            query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
+                    dataSourceObjId.toString(), fileMetaAddressStr, filename.replace("'", "''"));
+        } else {
+            String newParentPath = "/" + ROOT_STR + "/" + vhdFilename + "/" + parentPath;
+            query = String.format("name = '%s' AND parent_path = '%s'", // NON-NLS
+                    filename.replace("'", "''"), newParentPath.replace("'", "''"));
+        }
+        return query;
+    }
+
 }
