@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -190,6 +191,7 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
     private void addInterestingFiles(File src, Path resultsPath) throws IOException, TskCoreException {
         Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
         Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
+        long totalFiles = Files.lines(resultsPath).count() - 1; // skip the header line
         
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                       new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
@@ -198,9 +200,9 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
             int lineNumber = 2;
             while ((line = br.readLine()) != null) {
                 String[] fields = line.split("\t", -1); // NON-NLS
-                if (fields.length != 9) {
-                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
-                }
+//                if (fields.length != 9) {
+//                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
+//                }
                 String vhdFilename = fields[0];
                 
                 String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
@@ -218,6 +220,9 @@ final class AddLogicalImageTask extends AddMultipleImageTask {
                 String filename = fields[7];
 //                String parentPath = fields[8];
                 
+                if (lineNumber % 100 == 0) {
+                    progressMonitor.setProgressText(String.format("Adding interesting file %d of %d", lineNumber, totalFiles));
+                }
                 String query = String.format("data_source_obj_id = '%s' AND meta_addr = '%s' AND name = '%s'", // NON-NLS
                         dataSourceObjId.toString(), fileMetaAddressStr, filename);
                 List<AbstractFile> matchedFiles = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(query);

@@ -5,6 +5,8 @@
 AddLogicalImageTask.addingInterestingFiles=Adding search results as interesting files
 # {0} - file
 AddLogicalImageTask.addingToReport=Adding {0} to report
+# {0} - target image path
+AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}
 # {0} - SearchResults.txt
 # {1} - directory
 AddLogicalImageTask.cannotFindFiles=Cannot find {0} in {1}
