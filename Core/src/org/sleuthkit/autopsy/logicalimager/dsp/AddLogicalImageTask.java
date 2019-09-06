@@ -70,7 +70,6 @@ final class AddLogicalImageTask implements Runnable {
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final Blackboard blackboard;
     private final Case currentCase;
-    private Map<Long, List<String>> imagePaths;
     private Map<String, Long> imagePathToObjIdMap;
     private long totalFiles;
 
@@ -176,10 +175,6 @@ final class AddLogicalImageTask implements Runnable {
             }
         }
 
-        AddMultipleImageTask addMultipleImageTask = null;
-        List<Content> newDataSources = new ArrayList<>();
-        boolean createVHD;
-
         Path resultsPath = Paths.get(dest.toString(), resultsFilename);
         try {
             totalFiles = Files.lines(resultsPath).count() - 1; // skip the header line
@@ -188,6 +183,10 @@ final class AddLogicalImageTask implements Runnable {
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
+
+        AddMultipleImageTask addMultipleImageTask = null;
+        List<Content> newDataSources = new ArrayList<>();
+        boolean createVHD;
 
         if (imagePaths.isEmpty()) {
             createVHD = false;
@@ -282,15 +281,15 @@ final class AddLogicalImageTask implements Runnable {
     }
 
     private Map<String, Long> imagePathsToDataSourceObjId(Map<Long, List<String>> imagePaths) {
-        Map<String, Long> imagePathToObjIdMap = new HashMap<>();
+        Map<String, Long> imagePathToObjId = new HashMap<>();
         for (Map.Entry<Long, List<String>> entry : imagePaths.entrySet()) {
             Long key = entry.getKey();
             List<String> names = entry.getValue();
             for (String name : names) {
-                imagePathToObjIdMap.put(name, key);
+                imagePathToObjId.put(name, key);
             }
         }
-        return imagePathToObjIdMap;
+        return imagePathToObjId;
     }
 
     @Messages({
@@ -299,8 +298,8 @@ final class AddLogicalImageTask implements Runnable {
         "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting file {0} of {1}"
     })
     private void addInterestingFiles(Path resultsPath, boolean createVHD) throws IOException, TskCoreException {
-        imagePaths = currentCase.getSleuthkitCase().getImagePaths();
-        imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
+        Map<Long, List<String>> objIdToimagePathsMap = currentCase.getSleuthkitCase().getImagePaths();
+        imagePathToObjIdMap = imagePathsToDataSourceObjId(objIdToimagePathsMap);
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                       new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
