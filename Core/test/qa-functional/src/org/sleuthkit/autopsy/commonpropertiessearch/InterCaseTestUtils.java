@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -267,10 +267,8 @@ class InterCaseTestUtils {
             for (CorrelationCase correlationCase : EamDb.getInstance().getCases()) {
                 mapOfCaseIdsToCase.put(correlationCase.getDisplayName(), correlationCase.getID());
             }
-            System.out.println("EAM IS ENABLED");
             return mapOfCaseIdsToCase;
         } else {
-            System.out.println("EAMDB NOT ENABLED");
             //it is reasonable that this might happen...
             //  for example when we test the feature in the absence of an enabled eamdb 
             return new HashMap<>(0);

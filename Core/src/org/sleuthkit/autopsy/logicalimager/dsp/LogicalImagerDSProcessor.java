@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -131,8 +130,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
-        "# {0} - file", "LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}",
-        "LogicalImagerDSProcessor.noCurrentCase=No current case",})
+        "LogicalImagerDSProcessor.noCurrentCase=No current case",
+    })
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
@@ -172,36 +171,9 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         File src = imageDirPath.toFile();
 
         try {
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_copyingImageFromTo(src.toString(), dest.toString()));
-            FileUtils.copyDirectory(src, dest);
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneCopying());
-        } catch (IOException ex) {
-            // Copy directory failed
-            String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
-            errorList.add(msg);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-        
-        // Get all VHD files in the src directory
-        List<String> imagePaths = new ArrayList<>();
-        for (File f : dest.listFiles()) {
-            if (f.getName().endsWith(".vhd")) {
-                try {
-                    imagePaths.add(f.getCanonicalPath());
-                } catch (IOException ex) {
-                    String msg = Bundle.LogicalImagerDSProcessor_failToGetCanonicalPath(f.getName());
-                    errorList.add(msg);
-                    callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-                    return;
-                }
-            }
-        }
-        try {
             String deviceId = UUID.randomUUID().toString();
             String timeZone = Calendar.getInstance().getTimeZone().getID();
-            run(deviceId, imagePaths,
-                    timeZone, src, dest,
+            run(deviceId, timeZone, src, dest,
                     progressMonitor, callback);
         } catch (NoCurrentCaseException ex) {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
@@ -220,7 +192,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param deviceId        An ASCII-printable identifier for the device
      *                        associated with the data source that is intended
      *                        to be unique across multiple cases (e.g., a UUID).
-     * @param imagePaths      Paths to the image files.
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
      *                        java.util.TimeZone.getID.
@@ -230,11 +201,11 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, List<String> imagePaths, String timeZone,
+    private void run(String deviceId, String timeZone,
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
-        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePaths, timeZone, src, dest,
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest,
                 progressMonitor, callback);
         new Thread(addLogicalImageTask).start();
     }
