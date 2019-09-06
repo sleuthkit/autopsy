@@ -9,9 +9,9 @@ fi
 echo "Installing dependencies for ${OS}"
 if test ${OS} = "linux" ; then
 	sudo apt-get -qq update
-	sudo apt-get -y install ant automake libtool testdisk
+	sudo apt-get -y install libafflib-dev libewf-dev libpq-dev autopoint libsqulite3-dev libcppunit-dev wget openjdk-8-jdk openjfx=8u161-b12-1ubuntu2 libopenjfx-java=8u161-b12-1ubuntu2 libopenjfx-jni=8u161-b12-1ubuntu2 ant automake libtool testdisk
 elif test ${OS} = "osx" ; then
-	brew install ant automake libtool postgresql testdisk
+	brew install ant automake libtool postgresql testdisk libewf gettext cppunit afflib
 fi
 
 # Cloning sleuthkit
@@ -24,4 +24,7 @@ fi
 echo "Setting up sleuthkit"
 cd ${TSK_HOME}
 export TRAVIS_OS_NAME=$OS
-./travis_build.sh
+./travis_install_libs.sh
+
+./bootstrap && ./configure --prefix=/usr && make
+cd bindings/java/ && ant -q dist-PostgreSQL
