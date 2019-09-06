@@ -333,9 +333,19 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     }
                 });
                 if (vhdFiles.length == 0) {
-                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
-                    firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
-                    return;
+                    // No VHD files, try directories for individual files
+                    String[] directories = dir.list(new FilenameFilter() {
+                        @Override
+                        public boolean accept(File dir, String name) {
+                            return Paths.get(dir.toString(), name).toFile().isDirectory();
+                        }
+                    });
+                    if (directories.length == 0) {
+                        // No directories, bail
+                        setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
+                        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+                        return;
+                    }
                 }
                 manualImageDirPath = Paths.get(path);
                 setNormalMessage(path);
@@ -360,11 +370,11 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         }
     }
 
-    private boolean dirHasVhdFiles(File dir) {
-        File[] fList = dir.listFiles(new FilenameFilter() {
+    private boolean dirHasImagerResult(File dir) {
+        String[] fList = dir.list(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.endsWith(".vhd");
+                return name.endsWith(".vhd") || Paths.get(dir.toString(), name).toFile().isDirectory();
             }
         });
         return (fList != null && fList.length != 0);
@@ -382,9 +392,9 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         if (fList != null) {
             imageTableModel = new ImageTableModel();
             // Find all directories with name like Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
-            // and has vhd files in it
+            // and has Logical Imager result in it
             for (File file : fList) {
-                if (file.isDirectory() && dirHasVhdFiles(file)) {
+                if (file.isDirectory() && dirHasImagerResult(file)) {
                     String dir = file.getName();
                     Matcher m = regex.matcher(dir);
                     if (m.find()) {
