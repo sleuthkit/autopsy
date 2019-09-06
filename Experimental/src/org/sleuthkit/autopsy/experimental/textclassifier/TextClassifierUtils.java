@@ -172,6 +172,7 @@ class TextClassifierUtils {
                 tokens.addAll(Arrays.asList(sentenceTokens));
             }
         }
+        return tokens.toArray(new String[0]);
     }
 
     /**
