@@ -78,6 +78,10 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }
     
     void setConfiguration(HashesReportModuleSettings settings) {
+        // reload tags list. user could have opened a differet case 
+        // or there could be no case open (e.g. Command Line report wizard) 
+        customizeComponents();
+        
         // update tag selection
         jAllTagsCheckBox.setSelected(settings.isExportAllTags());
         
