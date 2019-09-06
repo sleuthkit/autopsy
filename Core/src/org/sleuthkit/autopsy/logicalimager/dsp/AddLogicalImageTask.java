@@ -333,7 +333,7 @@ final class AddLogicalImageTask implements Runnable {
                 }
                 String[] fields = line.split("\t", -1); // NON-NLS
                 if (fields.length != 14) {
-                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
+                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 14));
                 }
                 String vhdFilename = fields[0];
 //                String fileSystemOffsetStr = fields[1];
@@ -506,7 +506,7 @@ final class AddLogicalImageTask implements Runnable {
         if (createVHD) {
             Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
             Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
-            String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
+            String targetImagePath = Paths.get(dest.toString(), vhdFilename).toString();
             Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
             if (dataSourceObjId == null) {
                 throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
