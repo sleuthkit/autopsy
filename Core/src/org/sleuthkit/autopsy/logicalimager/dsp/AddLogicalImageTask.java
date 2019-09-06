@@ -411,14 +411,14 @@ final class AddLogicalImageTask implements Runnable {
 
                     //addLocalFile here
                     fileImporter.addLocalFile(
-                            Paths.get(src.toString(), extractedFilePath).toFile(),
-                            filename,
-                            parentPath,
-                            Long.parseLong(ctime),
-                            Long.parseLong(crtime),
-                            Long.parseLong(atime),
-                            Long.parseLong(mtime),
-                            localFilesDataSource);
+                        Paths.get(src.toString(), extractedFilePath).toFile(),
+                        filename,
+                        parentPath,
+                        Long.parseLong(ctime),
+                        Long.parseLong(crtime),
+                        Long.parseLong(atime),
+                        Long.parseLong(mtime),
+                        localFilesDataSource);
 
                     lineNumber++;
                 } // end reading file
