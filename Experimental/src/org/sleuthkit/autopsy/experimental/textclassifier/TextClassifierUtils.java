@@ -157,33 +157,32 @@ class TextClassifierUtils {
         //Initialize the sentenceDetector if that hasn't been done yet.
         if (sentenceDetector == null) {
             sentenceDetector = new NewlineSentenceDetector();
-            /*
             //Define the sentence detector, trained on the train section of the EWT corpus, from Universal Dependencies
-            final File sentenceModelFile = InstalledFileLocator.getDefault().locate("doc_summary_models/en-sent-ewt.bin", TextClassifierUtils.class.getPackage().getName(), false); //NON-NLS
+            final File sentenceModelFile = new File("C:\\cygwin64\\home\\Brian Kjersten\\repos\\git\\autopsy\\Experimental\\src\\resources\\en-sent-ewt.bin");
+            //final File sentenceModelFile = InstalledFileLocator.getDefault().locate("doc_summary_models/en-sent-ewt.bin", TextClassifierUtils.class.getPackage().getName(), false); //NON-NLS
             if (sentenceModelFile == null) {
                 throw new IOException("Error finding sentence detector module");
             }
             sentenceDetector = new SentenceDetectorME(new SentenceModel(new FileInputStream(sentenceModelFile)));
-            */
         }
         
         //TODO: Delete this
-        System.out.println("***** START OF FILE *****");
+        //System.out.println("***** START OF FILE *****");
         
         ArrayList<String> tokens = new ArrayList<>();
         String[] sentences = sentenceDetector.sentDetect(text);
         for (String sentence : sentences) {
             //Tokenize the file.
             String[] sentenceTokens = TOKENIZER.tokenize(sentence);
-            if (sentenceTokens.length > 20) {
+            if (sentenceTokens.length > 7) {
                 tokens.addAll(Arrays.asList(sentenceTokens));
                 
                 //TODO: Delete this
-                System.out.println(sentence);
+                //System.out.println(sentence);
             }
         }
         //TODO: Delete this        
-        System.out.println("****** END OF FILE ******");
+        //System.out.println("****** END OF FILE ******");
         return tokens.toArray(new String[0]);
     }
     
