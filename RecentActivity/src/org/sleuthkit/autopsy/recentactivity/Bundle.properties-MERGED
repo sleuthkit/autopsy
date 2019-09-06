@@ -189,4 +189,7 @@ SearchEngineURLQueryAnalyzer.domainSubStr.none=NONE
 SearchEngineURLQueryAnalyzer.toString=Name: {0}\nDomain Substring: {1}\nCount: {2}\nSplit Tokens: \n{3}
 SearchEngineURLQueryAnalyzer.parentModuleName.noSpace=RecentActivity
 SearchEngineURLQueryAnalyzer.parentModuleName=Recent Activity
+Shellbag_Artifact_Display_Name=Shell Bags
+Shellbag_Key_Attribute_Display_Name=Key
+Shellbag_Last_Write_Attribute_Display_Name=Last Write
 UsbDeviceIdMapper.parseAndLookup.text=Product: {0}
