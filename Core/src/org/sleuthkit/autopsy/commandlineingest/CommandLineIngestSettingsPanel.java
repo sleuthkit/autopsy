@@ -39,7 +39,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(CommandLineIngestSettingsPanel.class.getName());
     
     static final String REPORTING_CONFIGURATION_NAME = "CommandLineIngest";
-    private static final boolean DISPLAY_CASE_SPECIFIC_DATA = false; // do not try to display case specific data as there is likely no case open
+    private static final boolean DISPLAY_CASE_SPECIFIC_DATA = false; // do not try to display case specific data
     private static final boolean RUN_REPORTS = false; // do not generate reports as part of running the report wizard
 
     /**
