@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
+import org.openide.modules.InstalledFileLocator;
 import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getUserDirectory;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -155,8 +156,7 @@ class TextClassifierUtils {
         //Initialize the sentenceDetector if that hasn't been done yet.
         if (sentenceDetector == null) {
             //Define the sentence detector, trained on the train section of the EWT corpus, from Universal Dependencies
-            final File sentenceModelFile = new File("C:\\cygwin64\\home\\Brian Kjersten\\repos\\git\\autopsy\\Experimental\\src\\resources\\en-sent-ewt.bin");
-            //final File sentenceModelFile = InstalledFileLocator.getDefault().locate("doc_summary_models/en-sent-ewt.bin", TextClassifierUtils.class.getPackage().getName(), false); //NON-NLS
+            final File sentenceModelFile = InstalledFileLocator.getDefault().locate("textclassifier/en-sent-ewt.bin", TextClassifierUtils.class.getPackage().getName(), false); //NON-NLS
             if (sentenceModelFile == null) {
                 throw new IOException("Error finding sentence detector module");
             }
