@@ -53,15 +53,15 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private List<TagName> tagNames;
-    private final Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
-    private final TagNamesListModel tagsNamesListModel = new TagNamesListModel();
-    private final TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
+    private Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
+    private TagNamesListModel tagsNamesListModel = new TagNamesListModel();
+    private TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
     private HashDb selectedHashSet = null;
 
     AddTaggedHashesToHashDbConfigPanel() {
         initComponents();
         customizeComponents();
-        
+              
         this.jAllTagsCheckBox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -78,8 +78,8 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }
     
     void setConfiguration(HashesReportModuleSettings settings) {
-        // reload tags list. user could have opened a differet case 
-        // or there could be no case open (e.g. Command Line report wizard) 
+        // Need to reset tags. User may have opened a different case or
+        // there may not be a case open any more (Command Line wizard).
         customizeComponents();
         
         // update tag selection
@@ -93,6 +93,9 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }
 
     private void customizeComponents() {
+        tagNameSelections = new LinkedHashMap<>();
+        tagsNamesListModel = new TagNamesListModel();
+        tagsNamesRenderer = new TagsNamesListCellRenderer();
         populateTagNameComponents();
         populateHashSetComponents();
     }
@@ -116,7 +119,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         for (TagName tagName : tagNames) {
             tagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
         }
-
+        
         // Set up the tag names JList component to be a collection of check boxes
         // for selecting tag names. The mouse click listener updates tagNameSelections
         // to reflect user choices.
