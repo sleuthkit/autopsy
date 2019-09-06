@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
- *
- * Copyright 2013-2018 Basis Technology Corp.
+ * 
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,7 @@ class StixArtifactData {
 
     @Messages({"StixArtifactData.indexError.message=Failed to index STIX interesting file hit artifact for keyword search.",
         "StixArtifactData.noOpenCase.errMsg=No open case available."})
-    public void createArtifact(String a_title) throws TskCoreException {
+    void createArtifact(String a_title) throws TskCoreException {
         Blackboard blackboard;
         try {
             blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
@@ -100,9 +100,5 @@ class StixArtifactData {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
             }
         }
-    }
-
-    public void print() {
-        System.out.println("  " + observableId + " " + file.getName());
     }
 }
