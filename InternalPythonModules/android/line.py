@@ -60,8 +60,8 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
-            contact_and_message_dbs = SQLiteUtil.findAppDatabases(dataSource, "naver_line", self._LINE_PACKAGE_NAME)
-            calllog_dbs = SQLiteUtil.findAppDatabases(dataSource, "call_history", self._LINE_PACKAGE_NAME)
+            contact_and_message_dbs = SQLiteUtil.findAppDatabases(dataSource, "naver_line.db", True, self._LINE_PACKAGE_NAME)
+            calllog_dbs = SQLiteUtil.findAppDatabases(dataSource, "call_history", True, self._LINE_PACKAGE_NAME)
 
             for contact_and_message_db in contact_and_message_dbs:
                 blackboard_util = BlackboardUtil(self._PARSER_NAME, contact_and_message_db.getDBFile(), Account.Type.LINE) 
@@ -98,9 +98,17 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
 
             for calllog_db in calllog_dbs:
                 blackboard_util = BlackboardUtil(self._PARSER_NAME, calllog_db.getDBFile(), Account.Type.LINE)
+                calllog_db.attachDatabase(dataSource, "naver_line.db", True, calllog_db.getDBFile().getParentPath(), "naver")
 
                 calllog_parser = LineCallLogsParser(calllog_db)
                 while calllog_parser.next():
+                    print(calllog_parser.get_account_name())
+                    print(calllog_parser.get_contact_name())
+                    print(calllog_parser.get_call_direction())
+                    print(calllog_parser.get_phone_number_from())
+                    print(calllog_parser.get_phone_number_to())
+                    print(calllog_parser.get_call_start_date_time())
+                    print(calllog_parser.get_call_end_date_time())
                     blackboard_util.addCalllog(
                         calllog_parser.get_account_name(),
                         calllog_parser.get_call_direction(),
@@ -111,6 +119,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                         calllog_parser.get_contact_name()
                     )
 
+                calllog_db.detachDatabase("naver")
                 calllog_parser.close()
                 calllog_db.close()
 
@@ -129,11 +138,14 @@ class LineCallLogsParser(TskCallLogsParser):
     def __init__(self, calllog_db):
         super(LineCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
-                     SELECT C.caller_mid            AS mid, 
-                            substr(C.call_type, -1) AS direction, 
-                            C.start_time            AS start_time, 
-                            C.end_time              AS end_time 
-                     FROM   call_history AS C 
+                     SELECT substr(CallH.call_type, -1) AS direction, 
+                            CallH.start_time            AS start_time, 
+                            CallH.end_time              AS end_time, 
+                            ConT.server_name            AS account_name, 
+                            ConT.name                   AS contact_name 
+                     FROM   call_history AS CallH 
+                            JOIN naver.contacts AS ConT 
+                              ON CallH.caller_mid = ConT.m_id 
                  """
              )
         )
@@ -153,6 +165,8 @@ class LineCallLogsParser(TskCallLogsParser):
                 return long(start_time) / 1000
             except ValueError as ve:
                 self._had_error = True
+                print("bad_conversion")
+                return super(LineCallLogsParser, self).get_call_start_date_time()
 
         def get_call_end_date_time(self):
             end_time = self.result_set.getString("end_time")
@@ -160,6 +174,14 @@ class LineCallLogsParser(TskCallLogsParser):
                 return long(end_time) / 1000
             except ValueError as ve:
                 self._had_error = True
+                print("bad conversion")
+                return super(LineCallLogsParser, self).get_call_end_date_time()
+
+        def get_account_name(self):
+            return self.result_set.getString("account_name")
+
+        def get_contact_name(self):
+            return self.result_set.getString("contact_name")
 
 class LineContactsParser(TskContactsParser):
     """
