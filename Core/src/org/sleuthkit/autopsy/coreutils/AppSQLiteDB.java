@@ -108,9 +108,9 @@ public final class AppSQLiteDB implements Closeable {
             parentPath = SleuthkitCase.escapeSingleQuotes(parentPath);
             String whereClause;
             if (matchExactName) {
-                whereClause = String.format("LOWER(name) LIKE LOWER(\'%1$s\') AND LOWER(parent_path) LIKE LOWER(\'%%%2$s%%\') AND data_source_obj_id = " + dataSource.getId(), dbName, parentPath);
+                whereClause = String.format("LOWER(name) = LOWER('%s') AND LOWER(parent_path) LIKE LOWER('%%%s%%') AND data_source_obj_id = %s", dbName, parentPath, dataSource.getId());
             } else {
-                whereClause = String.format("LOWER(name) LIKE LOWER(\'%%%1$s%%\') AND LOWER(name) NOT LIKE LOWER(\'%%journal%%\') AND LOWER(parent_path) LIKE LOWER(\'%%%2$s%%\') AND data_source_obj_id = " + dataSource.getId(), dbName, parentPath);
+                whereClause = String.format("LOWER(name) LIKE LOWER('%%%s%%') AND LOWER(name) NOT LIKE LOWER('%%journal%%') AND LOWER(parent_path) LIKE LOWER('%%%s%%') AND data_source_obj_id = %s", dbName, parentPath, dataSource.getId() );
             }
             absFiles = skCase.findAllFilesWhere(whereClause);
             for (AbstractFile absFile : absFiles) {
@@ -141,6 +141,101 @@ public final class AppSQLiteDB implements Closeable {
     public AbstractFile getDBFile() {
         return this.dbAbstractFile;
     }
+    
+    /**
+     * Attaches a database to the current connection.
+     * 
+     * Finds the specified database file in the specified folder.  
+     * If found, makes copy of the database in the case folder and
+     * run ATTACH DATABASE sql.
+     * 
+     * @param dataSource data source in which to look file the db file
+     * @param dbName name of db file to look for
+     * @param matchExactName specified whether the name is an exact name or a pattern
+     * @param dbPath path in which to look for the db file
+     * @param dbAlias alias name to attach the database as
+     * 
+     * @return abstract file for the matching db file.
+     * 
+     * @throws TskCoreException in case of an error.
+     */
+    public AbstractFile attachDatabase(DataSource dataSource, String dbName, 
+                    boolean matchExactName, String dbPath, String dbAlias) throws TskCoreException {
+        
+        Case openCase; 
+        try {
+            openCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
+            throw new TskCoreException("Exception while getting open case.", ex);
+        }
+        
+        List<AbstractFile> absFiles;
+        long fileId = 0;
+        String localFilePath = "";
+        try {
+            SleuthkitCase skCase = openCase.getSleuthkitCase();
+            String parentPath = dbPath.replace("\\", "/");
+            parentPath = SleuthkitCase.escapeSingleQuotes(parentPath);
+            String whereClause;
+            if (matchExactName) {
+                whereClause = String.format("LOWER(name) = LOWER('%s') AND LOWER(parent_path) = LOWER('%s') AND data_source_obj_id = %s", dbName, parentPath, dataSource.getId()); //NON-NLS
+            } else {
+                whereClause = String.format("LOWER(name) LIKE LOWER('%%%s%%') AND LOWER(name) NOT LIKE LOWER('%%journal%%') AND LOWER(parent_path) = LOWER('%s') AND data_source_obj_id = %s", dbName, parentPath, dataSource.getId()); //NON-NLS
+            }
+            absFiles = skCase.findAllFilesWhere(whereClause);
+            for (AbstractFile absFile : absFiles) {
+                try {
+                    localFilePath = openCase.getTempDirectory()
+                                            + File.separator + absFile.getId() + absFile.getName();
+                    File jFile = new java.io.File(localFilePath);
+                    fileId = absFile.getId();
+                    ContentUtils.writeToFile(absFile, jFile);
+                    
+                    //Find and copy both WAL and SHM meta files 
+                    findAndCopySQLiteMetaFile(absFile, absFile.getName() + "-wal");
+                    findAndCopySQLiteMetaFile(absFile, absFile.getName() + "-shm");
+                
+                    //run the ATTACH DATABASE sql command
+                    try {
+                        String attachDbSql = String.format("ATTACH DATABASE '%s' AS '%s'", localFilePath, dbAlias); //NON-NLS
+                        statement.executeUpdate(attachDbSql); 
+                    }
+                    catch (SQLException ex) {
+                        throw new TskCoreException("Error running ATTACH DATABASE SQL. " + ex.getMessage(), ex);
+                    }
+        
+                    return absFile;            
+                } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                    Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", absFile.getName(), fileId), ex); //NON-NLS
+                } catch (IOException | NoCurrentCaseException ex) {
+                    Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.SEVERE, String.format("Error writing content from file '%s' (id=%d) to '%s'.", absFile.getName(), fileId, localFilePath), ex); //NON-NLS
+                }
+            }
+        } catch (TskCoreException e) {
+            Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.SEVERE, "Error finding application DB file.", e); //NON-NLS
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Detaches the specified database from the connection
+     * 
+     * @param dbAlias alias for database to detach
+     * 
+     * @throws TskCoreException 
+     */
+    public void detachDatabase(String dbAlias) throws TskCoreException {
+       
+        try {
+            String detachDbSql = String.format("DETACH DATABASE '%s'", dbAlias);
+            statement.executeUpdate(detachDbSql); //NON-NLS
+        }
+        catch (SQLException ex) {
+            throw new TskCoreException("Error running DETACH DATABASE SQL. " + ex.getMessage(), ex);
+        }
+    }
+     
     
     /**
      * Checks if the specified table exists in the given database file.
