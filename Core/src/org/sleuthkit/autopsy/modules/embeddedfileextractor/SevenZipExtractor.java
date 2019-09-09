@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,7 +45,7 @@ import net.sf.sevenzipjbinding.PropID;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
-import org.mozilla.universalchardet.UniversalDetector;
+import org.apache.tika.parser.txt.CharsetDetector;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -96,7 +97,6 @@ class SevenZipExtractor {
     private IngestServices services = IngestServices.getInstance();
     private final IngestJobContext context;
     private final FileTypeDetector fileTypeDetector;
-    private final UniversalDetector universalDetector = new UniversalDetector(null);
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
@@ -809,12 +809,19 @@ class SevenZipExtractor {
     }
 
     private String detectFilenamesCharset(Collection<byte[]> byteDatas) {
-        universalDetector.reset();
+        CharsetDetector charsetDetector = new CharsetDetector();
+        int sum = 0;
         for (byte[] byteData : byteDatas) {
-            universalDetector.handleData(byteData, 0, byteData.length);
+            sum += byteData.length;
         }
-        universalDetector.dataEnd();
-        return universalDetector.getDetectedCharset();
+        byte[] allBytes = new byte[sum];
+        int start = 0;
+        for (byte[] byteData : byteDatas) {
+            System.arraycopy(byteData, 0, allBytes, start, byteData.length);
+            start += byteData.length;
+        }
+        charsetDetector.setText(allBytes);
+        return charsetDetector.detect().getName();
     }
 
     private String decodeFilename(byte[] nameBytes, String charset) {
