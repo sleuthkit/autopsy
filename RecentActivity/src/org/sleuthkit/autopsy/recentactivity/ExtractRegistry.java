@@ -1023,29 +1023,33 @@ class ExtractRegistry extends Extract {
     void createShellBagArtifacts(AbstractFile regFile, List<ShellBag> shellbags) throws TskCoreException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         for (ShellBag bag : shellbags) {
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             BlackboardArtifact artifact = regFile.newArtifact(getShellBagArtifact().getTypeID());
-            artifact.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
-            artifact.addAttribute(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
+            attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
+            attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
 
-            long time = bag.getModified();
+            long time;
+            time = bag.getLastWrite();
             if (time != 0) {
-                artifact.addAttribute(new BlackboardAttribute(TSK_DATETIME_MODIFIED, getName(), time));
+                attributes.add(new BlackboardAttribute(getLastWriteAttribute(), getName(), time));
+            }
+            
+            time = bag.getModified();
+            if (time != 0) {
+                attributes.add(new BlackboardAttribute(TSK_DATETIME_MODIFIED, getName(), time));
             }
 
             time = bag.getCreated();
             if (time != 0) {
-                artifact.addAttribute(new BlackboardAttribute(TSK_DATETIME_CREATED, getName(), time));
+                attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, getName(), time));
             }
 
             time = bag.getAccessed();
             if (time != 0) {
-                artifact.addAttribute(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
+                attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
             }
 
-            time = bag.getLastWrite();
-            if (time != 0) {
-                artifact.addAttribute(new BlackboardAttribute(getLastWriteAttribute(), getName(), time));
-            }
+            artifact.addAttributes(attributes);
 
             artifacts.add(artifact);
         }
