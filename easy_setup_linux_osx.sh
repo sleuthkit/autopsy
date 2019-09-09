@@ -9,7 +9,7 @@ fi
 echo "Installing dependencies for ${OS}"
 if test ${OS} = "linux" ; then
 	sudo apt-get -qq update
-	sudo apt-get -y install libafflib-dev libewf-dev libpq-dev autopoint libsqulite3-dev libcppunit-dev wget openjdk-8-jdk openjfx=8u161-b12-1ubuntu2 libopenjfx-java=8u161-b12-1ubuntu2 libopenjfx-jni=8u161-b12-1ubuntu2 ant automake libtool testdisk
+	sudo apt-get -y install libafflib-dev libewf-dev libpq-dev autopoint libsqlite3-dev libcppunit-dev wget openjdk-8-jdk openjfx=8u161-b12-1ubuntu2 libopenjfx-java=8u161-b12-1ubuntu2 libopenjfx-jni=8u161-b12-1ubuntu2 ant automake libtool testdisk
 elif test ${OS} = "osx" ; then
 	brew install ant automake libtool postgresql testdisk libewf gettext cppunit afflib
 fi
