@@ -47,6 +47,7 @@ import tangomessage
 import textmessage
 import wwfmessage
 import imo
+import line
 
 class AndroidModuleFactory(IngestModuleFactoryAdapter):
 
@@ -91,7 +92,7 @@ class AndroidIngestModule(DataSourceIngestModule):
         analyzers = [contact.ContactAnalyzer(), calllog.CallLogAnalyzer(), textmessage.TextMessageAnalyzer(),
                      tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(),
                      googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(),
-                     cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer()]
+                     cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(), line.LineAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 
