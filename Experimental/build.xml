@@ -17,6 +17,13 @@
         <copy todir="${basedir}/release/textclassifier">
             <fileset dir="${basedir}/src/resources/"/>
         </copy>
+        
+        <mkdir dir="${basedir}/build/cluster/textclassifier"/>
+        <copy todir="${basedir}/build/cluster/textclassifier">
+            <fileset dir="${basedir}/src/resources/"/>
+        </copy>
+        
+        
     </target>
 
     <target name="resolve">
