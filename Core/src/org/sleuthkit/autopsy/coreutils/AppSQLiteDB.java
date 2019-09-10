@@ -139,7 +139,6 @@ public final class AppSQLiteDB implements Closeable {
      * 
      * @param dataSource data source in which to look file the db file
      * @param dbName name of db file to look for
-     * @param matchExactName specified whether the name is an exact name or a pattern
      * @param dbPath path in which to look for the db file
      * @param dbAlias alias name to attach the database as
      * 
@@ -149,12 +148,14 @@ public final class AppSQLiteDB implements Closeable {
      * @throws SQLException in case of an SQL error
      */
     public AbstractFile attachDatabase(DataSource dataSource, String dbName, 
-                    boolean matchExactName, String dbPath, String dbAlias) throws SQLException {
+                    String dbPath, String dbAlias) throws SQLException {
         try {
-            Collection<AppSQLiteDBFileBundle> dbFileBundles = findAndCopySQLiteDB(dataSource,  dbName,  matchExactName, dbPath, true);
-            for (AppSQLiteDBFileBundle dbFileBundle: dbFileBundles) {
+            // find and copy DB files with exact name and path.
+            Collection<AppSQLiteDBFileBundle> dbFileBundles = findAndCopySQLiteDB(dataSource,  dbName, true, dbPath, true);
+            if (!dbFileBundles.isEmpty()) {
+                AppSQLiteDBFileBundle dbFileBundle = dbFileBundles.iterator().next();
                 String attachDbSql = String.format("ATTACH DATABASE '%s' AS '%s'", dbFileBundle.getFileCopy().getPath(), dbAlias); //NON-NLS
-                    statement.executeUpdate(attachDbSql); 
+                statement.executeUpdate(attachDbSql); 
                     
                 return dbFileBundle.getAbstractFile();
             }
@@ -182,16 +183,14 @@ public final class AppSQLiteDB implements Closeable {
     private static Collection<AppSQLiteDBFileBundle> findAndCopySQLiteDB(DataSource dataSource, String dbName, 
                     boolean matchExactName,  String dbPath, boolean matchExactPath) throws TskCoreException {
         
-        List<AppSQLiteDBFileBundle> dbFileBundles = new ArrayList<> ();
         Case openCase;
-        
         try {
             openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Failed to get current case.", ex);
         }
         
-        List<AbstractFile> absFiles;
+        List<AppSQLiteDBFileBundle> dbFileBundles = new ArrayList<> ();
         long fileId = 0;
         String localDiskPath = "";
         
@@ -212,7 +211,7 @@ public final class AppSQLiteDB implements Closeable {
         }
         whereClause += String.format(" AND data_source_obj_id = %s", dataSource.getId());
         
-        absFiles = skCase.findAllFilesWhere(whereClause);
+        List<AbstractFile> absFiles = skCase.findAllFilesWhere(whereClause);
         for (AbstractFile absFile : absFiles) {
             try {
                 localDiskPath = openCase.getTempDirectory()
