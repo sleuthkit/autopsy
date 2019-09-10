@@ -21,8 +21,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -809,7 +808,8 @@ class SevenZipExtractor {
         return unpackSuccessful;
     }
 
-    private String detectFilenamesCharset(Collection<byte[]> byteDatas) {
+    private Charset detectFilenamesCharset(Collection<byte[]> byteDatas) {
+        Charset detectedCharset = null;
         CharsetDetector charsetDetector = new CharsetDetector();
         int sum = 0;
         for (byte[] byteData : byteDatas) {
@@ -824,22 +824,11 @@ class SevenZipExtractor {
         charsetDetector.setText(allBytes);
         CharsetMatch cm = charsetDetector.detect();
         if (cm.getConfidence() >= 90) {
-            return cm.getName();
-        } else {
-            return null;
-        }
-    }
-
-    private String decodeFilename(byte[] nameBytes, String charset) {
-        String decodedName = null;
-        if (charset != null) {
-            try {
-                decodedName = new String(nameBytes, charset);
-            } catch (UnsupportedEncodingException ex) {
-                logger.log(Level.WARNING, "Error decoding filename. ", ex); //NON-NLS
+            if (Charset.isSupported(cm.getName())) {
+                detectedCharset = Charset.forName(cm.getName());
             }
         }
-        return decodedName;
+        return detectedCharset;
     }
 
     /**
@@ -1331,16 +1320,14 @@ class SevenZipExtractor {
                     }
                     names += child.getFileName();
                 }
-                String detectedCharset = detectFilenamesCharset(byteDatas);
+                Charset detectedCharset = detectFilenamesCharset(byteDatas);
+
                 // If a charset was detected, transcode filenames accordingly
-                if (detectedCharset != null) {
+                if (detectedCharset != null && detectedCharset.canEncode()) {
                     for (UnpackedNode child : node.getChildren()) {
                         if (child.getFileNameBytes() != null) {
-                            String decodedName = decodeFilename(child.getFileNameBytes(), detectedCharset);
-
-                            if (decodedName != null) {
-                                child.setFileName(decodedName);
-                            }
+                            String decodedName = new String(child.getFileNameBytes(), detectedCharset);
+                            child.setFileName(decodedName);
                         }
                     }
                 }
