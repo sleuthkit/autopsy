@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import org.openide.filesystems.FileObject;
 import java.nio.file.Files;
@@ -181,7 +182,7 @@ public class FileUtil {
      * @return Sanitized string
      */
     public static String utf8SanitizeFileName(String fileName) {
-        Charset charset = Charset.forName("UTF-8");
+        Charset charset = StandardCharsets.UTF_8;
         return charset.decode(charset.encode(escapeFileName(fileName))).toString();
     }    
 
