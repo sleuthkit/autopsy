@@ -880,16 +880,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         void nextPage() {
             currentPage++;
-            DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             postPageChangeEvent();
-            DataResultViewerTable.this.setCursor(null);
         }
 
         void previousPage() {
             currentPage--;
-            DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             postPageChangeEvent();
-            DataResultViewerTable.this.setCursor(null);
         }
 
         @NbBundle.Messages({"# {0} - totalPages",
