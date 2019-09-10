@@ -61,8 +61,8 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         """
 
         try:
-            contact_and_calllog_dbs = SQLiteUtil.findAppDatabases(dataSource, "viber_data", self._VIBER_PACKAGE_NAME)
-            message_dbs = SQLiteUtil.findAppDatabases(dataSource, "viber_messages", self._VIBER_PACKAGE_NAME)
+            contact_and_calllog_dbs = SQLiteUtil.findAppDatabases(dataSource, "viber_data", True, self._VIBER_PACKAGE_NAME)
+            message_dbs = SQLiteUtil.findAppDatabases(dataSource, "viber_messages", True, self._VIBER_PACKAGE_NAME)
 
             #Extract TSK_CONTACT and TSK_CALLLOG information
             for contact_and_calllog_db in contact_and_calllog_dbs:
@@ -91,6 +91,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                         calllog_parser.get_contact_name()
                     )
                 calllog_parser.close()
+                contact_and_calllog_db.close()
 
             #Extract TSK_MESSAGE information
             for message_db in message_dbs:
@@ -98,7 +99,6 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 messages_parser = ViberMessagesParser(message_db)
                 while messages_parser.next():
                     blackboard_util.addMessage(
-                        messages_parser.get_account_id(),
                         messages_parser.get_message_type(),
                         messages_parser.get_message_direction(),
                         messages_parser.get_phone_number_from(),
@@ -110,6 +110,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                         messages_parser.get_thread_id()
                     )
                 messages_parser.close()
+                message_db.close()
         except (SQLException, TskCoreException) as ex:
             #Error parsing Viber db
             self._logger.log(Level.WARNING, "Error parsing Viber Databases", ex)
@@ -137,6 +138,9 @@ class ViberCallLogsParser(TskCallLogsParser):
         self._OUTGOING_CALL = 2
         self._INCOMING_CALL = 1
         self._MISSED_CALL = 3
+
+    def get_account_name(self):
+        return self.result_set.getString("number")
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_MSG_STRING:
@@ -184,10 +188,10 @@ class ViberContactsParser(TskContactsParser):
         )
     
     def get_account_name(self):
-        return self.result_set.getString("name")
+        return self.result_set.getString("number")
         
     def get_contact_name(self):
-        return self.get_account_name()
+        return self.result_set.getString("name")
 
     def get_phone(self):
         return self.result_set.getString("number")
@@ -202,32 +206,33 @@ class ViberMessagesParser(TskMessagesParser):
     def __init__(self, message_db):
         super(ViberMessagesParser, self).__init__(message_db.runQuery(
                  """
-                      SELECT FROM_RESULT.number     AS from_number,
-                             FROM_RESULT.viber_name AS from_name,
-                             TO_RESULT.number       AS to_number,
-                             M.conversation_id      AS thread_id,
-                             M.body                 AS msg_content,
-                             M.send_type            AS direction,
-                             M.msg_date             AS msg_date,
-                             M.unread               AS read_status
-                      FROM   (SELECT P._id,
-                                     P.conversation_id,
-                                     PI.number,
-                                     PI.viber_name
-                              FROM   participants AS P
-                                     JOIN participants_info AS PI
-                                       ON P.participant_info_id = PI._id) AS FROM_RESULT
-                              JOIN (SELECT P._id,
-                                           P.conversation_id,
-                                           PI.number
-                                    FROM   participants AS P
-                                           JOIN participants_info AS PI
-                                             ON P.participant_info_id = PI._id) AS TO_RESULT
-                                ON FROM_RESULT._id != TO_RESULT._id
-                                   AND FROM_RESULT.conversation_id = TO_RESULT.conversation_id
-                              JOIN messages AS M
-                                ON M.participant_id = FROM_RESULT._id
-                                   AND M.conversation_id = FROM_RESULT.conversation_id  
+                     SELECT convo_participants.from_number AS from_number, 
+                            convo_participants.recipients  AS recipients, 
+                            M.conversation_id              AS thread_id, 
+                            M.body                         AS msg_content, 
+                            M.send_type                    AS direction, 
+                            M.msg_date                     AS msg_date, 
+                            M.unread                       AS read_status 
+                     FROM   (SELECT *, 
+                                    group_concat(TO_RESULT.number) AS recipients 
+                             FROM   (SELECT P._id     AS FROM_ID, 
+                                            P.conversation_id, 
+                                            PI.number AS FROM_NUMBER 
+                                     FROM   participants AS P 
+                                            JOIN participants_info AS PI 
+                                              ON P.participant_info_id = PI._id) AS FROM_RESULT 
+                                    JOIN (SELECT P._id AS TO_ID, 
+                                                 P.conversation_id, 
+                                                 PI.number 
+                                          FROM   participants AS P 
+                                                 JOIN participants_info AS PI 
+                                                   ON P.participant_info_id = PI._id) AS TO_RESULT 
+                                      ON FROM_RESULT.from_id != TO_RESULT.to_id 
+                                         AND FROM_RESULT.conversation_id = TO_RESULT.conversation_id 
+                             GROUP  BY FROM_RESULT.from_id) AS convo_participants 
+                            JOIN messages AS M 
+                              ON M.participant_id = convo_participants.from_id 
+                                 AND M.conversation_id = convo_participants.conversation_id
                  """
              )
         )
@@ -235,36 +240,35 @@ class ViberMessagesParser(TskMessagesParser):
         self._INCOMING_MESSAGE_TYPE = 0
         self._OUTGOING_MESSAGE_TYPE = 1
 
-    def get_account_id(self):
-        name = self.result_set.getString("from_name")
-        if name is None or len(name) == 0:
-            return self.get_phone_number_from()
-        return name
-
     def get_message_type(self):
         return self._VIBER_MESSAGE_TYPE 
 
     def get_phone_number_from(self):
-        return self.result_set.getString("from_number")
+        return Account.Address(self.result_set.getString("from_number"), 
+                self.result_set.getString("from_number"))
 
     def get_message_direction(self):  
         direction = self.result_set.getInt("direction")
         if direction == self._INCOMING_MESSAGE_TYPE:
-            return self.INCOMING_MSG_STRING 
-        return self.OUTGOING_MSG_STRING 
+            return self.INCOMING_MSG 
+        return self.OUTGOING_MSG 
     
     def get_phone_number_to(self):
-        return self.result_set.getString("to_number")
+        recipients = []
+        for token in self.result_set.getString("recipients").split(","):
+            recipients.append(Account.Address(token, token))
+        return recipients
 
     def get_message_date_time(self):
         #transform from ms to seconds
         return self.result_set.getLong("msg_date") / 1000 
 
     def get_message_read_status(self):
-        #Viber: 0 is read, 1 is unread. 
-        #TSK_MESSAGE 1 is read, 0 is unread.
-        if self.get_message_direction() == self.INCOMING_MSG_STRING: 
-            return 1 - self.result_set.getInt("read_status")
+        if self.get_message_direction() == self.INCOMING_MSG: 
+            if self.result_set.getInt("read_status") == 0:
+                return BlackboardUtil.MessageReadStatusEnum.READ
+            else:
+                return BlackboardUtil.MessageReadStatusEnum.UNREAD
         return super(ViberMessagesParser, self).get_message_read_status()
 
     def get_message_text(self):

@@ -17,6 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from ResultSetIterator import ResultSetIterator
+from org.sleuthkit.datamodel import Account
+from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
 
 class TskMessagesParser(ResultSetIterator):
     """
@@ -31,14 +33,12 @@ class TskMessagesParser(ResultSetIterator):
 
     def __init__(self, result_set):
         super(TskMessagesParser, self).__init__(result_set)
-        self.INCOMING_MSG_STRING = "Incoming"
-        self.OUTGOING_MSG_STRING = "Outgoing"
+        self.INCOMING_MSG = "Incoming"
+        self.OUTGOING_MSG = "Outgoing"
         self._DEFAULT_TEXT = ""
         self._DEFAULT_LONG = -1L
-        self._DEFAULT_INT = -1
-
-    def get_account_id(self):
-        return self._DEFAULT_TEXT
+        self._DEFAULT_MSG_READ_STATUS = AppDBParserHelper.MessageReadStatusEnum.UNKNOWN
+        self._DEFAULT_ACCOUNT_ADDRESS = Account.Address("","")
 
     def get_message_type(self):
         return self._DEFAULT_TEXT
@@ -47,16 +47,16 @@ class TskMessagesParser(ResultSetIterator):
         return self._DEFAULT_TEXT
 
     def get_phone_number_from(self):
-        return self._DEFAULT_TEXT
+        return self._DEFAULT_ACCOUNT_ADDRESS
 
     def get_phone_number_to(self):
-        return self._DEFAULT_TEXT
+        return self._DEFAULT_ACCOUNT_ADDRESS
 
     def get_message_date_time(self):
         return self._DEFAULT_LONG
 
     def get_message_read_status(self):
-        return self._DEFAULT_INT
+        return self._DEFAULT_MSG_READ_STATUS
 
     def get_message_subject(self):
         return self._DEFAULT_TEXT
