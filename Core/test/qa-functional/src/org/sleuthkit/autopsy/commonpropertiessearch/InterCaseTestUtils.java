@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,19 +46,11 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import junit.framework.Assert;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValue;
-import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
@@ -279,10 +271,8 @@ class InterCaseTestUtils {
             for (CorrelationCase correlationCase : EamDb.getInstance().getCases()) {
                 mapOfCaseIdsToCase.put(correlationCase.getDisplayName(), correlationCase.getID());
             }
-            System.out.println("EAM IS ENABLED");
             return mapOfCaseIdsToCase;
         } else {
-            System.out.println("EAMDB NOT ENABLED");
             //it is reasonable that this might happen...
             //  for example when we test the feature in the absence of an enabled eamdb 
             return new HashMap<>(0);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
-
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -128,7 +126,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;
         } catch (Blackboard.BlackboardException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Blackboard Exception processing file with obj_id = " + file.getId(), ex);
         }
         return ProcessResult.OK;
     }

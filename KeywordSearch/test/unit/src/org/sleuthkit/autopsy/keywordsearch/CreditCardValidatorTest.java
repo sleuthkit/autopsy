@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,8 +48,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testLengthMatchesBin() {
-        System.out.println("lengthMatchesBin");
-
         //amex must be 15
         assertEquals(true, CreditCardValidator.isValidCCN("3431 136294 58529"));
         assertEquals(false, CreditCardValidator.isValidCCN("3431-136294-5850")); //too short
@@ -95,8 +93,6 @@ public class CreditCardValidatorTest {
      */
     @Test
     public void testIsValidCCN16() {
-        System.out.println("isValidCCN");
-
         //rules for separators and grouping for 16 digits
         assertEquals(true, CreditCardValidator.isValidCCN("1234567890318342"));// dashes
         assertEquals(true, CreditCardValidator.isValidCCN("1234-5678-9031-8342"));// dashes
@@ -111,8 +107,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testIsValidCCN15() {
-        System.out.println("isValidCCN");
-
         //amex are fifteen digits, and grouped 4 6 5
         //amex cards that strart with 34
         assertEquals(true, CreditCardValidator.isValidCCN("3431 136294 58529"));
@@ -143,7 +137,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testIsValidCCN19() {
-        System.out.println("isValidCCN");
         //nineteen digit (visa) cards 4-4-4-4-3
         assertEquals(true, CreditCardValidator.isValidCCN("4539747947839518654"));
         assertEquals(true, CreditCardValidator.isValidCCN("4539-7479-4783-9518-654"));
@@ -168,8 +161,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testIsValidCCN18() {
-        System.out.println("isValidCCN");
-
         assertEquals(true, CreditCardValidator.isValidCCN("123456789031834267"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234 5678 9031 8342 67"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234-56789031834-267"));
@@ -181,8 +172,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testIsValidCCN17() {
-        System.out.println("isValidCCN");
-
         assertEquals(true, CreditCardValidator.isValidCCN("12345678903183426"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234 5678 9031 8342 6"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234-56789031834-26"));
@@ -194,8 +183,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testIsValidCCN14() {
-        System.out.println("isValidCCN");
-
         assertEquals(true, CreditCardValidator.isValidCCN("12345678903183"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234 5678 9031 83"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234-5678903183"));
@@ -207,8 +194,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testIsValidCCN13() {
-        System.out.println("isValidCCN");
-
         assertEquals(true, CreditCardValidator.isValidCCN("1234567890318"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234 5678 9031 8"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234-567890318"));
@@ -220,8 +205,6 @@ public class CreditCardValidatorTest {
 
     @Test
     public void testIsValidCCN12() {
-        System.out.println("isValidCCN");
-
         assertEquals(true, CreditCardValidator.isValidCCN("123456789031"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234 5678 9031"));
         assertEquals(true, CreditCardValidator.isValidCCN("1234-56789031"));

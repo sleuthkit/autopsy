@@ -421,12 +421,6 @@ class ExtractRegistry extends Extract {
             Element oroot = doc.getDocumentElement();
             NodeList children = oroot.getChildNodes();
             int len = children.getLength();
-            // Add all "usb" dataType nodes to collection of BlackboardArtifacts 
-            // that we will submit in a ModuleDataEvent for additional processing.
-            Collection<BlackboardArtifact> usbBBartifacts = new ArrayList<>();
-            // Add all "ssid" dataType nodes to collection of BlackboardArtifacts 
-            // that we will submit in a ModuleDataEvent for additional processing.
-            Collection<BlackboardArtifact> wifiBBartifacts = new ArrayList<>();
             for (int i = 0; i < len; i++) {
 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -683,10 +677,8 @@ class ExtractRegistry extends Extract {
 
                                             // index the artifact for keyword search
                                             postArtifact(bbart);
-                                            // add to collection for ModuleDataEvent
-                                            usbBBartifacts.add(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard."); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
                                     case "uninstall": //NON-NLS
@@ -697,8 +689,8 @@ class ExtractRegistry extends Extract {
                                                 itemMtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(mTimeAttr).getTime(); //NON-NLS
                                                 itemMtime /= MS_IN_SEC;
                                             }
-                                        } catch (ParseException e) {
-                                            logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
+                                        } catch (ParseException ex) {
+                                            logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact.", ex); //NON-NLS
                                         }
 
                                         try {
@@ -710,7 +702,7 @@ class ExtractRegistry extends Extract {
                                             // index the artifact for keyword search
                                             postArtifact(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
                                     case "office": //NON-NLS
@@ -730,7 +722,7 @@ class ExtractRegistry extends Extract {
                                             // index the artifact for keyword search
                                             postArtifact(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard."); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
 
@@ -797,7 +789,7 @@ class ExtractRegistry extends Extract {
                                             // index the artifact for keyword search
                                             postArtifact(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding account artifact to blackboard."); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
 
@@ -814,7 +806,7 @@ class ExtractRegistry extends Extract {
                                             // index the artifact for keyword search
                                             postArtifact(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding network artifact to blackboard."); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding network artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
                                     case "SSID": // NON-NLS
@@ -829,9 +821,8 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             postArtifact(bbart);
-                                            wifiBBartifacts.add(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard."); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
                                     case "shellfolders": // NON-NLS
@@ -849,9 +840,6 @@ class ExtractRegistry extends Extract {
                         break;
                 }
             } // for
-
-            postArtifacts(usbBBartifacts);
-            postArtifacts(wifiBBartifacts);
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
