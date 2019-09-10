@@ -53,8 +53,7 @@ public class NewlineHeuristicSentenceDetector implements SentenceDetector {
         // Include a sentence boundary if
         // 1. CONTAINED_DETECTOR says it is a sentence boundary
         // 2. a '\n' character is followed by a lower case letter.
-        // This skips all '\r', on the assumption that '\r' is only
-        // meaningful when preceding '\n'.
+        // This skips '\r' if it comes after '\n'.
 
         Span[] oldSpans = CONTAINED_DETECTOR.sentPosDetect(s);
 
@@ -71,16 +70,13 @@ public class NewlineHeuristicSentenceDetector implements SentenceDetector {
                     continue;
                 }
 
-                if (previousIsNewLine) {
-                    if (!Character.isLowerCase(c)) {
-                        Span span = (new Span(start, i - 1)).trim(s);
-                        if (span.length() > 0) {
-                            newSpans.add(span);
-                            start = i;
-                        }
+                if (previousIsNewLine && !Character.isLowerCase(c)) {
+                    Span span = (new Span(start, i - 1)).trim(s);
+                    if (span.length() > 0) {
+                        newSpans.add(span);
+                        start = i;
                     }
                 }
-
                 previousIsNewLine = (c == '\n');
             }
 
