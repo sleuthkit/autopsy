@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import java.io.File;
@@ -29,9 +28,9 @@ import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
 
 /**
- * A wrapper around another SentenceDetectorME as defined in a model file.
- * It treats all newlines as sentence boundaries unless the following character 
- * is lowercase. It also accepts all sentence boundaries from the contained
+ * A wrapper around another SentenceDetectorME as defined in a model file. It
+ * treats all newlines as sentence boundaries unless the following character is
+ * lowercase. It also accepts all sentence boundaries from the contained
  * SentenceDetector.
  */
 public class NewlineHeuristicSentenceDetector implements SentenceDetector {
@@ -43,7 +42,7 @@ public class NewlineHeuristicSentenceDetector implements SentenceDetector {
             this.CONTAINED_DETECTOR = new SentenceDetectorME(new SentenceModel(stream));
         }
     }
-    
+
     @Override
     public String[] sentDetect(String inputString) {
         return Span.spansToStrings(this.sentPosDetect(inputString), inputString);
@@ -61,11 +60,11 @@ public class NewlineHeuristicSentenceDetector implements SentenceDetector {
 
         ArrayList<Span> newSpans = new ArrayList<>();
 
-        for(Span oldSpan : oldSpans) {
+        for (Span oldSpan : oldSpans) {
             int start = oldSpan.getStart();
 
             boolean previousIsNewLine = false;
-            for(int i = oldSpan.getStart(); i < oldSpan.getEnd(); ++i) {
+            for (int i = oldSpan.getStart(); i < oldSpan.getEnd(); ++i) {
                 char c = s.charAt(i);
 
                 if (previousIsNewLine && c == '\r') {
@@ -81,7 +80,7 @@ public class NewlineHeuristicSentenceDetector implements SentenceDetector {
                         }
                     }
                 }
-                
+
                 previousIsNewLine = (c == '\n');
             }
 
