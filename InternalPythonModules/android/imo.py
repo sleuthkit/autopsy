@@ -129,9 +129,11 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         # TBD: parse the imdata JSON structure to figure out if there is an attachment.
                         #      If one exists, add the attachment as a derived file and a child of the message artifact.
 
-            
+                    
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for IMO friends", ex)       
+                self._logger.log(Level.SEVERE, "Error processing query result for IMO friends", ex)
+            except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding artifacts.", ex)
             finally:
                 friendsDb.close()
                 
