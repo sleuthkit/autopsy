@@ -19,25 +19,31 @@
 
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import opennlp.tools.sentdetect.SentenceDetector;
 import opennlp.tools.util.Span;
-
 import java.util.ArrayList;
+import opennlp.tools.sentdetect.SentenceDetectorME;
+import opennlp.tools.sentdetect.SentenceModel;
 
 /**
- * A wrapper around another SentenceDetector. It treats all newlines as sentence
- * boundaries, and it also accepts all sentence boundaries from the contained
+ * A wrapper around another SentenceDetectorME as defined in a model file.
+ * It treats all newlines as sentence boundaries unless the following character 
+ * is lowercase. It also accepts all sentence boundaries from the contained
  * SentenceDetector.
  */
 public class NewlineHeuristicSentenceDetector implements SentenceDetector {
 
     private final SentenceDetector CONTAINED_DETECTOR;
 
-
-    public NewlineHeuristicSentenceDetector(SentenceDetector detector1) {
-        this.CONTAINED_DETECTOR = detector1;
+    public NewlineHeuristicSentenceDetector(File modelFile) throws IOException {
+        try (FileInputStream stream = new FileInputStream(modelFile)) {
+            this.CONTAINED_DETECTOR = new SentenceDetectorME(new SentenceModel(stream));
+        }
     }
-
+    
     @Override
     public String[] sentDetect(String inputString) {
         return Span.spansToStrings(this.sentPosDetect(inputString), inputString);
@@ -76,11 +82,7 @@ public class NewlineHeuristicSentenceDetector implements SentenceDetector {
                     }
                 }
                 
-                if (c == '\n') {
-                    previousIsNewLine = true;
-                } else {
-                    previousIsNewLine = false;
-                }
+                previousIsNewLine = (c == '\n');
             }
 
             //If we reached the end of the old Span, create a new Span

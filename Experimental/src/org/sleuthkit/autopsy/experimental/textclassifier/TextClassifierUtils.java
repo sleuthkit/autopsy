@@ -160,7 +160,7 @@ class TextClassifierUtils {
             if (sentenceModelFile == null) {
                 throw new IOException("Error finding sentence detector module");
             }
-            sentenceDetector = new NewlineHeuristicSentenceDetector(new SentenceDetectorME(new SentenceModel(new FileInputStream(sentenceModelFile))));
+            sentenceDetector = new NewlineHeuristicSentenceDetector(sentenceModelFile);
         }
     }
 
