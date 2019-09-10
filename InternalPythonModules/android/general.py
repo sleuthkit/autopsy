@@ -26,17 +26,3 @@ class AndroidComponentAnalyzer:
     # The Analyzer should implement this method
     def analyze(self, dataSource, fileManager, context):
         raise NotImplementedError
-
-
-"""
-A utility method to append list of attachments to msg body
-"""
-def appendAttachmentList(msgBody, attachmentsList):
-    body = msgBody
-    if attachmentsList:
-        body = body + '\n\n' + "Attachments:" + 'n' + "------------" + 'n'
-        body = body + '\n'.join(attachmentsList)
-
-    return body
-    
-    
