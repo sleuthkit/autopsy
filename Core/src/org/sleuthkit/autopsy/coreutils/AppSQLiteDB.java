@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -45,8 +44,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An abstraction around an SQLite app DB found in a data source.
- * This class makes a copy of it, opens a SQLite connection to it 
- * and runs queries on it.
+ * This class makes a copy of it, along with any meta files (WAL, SHM),
+ * opens a SQLite connection to it, and runs queries on it.
  */
 public final class AppSQLiteDB implements Closeable {
     private final Logger logger = Logger.getLogger(AppSQLiteDB.class.getName());
@@ -103,8 +102,8 @@ public final class AppSQLiteDB implements Closeable {
      * @param matchExactName whether to look for exact file name or a pattern match
      * @param parentPathSubstr path substring to match
      * 
-     * @return AbstractFile for the DB if the database file is found.
-     *         Returns NULL if no such database is found.
+     * @return A list of abstract files matching the specified name and path.
+     *         Returns an empty list if no matching database is found.
      */
     public static Collection<AppSQLiteDB> findAppDatabases(DataSource dataSource,
             String dbName, boolean matchExactName, String parentPathSubstr) {
