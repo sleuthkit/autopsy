@@ -46,6 +46,7 @@ import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -821,7 +822,12 @@ class SevenZipExtractor {
             start += byteData.length;
         }
         charsetDetector.setText(allBytes);
-        return charsetDetector.detect().getName();
+        CharsetMatch cm = charsetDetector.detect();
+        if (cm.getConfidence() >= 90) {
+            return cm.getName();
+        } else {
+            return null;
+        }
     }
 
     private String decodeFilename(byte[] nameBytes, String charset) {
