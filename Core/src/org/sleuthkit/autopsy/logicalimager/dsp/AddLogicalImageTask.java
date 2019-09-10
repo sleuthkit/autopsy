@@ -295,7 +295,7 @@ final class AddLogicalImageTask implements Runnable {
     @Messages({
         "# {0} - line number", "# {1} - fields length", "# {2} - expected length", "AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}",
         "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}",
-        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting file {0} of {1}"
+        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting file ({0}/{1})"
     })
     private void addInterestingFiles(Path resultsPath, boolean createVHD) throws IOException, TskCoreException {
         Map<Long, List<String>> objIdToimagePathsMap = currentCase.getSleuthkitCase().getImagePaths();
@@ -361,8 +361,7 @@ final class AddLogicalImageTask implements Runnable {
     }
 
     @Messages({
-        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingExtractedFile=Adding extracted file {0} of {1}",
-        "AddLogicalImageTask.errorAddingExtractedFiles=Error adding extracted files"
+        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingExtractedFile=Adding extracted file ({0}/{1})"
     })
     private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, IOException {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -428,7 +427,7 @@ final class AddLogicalImageTask implements Runnable {
         } catch (NumberFormatException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error adding extracted files", ex); // NON-NLS
             rollbackTransaction(trans);
-            throw new TskCoreException(Bundle.AddLogicalImageTask_errorAddingExtractedFiles(), ex);
+            throw new TskCoreException("Error adding extracted files", ex);
         }
     }
 

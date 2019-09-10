@@ -4,11 +4,11 @@
 
 # {0} - file number
 # {1} - total files
-AddLogicalImageTask.addingExtractedFile=Adding extracted file {0} of {1}
+AddLogicalImageTask.addingExtractedFile=Adding extracted file ({0}/{1})
 AddLogicalImageTask.addingExtractedFiles=Adding extracted files
 # {0} - file number
 # {1} - total files
-AddLogicalImageTask.addingInterestingFile=Adding interesting file {0} of {1}
+AddLogicalImageTask.addingInterestingFile=Adding interesting file ({0}/{1})
 AddLogicalImageTask.addingInterestingFiles=Adding search results as interesting files
 # {0} - file
 AddLogicalImageTask.addingToReport=Adding {0} to report
@@ -27,7 +27,6 @@ AddLogicalImageTask.doneAddingInterestingFiles=Done adding search results as int
 # {0} - file
 AddLogicalImageTask.doneAddingToReport=Done adding {0} to report
 AddLogicalImageTask.doneCopying=Done copying
-AddLogicalImageTask.errorAddingExtractedFiles=Error adding extracted files
 # {0} - reason
 AddLogicalImageTask.failedToAddInterestingFiles=Failed to add interesting files: {0}
 # {0} - file
