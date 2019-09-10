@@ -81,12 +81,12 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
-import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
  * A tabular result viewer that displays the children of the given root node
@@ -893,21 +893,21 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             "DataResultViewerTable.goToPageTextField.err=Invalid page number"})
         void gotoPage() {
             try {
-                int saveCurrentPage = currentPage;
                 currentPage = Integer.decode(gotoPageTextField.getText());
-                if (currentPage > totalPages || currentPage < 1) {
-                    currentPage = saveCurrentPage;
-                    JOptionPane.showMessageDialog(DataResultViewerTable.this,
-                            Bundle.DataResultViewerTable_goToPageTextField_msgDlg(totalPages),
-                            Bundle.DataResultViewerTable_goToPageTextField_err(),
-                            JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                postPageChangeEvent();
             } catch (NumberFormatException e) {
                 //ignore input
                 return;
             }
+
+            if (currentPage > totalPages || currentPage < 1) {
+                currentPage = 1;
+                JOptionPane.showMessageDialog(DataResultViewerTable.this,
+                        Bundle.DataResultViewerTable_goToPageTextField_msgDlg(totalPages),
+                        Bundle.DataResultViewerTable_goToPageTextField_err(),
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            postPageChangeEvent();
         }
 
         /**
