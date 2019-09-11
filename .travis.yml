@@ -42,12 +42,12 @@ before_install:
 
 install:
  - sudo apt-get install testdisk
+ - cd sleuthkit/sleuthkit
  - ./travis_install_libs.sh
 
 script:
  - set -e
  - echo "Building TSK..."
- - cd sleuthkit/sleuthkit
  - ./bootstrap && ./configure --prefix=/usr && make
  - pushd bindings/java/ && ant -q dist-PostgreSQL && popd
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
