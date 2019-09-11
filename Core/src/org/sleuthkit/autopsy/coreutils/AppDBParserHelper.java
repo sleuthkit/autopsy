@@ -248,13 +248,15 @@ public final class AppDBParserHelper  {
      * @param relationshipType type of relationship
      * @param dateTime date/time of relationship 
      */
-    private void addRelationship(AccountFileInstance selfAccount, AccountFileInstance otherAccount, 
+    private void addRelationship(AccountFileInstance selfAccountInstance, AccountFileInstance otherAccountInstance, 
                                     BlackboardArtifact sourceArtifact, Relationship.Type relationshipType, long dateTime) {
         try {
-            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(selfAccount,
-                    Collections.singletonList(otherAccount), sourceArtifact, relationshipType, dateTime);
+            if (selfAccountInstance.getAccount() != otherAccountInstance.getAccount()) {
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(selfAccountInstance,
+                    Collections.singletonList(otherAccountInstance), sourceArtifact, relationshipType, dateTime);
+            }
         } catch (TskCoreException | TskDataException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to add relationship between account %s and account %s", selfAccount.toString(), otherAccount.toString()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Unable to add relationship between account %s and account %s", selfAccountInstance.toString(), otherAccountInstance.toString()), ex); //NON-NLS
         }
     }
     
@@ -366,17 +368,6 @@ public final class AppDBParserHelper  {
                 String threadId, 
                 Collection<BlackboardAttribute> otherAttributesList) {
        
-         
-        // Create a comma separated string of recipients
-        String toAddresses =  null;
-        if (recipientsList != null && (!recipientsList.isEmpty())) {
-            StringBuilder toAddressesSb = new StringBuilder();
-            for(Account.Address recipient : recipientsList) {
-                toAddressesSb = toAddressesSb.length() > 0 ? toAddressesSb.append(",").append(recipient.getDisplayName()) : toAddressesSb.append(recipient.getDisplayName());
-            }
-            toAddresses =  toAddressesSb.toString();
-        }
-    
         // Created message artifact.  
         BlackboardArtifact msgArtifact = null;
         try {
@@ -399,6 +390,8 @@ public final class AppDBParserHelper  {
             if (fromAddress != null && !StringUtils.isEmpty(fromAddress.getDisplayName())) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromAddress.getDisplayName()));
             }
+            // Create a comma separated string of recipients
+            String toAddresses =  addressListToString(recipientsList);
             if (toAddresses != null && !StringUtils.isEmpty(toAddresses)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, toAddresses));
             }
@@ -412,7 +405,6 @@ public final class AppDBParserHelper  {
             if (!StringUtils.isEmpty(threadId)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_THREAD_ID, moduleName, threadId));
             }
-
 
             // Add other specified attributes
             for (BlackboardAttribute otherAttribute: otherAttributesList) {
@@ -444,8 +436,6 @@ public final class AppDBParserHelper  {
 
             // post artifact 
             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(msgArtifact, this.moduleName);
-        
-        
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Unable to add message artifact", ex); //NON-NLS
             return null;
@@ -461,24 +451,22 @@ public final class AppDBParserHelper  {
     /**
      * Adds a TSK_CALLLOG artifact. 
      * 
-     * Also creates an account instance for the caller/receiver, and creates a 
-     * relationship between the self account and the caller/receiver account.
+     * Also creates an account instance for the caller/callee, and creates a 
+     * relationship between the self account and the caller/callee account.
      * 
-     * @param otherAccountUniqueID unique id for the caller/receiver account
      * @param direction call direction
-     * @param fromPhoneNumber originating phone number, may be empty
-     * @param toPhoneNumber recipient phone number, may be empty
+     * @param fromAddress caller address, may be empty
+     * @param toAddress callee address, may be empty
      * @param startDateTime start date/time
      * @param endDateTime end date/time
-     * @param contactName contact name, may be empty
      * 
      * @return call log artifact
      */
-    public BlackboardArtifact addCalllog( String otherAccountUniqueID, 
-                                          String direction, String fromPhoneNumber, String toPhoneNumber, 
-                                          long startDateTime, long endDateTime, String contactName) {
-        return addCalllog(otherAccountUniqueID, direction, fromPhoneNumber, toPhoneNumber, 
-                            startDateTime, endDateTime,  contactName, 
+    public BlackboardArtifact addCalllog( String direction, 
+                                    Account.Address fromAddress, Account.Address toAddress, 
+                                    long startDateTime, long endDateTime) {
+        return addCalllog(direction, fromAddress, toAddress, 
+                            startDateTime, endDateTime, 
                             Collections.<BlackboardAttribute>emptyList());
     }
     
@@ -486,23 +474,74 @@ public final class AppDBParserHelper  {
      * Adds a TSK_CALLLOG artifact. 
      * 
      * Also creates an account instance for the caller/receiver, and creates a 
-     * relationship between the device owner account and the caller/receiver account.
+     * relationship between the self account and the caller/receiver account.
      * 
-     * @param otherAccountUniqueID
-     * @param direction
-     * @param fromPhoneNumber
-     * @param toPhoneNumber
-     * @param startDateTime
-     * @param endDateTime
-     * @param contactName
-     * @param otherAttributesList
+     * @param direction call direction
+     * @param fromAddress caller address, may be empty
+     * @param toAddress callee address, may be empty
+     * @param startDateTime start date/time
+     * @param endDateTime end date/time
+     * @param otherAttributesList other attributes
+     * 
+     * @return call log artifact
+     */
+    public BlackboardArtifact addCalllog( String direction, 
+                                    Account.Address fromAddress, 
+                                    Account.Address toAddress, 
+                                    long startDateTime, long endDateTime,
+                                    Collection<BlackboardAttribute> otherAttributesList) {
+        return addCalllog(direction, 
+                            fromAddress, 
+                            Arrays.asList(toAddress), 
+                            startDateTime, endDateTime, 
+                            otherAttributesList);
+    }
+    
+     /**
+     * Adds a TSK_CALLLOG artifact. 
+     * 
+     * Also creates an account instance for the caller/callees, 
+     * and creates a relationship between the device owner account and the caller account
+     * as well between the device owner account and each callee account
+     * 
+     * @param direction call direction
+     * @param fromAddress caller address, may be empty
+     * @param toAddressList callee address list, may be empty
+     * @param startDateTime start date/time
+     * @param endDateTime end date/time
+     * 
+     * @return call log artifact
+     */
+    public BlackboardArtifact addCalllog( String direction, 
+                                Account.Address fromAddress, 
+                                Collection<Account.Address> toAddressList, 
+                                long startDateTime, long endDateTime) {
+    
+         return addCalllog(direction, fromAddress, toAddressList, 
+                            startDateTime, endDateTime, 
+                            Collections.<BlackboardAttribute>emptyList());
+    }
+    /**
+     * Adds a TSK_CALLLOG artifact. 
+     * 
+     * Also creates an account instance for the caller/callees, 
+     * and creates a relationship between the device owner account and the caller account
+     * as well between the device owner account and each callee account
+     * 
+     * @param direction call direction
+     * @param fromAddress caller address, may be empty
+     * @param toAddressList callee address list, may be empty
+     * @param startDateTime start date/time
+     * @param endDateTime end date/time
+     * @param otherAttributesList other attributes
      * 
      * @return calllog artifact
      */
-    public BlackboardArtifact addCalllog(String otherAccountUniqueID, 
-                                            String direction, String fromPhoneNumber, String toPhoneNumber, 
-                                            long startDateTime, long endDateTime, String contactName,
-                                            Collection<BlackboardAttribute> otherAttributesList) {
+    public BlackboardArtifact addCalllog( String direction, 
+                                Account.Address fromAddress, 
+                                Collection<Account.Address> toAddressList, 
+                                long startDateTime, long endDateTime,
+                                Collection<BlackboardAttribute> otherAttributesList) {
         BlackboardArtifact callLogArtifact = null;
         try {
             // Create TSK_CALLLOG artifact
@@ -519,14 +558,17 @@ public final class AppDBParserHelper  {
             if (!StringUtils.isEmpty(direction)) {
                 callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction));
             }
-            if (!StringUtils.isEmpty(fromPhoneNumber)) {
-                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromPhoneNumber));
+            if (fromAddress != null) {
+                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromAddress.getUniqueID()));
+                if (!StringUtils.isEmpty(fromAddress.getDisplayName())) {
+                    callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, fromAddress.getDisplayName()));
+                }
             }
-            if (!StringUtils.isEmpty(toPhoneNumber)) {
-                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, toPhoneNumber));
-            }
-            if (!StringUtils.isEmpty(contactName)) {
-                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, contactName));
+            
+            // Create a comma separated string of recipients
+            String toAddresses =  addressListToString(toAddressList);
+            if (!StringUtils.isEmpty(toAddresses)) {
+                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, toAddresses));
             }
             
             // Add other specified attributes
@@ -534,13 +576,24 @@ public final class AppDBParserHelper  {
                 callLogArtifact.addAttribute(otherAttribute);
             }
             
-            // Find/Create an account instance for the sender/recipient
-            // Create a relationship between selfAccount and contactAccount
-            AccountFileInstance contactAccountInstance = createAccountInstance(accountsType, otherAccountUniqueID);
-            if (selfAccountInstance != null) {
-                addRelationship (selfAccountInstance, contactAccountInstance, callLogArtifact, Relationship.Type.CALL_LOG, 0 );
+            // Create a relationship between selfAccount and caller
+            if (fromAddress != null) {
+                AccountFileInstance callerAccountInstance = createAccountInstance(accountsType, fromAddress.getUniqueID());
+                if (selfAccountInstance != null) {
+                   addRelationship (selfAccountInstance, callerAccountInstance, callLogArtifact, Relationship.Type.CALL_LOG, (startDateTime > 0) ? startDateTime : 0 );
+               }
             }
             
+             // Create a relationship between selfAccount and each callee
+            if (toAddressList != null) {
+                for(Account.Address callee : toAddressList) {
+                   AccountFileInstance calleeAccountInstance = createAccountInstance(accountsType, callee.getUniqueID());
+                   if (selfAccountInstance != null) {
+                       addRelationship (selfAccountInstance, calleeAccountInstance, callLogArtifact, Relationship.Type.CALL_LOG, (startDateTime > 0) ? startDateTime : 0 );
+                   }
+                }
+            }
+           
             // post artifact 
             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(callLogArtifact, this.moduleName);
         } catch (TskCoreException ex) {
@@ -1142,4 +1195,25 @@ public final class AppDBParserHelper  {
         return gpsTrackpointArtifact;              
     }
     
+    /**
+     * Converts a list of addresses into a single comma separated string of 
+     * addresses.
+     * 
+     * @param addressList
+     * @return comma separated string of addresses
+     */
+    private String addressListToString(Collection<Account.Address> addressList) {
+        
+        String toAddresses =  "";
+        if (addressList != null && (!addressList.isEmpty())) {
+            StringBuilder toAddressesSb = new StringBuilder();
+            for(Account.Address address : addressList) {
+                String displayAddress = !StringUtils.isEmpty(address.getDisplayName()) ? address.getDisplayName() : address.getUniqueID();
+                toAddressesSb = toAddressesSb.length() > 0 ? toAddressesSb.append(",").append(displayAddress) : toAddressesSb.append(displayAddress);
+            }
+            toAddresses =  toAddressesSb.toString();
+        }
+        
+        return toAddresses;
+    }
 }
