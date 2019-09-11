@@ -332,11 +332,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (EamDb.isEnabled()) {
                 properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
             }
+            // Get the SCO columns data in a background task
+            backgroundTasksPool.submit(new GetSCOTask(
+                    new WeakReference<>(this), weakPcl));
         }
-
-        // Get the SCO columns data in a background task
-        backgroundTasksPool.submit(new GetSCOTask(
-                new WeakReference<>(this), weakPcl));
 
         properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
         properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
