@@ -808,16 +808,23 @@ class SevenZipExtractor {
         return unpackSuccessful;
     }
 
-    private Charset detectFilenamesCharset(Collection<byte[]> byteDatas) {
+    private Charset detectFilenamesCharset(ArrayList<byte[]> byteDatas) {
         Charset detectedCharset = null;
         CharsetDetector charsetDetector = new CharsetDetector();
-        int sum = 0;
+        int byteSum = 0;
+        int fileNum = 0;
         for (byte[] byteData : byteDatas) {
-            sum += byteData.length;
+            fileNum++;
+            byteSum += byteData.length;
+            // Only read ~1000 bytes of filenames in this directory
+            if (byteSum >= 1000) {
+                break;
+            }
         }
-        byte[] allBytes = new byte[sum];
+        byte[] allBytes = new byte[byteSum];
         int start = 0;
-        for (byte[] byteData : byteDatas) {
+        for (int i = 0; i < fileNum; i++) {
+            byte[] byteData = byteDatas.get(i);
             System.arraycopy(byteData, 0, allBytes, start, byteData.length);
             start += byteData.length;
         }
