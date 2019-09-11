@@ -28,6 +28,7 @@ import org.opencv.core.Core;
  */
 public final class OpenCvLoader {
 
+    // Uses java logger since the Autopsy class logger (Autopsy-core) is not part of this module
     private static final Logger logger = Logger.getLogger(OpenCvLoader.class.getName());
     private static boolean openCvLoaded;
     private static UnsatisfiedLinkError exception = null; // Deprecated
