@@ -21,9 +21,6 @@ package org.sleuthkit.autopsy.filequery;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Class for storing files that belong to a particular group.
@@ -77,8 +74,8 @@ class FileGroup implements Comparable<FileGroup> {
      *
      * @return List of abstract files
      */
-    List<AbstractFile> getAbstractFiles() {
-        return files.stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+    List<ResultFile> getAbstractFiles() {
+        return Collections.unmodifiableList(files);
     }
 
     /**

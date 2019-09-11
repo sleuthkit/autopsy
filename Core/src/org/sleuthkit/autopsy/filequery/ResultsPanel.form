@@ -25,7 +25,7 @@
           <Group type="102" alignment="0" attributes="0">
               <Component id="pagingPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-              <Component id="resultsViewerPanel" max="32767" attributes="0"/>
+              <Component id="resultsViewerPanel" pref="62" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Class to handle event bus and events for file discovery tool.
@@ -156,7 +154,7 @@ final class DiscoveryEvents {
      */
     static final class PageRetrievedEvent {
 
-        private final List<AbstractFile> results;
+        private final List<ResultFile> results;
         private final int page;
         private final FileType resultType;
 
@@ -167,7 +165,7 @@ final class DiscoveryEvents {
          * @param page       The number of the page which was retrieved.
          * @param results    The list of files in the page retrieved.
          */
-        PageRetrievedEvent(FileType resultType, int page, List<AbstractFile> results) {
+        PageRetrievedEvent(FileType resultType, int page, List<ResultFile> results) {
             this.results = results;
             this.page = page;
             this.resultType = resultType;
@@ -178,7 +176,7 @@ final class DiscoveryEvents {
          *
          * @return The list of files in the page retrieved.
          */
-        List<AbstractFile> getSearchResults() {
+        List<ResultFile> getSearchResults() {
             return Collections.unmodifiableList(results);
         }
 

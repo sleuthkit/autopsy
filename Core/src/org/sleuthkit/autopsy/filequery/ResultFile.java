@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.filequery;
 
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -252,10 +251,10 @@ class ResultFile {
         if (this.getAbstractFile().getMd5Hash() == null
                 || HashUtility.isNoDataMd5(this.getAbstractFile().getMd5Hash())
                 || !HashUtility.isValidMd5Hash(this.getAbstractFile().getMd5Hash())) {
-            return super.hashCode();  
+            return super.hashCode();
         } else {
             //if the file has a valid MD5 use the hashcode of the MD5 for deduping files with the same MD5
-            return this.getAbstractFile().getMd5Hash().hashCode();  
+            return this.getAbstractFile().getMd5Hash().hashCode();
         }
 
     }
@@ -268,7 +267,7 @@ class ResultFile {
                 || !HashUtility.isValidMd5Hash(this.getAbstractFile().getMd5Hash())) {
             return super.equals(obj);
         } else {
-             //if the file has a valid MD5 compare use the MD5 for equality check
+            //if the file has a valid MD5 compare use the MD5 for equality check
             return this.getAbstractFile().getMd5Hash().equals(((ResultFile) obj).getAbstractFile().getMd5Hash());
         }
     }

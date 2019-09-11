@@ -24,7 +24,6 @@ import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * SwingWorker to retrieve the contents of a page.
@@ -76,7 +75,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            List<AbstractFile> results = FileSearch.getFilesInGroup(searchfilters,
+            List<ResultFile> results = FileSearch.getFilesInGroup(searchfilters,
                     groupingAttribute,
                     groupSort,
                     fileSortMethod, groupName, startingEntry, pageSize,

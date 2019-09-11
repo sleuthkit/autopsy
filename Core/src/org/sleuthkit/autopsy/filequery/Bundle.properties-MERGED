@@ -6,6 +6,8 @@ FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})
 # {0} - Data source ID
 FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})
 FileSearch.FileTagGroupKey.noSets=None
+# {0} - file name
+FileSearch.genVideoThumb.progress.text=extracting temporary file {0}
 FileSearch.GroupingAttributeType.datasource.displayName=Data source
 FileSearch.GroupingAttributeType.fileType.displayName=File type
 FileSearch.GroupingAttributeType.frequency.displayName=Past occurrences

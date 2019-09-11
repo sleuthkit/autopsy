@@ -20,11 +20,16 @@ package org.sleuthkit.autopsy.filequery;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -56,6 +61,23 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         leftSplitPane.setRightComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
         rightSplitPane.setBottomComponent(dataContentPanel);
+        //add list selection listener so the content viewer will be updated with the selected file
+        //when a file is selected in the results panel
+        resultsPanel.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                    SwingUtilities.invokeLater(() -> {
+                        AbstractFile file = resultsPanel.getSelectedFile();
+                        if (file != null) {
+                            dataContentPanel.setNode(new TableFilterNode(new FileNode(file), false));
+                        } else {
+                            dataContentPanel.setNode(null);
+                        }
+                    });
+                }
+            }
+        });
         this.explorerManager.addPropertyChangeListener((evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES) && dataContentPanel != null) {
                 /*

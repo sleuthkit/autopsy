@@ -19,10 +19,15 @@
 package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Image;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.event.ListSelectionListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
@@ -32,6 +37,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Panel for displaying of file discovery results and handling the paging of
@@ -42,6 +48,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private final DataResultViewerThumbnail thumbnailViewer;
     private final DataResultViewerTable tableViewer;
+    private final VideoThumbnailViewer videoThumbnailViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
@@ -53,6 +60,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private final EamDb centralRepo;
     private int groupSize = 0;
     private PageWorker pageWorker;
+    private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
 
     /**
      * Creates new form ResultsPanel.
@@ -62,8 +70,17 @@ public class ResultsPanel extends javax.swing.JPanel {
         this.centralRepo = centralRepo;
         thumbnailViewer = new DataResultViewerThumbnail(explorerManager);
         tableViewer = new DataResultViewerTable(explorerManager);
+        videoThumbnailViewer = new VideoThumbnailViewer();
         // Disable manual editing of page size spinner
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
+    }
+
+    void addListSelectionListener(ListSelectionListener listener) {
+        videoThumbnailViewer.addListSelectionListener(listener);
+    }
+
+    AbstractFile getSelectedFile() {
+        return videoThumbnailViewer.getSelectedFile();
     }
 
     /**
@@ -80,23 +97,47 @@ public class ResultsPanel extends javax.swing.JPanel {
             tableViewer.resetComponent();
             resultsViewerPanel.remove(thumbnailViewer);
             resultsViewerPanel.remove(tableViewer);
-            if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE || pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
+            resultsViewerPanel.remove(videoThumbnailViewer);
+            if (pageRetrievedEvent.getType() == FileSearchData.FileType.IMAGE) {
                 resultsViewerPanel.add(thumbnailViewer);
                 if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(pageRetrievedEvent.getSearchResults()))), true));
+                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+                    thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new DiscoveryThumbnailChildren(filesList))), true));
                 } else {
                     thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
                 }
+            } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
+                populateVideoViewer(pageRetrievedEvent.getSearchResults());
+                resultsViewerPanel.add(videoThumbnailViewer);
+
             } else {
                 resultsViewerPanel.add(tableViewer);
                 if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                    tableViewer.setNode(new TableFilterNode(new SearchNode(pageRetrievedEvent.getSearchResults()), true));
+                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getAbstractFile()).collect(Collectors.toList());
+                    tableViewer.setNode(new TableFilterNode(new SearchNode(filesList), true));
                 } else {
                     tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
                 }
             }
-            resultsViewerPanel.validate();
         });
+    }
+
+    void populateVideoViewer(List<ResultFile> files) {
+        //cancel any unfished thumb workers
+        for (SwingWorker<Void, Void> thumbWorker : thumbnailWorkers) {
+            if (!thumbWorker.isDone()) {
+                thumbWorker.cancel(true);
+            }
+        }
+        //clear old thumbnails
+        thumbnailWorkers.clear();
+        videoThumbnailViewer.clearViewer();
+        for (ResultFile file : files) {
+            VideoThumbnailWorker thumbWorker = new VideoThumbnailWorker(file);
+            thumbWorker.execute();
+            //keep track of thumb worker for possible cancelation 
+            thumbnailWorkers.add(thumbWorker);
+        }
     }
 
     /**
@@ -124,6 +165,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             groupSize = 0;
             currentPage = 0;
             updateControls();
+            videoThumbnailViewer.clearViewer();
             thumbnailViewer.resetComponent();
             thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
             tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
@@ -300,7 +342,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pagingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(resultsViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 62, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -384,4 +426,23 @@ public class ResultsPanel extends javax.swing.JPanel {
     private javax.swing.JButton previousPageButton;
     private javax.swing.JPanel resultsViewerPanel;
     // End of variables declaration//GEN-END:variables
+
+    private class VideoThumbnailWorker extends SwingWorker<Void, Void> {
+
+        private final VideoThumbnailsWrapper thumbnailWrapper;
+
+        VideoThumbnailWorker(ResultFile file) {
+            thumbnailWrapper = new VideoThumbnailsWrapper(new ArrayList<Image>(), new int[4], file.getAbstractFile());
+            videoThumbnailViewer.addRow(thumbnailWrapper);
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            FileSearch.getVideoThumbnails(thumbnailWrapper);
+            videoThumbnailViewer.repaint();
+            return null;
+        }
+
+    }
+
 }

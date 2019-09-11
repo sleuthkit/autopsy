@@ -20,6 +20,10 @@ package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.io.Files;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -32,13 +36,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import org.netbeans.api.progress.ProgressHandle;
+import org.opencv.core.Mat;
+import org.opencv.highgui.VideoCapture;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
+import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.coreutils.VideoUtils.getVideoFileInTempDir;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileSize;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.Frequency;
@@ -57,7 +69,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
-    private static final Cache<String, List<AbstractFile>> groupCache = CacheBuilder.newBuilder().build();
+    private static final Cache<String, List<ResultFile>> groupCache = CacheBuilder.newBuilder().build();
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -104,7 +116,7 @@ class FileSearch {
 
         // Sort and group the results
         searchResults.sortGroupsAndFiles();
-        LinkedHashMap<String, List<AbstractFile>> resultHashMap = searchResults.toLinkedHashMap();
+        LinkedHashMap<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
         for (String groupName : resultHashMap.keySet()) {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
@@ -134,7 +146,7 @@ class FileSearch {
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        Map<String, List<AbstractFile>> searchResults = runFileSearch(filters,
+        Map<String, List<ResultFile>> searchResults = runFileSearch(filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
         for (String groupName : searchResults.keySet()) {
@@ -163,7 +175,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static synchronized List<AbstractFile> getFilesInGroup(
+    static synchronized List<ResultFile> getFilesInGroup(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -173,8 +185,8 @@ class FileSearch {
             int numberOfEntries,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
         //the group should be in the cache at this point
-        List<AbstractFile> filesInGroup = groupCache.getIfPresent(groupName);
-        List<AbstractFile> page = new ArrayList<>();
+        List<ResultFile> filesInGroup = groupCache.getIfPresent(groupName);
+        List<ResultFile> page = new ArrayList<>();
         if (filesInGroup == null) {
             logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupName);
             runFileSearch(filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
@@ -214,7 +226,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private synchronized static Map<String, List<AbstractFile>> runFileSearch(
+    private synchronized static Map<String, List<ResultFile>> runFileSearch(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -239,7 +251,7 @@ class FileSearch {
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         searchResults.add(resultFiles);
-        LinkedHashMap<String, List<AbstractFile>> resultHashMap = searchResults.toLinkedHashMap();
+        LinkedHashMap<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
         for (String groupName : resultHashMap.keySet()) {
             groupCache.put(groupName, resultHashMap.get(groupName));
         }
@@ -321,6 +333,169 @@ class FileSearch {
                 + "WHERE blackboard_attributes.artifact_type_id=\'" + artifactTypeID + "\' "
                 + "AND blackboard_attributes.attribute_type_id=\'" + setNameAttrID + "\' "
                 + "AND blackboard_artifacts.obj_id IN (" + objIdList + ") "; // NON-NLS
+    }
+
+    /**
+     * Get the video thumbnails for a file which exists in a
+     * VideoThumbnailsWrapper and update the VideoThumbnailsWrapper to include
+     * them.
+     *
+     * @param thumbnailWrapper the object which contains the file to generate
+     *                         thumbnails for.
+     *
+     */
+    @NbBundle.Messages({"# {0} - file name",
+        "FileSearch.genVideoThumb.progress.text=extracting temporary file {0}"})
+    static void getVideoThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
+        AbstractFile file = thumbnailWrapper.getAbstractFile();
+        //Currently this method always creates the thumbnails 
+        java.io.File tempFile;
+        try {
+            tempFile = getVideoFileInTempDir(file);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            int[] framePositions = new int[]{
+                0,
+                0,
+                0,
+                0};
+            thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+            return;
+        }
+        if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+            ProgressHandle progress = ProgressHandle.createHandle(Bundle.FileSearch_genVideoThumb_progress_text(file.getName()));
+            progress.start(100);
+            try {
+                Files.createParentDirs(tempFile);
+                if (Thread.interrupted()) {
+                    int[] framePositions = new int[]{
+                        0,
+                        0,
+                        0,
+                        0};
+                    thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                    return;
+                }
+                ContentUtils.writeToFile(file, tempFile, progress, null, true);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Error extracting temporary file for " + file.getParentPath() + "/" + file.getName(), ex); //NON-NLS
+            } finally {
+                progress.finish();
+            }
+        }
+        VideoCapture videoFile = new VideoCapture(); // will contain the video
+        BufferedImage bufferedImage = null;
+
+        try {
+            if (!videoFile.open(tempFile.toString())) {
+                logger.log(Level.WARNING, "Error opening {0} for preview generation.", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                int[] framePositions = new int[]{
+                    0,
+                    0,
+                    0,
+                    0};
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
+            }
+            double fps = videoFile.get(5); // gets frame per second
+            double totalFrames = videoFile.get(7); // gets total frames
+            if (fps <= 0 || totalFrames <= 0) {
+                logger.log(Level.WARNING, "Error getting fps or total frames for {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                int[] framePositions = new int[]{
+                    0,
+                    0,
+                    0,
+                    0};
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
+            }
+            if (Thread.interrupted()) {
+                int[] framePositions = new int[]{
+                    0,
+                    0,
+                    0,
+                    0};
+                thumbnailWrapper.setThumbnails(createDefaultThumbnailList(), framePositions);
+                return;
+            }
+
+            double duration = 1000 * (totalFrames / fps); //total milliseconds
+
+            int[] framePositions = new int[]{
+                (int) (duration * .01),
+                (int) (duration * .25),
+                (int) (duration * .5),
+                (int) (duration * .75),};
+
+            Mat imageMatrix = new Mat();
+            List<Image> videoThumbnails = new ArrayList<>();
+            for (int i = 0; i < framePositions.length; i++) {
+                if (!videoFile.set(0, framePositions[i])) {
+                    logger.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                    // If we can't set the time, continue to the next frame position and try again.
+
+                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                    continue;
+                }
+                // Read the frame into the image/matrix.
+                if (!videoFile.read(imageMatrix)) {
+                    logger.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", file.getParentPath() + "/" + file.getName()); //NON-NLS
+                    // If the image is bad for some reason, continue to the next frame position and try again.
+                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                    continue;
+                }
+                // If the image is empty, return since no buffered image can be created.
+                if (imageMatrix.empty()) {
+                    videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+                    continue;
+                }
+
+                int matrixColumns = imageMatrix.cols();
+                int matrixRows = imageMatrix.rows();
+
+                // Convert the matrix that contains the frame to a buffered image.
+                if (bufferedImage == null) {
+                    bufferedImage = new BufferedImage(matrixColumns, matrixRows, BufferedImage.TYPE_3BYTE_BGR);
+                }
+
+                byte[] data = new byte[matrixRows * matrixColumns * (int) (imageMatrix.elemSize())];
+                imageMatrix.get(0, 0, data); //copy the image to data
+
+                if (imageMatrix.channels() == 3) {
+                    for (int k = 0; k < data.length; k += 3) {
+                        byte temp = data[k];
+                        data[k] = data[k + 2];
+                        data[k + 2] = temp;
+                    }
+                }
+
+                bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
+                if (Thread.interrupted()) {
+
+                    thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
+                    return;
+                }
+                videoThumbnails.add(ScalrWrapper.resizeFast(bufferedImage, ImageUtils.ICON_SIZE_LARGE));
+            }
+            thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
+        } finally {
+            videoFile.release(); // close the file}
+        }
+    }
+
+    /**
+     * Private helper method for creating video thumbnails, for use when no
+     * thumbnails are created.
+     *
+     * @return List containing the default thumbnail.
+     */
+    private static List<Image> createDefaultThumbnailList() {
+        List<Image> videoThumbnails = new ArrayList<>();
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        videoThumbnails.add(ImageUtils.getDefaultThumbnail());
+        return videoThumbnails;
     }
 
     /**

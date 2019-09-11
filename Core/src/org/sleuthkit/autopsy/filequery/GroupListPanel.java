@@ -74,8 +74,6 @@ class GroupListPanel extends javax.swing.JPanel {
         if (groupDisplayNameList.getModel().getSize() > 0) {
             groupDisplayNameList.setSelectedIndex(0);
         }
-        validate();
-        repaint();
     }
 
     /**
