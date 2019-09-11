@@ -29,8 +29,8 @@ from java.util.logging import Level
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
-from org.sleuthkit.autopsy.coreutils import AppSQLiteDB as SQLiteUtil
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper as BlackboardUtil
+from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
+from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import BlackboardArtifact
@@ -47,7 +47,8 @@ import general
 
 class ViberAnalyzer(general.AndroidComponentAnalyzer):
     """
-        Parses the Viber App databases for TSK contacts, message and calllog artifacts.
+        Parses the Viber App databases for TSK contacts, message 
+        and calllog artifacts.
     """
    
     def __init__(self):
@@ -57,20 +58,24 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         """
-            Extract, Transform and Load all messages, contacts and calllogs from the Viber databases.
+            Extract, Transform and Load all messages, contacts and 
+            calllogs from the Viber databases.
         """
 
         try:
-            contact_and_calllog_dbs = SQLiteUtil.findAppDatabases(dataSource, "viber_data", True, self._VIBER_PACKAGE_NAME)
-            message_dbs = SQLiteUtil.findAppDatabases(dataSource, "viber_messages", True, self._VIBER_PACKAGE_NAME)
+            contact_and_calllog_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
+                    "viber_data", True, self._VIBER_PACKAGE_NAME)
+            message_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
+                    "viber_messages", True, self._VIBER_PACKAGE_NAME)
 
             #Extract TSK_CONTACT and TSK_CALLLOG information
             for contact_and_calllog_db in contact_and_calllog_dbs:
-                blackboard_util = BlackboardUtil(self._PARSER_NAME, contact_and_calllog_db.getDBFile(), Account.Type.VIBER) 
+                parser_helper = AppDBParserHelper(self._PARSER_NAME, 
+                        contact_and_calllog_db.getDBFile(), Account.Type.VIBER) 
 
                 contacts_parser = ViberContactsParser(contact_and_calllog_db)
                 while contacts_parser.next():
-                    blackboard_util.addContact( 
+                    parser_helper.addContact( 
                         contacts_parser.get_account_name(), 
                         contacts_parser.get_contact_name(), 
                         contacts_parser.get_phone(),
@@ -79,9 +84,10 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                         contacts_parser.get_email()
                     )
                 contacts_parser.close()
+
                 calllog_parser = ViberCallLogsParser(contact_and_calllog_db)
                 while calllog_parser.next():
-                    blackboard_util.addCalllog(
+                    parser_helper.addCalllog(
                         calllog_parser.get_account_name(),
                         calllog_parser.get_call_direction(),
                         calllog_parser.get_phone_number_from(),
@@ -91,14 +97,17 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                         calllog_parser.get_contact_name()
                     )
                 calllog_parser.close()
+
                 contact_and_calllog_db.close()
 
             #Extract TSK_MESSAGE information
             for message_db in message_dbs:
-                blackboard_util = BlackboardUtil(self._PARSER_NAME, message_db.getDBFile(), Account.Type.VIBER)
+                parser_helper = AppDBParserHelper(self._PARSER_NAME, 
+                        message_db.getDBFile(), Account.Type.VIBER)
+
                 messages_parser = ViberMessagesParser(message_db)
                 while messages_parser.next():
-                    blackboard_util.addMessage(
+                    parser_helper.addMessage(
                         messages_parser.get_message_type(),
                         messages_parser.get_message_direction(),
                         messages_parser.get_phone_number_from(),
@@ -110,6 +119,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                         messages_parser.get_thread_id()
                     )
                 messages_parser.close()
+
                 message_db.close()
         except (SQLException, TskCoreException) as ex:
             #Error parsing Viber db
@@ -145,13 +155,15 @@ class ViberCallLogsParser(TskCallLogsParser):
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
             return self.result_set.getString("number")
-        #Give default value if the call is outgoing, the device's # is not stored in the database.
+        #Give default value if the call is outgoing, 
+        #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
             return self.result_set.getString("number")
-        #Give default value if the call is incoming, the device's # is not stored in the database.
+        #Give default value if the call is incoming, 
+        #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_to()
 
     def get_call_direction(self):
@@ -171,8 +183,8 @@ class ViberCallLogsParser(TskCallLogsParser):
 class ViberContactsParser(TskContactsParser):
     """
         Extracts TSK_CONTACT information from the Viber database.
-        TSK_CONTACT fields that are not in the Viber database are given a default value
-        inherited from the super class. 
+        TSK_CONTACT fields that are not in the Viber database are given 
+        a default value inherited from the super class. 
     """
 
     def __init__(self, contact_db):
@@ -199,8 +211,8 @@ class ViberContactsParser(TskContactsParser):
 class ViberMessagesParser(TskMessagesParser):
     """
         Extract TSK_MESSAGE information from the Viber database.
-        TSK_CONTACT fields that are not in the Viber database are given a default value
-        inherited from the super class. 
+        TSK_CONTACT fields that are not in the Viber database are given
+        a default value inherited from the super class. 
     """
 
     def __init__(self, message_db):
@@ -266,9 +278,9 @@ class ViberMessagesParser(TskMessagesParser):
     def get_message_read_status(self):
         if self.get_message_direction() == self.INCOMING_MSG: 
             if self.result_set.getInt("read_status") == 0:
-                return BlackboardUtil.MessageReadStatusEnum.READ
+                return AppDBParserHelper.MessageReadStatusEnum.READ
             else:
-                return BlackboardUtil.MessageReadStatusEnum.UNREAD
+                return AppDBParserHelper.MessageReadStatusEnum.UNREAD
         return super(ViberMessagesParser, self).get_message_read_status()
 
     def get_message_text(self):
