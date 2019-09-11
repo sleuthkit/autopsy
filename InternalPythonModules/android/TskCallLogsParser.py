@@ -32,8 +32,8 @@ class TskCallLogsParser(ResultSetIterator):
 
     def __init__(self, result_set):
         super(TskCallLogsParser, self).__init__(result_set)
-        self.INCOMING_MSG_STRING = "Incoming"
-        self.OUTGOING_MSG_STRING = "Outgoing"
+        self.INCOMING_CALL = "Incoming"
+        self.OUTGOING_CALL = "Outgoing"
         self._DEFAULT_STRING = ""
 
     def get_account_name(self):

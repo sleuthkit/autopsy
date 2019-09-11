@@ -135,30 +135,30 @@ class ViberCallLogsParser(TskCallLogsParser):
              )    
         )
 
-        self._OUTGOING_CALL = 2
-        self._INCOMING_CALL = 1
-        self._MISSED_CALL = 3
+        self._OUTGOING_CALL_TYPE = 2
+        self._INCOMING_CALL_TYPE = 1
+        self._MISSED_CALL_TYPE = 3
 
     def get_account_name(self):
         return self.result_set.getString("number")
 
     def get_phone_number_from(self):
-        if self.get_call_direction() == self.INCOMING_MSG_STRING:
+        if self.get_call_direction() == self.INCOMING_CALL:
             return self.result_set.getString("number")
         #Give default value if the call is outgoing, the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
-        if self.get_call_direction() == self.OUTGOING_MSG_STRING:
+        if self.get_call_direction() == self.OUTGOING_CALL:
             return self.result_set.getString("number")
         #Give default value if the call is incoming, the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_to()
 
     def get_call_direction(self):
         direction = self.result_set.getInt("direction")
-        if direction == self._INCOMING_CALL or direction == self._MISSED_CALL:
-            return self.INCOMING_MSG_STRING
-        return self.OUTGOING_MSG_STRING
+        if direction == self._INCOMING_CALL_TYPE or direction == self._MISSED_CALL_TYPE:
+            return self.INCOMING_CALL
+        return self.OUTGOING_CALL
 
     def get_call_start_date_time(self):
         return self.result_set.getLong("start_time") / 1000
