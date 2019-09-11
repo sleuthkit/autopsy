@@ -48,7 +48,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_DELETED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
@@ -444,7 +447,6 @@ final class ExtractRecycleBin extends Extract {
         bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), fileName));
         bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
         bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
-
         return bba;
     }
 
@@ -509,7 +511,7 @@ final class ExtractRecycleBin extends Extract {
                 TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC,
                 (short) (TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue() | TskData.TSK_FS_META_FLAG_ENUM.USED.getValue()),
                 recycleBinFile.getSize(),
-                0, 0, 0, deletedTime,
+                recycleBinFile.getCtime(), recycleBinFile.getCrtime(), recycleBinFile.getAtime(), deletedTime,
                 true, parentDir);
     }
 
