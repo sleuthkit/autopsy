@@ -111,6 +111,7 @@ final class ConfigVisualPanel2 extends JPanel {
         maxSizeLabel = new javax.swing.JLabel();
         maxSizeTextField = new javax.swing.JFormattedTextField();
         promptBeforeExit = new javax.swing.JCheckBox();
+        createVHDCheckBox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.modifiedDateLabel.text")); // NOI18N
 
@@ -264,6 +265,13 @@ final class ConfigVisualPanel2 extends JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(createVHDCheckBox, org.openide.util.NbBundle.getMessage(ConfigVisualPanel2.class, "ConfigVisualPanel2.createVHDCheckBox.text")); // NOI18N
+        createVHDCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createVHDCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -338,7 +346,8 @@ final class ConfigVisualPanel2 extends JPanel {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(flagEncryptionProgramsCheckBox)
                                     .addComponent(finalizeImageWriter)
-                                    .addComponent(promptBeforeExit))
+                                    .addComponent(promptBeforeExit)
+                                    .addComponent(createVHDCheckBox))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(jSeparator1)))))
         );
@@ -412,7 +421,8 @@ final class ConfigVisualPanel2 extends JPanel {
                         .addComponent(finalizeImageWriter)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(promptBeforeExit)
-                        .addGap(21, 21, 21))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(createVHDCheckBox))))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -546,6 +556,10 @@ final class ConfigVisualPanel2 extends JPanel {
         config.setPromptBeforeExit(promptBeforeExit.isSelected());
     }//GEN-LAST:event_promptBeforeExitActionPerformed
 
+    private void createVHDCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createVHDCheckBoxActionPerformed
+        config.setCreateVHD(createVHDCheckBox.isSelected());
+    }//GEN-LAST:event_createVHDCheckBoxActionPerformed
+
     /**
      * Set the whether the a rule for detecting encryption programs will be
      * added to the rules in this config
@@ -588,6 +602,7 @@ final class ConfigVisualPanel2 extends JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField configFileTextField;
+    private javax.swing.JCheckBox createVHDCheckBox;
     private javax.swing.JLabel daysIncludedLabel;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JTextField descriptionEditTextField;
@@ -638,13 +653,14 @@ final class ConfigVisualPanel2 extends JPanel {
      * Update the panel to reflect the rules in the current config
      *
      * @param configFilePath  path of the config file being modified
-     * @param config          contents of the config file being modifed
+     * @param config          contents of the config file being modified
      * @param rowSelectionkey the name of the rule to select by default
      */
     private void updatePanel(String configFilePath, LogicalImagerConfig config, String rowSelectionkey) {
         configFileTextField.setText(configFilePath);
         finalizeImageWriter.setSelected(config.isFinalizeImageWriter());
         promptBeforeExit.setSelected(config.isPromptBeforeExit());
+        createVHDCheckBox.setSelected(config.isCreateVHD());
         LogicalImagerRuleSet ruleSet = getRuleSetFromCurrentConfig();
         flagEncryptionProgramsCheckBox.setSelected(ruleSet.find(EncryptionProgramsRule.getName()) != null);
         RulesTableModel rulesTableModel = new RulesTableModel();
