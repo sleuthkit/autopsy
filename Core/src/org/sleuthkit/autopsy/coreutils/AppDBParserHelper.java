@@ -142,17 +142,17 @@ public final class AppDBParserHelper  {
      * @param dbFile database file being parsed by the module
      * @param accountsType account types created by this module
      * @param selfAccountType self account type to be created for this module
-     * @param selfAccountId account unique id for the self account
+     * @param selfAccountAddress account unique id for the self account
      * 
      * @throws TskCoreException 
      */
-    public AppDBParserHelper(String moduleName, AbstractFile dbFile, Account.Type accountsType, Account.Type selfAccountType, String selfAccountId) throws TskCoreException {
+    public AppDBParserHelper(String moduleName, AbstractFile dbFile, Account.Type accountsType, Account.Type selfAccountType, Account.Address selfAccountAddress) throws TskCoreException {
         
         this.moduleName = moduleName;
         this.dbAbstractFile = dbFile;
         this.accountsType = accountsType;
         
-        this.selfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(selfAccountType, selfAccountId, moduleName, dbFile);
+        this.selfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(selfAccountType, selfAccountAddress.getUniqueID(), moduleName, dbFile);
     }
         
     /**
