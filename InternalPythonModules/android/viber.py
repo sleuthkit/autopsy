@@ -218,7 +218,7 @@ class ViberMessagesParser(TskMessagesParser):
     def __init__(self, message_db):
         """
             For our purposes, the Viber datamodel is as follows:
-                - People can take part in N conversation(s). A conversation can have N
+                - People can take part in N conversation(s). A conversation can have M 
                   members and messages are exchanged in a conversation. 
                 - Viber has a conversation table, a participant table (the people/members in the above
                   analogy) and a messages table.
@@ -227,7 +227,7 @@ class ViberMessagesParser(TskMessagesParser):
             
             The query below does the following:
                 - The first two inner joins on participants and participants_info build
-                  the 1 to many (N) mappings between the sender and the recipients for each 
+                  the 1 to many (M) mappings between the sender and the recipients for each 
                   conversation_id. If a and b do private messaging, then 2 rows in the result 
                   will be a -> b and b -> a.
                   If a, b, c, d are in a group, then 4 rows containing a -> b,c,d. b -> a,c,d. etc.
