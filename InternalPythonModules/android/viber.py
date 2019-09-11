@@ -88,13 +88,12 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 calllog_parser = ViberCallLogsParser(contact_and_calllog_db)
                 while calllog_parser.next():
                     helper.addCalllog(
-                        calllog_parser.get_account_name(),
                         calllog_parser.get_call_direction(),
                         calllog_parser.get_phone_number_from(),
                         calllog_parser.get_phone_number_to(),
                         calllog_parser.get_call_start_date_time(),
                         calllog_parser.get_call_end_date_time(),
-                        calllog_parser.get_contact_name()
+                        calllog_parser.get_call_type()
                     )
                 calllog_parser.close()
 
@@ -139,7 +138,8 @@ class ViberCallLogsParser(TskCallLogsParser):
                       SELECT C.canonized_number AS number, 
                              C.type             AS direction, 
                              C.duration         AS seconds, 
-                             C.date             AS start_time 
+                             C.date             AS start_time, 
+                             C.viber_call_type  AS call_type
                       FROM   calls AS C 
                  """
              )    
@@ -148,20 +148,21 @@ class ViberCallLogsParser(TskCallLogsParser):
         self._OUTGOING_CALL_TYPE = 2
         self._INCOMING_CALL_TYPE = 1
         self._MISSED_CALL_TYPE = 3
-
-    def get_account_name(self):
-        return self.result_set.getString("number")
+        self._AUDIO_CALL_TYPE = 1
+        self._VIDEO_CALL_TYPE = 4
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
-            return self.result_set.getString("number")
+            return Account.Address(self.result_set.getString("number"),
+                        self.result_set.getString("number"))
         #Give default value if the call is outgoing, 
         #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
-            return self.result_set.getString("number")
+            return Account.Address(self.result_set.getString("number"),
+                        self.result_set.getString("number"))
         #Give default value if the call is incoming, 
         #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_to()
@@ -169,7 +170,7 @@ class ViberCallLogsParser(TskCallLogsParser):
     def get_call_direction(self):
         direction = self.result_set.getInt("direction")
         if direction == self._INCOMING_CALL_TYPE or direction == self._MISSED_CALL_TYPE:
-            return self.INCOMING_CALL
+            return self.INCOMING_CALL 
         return self.OUTGOING_CALL
 
     def get_call_start_date_time(self):
@@ -179,6 +180,14 @@ class ViberCallLogsParser(TskCallLogsParser):
         start_time = self.get_call_start_date_time()
         duration = self.result_set.getLong("seconds")
         return start_time + duration
+
+    def get_call_type(self):
+        call_type = self.result_set.getInt("call_type")
+        if call_type == self._AUDIO_CALL_TYPE:
+            return self.AUDIO_CALL 
+        if call_type == self._VIDEO_CALL_TYPE:
+            return self.VIDEO_CALL
+        return super(ViberCallLogsParser, self).get_call_type()
 
 class ViberContactsParser(TskContactsParser):
     """
@@ -282,8 +291,8 @@ class ViberMessagesParser(TskMessagesParser):
     def get_message_direction(self):  
         direction = self.result_set.getInt("direction")
         if direction == self._INCOMING_MESSAGE_TYPE:
-            return self.INCOMING_MSG 
-        return self.OUTGOING_MSG 
+            return self.INCOMING
+        return self.OUTGOING
     
     def get_phone_number_to(self):
         recipients = []
@@ -296,11 +305,11 @@ class ViberMessagesParser(TskMessagesParser):
         return self.result_set.getLong("msg_date") / 1000 
 
     def get_message_read_status(self):
-        if self.get_message_direction() == self.INCOMING_MSG: 
+        if self.get_message_direction() == self.INCOMING: 
             if self.result_set.getInt("read_status") == 0:
-                return AppDBParserHelper.MessageReadStatusEnum.READ
+                return self.READ
             else:
-                return AppDBParserHelper.MessageReadStatusEnum.UNREAD
+                return self.UNREAD
         return super(ViberMessagesParser, self).get_message_read_status()
 
     def get_message_text(self):
