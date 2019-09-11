@@ -34,6 +34,7 @@ import javafx.stage.Modality;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -43,6 +44,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.Installer;
@@ -292,13 +294,15 @@ public final class OpenAction extends CallableSystemAction {
         );
     }
 
+    @Messages({"OpenAction.openTopComponent.error.message=An error occurred while attempting to open Image Gallery.",
+               "OpenAction.openTopComponent.error.title=Failed to open Image Gallery"})
     private void openTopComponent() {
         SwingUtilities.invokeLater(() -> {
             try {
                 ImageGalleryTopComponent.openTopComponent();
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to open Image Gallery top component", ex); //NON-NLS}
-                // TODO (JIRA-5217): Give the user some feedback here
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.OpenAction_openTopComponent_error_message(), Bundle.OpenAction_openTopComponent_error_title(), JOptionPane.PLAIN_MESSAGE);
             }
         });
     }
