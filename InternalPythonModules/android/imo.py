@@ -56,7 +56,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
         self._logger = Logger.getLogger(self.__class__.__name__)
 
     def analyze(self, dataSource, fileManager, context):
-        selfAccountId = None
+        selfAccountAddress = None
         accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", True, "com.imo.android.imous")
         for accountDb in accountDbs:
             try:
@@ -65,8 +65,8 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                     # We can determine the IMO user ID of the device owner. 
                     # Therefore we can create and use a app account and use that 
                     # as a 'self' account instead of a Device account
-                    if not selfAccountId:
-                        selfAccountId = accountResultSet.getString("name")
+                    if not selfAccountAddress:
+                        selfAccountAddress = Account.Address(accountResultSet.getString("uid"), accountResultSet.getString("name"))
             
             except SQLException as ex:
                 self._logger.log(Level.SEVERE, "Error processing query result for account", ex)       
@@ -77,7 +77,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
         for friendsDb in friendsDbs:
             try:
                 friendsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(),
-                                                    Account.Type.IMO, Account.Type.IMO, selfAccountId )
+                                                    Account.Type.IMO, Account.Type.IMO, selfAccountAddress )
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
