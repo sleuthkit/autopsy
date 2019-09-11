@@ -45,6 +45,14 @@ install:
  - cd sleuthkit/sleuthkit
  - ./travis_install_libs.sh
 
+before_script:
+  - if [ $TRAVIS_OS_NAME = linux ]; then 
+        sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java;
+        sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac;
+        export PATH=/usr/bin:$PATH; 
+        unset JAVA_HOME;
+    fi
+
 script:
  - set -e
  - echo "Building TSK..."
