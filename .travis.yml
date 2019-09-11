@@ -4,6 +4,9 @@ dist: bionic
 os:
  - linux
 
+jdk:
+  - openjdk8
+
 env:
  global:
   - TSK_HOME=$TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
@@ -18,6 +21,7 @@ addons:
     - autopoint
     - libsqlite3-dev
     - ant
+    - ant-optional
     - libcppunit-dev
     - wget
     - openjdk-8-jdk
@@ -28,6 +32,7 @@ addons:
     update: true
     packages:
     - ant
+    - ant-optional
     - libewf
     - gettext
     - cppunit
