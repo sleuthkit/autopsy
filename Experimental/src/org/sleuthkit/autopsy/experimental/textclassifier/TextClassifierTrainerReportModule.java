@@ -29,6 +29,7 @@ import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.doccat.DocumentSample;
+import opennlp.tools.ml.AbstractEventTrainer;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
@@ -189,10 +190,12 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         TrainingParameters params = new TrainingParameters();
         params.put(TrainingParameters.CUTOFF_PARAM, Integer.toString(0));
         params.put(TrainingParameters.ALGORITHM_PARAM, TextClassifierUtils.ALGORITHM);
+        //Use the one-pass data indexer. The 2-pass indexer writes all the
+        //during training, and fails if this output is more than 64kB.
+        params.put(AbstractEventTrainer.DATA_INDEXER_PARAM, AbstractEventTrainer.DATA_INDEXER_ONE_PASS_VALUE);
         if (oldModelPath != null) {
             params.put("MODEL_INPUT", oldModelPath);
         }
-
         return DocumentCategorizerME.train(TextClassifierUtils.LANGUAGE_CODE, sampleStream, params, new DoccatFactory());
     }
 
