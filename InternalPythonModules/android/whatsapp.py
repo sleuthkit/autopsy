@@ -29,8 +29,8 @@ from java.util.logging import Level
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
-from org.sleuthkit.autopsy.coreutils import AppSQLiteDB as SQLiteUtil
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper as BlackboardUtil
+from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
+from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import BlackboardArtifact
@@ -57,19 +57,24 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         """
-            Extract, Transform and Load all messages and contacts from the WhatsApp databases.
+            Extract, Transform and Load all TSK contact and message
+            artifacts from the WhatsApp databases.
         """
 
         try:
-            contact_dbs = SQLiteUtil.findAppDatabases(dataSource, "wa.db", self._WHATSAPP_PACKAGE_NAME)
-            message_dbs = SQLiteUtil.findAppDatabases(dataSource, "msgstore.db", self._WHATSAPP_PACKAGE_NAME)
+            contact_dbs = AppSQLiteDB.findAppDatabases(dataSource,
+                    "wa.db", True, self._WHATSAPP_PACKAGE_NAME)
+            message_dbs = AppSQLiteDB.findAppDatabases(dataSource,
+                    "msgstore.db", True, self._WHATSAPP_PACKAGE_NAME)
 
             #Extract TSK_CONTACT information
             for contact_db in contact_dbs:
-                blackboard_util = BlackboardUtil(self._PARSER_NAME, contact_db.getDBFile(), Account.Type.WHATSAPP) 
+                helper = AppDBParserHelper(self._PARSER_NAME,
+                        contact_db.getDBFile(), Account.Type.WHATSAPP) 
+
                 contacts_parser = WhatsAppContactsParser(contact_db)
                 while contacts_parser.next():
-                    blackboard_util.addContact( 
+                    helper.addContact( 
                         contacts_parser.get_account_name(), 
                         contacts_parser.get_contact_name(), 
                         contacts_parser.get_phone(),
@@ -79,14 +84,18 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                     )
                 contacts_parser.close()
 
+                contact_db.close()
+
             for message_db in message_dbs:
-                blackboard_util = BlackboardUtil(self._PARSER_NAME, message_db.getDBFile(), Account.Type.WHATSAPP)
-            """
-                message_db.attachDatabase(message_db.getDBFile().getParentPath(), "wa.db", "wadb")
+                helper = AppDBParserHelper(self._PARSER_NAME,
+                        message_db.getDBFile(), Account.Type.WHATSAPP)
+
+                message_db.attachDatabase(dataSource, "wa.db",
+                        message_db.getDBFile().getParentPath(), "wadb")
+
                 messages_parser = WhatsAppMessagesParser(message_db)
                 while messages_parser.next():
-                    blackboard_util.addMessage(
-                        messages_parser.get_account_id(),
+                    helper.addMessage(
                         messages_parser.get_message_type(),
                         messages_parser.get_message_direction(),
                         messages_parser.get_phone_number_from(),
@@ -98,7 +107,8 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                         messages_parser.get_thread_id()
                     )
                 messages_parser.close()
-            """
+
+                message_db.close()
         except (SQLException, TskCoreException) as ex:
             #Error parsing WhatsApp db
             self._logger.log(Level.WARNING, "Error parsing WhatsApp Databases", ex)
@@ -107,29 +117,21 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
 class WhatsAppContactsParser(TskContactsParser):
     """
         Extracts TSK_CONTACT information from the WhatsApp database.
-        TSK_CONTACT fields that are not in the WhatsApp database are given a default value
-        inherited from the super class. 
+        TSK_CONTACT fields that are not in the WhatsApp database are given
+        a default value inherited from the super class. 
     """
 
     def __init__(self, contact_db):
         super(WhatsAppContactsParser, self).__init__(contact_db.runQuery(
                  """ 
-                     SELECT number,
-                            CASE
-	                      WHEN given_name is NULL THEN family_name
-		              WHEN family_name is NULL THEN given_name
-		              ELSE given_name 
-                                   || " "
-                                   || family_name
-	                    END name
-                     FROM wa_contacts
-                     WHERE given_name is not NULL OR family_name IS NOT NULL
+                     SELECT """ + _get_contacts_formatting() + """
+                     FROM   wa_contacts AS WC
                  """
               )
         )
 
     def get_account_name(self):
-        return self.result_set.getString("name")
+        return self.get_phone()
 
     def get_contact_name(self):
         return self.result_set.getString("name")
@@ -140,64 +142,80 @@ class WhatsAppContactsParser(TskContactsParser):
 class WhatsAppMessagesParser(TskMessagesParser):
     """
         Extract TSK_MESSAGE information from the WhatsApp database.
-        TSK_CONTACT fields that are not in the WhatsApp database are given a default value
-        inherited from the super class. 
+        TSK_CONTACT fields that are not in the WhatsApp database are given
+        a default value inherited from the super class. 
     """
 
     def __init__(self, message_db):
-        super(WhatsAppMessageParser, self).__init__(message_db.runQuery(
+        super(WhatsAppMessagesParser, self).__init__(message_db.runQuery(
                  """
                      SELECT M.data               AS content, 
-                            WDB.number           AS number, 
-                            CASE 
-                              WHEN WDB.given_name IS NULL THEN WDB.family_name 
-                              WHEN WDB.family_name IS NULL THEN WDB.given_name 
-                              ELSE WDB.given_name 
-                                   || " " 
-                                   || WDB.family_name 
-                            END                  name, 
+                        """+_get_contacts_formatting()+""",
                             M.key_from_me        AS direction, 
-                            M.received_timestamp AS recieved_datetime, 
+                            M.received_timestamp AS received_datetime, 
                             M.timestamp          AS send_datetime 
                      FROM   messages AS M 
-                            JOIN wadb.wa_contacts AS WDB 
-                              ON M.key_remote_jid = WDB.jid 
+                            JOIN wadb.wa_contacts AS WC 
+                              ON M.key_remote_jid = WC.jid
                  """
               )
         )
         self._WHATSAPP_MESSAGE_TYPE = "WhatsApp Message"
         self._INCOMING_MESSAGE_TYPE = 0
         self._OUTGOING_MESSAGE_TYPE = 1
-        self._INCOMING_MSG_STRING = "Incoming"
-        self._OUTGOING_MSG_STRING = "Outgoing"
-
-    def get_account_id(self):
-        return self.result_set.getString("name")
 
     def get_message_type(self):
         return self._WHATSAPP_MESSAGE_TYPE 
 
     def get_phone_number_to(self):
-        if self.get_message_direction() == self._OUTGOING_MSG_STRING:
-            return self.result_set.getString("number")
-        return super(WhatsAppMessageParser, self).get_phone_number_to()
+        if self.get_message_direction() == self.OUTGOING_MSG:
+            return Account.Address(self.result_set.getString("number"), 
+                        self.result_set.getString("number"))
+        return super(WhatsAppMessagesParser, self).get_phone_number_to()
 
     def get_phone_number_from(self):
-        if self.get_message_direction() == self._INCOMING_MSG_STRING:
-            return self.result_set.getString("number")
-        return super(WhatsAppMessageParser, self).get_phone_number_from() 
+        if self.get_message_direction() == self.INCOMING_MSG:
+            return Account.Address(self.result_set.getString("number"), 
+                        self.result_set.getString("number"))
+        return super(WhatsAppMessagesParser, self).get_phone_number_from() 
 
     def get_message_direction(self):  
         direction = self.result_set.getInt("direction")
         if direction == self._INCOMING_MESSAGE_TYPE:
-            return self._INCOMING_MSG_STRING
-        return self._OUTGOING_MSG_STRING
+            return self.INCOMING_MSG
+        return self.OUTGOING_MSG
     
     def get_message_date_time(self):
         #transform from ms to seconds
-        if get_message_direction() == self._OUTGOING_MSG_STRING:
+        if self.get_message_direction() == self.OUTGOING_MSG:
             return self.result_set.getLong("send_datetime") / 1000
         return self.result_set.getLong("received_datetime") / 1000
 
     def get_message_text(self):
         return self.result_set.getString("content") 
+
+def _get_contacts_formatting():
+    """
+        This function is here to explicitly stress the point that the 
+        formatting routine used in the contacts and messages parsers
+        should never differ. These fields are used to correlate in Autopsy.
+        
+        The SQL statement assumes wa_contacts table is named WC.
+    """
+
+    return """ 
+               CASE 
+                 WHEN WC.number IS NULL THEN WC.jid 
+                 WHEN WC.number == "" THEN WC.jid 
+                 ELSE WC.number 
+               END number, 
+               CASE 
+                 WHEN WC.given_name IS NULL 
+                      AND WC.family_name IS NULL THEN WC.jid 
+                 WHEN WC.given_name IS NULL THEN WC.family_name 
+                 WHEN WC.family_name IS NULL THEN WC.given_name 
+                 ELSE WC.given_name 
+                      || " " 
+                      || WC.family_name 
+               END name 
+           """
