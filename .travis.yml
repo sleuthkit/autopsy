@@ -1,24 +1,55 @@
 language: java
 sudo: required
-dist: trusty
+dist: bionic
 os:
  - linux
+
 env:
  global:
   - TSK_HOME=$TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
+
+addons:
+  apt:
+    update: true
+    packages:
+    - libafflib-dev
+    - libewf-dev
+    - libpq-dev
+    - autopoint
+    - libsqlite3-dev
+    - ant
+    - libcppunit-dev
+    - wget
+    - openjdk-8-jdk
+    - openjfx=8u161-b12-1ubuntu2
+    - libopenjfx-java=8u161-b12-1ubuntu2
+    - libopenjfx-jni=8u161-b12-1ubuntu2
+  homebrew:
+    update: true
+    packages:
+    - ant
+    - libewf
+    - gettext
+    - cppunit
+    - afflib
+
 python:
   - "2.7"
-jdk:
- - oraclejdk8
+
 before_install:
  - git clone https://github.com/sleuthkit/sleuthkit.git sleuthkit/sleuthkit
  - python setupSleuthkitBranch.py
+
 install:
  - sudo apt-get install testdisk
- - cd sleuthkit/sleuthkit
- - sh travis_build.sh
+ - ./travis_install_libs.sh
+
 script:
  - set -e
+ - echo "Building TSK..."
+ - cd sleuthkit/sleuthkit
+ - ./bootstrap && ./configure --prefix=/usr && make
+ - pushd bindings/java/ && ant -q dist-PostgreSQL && popd
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
  - ant build
