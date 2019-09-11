@@ -70,12 +70,12 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
 
             #Extract TSK_CONTACT and TSK_CALLLOG information
             for contact_and_calllog_db in contact_and_calllog_dbs:
-                parser_helper = AppDBParserHelper(self._PARSER_NAME, 
+                helper = AppDBParserHelper(self._PARSER_NAME, 
                         contact_and_calllog_db.getDBFile(), Account.Type.VIBER) 
 
                 contacts_parser = ViberContactsParser(contact_and_calllog_db)
                 while contacts_parser.next():
-                    parser_helper.addContact( 
+                    helper.addContact( 
                         contacts_parser.get_account_name(), 
                         contacts_parser.get_contact_name(), 
                         contacts_parser.get_phone(),
@@ -87,7 +87,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
 
                 calllog_parser = ViberCallLogsParser(contact_and_calllog_db)
                 while calllog_parser.next():
-                    parser_helper.addCalllog(
+                    helper.addCalllog(
                         calllog_parser.get_account_name(),
                         calllog_parser.get_call_direction(),
                         calllog_parser.get_phone_number_from(),
@@ -102,12 +102,12 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
 
             #Extract TSK_MESSAGE information
             for message_db in message_dbs:
-                parser_helper = AppDBParserHelper(self._PARSER_NAME, 
+                helper = AppDBParserHelper(self._PARSER_NAME, 
                         message_db.getDBFile(), Account.Type.VIBER)
 
                 messages_parser = ViberMessagesParser(message_db)
                 while messages_parser.next():
-                    parser_helper.addMessage(
+                    helper.addMessage(
                         messages_parser.get_message_type(),
                         messages_parser.get_message_direction(),
                         messages_parser.get_phone_number_from(),
@@ -216,6 +216,26 @@ class ViberMessagesParser(TskMessagesParser):
     """
 
     def __init__(self, message_db):
+        """
+            For our purposes, the Viber datamodel is as follows:
+                - People can take part in N conversation(s). A conversation can have N
+                  members and messages are exchanged in a conversation. 
+                - Viber has a conversation table, a participant table (the people/members in the above
+                  analogy) and a messages table.
+                - Each row of the participants table maps a person to a conversation_id
+                - Each row in the messages table has a from participant id and a conversation id.
+            
+            The query below does the following:
+                - The first two inner joins on participants and participants_info build
+                  the 1 to many (N) mappings between the sender and the recipients for each 
+                  conversation_id. If a and b do private messaging, then 2 rows in the result 
+                  will be a -> b and b -> a.
+                  If a, b, c, d are in a group, then 4 rows containing a -> b,c,d. b -> a,c,d. etc.
+                  Participants_info is needed to get phone numbers. 
+                - The result of the above step is a look up table for each message. Joining this result
+                  onto the messages table lets us know which participant a message originated from and 
+                  everyone else that received it.
+        """
         super(ViberMessagesParser, self).__init__(message_db.runQuery(
                  """
                      SELECT convo_participants.from_number AS from_number, 
