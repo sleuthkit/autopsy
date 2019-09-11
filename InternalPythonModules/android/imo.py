@@ -33,6 +33,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
 from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
+from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import MessageReadStatusEnum
+from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import CommunicationDirection
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -97,20 +99,20 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         uniqueId = messagesResultSet.getString("buid")
 
                         if (messagesResultSet.getInt("message_type") == 1):
-                            direction = "Incoming"
+                            direction = CommunicationDirection.INCOMING
                             fromAddress = Account.Address(uniqueId, name)
                         else:
-                            direction = "Outgoing"
+                            direction = CommunicationDirection.OUTGOING
                             toAddress = Account.Address(uniqueId, name)
                         
                         
                         message_read = messagesResultSet.getInt("message_read")
                         if (message_read == 1):
-                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.READ
+                            msgReadStatus = MessageReadStatusEnum.READ
                         elif (message_read == 0):
-                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.UNREAD
+                            msgReadStatus = MessageReadStatusEnum.UNREAD
                         else:
-                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.UNKNOWN
+                            msgReadStatus = MessageReadStatusEnum.UNKNOWN
                                                 
                         timeStamp = messagesResultSet.getLong("timestamp") / 1000000000
 
