@@ -1161,28 +1161,33 @@ class SevenZipExtractor {
                     tokens.add(toks[i]);
                 }
             }
-            
-            List<byte[]> byteTokens = new ArrayList<>(tokens.size());
-            int last = 0;
-            for (int i = 0; i < filePathBytes.length; i++) {
-                if (filePathBytes[i] == '/') {
-                    int len = i - last;
+
+            List<byte[]> byteTokens = null;
+            if (filePathBytes == null) {
+                return addNode(rootNode, tokens, null);
+            } else {
+                byteTokens = new ArrayList<>(tokens.size());
+                int last = 0;
+                for (int i = 0; i < filePathBytes.length; i++) {
+                    if (filePathBytes[i] == '/') {
+                        int len = i - last;
+                        byte[] arr = new byte[len];
+                        System.arraycopy(filePathBytes, last, arr, 0, len);
+                        byteTokens.add(arr);
+                        last = i + 1;
+                    }
+                }
+                int len = filePathBytes.length - last;
+                if (len > 0) {
                     byte[] arr = new byte[len];
                     System.arraycopy(filePathBytes, last, arr, 0, len);
                     byteTokens.add(arr);
-                    last = i + 1;
                 }
-            }
-            int len = filePathBytes.length - last;
-            if (len > 0) {
-                byte[] arr = new byte[len];
-                System.arraycopy(filePathBytes, last, arr, 0, len);
-                byteTokens.add(arr);
-            }
-            
-            if (tokens.size() != byteTokens.size()) {
-                logger.log(Level.WARNING, "Could not map path bytes to path string");
-                return addNode(rootNode, tokens, new ArrayList<>());
+
+                if (tokens.size() != byteTokens.size()) {
+                    logger.log(Level.WARNING, "Could not map path bytes to path string");
+                    return addNode(rootNode, tokens, null);
+                }
             }
             
             return addNode(rootNode, tokens, byteTokens);
@@ -1205,12 +1210,17 @@ class SevenZipExtractor {
 
             // get the next name in the path and look it up
             String childName = tokenPath.remove(0);
-            byte[] childNameBytes = tokenPathBytes.remove(0);
+            byte[] childNameBytes = null;
+            if (tokenPathBytes != null) {
+                childNameBytes = tokenPathBytes.remove(0);
+            }
             UnpackedNode child = parent.getChild(childName);
             // create new node
             if (child == null) {
                 child = new UnpackedNode(childName, parent);
-                child.setFileNameBytes(childNameBytes);
+                if (childNameBytes != null) {
+                    child.setFileNameBytes(childNameBytes);
+                }
                 parent.addChild(child);
             }
 
