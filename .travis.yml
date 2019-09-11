@@ -4,9 +4,6 @@ dist: bionic
 os:
  - linux
 
-jdk:
-  - openjdk8
-
 env:
  global:
   - TSK_HOME=$TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
