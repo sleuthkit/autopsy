@@ -204,8 +204,13 @@ final class AddLogicalImageTask implements Runnable {
             try {
                 privateCallback = new AddDataSourceCallback();
                 addMultipleImageTask = new AddMultipleImageTask(deviceId, imagePaths, timeZone , progressMonitor, privateCallback);
-                multipleImageThread = new Thread(addMultipleImageTask);
-                multipleImageThread.start();
+                addMultipleImageTask.run();
+                if (privateCallback.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
+                    // TODO: Delete destination directory when 5453 (VHD file is not closed upon revert) is fixed.
+                    // bait out
+                    callback.done(privateCallback.getResult(), privateCallback.getErrorMessages(), privateCallback.getNewDataSources());
+                    return;
+                }                
             } catch (NoCurrentCaseException ex) {
                 String msg = Bundle.AddLogicalImageTask_noCurrentCase();
                 errorList.add(msg);
@@ -215,34 +220,6 @@ final class AddLogicalImageTask implements Runnable {
         }
 
         try {
-            if (createVHD) {
-                // Wait for addMultipleImageTask to finish, via its privateCallback
-                while (privateCallback.isInProgress()) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ex) {
-                        // Got the addMultipleImageTask stop (cancel)
-                        LOGGER.log(Level.INFO, "AddMultipleImageTask interrupted", ex); // NON-NLS
-                        // now wait for addMultipleImageTask to revert and finally callback
-                        while (privateCallback.isInProgress()) {
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException ex2) {
-                                LOGGER.log(Level.INFO, "AddMultipleImageTask interrupted 2", ex2); // NON-NLS
-                            }
-                        }
-                    }
-                }
-                // TODO: Delete destination directory when 5453 (VHD file is not closed upon revert) is fixed.
-                // if (cancelled) {
-                //     deleteDestinationDirectory();
-                // }
-                if (privateCallback.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
-                    // bait out
-                    callback.done(privateCallback.getResult(), privateCallback.getErrorMessages(), privateCallback.getNewDataSources());
-                    return;
-                }
-            }
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFiles());
             addingInterestingFiles = true;
             addInterestingFiles(dest, Paths.get(dest.toString(), resultsFilename), createVHD);
@@ -293,7 +270,6 @@ final class AddLogicalImageTask implements Runnable {
         LOGGER.log(Level.WARNING, "AddLogicalImageTask cancelled, processing may be incomplete"); // NON-NLS
         cancelled = true;
         if (addMultipleImageTask != null) {
-            multipleImageThread.interrupt();
             addMultipleImageTask.cancelTask();
         }
         if (!createVHD && !addingInterestingFiles) {
