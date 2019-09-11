@@ -204,7 +204,7 @@ final class SqliteTextExtractor implements TextExtractor {
          */
         @Override
         public int read(char[] cbuf, int off, int len) throws IOException {
-            buf = cbuf.clone();
+            buf = cbuf; //needs to be the same memory address and not a copy of the contents since we are filling it in
 
             bufIndex = off;
 

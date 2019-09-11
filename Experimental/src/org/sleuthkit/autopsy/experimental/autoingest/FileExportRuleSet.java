@@ -350,12 +350,12 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
             if (!Objects.equals(this.fileTypeCondition, that.getFileMIMETypeCondition())) {
                 return false;
             }
-            this.fileSizeConditions.sort(null);
+            this.sortFileSizeConditions();
             that.sortFileSizeConditions();
             if (!this.fileSizeConditions.equals(that.getFileSizeConditions())) {
                 return false;
             }
-            this.artifactConditions.sort(null);
+            this.sortArtifactConditions();
             that.sortArtifactConditions();
             return this.artifactConditions.equals(that.getArtifactConditions());
         }
@@ -390,18 +390,13 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
         List<Long> evaluate(long dataSourceId) throws ExportRulesException {
             try {
                 SleuthkitCase db = Case.getCurrentCaseThrows().getSleuthkitCase();
-                ResultSet resultSet = null;
-                try (SleuthkitCase.CaseDbQuery queryResult = db.executeQuery(getQuery(dataSourceId))) {
-                    resultSet = queryResult.getResultSet();
+                try (SleuthkitCase.CaseDbQuery queryResult = db.executeQuery(getQuery(dataSourceId));
+                        ResultSet resultSet = queryResult.getResultSet();) {
                     List<Long> fileIds = new ArrayList<>();
                     while (resultSet.next()) {
                         fileIds.add(resultSet.getLong("obj_id"));
                     }
                     return fileIds;
-                } finally {
-                    if (resultSet != null) {
-                        resultSet.close();
-                    }
                 }
             } catch (NoCurrentCaseException ex) {
                 throw new ExportRulesException("No current case", ex);
