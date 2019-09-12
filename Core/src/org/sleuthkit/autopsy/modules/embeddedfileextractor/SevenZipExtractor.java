@@ -1218,9 +1218,7 @@ class SevenZipExtractor {
             // create new node
             if (child == null) {
                 child = new UnpackedNode(childName, parent);
-                if (childNameBytes != null) {
-                    child.setFileNameBytes(childNameBytes);
-                }
+                child.setFileNameBytes(childNameBytes);
                 parent.addChild(child);
             }
 
@@ -1332,8 +1330,9 @@ class SevenZipExtractor {
                 String names = "";
                 ArrayList<byte[]> byteDatas = new ArrayList<>();
                 for (UnpackedNode child : node.getChildren()) {
-                    if (child.getFileNameBytes() != null) {
-                        byteDatas.add(child.getFileNameBytes());
+                    byte[] childBytes = child.getFileNameBytes();
+                    if (childBytes != null) {
+                        byteDatas.add(childBytes);
                     }
                     names += child.getFileName();
                 }
@@ -1342,8 +1341,9 @@ class SevenZipExtractor {
                 // If a charset was detected, transcode filenames accordingly
                 if (detectedCharset != null && detectedCharset.canEncode()) {
                     for (UnpackedNode child : node.getChildren()) {
-                        if (child.getFileNameBytes() != null) {
-                            String decodedName = new String(child.getFileNameBytes(), detectedCharset);
+                        byte[] childBytes = child.getFileNameBytes();
+                        if (childBytes != null) {
+                            String decodedName = new String(childBytes, detectedCharset);
                             child.setFileName(decodedName);
                         }
                     }
@@ -1495,10 +1495,15 @@ class SevenZipExtractor {
             }
 
             void setFileNameBytes(byte[] fileNameBytes) {
-                this.fileNameBytes = Arrays.copyOf(fileNameBytes, fileNameBytes.length);
+                if (fileNameBytes != null) {
+                    this.fileNameBytes = Arrays.copyOf(fileNameBytes, fileNameBytes.length);
+                }
             }
             
             byte[] getFileNameBytes() {
+                if (fileNameBytes == null) {
+                    return null;
+                }
                 return Arrays.copyOf(fileNameBytes, fileNameBytes.length);
             }
         }
