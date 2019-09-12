@@ -182,6 +182,10 @@
                 <binary-origin>release/modules/ext/opennlp-tools-1.9.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-text-1.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-text-1.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/org.osgi.core-6.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/org.osgi.core-6.0.0.jar</binary-origin>
             </class-path-extension>

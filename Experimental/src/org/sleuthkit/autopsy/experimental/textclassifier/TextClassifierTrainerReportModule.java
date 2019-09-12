@@ -54,9 +54,7 @@ import org.sleuthkit.datamodel.TskData;
  * This is a ReportModule that trains a text classifier. It trains on all
  * text-like documents in the current case. The two classes are the ones labeled
  * as notable by the user and the ones not labeled as notable. It will not train
- * a model if none of the documents were labeled as notable, if all of the
- * documents were labeled as notable, or if there are not enough documents in
- * the case for the underlying model trainer to run.
+ * a model if there are no text-like documents in the collection.
  *
  * The model is stored in %APPDATA%\autopsy\text_classifiers. If a model is
  * already present in that location, the TextClassifierTrainerReportModule adds

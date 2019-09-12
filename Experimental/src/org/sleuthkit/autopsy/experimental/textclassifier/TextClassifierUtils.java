@@ -39,7 +39,7 @@ import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -146,12 +146,13 @@ class TextClassifierUtils {
             String[] tokens = TOKENIZER.tokenize(text);
 
             ArrayList<String> sanitizedTokens = new ArrayList<>();
+            int i = 0;
             for (String token : tokens) {
                 token = UnicodeSanitizer.sanitize(token);
                 token = StringEscapeUtils.escapeJava(token);
-                sanitizedTokens.add(token);
+                tokens[i] = token;
+                i++;
             }
-            tokens = sanitizedTokens.toArray(new String[0]);
             return tokens;
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "Cannot extract tokens from file " + file.getName(), ex);
