@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.testing;
 
 import java.io.File;
 import java.io.IOException;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Logger;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import org.netbeans.jemmy.Timeouts;
