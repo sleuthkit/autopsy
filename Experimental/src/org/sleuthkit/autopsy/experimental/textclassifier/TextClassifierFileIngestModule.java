@@ -66,14 +66,16 @@ public class TextClassifierFileIngestModule extends FileIngestModuleAdapter {
         LOGGER.log(Level.INFO, "notable token count is {0}", categoryToTokenCount.get(TextClassifierUtils.NOTABLE_LABEL));
         LOGGER.log(Level.INFO, "nonnotable token count is {0}", categoryToTokenCount.get(TextClassifierUtils.NONNOTABLE_LABEL));
 
-        //Check whether there's enough data
+        //Check whether there's enough tokens of notable data
         final int notableCountMinimum = 50000;
-        final int nonnotableCountMinimum = 100000;
         double notableCount = categoryToTokenCount.get(TextClassifierUtils.NOTABLE_LABEL);
-        double nonnotableCount = categoryToTokenCount.get(TextClassifierUtils.NONNOTABLE_LABEL);
         if (notableCount < notableCountMinimum) {
             throw new IngestModule.IngestModuleException("Need more tokens in notable training data. Have " + notableCount + ", require " + notableCountMinimum);
         }
+        
+        //Check whether there's enough tokens of nonnotable data
+        final int nonnotableCountMinimum = 100000;
+        double nonnotableCount = categoryToTokenCount.get(TextClassifierUtils.NONNOTABLE_LABEL);
         if (nonnotableCount < nonnotableCountMinimum) {
             throw new IngestModule.IngestModuleException("Need more tokens in nonnotable training data. Have " + nonnotableCount + ", require " + nonnotableCountMinimum);
         }
