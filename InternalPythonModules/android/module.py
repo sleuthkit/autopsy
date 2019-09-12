@@ -50,6 +50,11 @@ import imo
 import xender
 import zapya
 import shareit
+import sbrowser
+import operabrowser
+import oruxmaps
+import installedapps
+
 
 class AndroidModuleFactory(IngestModuleFactoryAdapter):
 
@@ -95,7 +100,10 @@ class AndroidIngestModule(DataSourceIngestModule):
                      tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(),
                      googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(),
                      cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(),
-                     xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(), shareit.ShareItAnalyzer()]
+                     xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(), shareit.ShareItAnalyzer(),
+                     sbrowser.SBrowserAnalyzer(), operabrowser.OperaAnalyzer(),
+                     oruxmaps.OruxMapsAnalyzer(),
+                     installedapps.InstalledApplicationsAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 
