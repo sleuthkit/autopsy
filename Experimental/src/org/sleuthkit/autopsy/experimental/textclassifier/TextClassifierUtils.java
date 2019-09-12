@@ -25,6 +25,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import opennlp.tools.doccat.DoccatFactory;
@@ -34,12 +36,14 @@ import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
+import opennlp.tools.sentdetect.SentenceDetector;
 import org.apache.commons.io.IOUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import opennlp.tools.tokenize.Tokenizer;
+import org.openide.modules.InstalledFileLocator;
 import static org.sleuthkit.autopsy.coreutils.PlatformUtil.getUserDirectory;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -64,6 +68,8 @@ class TextClassifierUtils {
     static final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
     static final String LANGUAGE_CODE = "en";
     static final String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
+
+    private static SentenceDetector sentenceDetector;
 
     TextClassifierUtils() throws IngestModuleException {
         try {
@@ -132,16 +138,42 @@ class TextClassifierUtils {
             return new String[0];
         }
 
-        //Read the file, and tokenize it.
+        //Read the file and tokenize it.
         try {
             //Read the text
             String text = IOUtils.toString(reader);
-            //Tokenize the file.
-            return TOKENIZER.tokenize(text);
+            return cleanAndTokenize(text);
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "Cannot extract tokens from file " + file.getName(), ex);
             return new String[0];
         }
+    }
+
+    private static synchronized void initializeSentenceDetector() throws IOException {
+        //Initialize the sentenceDetector if that hasn't been done yet.
+        if (sentenceDetector == null) {
+            //Define the sentence detector, trained on the train section of the EWT corpus, from Universal Dependencies
+            final File sentenceModelFile = InstalledFileLocator.getDefault().locate("textclassifier/en-sent-ewt.bin", TextClassifierUtils.class.getPackage().getName(), false); //NON-NLS
+            if (sentenceModelFile == null) {
+                throw new IOException("Error finding sentence detector module");
+            }
+            sentenceDetector = new NewlineHeuristicSentenceDetector(sentenceModelFile);
+        }
+    }
+
+    private static String[] cleanAndTokenize(String text) throws IOException {
+        initializeSentenceDetector();
+
+        ArrayList<String> tokens = new ArrayList<>();
+        String[] sentences = sentenceDetector.sentDetect(text);
+        for (String sentence : sentences) {
+            //Tokenize the file.
+            String[] sentenceTokens = TOKENIZER.tokenize(sentence);
+            if (sentenceTokens.length > 5) {
+                tokens.addAll(Arrays.asList(sentenceTokens));
+            }
+        }
+        return tokens.toArray(new String[0]);
     }
 
     /**
@@ -153,11 +185,12 @@ class TextClassifierUtils {
      */
     static DocumentCategorizerME loadCategorizer() throws IOException {
         ensureTextClassifierFolderExists();
-        FileReader fr = new FileReader(new File(MODEL_PATH));
-        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
-        reader.checkModelType();
-        NaiveBayesModel model = (NaiveBayesModel) reader.constructModel();
-        fr.close();
+        NaiveBayesModel model;
+        try (FileReader fr = new FileReader(new File(MODEL_PATH))) {
+            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
+            reader.checkModelType();
+            model = (NaiveBayesModel) reader.constructModel();
+        }
         DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory());
         return new DocumentCategorizerME(doccatModel);
     }
@@ -171,11 +204,11 @@ class TextClassifierUtils {
      */
     static void writeModel(NaiveBayesModel model) throws IOException {
         ensureTextClassifierFolderExists();
-        FileWriter fw = new FileWriter(new File(MODEL_PATH));
-        PlainTextNaiveBayesModelWriter modelWriter;
-        modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
-        modelWriter.persist();
-        fw.close();
+        try (FileWriter fw = new FileWriter(new File(MODEL_PATH))) {
+            PlainTextNaiveBayesModelWriter modelWriter;
+            modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
+            modelWriter.persist();
+        }
     }
 
 }

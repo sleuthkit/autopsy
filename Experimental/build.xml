@@ -11,6 +11,28 @@
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
     
+    <!--Copy sentence boundary detector model to release-->
+    <target name="get-internal-dependencies" description="get internal dependencies">
+        <mkdir dir="${basedir}/release/textclassifier"/>
+        <copy todir="${basedir}/release/textclassifier">
+            <fileset dir="${basedir}/src/resources/"/>
+        </copy>
+        
+        <!--If you run the Experimental module, TextClassifierUtils will look for 
+        files here-->
+        <mkdir dir="${basedir}/build/cluster/textclassifier"/>
+        <copy todir="${basedir}/build/cluster/textclassifier">
+            <fileset dir="${basedir}/src/resources/"/>
+        </copy>
+        
+        <!--If you run the Autopsy project, TextClassifierUtils will look for 
+        files here-->
+        <mkdir dir="${basedir}/../build/cluster/textclassifier"/>
+        <copy todir="${basedir}/../build/cluster/textclassifier">
+            <fileset dir="${basedir}/src/resources/"/>
+        </copy>
+    </target>
+
     <target name="resolve">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve file="ivy.xml" conf="experimental" log="quiet"/>
@@ -24,7 +46,7 @@
         <ivy:retrieve conf="*"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
     
-    <target name="init" depends="retrieve-all, harness.init" />
+    <target name="init" depends="retrieve-all, harness.init, get-internal-dependencies" />
       
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  
