@@ -2,7 +2,13 @@
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
 
+# {0} - file number
+# {1} - total files
+AddLogicalImageTask.addingExtractedFile=Adding extracted file ({0}/{1})
 AddLogicalImageTask.addingExtractedFiles=Adding extracted files
+# {0} - file number
+# {1} - total files
+AddLogicalImageTask.addingInterestingFile=Adding interesting file ({0}/{1})
 AddLogicalImageTask.addingInterestingFiles=Adding search results as interesting files
 # {0} - file
 AddLogicalImageTask.addingToReport=Adding {0} to report
@@ -29,6 +35,8 @@ AddLogicalImageTask.failedToAddReport=Failed to add report {0}. Reason= {1}
 # {0} - src
 # {1} - dest
 AddLogicalImageTask.failedToCopyDirectory=Failed to copy directory {0} to {1}
+# {0} - reason
+AddLogicalImageTask.failedToGetTotalFilesCount=Failed to get total files count: {0}
 # {0} - file
 AddLogicalImageTask.failToGetCanonicalPath=Fail to get canonical path for {0}
 AddLogicalImageTask.ingestionCancelled=Ingestion cancelled

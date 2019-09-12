@@ -572,12 +572,12 @@ public final class DrawableDB {
                     String sql = "CREATE TABLE  if not exists drawable_files " //NON-NLS
                             + "( obj_id BIGINT PRIMARY KEY, " //NON-NLS
                             + " data_source_obj_id BIGINT NOT NULL, "
-                            + " path VARCHAR(255), " //NON-NLS
-                            + " name VARCHAR(255), " //NON-NLS
+                            + " path TEXT, " //NON-NLS
+                            + " name TEXT, " //NON-NLS
                             + " created_time integer, " //NON-NLS
                             + " modified_time integer, " //NON-NLS
-                            + " make VARCHAR(255) DEFAULT NULL, " //NON-NLS
-                            + " model VARCHAR(255) DEFAULT NULL, " //NON-NLS
+                            + " make TEXT DEFAULT NULL, " //NON-NLS
+                            + " model TEXT DEFAULT NULL, " //NON-NLS
                             + " analyzed integer DEFAULT 0)"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
@@ -588,7 +588,7 @@ public final class DrawableDB {
                 try {
                     String sql = "CREATE TABLE if not exists hash_sets " //NON-NLS
                             + "( hash_set_id INTEGER primary key," //NON-NLS
-                            + " hash_set_name VARCHAR(255) UNIQUE NOT NULL)"; //NON-NLS
+                            + " hash_set_name TEXT UNIQUE NOT NULL)"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
                     logger.log(Level.SEVERE, "Failed to create hash_sets table", ex); //NON-NLS
@@ -692,8 +692,8 @@ public final class DrawableDB {
                 String tableSchema
                         = "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
                         + " data_source_obj_id BIGINT DEFAULT 0, "
-                        + " value VARCHAR(255) not null, " //NON-NLS
-                        + " attribute VARCHAR(255) not null, " //NON-NLS
+                        + " value TEXT not null, " //NON-NLS
+                        + " attribute TEXT not null, " //NON-NLS
                         + " is_analyzed integer DEFAULT 0, "
                         + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
 
