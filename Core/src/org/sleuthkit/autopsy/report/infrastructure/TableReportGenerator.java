@@ -113,11 +113,9 @@ class TableReportGenerator {
     }
 
     protected void execute() {
-        // Start the progress indicators for each active TableReportModule.
 
         progressPanel.start();
-        progressPanel.setIndeterminate(false);
-        progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.readingTagsArtifacts.text"));
         
         if (settings.isUseCaseSpecificData()) {
             // Get the artifact types selected by the user.
@@ -141,6 +139,10 @@ class TableReportGenerator {
                 return;
             }
         }
+        
+        // Start the progress indicators for each active TableReportModule.
+        progressPanel.setIndeterminate(false);
+        progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
         
         // report on the blackboard results
         if (progressPanel.getStatus() != ReportProgressPanel.ReportStatus.CANCELED) {
