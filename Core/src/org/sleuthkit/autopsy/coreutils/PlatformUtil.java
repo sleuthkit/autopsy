@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -119,19 +119,19 @@ public class PlatformUtil {
     public static String getUserPythonModulesPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + PYTHON_MODULES_SUBDIRECTORY;
     }
-    
+
     /**
      * Get root path where the user's Ocr language packs are stored.
-     * 
+     *
      * @return Absolute path to the Ocr language packs root directory.
      */
     public static String getOcrLanguagePacksPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + OCR_LANGUAGE_SUBDIRECTORY;
     }
-    
+
     /**
      * Get the names of the language packs installed at the user directory.
-     * 
+     *
      * @return List of language packs base names
      */
     public static List<String> getOcrLanguagePacks() {
@@ -139,20 +139,20 @@ public class PlatformUtil {
 
         List<String> languagePacks = new ArrayList<>();
         for (File languagePack : languagePackRootDir.listFiles()) {
-            String fileExt = FilenameUtils.getExtension(languagePack.getName()); 
+            String fileExt = FilenameUtils.getExtension(languagePack.getName());
             if (!languagePack.isDirectory() && OCR_LANGUAGE_PACK_EXT.equals(fileExt)) {
                 String packageName = FilenameUtils.getBaseName(languagePack.getName());
                 languagePacks.add(packageName);
             }
         }
-        
+
         return languagePacks;
     }
 
     /**
      * Get root path where the user's object detection classifiers are stored.
-     * 
-     * @return Absolute path to the object detection classifiers root directory. 
+     *
+     * @return Absolute path to the object detection classifiers root directory.
      */
     public static String getObjectDetectionClassifierPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + CLASSIFIERS_SUBDIRECTORY;

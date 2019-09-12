@@ -57,27 +57,29 @@ public class InterestingHits implements AutopsyVisitableItem {
             .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text");
     private static final String DISPLAY_NAME = NbBundle.getMessage(InterestingHits.class, "InterestingHits.displayName.text");
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     private SleuthkitCase skCase;
     private final InterestingResults interestingResults = new InterestingResults();
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
     /**
      * Constructor
-     * 
-     * @param skCase  Case DB
-     * 
-     */ 
+     *
+     * @param skCase Case DB
+     *
+     */
     public InterestingHits(SleuthkitCase skCase) {
         this(skCase, 0);
     }
-    
+
     /**
      * Constructor
-     * 
-     * @param skCase  Case DB
-     * @param objId  Object id of the data source 
-     * 
-     */ 
+     *
+     * @param skCase Case DB
+     * @param objId  Object id of the data source
+     *
+     */
     public InterestingHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
         this.filteringDSObjId = objId;
@@ -132,7 +134,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
             if (filteringDSObjId > 0) {
-                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
+                query += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
@@ -217,17 +219,17 @@ public class InterestingHits implements AutopsyVisitableItem {
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 /**
                  * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked
-                 * out. Currently, remote events may be received for a case
-                 * that is already closed.
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
                  */
                 try {
                     Case.getCurrentCaseThrows();
                     /**
-                     * Even with the check above, it is still possible that
-                     * the case will be closed in a different thread before
-                     * this code executes. If that happens, it is possible
-                     * for the event to have a null oldValue.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
                     ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                     if (null != eventData && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
@@ -243,9 +245,9 @@ public class InterestingHits implements AutopsyVisitableItem {
                     || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                 /**
                  * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked
-                 * out. Currently, remote events may be received for a case
-                 * that is already closed.
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
                  */
                 try {
                     Case.getCurrentCaseThrows();
@@ -266,8 +268,8 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
             interestingResults.update();
             interestingResults.addObserver(this);

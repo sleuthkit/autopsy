@@ -59,20 +59,21 @@ class GetSCOTask implements Runnable {
     public void run() {
         AbstractContentNode<?> contentNode = weakNodeRef.get();
 
-        //Check for stale reference
-        if (contentNode == null) {
+         //Check for stale reference or if columns are disabled
+        if (contentNode == null || UserPreferences.getHideSCOColumns()) {
             return;
         }
-
         // get the SCO  column values
         List<Tag> tags = contentNode.getAllTagsFromDatabase();
-        CorrelationAttributeInstance fileAttribute = contentNode.getCorrelationAttributeInstance();
 
         SCOData scoData = new SCOData();
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
+        //getting the correlation attribute and setting the comment column is done before the eamdb isEnabled check
+        //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless 
+        CorrelationAttributeInstance fileAttribute = contentNode.getCorrelationAttributeInstance();
         scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
 
-        if (EamDb.isEnabled() && !UserPreferences.getHideSCOColumns()) {
+        if (EamDb.isEnabled()) {
             Type type = null;
             String value = null;
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();

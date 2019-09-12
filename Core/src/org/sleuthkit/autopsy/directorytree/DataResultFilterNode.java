@@ -179,9 +179,7 @@ public class DataResultFilterNode extends FilterNode {
                 newPs.setShortDescription(ps.getShortDescription());
 
                 newPs.put(ps.getProperties());
-                if (newPs.remove(AbstractFsContentNode.HIDE_PARENT) != null) {
-                    newPs.remove(AbstractFilePropertyType.LOCATION.toString());
-                }
+                newPs.remove(AbstractFsContentNode.HIDE_PARENT);
                 propertySets[i] = newPs;
             }
         }
