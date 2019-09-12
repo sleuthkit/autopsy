@@ -215,33 +215,21 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
-        boolean containsNotableDocument = false;
-        boolean containsNonNotableDocument = false;
+        
+        docSamples.add(new DocumentSample(TextClassifierUtils.NOTABLE_LABEL, new String[0]));
+        docSamples.add(new DocumentSample(TextClassifierUtils.NONNOTABLE_LABEL, new String[0]));
+        
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
-                containsNotableDocument = true;
             } else {
                 label = TextClassifierUtils.NONNOTABLE_LABEL;
-                containsNonNotableDocument = true;
             }
             DocumentSample docSample = new DocumentSample(label, TextClassifierUtils.extractTokens(doc));
             docSamples.add(docSample);
 
             progressPanel.increment();
         }
-
-        if (!containsNotableDocument) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.needNotable.text"));
-            throw new TskCoreException("Training set must contain at least one notable document");
-        }
-        if (!containsNonNotableDocument) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.needNonnotable.text"));
-            throw new TskCoreException("Training set must contain at least one nonnotable document");
-        }
-
         return new ListObjectStream<>(docSamples);
     }
 

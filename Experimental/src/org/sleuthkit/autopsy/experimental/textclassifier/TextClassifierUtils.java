@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import opennlp.tools.doccat.DoccatFactory;
@@ -35,6 +39,7 @@ import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -64,6 +69,7 @@ class TextClassifierUtils {
     static final String MODEL_PATH = MODEL_DIR + File.separator + "model.txt";
     static final String LANGUAGE_CODE = "en";
     static final String ALGORITHM = "org.sleuthkit.autopsy.experimental.textclassifier.IncrementalNaiveBayesTrainer";
+    //static final String ALGORITHM = NaiveBayesTrainer.NAIVE_BAYES_VALUE;
 
     TextClassifierUtils() throws IngestModuleException {
         try {
@@ -137,7 +143,16 @@ class TextClassifierUtils {
             //Read the text
             String text = IOUtils.toString(reader);
             //Tokenize the file.
-            return TOKENIZER.tokenize(text);
+            String[] tokens = TOKENIZER.tokenize(text);
+
+            ArrayList<String> sanitizedTokens = new ArrayList<>();
+            for (String token : tokens) {
+                token = UnicodeSanitizer.sanitize(token);
+                token = StringEscapeUtils.escapeJava(token);
+                sanitizedTokens.add(token);
+            }
+            tokens = sanitizedTokens.toArray(new String[0]);
+            return tokens;
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "Cannot extract tokens from file " + file.getName(), ex);
             return new String[0];
@@ -153,11 +168,15 @@ class TextClassifierUtils {
      */
     static DocumentCategorizerME loadCategorizer() throws IOException {
         ensureTextClassifierFolderExists();
-        FileReader fr = new FileReader(new File(MODEL_PATH));
-        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
+
+        NaiveBayesModel model;
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(MODEL_PATH),
+                Charset.forName("UTF-8").newDecoder()));
+        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(br);
+
         reader.checkModelType();
-        NaiveBayesModel model = (NaiveBayesModel) reader.constructModel();
-        fr.close();
+        model = (NaiveBayesModel) reader.constructModel();
         DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory());
         return new DocumentCategorizerME(doccatModel);
     }
@@ -171,11 +190,13 @@ class TextClassifierUtils {
      */
     static void writeModel(NaiveBayesModel model) throws IOException {
         ensureTextClassifierFolderExists();
-        FileWriter fw = new FileWriter(new File(MODEL_PATH));
-        PlainTextNaiveBayesModelWriter modelWriter;
-        modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
-        modelWriter.persist();
-        fw.close();
-    }
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(MODEL_PATH),
+                Charset.forName("UTF-8").newEncoder()))) {
+            PlainTextNaiveBayesModelWriter modelWriter = new PlainTextNaiveBayesModelWriter(model, bw);
 
+            //Write to file
+            modelWriter.persist();
+        }
+    }
 }
