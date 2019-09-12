@@ -67,8 +67,6 @@ import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -876,7 +874,7 @@ class ExtractRegistry extends Extract {
             String userInfoSection = "User Information";
             String previousLine = null;
             String line = bufferedReader.readLine();
-            Set<HashMap<String, String>> userSet = new HashSet<>();
+            Set<Map<String, String>> userSet = new HashSet<>();
             Map<String, List<String>> groupMap = null;
             while (line != null) {
                 if (line.contains(SECTION_DIVIDER) && previousLine != null && previousLine.contains(userInfoSection)) {
@@ -890,9 +888,9 @@ class ExtractRegistry extends Extract {
                 previousLine = line;
                 line = bufferedReader.readLine();
             }
-            Map<String, HashMap<String, String>> userInfoMap = new HashMap<>();
+            Map<String, Map<String, String>> userInfoMap = new HashMap<>();
             //load all the user info which was read into a map
-            for (HashMap<String, String> userInfo : userSet) {
+            for (Map<String, String> userInfo : userSet) {
                 userInfoMap.put(userInfo.get(SID_KEY), userInfo);
             }
             //get all existing OS account artifacts
@@ -903,7 +901,7 @@ class ExtractRegistry extends Extract {
                     BlackboardAttribute existingUserId = osAccount.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
                     if (existingUserId != null) {
                         String userID = existingUserId.getValueString().trim();
-                        HashMap<String, String> userInfo = userInfoMap.remove(userID);
+                        Map<String, String> userInfo = userInfoMap.remove(userID);
                         //if the existing user id matches a user id which we parsed information for check if that information exists and if it doesn't add it
                         if (userInfo != null) {
                             osAccount.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userID), true));
@@ -912,7 +910,7 @@ class ExtractRegistry extends Extract {
                 }
             }
             //add remaining userinfos as accounts;
-            for (HashMap<String, String> userInfo : userInfoMap.values()) {
+            for (Map<String, String> userInfo : userInfoMap.values()) {
                 BlackboardArtifact bbart = regAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
                 bbart.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userInfo.get(SID_KEY)), false));
                 // index the artifact for keyword search
@@ -943,7 +941,7 @@ class ExtractRegistry extends Extract {
      * 
      * @throws ParseException 
      */
-    Collection<BlackboardAttribute> getAttributesForAccount(HashMap<String, String> userInfo, List<String> groupList, boolean existingUser) throws ParseException {
+    Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser) throws ParseException {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
@@ -1062,8 +1060,8 @@ class ExtractRegistry extends Extract {
                     getRAModuleName(), settingString));
         }
 
-        if (groupList != null && groupList.size() > 0) {
-            String groups = new String();
+        if (groupList != null && groupList.isEmpty()) {
+            String groups = "";
             for (String group : groupList) {
                 groups += group + ", ";
             }
@@ -1086,7 +1084,7 @@ class ExtractRegistry extends Extract {
      *
      * @throws IOException
      */
-    private void readUsers(BufferedReader bufferedReader, Set<HashMap<String, String>> users) throws IOException {
+    private void readUsers(BufferedReader bufferedReader, Set<Map<String, String>> users) throws IOException {
         String line = bufferedReader.readLine();
         //read until end of file or next section divider
         String userName = "";
@@ -1131,7 +1129,7 @@ class ExtractRegistry extends Extract {
      * @throws IOException 
      */
     Map<String, List<String>> readGroups(BufferedReader bufferedReader) throws IOException {
-        HashMap<String, List<String>> groupMap = new HashMap<>();
+        Map<String, List<String>> groupMap = new HashMap<>();
 
         String line = bufferedReader.readLine();
 
@@ -1192,8 +1190,6 @@ class ExtractRegistry extends Extract {
             } else {
                 value = "";
             }
-
-            return new AbstractMap.SimpleEntry<>(key, value);
 
         } else if (line.contains("-->")) {
             key = line.replace("-->", "").trim();
