@@ -89,7 +89,8 @@ import org.sleuthkit.datamodel.TskData;
 public final class ImageGalleryController {
 
     private static final Logger logger = Logger.getLogger(ImageGalleryController.class.getName());
-
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED, IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED, IngestManager.IngestModuleEvent.FILE_DONE);
     /*
      * The file limit for image gallery. If the selected data source (or all
      * data sources, if that option is selected) has more than this many files
@@ -267,8 +268,8 @@ public final class ImageGalleryController {
         dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
 
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
-        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
-        IngestManager.getInstance().addIngestModuleEventListener(ingestModuleEventListener);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, ingestModuleEventListener);
 
         SwingUtilities.invokeLater(() -> {
             topComponent = ImageGalleryTopComponent.getTopComponent();
