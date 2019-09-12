@@ -75,6 +75,8 @@ final class AddLogicalImageTask implements Runnable {
     private boolean addingInterestingFiles;
     private AddMultipleImageTask addMultipleImageTask;
     private boolean createVHD;
+    private long totalFiles;
+    private Map<String, Long> imagePathToObjIdMap;
 
     AddLogicalImageTask(String deviceId,
             String timeZone,
@@ -181,9 +183,8 @@ final class AddLogicalImageTask implements Runnable {
             return;
         }
 
-        AddMultipleImageTask addMultipleImageTask = null;
+        AddDataSourceCallback privateCallback = null;
         List<Content> newDataSources = new ArrayList<>();
-        boolean createVHD;
 
         if (imagePaths.isEmpty()) {
             createVHD = false;
