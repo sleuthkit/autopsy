@@ -135,6 +135,7 @@ final class ReportVisualPanel2 extends JPanel {
                 deselectAllButton.setEnabled(false);
                 break;
         }
+        updateFinishButton();
     }
 
     // Initialize the list of Tags

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.infrastructure.TableReportSettings;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
@@ -92,7 +91,6 @@ class ReportWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public void readSettings(WizardDescriptor wiz) {
         // Re-enable the normal wizard buttons
-        setFinish(true);
         this.wiz = wiz;
         wiz.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, nextButton, finishButton, WizardDescriptor.CANCEL_OPTION});
     }
