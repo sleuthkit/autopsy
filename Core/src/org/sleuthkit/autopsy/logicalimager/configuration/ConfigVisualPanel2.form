@@ -103,6 +103,7 @@
                                   <Component id="flagEncryptionProgramsCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="finalizeImageWriter" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="promptBeforeExit" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="createVHDCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
@@ -193,7 +194,8 @@
                       <Component id="finalizeImageWriter" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Component id="promptBeforeExit" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="21" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="createVHDCheckBox" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -580,6 +582,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="promptBeforeExitActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="createVHDCheckBox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/logicalimager/configuration/Bundle.properties" key="ConfigVisualPanel2.createVHDCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="createVHDCheckBoxActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
