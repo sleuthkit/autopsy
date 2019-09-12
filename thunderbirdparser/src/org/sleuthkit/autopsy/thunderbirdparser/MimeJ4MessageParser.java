@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Super class for email parsers that can use the james.mime4J.Message objects.
  */
-abstract class MimeJ4MessageParser {
+class MimeJ4MessageParser {
 
     private static final Logger logger = Logger.getLogger(MimeJ4MessageParser.class.getName());
 

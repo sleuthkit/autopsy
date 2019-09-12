@@ -32,8 +32,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 class EMLParser extends MimeJ4MessageParser {
 
-    private static final Logger logger = Logger.getLogger(EMLParser.class.getName());
-
     /**
      * If the extention of the AbstractFile is eml and 'To:' is found close to
      * the beginning of the file, then its probably an eml file.
@@ -45,7 +43,7 @@ class EMLParser extends MimeJ4MessageParser {
      */
     static boolean isEMLFile(AbstractFile abFile, byte[] buffer) {
         String ext = abFile.getNameExtension();
-        boolean isEMLFile = ext != null ? ext.equals("eml") : false;
+        boolean isEMLFile = ext != null && ext.equals("eml");
         if (isEMLFile) {
             isEMLFile = (new String(buffer)).contains("To:"); //NON-NLS
         }
