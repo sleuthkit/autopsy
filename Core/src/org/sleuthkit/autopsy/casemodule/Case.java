@@ -1049,7 +1049,7 @@ public class Case {
                 /*
                  * Enable the case-specific actions.
                  */
-                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                CallableSystemAction.get(AddImageAction.class).setEnabled(Case.getCurrentCase().getMetadata().getCaseType() == CaseType.SINGLE_USER_CASE || !AccessLimiter.limitMultiUserAccess());
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);

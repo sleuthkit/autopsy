@@ -61,7 +61,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      */
     void readSettings() {
         caseNameTextField.setText("");
-        if (UserPreferences.getIsMultiUserModeEnabled()) {
+        if (UserPreferences.getIsMultiUserModeEnabled() && !AccessLimiter.limitMultiUserAccess()) {
             multiUserCaseRadioButton.setEnabled(true);
             multiUserCaseRadioButton.setSelected(true);
         } else {
