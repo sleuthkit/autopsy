@@ -73,7 +73,6 @@ final class AddLogicalImageTask implements Runnable {
     private volatile boolean cancelled;
     private boolean addingInterestingFiles;
     private AddMultipleImageTask addMultipleImageTask;
-    private Thread multipleImageThread;
     private boolean createVHD;
 
     AddLogicalImageTask(String deviceId,
