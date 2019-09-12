@@ -365,7 +365,7 @@ class HighlightedText implements IndexedText {
                 if (2.2 <= indexSchemaVersion) {
                     //if the query is literal try to get solr to do the highlighting
                     final String highlightQuery = keywords.stream().map(s ->
-                        LanguageSpecificContentQueryHelper.expandQueryString(KeywordSearchUtil.escapeLuceneQuery(s)))
+                        LanguageSpecificContentQueryHelper.expandQueryString(KeywordSearchUtil.quoteQuery(KeywordSearchUtil.escapeLuceneQuery(s))))
                         .collect(Collectors.joining(" OR "));
                     q.setQuery(highlightQuery);
                     for (Server.Schema field : LanguageSpecificContentQueryHelper.getQueryFields()) {
@@ -391,10 +391,17 @@ class HighlightedText implements IndexedText {
                 }
 
                 //tune the highlighter
-                q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
-                q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-                q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
-                q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+                if (shouldUseOriginalHighlighter(contentIdStr)) {
+                    // use original highlighter
+                    q.setParam("hl.useFastVectorHighlighter", "off");
+                    q.setParam("hl.simple.pre", HIGHLIGHT_PRE);
+                    q.setParam("hl.simple.post", HIGHLIGHT_POST);
+                } else {
+                    q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+                    q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+                    q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+                    q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+                }
 
                 //docs says makes sense for the original Highlighter only, but not really
                 q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
@@ -599,4 +606,37 @@ class HighlightedText implements IndexedText {
         return buf.toString();
     }
 
+    /**
+     * Return true if we should use original highlighter instead of FastVectorHighlighter.
+     *
+     * In the case Japanese text and phrase query, FastVectorHighlighter does not work well.
+     *
+     * Note about highlighters:
+     *   If the query is "雨が降る" (phrase query), Solr divides it into 雨 and 降る. が is a stop word here.
+     *   It seems that FastVector highlighter does not produce any snippet when there is a stop word between terms.
+     *   On the other hand, original highlighter produces multiple matches, for example:
+     *   > <em>雨</em>が<em>降っ</em>ています
+     *   Unified highlighter (from Solr 6.4) handles the case as expected:
+     *   > <em>雨が降っ</em>ています。
+     */
+    private boolean shouldUseOriginalHighlighter(String contentID) throws NoOpenCoreException, KeywordSearchModuleException {
+        final SolrQuery q = new SolrQuery();
+        q.setQuery("*:*");
+        q.addFilterQuery(Server.Schema.ID.toString() + ":" + contentID);
+        q.setFields(Server.Schema.LANGUAGE.toString());
+
+        QueryResponse response = solrServer.query(q, METHOD.POST);
+        SolrDocumentList solrDocuments = response.getResults();
+
+        if (!solrDocuments.isEmpty()) {
+            SolrDocument solrDocument = solrDocuments.get(0);
+            if (solrDocument != null) {
+                Object languageField = solrDocument.getFieldValue(Server.Schema.LANGUAGE.toString());
+                if (languageField != null) {
+                    return languageField.equals("ja");
+                }
+            }
+        }
+        return false;
+    }
 }

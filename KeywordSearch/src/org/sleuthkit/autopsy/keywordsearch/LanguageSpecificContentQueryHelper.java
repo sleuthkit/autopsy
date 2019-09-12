@@ -44,7 +44,7 @@ class LanguageSpecificContentQueryHelper {
    */
   static String expandQueryString(final String queryStr) {
     List<String> fieldQueries = new ArrayList<>();
-    fieldQueries.add(Server.Schema.TEXT.toString() + ":" + KeywordSearchUtil.quoteQuery(queryStr));
+    fieldQueries.add(Server.Schema.TEXT.toString() + ":" + queryStr);
     fieldQueries.addAll(LANGUAGE_SPECIFIC_CONTENT_FIELDS.stream().map(field -> field.toString() + ":" + queryStr).collect(Collectors.toList()));
     return String.join(" OR ", fieldQueries);
   }
@@ -129,7 +129,8 @@ class LanguageSpecificContentQueryHelper {
 
     final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentID);
     final String highlightQuery = keywords.stream()
-        .map(s -> LanguageSpecificContentQueryHelper.expandQueryString(KeywordSearchUtil.escapeLuceneQuery(s)))
+        .map(s -> LanguageSpecificContentQueryHelper.expandQueryString(
+            KeywordSearchUtil.quoteQuery(KeywordSearchUtil.escapeLuceneQuery(s))))
         .collect(Collectors.joining(" "));
 
     q.addFilterQuery(filterQuery);

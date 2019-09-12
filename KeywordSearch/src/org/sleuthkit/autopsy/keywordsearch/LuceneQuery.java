@@ -301,7 +301,7 @@ class LuceneQuery implements KeywordSearchQuery {
             queryStr = field + ":" + queryStr;
             q.setQuery(queryStr);
         } else if (2.2 <= indexSchemaVersion && originalKeyword.searchTermIsLiteral()) {
-            q.setQuery(LanguageSpecificContentQueryHelper.expandQueryString(keywordStringEscaped));
+            q.setQuery(LanguageSpecificContentQueryHelper.expandQueryString(queryStr));
         } else {
             q.setQuery(queryStr);
         }
