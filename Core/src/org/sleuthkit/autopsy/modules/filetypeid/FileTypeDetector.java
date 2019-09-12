@@ -258,8 +258,8 @@ public class FileTypeDetector {
                      * encoding with Decodetect.
                      */
                     if (file.getNameExtension().equals("txt")) {
-                        Charset detectedCharset = TextExtractor.getDecodetectCharset(file);
-                        if (detectedCharset != null) {
+                        Charset detectedCharset = TextExtractor.getEncoding(file);
+                        if (detectedCharset != TextExtractor.UNKNOWN_CHARSET) {
                             mimeType = MimeTypes.PLAIN_TEXT;
                         }
                     }

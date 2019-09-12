@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,22 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
 public interface TextExtractor {
+    public static Charset UNKNOWN_CHARSET = new Charset("unknown", null) {
+        @Override
+        public boolean contains(Charset cs) {
+            return false;
+        }
+
+        @Override
+        public CharsetDecoder newDecoder() {
+            return null;
+        }
+
+        @Override
+        public CharsetEncoder newEncoder() {
+            return null;
+        }
+    };
 
     /**
      * Determines if this extractor supports the given Content and
@@ -100,9 +118,9 @@ public interface TextExtractor {
         }
     }
 
-    static Charset getDecodetectCharset(Content content) {
+    static Charset getEncoding(Content content) {
         InputStream stream = new BufferedInputStream(new ReadContentInputStream(content));
-        Charset detectedCharset = null;
+        Charset detectedCharset = UNKNOWN_CHARSET;
 
         try {
             int maxBytes = 100000;

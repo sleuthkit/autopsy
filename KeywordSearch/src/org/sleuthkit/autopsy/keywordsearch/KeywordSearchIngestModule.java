@@ -628,7 +628,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             boolean wasTextAdded = false;
 
-            Charset decodetectCharset = null;
             //extract text with one of the extractors, divide into chunks and index with Solr
             try {
                 //logger.log(Level.INFO, "indexing: " + aFile.getName());
@@ -639,10 +638,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     extractStringsAndIndex(aFile);
                     return;
                 }
-                decodetectCharset = TextExtractor.getDecodetectCharset(aFile);
-                if (fileType.equals(MimeTypes.PLAIN_TEXT) && decodetectCharset != null) {
-                    indexTextFile(aFile, decodetectCharset);
-                    return;
+                if (fileType.equals(MimeTypes.PLAIN_TEXT)) {
+                    Charset decodetectCharset = TextExtractor.getEncoding(aFile);
+                    if (decodetectCharset != null) {
+                        indexTextFile(aFile, decodetectCharset);
+                        return;
+                    }
                 }
                 if (!extractTextAndIndex(aFile)) {
                     // Text extractor not found for file. Extract string only.
@@ -665,6 +666,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt") && !(aFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)))) {
                 //Carved Files should be the only type of unallocated files capable of a txt extension and 
                 //should be ignored by the TextFileExtractor because they may contain more than one text encoding
+                Charset decodetectCharset = TextExtractor.getEncoding(aFile);
                 wasTextAdded = indexTextFile(aFile, decodetectCharset);
             }
 
@@ -674,10 +676,17 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
         }
 
-        private boolean indexTextFile(AbstractFile aFile, Charset detectedCharset) {
+        /**
+         * Adds the text file to the index given an encoding.
+         * Returns true if indexing was successful and false otherwise.
+         *
+         * @param aFile Text file to analyze
+         * @param detectedCharset the encoding of the file
+         */
+        private boolean indexTextFile(AbstractFile aFile, Charset encoding) {
             try {
-                TextFileExtractor textFileExtractor = new TextFileExtractor(detectedCharset);
-                Reader textReader = textFileExtractor.getReader(aFile);
+                TextFileExtractor textFileExtractor = new TextFileExtractor();
+                Reader textReader = textFileExtractor.getReader(aFile, encoding);
                 if (textReader == null) {
                     logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
                 } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
@@ -685,7 +694,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     return true;
                 }
             } catch (IngesterException ex) {
-                logger.log(Level.WARNING, "Unable to index as unicode", ex);
+                logger.log(Level.WARNING, "Unable to index as " + encoding.displayName(), ex);
             } catch (TextFileExtractorException ex) {
                 logger.log(Level.INFO, "Could not extract text with TextFileExtractor", ex);
             }
