@@ -536,9 +536,6 @@ class PortableCaseReportModule implements ReportModule {
             Content content = tag.getContent();
             if (content instanceof AbstractFile) {
                 
-                // Get the image tag data associated with this tag (empty string if there is none)
-                String appData = getImageTagDataForContentTag(tag);
-                
                 long newFileId = copyContentToPortableCase(content, progressPanel);
                 
                 // Tag the file
@@ -546,6 +543,10 @@ class PortableCaseReportModule implements ReportModule {
                     throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName()); // NON-NLS
                 }
                 ContentTag newContentTag = portableSkCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
+
+                // Get the image tag data associated with this tag (empty string if there is none)
+                // and save it if present
+                String appData = getImageTagDataForContentTag(tag);
                 if (! appData.isEmpty()) {
                     addImageTagToPortableCase(newContentTag, appData);
                 }
