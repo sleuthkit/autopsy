@@ -116,50 +116,53 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
             return;
         }
 
-        //Convert allDocs to the format that OpenNLP needs.
-        ObjectStream<DocumentSample> sampleStream;
-        try {
-            sampleStream = convertTrainingData(allDocs, notableObjectIDs, progressPanel);
-        } catch (TskCoreException ex) {
-            //prograssPanel was updated in convertTrainingData, so no need
-            //to do it here.
-            LOGGER.log(Level.SEVERE, "Exception while converting training data", ex);
-            new File(baseReportDir).delete();
-            return;
-        }
+        int BATCH_SIZE = 1000;
+        while(!allDocs.isEmpty()) {
+            //Convert allDocs to the format that OpenNLP needs.
+            ObjectStream<DocumentSample> sampleStream;
+            
+            //TODO: Delete this
+            System.out.println("********** allDocs.size()\t" + allDocs.size() + "**********");
+            
+            if (allDocs.size() > BATCH_SIZE) {
+                sampleStream = convertTrainingData(allDocs.subList(0, BATCH_SIZE), notableObjectIDs, progressPanel);
+                allDocs = allDocs.subList(BATCH_SIZE, allDocs.size());
+            } else {
+                sampleStream = convertTrainingData(allDocs, notableObjectIDs, progressPanel);
+                allDocs = new ArrayList<>();
+            }
+            
+            //Train the model
+            progressPanel.setIndeterminate(true);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.training.text"));
+            DoccatModel model;
+            try {
+                model = train(progressPanel, TextClassifierUtils.MODEL_PATH, sampleStream);
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "IOException during training", ex);
+                progressPanel.complete(ReportStatus.ERROR);
+                progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.trainIOException.text"));
+                new File(baseReportDir).delete();
+                return;
+            }
 
-        //Train the model
-        progressPanel.setIndeterminate(true);
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.training.text"));
-        DoccatModel model;
-        try {
-            model = train(progressPanel, TextClassifierUtils.MODEL_PATH, sampleStream);
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "IOException during training", ex);
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.trainIOException.text"));
-            new File(baseReportDir).delete();
-            return;
-        }
-        //If there was an uncaught training error, stop here.
-        if (model == null) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.noModel.text"));
-            new File(baseReportDir).delete();
-            return;
-        }
+            //If there was an uncaught training error
+            if (model == null) {
+                continue;
+            }
 
-        //Write the model to disk
-        progressPanel.setIndeterminate(true);
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.writingModel.text") + TextClassifierUtils.MODEL_PATH);
-        try {
-            TextClassifierUtils.writeModel((NaiveBayesModel) model.getMaxentModel());
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Cannot save model.", ex);
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.cannotSave.text") + TextClassifierUtils.MODEL_PATH);
-            new File(baseReportDir).delete();
-            return;
+            //Write the model to disk
+            progressPanel.setIndeterminate(true);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.writingModel.text") + TextClassifierUtils.MODEL_PATH);
+            try {
+                TextClassifierUtils.writeModel((NaiveBayesModel) model.getMaxentModel());
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Cannot save model.", ex);
+                progressPanel.complete(ReportStatus.ERROR);
+                progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.cannotSave.text") + TextClassifierUtils.MODEL_PATH);
+                new File(baseReportDir).delete();
+                return;
+            }
         }
         progressPanel.complete(ReportStatus.COMPLETE);
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.completeModelLocation.text") + TextClassifierUtils.MODEL_PATH);
@@ -200,7 +203,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
     /**
      * Converts all documents to a format OpenNLP can use.
      *
-     * @param allDocs
+     * @param documents
      * @param notableObjectIDs
      * @param progressPanel
      * @return training data usable by OpenNLP
@@ -210,17 +213,17 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         "TextClassifierTrainerReportModule.converting.text=Converting training documents",
         "TextClassifierTrainerReportModule.needNotable.text=Training set must contain at least one notable document",
         "TextClassifierTrainerReportModule.needNonnotable.text=Training set must contain at least one nonnotable document",})
-    private ObjectStream<DocumentSample> convertTrainingData(List<AbstractFile> allDocs, Set<Long> notableObjectIDs, ReportProgressPanel progressPanel) throws TskCoreException {
+    private ObjectStream<DocumentSample> convertTrainingData(List<AbstractFile> documents, Set<Long> notableObjectIDs, ReportProgressPanel progressPanel) {
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.converting.text"));
-        progressPanel.setMaximumProgress(allDocs.size());
+        progressPanel.setMaximumProgress(documents.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
         
         docSamples.add(new DocumentSample(TextClassifierUtils.NOTABLE_LABEL, new String[0]));
         docSamples.add(new DocumentSample(TextClassifierUtils.NONNOTABLE_LABEL, new String[0]));
         
-        for (AbstractFile doc : allDocs) {
+        for (AbstractFile doc : documents) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
             } else {
