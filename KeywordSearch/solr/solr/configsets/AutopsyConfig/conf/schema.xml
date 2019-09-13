@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="Autopsy Keyword Search" version="2.1">
+<schema name="Autopsy Keyword Search" version="2.2">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.4" is Solr's version number for the schema syntax and semantics.  It should
@@ -62,6 +62,7 @@
        2.0 added chunk_size field
        2.1 to facilitate case insensitive regex search,no longer copying content into content_str.
            content_str will be populated with lowercase content by Autopsy.
+       2.2 added text_ja type, content_ja and language fields to support Japanese text search
      -->
 
   <types>
