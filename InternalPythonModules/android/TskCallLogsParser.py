@@ -36,7 +36,7 @@ class TskCallLogsParser(ResultSetIterator):
         super(TskCallLogsParser, self).__init__(result_set)
         self._DEFAULT_STRING = ""
         self._DEFAULT_DIRECTION = AppDBParserHelper.CommunicationDirection.UNKNOWN
-        self._DEFAULT_ADDRESS = Account.Address("","")
+        self._DEFAULT_ADDRESS = None 
         self._DEFAULT_CALL_TYPE = AppDBParserHelper.CallMediaType.UNKNOWN
 
         self.INCOMING_CALL = AppDBParserHelper.CommunicationDirection.INCOMING

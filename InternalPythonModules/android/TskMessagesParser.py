@@ -36,7 +36,7 @@ class TskMessagesParser(ResultSetIterator):
         self._DEFAULT_TEXT = ""
         self._DEFAULT_LONG = -1L
         self._DEFAULT_MSG_READ_STATUS = AppDBParserHelper.MessageReadStatusEnum.UNKNOWN
-        self._DEFAULT_ACCOUNT_ADDRESS = Account.Address("","")
+        self._DEFAULT_ACCOUNT_ADDRESS = None 
         self._DEFAULT_COMMUNICATION_DIRECTION = AppDBParserHelper.CommunicationDirection.UNKNOWN
 
         self.INCOMING = AppDBParserHelper.CommunicationDirection.INCOMING
