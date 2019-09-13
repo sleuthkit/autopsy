@@ -30,10 +30,9 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
-import opennlp.tools.doccat.DoccatFactory;
-import opennlp.tools.doccat.DoccatModel;
-import opennlp.tools.doccat.DocumentCategorizerME;
+import opennlp.tools.ml.model.Context;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
@@ -184,23 +183,22 @@ class TextClassifierUtils {
     }
 
     /**
-     * Loads a Naive Bayes categorizer from disk.
+     * Loads a Naive Bayes model from disk.
      *
-     * @return the categorizer
+     * @return the model
      * @throws IOException if the model cannot be found on disk, or if the file
      * does not seem to be a model file
      */
-    static DocumentCategorizerME loadCategorizer() throws IOException {
+    static NaiveBayesModel loadModel() throws IOException {
+        
         ensureTextClassifierFolderExists();
-        BufferedReader br = new BufferedReader(new InputStreamReader(
+        try (        BufferedReader br = new BufferedReader(new InputStreamReader(
                 new FileInputStream(MODEL_PATH),
-                Charset.forName("UTF-8").newDecoder()));
-        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(br);
-
-        reader.checkModelType();
-        NaiveBayesModel model = (NaiveBayesModel) reader.constructModel();
-        DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory());
-        return new DocumentCategorizerME(doccatModel);
+                Charset.forName("UTF-8").newDecoder()))) {
+            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(br);
+            reader.checkModelType();
+            return (NaiveBayesModel) reader.constructModel();
+        }
     }
 
     /**
@@ -220,5 +218,30 @@ class TextClassifierUtils {
             //Write to file
             modelWriter.persist();
         }
+    }
+
+    static Map<String, Double> countTokens(NaiveBayesModel model) {
+        Object[] data = model.getDataStructures();
+        Map<String, Context> pmap = (Map<String, Context>) data[1];
+        String[] outcomeNames = (String[]) data[2];
+
+        //Initialize counts to 0
+        Map<String, Double> categoryToTokenCount = new HashMap<>();
+        for (String outcomeName : outcomeNames) {
+            categoryToTokenCount.put(outcomeName, 0.0);
+        }
+
+        //Count how many tokens are in the training data for each category.
+        for (String pred : pmap.keySet()) {
+            Context context = pmap.get(pred);
+            int outcomeIndex = 0;
+            for (String outcomeName : outcomeNames) {
+                double oldValue = categoryToTokenCount.get(outcomeName);
+                double toAdd = context.getParameters()[outcomeIndex];
+                categoryToTokenCount.put(outcomeName, oldValue + toAdd);
+                outcomeIndex++;
+            }
+        }
+        return categoryToTokenCount;
     }
 }
