@@ -25,7 +25,6 @@ import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -43,23 +42,26 @@ import org.sleuthkit.datamodel.TskFileRange;
  *
  */
 @Messages({
-    "AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type"
+    "AddMultipleImagesTask.fsTypeUnknownErr=Cannot determine file system type"
 })
-class AddMultipleImageTask implements Runnable {
+class AddMultipleImagesTask implements Runnable {
 
-    private static final Logger LOGGER = Logger.getLogger(AddMultipleImageTask.class.getName());
-    public static final String TSK_FS_TYPE_UNKNOWN_ERR_MSG = Bundle.AddMultipleImageTask_fsTypeUnknownErr();
+    private static final Logger LOGGER = Logger.getLogger(AddMultipleImagesTask.class.getName());
+    public static final String TSK_FS_TYPE_UNKNOWN_ERR_MSG = Bundle.AddMultipleImagesTask_fsTypeUnknownErr();
     private static final long TWO_GB = 2000000000L;
     private final String deviceId;
     private final List<String> imageFilePaths;
     private final String timeZone;
     private final long chunkSize = TWO_GB;
     private final DataSourceProcessorProgressMonitor progressMonitor;
-    private final DataSourceProcessorCallback callback;
     private final Case currentCase;
     private boolean criticalErrorOccurred;
     private SleuthkitJNI.CaseDbHandle.AddImageProcess addImageProcess = null;
-    
+    private List<String> errorMessages = new ArrayList<>();
+    private DataSourceProcessorResult result;
+    private List<Content> newDataSources = new ArrayList<>();
+    private List<Content> emptyDataSources = new ArrayList<>();
+
     /*
      * The cancellation requested flag and SleuthKit add image process are
      * guarded by a lock to synchronize cancelling the process (setting the flag
@@ -84,20 +86,18 @@ class AddMultipleImageTask implements Runnable {
      *                        java.util.TimeZone.getID.
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
-     * @param callback        Callback to call when processing is done.
      *
      * @throws NoCurrentCaseException The exception if there is no open case.
      */
     @Messages({
-        "# {0} - file", "AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.",
+        "# {0} - file", "AddMultipleImagesTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.",
         "# {0} - deviceId", "# {1} - exceptionMessage",
-        "AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}",})
-    AddMultipleImageTask(String deviceId, List<String> imageFilePaths, String timeZone,
-            DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) throws NoCurrentCaseException {
+        "AddMultipleImagesTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}",})
+    AddMultipleImagesTask(String deviceId, List<String> imageFilePaths, String timeZone,
+            DataSourceProcessorProgressMonitor progressMonitor) throws NoCurrentCaseException {
         this.deviceId = deviceId;
         this.imageFilePaths = imageFilePaths;
         this.timeZone = timeZone;
-        this.callback = callback;
         this.progressMonitor = progressMonitor;
         currentCase = Case.getCurrentCaseThrows();
         this.criticalErrorOccurred = false;
@@ -105,13 +105,13 @@ class AddMultipleImageTask implements Runnable {
     }
 
     @Messages({
-        "AddMultipleImageTask.cancelled=Cancellation: Add image process reverted",
+        "AddMultipleImagesTask.cancelled=Cancellation: Add image process reverted",
     })
     @Override
     public void run() {
-        List<String> errorMessages = new ArrayList<>();
-        List<Content> newDataSources = new ArrayList<>();
-        List<Content> emptyDataSources = new ArrayList<>();
+        errorMessages = new ArrayList<>();
+        newDataSources = new ArrayList<>();
+        emptyDataSources = new ArrayList<>();
         
         /*
          * Try to add the input image files as images.
@@ -132,8 +132,9 @@ class AddMultipleImageTask implements Runnable {
                 commitOrRevertAddImageProcess(imageFilePath, errorMessages, newDataSources);
                 synchronized (tskAddImageProcessLock) {
                     if (tskAddImageProcessStopped) {
-                        errorMessages.add(Bundle.AddMultipleImageTask_cancelled());
-                        callback.done(DataSourceProcessorResult.CRITICAL_ERRORS, errorMessages, emptyDataSources);
+                        errorMessages.add(Bundle.AddMultipleImagesTask_cancelled());
+                        result = DataSourceProcessorResult.CRITICAL_ERRORS;
+                        newDataSources = emptyDataSources;
                         return;
                     }
                 }
@@ -151,7 +152,7 @@ class AddMultipleImageTask implements Runnable {
             SleuthkitCase caseDatabase;
             caseDatabase = currentCase.getSleuthkitCase();
             try {
-                progressMonitor.setProgressText(Bundle.AddMultipleImageTask_addingFileAsLogicalFile(corruptedImageFilePaths.toString()));
+                progressMonitor.setProgressText(Bundle.AddMultipleImagesTask_addingFileAsLogicalFile(corruptedImageFilePaths.toString()));
 
                 caseDatabase.acquireSingleUserCaseWriteLock();
 
@@ -175,7 +176,7 @@ class AddMultipleImageTask implements Runnable {
 
                 caseDatabase.addLayoutFiles(dataSource, fileRanges);
             } catch (TskCoreException ex) {
-                errorMessages.add(Bundle.AddMultipleImageTask_errorAddingImgWithoutFileSystem(deviceId, ex.getLocalizedMessage()));
+                errorMessages.add(Bundle.AddMultipleImagesTask_errorAddingImgWithoutFileSystem(deviceId, ex.getLocalizedMessage()));
                 criticalErrorOccurred = true;
             } finally {
                 caseDatabase.releaseSingleUserCaseWriteLock();
@@ -189,10 +190,6 @@ class AddMultipleImageTask implements Runnable {
         progressMonitor.setProgress(0);
         progressMonitor.setProgress(100);
 
-        /*
-         * Pass the results back via the callback.
-         */
-        DataSourceProcessorCallback.DataSourceProcessorResult result;
         if (criticalErrorOccurred) {
             result = DataSourceProcessorResult.CRITICAL_ERRORS;
         } else if (!errorMessages.isEmpty()) {
@@ -200,7 +197,6 @@ class AddMultipleImageTask implements Runnable {
         } else {
             result = DataSourceProcessorResult.NO_ERRORS;
         }
-        callback.done(result, errorMessages, newDataSources);
     }
 
     /**
@@ -208,7 +204,7 @@ class AddMultipleImageTask implements Runnable {
      * partial processing of the input.
      */
     void cancelTask() {
-        LOGGER.log(Level.WARNING, "AddMultipleImageTask cancelled, processing may be incomplete"); // NON-NLS
+        LOGGER.log(Level.WARNING, "AddMultipleImagesTask cancelled, processing may be incomplete"); // NON-NLS
         synchronized (tskAddImageProcessLock) {
             tskAddImageProcessStopped = true;
             if (addImageProcess != null) {
@@ -239,19 +235,19 @@ class AddMultipleImageTask implements Runnable {
      *                                 for later addition as an unallocated space file.
      * @param errorMessages            If there are any error messages, the
      *                                 error messages are added to this list for
-     *                                 eventual return to the caller via the
-     *                                 callback.
+     *                                 eventual return to the caller via the getter
+     *                                 method.
      */
     @Messages({
-        "# {0} - imageFilePath", "AddMultipleImageTask.adding=Adding: {0}",
-        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImageTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}",
-        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImageTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}",
-        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}",})
+        "# {0} - imageFilePath", "AddMultipleImagesTask.adding=Adding: {0}",
+        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImagesTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}",
+        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImagesTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}",
+        "# {0} - imageFilePath", "# {1} - deviceId", "# {2} - exceptionMessage", "AddMultipleImagesTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}",})
     private void run(String imageFilePath, List<String> corruptedImageFilePaths, List<String> errorMessages) {
         /*
          * Try to add the image to the case database as a data source.
          */
-        progressMonitor.setProgressText(Bundle.AddMultipleImageTask_adding(imageFilePath));
+        progressMonitor.setProgressText(Bundle.AddMultipleImagesTask_adding(imageFilePath));
         try {
             addImageProcess.run(deviceId, new String[]{imageFilePath});
         } catch (TskCoreException ex) {
@@ -264,11 +260,11 @@ class AddMultipleImageTask implements Runnable {
                  */
                 corruptedImageFilePaths.add(imageFilePath);
             } else {
-                errorMessages.add(Bundle.AddMultipleImageTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
+                errorMessages.add(Bundle.AddMultipleImagesTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
                 criticalErrorOccurred = true;
             }
         } catch (TskDataException ex) {
-            errorMessages.add(Bundle.AddMultipleImageTask_nonCriticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
+            errorMessages.add(Bundle.AddMultipleImagesTask_nonCriticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
         }
     }
     
@@ -279,10 +275,10 @@ class AddMultipleImageTask implements Runnable {
      *
      * @param imageFilePath  The image file path.
      * @param errorMessages  Error messages, if any, are added to this list for
-     *                       eventual return via the callback.
+     *                       eventual return via the getter method.
      * @param newDataSources If the new image is successfully committed, it is
      *                       added to this list for eventual return via the
-     *                       callback.
+     *                       getter method.
      */
     private void commitOrRevertAddImageProcess(String imageFilePath, List<String> errorMessages, List<Content> newDataSources) {
         synchronized (tskAddImageProcessLock) {
@@ -290,7 +286,7 @@ class AddMultipleImageTask implements Runnable {
                 try {
                     addImageProcess.revert();
                 } catch (TskCoreException ex) {
-                    errorMessages.add(Bundle.AddMultipleImageTask_criticalErrorReverting(imageFilePath, deviceId, ex.getLocalizedMessage()));
+                    errorMessages.add(Bundle.AddMultipleImagesTask_criticalErrorReverting(imageFilePath, deviceId, ex.getLocalizedMessage()));
                     criticalErrorOccurred = true;
                 }
                 return;
@@ -299,7 +295,7 @@ class AddMultipleImageTask implements Runnable {
             /*
                 * Try to commit the results of the add image process, retrieve the new
                 * image from the case database, and add it to the list of new data
-                * sources to be returned via the callback.
+                * sources to be returned via the getter method.
              */
             try {
                 long imageId = addImageProcess.commit();
@@ -312,7 +308,7 @@ class AddMultipleImageTask implements Runnable {
                  */
                 String verificationError = dataSource.verifyImageSize();
                 if (!verificationError.isEmpty()) {
-                    errorMessages.add(Bundle.AddMultipleImageTask_nonCriticalErrorAdding(imageFilePath, deviceId, verificationError));
+                    errorMessages.add(Bundle.AddMultipleImagesTask_nonCriticalErrorAdding(imageFilePath, deviceId, verificationError));
                 }
             } catch (TskCoreException ex) {
                 /*
@@ -320,9 +316,33 @@ class AddMultipleImageTask implements Runnable {
                      * for the newly added image failed. Either way, this is a critical
                      * error.
                  */
-                errorMessages.add(Bundle.AddMultipleImageTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
+                errorMessages.add(Bundle.AddMultipleImagesTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
                 criticalErrorOccurred = true;
             }
         }
     }
+
+    /**
+     * Return the error messages from the AddMultipleImagesTask run
+     * @return List of error message
+     */
+    public List<String> getErrorMessages() {
+        return errorMessages;
+    }
+
+    /**
+     * Return the result the AddMultipleImagesTask run
+     * @return The result of the run
+     */
+    public DataSourceProcessorResult getResult() {
+        return result;
+    }
+
+    /**
+     * Return the new data sources the AddMultipleImagesTask run
+     * @return The new data sources of the run
+     */
+    public List<Content> getNewDataSources() {
+        return newDataSources;
+    }    
 }

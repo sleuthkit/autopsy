@@ -229,7 +229,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     @Override
     public void cancel() {
         if (addLogicalImageTask != null) {
-            thread.interrupt();
             addLogicalImageTask.cancelTask();
         }
     }

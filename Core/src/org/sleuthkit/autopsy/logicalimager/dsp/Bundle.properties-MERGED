@@ -2,6 +2,7 @@
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
 
+AddLogicalImageTask.addImageCancelled=Add image cancelled
 # {0} - file number
 # {1} - total files
 AddLogicalImageTask.addingExtractedFile=Adding extracted files ({0}/{1})
@@ -46,26 +47,26 @@ AddLogicalImageTask.noCurrentCase=No current case
 # {2} - expected length
 AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}
 # {0} - imageFilePath
-AddMultipleImageTask.adding=Adding: {0}
+AddMultipleImagesTask.adding=Adding: {0}
 # {0} - file
-AddMultipleImageTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.
-AddMultipleImageTask.cancelled=Cancellation: Add image process reverted
+AddMultipleImagesTask.addingFileAsLogicalFile=Adding: {0} as an unallocated space file.
+AddMultipleImagesTask.cancelled=Cancellation: Add image process reverted
 # {0} - imageFilePath
 # {1} - deviceId
 # {2} - exceptionMessage
-AddMultipleImageTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}
+AddMultipleImagesTask.criticalErrorAdding=Critical error adding {0} for device {1}: {2}
 # {0} - imageFilePath
 # {1} - deviceId
 # {2} - exceptionMessage
-AddMultipleImageTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}
+AddMultipleImagesTask.criticalErrorReverting=Critical error reverting add image process for {0} for device {1}: {2}
 # {0} - deviceId
 # {1} - exceptionMessage
-AddMultipleImageTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}
-AddMultipleImageTask.fsTypeUnknownErr=Cannot determine file system type
+AddMultipleImagesTask.errorAddingImgWithoutFileSystem=Error adding images without file systems for device {0}: {1}
+AddMultipleImagesTask.fsTypeUnknownErr=Cannot determine file system type
 # {0} - imageFilePath
 # {1} - deviceId
 # {2} - exceptionMessage
-AddMultipleImageTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}
+AddMultipleImagesTask.nonCriticalErrorAdding=Non-critical error adding {0} for device {1}: {2}
 LogicalImagerDSProcessor.dataSourceType=Autopsy Logical Imager Results
 LogicalImagerDSProcessor.destinationDirectoryConfirmation=Destination directory confirmation
 # {0} - directory
