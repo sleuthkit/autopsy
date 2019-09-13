@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.experimental.textclassifier;
 
 import java.nio.charset.Charset;
@@ -26,20 +25,22 @@ import java.text.Normalizer;
 /**
  * Standardizes Unicode strings and cleans up invalid Unicode.
  */
-public class UnicodeSanitizer {
+final class UnicodeSanitizer {
+
     private static final Charset UTF_16 = StandardCharsets.UTF_16;
 
     /**
-     * This method standardizes Unicode strings.
-     * 1. Combining characters are merged together according to
-     * {@line Normalizer.Form.NFKC}.
-     * 2. Invalid UTF-16 characters character sequences are replaced with
-     * U+FFFD / �.
-     * 3. Characters that are either invalid UTF-8 are replaced with caret "^".
-     * Some valid characters outside the multilingual plane may also be
-     * replaced with "^"
+     * This method standardizes Unicode strings. 1. Combining characters are
+     * merged together according to
+     * {
+     *
+     * @line Normalizer.Form.NFKC}. 2. Invalid UTF-16 characters character
+     * sequences are replaced with U+FFFD / �. 3. Characters that are either
+     * invalid UTF-8 are replaced with caret "^". Some valid characters outside
+     * the multilingual plane may also be replaced with "^"
      *
      * @param s The string to cleanup.
+     *
      * @return A string with all the same content as s, but where code points
      *         are normalized and cleaned up.
      */
@@ -58,8 +59,10 @@ public class UnicodeSanitizer {
      *         code points have been replaced.
      */
     private static StringBuilder replaceInvalidUTF16(String s) {
-        /* encode the string to UTF-16 which does the replacement, see
-         * Charset.encode(), then decode back to a StringBuilder. */
+        /*
+         * encode the string to UTF-16 which does the replacement, see
+         * Charset.encode(), then decode back to a StringBuilder.
+         */
         return new StringBuilder(UTF_16.decode(UTF_16.encode(s)));
     }
 
@@ -98,5 +101,12 @@ public class UnicodeSanitizer {
      */
     private static boolean isValidSolrUTF8(char ch) {
         return ((ch <= 0xFDD0 || ch >= 0xFDEF) && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD) && (ch != 0xFFFF) && (ch != 0xFFFE));
+    }
+
+    /**
+     * Private constructor for Unicode Sanitizer utility class.
+     */
+    private UnicodeSanitizer() {
+        //Constructor intentionally left blank
     }
 }
