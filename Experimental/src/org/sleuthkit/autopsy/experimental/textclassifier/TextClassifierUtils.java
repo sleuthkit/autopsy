@@ -105,6 +105,7 @@ class TextClassifierUtils {
      * language text.
      *
      * @param abstractFile A file
+     *
      * @return true if this file's MIME type is supported.
      */
     boolean isSupported(AbstractFile abstractFile) {
@@ -121,6 +122,7 @@ class TextClassifierUtils {
      * Divides a file into tokens
      *
      * @param a file
+     *
      * @return An array of all tokens in the file
      */
     static String[] extractTokens(AbstractFile file) {
@@ -186,13 +188,13 @@ class TextClassifierUtils {
      * Loads a Naive Bayes model from disk.
      *
      * @return the model
+     *
      * @throws IOException if the model cannot be found on disk, or if the file
-     * does not seem to be a model file
+     *                     does not seem to be a model file
      */
     static NaiveBayesModel loadModel() throws IOException {
-        
         ensureTextClassifierFolderExists();
-        try (        BufferedReader br = new BufferedReader(new InputStreamReader(
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 new FileInputStream(MODEL_PATH),
                 Charset.forName("UTF-8").newDecoder()))) {
             NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(br);
@@ -205,8 +207,9 @@ class TextClassifierUtils {
      * Writes a naive Bayes classifier model to disk.
      *
      * @param model the model
+     *
      * @throws IOException If the model file cannot be written. Large files can
-     * cause this.
+     *                     cause this.
      */
     static void writeModel(NaiveBayesModel model) throws IOException {
         ensureTextClassifierFolderExists();
