@@ -34,11 +34,6 @@ import java.util.Optional;
 
 class LanguageDetector {
 
-  public enum Language {
-    JAPANESE,
-    ENGLISH,
-  }
-
   private List<LanguageProfile> languageProfiles;
 
   LanguageDetector() {
@@ -60,14 +55,6 @@ class LanguageDetector {
     TextObjectFactory textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
 
     TextObject textObject = textObjectFactory.forText(text);
-    return languageDetector.detect(textObject).transform(Optional::of).or(Optional.empty()).map(LdLocale::getLanguage).flatMap(LanguageDetector::toLanguage);
-  }
-
-  private static Optional<Language> toLanguage(String s) {
-    switch (s) {
-      case "ja": return Optional.of(Language.JAPANESE);
-      case "en": return Optional.of(Language.ENGLISH);
-      default: return Optional.empty();
-    }
+    return languageDetector.detect(textObject).transform(Optional::of).or(Optional.empty()).map(LdLocale::getLanguage).flatMap(Language::fromValue);
   }
 }

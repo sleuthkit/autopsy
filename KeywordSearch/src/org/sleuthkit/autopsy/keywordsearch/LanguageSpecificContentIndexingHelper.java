@@ -31,16 +31,12 @@ import java.util.Optional;
 
 class LanguageSpecificContentIndexingHelper {
 
-  enum Language {
-    JAPANESE
-  }
-
   private final LanguageDetector languageDetector = new LanguageDetector();
 
   Optional<Language> detectLanguageIfNeeded(Chunker.Chunk chunk) throws NoOpenCoreException {
     double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
     if (2.2 <= indexSchemaVersion) {
-      return languageDetector.detect(chunk.toString()).flatMap(lang -> Optional.ofNullable(toLanguage(lang)));
+      return languageDetector.detect(chunk.toString());
     } else {
       return Optional.empty();
     }
@@ -55,7 +51,7 @@ class LanguageSpecificContentIndexingHelper {
 
     // index the chunk to a language specific field
     fields.put(Server.Schema.CONTENT_JA.toString(), values);
-    fields.put(Server.Schema.LANGUAGE.toString(), toFieldValue(language));
+    fields.put(Server.Schema.LANGUAGE.toString(), language.getValue());
   }
 
   void indexMiniChunk(Chunker.Chunk chunk, String sourceName, Map<String, Object> fields, String baseChunkID, Language language)
@@ -71,7 +67,7 @@ class LanguageSpecificContentIndexingHelper {
 
       // index the chunk to a language specific field
       updateDoc.addField(Server.Schema.CONTENT_JA.toString(), chunk.toString().substring(chunk.getBaseChunkLength()));
-      updateDoc.addField(Server.Schema.LANGUAGE.toString(), toFieldValue(language));
+      updateDoc.addField(Server.Schema.LANGUAGE.toString(), language.getValue());
 
       TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
 
@@ -81,28 +77,6 @@ class LanguageSpecificContentIndexingHelper {
     } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
       throw new Ingester.IngesterException(
           NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
-    }
-  }
-
-  private static String toFieldValue(Language language) {
-    if (language == null) {
-      return null;
-    }
-    switch (language) {
-      case JAPANESE: return "ja";
-      default:
-        throw new IllegalStateException("Unknown language: " + language);
-    }
-  }
-
-  private Language toLanguage(LanguageDetector.Language language) {
-    if (language == null) {
-      return null;
-    }
-    switch (language) {
-      case JAPANESE: return Language.JAPANESE;
-      default:
-        return null;
     }
   }
 }

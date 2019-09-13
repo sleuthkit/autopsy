@@ -162,7 +162,7 @@ class Ingester {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-                Optional<LanguageSpecificContentIndexingHelper.Language> language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
+                Optional<Language> language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
                 language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                 try {
                     //add the chunk text to Solr index
