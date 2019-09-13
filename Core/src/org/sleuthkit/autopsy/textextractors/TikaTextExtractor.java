@@ -136,6 +136,7 @@ final class TikaTextExtractor implements TextExtractor {
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
                     "application/pdf"); //NON-NLS
 
+    // Used to log to the tika file that is why it uses the java.util.logging.logger class instead of the Autopsy one
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
 

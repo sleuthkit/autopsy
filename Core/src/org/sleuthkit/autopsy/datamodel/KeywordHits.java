@@ -62,7 +62,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class KeywordHits implements AutopsyVisitableItem {
 
     private static final Logger logger = Logger.getLogger(KeywordHits.class.getName());
-
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     @NbBundle.Messages("KeywordHits.kwHits.text=Keyword Hits")
     private static final String KEYWORD_HITS = KeywordHits_kwHits_text();
     @NbBundle.Messages("KeywordHits.simpleLiteralSearch.text=Single Literal Keyword Search")
@@ -155,25 +156,22 @@ public class KeywordHits implements AutopsyVisitableItem {
                 Collections.sort(names, new Comparator<String>() {
 
                     @Override
-                    public int compare(String o1, String o2) {  
+                    public int compare(String o1, String o2) {
                         // ideally, they would not be hard coded, but this module
                         // doesn't know about Keyword Search NBM
                         if (o1.startsWith("Single Literal Keyword Search")) {
                             return -1;
-                        }
-                        else if (o2.startsWith("Single Literal Keyword Search")) {
+                        } else if (o2.startsWith("Single Literal Keyword Search")) {
                             return 1;
-                        }
-                        else if (o1.startsWith("Single Regular Expression Search")) {
+                        } else if (o1.startsWith("Single Regular Expression Search")) {
                             return -1;
-                        }
-                        else if (o2.startsWith("Single Regular Expression Search")) {
+                        } else if (o2.startsWith("Single Regular Expression Search")) {
                             return 1;
                         }
                         return o1.compareTo(o2);
                     }
                 });
-                
+
                 return names;
             }
         }
@@ -501,8 +499,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
             keywordResults.update();
             super.addNotify();
@@ -529,8 +527,9 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     private abstract class KWHitsNodeBase extends DisplayableItemNode implements Observer {
+
         private String displayName;
-        
+
         private KWHitsNodeBase(Children children, Lookup lookup, String displayName) {
             super(children, lookup);
             this.displayName = displayName;

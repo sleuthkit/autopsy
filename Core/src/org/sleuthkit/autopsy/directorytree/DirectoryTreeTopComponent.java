@@ -85,7 +85,6 @@ import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -128,7 +127,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         getTree().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         //Hook into the JTree and pre-expand the Views Node and Results node when a user
         //expands an item in the tree that makes these nodes visible.
-        ((ExpansionBeanTreeView )getTree()).addTreeExpansionListener(new TreeExpansionListener() {
+        ((ExpansionBeanTreeView) getTree()).addTreeExpansionListener(new TreeExpansionListener() {
             @Override
             public void treeExpanded(TreeExpansionEvent event) {
                 //Bail immediately if we are not in the Group By view.
@@ -238,8 +237,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE, Case.Events.DATA_SOURCE_ADDED), this);
         this.em.addPropertyChangeListener(this);
-        IngestManager.getInstance().addIngestJobEventListener(this);
-        IngestManager.getInstance().addIngestModuleEventListener(this);
     }
 
     public void setDirectoryListingActive() {
@@ -799,10 +796,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             } // change in node selection
             else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 respondSelection((Node[]) event.getOldValue(), (Node[]) event.getNewValue());
-            } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                // nothing to do here.
-                // all nodes should be listening for these events and update accordingly.
-            }
+            } 
         }
     }
 

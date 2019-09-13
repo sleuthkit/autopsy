@@ -27,10 +27,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * UI controls for Common Files Search scenario where the user intends to find
@@ -38,6 +39,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
  */
 public final class InterCasePanel extends javax.swing.JPanel {
 
+    private final static Logger logger = Logger.getLogger(InterCasePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final Observable fileTypeFilterObservable;
     static final int NO_CASE_SELECTED = -1;
@@ -121,7 +123,7 @@ public final class InterCasePanel extends javax.swing.JPanel {
                 this.correlationTypeComboBox.addItem(type.getDisplayName());
             }
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error getting correlation types", ex);
         }
         this.correlationTypeComboBox.setSelectedIndex(0);
     }
