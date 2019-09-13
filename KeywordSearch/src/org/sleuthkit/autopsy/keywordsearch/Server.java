@@ -189,6 +189,11 @@ public class Server {
                 return "chunk_size"; //NON-NLS
             }
         },
+        /**
+         * termfreq is a function which returns the number of times the term appears.
+         * This is not an actual field defined in schema.xml, but can be gotten from returned documents
+         * in the same way as fields.
+         */
         TERMFREQ {
             @Override
             public String toString() {
