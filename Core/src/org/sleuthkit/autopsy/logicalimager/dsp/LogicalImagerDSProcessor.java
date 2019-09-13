@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -173,7 +174,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
                     JOptionPane.YES_NO_OPTION);
             if (showConfirmDialog == YES_OPTION) {
                 // Get unique dest directory
-                String uniqueDirectory = imageDirPath.getFileName() + "_" + UUID.randomUUID();
+                String uniqueDirectory = imageDirPath.getFileName() + "_" + TimeStampUtils.createTimeStamp();
                 dest = Paths.get(logicalImagerDir.toString(), uniqueDirectory).toFile();
             } else {
                 String msg = Bundle.LogicalImagerDSProcessor_directoryAlreadyExists(dest.toString());

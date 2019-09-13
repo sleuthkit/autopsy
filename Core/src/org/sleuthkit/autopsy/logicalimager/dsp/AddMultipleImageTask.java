@@ -213,14 +213,15 @@ class AddMultipleImageTask implements Runnable {
             tskAddImageProcessStopped = true;
             if (addImageProcess != null) {
                 try {
+                    /*
+                     * All this does is set a flag that will make the TSK add
+                     * image process exit when the flag is checked between
+                     * processing steps. The state of the flag is not
+                     * accessible, so record it here so that it is known that
+                     * the revert method of the process object needs to be
+                     * called.
+                     */
                     addImageProcess.stop();
-                    addImageProcess.revert();
-                    if (tskAddImageProcessStopped) {
-                        List<String> errorMessages = new ArrayList<>();
-                        List<Content> emptyDataSources = new ArrayList<>();
-                        errorMessages.add(Bundle.AddMultipleImageTask_cancelled());
-                        callback.done(DataSourceProcessorResult.CRITICAL_ERRORS, errorMessages, emptyDataSources);
-                    }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Cancellation: addImagePRocess.stop failed", ex); // NON-NLS
                 }
@@ -295,34 +296,32 @@ class AddMultipleImageTask implements Runnable {
                 return;
             }
         
-            if (!tskAddImageProcessStopped) {
-                /*
-                 * Try to commit the results of the add image process, retrieve the new
-                 * image from the case database, and add it to the list of new data
-                 * sources to be returned via the callback.
-                 */
-                try {
-                    long imageId = addImageProcess.commit();
-                    Image dataSource = currentCase.getSleuthkitCase().getImageById(imageId);
-                    newDataSources.add(dataSource);
+            /*
+                * Try to commit the results of the add image process, retrieve the new
+                * image from the case database, and add it to the list of new data
+                * sources to be returned via the callback.
+             */
+            try {
+                long imageId = addImageProcess.commit();
+                Image dataSource = currentCase.getSleuthkitCase().getImageById(imageId);
+                newDataSources.add(dataSource);
 
-                    /*
+                /*
                      * Verify the size of the new image. Note that it may not be what is
                      * expected, but at least part of it was added to the case.
-                     */
-                    String verificationError = dataSource.verifyImageSize();
-                    if (!verificationError.isEmpty()) {
-                        errorMessages.add(Bundle.AddMultipleImageTask_nonCriticalErrorAdding(imageFilePath, deviceId, verificationError));
-                    }
-                } catch (TskCoreException ex) {
-                    /*
+                 */
+                String verificationError = dataSource.verifyImageSize();
+                if (!verificationError.isEmpty()) {
+                    errorMessages.add(Bundle.AddMultipleImageTask_nonCriticalErrorAdding(imageFilePath, deviceId, verificationError));
+                }
+            } catch (TskCoreException ex) {
+                /*
                      * The add image process commit failed or querying the case database
                      * for the newly added image failed. Either way, this is a critical
                      * error.
-                     */
-                    errorMessages.add(Bundle.AddMultipleImageTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
-                    criticalErrorOccurred = true;
-                }
+                 */
+                errorMessages.add(Bundle.AddMultipleImageTask_criticalErrorAdding(imageFilePath, deviceId, ex.getLocalizedMessage()));
+                criticalErrorOccurred = true;
             }
         }
     }
