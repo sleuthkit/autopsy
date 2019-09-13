@@ -133,9 +133,9 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
 
                     
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for IMO friends", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for IMO friends", ex)
             except TskCoreException as ex:
-                self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding artifacts.", ex)
+                self._logger.log(Level.WARNING, "Failed to create AppDBParserHelper for adding artifacts.", ex)
             finally:
                 friendsDb.close()
                 
