@@ -24,12 +24,7 @@ import opennlp.tools.ml.model.DataIndexer;
 import opennlp.tools.ml.model.MaxentModel;
 import opennlp.tools.ml.model.MutableContext;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
-import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
-import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.util.TrainingParameters;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,12 +75,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
      * @param modelInputPath
      */
     private void uploadModel(String modelInputPath) throws IOException {
-        NaiveBayesModel initialModel;
-        try (FileReader fr = new FileReader(modelInputPath)) {
-            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
-            reader.checkModelType();
-            initialModel = (NaiveBayesModel) reader.constructModel();
-        }
+        NaiveBayesModel initialModel = TextClassifierUtils.loadModel();
 
         Object[] data = initialModel.getDataStructures();
 
@@ -93,7 +83,6 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
         //pmap has the same data as data[0], except it also contains the predicate string.
         Map<String, Context> pmap = (Map<String, Context>) data[1];
         String[] outcomeNames = (String[]) data[2];
-
         this.setMasterOutcomeLabels(Arrays.asList(outcomeNames));
         this.setMasterPredLabels(new ArrayList<>(pmap.keySet()));
         List<MutableContext> paramsList = new ArrayList<>();
@@ -257,7 +246,7 @@ public class IncrementalNaiveBayesTrainer extends AbstractEventTrainer {
     private void setMasterPredLabels(List<String> predicates) {
         this.masterPredLabels = predicates;
 
-        //Set masterPredMap
+        //Set map from term to index value
         masterPredMap = new HashMap<>();
         for (int i = 0; i < predicates.size(); i++) {
             masterPredMap.put(predicates.get(i), i);
