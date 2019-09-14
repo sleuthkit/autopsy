@@ -54,6 +54,7 @@ import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractF
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.RefreshKeysEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.CONTENT_CHANGED;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
@@ -77,6 +78,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(CONTENT_CHANGED);
 
     /**
      * @param abstractFile file to wrap
@@ -89,7 +91,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             // If this is an archive file we will listen for ingest events
             // that will notify us when new content has been identified.
             if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
-                IngestManager.getInstance().addIngestModuleEventListener(weakPcl);
+                IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             }
         }
 
@@ -330,11 +332,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (EamDb.isEnabled()) {
                 properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), VALUE_LOADING, ""));
             }
+            // Get the SCO columns data in a background task
+            backgroundTasksPool.submit(new GetSCOTask(
+                    new WeakReference<>(this), weakPcl));
         }
-
-        // Get the SCO columns data in a background task
-        backgroundTasksPool.submit(new GetSCOTask(
-                new WeakReference<>(this), weakPcl));
 
         properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
         properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));

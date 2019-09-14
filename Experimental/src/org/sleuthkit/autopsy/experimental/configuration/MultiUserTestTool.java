@@ -26,7 +26,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
@@ -68,8 +70,9 @@ class MultiUserTestTool {
     private static final Logger LOGGER = Logger.getLogger(MultiUserTestTool.class.getName());
     private static final String TEST_FILE_NAME = "AutopsyTempFile";
     private static final Object INGEST_LOCK = new Object();
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     static final String MULTI_USER_TEST_SUCCESSFUL = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.Success");
-    
+
     private MultiUserTestTool() {
     }
 
@@ -86,17 +89,17 @@ class MultiUserTestTool {
         "# {0} - serviceName",
         "MultiUserTestTool.serviceDown=Multi User service is down: {0}",
         "# {0} - serviceName",
-        "MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}"        
+        "MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}"
     })
     static String runTest(String rootOutputDirectory) {
-                
+
         // run standard tests for all services. this detects many problems sooner.
         try {
             if (!isServiceUp(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
                 return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName());
             }
         } catch (ServicesMonitor.ServicesMonitorException ex) {
-            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService", 
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
                     ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName() + ". " + ex.getMessage());
         }
 
@@ -105,7 +108,7 @@ class MultiUserTestTool {
                 return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getDisplayName());
             }
         } catch (ServicesMonitor.ServicesMonitorException ex) {
-            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService", 
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
                     ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.getDisplayName() + ". " + ex.getMessage());
         }
 
@@ -114,7 +117,7 @@ class MultiUserTestTool {
                 return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.serviceDown", ServicesMonitor.Service.MESSAGING.getDisplayName());
             }
         } catch (ServicesMonitor.ServicesMonitorException ex) {
-            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService", 
+            return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.unableToCheckService",
                     ServicesMonitor.Service.MESSAGING.getDisplayName() + ". " + ex.getMessage());
         }
 
@@ -225,10 +228,12 @@ class MultiUserTestTool {
     /**
      * Creates a new multi user case.
      *
-     * @param baseCaseName Case name (will get time stamp appended to it)
+     * @param baseCaseName        Case name (will get time stamp appended to it)
      * @param rootOutputDirectory Full path to directory in which the case will
-     * be created
+     *                            be created
+     *
      * @return Case object
+     *
      * @throws CaseActionException
      */
     private static Case createCase(String baseCaseName, String rootOutputDirectory) throws CaseActionException {
@@ -251,16 +256,17 @@ class MultiUserTestTool {
      * @param dataSource The data source.
      *
      * @return Error String if there was an error, empty string if the data
-     * source was added successfully
+     *         source was added successfully
      *
      * @throws InterruptedException if the thread running the job processing
-     * task is interrupted while blocked, i.e., if ingest is shutting down.
+     *                              task is interrupted while blocked, i.e., if
+     *                              ingest is shutting down.
      */
     @NbBundle.Messages({
         "MultiUserTestTool.noContent=Test data source failed to produce content",
         "# {0} - errorMessage",
         "MultiUserTestTool.criticalError=Critical error running data source processor on test data source: {0}"
-    })    
+    })
     private static String runLogicalFilesDSP(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException {
 
         AutoIngestDataSourceProcessor selectedProcessor = new LocalFilesDSProcessor();
@@ -298,23 +304,24 @@ class MultiUserTestTool {
      * @param dataSource The data source to analyze.
      *
      * @return Error String if there was an error, empty string if the data
-     * source was analyzed successfully
+     *         source was analyzed successfully
      *
      * @throws InterruptedException if the thread running the job processing
-     * task is interrupted while blocked, i.e., if auto ingest is shutting down.
+     *                              task is interrupted while blocked, i.e., if
+     *                              auto ingest is shutting down.
      */
     @NbBundle.Messages({
         "# {0} - cancellationReason",
         "MultiUserTestTool.ingestCancelled=Ingest cancelled due to {0}",
         "MultiUserTestTool.startupError=Failed to analyze data source due to ingest job startup error",
         "MultiUserTestTool.errorStartingIngestJob=Ingest manager error while starting ingest job",
-        "MultiUserTestTool.ingestSettingsError=Failed to analyze data source due to ingest settings errors"  
+        "MultiUserTestTool.ingestSettingsError=Failed to analyze data source due to ingest settings errors"
     })
     private static String analyze(AutoIngestDataSource dataSource) throws InterruptedException {
 
         LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", dataSource.getPath());
         IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
-        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
         try {
             synchronized (INGEST_LOCK) {
                 IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
@@ -324,9 +331,9 @@ class MultiUserTestTool {
                     IngestJob ingestJob = ingestJobStartResult.getJob();
                     if (null != ingestJob) {
                         /*
-                             * Block until notified by the ingest job event
-                             * listener or until interrupted because auto ingest
-                             * is shutting down.
+                         * Block until notified by the ingest job event listener
+                         * or until interrupted because auto ingest is shutting
+                         * down.
                          */
                         INGEST_LOCK.wait();
                         LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", dataSource.getPath());
@@ -381,7 +388,7 @@ class MultiUserTestTool {
      * @return True if the service is running, false otherwise.
      *
      * @throws ServicesMonitorException if there is an error querying the
-     * services monitor.
+     *                                  services monitor.
      */
     private static boolean isServiceUp(String serviceName) throws ServicesMonitor.ServicesMonitorException {
         return (ServicesMonitor.getInstance().getServiceStatus(serviceName).equals(ServicesMonitor.ServiceStatus.UP.toString()));

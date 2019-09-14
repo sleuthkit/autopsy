@@ -56,7 +56,48 @@ public final class AppDBParserHelper  {
         UNREAD,     /// message has not been read
         READ        /// message has been read
     }
+    
+    /**
+     * Enum for call/message direction
+     */
+    public enum CommunicationDirection
+    {
+        UNKNOWN("Unknown"),
+        INCOMING("Incoming"),
+        OUTGOING("Outgoing");
         
+        private final String dirStr;
+
+        CommunicationDirection(String dir) {
+            this.dirStr = dir;
+        }
+
+        public String getString() {
+            return dirStr;
+        }
+    }
+    
+    /**
+     * Enum for call media type
+     */
+    public enum CallMediaType
+    {
+        UNKNOWN("Unknown"),
+        AUDIO("Audio"),
+        VIDEO("Video");
+        
+        private final String typeStr;
+
+        CallMediaType(String type) {
+            this.typeStr = type;
+        }
+
+        public String getString() {
+            return typeStr;
+        }
+    }
+    
+
     private final AbstractFile dbAbstractFile;
     private final String moduleName;
     
@@ -101,17 +142,17 @@ public final class AppDBParserHelper  {
      * @param dbFile database file being parsed by the module
      * @param accountsType account types created by this module
      * @param selfAccountType self account type to be created for this module
-     * @param selfAccountId account unique id for the self account
+     * @param selfAccountAddress account unique id for the self account
      * 
      * @throws TskCoreException 
      */
-    public AppDBParserHelper(String moduleName, AbstractFile dbFile, Account.Type accountsType, Account.Type selfAccountType, String selfAccountId) throws TskCoreException {
+    public AppDBParserHelper(String moduleName, AbstractFile dbFile, Account.Type accountsType, Account.Type selfAccountType, Account.Address selfAccountAddress) throws TskCoreException {
         
         this.moduleName = moduleName;
         this.dbAbstractFile = dbFile;
         this.accountsType = accountsType;
         
-        this.selfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(selfAccountType, selfAccountId, moduleName, dbFile);
+        this.selfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(selfAccountType, selfAccountAddress.getUniqueID(), moduleName, dbFile);
     }
         
     /**
@@ -280,7 +321,8 @@ public final class AppDBParserHelper  {
      * @return message artifact 
      */
     public BlackboardArtifact addMessage( 
-                                String messageType, String direction, 
+                                String messageType, 
+                                CommunicationDirection direction, 
                                 Account.Address fromAddress, 
                                 Account.Address toAddress, 
                                 long dateTime, MessageReadStatusEnum readStatus, 
@@ -311,7 +353,8 @@ public final class AppDBParserHelper  {
      * 
      * @return message artifact
      */
-    public BlackboardArtifact addMessage( String messageType, String direction, 
+    public BlackboardArtifact addMessage( String messageType, 
+                                CommunicationDirection direction, 
                                 Account.Address fromAddress, 
                                 Account.Address toAddress, 
                                 long dateTime, MessageReadStatusEnum readStatus, String subject, 
@@ -347,7 +390,8 @@ public final class AppDBParserHelper  {
      * 
      * @return message artifact
      */
-    public BlackboardArtifact addMessage( String messageType, String direction, 
+    public BlackboardArtifact addMessage( String messageType, 
+                CommunicationDirection direction, 
                 Account.Address fromAddress, 
                 List<Account.Address> recipientsList, 
                 long dateTime, MessageReadStatusEnum readStatus, 
@@ -360,7 +404,8 @@ public final class AppDBParserHelper  {
     }
     
     
-    public BlackboardArtifact addMessage( String messageType, String direction, 
+    public BlackboardArtifact addMessage( String messageType, 
+                CommunicationDirection direction, 
                 Account.Address fromAddress, 
                 List<Account.Address> recipientsList, 
                 long dateTime, MessageReadStatusEnum readStatus, 
@@ -384,8 +429,8 @@ public final class AppDBParserHelper  {
             if (!StringUtils.isEmpty(messageType)) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, moduleName, messageType));
             }
-            if (!StringUtils.isEmpty(direction)) {
-                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction));
+            if (direction != CommunicationDirection.UNKNOWN) {
+                msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction.getString()));
             }
             if (fromAddress != null && !StringUtils.isEmpty(fromAddress.getDisplayName())) {
                 msgArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromAddress.getDisplayName()));
@@ -462,11 +507,34 @@ public final class AppDBParserHelper  {
      * 
      * @return call log artifact
      */
-    public BlackboardArtifact addCalllog( String direction, 
+    public BlackboardArtifact addCalllog(CommunicationDirection direction, 
                                     Account.Address fromAddress, Account.Address toAddress, 
                                     long startDateTime, long endDateTime) {
         return addCalllog(direction, fromAddress, toAddress, 
                             startDateTime, endDateTime, 
+                            CallMediaType.UNKNOWN);
+    }
+    
+    /**
+     * Adds a TSK_CALLLOG artifact. 
+     * 
+     * Also creates an account instance for the caller/callee, and creates a 
+     * relationship between the self account and the caller/callee account.
+     * 
+     * @param direction call direction
+     * @param fromAddress caller address, may be empty
+     * @param toAddress callee address, may be empty
+     * @param startDateTime start date/time
+     * @param endDateTime end date/time
+     * @param mediaType media type
+     * 
+     * @return call log artifact
+     */
+    public BlackboardArtifact addCalllog(CommunicationDirection direction, 
+                                    Account.Address fromAddress, Account.Address toAddress, 
+                                    long startDateTime, long endDateTime, CallMediaType mediaType) {
+        return addCalllog(direction, fromAddress, toAddress, 
+                            startDateTime, endDateTime, mediaType,
                             Collections.<BlackboardAttribute>emptyList());
     }
     
@@ -481,19 +549,22 @@ public final class AppDBParserHelper  {
      * @param toAddress callee address, may be empty
      * @param startDateTime start date/time
      * @param endDateTime end date/time
+     * @param mediaType media type
      * @param otherAttributesList other attributes
      * 
      * @return call log artifact
      */
-    public BlackboardArtifact addCalllog( String direction, 
+    public BlackboardArtifact addCalllog(CommunicationDirection direction, 
                                     Account.Address fromAddress, 
                                     Account.Address toAddress, 
-                                    long startDateTime, long endDateTime,
+                                    long startDateTime, long endDateTime, 
+                                    CallMediaType mediaType, 
                                     Collection<BlackboardAttribute> otherAttributesList) {
         return addCalllog(direction, 
                             fromAddress, 
                             Arrays.asList(toAddress), 
                             startDateTime, endDateTime, 
+                            mediaType,
                             otherAttributesList);
     }
     
@@ -512,15 +583,44 @@ public final class AppDBParserHelper  {
      * 
      * @return call log artifact
      */
-    public BlackboardArtifact addCalllog( String direction, 
+    public BlackboardArtifact addCalllog(CommunicationDirection direction, 
                                 Account.Address fromAddress, 
                                 Collection<Account.Address> toAddressList, 
                                 long startDateTime, long endDateTime) {
     
          return addCalllog(direction, fromAddress, toAddressList, 
                             startDateTime, endDateTime, 
+                            CallMediaType.UNKNOWN);
+    }
+    
+     /**
+     * Adds a TSK_CALLLOG artifact. 
+     * 
+     * Also creates an account instance for the caller/callees, 
+     * and creates a relationship between the device owner account and the caller account
+     * as well between the device owner account and each callee account
+     * 
+     * @param direction call direction
+     * @param fromAddress caller address, may be empty
+     * @param toAddressList callee address list, may be empty
+     * @param startDateTime start date/time
+     * @param endDateTime end date/time
+     * @param mediaType call media type
+     * 
+     * @return call log artifact
+     */
+    public BlackboardArtifact addCalllog(CommunicationDirection direction, 
+                                Account.Address fromAddress, 
+                                Collection<Account.Address> toAddressList, 
+                                long startDateTime, long endDateTime,
+                                CallMediaType mediaType) {
+    
+         return addCalllog(direction, fromAddress, toAddressList, 
+                            startDateTime, endDateTime, 
+                            mediaType,
                             Collections.<BlackboardAttribute>emptyList());
     }
+    
     /**
      * Adds a TSK_CALLLOG artifact. 
      * 
@@ -533,14 +633,16 @@ public final class AppDBParserHelper  {
      * @param toAddressList callee address list, may be empty
      * @param startDateTime start date/time
      * @param endDateTime end date/time
+     * @param mediaType called media type
      * @param otherAttributesList other attributes
      * 
      * @return calllog artifact
      */
-    public BlackboardArtifact addCalllog( String direction, 
+    public BlackboardArtifact addCalllog(CommunicationDirection direction, 
                                 Account.Address fromAddress, 
                                 Collection<Account.Address> toAddressList, 
                                 long startDateTime, long endDateTime,
+                                CallMediaType mediaType,
                                 Collection<BlackboardAttribute> otherAttributesList) {
         BlackboardArtifact callLogArtifact = null;
         try {
@@ -555,8 +657,8 @@ public final class AppDBParserHelper  {
                 callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END, moduleName, endDateTime));
             }
             
-            if (!StringUtils.isEmpty(direction)) {
-                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction));
+            if (direction != CommunicationDirection.UNKNOWN) {
+                callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, direction.getString()));
             }
             if (fromAddress != null) {
                 callLogArtifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, moduleName, fromAddress.getUniqueID()));
