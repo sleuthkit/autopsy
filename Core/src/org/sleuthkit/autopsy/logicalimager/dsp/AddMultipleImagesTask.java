@@ -60,7 +60,6 @@ class AddMultipleImagesTask implements Runnable {
     private List<String> errorMessages = new ArrayList<>();
     private DataSourceProcessorResult result;
     private List<Content> newDataSources = new ArrayList<>();
-    private List<Content> emptyDataSources = new ArrayList<>();
 
     /*
      * The cancellation requested flag and SleuthKit add image process are
@@ -111,7 +110,7 @@ class AddMultipleImagesTask implements Runnable {
     public void run() {
         errorMessages = new ArrayList<>();
         newDataSources = new ArrayList<>();
-        emptyDataSources = new ArrayList<>();
+        List<Content> emptyDataSources = new ArrayList<>();
         
         /*
          * Try to add the input image files as images.

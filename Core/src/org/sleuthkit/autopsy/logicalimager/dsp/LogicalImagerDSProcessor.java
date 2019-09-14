@@ -53,7 +53,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private final LogicalImagerPanel configPanel;
     private AddLogicalImageTask addLogicalImageTask;
-    private Thread thread;
 
     /*
      * Constructs a Logical Imager data source processor that implements the
@@ -222,7 +221,7 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     ) throws NoCurrentCaseException {
         addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest,
                 progressMonitor, callback);
-        thread = new Thread(addLogicalImageTask);
+        Thread thread = new Thread(addLogicalImageTask);
         thread.start();
     }
 
