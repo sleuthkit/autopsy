@@ -54,6 +54,7 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
         self._logger = Logger.getLogger(self.__class__.__name__)
         self._WHATSAPP_PACKAGE_NAME = "com.whatsapp"
         self._PARSER_NAME = "WhatsApp Parser"
+        self._VERSION = "2.19.244"
 
     def analyze(self, dataSource, fileManager, context):
         """
