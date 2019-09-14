@@ -33,18 +33,22 @@ class TskMessagesParser(ResultSetIterator):
 
     def __init__(self, result_set):
         super(TskMessagesParser, self).__init__(result_set)
-        self.INCOMING_MSG = "Incoming"
-        self.OUTGOING_MSG = "Outgoing"
         self._DEFAULT_TEXT = ""
         self._DEFAULT_LONG = -1L
         self._DEFAULT_MSG_READ_STATUS = AppDBParserHelper.MessageReadStatusEnum.UNKNOWN
-        self._DEFAULT_ACCOUNT_ADDRESS = Account.Address("","")
+        self._DEFAULT_ACCOUNT_ADDRESS = None 
+        self._DEFAULT_COMMUNICATION_DIRECTION = AppDBParserHelper.CommunicationDirection.UNKNOWN
+
+        self.INCOMING = AppDBParserHelper.CommunicationDirection.INCOMING
+        self.OUTGOING = AppDBParserHelper.CommunicationDirection.OUTGOING
+        self.READ = AppDBParserHelper.MessageReadStatusEnum.READ
+        self.UNREAD = AppDBParserHelper.MessageReadStatusEnum.UNREAD
 
     def get_message_type(self):
         return self._DEFAULT_TEXT
 
     def get_message_direction(self):  
-        return self._DEFAULT_TEXT
+        return self._DEFAULT_COMMUNICATION_DIRECTION
 
     def get_phone_number_from(self):
         return self._DEFAULT_ACCOUNT_ADDRESS
