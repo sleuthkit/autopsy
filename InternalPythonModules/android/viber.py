@@ -55,6 +55,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         self._logger = Logger.getLogger(self.__class__.__name__)
         self._VIBER_PACKAGE_NAME = "com.viber.voip"
         self._PARSER_NAME = "Viber Parser"
+        self._VERSION = "11.5.0"
 
     def analyze(self, dataSource, fileManager, context):
         """
