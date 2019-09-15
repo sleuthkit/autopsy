@@ -33,6 +33,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
 from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
+from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import MessageReadStatusEnum
+from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import CommunicationDirection
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -54,7 +56,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
         self._logger = Logger.getLogger(self.__class__.__name__)
 
     def analyze(self, dataSource, fileManager, context):
-        selfAccountId = None
+        selfAccountAddress = None
         accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", True, "com.imo.android.imous")
         for accountDb in accountDbs:
             try:
@@ -63,8 +65,8 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                     # We can determine the IMO user ID of the device owner. 
                     # Therefore we can create and use a app account and use that 
                     # as a 'self' account instead of a Device account
-                    if not selfAccountId:
-                        selfAccountId = accountResultSet.getString("name")
+                    if not selfAccountAddress:
+                        selfAccountAddress = Account.Address(accountResultSet.getString("uid"), accountResultSet.getString("name"))
             
             except SQLException as ex:
                 self._logger.log(Level.SEVERE, "Error processing query result for account", ex)       
@@ -75,7 +77,7 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
         for friendsDb in friendsDbs:
             try:
                 friendsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(),
-                                                    Account.Type.IMO, Account.Type.IMO, selfAccountId )
+                                                    Account.Type.IMO, Account.Type.IMO, selfAccountAddress )
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
@@ -97,20 +99,20 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         uniqueId = messagesResultSet.getString("buid")
 
                         if (messagesResultSet.getInt("message_type") == 1):
-                            direction = "Incoming"
+                            direction = CommunicationDirection.INCOMING
                             fromAddress = Account.Address(uniqueId, name)
                         else:
-                            direction = "Outgoing"
+                            direction = CommunicationDirection.OUTGOING
                             toAddress = Account.Address(uniqueId, name)
                         
                         
                         message_read = messagesResultSet.getInt("message_read")
                         if (message_read == 1):
-                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.READ
+                            msgReadStatus = MessageReadStatusEnum.READ
                         elif (message_read == 0):
-                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.UNREAD
+                            msgReadStatus = MessageReadStatusEnum.UNREAD
                         else:
-                            msgReadStatus = AppDBParserHelper.MessageReadStatusEnum.UNKNOWN
+                            msgReadStatus = MessageReadStatusEnum.UNKNOWN
                                                 
                         timeStamp = messagesResultSet.getLong("timestamp") / 1000000000
 
@@ -129,9 +131,11 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         # TBD: parse the imdata JSON structure to figure out if there is an attachment.
                         #      If one exists, add the attachment as a derived file and a child of the message artifact.
 
-            
+                    
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for IMO friends", ex)       
+                self._logger.log(Level.WARNING, "Error processing query result for IMO friends", ex)
+            except TskCoreException as ex:
+                self._logger.log(Level.WARNING, "Failed to create AppDBParserHelper for adding artifacts.", ex)
             finally:
                 friendsDb.close()
                 

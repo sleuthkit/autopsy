@@ -206,7 +206,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
      */
     private static class GetInterestingItemSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-        private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GetInterestingItemSetNamesCallback.class.getName());
+        private static final Logger logger = Logger.getLogger(GetInterestingItemSetNamesCallback.class.getName());
         private final Map<String, Long> setCounts = new HashMap<>();
         
         @Override
