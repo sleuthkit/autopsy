@@ -120,19 +120,20 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         }
 
         int BATCH_SIZE = 1000;
-        while(!allDocs.isEmpty()) {
+        while (!allDocs.isEmpty()) {
+            
             //Convert allDocs to the format that OpenNLP needs.
             ObjectStream<DocumentSample> sampleStream;
-            
+
+            //TODO: Delete this
+            LOGGER.log(Level.INFO, "********** allDocs.size()\t" + allDocs.size() + "**********");
+
             Queue<AbstractFile> batchDocs = new LinkedList<>();
             while (!allDocs.isEmpty() && batchDocs.size() < BATCH_SIZE) {
                 batchDocs.offer(allDocs.poll());
             }
-            //TODO: Delete this
-            System.out.println("********** allDocs.size()\t" + allDocs.size() + "**********");
-            
             sampleStream = convertTrainingData(batchDocs, notableObjectIDs, progressPanel);
-            
+
             //Train the model
             progressPanel.setIndeterminate(true);
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.training.text"));
@@ -200,7 +201,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         }
         return DocumentCategorizerME.train(TextClassifierUtils.LANGUAGE_CODE, sampleStream, params, new DoccatFactory());
     }
-
+ 
     /**
      * Converts all documents to a format OpenNLP can use.
      *
@@ -215,15 +216,16 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         "TextClassifierTrainerReportModule.needNotable.text=Training set must contain at least one notable document",
         "TextClassifierTrainerReportModule.needNonnotable.text=Training set must contain at least one nonnotable document",})
     private ObjectStream<DocumentSample> convertTrainingData(Collection<AbstractFile> documents, Set<Long> notableObjectIDs, ReportProgressPanel progressPanel) {
-
+        progressPanel.setIndeterminate(false);
+        progressPanel.setProgress(0);
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.converting.text"));
         progressPanel.setMaximumProgress(documents.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
-        
+
         docSamples.add(new DocumentSample(TextClassifierUtils.NOTABLE_LABEL, new String[0]));
         docSamples.add(new DocumentSample(TextClassifierUtils.NONNOTABLE_LABEL, new String[0]));
-        
+
         for (AbstractFile doc : documents) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
@@ -262,7 +264,6 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         //corpus( 20 Newsgroups) has.
         List<AbstractFile> allDocs = fileManager.findFilesByMimeType(SupportedFormats.getDocumentMIMETypes());
         LOGGER.log(Level.INFO, "There are {0} documents", allDocs.size());
-        return new LinkedList(allDocs);
-
+        return new LinkedList<>(allDocs);
     }
 }
