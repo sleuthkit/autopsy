@@ -227,6 +227,11 @@ final class AddLogicalImageTask implements Runnable {
             // ingest the VHDs
             try {
                 synchronized (addMultipleImagesLock) {
+                    if (cancelled) {
+                        LOGGER.log(Level.SEVERE, "Add VHD cancelled"); // NON-NLS
+                        callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                        return;
+                    }
                     addMultipleImagesTask = new AddMultipleImagesTask(deviceId, imagePaths, timeZone , progressMonitor);
                 }
                 addMultipleImagesTask.run();
@@ -301,8 +306,8 @@ final class AddLogicalImageTask implements Runnable {
      */
     void cancelTask() {
         LOGGER.log(Level.WARNING, "AddLogicalImageTask cancelled, processing may be incomplete"); // NON-NLS
-        cancelled = true;
         synchronized (addMultipleImagesLock) {
+            cancelled = true;
             if (addMultipleImagesTask != null) {
                 addMultipleImagesTask.cancelTask();
             }
