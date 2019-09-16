@@ -140,7 +140,7 @@ final class AddLogicalImageTask implements Runnable {
             // Don't delete destination directory once we started adding interesting files.
             // At this point the database and destination directory are complete.
             deleteDestinationDirectory();
-            errorList.add("Add image cancelled");
+            errorList.add(Bundle.AddLogicalImageTask_addImageCancelled());
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
@@ -229,6 +229,7 @@ final class AddLogicalImageTask implements Runnable {
                 synchronized (addMultipleImagesLock) {
                     if (cancelled) {
                         LOGGER.log(Level.SEVERE, "Add VHD cancelled"); // NON-NLS
+                        errorList.add(Bundle.AddLogicalImageTask_addImageCancelled());
                         callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
                         return;
                     }
@@ -345,7 +346,7 @@ final class AddLogicalImageTask implements Runnable {
                 if (cancelled) {
                     // Don't delete destination directory once we started adding interesting files.
                     // At this point the database and destination directory are complete.
-                    return;
+                    break;
                 }
                 String[] fields = line.split("\t", -1); // NON-NLS
                 if (fields.length != 14) {
