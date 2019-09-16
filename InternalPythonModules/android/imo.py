@@ -42,7 +42,7 @@ from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
-from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatusEnum
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
 import traceback
@@ -110,11 +110,11 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         
                         message_read = messagesResultSet.getInt("message_read")
                         if (message_read == 1):
-                            msgReadStatus = MessageReadStatusEnum.READ
+                            msgReadStatus = MessageReadStatus.READ
                         elif (message_read == 0):
-                            msgReadStatus = MessageReadStatusEnum.UNREAD
+                            msgReadStatus = MessageReadStatus.UNREAD
                         else:
-                            msgReadStatus = MessageReadStatusEnum.UNKNOWN
+                            msgReadStatus = MessageReadStatus.UNKNOWN
                                                 
                         timeStamp = messagesResultSet.getLong("timestamp") / 1000000000
 
