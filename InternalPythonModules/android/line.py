@@ -44,6 +44,7 @@ from org.sleuthkit.datamodel import Account
 from TskContactsParser import TskContactsParser
 from TskMessagesParser import TskMessagesParser
 from TskCallLogsParser import TskCallLogsParser
+from general import appendAttachmentList
 
 import traceback
 import general
@@ -114,6 +115,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                         calllog_parser.get_call_end_date_time(),
                         calllog_parser.get_call_type()
                     )
+                calllog_db.detachDatabase("naver")
                 calllog_parser.close()
 
                 calllog_db.close()
@@ -249,6 +251,7 @@ class LineMessagesParser(TskMessagesParser):
                         FROM   contacts) AS all_contacts 
                        JOIN chat_history AS CH 
                          ON CH.chat_id = all_contacts.id
+                WHERE attachement_type != 6
             """
                         )
         )
@@ -273,6 +276,11 @@ class LineMessagesParser(TskMessagesParser):
 
     def get_message_text(self):
         content = self.result_set.getString("content") 
+        attachment_uri = self.result_set.getString("attachement_local_uri")
+        if attachment_uri is not None and content is not None:
+            return appendAttachmentList(content, [attachment_uri])
+        elif attachment_uri is not None and content is None:
+            return appendAttachmentList("", [attachment_uri])
         return content
 
     def get_message_direction(self):  
