@@ -41,16 +41,18 @@
                       <Component id="messagesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="callLogsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="contactsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="attachmentsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="thumbnailCntLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="attachmentsLable" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="attachmentsDataLabel" min="-2" max="-2" attributes="0"/>
+                      <Component id="attachmentDataLabel" min="-2" max="-2" attributes="0"/>
+                      <Component id="thumbnailsDataLabel" min="-2" max="-2" attributes="0"/>
                       <Component id="contactsDataLabel" min="-2" max="-2" attributes="0"/>
                       <Component id="callLogsDataLabel" min="-2" max="-2" attributes="0"/>
                       <Component id="messagesDataLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="959" max="32767" attributes="0"/>
+                  <EmptySpace pref="845" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -74,10 +76,14 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="attachmentsLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="attachmentsDataLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="thumbnailCntLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="thumbnailsDataLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="attachmentsLable" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="attachmentDataLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
           </Group>
         </DimensionLayout>
@@ -104,17 +110,17 @@
             </Property>
           </Properties>
         </Component>
-        <Component class="javax.swing.JLabel" name="attachmentsLabel">
+        <Component class="javax.swing.JLabel" name="thumbnailCntLabel">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/communications/relationships/Bundle.properties" key="SummaryViewer.attachmentsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/communications/relationships/Bundle.properties" key="SummaryViewer.thumbnailCntLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
-        <Component class="javax.swing.JLabel" name="attachmentsDataLabel">
+        <Component class="javax.swing.JLabel" name="thumbnailsDataLabel">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/communications/relationships/Bundle.properties" key="SummaryViewer.attachmentsDataLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/communications/relationships/Bundle.properties" key="SummaryViewer.thumbnailsDataLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -136,6 +142,20 @@
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/communications/relationships/Bundle.properties" key="SummaryViewer.contactsDataLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="attachmentsLable">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/communications/relationships/Bundle.properties" key="SummaryViewer.attachmentsLable.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="attachmentDataLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/communications/relationships/Bundle.properties" key="SummaryViewer.attachmentDataLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>

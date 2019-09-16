@@ -61,7 +61,7 @@ import org.sleuthkit.datamodel.TskData;
 public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
     private final static Logger logger = Logger.getLogger(FileTypesByMimeType.class.getName());
-
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private final SleuthkitCase skCase;
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
@@ -99,9 +99,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
-                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal())) 
+                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
                 + "))"
-                + ( (filteringDataSourceObjId() > 0) ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
+                + ((filteringDataSourceObjId() > 0) ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
     }
 
@@ -180,7 +180,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 }
             }
         };
-        IngestManager.getInstance().addIngestJobEventListener(pcl);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         populateHashMap();
     }
@@ -193,7 +193,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     long filteringDataSourceObjId() {
         return typesRoot.filteringDataSourceObjId();
     }
-    
+
     /**
      * Method to check if the node in question is a ByMimeTypeNode which is
      * empty.
@@ -370,7 +370,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * Node which represents the media sub type in the By MIME type tree, the
      * media subtype is the portion of the MIME type following the /.
      */
-    class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
+    final class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
 
         @NbBundle.Messages({"FileTypesByMimeTypeNode.createSheet.mediaSubtype.name=Subtype",
             "FileTypesByMimeTypeNode.createSheet.mediaSubtype.displayName=Subtype",

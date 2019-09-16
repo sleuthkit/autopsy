@@ -142,6 +142,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         ControlEventType.SHUTDOWN.toString(),
         Event.CANCEL_JOB.toString(),
         Event.REPROCESS_JOB.toString()}));
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
@@ -2670,7 +2671,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
-            IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
                     IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());

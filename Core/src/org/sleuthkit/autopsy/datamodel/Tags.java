@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,9 +54,10 @@ public class Tags implements AutopsyVisitableItem {
     // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren
     // override of Children.Keys<T>.createNodes().
 
-    private final TagResults tagResults = new TagResults();
     private final static String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
+    private final TagResults tagResults = new TagResults();
     private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
@@ -223,8 +224,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
             Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             tagResults.update();
             tagResults.addObserver(this);
@@ -233,7 +233,6 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             tagResults.deleteObserver(this);
         }
