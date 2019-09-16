@@ -21,12 +21,14 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -37,6 +39,7 @@ import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelWriter;
 import opennlp.tools.sentdetect.SentenceDetector;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -102,6 +105,7 @@ class TextClassifierUtils {
      * language text.
      *
      * @param abstractFile A file
+     *
      * @return true if this file's MIME type is supported.
      */
     boolean isSupported(AbstractFile abstractFile) {
@@ -118,6 +122,7 @@ class TextClassifierUtils {
      * Divides a file into tokens
      *
      * @param a file
+     *
      * @return An array of all tokens in the file
      */
     static String[] extractTokens(AbstractFile file) {
@@ -169,7 +174,11 @@ class TextClassifierUtils {
             //Tokenize the file.
             String[] sentenceTokens = TOKENIZER.tokenize(sentence);
             if (sentenceTokens.length > 5) {
-                tokens.addAll(Arrays.asList(sentenceTokens));
+                for (String token : sentenceTokens) {
+                    token = UnicodeSanitizer.sanitize(token);
+                    token = StringEscapeUtils.escapeJava(token);
+                    tokens.add(token);
+                }
             }
         }
         return tokens.toArray(new String[0]);
@@ -179,42 +188,37 @@ class TextClassifierUtils {
      * Loads a Naive Bayes model from disk.
      *
      * @return the model
+     *
      * @throws IOException if the model cannot be found on disk, or if the file
-     * does not seem to be a model file
+     *                     does not seem to be a model file
      */
-<<<<<<< HEAD
     static NaiveBayesModel loadModel() throws IOException {
-        try (FileReader fr = new FileReader(MODEL_PATH)) {
-            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
+        ensureTextClassifierFolderExists();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(MODEL_PATH),
+                Charset.forName("UTF-8").newDecoder()))) {
+            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(br);
             reader.checkModelType();
             return (NaiveBayesModel) reader.constructModel();
         }
-=======
-    static DocumentCategorizerME loadCategorizer() throws IOException {
-        ensureTextClassifierFolderExists();
-        NaiveBayesModel model;
-        try (FileReader fr = new FileReader(new File(MODEL_PATH))) {
-            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(new BufferedReader(fr));
-            reader.checkModelType();
-            model = (NaiveBayesModel) reader.constructModel();
-        }
-        DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory());
-        return new DocumentCategorizerME(doccatModel);
->>>>>>> upstream/text-classification
     }
 
     /**
      * Writes a naive Bayes classifier model to disk.
      *
      * @param model the model
+     *
      * @throws IOException If the model file cannot be written. Large files can
-     * cause this.
+     *                     cause this.
      */
     static void writeModel(NaiveBayesModel model) throws IOException {
         ensureTextClassifierFolderExists();
-        try (FileWriter fw = new FileWriter(new File(MODEL_PATH))) {
-            PlainTextNaiveBayesModelWriter modelWriter;
-            modelWriter = new PlainTextNaiveBayesModelWriter(model, new BufferedWriter(fw));
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(MODEL_PATH),
+                Charset.forName("UTF-8").newEncoder()))) {
+            PlainTextNaiveBayesModelWriter modelWriter = new PlainTextNaiveBayesModelWriter(model, bw);
+
+            //Write to file
             modelWriter.persist();
         }
     }

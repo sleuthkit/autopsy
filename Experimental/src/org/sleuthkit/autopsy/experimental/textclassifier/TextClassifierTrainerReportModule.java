@@ -55,9 +55,7 @@ import org.sleuthkit.datamodel.TskData;
  * This is a ReportModule that trains a text classifier. It trains on all
  * text-like documents in the current case. The two classes are the ones labeled
  * as notable by the user and the ones not labeled as notable. It will not train
- * a model if none of the documents were labeled as notable, if all of the
- * documents were labeled as notable, or if there are not enough documents in
- * the case for the underlying model trainer to run.
+ * a model if there are no text-like documents in the collection.
  *
  * The model is stored in %APPDATA%\autopsy\text_classifiers. If a model is
  * already present in that location, the TextClassifierTrainerReportModule adds
@@ -218,33 +216,21 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         progressPanel.setMaximumProgress(allDocs.size());
         List<DocumentSample> docSamples = new ArrayList<>();
         String label;
-        boolean containsNotableDocument = false;
-        boolean containsNonNotableDocument = false;
+        
+        docSamples.add(new DocumentSample(TextClassifierUtils.NOTABLE_LABEL, new String[0]));
+        docSamples.add(new DocumentSample(TextClassifierUtils.NONNOTABLE_LABEL, new String[0]));
+        
         for (AbstractFile doc : allDocs) {
             if (notableObjectIDs.contains(doc.getId())) {
                 label = TextClassifierUtils.NOTABLE_LABEL;
-                containsNotableDocument = true;
             } else {
                 label = TextClassifierUtils.NONNOTABLE_LABEL;
-                containsNonNotableDocument = true;
             }
             DocumentSample docSample = new DocumentSample(label, TextClassifierUtils.extractTokens(doc));
             docSamples.add(docSample);
 
             progressPanel.increment();
         }
-
-        if (!containsNotableDocument) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.needNotable.text"));
-            throw new TskCoreException("Training set must contain at least one notable document");
-        }
-        if (!containsNonNotableDocument) {
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.needNonnotable.text"));
-            throw new TskCoreException("Training set must contain at least one nonnotable document");
-        }
-
         return new ListObjectStream<>(docSamples);
     }
 
