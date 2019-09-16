@@ -32,9 +32,7 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
-from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import MessageReadStatusEnum
-from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import CommunicationDirection
+
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -43,6 +41,9 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatusEnum
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
 import traceback
 import general
@@ -76,7 +77,8 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
         friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", True, "com.imo.android.imous")
         for friendsDb in friendsDbs:
             try:
-                friendsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(),
+                friendsDBHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                                    "IMO Parser", friendsDb.getDBFile(),
                                                     Account.Type.IMO, Account.Type.IMO, selfAccountAddress )
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
