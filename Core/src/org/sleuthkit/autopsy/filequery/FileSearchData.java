@@ -122,14 +122,16 @@ class FileSearchData {
         "FileSearchData.FileSize.OVER_50MB.displayName=50 - 200 MB",
         "FileSearchData.FileSize.OVER_1MB.displayName=1 - 50 MB",
         "FileSearchData.FileSize.OVER_100KB.displayName=100 KB - 1 MB",
-        "FileSearchData.FileSize.UNDER_100KB.displayName=Under 100 KB",})
+        "FileSearchData.FileSize.OVER_16KB.displayName=16 KB - 100 KB",
+        "FileSearchData.FileSize.UNDER_16KB.displayName=Under 16 KB",})
     enum FileSize {
         OVER_1GB(0, 1000 * BYTES_PER_MB, -1, Bundle.FileSearchData_FileSize_OVER_1GB_displayName()),
         OVER_200MB(1, 200 * BYTES_PER_MB, 1000 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_200MB_displayName()),
         OVER_50MB(2, 50 * BYTES_PER_MB, 200 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_50MB_displayName()),
         OVER_1MB(3, 1 * BYTES_PER_MB, 50 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_1MB_displayName()),
         OVER_100KB(4, 100000, 1 * BYTES_PER_MB, Bundle.FileSearchData_FileSize_OVER_100KB_displayName()),
-        UNDER_100KB(5, 0, 100000, Bundle.FileSearchData_FileSize_UNDER_100KB_displayName());
+        OVER_16KB(5, 16000, 100000, Bundle.FileSearchData_FileSize_OVER_16KB_displayName()),
+        UNDER_16KB(6, 0, 16000, Bundle.FileSearchData_FileSize_UNDER_16KB_displayName());
 
         private final int ranking;   // Must be unique for each value
         private final long minBytes; // Note that the size must be strictly greater than this to match
@@ -167,8 +169,10 @@ class FileSearchData {
                 return OVER_1MB;
             } else if (size > OVER_100KB.minBytes) {
                 return OVER_100KB;
+            } else if (size > OVER_16KB.minBytes) {
+                return OVER_16KB;
             } else {
-                return UNDER_100KB;
+                return UNDER_16KB;
             }
         }
 
@@ -206,8 +210,7 @@ class FileSearchData {
     }
 
     /**
-     * Enum representing the file type.
-     * We don't simply use
+     * Enum representing the file type. We don't simply use
      * FileTypeUtils.FileTypeCategory because: - Some file types categories
      * overlap - It is convenient to have the "OTHER" option for files that
      * don't match the given types
