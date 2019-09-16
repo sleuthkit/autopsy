@@ -114,7 +114,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
                         Case.getCurrentCase().getSleuthkitCase(), crDb);
                     System.out.println("First five " + firstGroupName + " : ");
                     for (ResultFile f : entries0to5) {
-                        System.out.println("  " + f.getAbstractFile().getName());
+                        System.out.println("  " + f.getFirstInstance().getName());
                     }
 
                     List<ResultFile> entries6to106 = FileSearch.getFilesInGroup(filters, 
@@ -127,7 +127,7 @@ public final class FileSearchTestAction extends CallableSystemAction {
                         Case.getCurrentCase().getSleuthkitCase(), crDb);
                     System.out.println(firstGroupName + " 6 to 106: ");
                     for (ResultFile f : entries6to106) {
-                        System.out.println("  " + f.getAbstractFile().getName());
+                        System.out.println("  " + f.getFirstInstance().getName());
                     }
                 }
                 

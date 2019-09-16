@@ -95,7 +95,7 @@ class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1 has the lower data source ID, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getDataSourceComparator() {
-        return (ResultFile file1, ResultFile file2) -> Long.compare(file1.getAbstractFile().getDataSourceObjectId(), file2.getAbstractFile().getDataSourceObjectId());
+        return (ResultFile file1, ResultFile file2) -> Long.compare(file1.getFirstInstance().getDataSourceObjectId(), file2.getFirstInstance().getDataSourceObjectId());
     }    
     
     /**
@@ -138,7 +138,7 @@ class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1's path comes first alphabetically, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getParentPathComparator() {
-        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getAbstractFile().getParentPath(), file2.getAbstractFile().getParentPath());
+        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getParentPath(), file2.getFirstInstance().getParentPath());
     }   
     
     /**
@@ -157,7 +157,7 @@ class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1's MIME type comes before file2's, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getMIMETypeComparator() {
-        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getAbstractFile().getMIMEType(), file2.getAbstractFile().getMIMEType());
+        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getMIMEType(), file2.getFirstInstance().getMIMEType());
     }  
     
     /**
@@ -166,7 +166,7 @@ class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1 is larger than file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getFileSizeComparator() {
-        return (ResultFile file1, ResultFile file2) -> -1 * Long.compare(file1.getAbstractFile().getSize(), file2.getAbstractFile().getSize()) // Sort large to small
+        return (ResultFile file1, ResultFile file2) -> -1 * Long.compare(file1.getFirstInstance().getSize(), file2.getFirstInstance().getSize()) // Sort large to small
         ;
     }
     
@@ -176,7 +176,7 @@ class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getFileNameComparator() {
-        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getAbstractFile().getName(), file2.getAbstractFile().getName());
+        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getName(), file2.getFirstInstance().getName());
     }
     
     /**
@@ -192,7 +192,7 @@ class FileSorter implements Comparator<ResultFile> {
             // Compare file names and then object ID (to ensure a consistent sort)
             int result = getFileNameComparator().compare(file1, file2);
             if (result == 0) {
-                return Long.compare(file1.getAbstractFile().getId(), file2.getAbstractFile().getId());
+                return Long.compare(file1.getFirstInstance().getId(), file2.getFirstInstance().getId());
             }
             return result;
         };

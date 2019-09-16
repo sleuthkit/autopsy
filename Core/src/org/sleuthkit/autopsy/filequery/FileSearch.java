@@ -322,7 +322,7 @@ class FileSearch {
             if (!objIdList.isEmpty()) {
                 objIdList += ","; // NON-NLS
             }
-            objIdList += "\'" + file.getAbstractFile().getId() + "\'"; // NON-NLS
+            objIdList += "\'" + file.getFirstInstance().getId() + "\'"; // NON-NLS
         }
 
         // Get pairs of (object ID, set name) for all files in the list of files that have
@@ -347,7 +347,7 @@ class FileSearch {
     @NbBundle.Messages({"# {0} - file name",
         "FileSearch.genVideoThumb.progress.text=extracting temporary file {0}"})
     static void getVideoThumbnails(VideoThumbnailsWrapper thumbnailWrapper) {
-        AbstractFile file = thumbnailWrapper.getAbstractFile();
+        AbstractFile file = thumbnailWrapper.getResultFile().getFirstInstance();
         //Currently this method always creates the thumbnails 
         java.io.File tempFile;
         try {
@@ -471,7 +471,6 @@ class FileSearch {
 
                 bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
                 if (Thread.interrupted()) {
-
                     thumbnailWrapper.setThumbnails(videoThumbnails, framePositions);
                     return;
                 }
@@ -603,7 +602,7 @@ class FileSearch {
         private final FileSize fileSize;
 
         FileSizeGroupKey(ResultFile file) {
-            fileSize = FileSize.fromSize(file.getAbstractFile().getSize());
+            fileSize = FileSize.fromSize(file.getFirstInstance().getSize());
         }
 
         @Override
@@ -660,8 +659,8 @@ class FileSearch {
         private final String parentPath;
 
         ParentPathGroupKey(ResultFile file) {
-            if (file.getAbstractFile().getParentPath() != null) {
-                parentPath = file.getAbstractFile().getParentPath();
+            if (file.getFirstInstance().getParentPath() != null) {
+                parentPath = file.getFirstInstance().getParentPath();
             } else {
                 parentPath = ""; // NON-NLS
             }
@@ -728,11 +727,11 @@ class FileSearch {
             "# {0} - Data source ID",
             "FileSearch.DataSourceGroupKey.idOnly=Data source (ID: {0})"})
         DataSourceGroupKey(ResultFile file) {
-            dataSourceID = file.getAbstractFile().getDataSourceObjectId();
+            dataSourceID = file.getFirstInstance().getDataSourceObjectId();
 
             try {
                 // The data source should be cached so this won't actually be a database query.
-                Content ds = file.getAbstractFile().getDataSource();
+                Content ds = file.getFirstInstance().getDataSource();
                 displayName = Bundle.FileSearch_DataSourceGroupKey_datasourceAndID(ds.getName(), ds.getId());
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error looking up data source with ID " + dataSourceID, ex); // NON-NLS
@@ -790,7 +789,7 @@ class FileSearch {
                 EamDb centralRepoDb) throws FileSearchException {
             for (ResultFile file : files) {
                 if (file.getFileType().equals(FileType.OTHER)) {
-                    file.setFileType(FileType.fromMIMEtype(file.getAbstractFile().getMIMEType()));
+                    file.setFileType(FileType.fromMIMEtype(file.getFirstInstance().getMIMEType()));
                 }
             }
         }
@@ -893,7 +892,7 @@ class FileSearch {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
                     for (ResultFile file : resultFiles) {
-                        tempMap.put(file.getAbstractFile().getId(), file);
+                        tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
                     while (rs.next()) {
@@ -1006,9 +1005,9 @@ class FileSearch {
             List<ResultFile> currentFiles = new ArrayList<>();
             for (ResultFile file : files) {
                 if (file.getFrequency() == Frequency.UNKNOWN
-                        && file.getAbstractFile().getMd5Hash() != null
-                        && !file.getAbstractFile().getMd5Hash().isEmpty()) {
-                    hashesToLookUp.add(file.getAbstractFile().getMd5Hash());
+                        && file.getFirstInstance().getMd5Hash() != null
+                        && !file.getFirstInstance().getMd5Hash().isEmpty()) {
+                    hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
                     currentFiles.add(file);
                 }
 
@@ -1044,7 +1043,7 @@ class FileSearch {
                     int count = resultSet.getInt(2);
                     for (Iterator<ResultFile> iterator = files.iterator(); iterator.hasNext();) {
                         ResultFile file = iterator.next();
-                        if (file.getAbstractFile().getMd5Hash().equalsIgnoreCase(hash)) {
+                        if (file.getFirstInstance().getMd5Hash().equalsIgnoreCase(hash)) {
                             file.setFrequency(Frequency.fromCount(count));
                             iterator.remove();
                         }
@@ -1157,7 +1156,7 @@ class FileSearch {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
                     for (ResultFile file : resultFiles) {
-                        tempMap.put(file.getAbstractFile().getId(), file);
+                        tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
                     while (rs.next()) {
@@ -1297,7 +1296,7 @@ class FileSearch {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
                     for (ResultFile file : resultFiles) {
-                        tempMap.put(file.getAbstractFile().getId(), file);
+                        tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
                     while (rs.next()) {
@@ -1436,7 +1435,7 @@ class FileSearch {
                     // Create a temporary map of object ID to ResultFile
                     Map<Long, ResultFile> tempMap = new HashMap<>();
                     for (ResultFile file : resultFiles) {
-                        tempMap.put(file.getAbstractFile().getId(), file);
+                        tempMap.put(file.getFirstInstance().getId(), file);
                     }
 
                     while (rs.next()) {
@@ -1540,7 +1539,7 @@ class FileSearch {
 
             try {
                 for (ResultFile resultFile : files) {
-                    List<ContentTag> contentTags = caseDb.getContentTagsByContent(resultFile.getAbstractFile());
+                    List<ContentTag> contentTags = caseDb.getContentTagsByContent(resultFile.getFirstInstance());
 
                     for (ContentTag tag : contentTags) {
                         resultFile.addTagName(tag.getName().getDisplayName());

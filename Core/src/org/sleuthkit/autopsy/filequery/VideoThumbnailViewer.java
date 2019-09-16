@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -51,13 +53,25 @@ public class VideoThumbnailViewer extends javax.swing.JPanel {
      * Get the AbstractFile associated with the selected thumbnails.
      *
      * @return The AbstractFile associated with the selected thumbnails, or null
-     *         if no thumnails are selected.
+     *         if no thumbnails are selected.
      */
     AbstractFile getSelectedFile() {
-        if (thumbnailList.getSelectedIndex() == -1) {
-            return null;
-        } else {
-            return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getAbstractFile();
+        synchronized (this) {
+            if (thumbnailList.getSelectedIndex() == -1) {
+                return null;
+            } else {
+                return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getFirstInstance();
+            }
+        }
+    }
+
+    List<AbstractFile> getInstancesForSelected() {
+        synchronized (this) {
+            if (thumbnailList.getSelectedIndex() == -1) {
+                return new ArrayList<>();
+            } else {
+                return thumbnailListModel.getElementAt(thumbnailList.getSelectedIndex()).getResultFile().getAllInstances();
+            }
         }
     }
 
