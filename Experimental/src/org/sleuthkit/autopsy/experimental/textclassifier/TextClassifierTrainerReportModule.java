@@ -21,8 +21,11 @@ package org.sleuthkit.autopsy.experimental.textclassifier;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import opennlp.tools.doccat.DoccatFactory;
@@ -94,7 +97,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         progressPanel.complete(ReportStatus.RUNNING);
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.inProgress.text"));
 
-        List<AbstractFile> allDocs;
+        Queue<AbstractFile> allDocs;
         Set<Long> notableObjectIDs;
         try {
             //Get all files in the case that are documents. Some of these are
@@ -121,16 +124,14 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
             //Convert allDocs to the format that OpenNLP needs.
             ObjectStream<DocumentSample> sampleStream;
             
+            Queue<AbstractFile> batchDocs = new LinkedList<>();
+            while (!allDocs.isEmpty() && batchDocs.size() < BATCH_SIZE) {
+                batchDocs.offer(allDocs.poll());
+            }
             //TODO: Delete this
             System.out.println("********** allDocs.size()\t" + allDocs.size() + "**********");
             
-            if (allDocs.size() > BATCH_SIZE) {
-                sampleStream = convertTrainingData(allDocs.subList(0, BATCH_SIZE), notableObjectIDs, progressPanel);
-                allDocs = allDocs.subList(BATCH_SIZE, allDocs.size());
-            } else {
-                sampleStream = convertTrainingData(allDocs, notableObjectIDs, progressPanel);
-                allDocs = new ArrayList<>();
-            }
+            sampleStream = convertTrainingData(batchDocs, notableObjectIDs, progressPanel);
             
             //Train the model
             progressPanel.setIndeterminate(true);
@@ -213,7 +214,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         "TextClassifierTrainerReportModule.converting.text=Converting training documents",
         "TextClassifierTrainerReportModule.needNotable.text=Training set must contain at least one notable document",
         "TextClassifierTrainerReportModule.needNonnotable.text=Training set must contain at least one nonnotable document",})
-    private ObjectStream<DocumentSample> convertTrainingData(List<AbstractFile> documents, Set<Long> notableObjectIDs, ReportProgressPanel progressPanel) {
+    private ObjectStream<DocumentSample> convertTrainingData(Collection<AbstractFile> documents, Set<Long> notableObjectIDs, ReportProgressPanel progressPanel) {
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.converting.text"));
         progressPanel.setMaximumProgress(documents.size());
@@ -251,7 +252,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         return notableObjectIDs;
     }
 
-    private List<AbstractFile> fetchAllDocuments(ReportProgressPanel progressPanel) throws TskCoreException {
+    private Queue<AbstractFile> fetchAllDocuments(ReportProgressPanel progressPanel) throws TskCoreException {
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "TextClassifierTrainerReportModule.fetching.text"));
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
@@ -261,7 +262,7 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
         //corpus( 20 Newsgroups) has.
         List<AbstractFile> allDocs = fileManager.findFilesByMimeType(SupportedFormats.getDocumentMIMETypes());
         LOGGER.log(Level.INFO, "There are {0} documents", allDocs.size());
-        return allDocs;
+        return new LinkedList(allDocs);
 
     }
 }
