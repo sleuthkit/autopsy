@@ -38,6 +38,7 @@ class TskCallLogsParser(ResultSetIterator):
         self._DEFAULT_DIRECTION = AppDBParserHelper.CommunicationDirection.UNKNOWN
         self._DEFAULT_ADDRESS = None 
         self._DEFAULT_CALL_TYPE = AppDBParserHelper.CallMediaType.UNKNOWN
+        self._DEFAULT_LONG = -1
 
         self.INCOMING_CALL = AppDBParserHelper.CommunicationDirection.INCOMING
         self.OUTGOING_CALL = AppDBParserHelper.CommunicationDirection.OUTGOING
