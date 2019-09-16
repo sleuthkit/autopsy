@@ -35,21 +35,21 @@ import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 import org.sleuthkit.datamodel.TimelineFilter.FileTypeFilter;
 import org.sleuthkit.datamodel.TimelineFilter.FileTypesFilter;
 import org.sleuthkit.datamodel.TimelineFilter.HashHitsFilter;
-import org.sleuthkit.datamodel.TimelineFilter.HashSetFilter;
 import org.sleuthkit.datamodel.TimelineFilter.HideKnownFilter;
 import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
 
 /** A FilterState for RootFilters. Provides named access to the sub
- * filterstates.
+ * filter states.
  */
 public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFilter> {
 
     private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
     private final SqlFilterState<HideKnownFilter> knownFilterState;
     private final SqlFilterState<TextFilter> textFilterState;
-    private final TagsFilterState tagsFilterState;
-    private final CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState;
+    private final SqlFilterState<TagsFilter> tagsFilterState;
+    private final SqlFilterState<HashHitsFilter> hashHitsFilterState;
     private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState;
     private final CompoundFilterState<TimelineFilter.FileTypeFilter, TimelineFilter.FileTypesFilter> fileTypesFilterState;
 
@@ -63,8 +63,8 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
                 new CompoundFilterState<>(delegate.getEventTypeFilter()),
                 new SqlFilterState<>(delegate.getKnownFilter()),
                 new SqlFilterState<>(delegate.getTextFilter()),
-                new TagsFilterState(delegate.getTagsFilter()),
-                new CompoundFilterState<>(delegate.getHashHitsFilter()),
+                new SqlFilterState<>(delegate.getTagsFilter()),
+                new SqlFilterState<>(delegate.getHashHitsFilter()),
                 new CompoundFilterState<>(delegate.getDataSourcesFilter()),
                 new CompoundFilterState<>(delegate.getFileTypesFilter())
         );
@@ -74,8 +74,8 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
                             CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
                             SqlFilterState<HideKnownFilter> knownFilterState,
                             SqlFilterState<TextFilter> textFilterState,
-                            TagsFilterState tagsFilterState,
-                            CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState,
+                            SqlFilterState<TagsFilter> tagsFilterState,
+                            SqlFilterState<HashHitsFilter> hashHitsFilterState,
                             CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState,
                             CompoundFilterState<FileTypeFilter, FileTypesFilter> fileTypesFilterState) {
         super(filter, Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
@@ -133,11 +133,11 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         return textFilterState;
     }
 
-    public TagsFilterState getTagsFilterState() {
+    public SqlFilterState<TagsFilter> getTagsFilterState() {
         return tagsFilterState;
     }
 
-    public CompoundFilterState<HashSetFilter, HashHitsFilter> getHashHitsFilterState() {
+    public SqlFilterState<HashHitsFilter> getHashHitsFilterState() {
         return hashHitsFilterState;
     }
 
@@ -161,17 +161,17 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
                 Lists.transform(getSubFilterStates(), FilterState::getActiveFilter));
     }
 
-    @SuppressWarnings("rawtypes")
-    public boolean hasActiveHashFilters() {
-        return hashHitsFilterState.isActive()
-               && hashHitsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
-    }
-
-    @SuppressWarnings("rawtypes")
-    public boolean hasActiveTagsFilters() {
-        return tagsFilterState.isActive()
-               && tagsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
-    }
+//    @SuppressWarnings("rawtypes")
+//    public boolean hasActiveHashFilters() {
+//        return hashHitsFilterState.isActive();
+//              // && hashHitsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
+//    }
+//
+//    @SuppressWarnings("rawtypes")
+//    public boolean hasActiveTagsFilters() {
+//        return tagsFilterState.isActive();
+//             //  && tagsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
+//    }
 
     @Override
     public ObservableList<FilterState<? extends TimelineFilter>> getSubFilterStates() {
