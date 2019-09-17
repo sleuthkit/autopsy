@@ -32,7 +32,6 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -40,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.blackboardutils import WebBrowserArtifactsHelper
 
 import traceback
 import general
@@ -60,7 +60,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             cookiesDbs = AppSQLiteDB.findAppDatabases(dataSource, "Cookies", True, "com.opera.browser")
             for cookiesDb in cookiesDbs:
                 try:
-                    cookiesDbHelper = AppDBParserHelper(self.moduleName, cookiesDb.getDBFile())
+                    cookiesDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                        self.moduleName, cookiesDb.getDBFile())
                     cookiesResultSet = cookiesDb.runQuery("SELECT host_key, name, value, creation_utc FROM cookies")
                     if cookiesResultSet is not None:
                         while cookiesResultSet.next():
@@ -72,9 +73,9 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                                                         self.progName)
 
                 except SQLException as ex:
-                    self._logger.log(Level.SEVERE, "Error processing query results for Opera cookies.", ex)
+                    self._logger.log(Level.WARNING, "Error processing query results for Opera cookies.", ex)
                 except TskCoreException as ex:
-                    self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding Opera cookies.", ex)
+                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera cookies.", ex)
                 finally:      
                     cookiesDb.close()                    
             	
@@ -84,7 +85,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             historyDbs = AppSQLiteDB.findAppDatabases(dataSource, "History", True, "com.opera.browser")
             for historyDb in historyDbs:
                 try:
-                    historyDbHelper = AppDBParserHelper(self.moduleName, historyDb.getDBFile())
+                    historyDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                            self.moduleName, historyDb.getDBFile())
                     historyResultSet = historyDb.runQuery("SELECT url, title, last_visit_time FROM urls")
                     if historyResultSet is not None:
                         while historyResultSet.next():
@@ -95,9 +97,9 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                                                         historyResultSet.getString("title"),
                                                         self.progName)
                 except SQLException as ex:
-                    self._logger.log(Level.SEVERE, "Error processing query results for Opera history.", ex)
+                    self._logger.log(Level.WARNING, "Error processing query results for Opera history.", ex)
                 except TskCoreException as ex:
-                    self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding Opera history.", ex)
+                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera history.", ex)
                 finally:        
                     historyDb.close()                    
                 
@@ -107,7 +109,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             downloadsDbs = AppSQLiteDB.findAppDatabases(dataSource, "History", True, "com.opera.browser")
             for downloadsDb in downloadsDbs:
                 try:
-                    downloadsDbHelper = AppDBParserHelper(self.moduleName, downloadsDb.getDBFile())
+                    downloadsDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                            self.moduleName, downloadsDb.getDBFile())
                     queryString = "SELECT target_path, start_time, url FROM downloads"\
                                   " INNER JOIN downloads_url_chains ON downloads.id = downloads_url_chains.id"
                     downloadsResultSet = downloadsDb.runQuery(queryString)
@@ -120,9 +123,9 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                                                         self.progName)
                 
                 except SQLException as ex:
-                    self._logger.log(Level.SEVERE, "Error processing query results for Opera downloads.", ex)
+                    self._logger.log(Level.WARNING, "Error processing query results for Opera downloads.", ex)
                 except TskCoreException as ex:
-                    self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding Opera downloads.", ex)
+                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera downloads.", ex)
                 finally:
                     downloadsDb.close()                    
                 
@@ -130,7 +133,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             autofillDbs = AppSQLiteDB.findAppDatabases(dataSource, "Web Data", True, "com.opera.browser")
             for autofillDb in autofillDbs:
                 try:
-                    autofillDbHelper = AppDBParserHelper(self.moduleName, autofillDb.getDBFile())
+                    autofillDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                            self.moduleName, autofillDb.getDBFile())
                     autofillsResultSet = autofillDb.runQuery("SELECT name, value, count, date_created FROM autofill")
                     if autofillsResultSet is not None:
                         while autofillsResultSet.next():
@@ -142,9 +146,9 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                                                         autofillsResultSet.getInt("count"))
                 
                 except SQLException as ex:
-                    self._logger.log(Level.SEVERE, "Error processing query results for Opera autofill.", ex)
+                    self._logger.log(Level.WARNING, "Error processing query results for Opera autofill.", ex)
                 except TskCoreException as ex:
-                    self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding Opera autofill.", ex)
+                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera autofill.", ex)
                 finally:
                     autofillDb.close()
 
@@ -152,7 +156,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             webFormAddressDbs = AppSQLiteDB.findAppDatabases(dataSource, "Web Data", True, "com.opera.browser")
             for webFormAddressDb in webFormAddressDbs:
                 try:
-                    webFormAddressDbHelper = AppDBParserHelper(self.moduleName, webFormAddressDb.getDBFile())
+                    webFormAddressDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                                self.moduleName, webFormAddressDb.getDBFile())
                     queryString = "SELECT street_address, city, state, zipcode, country_code, date_modified, first_name, last_name, number, email FROM autofill_profiles "\
                                 " INNER JOIN autofill_profile_names"\
                                 " ON autofill_profiles.guid = autofill_profile_names.guid"\
@@ -179,9 +184,9 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                                                         0)
                 
                 except SQLException as ex:
-                    self._logger.log(Level.SEVERE, "Error processing query results for Opera web form addresses.", ex)
+                    self._logger.log(Level.WARNING, "Error processing query results for Opera web form addresses.", ex)
                 except TskCoreException as ex:
-                    self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding Opera form addresses.", ex)
+                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera form addresses.", ex)
                 finally:
                     webFormAddressDb.close()
                     

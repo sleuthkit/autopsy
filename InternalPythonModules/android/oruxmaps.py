@@ -34,7 +34,6 @@ from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -43,6 +42,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.blackboardutils import ArtifactsHelper
 
 import traceback
 import general
@@ -62,7 +62,8 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
         oruxMapsTrackpointsDbs = AppSQLiteDB.findAppDatabases(dataSource, "oruxmapstracks.db", True, "oruxmaps")
         for oruxMapsTrackpointsDb in oruxMapsTrackpointsDbs:
             try:
-                oruxDbHelper = AppDBParserHelper(self.moduleName, oruxMapsTrackpointsDb.getDBFile())
+                oruxDbHelper = ArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                    self.moduleName, oruxMapsTrackpointsDb.getDBFile())
                 
                 poiQueryString = "SELECT poilat, poilon, poitime, poiname FROM pois"
                 poisResultSet = oruxMapsTrackpointsDb.runQuery(poiQueryString)
@@ -86,8 +87,8 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                                             "",
                                             self.programName)
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for Orux Map trackpoints.", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for Orux Map trackpoints.", ex)
             except TskCoreException as ex:
-                self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding Orux Map trackpoints.", ex)
+                self._logger.log(Level.WARNING, "Failed to create ArtifactsHelper for adding Orux Map trackpoints.", ex)
             finally:
                 oruxMapsTrackpointsDb.close()

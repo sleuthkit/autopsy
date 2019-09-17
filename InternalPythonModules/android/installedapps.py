@@ -32,7 +32,6 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -40,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.blackboardutils import ArtifactsHelper
 
 import traceback
 import general
@@ -59,7 +59,8 @@ class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
         libraryDbs = AppSQLiteDB.findAppDatabases(dataSource, "library.db", True, "com.android.vending")
         for libraryDb in libraryDbs:
             try:
-                libraryDbHelper = AppDBParserHelper(self.moduleName, libraryDb.getDBFile())
+                libraryDbHelper = ArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                    self.moduleName, libraryDb.getDBFile())
                 queryString = "SELECT doc_id, purchase_time FROM ownership"
                 ownershipResultSet = libraryDb.runQuery(queryString)
                 if ownershipResultSet is not None:
@@ -69,9 +70,9 @@ class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
                                                     purchase_time)
             
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for installed applications. ", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for installed applications. ", ex)
             except TskCoreException as ex:
-                self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding installed applications.", ex)
+                self._logger.log(Level.WARNING, "Failed to create ArtifactsHelper for adding installed applications.", ex)
             finally:
                 libraryDb.close()
     
