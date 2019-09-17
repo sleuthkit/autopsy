@@ -30,6 +30,8 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.logging.Level;
 import opennlp.tools.ml.model.Context;
@@ -62,7 +64,11 @@ class TextClassifierUtils {
     private static final Logger LOGGER = Logger.getLogger(TextClassifierUtils.class.getName());
     private static final String TEXT_CLASSIFIERS_SUBDIRECTORY = "text_classifiers"; //NON-NLS
     private static final Tokenizer TOKENIZER = SimpleTokenizer.INSTANCE;
+    //Pattern to identify tokens without letters.
+    private static final Pattern LETTERLESS = Pattern.compile("^[^\\p{L}]*$",
+            Pattern.UNICODE_CHARACTER_CLASS);
     private FileTypeDetector fileTypeDetector;
+
     static final String NOTABLE_LABEL = "notable";
     static final String NONNOTABLE_LABEL = "nonnotable";
     static final int MAX_FILE_SIZE = 100000000;
@@ -175,9 +181,20 @@ class TextClassifierUtils {
             String[] sentenceTokens = TOKENIZER.tokenize(sentence);
             if (sentenceTokens.length > 5) {
                 for (String token : sentenceTokens) {
-                    token = UnicodeSanitizer.sanitize(token);
-                    token = StringEscapeUtils.escapeJava(token);
-                    tokens.add(token);
+                    if (token == null) {
+                        continue;
+                    }
+                    String sanitizedToken = UnicodeSanitizer.sanitize(token);
+                    sanitizedToken = sanitizedToken.toLowerCase(Locale.US);
+                    if (sanitizedToken.length() < 3) {
+                        continue;
+                    }
+                    if (LETTERLESS.matcher(sanitizedToken).matches()) {
+                        continue;
+                    }
+
+                    sanitizedToken = StringEscapeUtils.escapeJava(sanitizedToken);
+                    tokens.add(sanitizedToken);
                 }
             }
         }
