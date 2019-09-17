@@ -70,7 +70,7 @@ final class ContactNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
+        Sheet sheet = new Sheet();
         
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
