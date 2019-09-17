@@ -21,40 +21,36 @@ package org.sleuthkit.autopsy.keywordsearch;
 import com.optimaize.langdetect.LanguageDetectorBuilder;
 import com.optimaize.langdetect.i18n.LdLocale;
 import com.optimaize.langdetect.ngram.NgramExtractors;
-import com.optimaize.langdetect.profiles.LanguageProfile;
 import com.optimaize.langdetect.profiles.LanguageProfileReader;
 import com.optimaize.langdetect.text.CommonTextObjectFactories;
 import com.optimaize.langdetect.text.TextObject;
 import com.optimaize.langdetect.text.TextObjectFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.io.UncheckedIOException;
 import java.util.Optional;
 
 class LanguageDetector {
 
-  private List<LanguageProfile> languageProfiles;
+  private com.optimaize.langdetect.LanguageDetector impl;
+  private TextObjectFactory textObjectFactory;
 
   LanguageDetector() {
     try {
-      languageProfiles = Arrays.asList(
-          new LanguageProfileReader().readBuiltIn(LdLocale.fromString("en")),
-          new LanguageProfileReader().readBuiltIn(LdLocale.fromString("ja"))
-      );
+      impl = LanguageDetectorBuilder.create(NgramExtractors.standard())
+          .withProfiles(new LanguageProfileReader().readAllBuiltIn())
+          .build();
+      textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      // The IOException here could occur when failing to read the language profiles from the classpath.
+      // That can be considered to be a severe IO problem. Nothing can be done here.
+      throw new UncheckedIOException(e);
     }
   }
 
   Optional<Language> detect(String text) {
-    com.optimaize.langdetect.LanguageDetector languageDetector = LanguageDetectorBuilder.create(NgramExtractors.standard())
-        .withProfiles(languageProfiles)
-        .build();
-
-    TextObjectFactory textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
-
     TextObject textObject = textObjectFactory.forText(text);
-    return languageDetector.detect(textObject).transform(Optional::of).or(Optional.empty()).map(LdLocale::getLanguage).flatMap(Language::fromValue);
+    Optional<LdLocale> localeOpt = impl.detect(textObject).transform(Optional::of).or(Optional.empty());
+    return localeOpt.map(LdLocale::getLanguage).flatMap(Language::fromValue);
   }
 }
