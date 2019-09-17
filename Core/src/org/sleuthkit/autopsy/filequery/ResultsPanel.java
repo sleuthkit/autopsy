@@ -427,6 +427,7 @@ public class ResultsPanel extends javax.swing.JPanel {
 
         instancesList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ResultsPanel.class, "ResultsPanel.instancesList.border.title"))); // NOI18N
         instancesList.setModel(instancesListModel);
+        instancesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         instancesList.setCellRenderer(new InstancesCellRenderer());
         instancesScrollPane.setViewportView(instancesList);
 
