@@ -170,7 +170,9 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnEditIngestSettingsActionPerformed
 
     private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         doReportWizard(REPORTING_CONFIGURATION_NAME, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnEditReportSettingsActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
