@@ -19,15 +19,15 @@
 package org.sleuthkit.autopsy.logicalimager.dsp;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
+import javax.swing.JOptionPane;
+import static javax.swing.JOptionPane.YES_OPTION;
 import javax.swing.JPanel;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -131,8 +132,10 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
-        "# {0} - file", "LogicalImagerDSProcessor.failToGetCanonicalPath=Fail to get canonical path for {0}",
-        "LogicalImagerDSProcessor.noCurrentCase=No current case",})
+        "LogicalImagerDSProcessor.destinationDirectoryConfirmation=Destination directory confirmation",
+        "# {0} - directory", "LogicalImagerDSProcessor.destinationDirectoryConfirmationMsg=The logical imager folder {0} already exists,\ndo you want to add it again using a new folder name?",
+        "LogicalImagerDSProcessor.noCurrentCase=No current case",
+    })
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
@@ -164,44 +167,27 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         File dest = Paths.get(logicalImagerDir.toString(), imageDirPath.getFileName().toString()).toFile();
         if (dest.exists()) {
             // Destination directory already exists
-            String msg = Bundle.LogicalImagerDSProcessor_directoryAlreadyExists(dest.toString());
-            errorList.add(msg);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
+            int showConfirmDialog = JOptionPane.showConfirmDialog(configPanel, 
+                    Bundle.LogicalImagerDSProcessor_destinationDirectoryConfirmationMsg(dest.toString()),
+                    Bundle.LogicalImagerDSProcessor_destinationDirectoryConfirmation(),
+                    JOptionPane.YES_NO_OPTION);
+            if (showConfirmDialog == YES_OPTION) {
+                // Get unique dest directory
+                String uniqueDirectory = imageDirPath.getFileName() + "_" + TimeStampUtils.createTimeStamp();
+                dest = Paths.get(logicalImagerDir.toString(), uniqueDirectory).toFile();
+            } else {
+                String msg = Bundle.LogicalImagerDSProcessor_directoryAlreadyExists(dest.toString());
+                errorList.add(msg);
+                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                return;
+            }
         }
         File src = imageDirPath.toFile();
 
         try {
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_copyingImageFromTo(src.toString(), dest.toString()));
-            FileUtils.copyDirectory(src, dest);
-            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneCopying());
-        } catch (IOException ex) {
-            // Copy directory failed
-            String msg = Bundle.AddLogicalImageTask_failedToCopyDirectory(src.toString(), dest.toString());
-            errorList.add(msg);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-        
-        // Get all VHD files in the src directory
-        List<String> imagePaths = new ArrayList<>();
-        for (File f : dest.listFiles()) {
-            if (f.getName().endsWith(".vhd")) {
-                try {
-                    imagePaths.add(f.getCanonicalPath());
-                } catch (IOException ex) {
-                    String msg = Bundle.LogicalImagerDSProcessor_failToGetCanonicalPath(f.getName());
-                    errorList.add(msg);
-                    callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-                    return;
-                }
-            }
-        }
-        try {
             String deviceId = UUID.randomUUID().toString();
             String timeZone = Calendar.getInstance().getTimeZone().getID();
-            run(deviceId, imagePaths,
-                    timeZone, src, dest,
+            run(deviceId, timeZone, src, dest,
                     progressMonitor, callback);
         } catch (NoCurrentCaseException ex) {
             String msg = Bundle.LogicalImagerDSProcessor_noCurrentCase();
@@ -220,7 +206,6 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param deviceId        An ASCII-printable identifier for the device
      *                        associated with the data source that is intended
      *                        to be unique across multiple cases (e.g., a UUID).
-     * @param imagePaths      Paths to the image files.
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
      *                        java.util.TimeZone.getID.
@@ -230,13 +215,14 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, List<String> imagePaths, String timeZone,
+    private void run(String deviceId, String timeZone,
             File src, File dest,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
-        addLogicalImageTask = new AddLogicalImageTask(deviceId, imagePaths, timeZone, src, dest,
+        addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest,
                 progressMonitor, callback);
-        new Thread(addLogicalImageTask).start();
+        Thread thread = new Thread(addLogicalImageTask);
+        thread.start();
     }
 
     @Override
