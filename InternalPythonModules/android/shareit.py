@@ -32,8 +32,6 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
-from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import CommunicationDirection
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -42,6 +40,9 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
 import traceback
 import general
@@ -62,8 +63,9 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
         historyDbs = AppSQLiteDB.findAppDatabases(dataSource, "history.db", True, "com.lenovo.anyshare.gps")
         for historyDb in historyDbs:
             try:
-                historyDbHelper = AppDBParserHelper(self.moduleName, historyDb.getDBFile(),
-                                                    Account.Type.SHAREIT)
+                historyDbHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                    self.moduleName, historyDb.getDBFile(),
+                                    Account.Type.SHAREIT)
 
                 queryString = "SELECT history_type, device_id, device_name, description, timestamp, import_path FROM history"
                 historyResultSet = historyDb.runQuery(queryString)
@@ -91,7 +93,7 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                                             fromAddress,
                                                             toAddress,
                                                             timeStamp,
-                                                            AppDBParserHelper.MessageReadStatusEnum.UNKNOWN,
+                                                            MessageReadStatus.UNKNOWN,
                                                             None,   # subject
                                                             msgBody,
                                                             "" )
@@ -99,9 +101,9 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                         # TBD: add the file as attachment ??
 
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for ShareIt history.", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for ShareIt history.", ex)
             except TskCoreException as ex:
-                self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding artifacts.", ex)
+                self._logger.log(Level.WARNING, "Failed to create CommunicationArtifactsHelper for adding artifacts.", ex)
             finally:
                 historyDb.close()
                 

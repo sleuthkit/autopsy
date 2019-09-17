@@ -32,8 +32,6 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
-from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import CommunicationDirection
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -42,7 +40,9 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
-
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 import traceback
 import general
 
@@ -70,8 +70,9 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                         if not selfAccountAddress:
                             selfAccountAddress = Account.Address(profilesResultSet.getString("device_id"), profilesResultSet.getString("nick_name"))
 
-                transactionDbHelper = AppDBParserHelper(self.moduleName, transactionDb.getDBFile(),
-                                                    Account.Type.XENDER, Account.Type.XENDER, selfAccountAddress )
+                transactionDbHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                                            self.moduleName, transactionDb.getDBFile(),
+                                            Account.Type.XENDER, Account.Type.XENDER, selfAccountAddress )
 
                 queryString = "SELECT f_path, f_display_name, f_size_str, f_create_time, c_direction, c_session_id, s_name, s_device_id, r_name, r_device_id FROM new_history "
                 messagesResultSet = transactionDb.runQuery(queryString)
@@ -99,7 +100,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                                                             fromAddress,
                                                             toAddress,
                                                             timeStamp,
-                                                            AppDBParserHelper.MessageReadStatusEnum.UNKNOWN,
+                                                            MessageReadStatus.UNKNOWN,
                                                             None, 
                                                             msgBody,
                                                             messagesResultSet.getString("c_session_id") )
@@ -107,9 +108,9 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                         # TBD: add the file as attachment ??
 
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for profiles", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for profiles", ex)
             except TskCoreException as ex:
-                self._logger.log(Level.SEVERE, "Failed to create AppDBParserHelper for adding artifacts.", ex)
+                self._logger.log(Level.WARNING, "Failed to create CommunicationArtifactsHelper for adding artifacts.", ex)
             finally:
                 transactionDb.close()
                 
