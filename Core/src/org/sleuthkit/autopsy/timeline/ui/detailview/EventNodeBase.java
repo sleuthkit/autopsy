@@ -293,32 +293,6 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
 
                 @Override
                 protected String call() throws Exception {
-//                    HashMap<String, Long> hashSetCounts = new HashMap<>();
-//                    if (tlEvent.getEventIDsWithHashHits().isEmpty() == false) {
-//                        try {
-//                            //TODO:push this to DB
-//                            for (TimelineEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
-//                                Set<String> hashSetNames = sleuthkitCase.getContentById(tle.getFileObjID()).getHashSetNames();
-//                                for (String hashSetName : hashSetNames) {
-//                                    hashSetCounts.merge(hashSetName, 1L, Long::sum);
-//                                }
-//                            }
-//                        } catch (TskCoreException ex) {
-//                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex); //NON-NLS
-//                        }
-//                    }
-//                    String hashSetCountsString = hashSetCounts.entrySet().stream()
-//                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
-//                            .collect(Collectors.joining("\n"));
-
-//                    Map<String, Long> tagCounts = new HashMap<>();
-//                    if (tlEvent.getEventIDsWithTags().isEmpty() == false) {
-//                        tagCounts.putAll(eventsModel.getTagCountsByTagName(tlEvent.getEventIDsWithTags()));
-//                    }
-//                    String tagCountsString = tagCounts.entrySet().stream()
-//                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
-//                            .collect(Collectors.joining("\n"));
-
                     return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
                             TimeLineController.getZonedFormatter().print(getEndMillis() + 1000));
