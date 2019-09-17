@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filequery;
 
 import java.awt.Image;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,23 +29,19 @@ import java.util.List;
  */
 final class VideoThumbnailsWrapper {
 
-    private List<Image> thumbnails;
+    private final List<Image> thumbnails;
     private final ResultFile resultFile;
     private int[] timeStamps;
 
     /**
      * Construct a new VideoThumbnailsWrapper.
      *
-     * @param thumbnails The list of Images which are the thumbnails for the
-     *                   video.
-     * @param timeStamps An array containing the time in milliseconds into the
-     *                   video that each thumbnail created for.
-     * @param file       The ResultFile which represents the video file which
-     *                   the thumbnails were created for.
+     * @param file The ResultFile which represents the video file which the
+     *             thumbnails were created for.
      */
-    VideoThumbnailsWrapper(List<Image> thumbnails, int[] timeStamps, ResultFile file) {
-        this.thumbnails = thumbnails;
-        this.timeStamps = timeStamps;
+    VideoThumbnailsWrapper(ResultFile file) {
+        this.thumbnails = new ArrayList<>();
+        this.timeStamps = new int[4];
         this.resultFile = file;
     }
 
@@ -79,9 +76,17 @@ final class VideoThumbnailsWrapper {
         return Collections.unmodifiableList(thumbnails);
     }
 
+    /**
+     * Set the thumbnails and their associated time stamps.
+     *
+     * @param videoThumbnails The list of Images which are the thumbnails for
+     *                        the video.
+     * @param framePositions  An array containing the time in milliseconds into
+     *                        the video that each thumbnail created for.
+     */
     void setThumbnails(List<Image> videoThumbnails, int[] framePositions) {
-        this.thumbnails = videoThumbnails;
-        this.timeStamps = framePositions;
+        this.thumbnails.addAll(videoThumbnails);
+        this.timeStamps = framePositions.clone();
     }
 
 }

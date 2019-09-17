@@ -35,7 +35,7 @@ import org.openide.util.NbBundle.Messages;
 final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<VideoThumbnailsWrapper> {
 
     private static final int GAP_SIZE = 4;
-    private static final Color SELECTION_COLOR = new Color(100, 200, 255);
+    private static final Color SELECTION_COLOR = new Color(0,120,215);
     private static final long serialVersionUID = 1L;
 
     /**
@@ -124,7 +124,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(fileSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 19, Short.MAX_VALUE)
                     .addComponent(countLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
