@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+  <Properties>
+    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+      <Dimension value="[810, 422]"/>
+    </Property>
+  </Properties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -16,7 +21,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="nodeScrollPane" alignment="1" pref="864" max="32767" attributes="0"/>
+          <Component id="nodeScrollPane" alignment="1" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -31,6 +36,9 @@
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[0, 0]"/>
         </Property>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[803, 553]"/>
+        </Property>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
@@ -39,6 +47,9 @@
           <Properties>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[100, 100]"/>
+            </Property>
+            <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+              <Dimension value="[801, 551]"/>
             </Property>
           </Properties>
 
@@ -53,7 +64,7 @@
                           <Component id="jLabelReportConfig" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="bnEditReportSettings" alignment="0" min="-2" pref="155" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="1362" max="32767" attributes="0"/>
+                      <EmptySpace pref="362" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -77,10 +88,10 @@
             <Component class="javax.swing.JButton" name="bnEditIngestSettings">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="viking/commandline/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditIngestSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditIngestSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="viking/commandline/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditIngestSettings.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditIngestSettings.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.bnEditIngestSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
