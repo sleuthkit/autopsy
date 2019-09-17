@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.report.infrastructure;
 
 import org.sleuthkit.autopsy.report.modules.file.FileReportDataTypes;
-import org.sleuthkit.autopsy.report.infrastructure.FileReportSettings;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -73,7 +72,7 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
             // load defaults
             options = Arrays.asList(FileReportDataTypes.values());
             for (FileReportDataTypes entry : options) {
-                optionStates.put(entry, Boolean.FALSE);
+                optionStates.put(entry, Boolean.TRUE);
             }
         }
 
