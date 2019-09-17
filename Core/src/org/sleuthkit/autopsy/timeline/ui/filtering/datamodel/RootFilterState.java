@@ -161,18 +161,6 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
                 Lists.transform(getSubFilterStates(), FilterState::getActiveFilter));
     }
 
-//    @SuppressWarnings("rawtypes")
-//    public boolean hasActiveHashFilters() {
-//        return hashHitsFilterState.isActive();
-//              // && hashHitsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
-//    }
-//
-//    @SuppressWarnings("rawtypes")
-//    public boolean hasActiveTagsFilters() {
-//        return tagsFilterState.isActive();
-//             //  && tagsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
-//    }
-
     @Override
     public ObservableList<FilterState<? extends TimelineFilter>> getSubFilterStates() {
         ImmutableMap<FilterState<? extends TimelineFilter>, Integer> filterOrder

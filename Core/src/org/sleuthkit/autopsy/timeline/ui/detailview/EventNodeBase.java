@@ -24,15 +24,12 @@ import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -82,9 +79,7 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
-import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  *
