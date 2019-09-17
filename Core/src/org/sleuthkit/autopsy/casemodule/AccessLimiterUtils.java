@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * Class for methods to check if access should be limited to a feature
  *
  */
-final class AccessLimiter {
+final class AccessLimiterUtils {
 
     private final static String MULTI_USER_ACCESS_FILE_NAME = "mualimit"; // NON-NLS
     private final static String MULTI_USER_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), MULTI_USER_ACCESS_FILE_NAME).toString();
@@ -43,7 +43,7 @@ final class AccessLimiter {
     /**
      * Private constructor for a utility class
      */
-    private AccessLimiter() {
+    private AccessLimiterUtils() {
         //private constructer left empty intentionally
     }
 }
