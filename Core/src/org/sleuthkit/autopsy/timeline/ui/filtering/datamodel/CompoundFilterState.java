@@ -121,8 +121,6 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
 
     /**
      * Disable the sub-filters of the given compound filter if it is not active
-     *
-     * @param compoundFilter the compound filter
      */
     private void disableSubFiltersIfNotActive() {
         boolean inactive = isActive() == false;

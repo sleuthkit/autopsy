@@ -411,7 +411,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * appropriate artifacts and derived files.
      *
      * @param partialEmailsForThreading
-     * @param fileMessageIterator
+     * @param fullMessageIterator
      * @param abstractFile
      */
     private void processEmails(List<EmailMessage> partialEmailsForThreading, Iterator<EmailMessage> fullMessageIterator, AbstractFile abstractFile) {

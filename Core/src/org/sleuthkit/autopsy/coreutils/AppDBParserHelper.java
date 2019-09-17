@@ -283,8 +283,8 @@ public final class AppDBParserHelper  {
     /**
      * Adds a relations between the two specified account instances.
      * 
-     * @param selfAccount device owner account
-     * @param otherAccount other account
+     * @param selfAccountInstance device owner account
+     * @param otherAccountInstance other account
      * @param sourceArtifact artifact from which relationship is derived.
      * @param relationshipType type of relationship
      * @param dateTime date/time of relationship 
@@ -316,7 +316,7 @@ public final class AppDBParserHelper  {
      * @param readStatus message read or not
      * @param subject message subject, may be empty
      * @param messageText message body, may be empty
-     * @param threadId, message thread id
+     * @param threadId message thread id
      * 
      * @return message artifact 
      */
@@ -347,7 +347,7 @@ public final class AppDBParserHelper  {
      * @param readStatus message read or not
      * @param subject message subject, may be empty
      * @param messageText message body, may be empty
-     * @param threadId, message thread id
+     * @param threadId message thread id
      * 
      * @param otherAttributesList additional attributes 
      * 
@@ -385,7 +385,7 @@ public final class AppDBParserHelper  {
      * @param readStatus message read or not
      * @param subject message subject, may be empty
      * @param messageText message body, may be empty
-     * @param threadId, message thread id
+     * @param threadId message thread id
      * 
      * 
      * @return message artifact
@@ -867,7 +867,7 @@ public final class AppDBParserHelper  {
      * @param accessTime last access time
      * @param referrer referrer, may be empty
      * @param title website title, may be empty
-     * @param programName, application recording the history
+     * @param programName application recording the history
      * 
      * @return artifact created
      */
@@ -884,7 +884,7 @@ public final class AppDBParserHelper  {
      * @param accessTime last access time
      * @param referrer referrer, may be empty
      * @param title website title, may be empty
-     * @param programName, application recording the history
+     * @param programName application recording the history
      * @param otherAttributesList other attributes
      * 
      * 
