@@ -31,11 +31,10 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
-import opennlp.tools.doccat.DoccatFactory;
-import opennlp.tools.doccat.DoccatModel;
-import opennlp.tools.doccat.DocumentCategorizerME;
+import java.util.Map;
+import java.util.logging.Level;
+import opennlp.tools.ml.model.Context;
 import opennlp.tools.ml.naivebayes.NaiveBayesModel;
 import opennlp.tools.ml.naivebayes.NaiveBayesModelReader;
 import opennlp.tools.ml.naivebayes.PlainTextNaiveBayesModelReader;
@@ -112,6 +111,7 @@ class TextClassifierUtils {
      * language text.
      *
      * @param abstractFile A file
+     *
      * @return true if this file's MIME type is supported.
      */
     boolean isSupported(AbstractFile abstractFile) {
@@ -128,6 +128,7 @@ class TextClassifierUtils {
      * Divides a file into tokens
      *
      * @param a file
+     *
      * @return An array of all tokens in the file
      */
     static String[] extractTokens(AbstractFile file) {
@@ -183,17 +184,17 @@ class TextClassifierUtils {
                     if (token == null) {
                         continue;
                     }
-                    token = UnicodeSanitizer.sanitize(token);
-                    token = token.toLowerCase(Locale.US);
-                    if (token.length() < 3) {
+                    String sanitizedToken = UnicodeSanitizer.sanitize(token);
+                    sanitizedToken = sanitizedToken.toLowerCase(Locale.US);
+                    if (sanitizedToken.length() < 3) {
                         continue;
                     }
-                    if (LETTERLESS.matcher(token).matches()) {
+                    if (LETTERLESS.matcher(sanitizedToken).matches()) {
                         continue;
                     }
 
-                    token = StringEscapeUtils.escapeJava(token);
-                    tokens.add(token);
+                    sanitizedToken = StringEscapeUtils.escapeJava(sanitizedToken);
+                    tokens.add(sanitizedToken);
                 }
             }
         }
@@ -201,31 +202,31 @@ class TextClassifierUtils {
     }
 
     /**
-     * Loads a Naive Bayes categorizer from disk.
+     * Loads a Naive Bayes model from disk.
      *
-     * @return the categorizer
+     * @return the model
+     *
      * @throws IOException if the model cannot be found on disk, or if the file
-     * does not seem to be a model file
+     *                     does not seem to be a model file
      */
-    static DocumentCategorizerME loadCategorizer() throws IOException {
+    static NaiveBayesModel loadModel() throws IOException {
         ensureTextClassifierFolderExists();
-        BufferedReader br = new BufferedReader(new InputStreamReader(
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 new FileInputStream(MODEL_PATH),
-                Charset.forName("UTF-8").newDecoder()));
-        NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(br);
-
-        reader.checkModelType();
-        NaiveBayesModel model = (NaiveBayesModel) reader.constructModel();
-        DoccatModel doccatModel = new DoccatModel(LANGUAGE_CODE, model, new HashMap<>(), new DoccatFactory());
-        return new DocumentCategorizerME(doccatModel);
+                Charset.forName("UTF-8").newDecoder()))) {
+            NaiveBayesModelReader reader = new PlainTextNaiveBayesModelReader(br);
+            reader.checkModelType();
+            return (NaiveBayesModel) reader.constructModel();
+        }
     }
 
     /**
      * Writes a naive Bayes classifier model to disk.
      *
      * @param model the model
+     *
      * @throws IOException If the model file cannot be written. Large files can
-     * cause this.
+     *                     cause this.
      */
     static void writeModel(NaiveBayesModel model) throws IOException {
         ensureTextClassifierFolderExists();
@@ -239,4 +240,28 @@ class TextClassifierUtils {
         }
     }
 
+    static Map<String, Double> countTokens(NaiveBayesModel model) {
+        Object[] data = model.getDataStructures();
+        Map<String, Context> pmap = (Map<String, Context>) data[1];
+        String[] outcomeNames = (String[]) data[2];
+
+        //Initialize counts to 0
+        Map<String, Double> categoryToTokenCount = new HashMap<>();
+        for (String outcomeName : outcomeNames) {
+            categoryToTokenCount.put(outcomeName, 0.0);
+        }
+
+        //Count how many tokens are in the training data for each category.
+        for (String pred : pmap.keySet()) {
+            Context context = pmap.get(pred);
+            int outcomeIndex = 0;
+            for (String outcomeName : outcomeNames) {
+                double oldValue = categoryToTokenCount.get(outcomeName);
+                double toAdd = context.getParameters()[outcomeIndex];
+                categoryToTokenCount.put(outcomeName, oldValue + toAdd);
+                outcomeIndex++;
+            }
+        }
+        return categoryToTokenCount;
+    }
 }

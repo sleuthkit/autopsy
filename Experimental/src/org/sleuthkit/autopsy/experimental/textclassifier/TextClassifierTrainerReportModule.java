@@ -125,9 +125,6 @@ public class TextClassifierTrainerReportModule extends GeneralReportModuleAdapte
             //Convert allDocs to the format that OpenNLP needs.
             ObjectStream<DocumentSample> sampleStream;
 
-            //TODO: Delete this
-            LOGGER.log(Level.INFO, "********** allDocs.size()\t" + allDocs.size() + "**********");
-
             Queue<AbstractFile> batchDocs = new LinkedList<>();
             while (!allDocs.isEmpty() && batchDocs.size() < BATCH_SIZE) {
                 batchDocs.offer(allDocs.poll());
