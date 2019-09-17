@@ -356,13 +356,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         scene.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             if (new KeyCodeCombination(KeyCode.LEFT, KeyCodeCombination.ALT_DOWN).match(keyEvent)) {
                 new Back(controller).handle(null);
-            } else if (new KeyCodeCombination(KeyCode.BACK_SPACE).match(keyEvent)) {
-                new Back(controller).handle(null);
             } else if (new KeyCodeCombination(KeyCode.RIGHT, KeyCodeCombination.ALT_DOWN).match(keyEvent)) {
                 new Forward(controller).handle(null);
-            } else if (new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCodeCombination.SHIFT_DOWN).match(keyEvent)) {
-                new Forward(controller).handle(null);
-            }
+            } 
         });
 
         //add ui componenets to JFXPanels

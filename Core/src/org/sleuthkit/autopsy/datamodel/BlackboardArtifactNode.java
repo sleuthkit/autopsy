@@ -369,11 +369,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             if (EamDb.isEnabled()) {
                 sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), VALUE_LOADING, ""));
             }
+            // Get the SCO columns data in a background task
+            backgroundTasksPool.submit(new GetSCOTask(
+                    new WeakReference<>(this), weakPcl));
         }
-
-        // Get the SCO columns data in a background task
-        backgroundTasksPool.submit(new GetSCOTask(
-                new WeakReference<>(this), weakPcl));
 
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {

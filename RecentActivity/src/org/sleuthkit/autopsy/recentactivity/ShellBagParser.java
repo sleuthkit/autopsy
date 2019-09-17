@@ -30,18 +30,19 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Parse the ntuser and ursclass regripper output files for shellbags.
  */
 public class ShellBagParser {
+    private static final Logger logger = Logger.getLogger(ShellBagParser.class.getName());
     
-    private final Logger logger = Logger.getLogger(ShellBagParser.class.getName());
-
-    static SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    static SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
     // Last Write date\time format from itempos plugin
-    static SimpleDateFormat DATE_TIME_FORMATTER2 = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyyy");
+    static SimpleDateFormat DATE_TIME_FORMATTER2 = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyyy", Locale.getDefault());
 
     private ShellBagParser() {
     }
@@ -246,21 +247,21 @@ public class ShellBagParser {
      */
     class ShellBag {
 
-        private String resource = "";
-        private String key = "";
-        private String lastWrite = "";
-        private String modified = "";
-        private String accessed = "";
-        private String created = "";
+        private final String resource;
+        private final String key;
+        private final String lastWrite;
+        private final String modified;
+        private final String accessed;
+        private final String created;
 
         /**
          * Creates a new shell bag object.
          * 
          * Any of the parameters can be "";
          * 
-         * @param resource String from the "Resource" or "Name" column, depending on the plugin
+         * @param resource String from the "Resource" or "Name" column, depending on the plug in
          * @param key  String registry key value
-         * @param lastWrite Depending on the plugin lastWrite is either Last write value or the MRU Time value
+         * @param lastWrite Depending on the plug in lastWrite is either Last write value or the MRU Time value
          * @param modified  Modified time string
          * @param accessed  Accessed time string
          * @param created   Created time string
@@ -351,7 +352,7 @@ public class ShellBagParser {
                 try {
                     return DATE_TIME_FORMATTER2.parse(dateTimeString).getTime() / 1000;
                 } catch (ParseException ex) {
-                    
+                    logger.log(Level.WARNING, String.format("ShellBag parse failure.  %s is not formated as expected.", dateTimeString), ex);
                 }
             }
             return 0;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
@@ -34,6 +36,8 @@ import org.sleuthkit.datamodel.Content;
  * A utility that runs an ingest job, blocking until the job is completed.
  */
 public final class IngestJobRunner {
+
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
 
     /**
      * Runs an ingest job, blocking until the job is completed.
@@ -51,7 +55,7 @@ public final class IngestJobRunner {
         Object ingestMonitor = new Object();
         IngestJobCompletiontListener completiontListener = new IngestJobCompletiontListener(ingestMonitor);
         IngestManager ingestManager = IngestManager.getInstance();
-        ingestManager.addIngestJobEventListener(completiontListener);
+        ingestManager.addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, completiontListener);
         try {
             synchronized (ingestMonitor) {
                 IngestJobStartResult jobStartResult = ingestManager.beginIngestJob(dataSources, settings);
@@ -111,5 +115,5 @@ public final class IngestJobRunner {
             }
         }
     }
-    
+
 }
