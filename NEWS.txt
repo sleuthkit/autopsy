@@ -1,3 +1,48 @@
+---------------- VERSION 4.12.0  --------------
+Collection
+- Added ability to configure a USB drive to use new logical imager tool.
+- Added logical imager tool that runs on a live Windows computer and saves results to a USB drive.
+- Added ability to import logical imager results into Autopsy as a data source.
+
+Ingest Modules:
+- Changed file type detection so that Tika does not rely only on extension.
+- Email ingest module assigns thread IDs to messages
+- Android ingest modules store thread ID from their databases.
+
+Content Viewers (lower right of UI):
+- New “Text” viewer that consolidates previous Strings and “Indexed Text” viewers.
+- New “Translation” panel was added to the new “Text” viewer.
+- Added integration with Google and Bing translation (credentials required)
+- Redesigned “Other Occurrences” viewer to have 4th column with details of selected item.
+- Added Willi Ballentin’s “Registry Hive Viewer” panel to the “Application” viewer.
+- Improved HTML viewer to use style sheets and better layout.
+- Added ability to draw a box on a picture while tagging it.
+
+Result Table (upper right of UI)
+- Added paging to all views for faster loading of large data sets.
+- Improved speed of displaying results when a column was sorted.
+
+Reporting
+- Portable cases can contain files marked as Interesting Items
+- Portable cases can be compressed and chunked
+- “Files - Text” report can use either tabs or commas as the delimiter
+- “Files - Text” report better handles Unicode text.
+- Added ability to create a CSV report for the contents of a table
+- HTML report for tagged pictures includes a copy with the overlay box
+
+Communications:
+- Added Account Summary view
+- Added Contacts panel to show all contacts associated with an account.
+- Added Media panel to show media attachments associated with an account
+- Added filter to show accounts if they involved with the most recent messages.
+- Messages can be grouped by thread.
+
+Auto Ingest
+- New Test button was added to help diagnose permission and configuration issues.
+
+Documentation:
+- Created new Triage Standard Operating Procedure (SOP) section to the User Docs
+
 ---------------- VERSION 4.11.0  --------------
 New Features:
 

@@ -24,7 +24,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.openide.util.NbBundle;
