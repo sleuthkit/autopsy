@@ -25,6 +25,7 @@ package org.sleuthkit.autopsy.report.infrastructure;
 import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModuleSettings;
 import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModule;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -46,6 +47,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -143,7 +145,9 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
     @Override
     @SuppressWarnings("unchecked")
     public void actionPerformed(ActionEvent e) {
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         doReportWizard(REPORTING_CONFIGURATION_NAME, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
     @Override

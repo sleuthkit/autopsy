@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.util.ArrayList;
 import static java.util.Collections.swap;
 import java.util.HashMap;
@@ -42,7 +41,6 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -76,11 +74,9 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     // Initialize the list of ReportModules
     private void initModules() {
 
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         tableModules = ReportModuleLoader.getTableReportModules();
         generalModules = ReportModuleLoader.getGeneralReportModules();
         fileModules = ReportModuleLoader.getFileReportModules();
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
         for (TableReportModule module : tableModules) {
             if (!moduleIsValid(module)) {
