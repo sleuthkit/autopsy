@@ -28,19 +28,19 @@ import java.util.Optional;
  * such as content_ja.
  */
 public enum Language {
-  JAPANESE("ja");
+    JAPANESE("ja");
 
-  private String value;
+    private String value;
 
-  String getValue() {
-    return value;
-  }
+    String getValue() {
+        return value;
+    }
 
-  static Optional<Language> fromValue(String value) {
-    return Arrays.stream(Language.values()).filter(x -> x.value.equals(value)).findFirst();
-  }
+    static Optional<Language> fromValue(String value) {
+        return Arrays.stream(Language.values()).filter(x -> x.value.equals(value)).findFirst();
+    }
 
-  Language(String value) {
-    this.value = value;
-  }
+    Language(String value) {
+        this.value = value;
+    }
 }

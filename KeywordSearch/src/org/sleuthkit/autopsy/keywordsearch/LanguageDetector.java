@@ -32,25 +32,25 @@ import java.util.Optional;
 
 class LanguageDetector {
 
-  private com.optimaize.langdetect.LanguageDetector impl;
-  private TextObjectFactory textObjectFactory;
+    private com.optimaize.langdetect.LanguageDetector impl;
+    private TextObjectFactory textObjectFactory;
 
-  LanguageDetector() {
-    try {
-      impl = LanguageDetectorBuilder.create(NgramExtractors.standard())
-          .withProfiles(new LanguageProfileReader().readAllBuiltIn())
-          .build();
-      textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
-    } catch (IOException e) {
-      // The IOException here could occur when failing to read the language profiles from the classpath.
-      // That can be considered to be a severe IO problem. Nothing can be done here.
-      throw new UncheckedIOException(e);
+    LanguageDetector() {
+        try {
+            impl = LanguageDetectorBuilder.create(NgramExtractors.standard())
+                .withProfiles(new LanguageProfileReader().readAllBuiltIn())
+                .build();
+            textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
+        } catch (IOException e) {
+            // The IOException here could occur when failing to read the language profiles from the classpath.
+            // That can be considered to be a severe IO problem. Nothing can be done here.
+            throw new UncheckedIOException(e);
+        }
     }
-  }
 
-  Optional<Language> detect(String text) {
-    TextObject textObject = textObjectFactory.forText(text);
-    Optional<LdLocale> localeOpt = impl.detect(textObject).transform(Optional::of).or(Optional.empty());
-    return localeOpt.map(LdLocale::getLanguage).flatMap(Language::fromValue);
-  }
+    Optional<Language> detect(String text) {
+        TextObject textObject = textObjectFactory.forText(text);
+        Optional<LdLocale> localeOpt = impl.detect(textObject).transform(Optional::of).or(Optional.empty());
+        return localeOpt.map(LdLocale::getLanguage).flatMap(Language::fromValue);
+    }
 }

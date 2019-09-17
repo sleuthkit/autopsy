@@ -31,52 +31,52 @@ import java.util.Optional;
 
 class LanguageSpecificContentIndexingHelper {
 
-  private final LanguageDetector languageDetector = new LanguageDetector();
+    private final LanguageDetector languageDetector = new LanguageDetector();
 
-  Optional<Language> detectLanguageIfNeeded(Chunker.Chunk chunk) throws NoOpenCoreException {
-    double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
-    if (2.2 <= indexSchemaVersion) {
-      return languageDetector.detect(chunk.toString());
-    } else {
-      return Optional.empty();
-    }
-  }
-
-  void updateLanguageSpecificFields(Map<String, Object> fields, Chunker.Chunk chunk, Language language) {
-    List<String> values = new ArrayList<>();
-    values.add(chunk.toString());
-    if (fields.containsKey(Server.Schema.FILE_NAME.toString())) {
-      values.add(fields.get(Server.Schema.FILE_NAME.toString()).toString());
+    Optional<Language> detectLanguageIfNeeded(Chunker.Chunk chunk) throws NoOpenCoreException {
+        double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
+        if (2.2 <= indexSchemaVersion) {
+            return languageDetector.detect(chunk.toString());
+        } else {
+            return Optional.empty();
+        }
     }
 
-    // index the chunk to a language specific field
-    fields.put(Server.Schema.CONTENT_JA.toString(), values);
-    fields.put(Server.Schema.LANGUAGE.toString(), language.getValue());
-  }
+    void updateLanguageSpecificFields(Map<String, Object> fields, Chunker.Chunk chunk, Language language) {
+        List<String> values = new ArrayList<>();
+        values.add(chunk.toString());
+        if (fields.containsKey(Server.Schema.FILE_NAME.toString())) {
+            values.add(fields.get(Server.Schema.FILE_NAME.toString()).toString());
+        }
 
-  void indexMiniChunk(Chunker.Chunk chunk, String sourceName, Map<String, Object> fields, String baseChunkID, Language language)
-      throws Ingester.IngesterException {
-    //Make a SolrInputDocument out of the field map
-    SolrInputDocument updateDoc = new SolrInputDocument();
-    for (String key : fields.keySet()) {
-      updateDoc.addField(key, fields.get(key));
+        // index the chunk to a language specific field
+        fields.put(Server.Schema.CONTENT_JA.toString(), values);
+        fields.put(Server.Schema.LANGUAGE.toString(), language.getValue());
     }
 
-    try {
-      updateDoc.setField(Server.Schema.ID.toString(), MiniChunks.getChunkIdString(baseChunkID));
+    void indexMiniChunk(Chunker.Chunk chunk, String sourceName, Map<String, Object> fields, String baseChunkID, Language language)
+        throws Ingester.IngesterException {
+        //Make a SolrInputDocument out of the field map
+        SolrInputDocument updateDoc = new SolrInputDocument();
+        for (String key : fields.keySet()) {
+            updateDoc.addField(key, fields.get(key));
+        }
 
-      // index the chunk to a language specific field
-      updateDoc.addField(Server.Schema.CONTENT_JA.toString(), chunk.toString().substring(chunk.getBaseChunkLength()));
-      updateDoc.addField(Server.Schema.LANGUAGE.toString(), language.getValue());
+        try {
+            updateDoc.setField(Server.Schema.ID.toString(), MiniChunks.getChunkIdString(baseChunkID));
 
-      TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
+            // index the chunk to a language specific field
+            updateDoc.addField(Server.Schema.CONTENT_JA.toString(), chunk.toString().substring(chunk.getBaseChunkLength()));
+            updateDoc.addField(Server.Schema.LANGUAGE.toString(), language.getValue());
 
-      KeywordSearch.getServer().addDocument(updateDoc);
-      HealthMonitor.submitTimingMetric(metric);
+            TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
 
-    } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-      throw new Ingester.IngesterException(
-          NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
+            KeywordSearch.getServer().addDocument(updateDoc);
+            HealthMonitor.submitTimingMetric(metric);
+
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            throw new Ingester.IngesterException(
+                NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
+        }
     }
-  }
 }

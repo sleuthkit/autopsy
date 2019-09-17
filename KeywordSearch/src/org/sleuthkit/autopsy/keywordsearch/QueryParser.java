@@ -34,52 +34,52 @@ import java.util.stream.Collectors;
  */
 class QueryParser {
 
-  static class Result {
+    static class Result {
+        /**
+         * field name -> [term]
+         */
+        final Map<String, List<String>> fieldTermsMap = new HashMap<>();
+    }
+
     /**
-     * field name -> [term]
+     * Parse the given query string on Solr and return the result
      */
-    final Map<String, List<String>> fieldTermsMap = new HashMap<>();
-  }
+    static Result parse(String query, List<Server.Schema> fields) throws KeywordSearchModuleException, NoOpenCoreException {
+        Server server = KeywordSearch.getServer();
 
-  /**
-   * Parse the given query string on Solr and return the result
-   */
-  static Result parse(String query, List<Server.Schema> fields) throws KeywordSearchModuleException, NoOpenCoreException {
-    Server server = KeywordSearch.getServer();
+        FieldAnalysisRequest request = new FieldAnalysisRequest();
+        for (Server.Schema field : fields) {
+            request.addFieldName(field.toString());
+        }
+        // FieldAnalysisRequest requires to set its field value property,
+        // while the corresponding analysis.fieldvalue parameter is not needed in the API.
+        // Setting an empty value does not effect on the result.
+        request.setFieldValue("");
+        request.setQuery(query);
 
-    FieldAnalysisRequest request = new FieldAnalysisRequest();
-    for (Server.Schema field : fields) {
-      request.addFieldName(field.toString());
+        FieldAnalysisResponse response = new FieldAnalysisResponse();
+        try {
+            response.setResponse(server.request(request));
+        } catch (SolrServerException e) {
+            throw new KeywordSearchModuleException(e);
+        }
+
+        Result result = new Result();
+        for (Map.Entry<String, FieldAnalysisResponse.Analysis> entry : response.getAllFieldNameAnalysis()) {
+            Iterator<AnalysisResponseBase.AnalysisPhase> it = entry.getValue().getQueryPhases().iterator();
+
+            // The last phase is the one which is used in the search process.
+            AnalysisResponseBase.AnalysisPhase lastPhase = null;
+            while (it.hasNext()) {
+                lastPhase = it.next();
+            }
+
+            if (lastPhase != null) {
+                List<String> tokens = lastPhase.getTokens().stream().map(AnalysisResponseBase.TokenInfo::getText).collect(Collectors.toList());
+                result.fieldTermsMap.put(entry.getKey(), tokens);
+            }
+        }
+
+        return result;
     }
-    // FieldAnalysisRequest requires to set its field value property,
-    // while the corresponding analysis.fieldvalue parameter is not needed in the API.
-    // Setting an empty value does not effect on the result.
-    request.setFieldValue("");
-    request.setQuery(query);
-
-    FieldAnalysisResponse response = new FieldAnalysisResponse();
-    try {
-      response.setResponse(server.request(request));
-    } catch (SolrServerException e) {
-      throw new KeywordSearchModuleException(e);
-    }
-
-    Result result = new Result();
-    for (Map.Entry<String, FieldAnalysisResponse.Analysis> entry : response.getAllFieldNameAnalysis()) {
-      Iterator<AnalysisResponseBase.AnalysisPhase> it = entry.getValue().getQueryPhases().iterator();
-
-      // The last phase is the one which is used in the search process.
-      AnalysisResponseBase.AnalysisPhase lastPhase = null;
-      while (it.hasNext()) {
-        lastPhase = it.next();
-      }
-
-      if (lastPhase != null) {
-        List<String> tokens = lastPhase.getTokens().stream().map(AnalysisResponseBase.TokenInfo::getText).collect(Collectors.toList());
-        result.fieldTermsMap.put(entry.getKey(), tokens);
-      }
-    }
-
-    return result;
-  }
 }
