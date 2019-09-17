@@ -512,8 +512,14 @@ public final class FilteredEventsModel {
         DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
 
         Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
-        boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-        Set<Long> updatedEventIDs = deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
+        boolean isContentTagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
+        boolean isArtifactTagged = false;
+        
+        if(content instanceof BlackboardArtifact) {
+            isArtifactTagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact((BlackboardArtifact)content).isEmpty() == false;
+        }
+        
+        Set<Long> updatedEventIDs = deleteTag(content.getId(), null, deletedTagInfo.getTagID(), isArtifactTagged || isContentTagged);
         return postTagsDeleted(updatedEventIDs);
     }
 
@@ -521,8 +527,9 @@ public final class FilteredEventsModel {
         DeletedBlackboardArtifactTagInfo deletedTagInfo = evt.getDeletedTagInfo();
 
         BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
-        boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-        Set<Long> updatedEventIDs = deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
+        boolean isArtifactTagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
+        boolean isContentTagged = autoCase.getServices().getTagsManager().getContentTagsByContent(artifact).isEmpty() == false;
+        Set<Long> updatedEventIDs = deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), isArtifactTagged || isContentTagged);
         return postTagsDeleted(updatedEventIDs);
     }
 
