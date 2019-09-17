@@ -436,7 +436,7 @@
     <folder name="Windows2">
         <folder name="Components">
             <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml"/>
-            <!-- <file name="DataContentTopComponent.settings" url="DataContentTopComponentSettings.xml" /> -->
+            <file name="DataContentTopComponent.settings" url="DataContentTopComponentSettings.xml" />
             <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml"/>
         </folder>
         <folder name="Modes">

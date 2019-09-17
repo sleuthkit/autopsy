@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.tuple.Pair;
@@ -52,6 +53,7 @@ import org.sleuthkit.datamodel.Tag;
 public class VolumeNode extends AbstractContentNode<Volume> {
 
     private static final Logger logger = Logger.getLogger(VolumeNode.class.getName());
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
 
     /**
      * Helper so that the display name and the name used in building the path
@@ -81,7 +83,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
 
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS
         // Listen for ingest events so that we can detect new added files (e.g. carved)
-        IngestManager.getInstance().addIngestModuleEventListener(pcl);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
         // Listen for case events so that we can detect when case is closed
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
     }
@@ -159,7 +161,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                 NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
 
-        return actionsList.toArray(new Action[0]);
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     @Override
