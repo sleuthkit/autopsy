@@ -18,12 +18,13 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.request.FieldAnalysisRequest;
+import org.apache.solr.client.solrj.response.AnalysisResponseBase;
+import org.apache.solr.client.solrj.response.FieldAnalysisResponse;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,45 +38,48 @@ class QueryParser {
     /**
      * field name -> [term]
      */
-    Map<String, List<String>> fieldTermsMap;
+    final Map<String, List<String>> fieldTermsMap = new HashMap<>();
   }
 
   /**
    * Parse the given query string on Solr and return the result
    */
   static Result parse(String query, List<Server.Schema> fields) throws KeywordSearchModuleException, NoOpenCoreException {
-    SolrQuery q = new SolrQuery();
-    q.setShowDebugInfo(true);
-    q.setQuery(fields.stream().map(f -> String.format("%s:%s", f, KeywordSearchUtil.escapeLuceneQuery(query))).collect(Collectors.joining(" OR ")));
-    q.setRows(0);
+    Server server = KeywordSearch.getServer();
 
-    QueryResponse response = KeywordSearch.getServer().query(q, SolrRequest.METHOD.POST);
-    Map<String, Object> debugMap = response.getDebugMap();
-    String parsedQuery = debugMap.getOrDefault("parsedquery", "").toString();
+    FieldAnalysisRequest request = new FieldAnalysisRequest();
+    for (Server.Schema field : fields) {
+      request.addFieldName(field.toString());
+    }
+    // FieldAnalysisRequest requires to set its field value property,
+    // while the corresponding analysis.fieldvalue parameter is not needed in the API.
+    // Setting an empty value does not effect on the result.
+    request.setFieldValue("");
+    request.setQuery(query);
 
-    Result result = new Result();
-    result.fieldTermsMap = getFieldTermsMap(parsedQuery);
-    return result;
-  }
-
-  static Map<String, List<String>> getFieldTermsMap(String parsedQuery) {
-    Map<String, List<String>> map = new HashMap<>();
-
-    for (String fieldTermStr : parsedQuery.split(" ")) {
-      String[] fieldTerm = fieldTermStr.split(":");
-      if (fieldTerm.length != 2) {
-        continue;
-      }
-
-      String field = fieldTerm[0];
-      String term = fieldTerm[1];
-
-      List<String> terms = map.getOrDefault(field, new ArrayList<>());
-      terms.add(term);
-
-      map.put(field, terms);
+    FieldAnalysisResponse response = new FieldAnalysisResponse();
+    try {
+      response.setResponse(server.request(request));
+    } catch (SolrServerException e) {
+      throw new KeywordSearchModuleException(e);
     }
 
-    return map;
+    Result result = new Result();
+    for (Map.Entry<String, FieldAnalysisResponse.Analysis> entry : response.getAllFieldNameAnalysis()) {
+      Iterator<AnalysisResponseBase.AnalysisPhase> it = entry.getValue().getQueryPhases().iterator();
+
+      // The last phase is the one which is used in the search process.
+      AnalysisResponseBase.AnalysisPhase lastPhase = null;
+      while (it.hasNext()) {
+        lastPhase = it.next();
+      }
+
+      if (lastPhase != null) {
+        List<String> tokens = lastPhase.getTokens().stream().map(AnalysisResponseBase.TokenInfo::getText).collect(Collectors.toList());
+        result.fieldTermsMap.put(entry.getKey(), tokens);
+      }
+    }
+
+    return result;
   }
 }
