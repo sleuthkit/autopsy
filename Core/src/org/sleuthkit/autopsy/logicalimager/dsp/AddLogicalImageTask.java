@@ -369,6 +369,7 @@ final class AddLogicalImageTask implements Runnable {
                 }
                 if (lineNumber % POST_ARTIFACT_INTERVAL == 0) {
                     postArtifacts(artifacts);
+                    artifacts.clear();
                 }
                 String query = makeQuery(createVHD, vhdFilename, fileMetaAddressStr, parentPath, filename);
 
