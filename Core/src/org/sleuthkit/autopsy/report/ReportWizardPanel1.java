@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.report;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.prefs.Preferences;
 import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
@@ -33,10 +35,12 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
 
     private WizardDescriptor wiz;
     private ReportVisualPanel1 component;
-    private JButton nextButton;
-    private JButton finishButton;
+    private Map<String, ReportModuleConfig> moduleConfigs;
+    private final JButton nextButton;
+    private final JButton finishButton;
 
-    ReportWizardPanel1() {
+    ReportWizardPanel1(Map<String, ReportModuleConfig> moduleConfigs) {
+        this.moduleConfigs = moduleConfigs;
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.nextButton.text"));
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.finishButton.text"));
         finishButton.setEnabled(false);
@@ -60,7 +64,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
     @Override
     public ReportVisualPanel1 getComponent() {
         if (component == null) {
-            component = new ReportVisualPanel1(this);
+            component = new ReportVisualPanel1(this, moduleConfigs);
         }
         return component;
     }

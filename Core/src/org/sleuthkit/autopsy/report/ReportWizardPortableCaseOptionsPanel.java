@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.report;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
@@ -36,7 +37,7 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
     private ReportWizardPortableCaseOptionsVisualPanel component;
     private final JButton finishButton;
 
-    ReportWizardPortableCaseOptionsPanel() {
+    ReportWizardPortableCaseOptionsPanel(Map<String, ReportModuleConfig> moduleConfigs) {
         finishButton = new JButton(
                 NbBundle.getMessage(this.getClass(), "ReportWizardFileOptionsPanel.finishButton.text"));
         finishButton.setEnabled(false);

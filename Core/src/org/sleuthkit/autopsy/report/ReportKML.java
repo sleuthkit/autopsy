@@ -184,7 +184,7 @@ class ReportKML implements GeneralReportModule {
         document.addContent(gpsSearchesFolder);
         document.addContent(gpsTrackpointsFolder);
 
-        ReportProgressPanel.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
+        ReportProgressDialog.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
 
         /**
          * In the following code, nulls are okay, and are handled when we go to

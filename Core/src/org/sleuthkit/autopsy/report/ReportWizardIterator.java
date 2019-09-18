@@ -22,13 +22,16 @@ import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
+    private static final Logger logger = Logger.getLogger(ReportWizardIterator.class.getName());
     private int index;
 
     private final ReportWizardPanel1 firstPanel;
@@ -55,11 +58,26 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
     private final WizardDescriptor.Panel<WizardDescriptor>[] portableCaseConfigPanels;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    ReportWizardIterator() {
-        firstPanel = new ReportWizardPanel1();
-        tableConfigPanel = new ReportWizardPanel2();
-        fileConfigPanel = new ReportWizardFileOptionsPanel();
-        portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel();
+    ReportWizardIterator(String reportingConfigurationName, boolean useCaseSpecificData, boolean runReports) {
+        
+        ReportingConfig config = null;
+        try {
+            config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+        } catch (ReportConfigException ex) {
+            logger.log(Level.SEVERE, "Unable to load reporting configuration " + reportingConfigurationName + ". Using default settings", ex);
+        }
+        
+        if (config != null) {
+            firstPanel = new ReportWizardPanel1(config.getModuleConfigs());
+            tableConfigPanel = new ReportWizardPanel2(config.getTableReportSettings(), useCaseSpecificData);
+            fileConfigPanel = new ReportWizardFileOptionsPanel(config.getFileReportSettings());
+            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs());
+        } else {
+            firstPanel = new ReportWizardPanel1(null);
+            tableConfigPanel = new ReportWizardPanel2(null, useCaseSpecificData);
+            fileConfigPanel = new ReportWizardFileOptionsPanel(null);
+            portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null);            
+        }
 
         allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
         tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
