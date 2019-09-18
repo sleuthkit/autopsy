@@ -54,7 +54,7 @@ class ArtifactSelectionDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ArtifactSelectionDialog
-     * 
+     *
      * @param parent The parent window
      * @param modal  Block user-input to other top-level windows.
      */
@@ -113,9 +113,11 @@ class ArtifactSelectionDialog extends javax.swing.JDialog {
             @Override
             public void mousePressed(MouseEvent evt) {
                 int index = artifactList.locationToIndex(evt.getPoint());
-                BlackboardArtifact.Type type = model.getElementAt(index);
-                artifactTypeSelections.put(type, !artifactTypeSelections.get(type));
-                artifactList.repaint();
+                if (index >= 0) {
+                    BlackboardArtifact.Type type = model.getElementAt(index);
+                    artifactTypeSelections.put(type, !artifactTypeSelections.get(type));
+                    artifactList.repaint();
+                }
             }
         });
     }

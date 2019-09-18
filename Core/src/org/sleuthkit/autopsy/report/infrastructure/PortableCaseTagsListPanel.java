@@ -230,7 +230,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
      */    
     static class GetTagCountsCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-        private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GetTagCountsCallback.class.getName());
+        private static final Logger logger = Logger.getLogger(GetTagCountsCallback.class.getName());
         private final Map<Long, Long> tagCounts = new HashMap<>();
         
         @Override

@@ -51,6 +51,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 class Util {
 
     private static Logger logger = Logger.getLogger(Util.class.getName());
+    
+    /** Difference between Filetime epoch and Unix epoch (in ms). */
+    private static final long FILETIME_EPOCH_DIFF = 11644473600000L;
+
+    /** One millisecond expressed in units of 100s of nanoseconds. */
+    private static final long FILETIME_ONE_MILLISECOND = 10 * 1000;
 
     private Util() {
     }
@@ -176,4 +182,16 @@ class Util {
         }
         return results;
     }
+    
+    /**
+     * Converts a windows FILETIME to java-unix epoch milliseconds
+     * 
+     * @param filetime 100 nanosecond intervals from jan 1, 1601
+     * 
+     * @return java-unix epoch milliseconds
+     */
+    static long filetimeToMillis(final long filetime) {
+        return (filetime / FILETIME_ONE_MILLISECOND) - FILETIME_EPOCH_DIFF;
+    }
+
 }

@@ -37,6 +37,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -187,9 +188,12 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts",
         "PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files",
         "PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results",
+        "PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table",
         "# {0} - attribute type name",
         "PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
         "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
+        "PortableCaseReportModule.generateReport.errorCreatingReportFolder=Could not make report folder",
+        "PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report"
     })
 
     public void generateReport(String reportPath, PortableCaseReportModuleSettings options, ReportProgressPanel progressPanel) {
@@ -270,6 +274,14 @@ public class PortableCaseReportModule implements ReportModule {
         // Check for cancellation 
         if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
             handleCancellation(progressPanel);
+            return;
+        }
+        
+        // Set up the table for the image tags
+        try {
+            initializeImageTags(progressPanel);
+        } catch (TskCoreException ex) {
+            handleError("Error creating image tag table", Bundle.PortableCaseReportModule_generateReport_errorCreatingImageTagTable(), ex, progressPanel); // NON-NLS
             return;
         }
         
@@ -391,7 +403,7 @@ public class PortableCaseReportModule implements ReportModule {
         
         File reportsFolder = Paths.get(caseFolder.toString(), "Reports").toFile();
         if(!reportsFolder.mkdir()) {
-            handleError("Could not make report folder", "Could not make report folder", null, progressPanel); // NON-NLS
+            handleError("Could not make report folder", Bundle.PortableCaseReportModule_generateReport_errorCreatingReportFolder(), null, progressPanel); // NON-NLS
             return;
         }
         
@@ -399,7 +411,7 @@ public class PortableCaseReportModule implements ReportModule {
             CaseUcoFormatExporter.export(tagNames, setNames, reportsFolder, progressPanel);
         } catch (IOException | SQLException | NoCurrentCaseException | TskCoreException ex) {
             handleError("Problem while generating CASE-UCO report", 
-                    "Problem while generating CASE-UCO report", ex, progressPanel); // NON-NLS
+                    Bundle.PortableCaseReportModule_generateReport_errorGeneratingUCOreport(), ex, progressPanel); // NON-NLS
         }
         
         // Compress the case (if desired)
@@ -542,6 +554,22 @@ public class PortableCaseReportModule implements ReportModule {
     }
     
     /**
+     * Set up the image tag table in the portable case
+     * 
+     * @param progressPanel 
+     * 
+     * @throws TskCoreException 
+     */
+    private void initializeImageTags(ReportProgressPanel progressPanel) throws TskCoreException {
+  
+        // Create the image tags table in the portable case
+        CaseDbAccessManager portableDbAccessManager = portableSkCase.getCaseDbAccessManager();
+        if (! portableDbAccessManager.tableExists(ContentViewerTagManager.TABLE_NAME)) {
+            portableDbAccessManager.createTable(ContentViewerTagManager.TABLE_NAME, ContentViewerTagManager.TABLE_SCHEMA_SQLITE);
+        }
+    }
+    
+    /**
      * Add all files with a given tag to the portable case.
      * 
      * @param oldTagName    The TagName object from the current case
@@ -553,7 +581,7 @@ public class PortableCaseReportModule implements ReportModule {
         
         // Get all the tags in the current case
         List<ContentTag> tags = currentCase.getServices().getTagsManager().getContentTagsByTagName(oldTagName);
-        
+      
         // Copy the files into the portable case and tag
         for (ContentTag tag : tags) {
             
@@ -564,16 +592,88 @@ public class PortableCaseReportModule implements ReportModule {
             
             Content content = tag.getContent();
             if (content instanceof AbstractFile) {
+                
                 long newFileId = copyContentToPortableCase(content, progressPanel);
                 
                 // Tag the file
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
                     throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName()); // NON-NLS
                 }
-                portableSkCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
+                ContentTag newContentTag = portableSkCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
+
+                // Get the image tag data associated with this tag (empty string if there is none)
+                // and save it if present
+                String appData = getImageTagDataForContentTag(tag);
+                if (! appData.isEmpty()) {
+                    addImageTagToPortableCase(newContentTag, appData);
+                }
             }
         }  
     }  
+    
+    /**
+     * Gets the image tag data for a given content tag
+     * 
+     * @param tag The ContentTag in the current case
+     * 
+     * @return The app_data string for this content tag or an empty string if there was none
+     * 
+     * @throws TskCoreException 
+     */
+    private String getImageTagDataForContentTag(ContentTag tag) throws TskCoreException {
+
+        GetImageTagCallback callback = new GetImageTagCallback();
+        String query = "* FROM " + ContentViewerTagManager.TABLE_NAME + " WHERE content_tag_id = " + tag.getId();
+        currentCase.getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
+        return callback.getAppData();
+    }
+    
+    /**
+     * CaseDbAccessManager callback to get the app_data string for the image tag
+     */
+    private static class GetImageTagCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+        private static final Logger logger = Logger.getLogger(PortableCaseReportModule.class.getName());
+        private String appData = "";
+        
+        @Override
+        public void process(ResultSet rs) {
+            try {
+                while (rs.next()) {
+                    try {
+                        appData = rs.getString("app_data"); // NON-NLS
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "Unable to get app_data from result set", ex); // NON-NLS
+                    }
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Failed to get next result for app_data", ex); // NON-NLS
+            }
+        }   
+        
+        /**
+         * Get the app_data string
+         * 
+         * @return the app_data string
+         */
+        String getAppData() {
+            return appData;
+        }
+    }
+    
+    /**
+     * Add an image tag to the portable case.
+     * 
+     * @param newContentTag The content tag in the portable case
+     * @param appData       The string to copy into app_data
+     * 
+     * @throws TskCoreException 
+     */
+    private void addImageTagToPortableCase(ContentTag newContentTag, String appData) throws TskCoreException {
+        String insert = "(content_tag_id, app_data) VALUES (" + newContentTag.getId() + ", '" + appData + "')";
+        portableSkCase.getCaseDbAccessManager().insert(ContentViewerTagManager.TABLE_NAME, insert);
+    }
+    
     
     /**
      * Add all artifacts with a given tag to the portable case.

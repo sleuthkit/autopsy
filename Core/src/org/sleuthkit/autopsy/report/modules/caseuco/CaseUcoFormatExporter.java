@@ -201,21 +201,18 @@ public final class CaseUcoFormatExporter {
     }
 
     /**
-     * Exports files that are tagged w/ the following TagNames and that belong
-     * to the following interesting file sets (set name attributes of
-     * TSK_INTERSTING_FILE_HIT and TSK_INTERESTING_ARTIFACT_HIT). Artifacts that
-     * are tagged with the following TagNames also have their associated source
-     * files included.
-     *
+     * Exports files that are tagged with the following TagNames and that belong to 
+     * the following interesting file sets (set name attributes of TSK_INTERSTING_FILE_HIT
+     * and TSK_INTERESTING_ARTIFACT_HIT). Artifacts that are tagged with 
+     * the following TagNames also have their associated source files included.
+     * 
      * Duplicate files are excluded.
      *
      * @param tagTypes Collection of TagNames to match
-     * @param interestingItemSets Collection of SET_NAMEs to match on in
-     * TSK_INTERESTING_FILE_HITs and TSK_INTERESTING_ARTIFACT_HITs.
-     * @param outputFilePath Path to the folder that the CASE-UCO report should
-     * be written into
-     * @param progressPanel UI Component to be updated with current processing
-     * status
+     * @param interestingItemSets Collection of SET_NAMEs to match on in TSK_INTERESTING_FILE_HITs
+     *                            and TSK_INTERESTING_ARTIFACT_HITs.
+     * @param caseReportFolder Path to the folder that the CASE-UCO report should be written into
+     * @param progressPanel UI Component to be updated with current processing status
      */
     @NbBundle.Messages({
         "CaseUcoFormatExporter.startMsg=Generating CASE-UCO Report",
