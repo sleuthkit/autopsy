@@ -116,10 +116,6 @@ final class ContactNode extends BlackboardArtifactNode {
                 sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
             }
             
-            // Don't need these values to appear in the Contact property sheet.
-            sheetSet.remove("S");
-            sheetSet.remove("C");
-            
             List<Content> children = artifact.getChildren();
             if(children != null) {
                 int count = 0;
