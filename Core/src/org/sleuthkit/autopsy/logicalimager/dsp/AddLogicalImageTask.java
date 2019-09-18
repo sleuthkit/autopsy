@@ -437,12 +437,11 @@ final class AddLogicalImageTask implements Runnable {
                     fileIds.add(file.getId());
                 }
                 String key = String.format("%s\t%s", ruleSetName, ruleName);
-                List<Long> value = new ArrayList<>();
                 if (interestingFileMap.containsKey(key)) {
-                    value = interestingFileMap.get(key);
+                    interestingFileMap.get(key).addAll(fileIds);
+                } else {
+                    interestingFileMap.put(key, fileIds);
                 }
-                value.addAll(fileIds);
-                interestingFileMap.put(key, value);
                 lineNumber++;
             } // end reading file            }
         }
