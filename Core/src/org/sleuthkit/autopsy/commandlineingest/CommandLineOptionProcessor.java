@@ -49,6 +49,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option runIngestCommandOption = Option.withoutArgument('r', "runIngest");
     private final Option ingestProfileOption = Option.requiredArgument('p', "ingestProfile");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
+    private final Option generateReportsOption = Option.withoutArgument('g', "generateReports");
 
     private boolean runFromCommandLine = false;
 
@@ -67,6 +68,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(runIngestCommandOption);
         set.add(ingestProfileOption);
         set.add(listAllDataSourcesCommandOption);
+        set.add(generateReportsOption);
         return set;
     }
 
@@ -78,7 +80,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
         // input arguments must contain at least one command
         if (!(values.containsKey(createCaseCommandOption) || values.containsKey(addDataSourceCommandOption)
-                || values.containsKey(runIngestCommandOption) || values.containsKey(listAllDataSourcesCommandOption))) {
+                || values.containsKey(runIngestCommandOption) || values.containsKey(listAllDataSourcesCommandOption)
+                || values.containsKey(generateReportsOption))) {
             // not running from command line
             logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
             System.err.println("No command line commands passed in as inputs. Not running from command line.");
@@ -315,6 +318,24 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             commands.add(newCommand);
             runFromCommandLine = true;
         }
+        
+        // Add "GENERATE_REPORTS" command, if present
+        if (values.containsKey(generateReportsOption)) {
+
+            // 'caseDir' must only be specified if the case is not being created during the current run
+            if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
+                // new case is not being created during this run, so 'caseDir' should have been specified
+                logger.log(Level.SEVERE, "'caseDir' argument is empty");
+                System.err.println("'caseDir' argument is empty");
+                runFromCommandLine = false;
+                return;
+            }
+
+            CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+            commands.add(newCommand);
+            runFromCommandLine = true;
+        }        
     }
 
     /**

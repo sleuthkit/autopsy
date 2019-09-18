@@ -33,7 +33,8 @@ class CommandLineCommand {
         CREATE_CASE,
         ADD_DATA_SOURCE,
         RUN_INGEST,
-        LIST_ALL_DATA_SOURCES;
+        LIST_ALL_DATA_SOURCES,
+        GENERATE_REPORTS;
     }
 
     /**
