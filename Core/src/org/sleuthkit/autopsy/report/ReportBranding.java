@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import org.sleuthkit.autopsy.report.infrastructure.ReportBrandingProviderI;
+import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;

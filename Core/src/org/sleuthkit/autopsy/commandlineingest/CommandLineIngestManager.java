@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
@@ -61,17 +62,20 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
+import org.sleuthkit.autopsy.report.infrastructure.ReportProgressLogger;
+import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Allows Autopsy to be invoked with a command line arguments. Causes Autopsy to
- * create a case, add a specified data source, run ingest on that data source,
- * produce a CASE/UCO report and exit.
+ * create a case, add a specified data source, run ingest on that data source, 
+ * list all data source in a case, generate reports.
  */
 public class CommandLineIngestManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private Case caseForJob = null;
     private AutoIngestDataSource dataSource = null;
     private static final String LOG_DIR_NAME = "Command Output";
@@ -259,6 +263,30 @@ public class CommandLineIngestManager {
 
                                     String outputDirPath = getOutputDirPath(caseForJob);
                                     OutputGenerator.listAllDataSources(caseForJob, outputDirPath);
+                                } catch (CaseActionException ex) {
+                                    String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                    LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
+                                    System.err.println("Error opening case in case directory: " + caseDirPath);
+                                    // Do not process any other commands
+                                    return;
+                                }
+                                break;
+
+                            case GENERATE_REPORTS:
+                                try {
+                                    LOGGER.log(Level.INFO, "Processing 'Generate Reports' command");
+                                    System.out.println("Processing 'Generate Reports' command");
+                                    Map<String, String> inputs = command.getInputs();
+
+                                    // open the case, if it hasn't been already opened by previous command
+                                    if (caseForJob == null) {
+                                        String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
+                                        openCase(caseDirPath);
+                                    }
+
+                                    // generate reports
+                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.getReportingConfigName(), new ReportProgressLogger()); //NON-NLS
+                                    generator.generateReports();
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
                                     LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);

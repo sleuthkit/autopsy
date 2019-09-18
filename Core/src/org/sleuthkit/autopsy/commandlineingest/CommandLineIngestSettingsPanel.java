@@ -26,6 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.report.infrastructure.ReportWizardAction.doReportWizard;
 
 /**
  * Configuration panel for auto ingest settings.
@@ -33,9 +34,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
 
-    private final CommandLineIngestSettingsPanelController controller;
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(CommandLineIngestSettingsPanel.class.getName());
+    
+    private static final String REPORTING_CONFIGURATION_NAME = "CommandLineIngest";
+    private static final boolean DISPLAY_CASE_SPECIFIC_DATA = false; // do not try to display case specific data
+    private static final boolean RUN_REPORTS = false; // do not generate reports as part of running the report wizard
 
     /**
      * Creates new form AutoIngestSettingsPanel
@@ -43,8 +47,14 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
      * @param theController Controller to notify of changes.
      */
     public CommandLineIngestSettingsPanel(CommandLineIngestSettingsPanelController theController) {
-        controller = theController;
         initComponents();
+    }
+    
+    /**
+     * @return the REPORTING_CONFIGURATION_NAME
+     */
+    public static String getReportingConfigName() {
+        return REPORTING_CONFIGURATION_NAME;
     }
 
     private void displayIngestJobSettingsPanel() {
@@ -90,10 +100,16 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         nodePanel = new javax.swing.JPanel();
         bnEditIngestSettings = new javax.swing.JButton();
         jLabelBaselineConfig = new javax.swing.JLabel();
+        jLabelReportConfig = new javax.swing.JLabel();
+        bnEditReportSettings = new javax.swing.JButton();
+
+        setPreferredSize(new java.awt.Dimension(810, 422));
 
         nodeScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+        nodeScrollPane.setPreferredSize(new java.awt.Dimension(803, 553));
 
         nodePanel.setMinimumSize(new java.awt.Dimension(100, 100));
+        nodePanel.setPreferredSize(new java.awt.Dimension(801, 551));
 
         org.openide.awt.Mnemonics.setLocalizedText(bnEditIngestSettings, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditIngestSettings.text")); // NOI18N
         bnEditIngestSettings.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditIngestSettings.toolTipText")); // NOI18N
@@ -106,6 +122,17 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelBaselineConfig, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelBaselineConfig.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelReportConfig, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelReportConfig.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(bnEditReportSettings, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.text")); // NOI18N
+        bnEditReportSettings.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.toolTipText")); // NOI18N
+        bnEditReportSettings.setActionCommand(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.actionCommand")); // NOI18N
+        bnEditReportSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnEditReportSettingsActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout nodePanelLayout = new javax.swing.GroupLayout(nodePanel);
         nodePanel.setLayout(nodePanelLayout);
         nodePanelLayout.setHorizontalGroup(
@@ -114,8 +141,10 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(bnEditIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabelBaselineConfig))
-                .addContainerGap(1362, Short.MAX_VALUE))
+                    .addComponent(jLabelBaselineConfig)
+                    .addComponent(jLabelReportConfig)
+                    .addComponent(bnEditReportSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(362, Short.MAX_VALUE))
         );
         nodePanelLayout.setVerticalGroup(
             nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -124,7 +153,11 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jLabelBaselineConfig)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(bnEditIngestSettings)
-                .addContainerGap(442, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jLabelReportConfig)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(bnEditReportSettings)
+                .addContainerGap(376, Short.MAX_VALUE))
         );
 
         nodeScrollPane.setViewportView(nodePanel);
@@ -133,7 +166,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodeScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 864, Short.MAX_VALUE)
+            .addComponent(nodeScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -141,13 +174,21 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        doReportWizard(getReportingConfigName(), DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_bnEditReportSettingsActionPerformed
+
     private void bnEditIngestSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditIngestSettingsActionPerformed
         displayIngestJobSettingsPanel();
     }//GEN-LAST:event_bnEditIngestSettingsActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnEditIngestSettings;
+    private javax.swing.JButton bnEditReportSettings;
     private javax.swing.JLabel jLabelBaselineConfig;
+    private javax.swing.JLabel jLabelReportConfig;
     private javax.swing.JPanel nodePanel;
     private javax.swing.JScrollPane nodeScrollPane;
     // End of variables declaration//GEN-END:variables
