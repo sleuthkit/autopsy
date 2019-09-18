@@ -63,6 +63,8 @@ final class AddLogicalImageTask implements Runnable {
     private final static String MODULE_NAME = "Logical Imager"; //NON-NLS
     private final static String ROOT_STR = "root"; // NON-NLS
     private final static String VHD_EXTENSION = ".vhd"; // NON-NLS
+    private final static int REPORT_PROGRESS_INTERVAL = 100;
+    private final static int POST_ARTIFACT_INTERVAL = 1000;
     private final String deviceId;
     private final String timeZone;
     private final File src;
@@ -362,8 +364,11 @@ final class AddLogicalImageTask implements Runnable {
                 String filename = fields[7];
                 String parentPath = fields[8];
 
-                if (lineNumber % 100 == 0) {
+                if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
                     progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFile(lineNumber, totalFiles));
+                }
+                if (lineNumber % POST_ARTIFACT_INTERVAL == 0) {
+                    postArtifacts(artifacts);
                 }
                 String query = makeQuery(createVHD, vhdFilename, fileMetaAddressStr, parentPath, filename);
 
@@ -375,15 +380,19 @@ final class AddLogicalImageTask implements Runnable {
                 lineNumber++;
             } // end reading file
 
-            try {
-                // index the artifact for keyword search
-                blackboard.postArtifacts(artifacts, MODULE_NAME);
-            } catch (Blackboard.BlackboardException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
-            }
+            postArtifacts(artifacts);
         }
     }
 
+    private void postArtifacts(List<BlackboardArtifact> artifacts) {
+        try {
+            // index the artifact for keyword search
+            blackboard.postArtifacts(artifacts, MODULE_NAME);
+        } catch (Blackboard.BlackboardException ex) {
+            LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
+        }        
+    }
+    
     private void addInterestingFileToArtifacts(AbstractFile file, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName);
@@ -440,7 +449,7 @@ final class AddLogicalImageTask implements Runnable {
                     String ctime = fields[13];
                     parentPath = ROOT_STR + "/" + vhdFilename + "/" + parentPath;
 
-                    if (lineNumber % 100 == 0) {
+                    if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
                         progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFile(lineNumber, totalFiles));
                     }
 
