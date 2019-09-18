@@ -9,10 +9,19 @@ The following need to be done at least once. They do not need to be repeated for
 -- Linux:  % sudo apt-get install testdisk
 -- OS X: % brew install testdisk
 
-- Install Oracle Java and set JAVA_HOME. 
--- Linux: Use the instructions here: https://medium.com/coderscorner/installing-oracle-java-8-in-ubuntu-16-10-845507b13343
-          NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy 
+- Install a Java 8 JRE and JavaFX 8 and set JAVA_HOME. 
+-- Linux: Any Java 8 version of OpenJDK/OpenJFX distribution should suffice. The following instructions use the Zulu Community distribution.
+    1. Download a 64 bit Java 8 JRE for your specific platform from https://www.azul.com/downloads/zulu-community
+    2. Install the JRE. e.g. 'sudo apt install ./zulu8.40.0.25-ca-jre8.0.222-linux_amd64.deb'
+    3. Download a 64 bit Java 8 JavaFX for your specific platform from the same location.
+    4. Extract the contents of the JavaFX archive into the folder where the JRE was installed.
+        e.g. 'cd /usr/lib/jvm/zre-8-amd64; sudo tar xzf ~/Downloads/zulu8.40.0.25-ca-fx-jre8.0.222-linux_x64.tar.gz --strip-components=1'
+    5. Confirm Java 8 is being found by running 'java -version'
+    6. Set JAVA_HOME environment variable to location of JRE installation (e.g. /usr/lib/jvm/zre-8-amd64)
+
+    NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy 
           unix_setup.sh script can see the value. 
+
 -- OS X: Use The Oracle website: https://www.java.com/
          Set JAVA_HOME with something like: export JAVA_HOME=`/usr/libexec/java_home` in .bash_profile
 

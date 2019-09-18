@@ -70,7 +70,7 @@ final class ContactNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
+        Sheet sheet = new Sheet();
         
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
@@ -115,10 +115,6 @@ final class ContactNode extends BlackboardArtifactNode {
             for (BlackboardAttribute bba : otherMap.values()) {
                 sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
             }
-            
-            // Don't need these values to appear in the Contact property sheet.
-            sheetSet.remove("S");
-            sheetSet.remove("C");
             
             List<Content> children = artifact.getChildren();
             if(children != null) {

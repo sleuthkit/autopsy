@@ -35,9 +35,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.joda.time.DateTimeZone;
@@ -58,7 +56,6 @@ import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.TagsFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
@@ -70,7 +67,6 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEvent;
@@ -81,10 +77,8 @@ import org.sleuthkit.datamodel.TimelineFilter.DataSourcesFilter;
 import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
 import org.sleuthkit.datamodel.TimelineFilter.FileTypesFilter;
 import org.sleuthkit.datamodel.TimelineFilter.HashHitsFilter;
-import org.sleuthkit.datamodel.TimelineFilter.HashSetFilter;
 import org.sleuthkit.datamodel.TimelineFilter.HideKnownFilter;
 import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
-import org.sleuthkit.datamodel.TimelineFilter.TagNameFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
 
@@ -129,8 +123,6 @@ public final class FilteredEventsModel {
     private final LoadingCache<ZoomState, Map<TimelineEventType, Long>> eventCountsCache;
     /** Map from datasource id to datasource name. */
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
-    private final ObservableSet< String> hashSets = FXCollections.observableSet();
-    private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
     // end caches
 
     /**
@@ -171,8 +163,6 @@ public final class FilteredEventsModel {
         };
 
         datasourcesMap.addListener(filterSyncListener);
-        hashSets.addListener(filterSyncListener);
-        tagNames.addListener(filterSyncListener);
 
         requestedFilter.set(getDefaultFilter());
 
@@ -248,15 +238,11 @@ public final class FilteredEventsModel {
      */
     synchronized private void populateFilterData() throws TskCoreException {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
-        hashSets.addAll(eventManager.getHashSetNames());
 
         //because there is no way to remove a datasource we only add to this map.
         for (DataSource ds : skCase.getDataSources()) {
             datasourcesMap.putIfAbsent(ds.getId(), ds.getName());
         }
-
-        //should this only be tags applied to files or event bearing artifacts?
-        tagNames.setAll(skCase.getTagNamesInUse());
     }
 
     /**
@@ -269,22 +255,8 @@ public final class FilteredEventsModel {
      *                        with the tags in use in the case
      */
     public void syncFilters(RootFilterState rootFilterState) {
-        TagsFilterState tagsFilterState = rootFilterState.getTagsFilterState();
-        for (TagName tagName : tagNames) {
-            tagsFilterState.getFilter().addSubFilter(new TagNameFilter(tagName));
-        }
-        for (FilterState<? extends TagNameFilter> tagFilterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
-            // disable states for tag names that don't exist in case.
-            tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
-        }
-
         DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
         datasourcesMap.entrySet().forEach(entry -> dataSourcesFilter.addSubFilter(newDataSourceFromMapEntry(entry)));
-
-        HashHitsFilter hashSetsFilter = rootFilterState.getHashHitsFilterState().getFilter();
-        for (String hashSet : hashSets) {
-            hashSetsFilter.addSubFilter(new HashSetFilter(hashSet));
-        }
     }
 
     /**
@@ -351,10 +323,8 @@ public final class FilteredEventsModel {
                 -> dataSourcesFilter.addSubFilter(newDataSourceFromMapEntry(dataSourceEntry)));
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
-        hashSets.stream().map(HashSetFilter::new).forEach(hashHitsFilter::addSubFilter);
 
         TagsFilter tagsFilter = new TagsFilter();
-        tagNames.stream().map(TagNameFilter::new).forEach(tagsFilter::addSubFilter);
 
         FileTypesFilter fileTypesFilter = FilterUtils.createDefaultFileTypesFilter();
 
@@ -386,20 +356,6 @@ public final class FilteredEventsModel {
             events.add(getEventById(id));
         }
         return events;
-    }
-
-    /**
-     * get a count of tagnames applied to the given event ids as a map from
-     * tagname displayname to count of tag applications
-     *
-     * @param eventIDsWithTags the event ids to get the tag counts map for
-     *
-     * @return a map from tagname displayname to count of applications
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) throws TskCoreException {
-        return eventManager.getTagCountsByTagName(eventIDsWithTags);
     }
 
     public List<Long> getEventIDs(Interval timeRange, FilterState<? extends TimelineFilter> filter) throws TskCoreException {

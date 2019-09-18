@@ -51,6 +51,7 @@ ExtractOs.windowsVolume.label=OS Drive (Windows)
 ExtractOs.yellowDogLinuxOs.label=Linux (Yellow Dog)
 ExtractOs.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)
 ExtractOS_progressMessage=Checking for OS
+ExtractRecycleBin_module_name=Recycle Bin
 ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.
 ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files
 ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Cookies files
