@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report.infrastructure;
+package org.sleuthkit.autopsy.report;
 
 /**
  * Interface to implement by reports to add on custom branding, logos, etc
