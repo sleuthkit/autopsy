@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * A helper class to support indexing language-specific fields.
+ */
 class LanguageSpecificContentIndexingHelper {
 
     private final LanguageDetector languageDetector = new LanguageDetector();
@@ -63,7 +66,7 @@ class LanguageSpecificContentIndexingHelper {
         }
 
         try {
-            updateDoc.setField(Server.Schema.ID.toString(), MiniChunks.getChunkIdString(baseChunkID));
+            updateDoc.setField(Server.Schema.ID.toString(), MiniChunkHelper.getChunkIdString(baseChunkID));
 
             // index the chunk to a language specific field
             updateDoc.addField(Server.Schema.CONTENT_JA.toString(), chunk.toString().substring(chunk.getBaseChunkLength()));

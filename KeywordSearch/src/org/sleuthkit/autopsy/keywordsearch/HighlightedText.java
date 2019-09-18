@@ -440,7 +440,7 @@ class HighlightedText implements IndexedText {
                         if (contentHighlights == null) {
                             highlightedContent = "";
                         } else {
-                            int hitCountInMiniChunk = LanguageSpecificContentQueryHelper.queryChunkTermfreq(keywords, MiniChunks.getChunkIdString(contentIdStr));
+                            int hitCountInMiniChunk = LanguageSpecificContentQueryHelper.queryChunkTermfreq(keywords, MiniChunkHelper.getChunkIdString(contentIdStr));
                             String s = contentHighlights.get(0).trim();
                             // If there is a mini-chunk, trim the content not to show highlighted text in it.
                             if (0 < hitCountInMiniChunk) {

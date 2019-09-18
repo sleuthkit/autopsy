@@ -30,6 +30,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 
+/**
+ * Detects the language of the given contents. Only languages which should be indexed to a corresponding
+ * language-specific field are detected.
+ */
 class LanguageDetector {
 
     private com.optimaize.langdetect.LanguageDetector impl;

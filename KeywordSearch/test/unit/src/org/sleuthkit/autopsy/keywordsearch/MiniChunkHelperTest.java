@@ -18,19 +18,29 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-class MiniChunks {
+import org.junit.Assert;
+import org.junit.Test;
 
-    static String SUFFIX = "_mini";
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-    static String getChunkIdString(String baseChunkID) {
-        return baseChunkID + SUFFIX;
+/**
+ * tests for MiniChunkHelper
+ */
+public class MiniChunkHelperTest {
+
+    @Test
+    public void isMiniChunkID() {
+        assertTrue(MiniChunkHelper.isMiniChunkID("1_1_mini"));
+        assertFalse(MiniChunkHelper.isMiniChunkID("1_1"));
+        assertFalse(MiniChunkHelper.isMiniChunkID("1"));
     }
 
-    static boolean isMiniChunkID(String chunkID) {
-        return chunkID.endsWith(SUFFIX);
+    @Test
+    public void getBaseChunkID() {
+        Assert.assertEquals("1_1", MiniChunkHelper.getBaseChunkID("1_1_mini"));
+        Assert.assertEquals("1_1", MiniChunkHelper.getBaseChunkID("1_1"));
+        Assert.assertEquals("1", MiniChunkHelper.getBaseChunkID("1"));
     }
 
-    static String getBaseChunkID(String miniChunkID) {
-        return miniChunkID.replaceFirst(SUFFIX + "$", "");
-    }
 }

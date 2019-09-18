@@ -36,7 +36,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * A helper class to support querying documents which have language-specific fields.
+ */
 class LanguageSpecificContentQueryHelper {
+
+    private LanguageSpecificContentQueryHelper() {}
 
     private static final List<Server.Schema> QUERY_FIELDS = new ArrayList<>();
     private static final List<Server.Schema> LANGUAGE_SPECIFIC_CONTENT_FIELDS
@@ -48,6 +53,9 @@ class LanguageSpecificContentQueryHelper {
         QUERY_FIELDS.addAll(LANGUAGE_SPECIFIC_CONTENT_FIELDS);
     }
 
+    /**
+     * Holds query response for later processes related to language-specific fields
+     */
     static class QueryResults {
         List<SolrDocument> chunks = new ArrayList<>();
         Map</* ID */ String, SolrDocument> miniChunks = new HashMap<>();
@@ -74,8 +82,8 @@ class LanguageSpecificContentQueryHelper {
 
     static void updateQueryResults(QueryResults results, SolrDocument document) {
         String id = (String) document.getFieldValue(Server.Schema.ID.toString());
-        if (MiniChunks.isMiniChunkID(id)) {
-            results.miniChunks.put(MiniChunks.getBaseChunkID(id), document);
+        if (MiniChunkHelper.isMiniChunkID(id)) {
+            results.miniChunks.put(MiniChunkHelper.getBaseChunkID(id), document);
         } else {
             results.chunks.add(document);
         }
@@ -124,11 +132,11 @@ class LanguageSpecificContentQueryHelper {
 
     static void configureTermfreqQuery(SolrQuery query, String keyword) throws KeywordSearchModuleException, NoOpenCoreException {
         // make a request to Solr to parse query.
-        QueryParser.Result queryParserResult = QueryParser.parse(keyword, LANGUAGE_SPECIFIC_CONTENT_FIELDS);
+        QueryTermHelper.Result queryParserResult = QueryTermHelper.parse(keyword, LANGUAGE_SPECIFIC_CONTENT_FIELDS);
         query.addField(buildTermfreqQuery(keyword, queryParserResult));
     }
 
-    static String buildTermfreqQuery(String keyword, QueryParser.Result result) {
+    static String buildTermfreqQuery(String keyword, QueryTermHelper.Result result) {
         List<String> termfreqs = new ArrayList<>();
         for (Map.Entry<String, List<String>> e : result.fieldTermsMap.entrySet()) {
             String field = e.getKey();

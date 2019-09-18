@@ -39,7 +39,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -1660,7 +1659,7 @@ public class Server {
             String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q
                     = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*"
-                        + " NOT " + Server.Schema.ID + ":*" + MiniChunks.SUFFIX);
+                        + " NOT " + Server.Schema.ID + ":*" + MiniChunkHelper.SUFFIX);
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
         }

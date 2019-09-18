@@ -24,6 +24,9 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * tests for LanguageSpecificContentQueryHelper
+ */
 public class LanguageSpecificContentQueryHelperTest {
 
     @Test

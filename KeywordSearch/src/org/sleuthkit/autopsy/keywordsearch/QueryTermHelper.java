@@ -30,10 +30,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Parse query using Solr
+ * Get terms from query using Solr.
+ *
+ * This class is used to find matched terms from query results.
  */
-class QueryParser {
+class QueryTermHelper {
 
+    private QueryTermHelper() {}
+
+    /**
+     * Result of {@link #parse} method
+     */
     static class Result {
         /**
          * field name -> [term]
@@ -43,6 +50,9 @@ class QueryParser {
 
     /**
      * Parse the given query string on Solr and return the result
+     *
+     * @param query query to parse
+     * @param fields field names to use for parsing
      */
     static Result parse(String query, List<Server.Schema> fields) throws KeywordSearchModuleException, NoOpenCoreException {
         Server server = KeywordSearch.getServer();
