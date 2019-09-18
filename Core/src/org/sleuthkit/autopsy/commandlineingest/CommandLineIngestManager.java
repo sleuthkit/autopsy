@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -112,6 +113,7 @@ public class CommandLineIngestManager {
          * Requests the list of command line commands from command line options
          * processor and executes the commands one by one.
          */
+        @Override
         public void run() {
             LOGGER.log(Level.INFO, "Job processing task started");
 
@@ -271,10 +273,11 @@ public class CommandLineIngestManager {
                     }
                 } catch (Throwable ex) {
                     /*
-                    * Unexpected runtime exceptions firewall. This task is designed to
-                    * be able to be run in an executor service thread pool without
-                    * calling get() on the task's Future<Void>, so this ensures that
-                    * such errors get logged.
+                     * Unexpected runtime exceptions firewall. This task is
+                     * designed to be able to be run in an executor service
+                     * thread pool without calling get() on the task's
+                     * Future<Void>, so this ensures that such errors get
+                     * logged.
                      */
                     LOGGER.log(Level.SEVERE, "Unexpected error", ex);
                     System.err.println("Unexpected error. Exiting...");
@@ -384,12 +387,11 @@ public class CommandLineIngestManager {
          * @param dataSource The data source.
          *
          * @throws
-         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
-         * if there was a DSP processing error
+         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException if
+         * there was a DSP processing error
          *
-         * @throws InterruptedException if the thread running the job processing
-         * task is interrupted while blocked, i.e., if auto ingest is shutting
-         * down.
+         * @throws InterruptedException  if the thread running the job processing 
+         * task is interrupted while blocked, i.e., if auto ingest is shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
@@ -526,7 +528,7 @@ public class CommandLineIngestManager {
             }
 
             IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
-            IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobEventListener);
             try {
                 synchronized (ingestLock) {
                     IngestJobSettings ingestJobSettings;
@@ -640,7 +642,7 @@ public class CommandLineIngestManager {
          * the path.
          *
          * @param caseFoldersPath The root case folders path.
-         * @param caseName The name of the case.
+         * @param caseName        The name of the case.
          *
          * @return A case folder path with a time stamp suffix.
          */
@@ -654,8 +656,8 @@ public class CommandLineIngestManager {
          * for a case.
          *
          * @param folderToSearch The folder to be searched.
-         * @param caseName The name of the case for which a case folder is to be
-         * found.
+         * @param caseName       The name of the case for which a case folder is
+         *                       to be found.
          *
          * @return The path of the case folder, or null if it is not found.
          */

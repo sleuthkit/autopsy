@@ -31,6 +31,9 @@ PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged f
 PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files
 PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results
 PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
+PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table
+PortableCaseReportModule.generateReport.errorCreatingReportFolder=Could not make report folder
+PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report
 # {0} - attribute type name
 PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
 PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items

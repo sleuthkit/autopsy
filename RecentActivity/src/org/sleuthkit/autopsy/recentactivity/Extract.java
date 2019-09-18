@@ -235,6 +235,10 @@ abstract class Extract {
     protected String getName() {
         return moduleName;
     }
+    
+    protected String getRAModuleName() {
+        return RecentActivityExtracterModuleFactory.getModuleName();
+    }
 
     /**
      * Returns the state of foundData

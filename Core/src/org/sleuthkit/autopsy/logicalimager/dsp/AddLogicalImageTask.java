@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -69,8 +71,15 @@ final class AddLogicalImageTask implements Runnable {
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final Blackboard blackboard;
     private final Case currentCase;
-    
+
     private volatile boolean cancelled;
+    private volatile boolean createVHD;
+    private long totalFiles;
+    private Map<String, Long> imagePathToObjIdMap;
+
+    private final Object addMultipleImagesLock;
+    @GuardedBy("addMultipleImagesLock")
+    private AddMultipleImagesTask addMultipleImagesTask = null;
 
     AddLogicalImageTask(String deviceId,
             String timeZone,
@@ -86,6 +95,7 @@ final class AddLogicalImageTask implements Runnable {
         this.callback = callback;
         this.currentCase = Case.getCurrentCase();
         this.blackboard = this.currentCase.getServices().getArtifactsBlackboard();
+        this.addMultipleImagesLock = new Object();
     }
 
     /**
@@ -108,6 +118,8 @@ final class AddLogicalImageTask implements Runnable {
         "# {0} - reason", "AddLogicalImageTask.failedToAddInterestingFiles=Failed to add interesting files: {0}",
         "AddLogicalImageTask.addingExtractedFiles=Adding extracted files",
         "AddLogicalImageTask.doneAddingExtractedFiles=Done adding extracted files",
+        "# {0} - reason", "AddLogicalImageTask.failedToGetTotalFilesCount=Failed to get total files count: {0}",
+        "AddLogicalImageTask.addImageCancelled=Add image cancelled"
     })
     @Override
     public void run() {
@@ -124,6 +136,15 @@ final class AddLogicalImageTask implements Runnable {
             errorList.add(msg);
         }
 
+        if (cancelled) {
+            // Don't delete destination directory once we started adding interesting files.
+            // At this point the database and destination directory are complete.
+            deleteDestinationDirectory();
+            errorList.add(Bundle.AddLogicalImageTask_addImageCancelled());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
+        
         // Add the SearchResults.txt and users.txt to the case report
         String resultsFilename;
         if (Paths.get(dest.toString(), SEARCH_RESULTS_TXT).toFile().exists()) {
@@ -131,10 +152,6 @@ final class AddLogicalImageTask implements Runnable {
         } else {
             errorList.add(Bundle.AddLogicalImageTask_cannotFindFiles(SEARCH_RESULTS_TXT, dest.toString()));
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
-        }
-
-        if (cancelled) {
             return;
         }
 
@@ -171,13 +188,20 @@ final class AddLogicalImageTask implements Runnable {
             }
         }
 
-        AddMultipleImageTask addMultipleImageTask = null;
+        Path resultsPath = Paths.get(dest.toString(), resultsFilename);
+        try {
+            totalFiles = Files.lines(resultsPath).count() - 1; // skip the header line
+        } catch (IOException ex) {
+            errorList.add(Bundle.AddLogicalImageTask_failedToGetTotalFilesCount(ex.getMessage()));
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
+
         List<Content> newDataSources = new ArrayList<>();
-        boolean createVHD;
-        
+
         if (imagePaths.isEmpty()) {
             createVHD = false;
-            // No VHD in src directory, try ingest the root directory using Logical File Set
+            // No VHD in src directory, try ingest the root directory as local files
             File root = Paths.get(dest.toString(), ROOT_STR).toFile();
             if (root.exists() && root.isDirectory()) {
                 imagePaths.add(root.getAbsolutePath());
@@ -190,7 +214,7 @@ final class AddLogicalImageTask implements Runnable {
 
             try {
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFiles());
-                addExtractedFiles(dest, Paths.get(dest.toString(), resultsFilename), newDataSources);
+                addExtractedFiles(dest, resultsPath, newDataSources);
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingExtractedFiles());
             } catch (IOException | TskCoreException ex) {
                 errorList.add(ex.getMessage());
@@ -202,11 +226,20 @@ final class AddLogicalImageTask implements Runnable {
             createVHD = true;
             // ingest the VHDs
             try {
-                addMultipleImageTask = new AddMultipleImageTask(deviceId, imagePaths, timeZone , progressMonitor, callback);
-                addMultipleImageTask.run();
-                if (addMultipleImageTask.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
-                    callback.done(addMultipleImageTask.getResult(), addMultipleImageTask.getErrorMessages(), addMultipleImageTask.getNewDataSources());
-                    return;
+                synchronized (addMultipleImagesLock) {
+                    if (cancelled) {
+                        LOGGER.log(Level.SEVERE, "Add VHD cancelled"); // NON-NLS
+                        errorList.add(Bundle.AddLogicalImageTask_addImageCancelled());
+                        callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                        return;
+                    }
+                    addMultipleImagesTask = new AddMultipleImagesTask(deviceId, imagePaths, timeZone , progressMonitor);
+                }
+                addMultipleImagesTask.run();
+                if (addMultipleImagesTask.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
+                    LOGGER.log(Level.SEVERE, "Failed to add VHD datasource"); // NON-NLS
+                    callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, addMultipleImagesTask.getErrorMessages(), emptyDataSources);
+                    return;                    
                 }
             } catch (NoCurrentCaseException ex) {
                 String msg = Bundle.AddLogicalImageTask_noCurrentCase();
@@ -216,12 +249,22 @@ final class AddLogicalImageTask implements Runnable {
             }
         }
 
+        if (cancelled) {
+            if (!createVHD) {
+                // TODO: When 5453 is fixed, we should be able to delete it when adding VHD. 
+                deleteDestinationDirectory();
+            }
+            errorList.add(Bundle.AddLogicalImageTask_addImageCancelled());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+            return;
+        }
+
         try {
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFiles());
-            addInterestingFiles(dest, Paths.get(dest.toString(), resultsFilename), createVHD);
+            addInterestingFiles(Paths.get(dest.toString(), resultsFilename), createVHD);
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingInterestingFiles());
-            if (addMultipleImageTask != null) {
-                callback.done(addMultipleImageTask.getResult(), addMultipleImageTask.getErrorMessages(), addMultipleImageTask.getNewDataSources());
+            if (createVHD) {
+                callback.done(addMultipleImagesTask.getResult(), addMultipleImagesTask.getErrorMessages(), addMultipleImagesTask.getNewDataSources());
             } else {
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS, errorList, newDataSources);
             }
@@ -264,26 +307,34 @@ final class AddLogicalImageTask implements Runnable {
      */
     void cancelTask() {
         LOGGER.log(Level.WARNING, "AddLogicalImageTask cancelled, processing may be incomplete"); // NON-NLS
-        cancelled = true;
+        synchronized (addMultipleImagesLock) {
+            cancelled = true;
+            if (addMultipleImagesTask != null) {
+                addMultipleImagesTask.cancelTask();
+            }
+        }
     }
 
     private Map<String, Long> imagePathsToDataSourceObjId(Map<Long, List<String>> imagePaths) {
-        Map<String, Long> imagePathToObjIdMap = new HashMap<>();
+        Map<String, Long> imagePathToObjId = new HashMap<>();
         for (Map.Entry<Long, List<String>> entry : imagePaths.entrySet()) {
             Long key = entry.getKey();
             List<String> names = entry.getValue();
             for (String name : names) {
-                imagePathToObjIdMap.put(name, key);
+                imagePathToObjId.put(name, key);
             }
         }
-        return imagePathToObjIdMap;
+        return imagePathToObjId;
     }
 
     @Messages({
         "# {0} - line number", "# {1} - fields length", "# {2} - expected length", "AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}",
-        "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}"
+        "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}",
+        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting files ({0}/{1})"
     })
-    private void addInterestingFiles(File src, Path resultsPath, boolean createVHD) throws IOException, TskCoreException {
+    private void addInterestingFiles(Path resultsPath, boolean createVHD) throws IOException, TskCoreException {
+        Map<Long, List<String>> objIdToimagePathsMap = currentCase.getSleuthkitCase().getImagePaths();
+        imagePathToObjIdMap = imagePathsToDataSourceObjId(objIdToimagePathsMap);
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                       new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
@@ -293,11 +344,13 @@ final class AddLogicalImageTask implements Runnable {
             int lineNumber = 2;
             while ((line = br.readLine()) != null) {
                 if (cancelled) {
-                    return;
+                    // Don't delete destination directory once we started adding interesting files.
+                    // At this point the database and destination directory are complete.
+                    break;
                 }
                 String[] fields = line.split("\t", -1); // NON-NLS
                 if (fields.length != 14) {
-                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 9));
+                    throw new IOException(Bundle.AddLogicalImageTask_notEnoughFields(lineNumber, fields.length, 14));
                 }
                 String vhdFilename = fields[0];
 //                String fileSystemOffsetStr = fields[1];
@@ -309,6 +362,9 @@ final class AddLogicalImageTask implements Runnable {
                 String filename = fields[7];
                 String parentPath = fields[8];
 
+                if (lineNumber % 100 == 0) {
+                    progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFile(lineNumber, totalFiles));
+                }
                 String query = makeQuery(createVHD, vhdFilename, fileMetaAddressStr, parentPath, filename);
 
                 // TODO - findAllFilesWhere should SQL-escape the query
@@ -341,9 +397,13 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
+    @Messages({
+        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingExtractedFile=Adding extracted files ({0}/{1})"
+    })
     private void addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, IOException {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
+
         try {
             trans = skCase.beginTransaction();
             LocalFilesDataSource localFilesDataSource = skCase.addLocalFilesDataSource(deviceId, this.src.getName(), timeZone, trans);
@@ -380,16 +440,20 @@ final class AddLogicalImageTask implements Runnable {
                     String ctime = fields[13];
                     parentPath = ROOT_STR + "/" + vhdFilename + "/" + parentPath;
 
-                    //addLocalFile here 
+                    if (lineNumber % 100 == 0) {
+                        progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFile(lineNumber, totalFiles));
+                    }
+
+                    //addLocalFile here
                     fileImporter.addLocalFile(
-                            Paths.get(src.toString(), extractedFilePath).toFile(),
-                            filename, 
-                            parentPath,
-                            Long.parseLong(ctime),
-                            Long.parseLong(crtime),
-                            Long.parseLong(atime),
-                            Long.parseLong(mtime),
-                            localFilesDataSource);
+                        Paths.get(src.toString(), extractedFilePath).toFile(),
+                        filename,
+                        parentPath,
+                        Long.parseLong(ctime),
+                        Long.parseLong(crtime),
+                        Long.parseLong(atime),
+                        Long.parseLong(mtime),
+                        localFilesDataSource);
 
                     lineNumber++;
                 } // end reading file
@@ -414,12 +478,21 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
+    private boolean deleteDestinationDirectory() {
+        try {
+            FileUtils.deleteDirectory(dest);
+            LOGGER.log(Level.INFO, String.format("Cancellation: Deleted directory %s", dest.toString())); // NON-NLS
+            return true;
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, String.format("Cancellation: Failed to delete directory %s", dest.toString()), ex);  // NON-NLS
+            return false;
+        }
+    }
+
     String makeQuery(boolean createVHD, String vhdFilename, String fileMetaAddressStr, String parentPath, String filename) throws TskCoreException {
         String query;
         if (createVHD) {
-            Map<Long, List<String>> imagePaths = currentCase.getSleuthkitCase().getImagePaths();
-            Map<String, Long> imagePathToObjIdMap = imagePathsToDataSourceObjId(imagePaths);
-            String targetImagePath = Paths.get(src.toString(), vhdFilename).toString();
+            String targetImagePath = Paths.get(dest.toString(), vhdFilename).toString();
             Long dataSourceObjId = imagePathToObjIdMap.get(targetImagePath);
             if (dataSourceObjId == null) {
                 throw new TskCoreException(Bundle.AddLogicalImageTask_cannotFindDataSourceObjId(targetImagePath));
@@ -433,5 +506,5 @@ final class AddLogicalImageTask implements Runnable {
         }
         return query;
     }
-    
+
 }

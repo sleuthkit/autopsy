@@ -25,8 +25,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
+import javax.swing.JOptionPane;
+import static javax.swing.JOptionPane.YES_OPTION;
 import javax.swing.JPanel;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -130,6 +132,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         "# {0} - imageDirPath", "LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.",
         "# {0} - directory", "LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}",
         "# {0} - directory", "LogicalImagerDSProcessor.directoryAlreadyExists=Directory {0} already exists",
+        "LogicalImagerDSProcessor.destinationDirectoryConfirmation=Destination directory confirmation",
+        "# {0} - directory", "LogicalImagerDSProcessor.destinationDirectoryConfirmationMsg=The logical imager folder {0} already exists,\ndo you want to add it again using a new folder name?",
         "LogicalImagerDSProcessor.noCurrentCase=No current case",
     })
     @Override
@@ -163,10 +167,20 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
         File dest = Paths.get(logicalImagerDir.toString(), imageDirPath.getFileName().toString()).toFile();
         if (dest.exists()) {
             // Destination directory already exists
-            String msg = Bundle.LogicalImagerDSProcessor_directoryAlreadyExists(dest.toString());
-            errorList.add(msg);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
+            int showConfirmDialog = JOptionPane.showConfirmDialog(configPanel, 
+                    Bundle.LogicalImagerDSProcessor_destinationDirectoryConfirmationMsg(dest.toString()),
+                    Bundle.LogicalImagerDSProcessor_destinationDirectoryConfirmation(),
+                    JOptionPane.YES_NO_OPTION);
+            if (showConfirmDialog == YES_OPTION) {
+                // Get unique dest directory
+                String uniqueDirectory = imageDirPath.getFileName() + "_" + TimeStampUtils.createTimeStamp();
+                dest = Paths.get(logicalImagerDir.toString(), uniqueDirectory).toFile();
+            } else {
+                String msg = Bundle.LogicalImagerDSProcessor_directoryAlreadyExists(dest.toString());
+                errorList.add(msg);
+                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                return;
+            }
         }
         File src = imageDirPath.toFile();
 
@@ -207,7 +221,8 @@ public final class LogicalImagerDSProcessor implements DataSourceProcessor {
     ) throws NoCurrentCaseException {
         addLogicalImageTask = new AddLogicalImageTask(deviceId, timeZone, src, dest,
                 progressMonitor, callback);
-        new Thread(addLogicalImageTask).start();
+        Thread thread = new Thread(addLogicalImageTask);
+        thread.start();
     }
 
     @Override
