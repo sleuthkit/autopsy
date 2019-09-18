@@ -117,7 +117,7 @@ class TableReportGenerator {
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.readingTagsArtifacts.text"));
         
-        if (settings.isUseCaseSpecificData()) {
+        if (settings.useStoredTagsAndArtifactsLists()) {
             // Get the artifact types selected by the user.
             artifactTypes = settings.getArtifactSelections();
 

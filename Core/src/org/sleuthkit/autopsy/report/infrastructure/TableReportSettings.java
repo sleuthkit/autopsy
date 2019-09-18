@@ -43,7 +43,7 @@ final class TableReportSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private final List<String> tagNames = new ArrayList<>();
-    private final boolean loadAllTagsAndArtifacts;
+    private final boolean useStoredTagsAndArtifactsLists;
     private final TableReportOption reportOption;
 
     /**
@@ -55,10 +55,11 @@ final class TableReportSettings implements Serializable {
      * types to be included in the report. Only enabled entries will be kept.
      * @param tagNameSelections The enabled/disabled state of the tag names to
      * be included in the report. Only enabled entries will be kept.
-     * @param loadAllTagsAndArtifacts Flag whether to read tag and artifact lists at report generation time
+     * @param useTagsAndArtifactsLists Flag whether to use the input lists of tags 
+     * and artifacts (which may be empty) or read tag and artifact lists at report generation time
      * @param reportOption Selected table report option.
      */
-    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean loadAllTagsAndArtifacts, TableReportOption reportOption) {
+    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean useTagsAndArtifactsLists, TableReportOption reportOption) {
         // Get the artifact types selected by the user
         for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
             if (entry.getValue()) {
@@ -75,7 +76,7 @@ final class TableReportSettings implements Serializable {
         }
 
         this.reportOption = reportOption;
-        this.loadAllTagsAndArtifacts = loadAllTagsAndArtifacts;
+        this.useStoredTagsAndArtifactsLists = useTagsAndArtifactsLists;
     }
 
     List<BlackboardArtifact.Type> getArtifactSelections() {
@@ -86,8 +87,8 @@ final class TableReportSettings implements Serializable {
         return tagNames;
     }
 
-    boolean isUseCaseSpecificData() {
-        return loadAllTagsAndArtifacts;
+    boolean useStoredTagsAndArtifactsLists() {
+        return useStoredTagsAndArtifactsLists;
     }
 
     /**

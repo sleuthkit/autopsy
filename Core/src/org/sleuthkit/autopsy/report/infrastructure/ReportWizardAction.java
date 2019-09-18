@@ -131,9 +131,6 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
 
         // save reporting configuration
         ReportingConfigLoader.saveConfig(reportingConfig);
-        
-        //ELDELETE
-        throw new ReportConfigException("test");
     }
 
     public ReportWizardAction() {

@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
@@ -74,6 +75,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CommandLineIngestManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private Case caseForJob = null;
     private AutoIngestDataSource dataSource = null;
     private static final String LOG_DIR_NAME = "Command Output";
