@@ -22,7 +22,6 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
@@ -54,11 +53,11 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
 
         try {
             dataSources = Case.getCurrentCaseThrows().getDataSources();
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException | NoCurrentCaseException ex) {
             // No open Cases, create a disabled empty menu
             return getEmpty();
-        } catch (TskCoreException | NoCurrentCaseException e) {
-            logger.log(Level.INFO, "Exception getting images: " + e.getMessage());
+        } catch (TskCoreException e) {
+            System.out.println("Exception getting images: " + e.getMessage()); //NON-NLS
         }
         JComponent[] comps = new JComponent[dataSources.size()];
 
