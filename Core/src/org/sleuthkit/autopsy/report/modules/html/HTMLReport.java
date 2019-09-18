@@ -84,11 +84,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
-public class ReportHTML implements TableReportModule {
+public class HTMLReport implements TableReportModule {
 
-    private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
+    private static final Logger logger = Logger.getLogger(HTMLReport.class.getName());
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator; //NON-NLS
-    private static ReportHTML instance;
+    private static HTMLReport instance;
     private static final int MAX_THUMBS_PER_PAGE = 1000;
     private static final String HTML_SUBDIR = "content";
     private Case currentCase;
@@ -102,20 +102,20 @@ public class ReportHTML implements TableReportModule {
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
 
-    private ReportHTMLConfigurationPanel configPanel;
+    private HTMLReportConfigurationPanel configPanel;
 
     private final ReportBranding reportBranding;
 
     // Get the default instance of this report
-    public static synchronized ReportHTML getDefault() {
+    public static synchronized HTMLReport getDefault() {
         if (instance == null) {
-            instance = new ReportHTML();
+            instance = new HTMLReport();
         }
         return instance;
     }
 
     // Hidden constructor
-    private ReportHTML() {
+    private HTMLReport() {
         reportBranding = new ReportBranding();
     }
 
@@ -127,7 +127,7 @@ public class ReportHTML implements TableReportModule {
 
     private void initializePanel() {
         if (configPanel == null) {
-            configPanel = new ReportHTMLConfigurationPanel();
+            configPanel = new HTMLReportConfigurationPanel();
         }
     }
 

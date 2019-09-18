@@ -40,7 +40,7 @@ class ReportFileTextConfigurationPanel extends javax.swing.JPanel {
      * @param settings File report module settings object
      */
     void setConfiguration(FileReportModuleSettings settings) {
-        if (settings.getReportType() == FileReportModuleSettings.ReportType.COMA_DELIMITED) {
+        if (settings.getReportDelimiter() == FileReportModuleSettings.ReportDelimiter.COMA_DELIMITED) {
             commaDelimitedButton.setSelected(true);
         } else {
             // default to tab since it was previously the only option
@@ -55,9 +55,9 @@ class ReportFileTextConfigurationPanel extends javax.swing.JPanel {
      */
     FileReportModuleSettings getConfiguration() {
         if (commaDelimitedButton.isSelected()) {
-            return new FileReportModuleSettings(FileReportModuleSettings.ReportType.COMA_DELIMITED);
+            return new FileReportModuleSettings(FileReportModuleSettings.ReportDelimiter.COMA_DELIMITED);
         } else {
-            return new FileReportModuleSettings(FileReportModuleSettings.ReportType.TAB_DELIMITED);
+            return new FileReportModuleSettings(FileReportModuleSettings.ReportDelimiter.TAB_DELIMITED);
         }
     }
 

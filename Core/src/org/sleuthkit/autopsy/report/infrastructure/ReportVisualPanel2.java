@@ -110,9 +110,9 @@ final class ReportVisualPanel2 extends JPanel {
         // enable things based on input settings
         advancedButton.setEnabled(useCaseSpecificData);
         specificTaggedResultsRadioButton.setEnabled(useCaseSpecificData);
-        TableReportSettings.TableReportType type = TableReportSettings.TableReportType.ALL_RESULTS;
+        TableReportSettings.TableReportOption type = TableReportSettings.TableReportOption.ALL_RESULTS;
         if (settings != null) {
-            type = settings.getReportType();
+            type = settings.getSelectedReportOption();
         }
         switch (type) {
             case ALL_TAGGED_RESULTS:
@@ -275,13 +275,13 @@ final class ReportVisualPanel2 extends JPanel {
      * @return true if the Specific Tags radio button is selected, false
      * otherwise
      */
-    TableReportSettings.TableReportType getSelectedReportType() {
+    TableReportSettings.TableReportOption getSelectedReportType() {
         if (allTaggedResultsRadioButton.isSelected()) {
-            return TableReportSettings.TableReportType.ALL_TAGGED_RESULTS;
+            return TableReportSettings.TableReportOption.ALL_TAGGED_RESULTS;
         } else if (specificTaggedResultsRadioButton.isSelected()) {
-            return TableReportSettings.TableReportType.SPECIFIC_TAGGED_RESULTS;
+            return TableReportSettings.TableReportOption.SPECIFIC_TAGGED_RESULTS;
         }
-        return TableReportSettings.TableReportType.ALL_RESULTS;
+        return TableReportSettings.TableReportOption.ALL_RESULTS;
     }
 
     /**

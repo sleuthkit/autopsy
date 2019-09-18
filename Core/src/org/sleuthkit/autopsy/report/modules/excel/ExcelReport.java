@@ -33,10 +33,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.report.infrastructure.TableReportModule;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class ReportExcel implements TableReportModule {
+class ExcelReport implements TableReportModule {
 
-    private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
-    private static ReportExcel instance;
+    private static final Logger logger = Logger.getLogger(ExcelReport.class.getName());
+    private static ExcelReport instance;
     private static final int EXCEL_CELL_MAXIMUM_SIZE = 36767; //Specified at:https://poi.apache.org/apidocs/org/apache/poi/ss/SpreadsheetVersion.html
 
     private Workbook wb;
@@ -49,15 +49,15 @@ class ReportExcel implements TableReportModule {
     private String reportPath;
 
     // Get the default instance of this report
-    public static synchronized ReportExcel getDefault() {
+    public static synchronized ExcelReport getDefault() {
         if (instance == null) {
-            instance = new ReportExcel();
+            instance = new ExcelReport();
         }
         return instance;
     }
 
     // Hidden constructor
-    private ReportExcel() {
+    private ExcelReport() {
     }
 
     /**
@@ -246,7 +246,6 @@ class ReportExcel implements TableReportModule {
         "ReportExcel.exceptionMessage.dataTooLarge=Value is too long to fit into an Excel cell. ",
         "ReportExcel.exceptionMessage.errorText=Error showing data into an Excel cell."
     })
-
     public void addRow(List<String> rowData) {
         Row row = sheet.createRow(rowIndex);
         for (int i = 0; i < rowData.size(); ++i) {

@@ -23,63 +23,29 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
-import org.sleuthkit.autopsy.report.NoReportModuleSettings;
-import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 
 /**
- * ReportCaseUco generates a report in the CASE-UCO format. It saves basic file
+ * CaseUcoReport generates a report in the CASE-UCO format. It saves basic file
  * info like full caseDirPath, name, MIME type, times, and hash.
  */
-public final class ReportCaseUco implements GeneralReportModule {
+public final class CaseUcoReport implements GeneralReportModule {
 
-    private static final Logger logger = Logger.getLogger(ReportCaseUco.class.getName());
-    private static ReportCaseUco instance = null;
+    private static final Logger logger = Logger.getLogger(CaseUcoReport.class.getName());
+    private static CaseUcoReport instance = null;
 
     private static final String REPORT_FILE_NAME = "CASE_UCO_output.json-ld";
 
     // Hidden constructor for the report
-    private ReportCaseUco() {
+    private CaseUcoReport() {
     }
 
     // Get the default implementation of this report
-    public static synchronized ReportCaseUco getDefault() {
+    public static synchronized CaseUcoReport getDefault() {
         if (instance == null) {
-            instance = new ReportCaseUco();
+            instance = new CaseUcoReport();
         }
         return instance;
-    }
-
-    /**
-     * Get default configuration for this report module.
-     *
-     * @return Object which contains default report module settings.
-     */
-    @Override
-    public ReportModuleSettings getDefaultConfiguration() {
-        // This module does not have configuration
-        return new NoReportModuleSettings();
-    }
-
-    /**
-     * Get current configuration for this report module.
-     *
-     * @return Object which contains current report module settings.
-     */
-    @Override
-    public ReportModuleSettings getConfiguration() {
-        // This module does not have configuration
-        return new NoReportModuleSettings();
-    }
-
-    /**
-     * Set report module configuration.
-     *
-     * @param settings Object which contains report module settings.
-     */
-    @Override
-    public void setConfiguration(ReportModuleSettings settings) {
-        // This module does not have configuration
     }
 
     @Override

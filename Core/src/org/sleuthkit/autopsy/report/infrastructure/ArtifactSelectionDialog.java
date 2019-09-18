@@ -58,7 +58,7 @@ class ArtifactSelectionDialog extends javax.swing.JDialog {
      * @param parent The parent window
      * @param modal  Block user-input to other top-level windows.
      */
-    public ArtifactSelectionDialog(java.awt.Frame parent, boolean modal) {
+    ArtifactSelectionDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         populateList();
@@ -96,7 +96,9 @@ class ArtifactSelectionDialog extends javax.swing.JDialog {
             Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: {0}", ex.getLocalizedMessage()); //NON-NLS
         } catch (NoCurrentCaseException ex) {
             // There may not be a case open, for example when configuring Command Line reports
-            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex.getLocalizedMessage()); //NON-NLS
+            if (Case.isCaseOpen()) {
+                Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex.getLocalizedMessage()); //NON-NLS
+            }
         }
     }
 

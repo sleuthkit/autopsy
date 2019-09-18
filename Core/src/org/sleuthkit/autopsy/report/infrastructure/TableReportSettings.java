@@ -32,9 +32,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 final class TableReportSettings implements Serializable {
 
     /**
-     * An enumeration of table report types.
+     * An enumeration of table report options.
      */
-    enum TableReportType {
+    enum TableReportOption {
         ALL_RESULTS, //NON-NLS
         ALL_TAGGED_RESULTS, //NON-NLS
         SPECIFIC_TAGGED_RESULTS;   //NON-NLS
@@ -43,8 +43,8 @@ final class TableReportSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private final List<String> tagNames = new ArrayList<>();
-    private final boolean useCaseSpecificData;
-    private final TableReportType reportType;
+    private final boolean loadAllTagsAndArtifacts;
+    private final TableReportOption reportOption;
 
     /**
      * Creates TableReportSettings object. This constructor is used when user
@@ -55,10 +55,10 @@ final class TableReportSettings implements Serializable {
      * types to be included in the report. Only enabled entries will be kept.
      * @param tagNameSelections The enabled/disabled state of the tag names to
      * be included in the report. Only enabled entries will be kept.
-     * @param useCaseSpecificData Flag whether to use case specific tag and artifact data.
-     * @param reportType Table report type.
+     * @param loadAllTagsAndArtifacts Flag whether to read tag and artifact lists at report generation time
+     * @param reportOption Selected table report option.
      */
-    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean useCaseSpecificData, TableReportType reportType) {
+    TableReportSettings(Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections, boolean loadAllTagsAndArtifacts, TableReportOption reportOption) {
         // Get the artifact types selected by the user
         for (Map.Entry<BlackboardArtifact.Type, Boolean> entry : artifactTypeSelections.entrySet()) {
             if (entry.getValue()) {
@@ -74,8 +74,8 @@ final class TableReportSettings implements Serializable {
             }
         }
 
-        this.reportType = reportType;
-        this.useCaseSpecificData = useCaseSpecificData;
+        this.reportOption = reportOption;
+        this.loadAllTagsAndArtifacts = loadAllTagsAndArtifacts;
     }
 
     List<BlackboardArtifact.Type> getArtifactSelections() {
@@ -87,15 +87,15 @@ final class TableReportSettings implements Serializable {
     }
 
     boolean isUseCaseSpecificData() {
-        return useCaseSpecificData;
+        return loadAllTagsAndArtifacts;
     }
 
     /**
-     * Get report type.
+     * Get selected report option.
      * 
-     * @return the reportType
+     * @return the reportOption
      */
-    TableReportType getReportType() {
-        return reportType;
+    TableReportOption getSelectedReportOption() {
+        return reportOption;
     }
 }

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.file.FileReportDataTypes;
 import org.sleuthkit.autopsy.report.ReportModule;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;

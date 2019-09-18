@@ -52,13 +52,13 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
  */
-class ReportKML implements GeneralReportModule {
+class KMLReport implements GeneralReportModule {
 
-    private static final Logger logger = Logger.getLogger(ReportKML.class.getName());
+    private static final Logger logger = Logger.getLogger(KMLReport.class.getName());
     private static final String KML_STYLE_FILE = "style.kml";
     private static final String REPORT_KML = "ReportKML.kml";
     private static final String STYLESHEETS_PATH = "/org/sleuthkit/autopsy/report/stylesheets/";
-    private static ReportKML instance = null;
+    private static KMLReport instance = null;
     private Case currentCase;
     private SleuthkitCase skCase;
     private final SimpleDateFormat kmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
@@ -84,13 +84,13 @@ class ReportKML implements GeneralReportModule {
     }
 
     // Hidden constructor for the report
-    private ReportKML() {
+    private KMLReport() {
     }
 
     // Get the default implementation of this report
-    public static synchronized ReportKML getDefault() {
+    public static synchronized KMLReport getDefault() {
         if (instance == null) {
-            instance = new ReportKML();
+            instance = new KMLReport();
         }
         return instance;
     }

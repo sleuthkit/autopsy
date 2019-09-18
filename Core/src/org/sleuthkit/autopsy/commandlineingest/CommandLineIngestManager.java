@@ -114,6 +114,7 @@ public class CommandLineIngestManager {
          * Requests the list of command line commands from command line options
          * processor and executes the commands one by one.
          */
+        @Override
         public void run() {
             LOGGER.log(Level.INFO, "Job processing task started");
 
@@ -281,7 +282,7 @@ public class CommandLineIngestManager {
                                     }
 
                                     // generate reports
-                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.REPORTING_CONFIGURATION_NAME, new ReportProgressLogger()); //NON-NLS
+                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.getReportingConfigName(), new ReportProgressLogger()); //NON-NLS
                                     generator.generateReports();
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());

@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * provides a convenient way to add content hashes to hash set databases.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
+class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private List<TagName> tagNames;
@@ -58,7 +58,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
     private HashDb selectedHashSet = null;
 
-    AddTaggedHashesToHashDbConfigPanel() {
+    SaveTaggedHashesToHashDbConfigPanel() {
         initComponents();
         customizeComponents();
               
@@ -107,10 +107,10 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
             // There may not be a case open when configuring report modules for Command Line execution
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
-            Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
+            Logger.getLogger(SaveTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
         } catch (NoCurrentCaseException ex) {
             // There may not be a case open when configuring report modules for Command Line execution
-            Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex);
+            Logger.getLogger(SaveTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex);
         }
 
         // Mark the tag names as unselected. Note that tagNameSelections is a
@@ -247,21 +247,21 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
         jScrollPane1.setViewportView(tagNamesListBox);
 
-        org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.selectAllButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(SaveTaggedHashesToHashDbConfigPanel.class, "SaveTaggedHashesToHashDbConfigPanel.selectAllButton.text")); // NOI18N
         selectAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 selectAllButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(deselectAllButton, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.deselectAllButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deselectAllButton, org.openide.util.NbBundle.getMessage(SaveTaggedHashesToHashDbConfigPanel.class, "SaveTaggedHashesToHashDbConfigPanel.deselectAllButton.text")); // NOI18N
         deselectAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deselectAllButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SaveTaggedHashesToHashDbConfigPanel.class, "SaveTaggedHashesToHashDbConfigPanel.jLabel1.text")); // NOI18N
 
         hashSetsComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -269,16 +269,16 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(configureHashDatabasesButton, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.configureHashDatabasesButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(configureHashDatabasesButton, org.openide.util.NbBundle.getMessage(SaveTaggedHashesToHashDbConfigPanel.class, "SaveTaggedHashesToHashDbConfigPanel.configureHashDatabasesButton.text")); // NOI18N
         configureHashDatabasesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 configureHashDatabasesButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SaveTaggedHashesToHashDbConfigPanel.class, "SaveTaggedHashesToHashDbConfigPanel.jLabel2.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jAllTagsCheckBox, org.openide.util.NbBundle.getMessage(AddTaggedHashesToHashDbConfigPanel.class, "AddTaggedHashesToHashDbConfigPanel.jAllTagsCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jAllTagsCheckBox, org.openide.util.NbBundle.getMessage(SaveTaggedHashesToHashDbConfigPanel.class, "SaveTaggedHashesToHashDbConfigPanel.jAllTagsCheckBox.text")); // NOI18N
         jAllTagsCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jAllTagsCheckBoxActionPerformed(evt);

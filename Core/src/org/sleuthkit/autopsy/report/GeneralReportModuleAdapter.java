@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.report;
 
 import javax.swing.JPanel;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
 
 /**
  * An adapter that provides no-op implementations of various GeneralReportModule

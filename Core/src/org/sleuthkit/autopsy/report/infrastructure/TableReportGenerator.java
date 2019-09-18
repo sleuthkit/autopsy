@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.html.ReportHTML;
+import org.sleuthkit.autopsy.report.modules.html.HTMLReport;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimaps;
@@ -127,7 +127,7 @@ class TableReportGenerator {
             try {
                 // If report type is "all tagged results", then read all possible tab names from database.
                 // Otherwise do not load tag names, i.e. run "all results" report
-                if (settings.getReportType() == TableReportSettings.TableReportType.ALL_TAGGED_RESULTS) {
+                if (settings.getSelectedReportOption() == TableReportSettings.TableReportOption.ALL_TAGGED_RESULTS) {
                     getAllExistingTags();
                 }
                 
@@ -220,7 +220,7 @@ class TableReportGenerator {
                         });
                 for (String accountTypeStr : groupedArtifacts.keySet()) {
                     /*
-                     * If the report is a ReportHTML, the data type name
+                     * If the report is a HTMLReport, the data type name
                      * eventualy makes it to useDataTypeIcon which expects but
                      * does not require a artifact name, so we make a synthetic
                      * compund name by appending a ":" and the account type.
@@ -346,8 +346,8 @@ class TableReportGenerator {
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.makeContTagTab.taggedFiles.msg"));
             comment.append(makeCommaSeparatedList(tagNamesFilter));
         }
-        if (tableReport instanceof ReportHTML) {
-            ReportHTML htmlReportModule = (ReportHTML) tableReport;
+        if (tableReport instanceof HTMLReport) {
+            HTMLReport htmlReportModule = (HTMLReport) tableReport;
             htmlReportModule.startDataType(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName(), comment.toString());
             htmlReportModule.startContentTagsTable(columnHeaders);
         } else {
@@ -384,8 +384,8 @@ class TableReportGenerator {
                 rowData.add(file.getMd5Hash());
             }
             // @@@ This casting is a tricky little workaround to allow the HTML report module to slip in a content hyperlink.
-            if (tableReport instanceof ReportHTML) {
-                ReportHTML htmlReportModule = (ReportHTML) tableReport;
+            if (tableReport instanceof HTMLReport) {
+                HTMLReport htmlReportModule = (HTMLReport) tableReport;
                 htmlReportModule.addRowWithTaggedContentHyperlink(rowData, tag);
             } else {
                 tableReport.addRow(rowData);
@@ -475,13 +475,13 @@ class TableReportGenerator {
         progressPanel.updateStatusLabel(
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.createdThumb.text"));
 
-        if (tableReport instanceof ReportHTML) {
-            ReportHTML htmlModule = (ReportHTML) tableReport;
+        if (tableReport instanceof HTMLReport) {
+            HTMLReport htmlModule = (HTMLReport) tableReport;
             htmlModule.startDataType(
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.name"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.thumbnailTable.desc"));
             List<String> emptyHeaders = new ArrayList<>();
-            for (int i = 0; i < ReportHTML.THUMBNAIL_COLUMNS; i++) {
+            for (int i = 0; i < HTMLReport.THUMBNAIL_COLUMNS; i++) {
                 emptyHeaders.add("");
             }
             htmlModule.startTable(emptyHeaders);

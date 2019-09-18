@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.report.infrastructure;
 
 import org.sleuthkit.autopsy.report.modules.portablecase.PortableCaseReportModule;
-import org.sleuthkit.autopsy.report.modules.html.ReportHTML;
+import org.sleuthkit.autopsy.report.modules.html.HTMLReport;
 import org.sleuthkit.autopsy.report.ReportModule;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
@@ -114,7 +114,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         // Results-HTML should always be first in the list of Report Modules.
         int indexOfHTMLReportModule = 0;
         for (ReportModule module : modules) {
-            if (module instanceof ReportHTML) {
+            if (module instanceof HTMLReport) {
                 break;
             }
             indexOfHTMLReportModule++;

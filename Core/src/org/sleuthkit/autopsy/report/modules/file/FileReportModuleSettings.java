@@ -27,22 +27,22 @@ class FileReportModuleSettings implements ReportModuleSettings {
 
     private static final long serialVersionUID = 1L;
     
-    enum ReportType {
+    enum ReportDelimiter {
         TAB_DELIMITED,
         COMA_DELIMITED
     }
-    private final ReportType type;
+    private final ReportDelimiter delimiter;
 
     /**
      * Default File report module settings. Default to tab delimited since it
      * was previously the only option.
      */
     FileReportModuleSettings() {
-        this.type = ReportType.TAB_DELIMITED;
+        this.delimiter = ReportDelimiter.TAB_DELIMITED;
     }
 
-    FileReportModuleSettings(ReportType type) {
-        this.type = type;
+    FileReportModuleSettings(ReportDelimiter type) {
+        this.delimiter = type;
     }
 
     @Override
@@ -51,11 +51,11 @@ class FileReportModuleSettings implements ReportModuleSettings {
     }
 
     /**
-     * Get type of the report.
+     * Get delimiter of the report.
      *
-     * @return Type of the report.
+     * @return Delimiter setting for the report.
      */
-    ReportType getReportType() {
-        return type;
+    ReportDelimiter getReportDelimiter() {
+        return delimiter;
     }
 }

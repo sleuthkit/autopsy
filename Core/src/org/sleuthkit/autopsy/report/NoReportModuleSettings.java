@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import org.sleuthkit.autopsy.report.ReportModuleSettings;
-
 /**
  * Implementation of the ReportModuleSettings interface for use by report
  * modules that do not have settings.

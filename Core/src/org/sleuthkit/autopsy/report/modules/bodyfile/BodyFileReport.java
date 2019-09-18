@@ -40,14 +40,14 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.*;
 
 /**
- * ReportBodyFile generates a report in the body file format specified on The
- * Sleuth Kit wiki as
- * MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
+ * BodyFileReport generates a report in the body file format specified on The
+ Sleuth Kit wiki as
+ MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
  */
-class ReportBodyFile implements GeneralReportModule {
+class BodyFileReport implements GeneralReportModule {
 
-    private static final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
-    private static ReportBodyFile instance = null;
+    private static final Logger logger = Logger.getLogger(BodyFileReport.class.getName());
+    private static BodyFileReport instance = null;
 
     private Case currentCase;
     private SleuthkitCase skCase;
@@ -55,13 +55,13 @@ class ReportBodyFile implements GeneralReportModule {
     private String reportPath;
 
     // Hidden constructor for the report
-    private ReportBodyFile() {
+    private BodyFileReport() {
     }
 
     // Get the default implementation of this report
-    public static synchronized ReportBodyFile getDefault() {
+    public static synchronized BodyFileReport getDefault() {
         if (instance == null) {
-            instance = new ReportBodyFile();
+            instance = new BodyFileReport();
         }
         return instance;
     }

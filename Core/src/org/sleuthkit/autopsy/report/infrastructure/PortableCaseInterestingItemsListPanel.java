@@ -73,7 +73,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         customizeComponents();
         
         // update tag selection
-        jAllSetsCheckBox.setSelected(settings.isAllTagsSelected());
+        jAllSetsCheckBox.setSelected(settings.areAllTagsSelected());
         setNamesListBox.setEnabled(!jAllSetsCheckBox.isSelected());
         selectButton.setEnabled(!jAllSetsCheckBox.isSelected());
         deselectButton.setEnabled(!jAllSetsCheckBox.isSelected());
@@ -123,7 +123,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
                 Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex); // NON-NLS
             } catch (NoCurrentCaseException ex) {
                 // There may not be a case open when configuring report modules for Command Line execution
-                Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); // NON-NLS
+                if (Case.isCaseOpen()) {
+                    Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+                }
             }
         }
         Collections.sort(setNames);

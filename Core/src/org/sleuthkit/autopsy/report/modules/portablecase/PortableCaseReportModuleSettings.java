@@ -134,11 +134,11 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         return chunkSize;
     }
 
-    public boolean isAllTagsSelected() {
+    public boolean areAllTagsSelected() {
         return allTagsSelected;
     }
 
-    public boolean isAllSetsSelected() {
+    public boolean areAllSetsSelected() {
         return allSetsSelected;
     }
 

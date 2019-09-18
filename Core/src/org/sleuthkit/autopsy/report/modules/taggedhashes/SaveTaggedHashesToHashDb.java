@@ -44,17 +44,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  * convenient way to add content hashes to hash set databases.
  */
 @ServiceProvider(service = GeneralReportModule.class)
-public class AddTaggedHashesToHashDb implements GeneralReportModule {
+public class SaveTaggedHashesToHashDb implements GeneralReportModule {
 
-    private static final Logger logger = Logger.getLogger(AddTaggedHashesToHashDb.class.getName());
-    private AddTaggedHashesToHashDbConfigPanel configPanel;
+    private static final Logger logger = Logger.getLogger(SaveTaggedHashesToHashDb.class.getName());
+    private SaveTaggedHashesToHashDbConfigPanel configPanel;
 
-    public AddTaggedHashesToHashDb() {
+    public SaveTaggedHashesToHashDb() {
     }
 
     @Override
     public String getName() {
-        return "Add Tagged Hashes";
+        return "Save Tagged Hashes";
     }
 
     @Override
@@ -119,7 +119,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         try {
             openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
+            Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
             progressPanel.updateStatusLabel("Exception while getting open case.");
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
             return;
@@ -166,7 +166,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                             try {
                                 hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
                             } catch (TskCoreException ex) {
-                                Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
+                                Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
                                 failedExports.add(tag.getContent().getName());
                             }
                         } else {
@@ -176,7 +176,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                     }
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
+                Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
                 progressPanel.updateStatusLabel("Error getting selected tags for case.");
             }
         }
@@ -206,7 +206,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
     
     private void initializePanel() {
         if (configPanel == null) {
-            configPanel = new AddTaggedHashesToHashDbConfigPanel();
+            configPanel = new SaveTaggedHashesToHashDbConfigPanel();
         }
     }
 }

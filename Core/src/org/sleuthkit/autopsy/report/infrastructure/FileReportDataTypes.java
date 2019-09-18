@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report.modules.file;
+package org.sleuthkit.autopsy.report.infrastructure;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -32,13 +32,13 @@ import org.sleuthkit.datamodel.TskData;
  */
 public enum FileReportDataTypes {
 
-    NAME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.filename.text")) {
+    NAME(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.filename.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getName();
                 }
             },
-    FILE_EXT(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.fileExt.text")) {
+    FILE_EXT(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.fileExt.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     String name = file.getName();
@@ -46,13 +46,13 @@ public enum FileReportDataTypes {
                     return (extIndex == -1 ? "" : name.substring(extIndex));
                 }
             },
-    FILE_TYPE(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.fileType.text")) {
+    FILE_TYPE(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.fileType.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getMetaTypeAsString();
                 }
             },
-    DELETED(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.isDel.text")) {
+    DELETED(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.isDel.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     if (file.getMetaFlagsAsString().equals(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.toString())) {
@@ -61,55 +61,55 @@ public enum FileReportDataTypes {
                     return "";
                 }
             },
-    A_TIME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.aTime.text")) {
+    A_TIME(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.aTime.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getAtimeAsDate();
                 }
             },
-    CR_TIME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.crTime.text")) {
+    CR_TIME(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.crTime.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getCrtimeAsDate();
                 }
             },
-    M_TIME(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.mTime.text")) {
+    M_TIME(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.mTime.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getMtimeAsDate();
                 }
             },
-    SIZE(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.size.text")) {
+    SIZE(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.size.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return String.valueOf(file.getSize());
                 }
             },
-    ADDRESS(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.address.text")) {
+    ADDRESS(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.address.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return String.valueOf(file.getMetaAddr());
                 }
             },
-    HASH_VALUE(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.hash.text")) {
+    HASH_VALUE(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.hash.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getMd5Hash();
                 }
             },
-    KNOWN_STATUS(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.knownStatus.text")) {
+    KNOWN_STATUS(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.knownStatus.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getKnown().getName();
                 }
             },
-    PERMISSIONS(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.perms.text")) {
+    PERMISSIONS(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.perms.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     return file.getModesAsString();
                 }
             },
-    FULL_PATH(NbBundle.getMessage(FileReportText.class, "FileReportDataTypes.path.text")) {
+    FULL_PATH(NbBundle.getMessage(FileReportDataTypes.class, "FileReportDataTypes.path.text")) {
                 @Override
                 public String getValue(AbstractFile file) {
                     try {

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.report.infrastructure;
 
-import org.sleuthkit.autopsy.report.modules.file.FileReportDataTypes;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;

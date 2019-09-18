@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.report.modules.file;
 
+import org.sleuthkit.autopsy.report.infrastructure.FileReportDataTypes;
 import org.sleuthkit.autopsy.report.NoReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 import java.io.BufferedWriter;

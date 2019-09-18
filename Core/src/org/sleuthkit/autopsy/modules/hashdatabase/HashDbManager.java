@@ -695,6 +695,8 @@ public class HashDbManager implements PropertyChangeListener {
     
     public static abstract class HashDb implements Serializable {
         
+        private static final long serialVersionUID = 1L;
+        
         /**
          * Indicates how files with hashes stored in a particular hash database
          * object should be classified.

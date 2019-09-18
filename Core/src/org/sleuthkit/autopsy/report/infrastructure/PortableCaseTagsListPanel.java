@@ -72,7 +72,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
         // update tag selection
-        jAllTagsCheckBox.setSelected(settings.isAllTagsSelected());
+        jAllTagsCheckBox.setSelected(settings.areAllTagsSelected());
         tagNamesListBox.setEnabled(!jAllTagsCheckBox.isSelected());
         selectButton.setEnabled(!jAllTagsCheckBox.isSelected());
         deselectButton.setEnabled(!jAllTagsCheckBox.isSelected());

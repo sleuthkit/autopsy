@@ -22,12 +22,12 @@ package org.sleuthkit.autopsy.report.modules.html;
  * The panel shown for all TableReportModules when configuring report modules.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class ReportHTMLConfigurationPanel extends javax.swing.JPanel {
+final class HTMLReportConfigurationPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form DefaultReportConfigurationPanel
      */
-    ReportHTMLConfigurationPanel() {
+    HTMLReportConfigurationPanel() {
         initComponents();        
         headerTextField.setText("");
         footerTextField.setText("");
@@ -76,13 +76,13 @@ final class ReportHTMLConfigurationPanel extends javax.swing.JPanel {
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
-        org.openide.awt.Mnemonics.setLocalizedText(headerLabel, org.openide.util.NbBundle.getMessage(ReportHTMLConfigurationPanel.class, "ReportHTMLConfigurationPanel.headerLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(headerLabel, org.openide.util.NbBundle.getMessage(HTMLReportConfigurationPanel.class, "HTMLReportConfigurationPanel.headerLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(footerLabel, org.openide.util.NbBundle.getMessage(ReportHTMLConfigurationPanel.class, "ReportHTMLConfigurationPanel.footerLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(footerLabel, org.openide.util.NbBundle.getMessage(HTMLReportConfigurationPanel.class, "HTMLReportConfigurationPanel.footerLabel.text")); // NOI18N
 
-        headerTextField.setText(org.openide.util.NbBundle.getMessage(ReportHTMLConfigurationPanel.class, "ReportHTMLConfigurationPanel.headerTextField.text")); // NOI18N
+        headerTextField.setText(org.openide.util.NbBundle.getMessage(HTMLReportConfigurationPanel.class, "HTMLReportConfigurationPanel.headerTextField.text")); // NOI18N
 
-        footerTextField.setText(org.openide.util.NbBundle.getMessage(ReportHTMLConfigurationPanel.class, "ReportHTMLConfigurationPanel.footerTextField.text")); // NOI18N
+        footerTextField.setText(org.openide.util.NbBundle.getMessage(HTMLReportConfigurationPanel.class, "HTMLReportConfigurationPanel.footerTextField.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

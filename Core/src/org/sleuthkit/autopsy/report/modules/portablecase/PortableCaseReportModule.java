@@ -227,7 +227,7 @@ public class PortableCaseReportModule implements ReportModule {
         
         // Check that there will be something to copy
         List<TagName> tagNames;
-        if (options.isAllTagsSelected()) {
+        if (options.areAllTagsSelected()) {
             try {
                 tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -240,7 +240,7 @@ public class PortableCaseReportModule implements ReportModule {
         }
         
         List<String> setNames;
-        if (options.isAllSetsSelected()) {
+        if (options.areAllSetsSelected()) {
             try {
                 setNames = getAllInterestingItemsSets();
             } catch (NoCurrentCaseException | TskCoreException ex) {

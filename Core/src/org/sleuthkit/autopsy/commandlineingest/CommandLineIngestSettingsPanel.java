@@ -34,11 +34,10 @@ import static org.sleuthkit.autopsy.report.infrastructure.ReportWizardAction.doR
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
 
-    private final CommandLineIngestSettingsPanelController controller;
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(CommandLineIngestSettingsPanel.class.getName());
     
-    static final String REPORTING_CONFIGURATION_NAME = "CommandLineIngest";
+    private static final String REPORTING_CONFIGURATION_NAME = "CommandLineIngest";
     private static final boolean DISPLAY_CASE_SPECIFIC_DATA = false; // do not try to display case specific data
     private static final boolean RUN_REPORTS = false; // do not generate reports as part of running the report wizard
 
@@ -48,8 +47,14 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
      * @param theController Controller to notify of changes.
      */
     public CommandLineIngestSettingsPanel(CommandLineIngestSettingsPanelController theController) {
-        controller = theController;
         initComponents();
+    }
+    
+    /**
+     * @return the REPORTING_CONFIGURATION_NAME
+     */
+    public static String getReportingConfigName() {
+        return REPORTING_CONFIGURATION_NAME;
     }
 
     private void displayIngestJobSettingsPanel() {
@@ -171,7 +176,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
 
     private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
         this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        doReportWizard(REPORTING_CONFIGURATION_NAME, DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
+        doReportWizard(getReportingConfigName(), DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
         this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnEditReportSettingsActionPerformed
 

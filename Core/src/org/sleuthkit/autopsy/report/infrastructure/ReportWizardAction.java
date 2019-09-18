@@ -38,6 +38,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
 import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -86,7 +87,15 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
 
             // save reporting configuration
-            saveReportingConfiguration(configName, wiz);
+            try {
+                saveReportingConfiguration(configName, wiz);
+            } catch (ReportConfigException ex) {
+                logger.log(Level.SEVERE, "Failed to save reporting configuration " + configName, ex); //NON-NLS
+                NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+                        NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.unableToSaveConfig.errorLabel.text"), 
+                        NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(descriptor);
+            }
 
             if (runReports) {
                 // generate reports in a separate thread
@@ -101,7 +110,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         }
     }
 
-    private static void saveReportingConfiguration(String configName, WizardDescriptor wiz) {
+    private static void saveReportingConfiguration(String configName, WizardDescriptor wiz) throws ReportConfigException {
 
         ReportingConfig reportingConfig = new ReportingConfig(configName);
         reportingConfig.setFileReportSettings((FileReportSettings) wiz.getProperty("fileReportSettings"));
@@ -120,13 +129,11 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         // set module configs
         reportingConfig.setModuleConfigs(moduleConfigs);
 
-        try {
-            // save reporting configuration
-            ReportingConfigLoader.saveConfig(reportingConfig);
-        } catch (ReportConfigException ex) {
-            // ELTODO should we do more to let the user know?
-            logger.log(Level.SEVERE, "Failed to save reporting configuration " + reportingConfig.getName(), ex); //NON-NLS
-        }
+        // save reporting configuration
+        ReportingConfigLoader.saveConfig(reportingConfig);
+        
+        //ELDELETE
+        throw new ReportConfigException("test");
     }
 
     public ReportWizardAction() {

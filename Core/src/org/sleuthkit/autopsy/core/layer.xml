@@ -311,19 +311,19 @@
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.FileSearchProvider"/>
             <attr name="position" intvalue="250"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-modules-html-ReportHTML.instance">
+        <file name="org-sleuthkit-autopsy-report-modules-html-HTMLReport.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.infrastructure.TableReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.html.ReportHTML.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.html.HTMLReport.getDefault"/>
             <attr name="position" intvalue="900"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-modules-excel.ReportExcel.instance">
+        <file name="org-sleuthkit-autopsy-report-modules-excel.ExcelReport.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.infrastructure.TableReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.excel.ReportExcel.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.excel.ExcelReport.getDefault"/>
             <attr name="position" intvalue="901"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-modules-bodyfile-ReportBodyFile.instance">
+        <file name="org-sleuthkit-autopsy-report-modules-bodyfile-BodyFileReport.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.bodyfile.ReportBodyFile.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.bodyfile.BodyFileReport.getDefault"/>
             <attr name="position" intvalue="902"/>
         </file>
         <file name="org-sleuthkit-autopsy-report-modules-file-FileReportText.instance">
@@ -331,9 +331,9 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.file.FileReportText.getDefault"/>
             <attr name="position" intvalue="903"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-modules-kml-ReportKML.instance">
+        <file name="org-sleuthkit-autopsy-report-modules-kml-KMLReport.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.kml.ReportKML.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.kml.KMLReport.getDefault"/>
             <attr name="position" intvalue="904"/>
         </file>
         <file name="org-sleuthkit-autopsy-report-modules-stix-STIXReportModule.instance">
@@ -341,9 +341,9 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.stix.STIXReportModule.getDefault"/>
             <attr name="position" intvalue="910"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-modules-caseuco-ReportCaseUco.instance">
+        <file name="org-sleuthkit-autopsy-report-modules-caseuco-CaseUcoReport.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.caseuco.ReportCaseUco.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoReport.getDefault"/>
             <attr name="position" intvalue="911"/>
         </file>       
         <!--<folder name="JavaHelp">
