@@ -49,11 +49,11 @@ public class LanguageSpecificContentQueryHelperTest {
 
     @Test
     public void buildTermfreqQuery() {
-        QueryParser.Result result = new QueryParser.Result();
+        QueryTermHelper.Result result = new QueryTermHelper.Result();
         result.fieldTermsMap.put("field1", Arrays.asList("term1"));
         result.fieldTermsMap.put("field2", Arrays.asList("term1", "term2"));
         assertEquals(
-            "termfreq:sum(termfreq(\"field1\",\"term1\"),termfreq(\"field1\",\"term1\"),termfreq(\"field1\",\"term1\"))",
+            "termfreq:sum(termfreq(\"field1\",\"term1\"),termfreq(\"field2\",\"term1\"),termfreq(\"field2\",\"term2\"))",
             LanguageSpecificContentQueryHelper.buildTermfreqQuery("query", result));
     }
 }
