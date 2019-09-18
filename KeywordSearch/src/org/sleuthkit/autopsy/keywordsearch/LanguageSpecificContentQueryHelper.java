@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 /**
  * A helper class to support querying documents which have language-specific fields.
  */
-class LanguageSpecificContentQueryHelper {
+final class LanguageSpecificContentQueryHelper {
 
     private LanguageSpecificContentQueryHelper() {}
 

@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 /**
  * Mini-chunk related methods.
  */
-class MiniChunkHelper {
+final class MiniChunkHelper {
 
     private MiniChunkHelper() {}
 

@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  *
  * This class is used to find matched terms from query results.
  */
-class QueryTermHelper {
+final class QueryTermHelper {
 
     private QueryTermHelper() {}
 
