@@ -41,6 +41,7 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
@@ -88,7 +89,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         self._PARSER_NAME = "Skype Parser"
         self._VERSION = "8.15.0.428"
     
-    def get_account_instance(self, skype_db):
+    def get_user_account(self, skype_db):
         account_query_result = skype_db.runQuery(
             """
                SELECT entry_id,
@@ -104,19 +105,36 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         #Skype databases are of the form: live:XYZ.db, where
-        #XYZ is the skype id of the user.
+        #XYZ is the skype id of the user. The following search
+        #does a generic substring match for 'live' in the skype
+        #package.
         skype_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
-                        "live", False, self._SKYPE_PACKAGE_NAME)
+                        "live:", False, self._SKYPE_PACKAGE_NAME)
+
         for skype_db in skype_dbs:
             try:
-                account_instance = self.get_account_instance(skype_db) 
-                if account_instance is None:
-                    helper = CommunicationArtifactsHelper(self._PARSER_NAME, 
-                            skype_db.getDBFile(), Account.Type.SKYPE) 
+                #Attempt to get the user account id from the database
+                user_account_instance = None
+                try:
+                    user_account_instance = self.get_user_account(skype_db) 
+                except SQLException as ex:
+                    self._logger.log(Level.WARNING, 
+                            "Error query for the user account in the Skype db.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
+
+                current_case = Case.getCurrentCaseThrows()
+
+                if user_account_instance is None:
+                    helper = CommunicationArtifactsHelper(
+                                current_case.getSleuthkitCase(), self._PARSER_NAME, 
+                                skype_db.getDBFile(), Account.Type.SKYPE
+                             ) 
                 else:
-                    helper = CommunicationArtifactsHelper(self._PARSER_NAME,
-                            skype_db.getDBFile(), Account.Type.SKYPE,
-                            Account.Type.SKYPE, account_instance)
+                    helper = CommunicationArtifactsHelper(
+                                current_case.getSleuthkitCase(), self._PARSER_NAME,
+                                skype_db.getDBFile(), Account.Type.SKYPE,
+                                Account.Type.SKYPE, user_account_instance
+                             )
                 
                 #Query for contacts and iterate row by row adding
                 #each contact artifact
@@ -168,9 +186,13 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                 self._logger.log(Level.WARNING, traceback.format_exc())
             except (TskCoreException, BlackboardException) as ex:
                 #Severe error trying to add to case database.. case is not complete.
-                self._logger.log(Level.SEVERE, "Failed to add message artifacts" +
-                        " to the case database.", ex)
+                #These exceptions are thrown by the CommunicationArtifactsHelper.
+                self._logger.log(Level.SEVERE, 
+                        "Failed to add message artifacts to the case database.", ex)
                 self._logger.log(Level.SEVERE, traceback.format_exc())
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 skype_db.close()
 
