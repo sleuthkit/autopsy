@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
@@ -53,18 +54,20 @@ and adds artifacts to the case.
 """
 class ShareItAnalyzer(general.AndroidComponentAnalyzer):
 
-    moduleName = "ShareIT Analyzer"
-    progName = "ShareIt"
-    
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self._PACKAGE_NAME = "com.lenovo.anyshare.gps"
+        self._MODULE_NAME = "ShareIt Analyzer"
+        self._MESSAGE_TYPE = "ShareIt Message"
+        self._VERSION = "5.0.28_ww"
 
     def analyze(self, dataSource, fileManager, context):
-        historyDbs = AppSQLiteDB.findAppDatabases(dataSource, "history.db", True, "com.lenovo.anyshare.gps")
+        historyDbs = AppSQLiteDB.findAppDatabases(dataSource, "history.db", True, self._PACKAGE_NAME)
         for historyDb in historyDbs:
             try:
-                historyDbHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                    self.moduleName, historyDb.getDBFile(),
+                current_case = Case.getCurrentCaseThrows()
+                historyDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+                                    self._MODULE_NAME, historyDb.getDBFile(),
                                     Account.Type.SHAREIT)
 
                 queryString = "SELECT history_type, device_id, device_name, description, timestamp, import_path FROM history"
@@ -88,7 +91,7 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                         
                         timeStamp = historyResultSet.getLong("timestamp") / 1000
                         messageArtifact = transferDbHelper.addMessage(
-                                                            "ShareIt Message",
+                                                            self._MESSAGE_TYPE,
                                                             direction,
                                                             fromAddress,
                                                             toAddress,
@@ -96,14 +99,22 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
                                                             msgBody,
-                                                            "" )
+                                                            None )  # thread id
                                                                                                 
                         # TBD: add the file as attachment ??
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for ShareIt history.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
             except TskCoreException as ex:
-                self._logger.log(Level.WARNING, "Failed to create CommunicationArtifactsHelper for adding artifacts.", ex)
+                self._logger.log(Level.SEVERE, "Failed to create ShareIt message artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 historyDb.close()
                 
