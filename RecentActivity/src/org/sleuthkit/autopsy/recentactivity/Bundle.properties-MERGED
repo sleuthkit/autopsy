@@ -2,9 +2,14 @@ cannotBuildXmlParser=Unable to build XML parser:
 cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: 
 cannotParseXml=Unable to parse XML file: 
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+# {0} - module name
+# {1} - row number
+# {2} - table length
+# {3} - cache path
 ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_FlashDrive=Flash Drive
+# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
 Extract.indexError.message=Failed to index artifact for keyword search.
@@ -46,6 +51,7 @@ ExtractOs.windowsVolume.label=OS Drive (Windows)
 ExtractOs.yellowDogLinuxOs.label=Linux (Yellow Dog)
 ExtractOs.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)
 ExtractOS_progressMessage=Checking for OS
+ExtractRecycleBin_module_name=Recycle Bin
 ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.
 ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files
 ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Cookies files
@@ -182,6 +188,7 @@ RecentDocumentsByLnk.parentModuleName.noSpace=RecentActivity
 RecentDocumentsByLnk.parentModuleName=Recent Activity
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
+# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine
 SearchEngineURLQueryAnalyzer.engineName.none=NONE
@@ -189,4 +196,7 @@ SearchEngineURLQueryAnalyzer.domainSubStr.none=NONE
 SearchEngineURLQueryAnalyzer.toString=Name: {0}\nDomain Substring: {1}\nCount: {2}\nSplit Tokens: \n{3}
 SearchEngineURLQueryAnalyzer.parentModuleName.noSpace=RecentActivity
 SearchEngineURLQueryAnalyzer.parentModuleName=Recent Activity
+Shellbag_Artifact_Display_Name=Shell Bags
+Shellbag_Key_Attribute_Display_Name=Key
+Shellbag_Last_Write_Attribute_Display_Name=Last Write
 UsbDeviceIdMapper.parseAndLookup.text=Product: {0}

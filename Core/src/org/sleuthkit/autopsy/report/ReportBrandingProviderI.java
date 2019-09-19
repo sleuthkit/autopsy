@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.report;
 /**
  * Interface to implement by reports to add on custom branding, logos, etc
  */
-interface ReportBrandingProviderI {
+public interface ReportBrandingProviderI {
 
     /**
      * Get the generator logo path on the local disk (previously set or

@@ -68,13 +68,19 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -85,7 +91,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({
     "RegRipperNotFound=Autopsy RegRipper executable not found.",
     "RegRipperFullNotFound=Full version RegRipper executable not found.",
-    "Progress_Message_Analyze_Registry=Analyzing Registry Files"
+    "Progress_Message_Analyze_Registry=Analyzing Registry Files",
+    "Shellbag_Artifact_Display_Name=Shell Bags",
+    "Shellbag_Key_Attribute_Display_Name=Key",
+    "Shellbag_Last_Write_Attribute_Display_Name=Last Write"
 })
 class ExtractRegistry extends Extract {
 
@@ -132,6 +141,14 @@ class ExtractRegistry extends Extract {
     private final Path rrFullHome; // Path to the full version of RegRipper
     private Content dataSource;
     private IngestJobContext context;
+    
+    private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
+    private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
+    private static final String SHELLBAG_ATTRIBUTE_KEY= "RA_SHELL_BAG_KEY"; //NON-NLS
+    
+    BlackboardArtifact.Type shellBagArtifactType = null;
+    BlackboardAttribute.Type shellBagKeyAttributeType = null;
+    BlackboardAttribute.Type shellBagLastWriteAttributeType = null;
 
     ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
@@ -195,6 +212,13 @@ class ExtractRegistry extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'ntuser.dat' file."); //NON-NLS
         }
+        
+        // find the user-specific ntuser-dat files
+        try {
+            allRegistryFiles.addAll(fileManager.findFiles(dataSource, "usrclass.dat")); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Error finding 'usrclass.dat' files."), ex); //NON-NLS
+        }
 
         // find the system hives'
         String[] regFileNames = new String[]{"system", "software", "security", "sam"}; //NON-NLS
@@ -204,7 +228,7 @@ class ExtractRegistry extends Extract {
             } catch (TskCoreException ex) {
                 String msg = NbBundle.getMessage(this.getClass(),
                         "ExtractRegistry.findRegFiles.errMsg.errReadingFile", regFileName);
-                logger.log(Level.WARNING, msg);
+                logger.log(Level.WARNING, msg, ex);
                 this.addErrorMessage(this.getName() + ": " + msg);
             }
         }
@@ -282,6 +306,13 @@ class ExtractRegistry extends Extract {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                     this.getName(), regFileName));
+                } else if (regFileNameLocal.toLowerCase().contains("ntuser") || regFileNameLocal.toLowerCase().contains("usrclass")) {
+                    try {
+                        List<ShellBag> shellbags = ShellBagParser.parseShellbagOutput(regOutputFiles.fullPlugins);
+                        createShellBagArtifacts(regFile, shellbags);
+                    } catch (IOException | TskCoreException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to get shell bags from file %s", regOutputFiles.fullPlugins), ex);
+                    }
                 }
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
@@ -340,6 +371,8 @@ class ExtractRegistry extends Extract {
             fullType = "sam"; //NON-NLS
         } else if (regFilePath.toLowerCase().contains("security")) { //NON-NLS
             fullType = "security"; //NON-NLS
+        }else if (regFilePath.toLowerCase().contains("usrclass")) { //NON-NLS
+            fullType = "usrclass"; //NON-NLS
         } else {
             return regOutputFiles;
         }
@@ -840,13 +873,13 @@ class ExtractRegistry extends Extract {
             } // for
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error finding the registry file: %s", regFilePath), ex); //NON-NLS
         } catch (SAXException ex) {
-            logger.log(Level.SEVERE, "Error parsing the registry XML.", ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error parsing the registry XML: %s", regFilePath), ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error building the document parser.", ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error building the document parser: %s", regFilePath), ex); //NON-NLS
         } catch (ParserConfigurationException ex) {
-            logger.log(Level.SEVERE, "Error configuring the registry parser.", ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error configuring the registry parser: %s", regFilePath), ex); //NON-NLS
         } finally {
             try {
                 if (fstream != null) {
@@ -1119,7 +1152,120 @@ class ExtractRegistry extends Extract {
         }
     }
     
+   
     /**
+     * Create the shellbag artifacts from the list of ShellBag objects.
+     *
+     * @param regFile   The data source file
+     * @param shellbags List of shellbags from source file
+     *
+     * @throws TskCoreException
+     */
+    void createShellBagArtifacts(AbstractFile regFile, List<ShellBag> shellbags) throws TskCoreException {
+        List<BlackboardArtifact> artifacts = new ArrayList<>();
+        for (ShellBag bag : shellbags) {
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            BlackboardArtifact artifact = regFile.newArtifact(getShellBagArtifact().getTypeID());
+            attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
+            attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
+
+            long time;
+            time = bag.getLastWrite();
+            if (time != 0) {
+                attributes.add(new BlackboardAttribute(getLastWriteAttribute(), getName(), time));
+            }
+            
+            time = bag.getModified();
+            if (time != 0) {
+                attributes.add(new BlackboardAttribute(TSK_DATETIME_MODIFIED, getName(), time));
+            }
+
+            time = bag.getCreated();
+            if (time != 0) {
+                attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, getName(), time));
+            }
+
+            time = bag.getAccessed();
+            if (time != 0) {
+                attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
+            }
+
+            artifact.addAttributes(attributes);
+
+            artifacts.add(artifact);
+        }
+
+        postArtifacts(artifacts);
+    }
+
+    /**
+     * Returns the custom Shellbag artifact type or creates it if it does not
+     * currently exist.
+     *
+     * @return BlackboardArtifact.Type for shellbag artifacts
+     *
+     * @throws TskCoreException
+     */
+    private BlackboardArtifact.Type getShellBagArtifact() throws TskCoreException {
+        if (shellBagArtifactType == null) {
+            try {
+                tskCase.addBlackboardArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name()); //NON-NLS
+            } catch (TskDataException ex) {
+                // Artifact already exists
+                logger.log(Level.INFO, String.format("%s may have already been defined for this case", SHELLBAG_ARTIFACT_NAME), ex);
+            }
+
+            shellBagArtifactType = tskCase.getArtifactType(SHELLBAG_ARTIFACT_NAME);
+        }
+
+        return shellBagArtifactType;
+    }
+
+    /**
+     * Gets the custom BlackboardAttribute type. The attribute type is created
+     * if it does not currently exist.
+     *
+     * @return The BlackboardAttribute type
+     *
+     * @throws TskCoreException
+     */
+    private BlackboardAttribute.Type getLastWriteAttribute() throws TskCoreException {
+        if (shellBagLastWriteAttributeType == null) {
+            try {
+                shellBagLastWriteAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE, 
+                                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME, 
+                                                    Bundle.Shellbag_Last_Write_Attribute_Display_Name());
+            } catch (TskDataException ex) {
+                // Attribute already exists get it from the case
+                shellBagLastWriteAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_LAST_WRITE);
+            }
+        }
+        return shellBagLastWriteAttributeType;
+    }
+
+    /**
+     * Gets the custom BlackboardAttribute type. The attribute type is created
+     * if it does not currently exist.
+     *
+     * @return The BlackboardAttribute type
+     *
+     * @throws TskCoreException
+     */
+    private BlackboardAttribute.Type getKeyAttribute() throws TskCoreException {
+        if (shellBagKeyAttributeType == null) {
+            try {
+                shellBagKeyAttributeType = tskCase.addArtifactAttributeType(SHELLBAG_ATTRIBUTE_KEY, 
+                                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, 
+                                                    Bundle.Shellbag_Key_Attribute_Display_Name());
+            } catch (TskDataException ex) {
+                // The attribute already exists get it from the case
+                shellBagKeyAttributeType = tskCase.getAttributeType(SHELLBAG_ATTRIBUTE_KEY);
+            }
+        }
+        return shellBagKeyAttributeType;
+    }
+    
+        /**
      * Maps the user groups to the sid that are a part of them.
      * 
      * @param bufferedReader
