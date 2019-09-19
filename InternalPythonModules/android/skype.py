@@ -110,9 +110,8 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         #package.
         skype_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
                         "live:", False, self._SKYPE_PACKAGE_NAME)
-
-        for skype_db in skype_dbs:
-            try:
+        try:
+            for skype_db in skype_dbs:
                 #Attempt to get the user account id from the database
                 user_account_instance = None
                 try:
@@ -138,11 +137,12 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                 self.parse_contacts(skype_db, helper)
                 self.parse_calllogs(skype_db, helper)
                 self.parse_messages(skype_db, helper)
-            except NoCurrentCaseException as ex:
-                self._logger.log(Level.WARNING, "No case currently open.", ex)
-                self._logger.log(Level.WARNING, traceback.format_exc())
-            finally:
-                skype_db.close()
+        except NoCurrentCaseException as ex:
+            self._logger.log(Level.WARNING, "No case currently open.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+
+        for skype_db in skype_dbs:
+            skype_db.close()
 
     def parse_contacts(self, skype_db, helper):
         #Query for contacts and iterate row by row adding
