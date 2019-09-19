@@ -16,7 +16,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 from java.io import File
 from java.lang import Class
 from java.lang import ClassNotFoundException
@@ -31,8 +30,8 @@ from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
-from org.sleuthkit.autopsy.coreutils import AppSQLiteDB 
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
+from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
+
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -40,11 +39,15 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from TskContactsParser import TskContactsParser
 from TskMessagesParser import TskMessagesParser
 from TskCallLogsParser import TskCallLogsParser
-from general import appendAttachmentList
 
 import traceback
 import general
@@ -63,65 +66,119 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
     def analyze(self, dataSource, fileManager, context):
         try:
             contact_and_message_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
-                    "naver_line", True, self._LINE_PACKAGE_NAME)
+                     "naver_line", True, self._LINE_PACKAGE_NAME)
             calllog_dbs = AppSQLiteDB.findAppDatabases(dataSource,
-                    "call_history", True, self._LINE_PACKAGE_NAME)
+                     "call_history", True, self._LINE_PACKAGE_NAME)
 
             for contact_and_message_db in contact_and_message_dbs:
-                helper = AppDBParserHelper(self._PARSER_NAME, 
+                current_case = Case.getCurrentCaseThrows()
+                helper = CommunicationArtifactsHelper(
+                            current_case.getSleuthkitCase(), self._PARSER_NAME, 
                             contact_and_message_db.getDBFile(), Account.Type.LINE) 
 
-                contacts_parser = LineContactsParser(contact_and_message_db)
-                while contacts_parser.next():
-                    helper.addContact( 
-                        contacts_parser.get_account_name(), 
-                        contacts_parser.get_contact_name(), 
-                        contacts_parser.get_phone(),
-                        contacts_parser.get_home_phone(),
-                        contacts_parser.get_mobile_phone(),
-                        contacts_parser.get_email()
-                    )
-                contacts_parser.close()
-
-                messages_parser = LineMessagesParser(contact_and_message_db)
-                while messages_parser.next():
-                    helper.addMessage(
-                        messages_parser.get_message_type(),
-                        messages_parser.get_message_direction(),
-                        messages_parser.get_phone_number_from(),
-                        messages_parser.get_phone_number_to(),
-                        messages_parser.get_message_date_time(),
-                        messages_parser.get_message_read_status(),
-                        messages_parser.get_message_subject(),
-                        messages_parser.get_message_text(),
-                        messages_parser.get_thread_id() 
-                    )
-                messages_parser.close()
+                self.parse_contacts(contact_and_message_db, helper)
+                self.parse_messages(contact_and_message_db, helper)
                 contact_and_message_db.close()
 
             for calllog_db in calllog_dbs:
-                helper = AppDBParserHelper(self._PARSER_NAME,
-                         calllog_db.getDBFile(), Account.Type.LINE)
-                calllog_db.attachDatabase(dataSource, 
-                        "naver_line", calllog_db.getDBFile().getParentPath(), "naver")
+                current_case = Case.getCurrentCaseThrows()
+                helper = CommunicationArtifactsHelper(
+                            current_case.getSleuthkitCase(), self._PARSER_NAME,
+                            calllog_db.getDBFile(), Account.Type.LINE)
 
-                calllog_parser = LineCallLogsParser(calllog_db)
-                while calllog_parser.next():
-                    helper.addCalllog(
-                        calllog_parser.get_call_direction(),
-                        calllog_parser.get_phone_number_from(),
-                        calllog_parser.get_phone_number_to(),
-                        calllog_parser.get_call_start_date_time(),
-                        calllog_parser.get_call_end_date_time(),
-                        calllog_parser.get_call_type()
-                    )
-                calllog_db.detachDatabase("naver")
-                calllog_parser.close()
+                calllog_db.attachDatabase(
+                        dataSource, "naver_line", 
+                        calllog_db.getDBFile().getParentPath(), "naver")
 
+                self.parse_calllogs(calllog_db, helper)
                 calllog_db.close()
-        except (SQLException, TskCoreException) as ex:
+        except NoCurrentCaseException as ex:
             # Error parsing Line databases.
             self._logger.log(Level.WARNING, "Error parsing the Line App Databases", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())   
+
+    def parse_contacts(self, contacts_db, helper):
+        try:
+            contacts_parser = LineContactsParser(contacts_db)
+            while contacts_parser.next():
+                helper.addContact( 
+                    contacts_parser.get_account_name(), 
+                    contacts_parser.get_contact_name(), 
+                    contacts_parser.get_phone(),
+                    contacts_parser.get_home_phone(),
+                    contacts_parser.get_mobile_phone(),
+                    contacts_parser.get_email()
+                )
+            contacts_parser.close()
+        except SQLException as ex:
+            self._logger.log(Level.WARNING, "Error parsing the Line App Database for contacts", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())   
+        except TskCoreException as ex:
+            #Error adding artifact to case database... case is not complete.
+            self._logger.log(Level.SEVERE, 
+                    "Error adding Line contact artifacts to the case database.", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())   
+        except BlackboardException as ex:
+            #Error posting notification to blackboard
+            self._logger.log(Level.WARNING, 
+                    "Error posting Line contact artifacts to blackboard.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())   
+
+    def parse_calllogs(self, calllogs_db, helper):
+        try:
+            calllog_parser = LineCallLogsParser(calllogs_db)
+            while calllog_parser.next():
+                helper.addCalllog(
+                    calllog_parser.get_call_direction(),
+                    calllog_parser.get_phone_number_from(),
+                    calllog_parser.get_phone_number_to(),
+                    calllog_parser.get_call_start_date_time(),
+                    calllog_parser.get_call_end_date_time(),
+                    calllog_parser.get_call_type()
+                )
+            calllog_parser.close()
+        except SQLException as ex:
+            self._logger.log(Level.WARNING, "Error parsing the Line App Database for calllogs", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())   
+        except TskCoreException as ex:
+            #Error adding artifact to case database... case is not complete.
+            self._logger.log(Level.SEVERE, 
+                    "Error adding Line calllog artifacts to the case database.", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())   
+        except BlackboardException as ex:
+            #Error posting notification to blackboard
+            self._logger.log(Level.WARNING, 
+                    "Error posting Line calllog artifacts to blackboard.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())   
+    
+    def parse_messages(self, messages_db, helper):
+        try:
+            messages_parser = LineMessagesParser(messages_db)
+            while messages_parser.next():
+                helper.addMessage(
+                    messages_parser.get_message_type(),
+                    messages_parser.get_message_direction(),
+                    messages_parser.get_phone_number_from(),
+                    messages_parser.get_phone_number_to(),
+                    messages_parser.get_message_date_time(),
+                    messages_parser.get_message_read_status(),
+                    messages_parser.get_message_subject(),
+                    messages_parser.get_message_text(),
+                    messages_parser.get_thread_id() 
+                )
+            messages_parser.close()
+        except SQLException as ex:
+            self._logger.log(Level.WARNING, "Error parsing the Line App Database for messages.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())   
+        except TskCoreException as ex:
+            #Error adding artifact to case database... case is not complete.
+            self._logger.log(Level.SEVERE, 
+                    "Error adding Line message artifacts to the case database.", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())   
+        except BlackboardException as ex:
+            #Error posting notification to blackboard
+            self._logger.log(Level.WARNING, 
+                    "Error posting Line message artifacts to blackboard.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())   
 
 class LineCallLogsParser(TskCallLogsParser):
@@ -148,7 +205,6 @@ class LineCallLogsParser(TskCallLogsParser):
         )
         self._OUTGOING_CALL_TYPE = "O"
         self._INCOMING_CALL_TYPE = "I"
-        self._had_error = False
         self._VIDEO_CALL_TYPE = "V"
         self._AUDIO_CALL_TYPE = "A"
 
@@ -162,14 +218,12 @@ class LineCallLogsParser(TskCallLogsParser):
         try:
             return long(self.result_set.getString("start_time")) / 1000
         except ValueError as ve:
-            self._had_error = True
             return super(LineCallLogsParser, self).get_call_start_date_time()
 
     def get_call_end_date_time(self):
         try:
             return long(self.result_set.getString("end_time")) / 1000
         except ValueError as ve:
-            self._had_error = True
             return super(LineCallLogsParser, self).get_call_end_date_time()
     
     def get_phone_number_to(self):
@@ -190,9 +244,6 @@ class LineCallLogsParser(TskCallLogsParser):
         if self.result_set.getString("call_type") == self._AUDIO_CALL_TYPE:
             return self.AUDIO_CALL
         return super(LineCallLogsParser, self).get_call_type()
-
-    def has_incomplete_results(self):
-        return self._had_error
 
 class LineContactsParser(TskContactsParser):
     """
@@ -225,42 +276,52 @@ class LineMessagesParser(TskMessagesParser):
 
     def __init__(self, message_db):
         super(LineMessagesParser, self).__init__(message_db.runQuery(
-            """
-                SELECT all_contacts.name, 
-                       all_contacts.id, 
-                       all_contacts.members, 
-                       CH.from_mid, 
-                       CH.content, 
-                       CH.created_time, 
-                       CH.attachement_type, 
-                       CH.attachement_local_uri,
-                       CH.status 
-                FROM   (SELECT G.name, 
-                               group_members.id, 
-                               group_members.members 
-                        FROM   (SELECT id, 
-                                       group_concat(m_id) AS members 
-                                FROM   membership 
-                                GROUP  BY id) AS group_members 
-                               JOIN groups AS G 
-                                 ON G.id = group_members.id 
-                        UNION 
-                        SELECT server_name, 
-                               m_id, 
-                               NULL 
-                        FROM   contacts) AS all_contacts 
-                       JOIN chat_history AS CH 
-                         ON CH.chat_id = all_contacts.id
-                WHERE attachement_type != 6
-            """
-                        )
+                """
+                    SELECT contact_list_with_groups.name,
+                           contact_list_with_groups.id,
+                           contact_list_with_groups.members,
+                           contact_list_with_groups.member_names,
+                           CH.from_mid,
+                           C.server_name AS from_name,
+                           CH.content,
+                           CH.created_time,
+                           CH.attachement_type,
+                           CH.attachement_local_uri,
+                           CH.status
+                    FROM   (SELECT G.name,
+                                   group_members.id,
+                                   group_members.members,
+                                   group_members.member_names
+                            FROM   (SELECT id,
+                                           group_concat(M.m_id) AS members,
+                                           group_concat(replace(C.server_name, 
+                                                                ",", 
+                                                                "")) as member_names
+                                    FROM   membership AS M
+                                           JOIN contacts as C
+                                             ON M.m_id = C.m_id
+                                    GROUP  BY id) AS group_members
+                                   JOIN groups AS G
+                                     ON G.id = group_members.id
+                            UNION
+                            SELECT server_name,
+                                   m_id,
+                                   NULL,
+                                   NULL
+                            FROM   contacts) AS contact_list_with_groups
+                           JOIN chat_history AS CH
+                             ON CH.chat_id = contact_list_with_groups.id
+                           LEFT JOIN contacts as C
+                             ON C.m_id = CH.from_mid
+                    WHERE attachement_type != 6
+                """
+             )
         )
         self._LINE_MESSAGE_TYPE = "Line Message"
         #From the limited test data, it appeared that incoming
         #was only associated with a 1 status. Status # 3 and 7
         #was only associated with outgoing.
         self._INCOMING_MESSAGE_TYPE = 1
-        self._had_error = False
 
     def get_message_type(self):
         return self._LINE_MESSAGE_TYPE
@@ -271,16 +332,15 @@ class LineMessagesParser(TskMessagesParser):
             #Get time in seconds (created_time is stored in ms from epoch)
             return long(created_time) / 1000
         except ValueError as ve:
-            self._had_error = True
             return super(LineMessagesParser, self).get_message_date_time()
 
     def get_message_text(self):
         content = self.result_set.getString("content") 
         attachment_uri = self.result_set.getString("attachement_local_uri")
         if attachment_uri is not None and content is not None:
-            return appendAttachmentList(content, [attachment_uri])
+            return general.appendAttachmentList(content, [attachment_uri])
         elif attachment_uri is not None and content is None:
-            return appendAttachmentList("", [attachment_uri])
+            return general.appendAttachmentList("", [attachment_uri])
         return content
 
     def get_message_direction(self):  
@@ -290,21 +350,27 @@ class LineMessagesParser(TskMessagesParser):
 
     def get_phone_number_from(self):
         if self.get_message_direction() == self.INCOMING:
-            group = self.result_set.getString("members")
-            if group is None:
-                return Account.Address(self.result_set.getString("from_mid"),
-                            self.result_set.getString("name"))
             return Account.Address(self.result_set.getString("from_mid"),
-                            self.result_set.getString("name"))
+                     self.result_set.getString("from_name"))
         return super(LineMessagesParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_message_direction() == self.OUTGOING:
             group = self.result_set.getString("members")
-            if group is None:
-                return Account.Address(self.result_set.getString("id"),
-                            self.result_set.getString("name"))
-            return Account.Address(group, self.result_set.getString("name"))
+            if group is not None:
+                group = group.split(",")
+                names = self.result_set.getString("member_names").split(",")
+                
+                recipients = []
+
+                for recipient_id, recipient_name in zip(group, names):
+                    recipients.append(Account.Address(recipient_id, recipient_name))
+
+                return recipients
+
+            return Account.Address(self.result_set.getString("id"), 
+                    self.result_set.getString("name"))
+
         return super(LineMessagesParser, self).get_phone_number_to()
 
     def get_thread_id(self):
