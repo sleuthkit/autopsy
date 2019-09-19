@@ -36,6 +36,8 @@ SaveSnapShotAsReport.reportName.prompt=leave empty for default report name: {0}.
 # {0} - report file path
 SaveSnapShotAsReport.ReportSavedAt=Report saved at [{0}]
 SaveSnapShotAsReport.Success=Success
+SaveSnapShotAsReport_Path_Failure_Report=Failed to create report.  Invalid path: {0}
+SaveSnapShotAsReport_Report_Failed=Report failed
 Timeline.ModuleName=Timeline
 ViewArtifactInTimelineAction.displayName=View Result in Timeline... 
 ViewFileInTimelineAction.viewFile.displayName=View File in Timeline... 
