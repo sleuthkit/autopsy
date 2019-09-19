@@ -200,10 +200,10 @@ You can use one of the standard artifact types or create your own.
 
 After you make an artifact, you should call <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifact()</a>, which will:
 <ul>
-<li>Analyze the artifact and add any timestamps to the new timeline tables
-<li>Send an event over its new EventBus that the artifact(s) was added.
+<li>Analyze the artifact and add any timestamps to the Timeline tables
+<li>Send an event over the EventBus that the artifact(s) was added
 <ul>
-<li>Autopsy is a listener of this new eventbus and will rebroadcast it to other Autopsy modules
+<li>Autopsy is a listener of this EventBus and will rebroadcast it to other Autopsy modules
 <li>Keyword search will also listen for this and will index the artifact
 </ul>
 </ul>
