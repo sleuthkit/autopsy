@@ -52,28 +52,36 @@ Finds the SQLite DB for Xender, parses the DB for contacts & messages,
 and adds artifacts to the case.
 """
 class XenderAnalyzer(general.AndroidComponentAnalyzer):
-
-    moduleName = "Xender Analyzer"
-    progName = "Xender"
-    
+   
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self._PACKAGE_NAME = "cn.xender"
+        self._MODULE_NAME = "Xender Analyzer"
+        self._MESSAGE_TYPE = "Xender Message"
+        self._VERSION = "4.6.5"
+        
 
     def analyze(self, dataSource, fileManager, context):
         selfAccountAddress = None
-        transactionDbs = AppSQLiteDB.findAppDatabases(dataSource, "trans-history-db", True, "cn.xender")
+        transactionDbs = AppSQLiteDB.findAppDatabases(dataSource, "trans-history-db", True, self._PACKAGE_NAME)
         for transactionDb in transactionDbs:
             try:
+                current_case = Case.getCurrentCaseThrows()
                 # get the profile with connection_times 0, that's the self account.
                 profilesResultSet = transactionDb.runQuery("SELECT device_id, nick_name FROM profile WHERE connect_times = 0")
                 if profilesResultSet:
                     while profilesResultSet.next():
                         if not selfAccountAddress:
                             selfAccountAddress = Account.Address(profilesResultSet.getString("device_id"), profilesResultSet.getString("nick_name"))
-
-                transactionDbHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                            self.moduleName, transactionDb.getDBFile(),
+                # create artifacts helper
+                if selfAccountAddress is not None:
+                    transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+                                            self._MODULE_NAME, transactionDb.getDBFile(),
                                             Account.Type.XENDER, Account.Type.XENDER, selfAccountAddress )
+                else:
+                    transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+                                            self._MODULE_NAME, transactionDb.getDBFile(),
+                                            Account.Type.XENDER)
 
                 queryString = "SELECT f_path, f_display_name, f_size_str, f_create_time, c_direction, c_session_id, s_name, s_device_id, r_name, r_device_id FROM new_history "
                 messagesResultSet = transactionDb.runQuery(queryString)
@@ -96,13 +104,13 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                         
                         timeStamp = messagesResultSet.getLong("f_create_time") / 1000
                         messageArtifact = transactionDbHelper.addMessage( 
-                                                            "Xender Message",
+                                                            self._MESSAGE_TYPE,
                                                             direction,
                                                             fromAddress,
                                                             toAddress,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
-                                                            None, 
+                                                            None,   # subject
                                                             msgBody,
                                                             messagesResultSet.getString("c_session_id") )
                                                                                                 
@@ -110,8 +118,16 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for profiles", ex)
-            except (TskCoreException, BlackboardException) as ex:
-                self._logger.log(Level.WARNING, "Failed to create Xender message artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to create Xender message artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 transactionDb.close()
                 

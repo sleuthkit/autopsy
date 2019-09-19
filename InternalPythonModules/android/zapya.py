@@ -54,18 +54,21 @@ and adds artifacts to the case.
 """
 class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
 
-    moduleName = "Zapya Analyzer"
-    progName = "Zapya"
-    
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self._PACKAGE_NAME = "com.dewmobile.kuaiya.play"
+        self._MODULE_NAME = "Zapya Analyzer"
+        self._MESSAGE_TYPE = "Zapya Message"
+        self._VERSION = "5.8.3"
 
     def analyze(self, dataSource, fileManager, context):
-        transferDbs = AppSQLiteDB.findAppDatabases(dataSource, "transfer20.db", True, "com.dewmobile.kuaiya.play")
+        transferDbs = AppSQLiteDB.findAppDatabases(dataSource, "transfer20.db", True, self._PACKAGE_NAME)
         for transferDb in transferDbs:
             try:
-                transferDbHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                    self.moduleName, transferDb.getDBFile(),
+                current_case = Case.getCurrentCaseThrows()
+                # 
+                transferDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+                                    self._MODULE_NAME, transferDb.getDBFile(),
                                     Account.Type.ZAPYA)
 
                 queryString = "SELECT device, name, direction, createtime, path, title FROM transfer"
@@ -89,23 +92,30 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                         
                         timeStamp = transfersResultSet.getLong("createtime") / 1000
                         messageArtifact = transferDbHelper.addMessage( 
-                                                            "Zapya Message",
+                                                            self._MESSAGE_TYPE,
                                                             direction,
                                                             fromAddress,
                                                             toAddress,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
-                                                            None, 
+                                                            None,   # subject
                                                             msgBody,
-                                                            "" )
+                                                            None )    # thread id
                                                                                                 
                         # TBD: add the file as attachment ??
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for transfer", ex)
-            except (TskCoreException, BlackboardException) as ex:
-                self._logger.log(Level.WARNING, "Failed to create Zapya message artifacts.", ex)
-
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to create Zapya message artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 transferDb.close()
                 
