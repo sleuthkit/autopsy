@@ -137,8 +137,10 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                     
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for IMO friends", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             except (TskCoreException, BlackboardException)  as ex:
                 self._logger.log(Level.WARNING, "Failed to message artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 friendsDb.close()
                 

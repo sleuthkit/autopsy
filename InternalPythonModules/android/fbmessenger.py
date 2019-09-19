@@ -90,8 +90,10 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for account", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             except (TskCoreException, BlackboardException) as ex:
                 self._logger.log(Level.WARNING, "Failed to add Facebook Messenger contact artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 contactsDb.close()
 
@@ -210,8 +212,10 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for FB Messenger messages.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             except (TskCoreException, BlackboardException) as ex:
                 self._logger.log(Level.WARNING, "Failed to add FB Messenger message artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 threadsDb.close()
 
