@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
@@ -89,8 +90,8 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for account", ex)
-            except TskCoreException as ex:
-                self._logger.log(Level.WARNING, "Failed to create CommunicationArtifactsHelper for adding Facebook contacts.", ex)
+            except (TskCoreException, BlackboardException) as ex:
+                self._logger.log(Level.WARNING, "Failed to add Facebook Messenger contact artifacts.", ex)
             finally:
                 contactsDb.close()
 
@@ -209,8 +210,8 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for FB Messenger messages.", ex)
-            except TskCoreException as ex:
-                self._logger.log(Level.WARNING, "Failed to create CommunicationArtifactsHelper for adding FB Messenger messages.", ex)
+            except (TskCoreException, BlackboardException) as ex:
+                self._logger.log(Level.WARNING, "Failed to add FB Messenger message artifacts.", ex)
             finally:
                 threadsDb.close()
 
