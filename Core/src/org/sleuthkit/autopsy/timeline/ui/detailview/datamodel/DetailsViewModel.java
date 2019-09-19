@@ -102,6 +102,7 @@ final public class DetailsViewModel {
     }
 
     /**
+     * @param uiFilter
      * @param zoom
      *
      * @return a list of aggregated events that are within the requested time
