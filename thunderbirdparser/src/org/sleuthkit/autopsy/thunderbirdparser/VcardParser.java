@@ -224,8 +224,6 @@ final class VcardParser {
             if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, attributes)) {
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                 artifact.addAttributes(attributes);
-                List<BlackboardArtifact> blackboardArtifacts = new ArrayList<>();
-                blackboardArtifacts.add(artifact);
                 
                  extractPhotos(vcard, abstractFile, artifact);
                 
@@ -388,8 +386,12 @@ final class VcardParser {
      */
     private void addPhoneAttributes(Telephone telephone, AbstractFile abstractFile, Collection<BlackboardAttribute> attributes) {
         String telephoneText = telephone.getText();
+       
         if (telephoneText == null || telephoneText.isEmpty()) {
-            return;
+            telephoneText =  telephone.getUri().getNumber();
+            if (telephoneText == null || telephoneText.isEmpty()) {
+                return;
+            }
         }
 
         // Add phone number to collection for later creation of TSK_CONTACT.
@@ -409,14 +411,19 @@ final class VcardParser {
 
             if (splitTelephoneTypes.size() > 0) {
                 String splitType = splitTelephoneTypes.get(0);
-                String attributeTypeName = "TSK_PHONE_NUMBER_" + splitType;
+                String attributeTypeName = "TSK_PHONE_NUMBER";
+                if (splitType != null && !splitType.isEmpty()) {
+                    attributeTypeName = "TSK_PHONE_NUMBER_" + splitType;
+                }
+
                 try {
                     BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
                     if (attributeType == null) {
                         // Add this attribute type to the case database.
                         attributeType = tskCase.addArtifactAttributeType(attributeTypeName,
                                 BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
-                                String.format("Phone (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                                String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+
                     }
                     ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephone.getText(), attributeType, attributes);
                 } catch (TskCoreException ex) {
@@ -424,7 +431,7 @@ final class VcardParser {
                 } catch (TskDataException ex) {
                     logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
                 }
-            } 
+            }
         }
     }
     
@@ -492,7 +499,11 @@ final class VcardParser {
     private void addPhoneAccountInstances(Telephone telephone, AbstractFile abstractFile, Collection<AccountFileInstance> accountInstances) {
         String telephoneText = telephone.getText();
         if (telephoneText == null || telephoneText.isEmpty()) {
-            return;
+            telephoneText =  telephone.getUri().getNumber();
+            if (telephoneText == null || telephoneText.isEmpty()) {
+                return;
+            }
+
         }
 
         // Add phone number as a TSK_ACCOUNT.

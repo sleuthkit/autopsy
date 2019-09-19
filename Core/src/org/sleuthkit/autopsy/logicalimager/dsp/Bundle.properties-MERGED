@@ -46,6 +46,9 @@ AddLogicalImageTask.noCurrentCase=No current case
 # {1} - fields length
 # {2} - expected length
 AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}
+# {0} - file number
+# {1} - total files
+AddLogicalImageTask.searchingInterestingFile=Searching for interesting files ({0}/{1})
 # {0} - imageFilePath
 AddMultipleImagesTask.adding=Adding: {0}
 # {0} - file
