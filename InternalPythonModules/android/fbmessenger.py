@@ -196,14 +196,14 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                                     fromAddress, recipientAddressList)
 
     
-                    # at the end of th loop, add last message 
+                    # at the end of the loop, add last message 
                     messageArtifact = threadsDBHelper.addMessage( 
                                             "FB Messenger Message",
                                             direction,
                                             fromAddress,
                                             recipientAddressList,
                                             timeStamp,
-                                            MessageReadStatusEnum.UNKNOWN,
+                                            MessageReadStatus.UNKNOWN,
                                             "", 
                                             msgText,
                                             threadId)
