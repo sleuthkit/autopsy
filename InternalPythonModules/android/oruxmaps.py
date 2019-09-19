@@ -30,6 +30,7 @@ from java.sql import Statement
 from java.util.logging import Level
 from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
@@ -53,18 +54,22 @@ Analyzes database created by ORUX Maps.
 """
 class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
 
-    moduleName = "Orux Maps Analyzer"
-    programName = "Orux Maps"
     
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self._PACKAGE_NAME = "oruxmaps"
+        self._MODULE_NAME = "OruxMaps Analyzer"
+        self._PROGRAM_NAME = "OruxMaps"
+        self._VERSION = "7.5.7"
+        self.current_case = None
 
     def analyze(self, dataSource, fileManager, context):
-        oruxMapsTrackpointsDbs = AppSQLiteDB.findAppDatabases(dataSource, "oruxmapstracks.db", True, "oruxmaps")
+        oruxMapsTrackpointsDbs = AppSQLiteDB.findAppDatabases(dataSource, "oruxmapstracks.db", True, self._PACKAGE_NAME)
         for oruxMapsTrackpointsDb in oruxMapsTrackpointsDbs:
             try:
-                oruxDbHelper = ArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                    self.moduleName, oruxMapsTrackpointsDb.getDBFile())
+                current_case = Case.getCurrentCaseThrows()
+                oruxDbHelper = ArtifactsHelper(current_case.getSleuthkitCase(),
+                                    self._MODULE_NAME, oruxMapsTrackpointsDb.getDBFile())
                 
                 poiQueryString = "SELECT poilat, poilon, poitime, poiname FROM pois"
                 poisResultSet = oruxMapsTrackpointsDb.runQuery(poiQueryString)
@@ -75,7 +80,7 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                                             poisResultSet.getDouble("poilon"),
                                             poisResultSet.getLong("poitime") / 1000,    # milliseconds since unix epoch
                                             poisResultSet.getString("poiname"),
-                                            self.programName)
+                                            self._PROGRAM_NAME)
                         
                 trackpointsQueryString = "SELECT trkptlat, trkptlon, trkpttime FROM trackpoints"
                 trackpointsResultSet = oruxMapsTrackpointsDb.runQuery(trackpointsQueryString)
@@ -86,10 +91,18 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                                             trackpointsResultSet.getDouble("trkptlon"),
                                             trackpointsResultSet.getLong("trkpttime") / 1000,    # milliseconds since unix epoch
                                             "",
-                                            self.programName)
+                                            self._PROGRAM_NAME)
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for Orux Map trackpoints.", ex)
-            except (TskCoreException, BlackboardException) as ex:
-                self._logger.log(Level.WARNING, "Failed to add Orux Map trackpoint artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to add Orux Map trackpoint artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 oruxMapsTrackpointsDb.close()

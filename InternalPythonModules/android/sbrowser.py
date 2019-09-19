@@ -29,6 +29,7 @@ from java.util.logging import Level
 from java.util import ArrayList
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
@@ -51,18 +52,20 @@ and adds artifacts to the case.
 """
 class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
 
-    moduleName = "SBrowser Parser"
-    progName = "SBrowser"
-    
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self._PACKAGE_NAME = "com.sec.android.app.sbrowser"
+        self._MODULE_NAME = "SBrowser Analyzer"
+        self._PROGRAM_NAME = "SBrowser"
+        self._VERSION = "10.1.00.27"
+        self.current_case = None
 
     def analyzeBookmarks(self, dataSource, fileManager, context):
-            sbrowserDbs = AppSQLiteDB.findAppDatabases(dataSource, "sbrowser.db", True, "com.sec.android.app.sbrowser")
+            sbrowserDbs = AppSQLiteDB.findAppDatabases(dataSource, "sbrowser.db", True, self._PACKAGE_NAME)
             for sbrowserDb in sbrowserDbs:
                 try:
-                    sbrowserDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                            self.moduleName, sbrowserDb.getDBFile())
+                    sbrowserDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                            self._MODULE_NAME, sbrowserDb.getDBFile())
                     bookmarkResultSet = sbrowserDb.runQuery("SELECT url, title, created FROM bookmarks WHERE url IS NOT NULL")
                     if bookmarkResultSet is not None:
                         while bookmarkResultSet.next():
@@ -70,22 +73,27 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                             sbrowserDbHelper.addWebBookmark( bookmarkResultSet.getString("url"),
                                                         bookmarkResultSet.getString("title"),
                                                         createTime,     
-                                                        self.progName)
+                                                        self._PROGRAM_NAME)
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser bookmarks.", ex)
-                except (TskCoreException, BlackboardException) as ex:
-                    self._logger.log(Level.WARNING, "Failed to add SBrowser bookmark artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
+                except TskCoreException as ex:
+                    self._logger.log(Level.SEVERE, "Failed to add SBrowser bookmark artifacts.", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                except BlackboardException as ex:
+                    self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
                 finally:  
                     sbrowserDb.close()                    
             	
         
 
     def analyzeCookies(self, dataSource, fileManager, context):
-            cookiesDbs = AppSQLiteDB.findAppDatabases(dataSource, "Cookies", True, "com.sec.android.app.sbrowser")
+            cookiesDbs = AppSQLiteDB.findAppDatabases(dataSource, "Cookies", True, self._PACKAGE_NAME)
             for cookiesDb in cookiesDbs:
                 try:
-                    cookiesDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                            self.moduleName, cookiesDb.getDBFile())
+                    cookiesDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                            self._MODULE_NAME, cookiesDb.getDBFile())
                     cookiesResultSet = cookiesDb.runQuery("SELECT host_key, name, value, creation_utc FROM cookies")
                     if cookiesResultSet is not None:
                         while cookiesResultSet.next():
@@ -94,23 +102,28 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                                                         createTime,  
                                                         cookiesResultSet.getString("name"),
                                                         cookiesResultSet.getString("value"),
-                                                        self.progName)
+                                                        self._PROGRAM_NAME)
 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser cookies.", ex)
-                except (TskCoreException, BlackboardException) as ex:
-                    self._logger.log(Level.WARNING, "Failed to add SBrowser cookie artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
+                except TskCoreException as ex:
+                    self._logger.log(Level.SEVERE, "Failed to add SBrowser cookie artifacts.", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                except BlackboardException as ex:
+                    self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
                 finally:      
                     cookiesDb.close()                    
             	
         
 
     def analyzeHistory(self, dataSource, fileManager, context):
-            historyDbs = AppSQLiteDB.findAppDatabases(dataSource, "History", True, "com.sec.android.app.sbrowser")
+            historyDbs = AppSQLiteDB.findAppDatabases(dataSource, "History", True, self._PACKAGE_NAME)
             for historyDb in historyDbs:
                 try:
-                    historyDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                            self.moduleName, historyDb.getDBFile())
+                    historyDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                            self._MODULE_NAME, historyDb.getDBFile())
                     historyResultSet = historyDb.runQuery("SELECT url, title, last_visit_time FROM urls")
                     if historyResultSet is not None:
                         while historyResultSet.next():
@@ -119,22 +132,27 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                                                         accessTime,
                                                         "",     # referrer
                                                         historyResultSet.getString("title"),
-                                                        self.progName)
+                                                        self._PROGRAM_NAME)
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser history.", ex)
-                except (TskCoreException, BlackboardException) as ex:
-                    self._logger.log(Level.WARNING, "Failed to add SBrowser history artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
+                except TskCoreException as ex:
+                    self._logger.log(Level.SEVERE, "Failed to add SBrowser history artifacts.", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                except BlackboardException as ex:
+                    self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
                 finally:        
                     historyDb.close()                    
                 
         
 
     def analyzeDownloads(self, dataSource, fileManager, context):
-            downloadsDbs = AppSQLiteDB.findAppDatabases(dataSource, "History", True, "com.sec.android.app.sbrowser")
+            downloadsDbs = AppSQLiteDB.findAppDatabases(dataSource, "History", True, self._PACKAGE_NAME)
             for downloadsDb in downloadsDbs:
                 try:
-                    downloadsDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                            self.moduleName, downloadsDb.getDBFile())
+                    downloadsDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                            self._MODULE_NAME, downloadsDb.getDBFile())
                     queryString = "SELECT target_path, start_time, url FROM downloads"\
                                   " INNER JOIN downloads_url_chains ON downloads.id = downloads_url_chains.id"
                     downloadsResultSet = downloadsDb.runQuery(queryString)
@@ -144,21 +162,26 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                             downloadsDbHelper.addWebDownload( downloadsResultSet.getString("target_path"),
                                                         startTime,
                                                         downloadsResultSet.getString("url"),
-                                                        self.progName)
+                                                        self._PROGRAM_NAME)
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser downloads.", ex)
-                except (TskCoreException, BlackboardException) as ex:
-                    self._logger.log(Level.WARNING, "Failed to add SBrowser download artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
+                except TskCoreException as ex:
+                    self._logger.log(Level.SEVERE, "Failed to add SBrowser download artifacts.", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                except BlackboardException as ex:
+                    self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
                 finally:
                     downloadsDb.close()                    
                 
     def analyzeAutofill(self, dataSource, fileManager, context):
-            autofillDbs = AppSQLiteDB.findAppDatabases(dataSource, "Web Data", True, "com.sec.android.app.sbrowser")
+            autofillDbs = AppSQLiteDB.findAppDatabases(dataSource, "Web Data", True, self._PACKAGE_NAME)
             for autofillDb in autofillDbs:
                 try:
-                    autofillDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                            self.moduleName, autofillDb.getDBFile())
+                    autofillDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                            self._MODULE_NAME, autofillDb.getDBFile())
                     autofillsResultSet = autofillDb.runQuery("SELECT name, value, count, date_created FROM autofill INNER JOIN autofill_dates ON autofill.pair_id = autofill_dates.pair_id")
                     if autofillsResultSet is not None:
                         while autofillsResultSet.next():
@@ -171,17 +194,22 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser autofill.", ex)
-                except (TskCoreException, BlackboardException) as ex:
-                    self._logger.log(Level.WARNING, "Failed to add SBrowser autofill artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
+                except TskCoreException as ex:
+                    self._logger.log(Level.SEVERE, "Failed to add SBrowser autofill artifacts.", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                except BlackboardException as ex:
+                    self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
                 finally:
                     autofillDb.close()
 
     def analyzeWebFormAddress(self, dataSource, fileManager, context):
-            webFormAddressDbs = AppSQLiteDB.findAppDatabases(dataSource, "Web Data", True, "com.sec.android.app.sbrowser")
+            webFormAddressDbs = AppSQLiteDB.findAppDatabases(dataSource, "Web Data", True, self._PACKAGE_NAME)
             for webFormAddressDb in webFormAddressDbs:
                 try:                    
-                    webFormAddressDbHelper = WebBrowserArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                                self.moduleName, webFormAddressDb.getDBFile())
+                    webFormAddressDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                                self._MODULE_NAME, webFormAddressDb.getDBFile())
                     queryString = "SELECT street_address, city, state, zipcode, country_code, date_modified, first_name, last_name, number, email FROM autofill_profiles "\
                                 " INNER JOIN autofill_profile_names"\
                                 " ON autofill_profiles.guid = autofill_profile_names.guid"\
@@ -209,12 +237,26 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser form addresses.", ex)
-                except (TskCoreException, BlackboardException) as ex:
-                    self._logger.log(Level.WARNING, "Failed to add SBrowser form address artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
+                except TskCoreException as ex:
+                    self._logger.log(Level.SEVERE, "Failed to add SBrowser form address artifacts.", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                except BlackboardException as ex:
+                    self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                    self._logger.log(Level.WARNING, traceback.format_exc())
                 finally:
                     webFormAddressDb.close()
                     
     def analyze(self, dataSource, fileManager, context):
+        ## open current case
+        try:
+            self.current_case = Case.getCurrentCaseThrows()
+        except NoCurrentCaseException as ex:
+            self._logger.log(Level.WARNING, "No case currently open.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+            return
+
+                
         self.analyzeBookmarks(dataSource, fileManager, context)
         self.analyzeCookies(dataSource, fileManager, context)
         self.analyzeHistory(dataSource, fileManager, context)

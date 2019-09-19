@@ -29,6 +29,7 @@ from java.util.logging import Level
 from java.util import ArrayList
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
@@ -55,12 +56,17 @@ class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
     
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self._PACKAGE_NAME = "com.android.vending"
+        self._MODULE_NAME = "Android Installed Applications Analyzer"
+        self._VERSION = "5.1.1"     ## Android version
+        self.current_case = None
 
     def analyze(self, dataSource, fileManager, context):
-        libraryDbs = AppSQLiteDB.findAppDatabases(dataSource, "library.db", True, "com.android.vending")
+        libraryDbs = AppSQLiteDB.findAppDatabases(dataSource, "library.db", True, self._PACKAGE_NAME)
         for libraryDb in libraryDbs:
             try:
-                libraryDbHelper = ArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
+                current_case = Case.getCurrentCaseThrows()
+                libraryDbHelper = ArtifactsHelper(current_case.getSleuthkitCase(),
                                     self.moduleName, libraryDb.getDBFile())
                 queryString = "SELECT doc_id, purchase_time FROM ownership"
                 ownershipResultSet = libraryDb.runQuery(queryString)
@@ -72,8 +78,16 @@ class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
             
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for installed applications. ", ex)
-            except (TskCoreException, BlackboardException) as ex:
-                self._logger.log(Level.WARNING, "Failed to adding installed application artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to adding installed application artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 libraryDb.close()
     
