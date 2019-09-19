@@ -192,27 +192,27 @@ The first question that you must answer is what type of data do you want the use
 -# Data that is in a big text file or some other report that the user can review. To do this, you will use the Case.addReport() method to make the output available in the directory tree.
 
 
-\subsection ingest_modules_making_results_bb Posting Results to the Blackboard
+\subsection ingest_modules_making_results_bb Saving Results to the Blackboard
 The blackboard is used to store results so that they are displayed in the results tree.  
-See \ref platform_blackboard  for details on posting results to it.  You use the blackboard when you have specific items to show the user.  if you want to just shown them a big report from another library or tool, see \ref mod_report_page.
+See \ref platform_blackboard  for details on saving results to it.  You use the blackboard when you have specific items to show the user.  If you want to just shown them a big report from another library or tool, see \ref mod_report_page.
 The blackboard defines artifacts for specific data types (such as web bookmarks). 
 You can use one of the standard artifact types or create your own.
 
-After you make an artifact, you should call <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifact()</a>, which will:
+After you've added an artifact and all of its attributes to the blackboard, you should call <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifact()</a>, which will:
 <ul>
 <li>Analyze the artifact and add any timestamps to the Timeline tables
-<li>Send an event over the EventBus that the artifact(s) was added
+<li>Send an event over the Sleuth Kit event bus that the artifact(s) was added
 <ul>
-<li>Autopsy is a listener of this EventBus and will rebroadcast it to other Autopsy modules
-<li>Keyword search will also listen for this and will index the artifact
+<li>Autopsy is a listener of this event bus and will rebroadcast the event to other Autopsy modules
+<li>Keyword search also listens for this event and will index the artifact
 </ul>
 </ul>
 
-This means you no longer have to make calls to:
+This means you no longer have to make separate calls to:
  - Index the artifact
  - Fire the event to refresh the UI.
  
-If you are creating a large number of artifacts, you may see better performance if you save all the artifacts and do one bulk write at the end using <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifacts()</a>
+If you are creating a large number of artifacts, you may see better performance if you save all the artifacts you create and do one bulk post at the end using <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifacts()</a>. You can also post batches of artifacts instead of saving all of them until the end.
  
 You should not be using the Autopsy version of Blackboard. Those methods have all been deprecated and is another example of us moving "services" into the TSK data model.
 
