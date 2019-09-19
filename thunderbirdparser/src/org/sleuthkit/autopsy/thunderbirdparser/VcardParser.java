@@ -57,6 +57,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Relationship;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -141,8 +142,8 @@ final class VcardParser {
      *                                file.
      * @throws NoCurrentCaseException If there is no open case.
      */
-    void parse(File vcardFile, AbstractFile abstractFile) throws IOException, NoCurrentCaseException {
-        for (VCard vcard: Ezvcard.parse(vcardFile).all()) {
+    void parse(AbstractFile abstractFile) throws IOException, NoCurrentCaseException {
+        for (VCard vcard: Ezvcard.parse(new ReadContentInputStream(abstractFile)).all()) {
             addContactArtifact(vcard, abstractFile);
         }
     }

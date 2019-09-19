@@ -206,7 +206,7 @@ public final class ExecUtil {
      * @param terminator The ProcessTerminator used to determine if the process
      *                   should be killed.
      *
-     * @returnthe exit value of the process
+     * @return the exit value of the process
      *
      * @throws SecurityException if a security manager exists and vetoes any
      *                           aspect of running the process.
