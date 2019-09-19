@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import WebBrowserArtifactsHelper
 
 import traceback
@@ -74,8 +75,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for Opera cookies.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera cookies.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add Opera cookie artifacts.", ex)
                 finally:      
                     cookiesDb.close()                    
             	
@@ -98,8 +99,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                                                         self.progName)
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for Opera history.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera history.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add Opera history artifacts.", ex)
                 finally:        
                     historyDb.close()                    
                 
@@ -124,8 +125,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for Opera downloads.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera downloads.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add Opera download artifacts.", ex)
                 finally:
                     downloadsDb.close()                    
                 
@@ -147,8 +148,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for Opera autofill.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera autofill.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add Opera autofill artifacts.", ex)
                 finally:
                     autofillDb.close()
 
@@ -185,8 +186,8 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for Opera web form addresses.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding Opera form addresses.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add Opera form address artifacts.", ex)
                 finally:
                     webFormAddressDb.close()
                     

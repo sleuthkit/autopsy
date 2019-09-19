@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import WebBrowserArtifactsHelper
 
 import traceback
@@ -72,8 +73,8 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                                                         self.progName)
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser bookmarks.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding bookmarks.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add SBrowser bookmark artifacts.", ex)
                 finally:  
                     sbrowserDb.close()                    
             	
@@ -97,8 +98,8 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser cookies.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding SBrowser cookies.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add SBrowser cookie artifacts.", ex)
                 finally:      
                     cookiesDb.close()                    
             	
@@ -121,8 +122,8 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                                                         self.progName)
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser history.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding SBrowser history.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add SBrowser history artifacts.", ex)
                 finally:        
                     historyDb.close()                    
                 
@@ -147,8 +148,8 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser downloads.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding SBrowser downloads.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add SBrowser download artifacts.", ex)
                 finally:
                     downloadsDb.close()                    
                 
@@ -170,8 +171,8 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser autofill.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding SBrowser autofill.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add SBrowser autofill artifacts.", ex)
                 finally:
                     autofillDb.close()
 
@@ -208,8 +209,8 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, "Error processing query results for SBrowser form addresses.", ex)
-                except TskCoreException as ex:
-                    self._logger.log(Level.WARNING, "Failed to create WebBrowserArtifactsHelper for adding SBrowser form addresses.", ex)
+                except (TskCoreException, BlackboardException) as ex:
+                    self._logger.log(Level.WARNING, "Failed to add SBrowser form address artifacts.", ex)
                 finally:
                     webFormAddressDb.close()
                     

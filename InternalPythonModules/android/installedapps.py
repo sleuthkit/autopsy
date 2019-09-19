@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import ArtifactsHelper
 
 import traceback
@@ -71,8 +72,8 @@ class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
             
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for installed applications. ", ex)
-            except TskCoreException as ex:
-                self._logger.log(Level.WARNING, "Failed to create ArtifactsHelper for adding installed applications.", ex)
+            except (TskCoreException, BlackboardException) as ex:
+                self._logger.log(Level.WARNING, "Failed to adding installed application artifacts.", ex)
             finally:
                 libraryDb.close()
     

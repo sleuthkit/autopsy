@@ -42,6 +42,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel.blackboardutils import ArtifactsHelper
 
 import traceback
@@ -88,7 +89,7 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                                             self.programName)
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for Orux Map trackpoints.", ex)
-            except TskCoreException as ex:
-                self._logger.log(Level.WARNING, "Failed to create ArtifactsHelper for adding Orux Map trackpoints.", ex)
+            except (TskCoreException, BlackboardException) as ex:
+                self._logger.log(Level.WARNING, "Failed to add Orux Map trackpoint artifacts.", ex)
             finally:
                 oruxMapsTrackpointsDb.close()
