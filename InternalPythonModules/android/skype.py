@@ -119,7 +119,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                     user_account_instance = self.get_user_account(skype_db) 
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, 
-                            "Error query for the user account in the Skype db.", ex)
+                            "Error querying for the user account in the Skype db.", ex)
                     self._logger.log(Level.WARNING, traceback.format_exc())
 
                 current_case = Case.getCurrentCaseThrows()
@@ -135,66 +135,113 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                                 skype_db.getDBFile(), Account.Type.SKYPE,
                                 Account.Type.SKYPE, user_account_instance
                              )
-                
-                #Query for contacts and iterate row by row adding
-                #each contact artifact
-                contacts_parser = SkypeContactsParser(skype_db)
-                while contacts_parser.next():
-                    helper.addContact( 
-                        contacts_parser.get_account_name(), 
-                        contacts_parser.get_contact_name(), 
-                        contacts_parser.get_phone(),
-                        contacts_parser.get_home_phone(),
-                        contacts_parser.get_mobile_phone(),
-                        contacts_parser.get_email()
-                    )
-                contacts_parser.close()
-
-                #Query for call logs and iterate row by row adding
-                #each call log artifact
-                calllog_parser = SkypeCallLogsParser(skype_db)
-                while calllog_parser.next():
-                    helper.addCalllog(
-                        calllog_parser.get_call_direction(),
-                        calllog_parser.get_phone_number_from(),
-                        calllog_parser.get_phone_number_to(),
-                        calllog_parser.get_call_start_date_time(),
-                        calllog_parser.get_call_end_date_time(),
-                        calllog_parser.get_call_type()
-                    )
-                calllog_parser.close()
-
-                #Query for messages and iterate row by row adding
-                #each message artifact
-                messages_parser = SkypeMessagesParser(skype_db)
-                while messages_parser.next():
-                    helper.addMessage(
-                        messages_parser.get_message_type(),
-                        messages_parser.get_message_direction(),
-                        messages_parser.get_phone_number_from(),
-                        messages_parser.get_phone_number_to(),
-                        messages_parser.get_message_date_time(),
-                        messages_parser.get_message_read_status(),
-                        messages_parser.get_message_subject(),
-                        messages_parser.get_message_text(),
-                        messages_parser.get_thread_id()
-                    )
-                messages_parser.close()
-            except SQLException as ex:
-                #Error parsing Skype db
-                self._logger.log(Level.WARNING, "Error parsing Skype Databases", ex)
-                self._logger.log(Level.WARNING, traceback.format_exc())
-            except (TskCoreException, BlackboardException) as ex:
-                #Severe error trying to add to case database.. case is not complete.
-                #These exceptions are thrown by the CommunicationArtifactsHelper.
-                self._logger.log(Level.SEVERE, 
-                        "Failed to add message artifacts to the case database.", ex)
-                self._logger.log(Level.SEVERE, traceback.format_exc())
+                self.parse_contacts(skype_db, helper)
+                self.parse_calllogs(skype_db, helper)
+                self.parse_messages(skype_db, helper)
             except NoCurrentCaseException as ex:
                 self._logger.log(Level.WARNING, "No case currently open.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 skype_db.close()
+
+    def parse_contacts(self, skype_db, helper):
+        #Query for contacts and iterate row by row adding
+        #each contact artifact
+        try:
+            contacts_parser = SkypeContactsParser(skype_db)
+            while contacts_parser.next():
+                helper.addContact( 
+                    contacts_parser.get_account_name(), 
+                    contacts_parser.get_contact_name(), 
+                    contacts_parser.get_phone(),
+                    contacts_parser.get_home_phone(),
+                    contacts_parser.get_mobile_phone(),
+                    contacts_parser.get_email()
+                )
+            contacts_parser.close()
+        except SQLException as ex:
+            #Error parsing Skype db
+            self._logger.log(Level.WARNING, 
+                    "Error parsing contact database for call logs artifacts.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except TskCoreException as ex:
+            #Severe error trying to add to case database.. case is not complete.
+            #These exceptions are thrown by the CommunicationArtifactsHelper.
+            self._logger.log(Level.SEVERE, 
+                    "Failed to add contact artifacts to the case database.", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+            #Failed to post notification to blackboard
+            self._logger.log(Level.WARNING, 
+                    "Failed to post contact artifact to the blackboard", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+
+    def parse_calllogs(self, skype_db, helper):
+        #Query for call logs and iterate row by row adding
+        #each call log artifact
+        try:
+            calllog_parser = SkypeCallLogsParser(skype_db)
+            while calllog_parser.next():
+                helper.addCalllog(
+                    calllog_parser.get_call_direction(),
+                    calllog_parser.get_phone_number_from(),
+                    calllog_parser.get_phone_number_to(),
+                    calllog_parser.get_call_start_date_time(),
+                    calllog_parser.get_call_end_date_time(),
+                    calllog_parser.get_call_type()
+                )
+            calllog_parser.close()
+        except SQLException as ex:
+            #Error parsing Skype db
+            self._logger.log(Level.WARNING, 
+                    "Error parsing Skype database for call logs artifacts.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except TskCoreException as ex:
+            #Severe error trying to add to case database.. case is not complete.
+            #These exceptions are thrown by the CommunicationArtifactsHelper.
+            self._logger.log(Level.SEVERE, 
+                    "Failed to add call log artifacts to the case database.", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+            #Failed to post notification to blackboard
+            self._logger.log(Level.WARNING, 
+                    "Failed to post call log artifact to the blackboard", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+
+    def parse_messages(self, skype_db, helper):
+        #Query for messages and iterate row by row adding
+        #each message artifact
+        try:
+            messages_parser = SkypeMessagesParser(skype_db)
+            while messages_parser.next():
+                helper.addMessage(
+                    messages_parser.get_message_type(),
+                    messages_parser.get_message_direction(),
+                    messages_parser.get_phone_number_from(),
+                    messages_parser.get_phone_number_to(),
+                    messages_parser.get_message_date_time(),
+                    messages_parser.get_message_read_status(),
+                    messages_parser.get_message_subject(),
+                    messages_parser.get_message_text(),
+                    messages_parser.get_thread_id()
+                )
+            messages_parser.close()
+        except SQLException as ex:
+            #Error parsing Skype db
+            self._logger.log(Level.WARNING, 
+                    "Error parsing Skype database for message artifacts.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except TskCoreException as ex:
+            #Severe error trying to add to case database.. case is not complete.
+            #These exceptions are thrown by the CommunicationArtifactsHelper.
+            self._logger.log(Level.SEVERE, 
+                    "Failed to add message artifacts to the case database.", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+            #Failed to post notification to blackboard
+            self._logger.log(Level.WARNING, 
+                    "Failed to post message artifact to the blackboard", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
 
 class SkypeCallLogsParser(TskCallLogsParser):
     """
