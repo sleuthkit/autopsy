@@ -83,9 +83,9 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
 
         textnow_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
                     "textnow_data.db", True, self._TEXTNOW_PACKAGE_NAME)
-
-        for textnow_db in textnow_dbs:
-            try:
+        
+        try:
+            for textnow_db in textnow_dbs:
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                             current_case.getSleuthkitCase(), self._PARSER_NAME, 
@@ -94,11 +94,12 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
                 self.parse_contacts(textnow_db, helper) 
                 self.parse_calllogs(textnow_db, helper)
                 self.parse_messages(textnow_db, helper)
-            except NoCurrentCaseException as ex:
-                self._logger.log(Level.WARNING, "No case currently open.", ex)
-                self._logger.log(Level.WARNING, traceback.format_exc())
-            finally:
-                textnow_db.close()
+        except NoCurrentCaseException as ex:
+            self._logger.log(Level.WARNING, "No case currently open.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        
+        for textnow_db in textnow_dbs:
+            textnow_db.close()
 
     def parse_contacts(self, textnow_db, helper):
         #Query for contacts and iterate row by row adding
