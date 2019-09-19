@@ -26,22 +26,30 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
+from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
+
+from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
+
 from TskMessagesParser import TskMessagesParser
 from TskContactsParser import TskContactsParser
 from TskCallLogsParser import TskCallLogsParser
-from general import appendAttachmentList
 
 import traceback
 import general
@@ -50,8 +58,17 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
     """
         Parses the TextNow App databases for TSK contacts, message 
         and calllog artifacts.
-    """
-   
+
+        The TextNow database in v6.41.0.2 is structured as follows:
+            - A messages table, which stores messages from/to a number
+            - A contacts table, which stores phone numbers
+            - A groups table, which stores each group the device owner is a part of
+            - A group_members table, which stores who is in each group
+
+        The messages table contains both call logs and messages, with a type
+        column differentiating the two.
+    """   
+
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
         self._TEXTNOW_PACKAGE_NAME = "com.enflick.android.TextNow"
@@ -64,61 +81,116 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
             calllogs from the TextNow databases.
         """
 
-        try:
-            textnow_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
+        textnow_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
                     "textnow_data.db", True, self._TEXTNOW_PACKAGE_NAME)
 
-            for textnow_db in textnow_dbs:
-                helper = AppDBParserHelper(self._PARSER_NAME, 
-                        textnow_db.getDBFile(), Account.Type.TEXTNOW) 
-
-                #Extract TSK_CONTACT information
-                contacts_parser = TextNowContactsParser(textnow_db)
-                while contacts_parser.next():
-                    helper.addContact( 
-                        contacts_parser.get_account_name(), 
-                        contacts_parser.get_contact_name(), 
-                        contacts_parser.get_phone(),
-                        contacts_parser.get_home_phone(),
-                        contacts_parser.get_mobile_phone(),
-                        contacts_parser.get_email()
-                    )
-                contacts_parser.close()
-
-                #Extract TSK_CALLLOG information
-                calllog_parser = TextNowCallLogsParser(textnow_db)
-                while calllog_parser.next():
-                    helper.addCalllog(
-                        calllog_parser.get_call_direction(),
-                        calllog_parser.get_phone_number_from(),
-                        calllog_parser.get_phone_number_to(),
-                        calllog_parser.get_call_start_date_time(),
-                        calllog_parser.get_call_end_date_time(),
-                        calllog_parser.get_call_type()
-                    )
-                calllog_parser.close()
-
-                #Extract TSK_MESSAGES information
-                messages_parser = TextNowMessagesParser(textnow_db)
-                while messages_parser.next():
-                    helper.addMessage(
-                        messages_parser.get_message_type(),
-                        messages_parser.get_message_direction(),
-                        messages_parser.get_phone_number_from(),
-                        messages_parser.get_phone_number_to(),
-                        messages_parser.get_message_date_time(),
-                        messages_parser.get_message_read_status(),
-                        messages_parser.get_message_subject(),
-                        messages_parser.get_message_text(),
-                        messages_parser.get_thread_id()
-                    )
-                messages_parser.close()
-
+        for textnow_db in textnow_dbs:
+            try:
+                current_case = Case.getCurrentCaseThrows()
+                helper = CommunicationArtifactsHelper(
+                            current_case.getSleuthkitCase(), self._PARSER_NAME, 
+                            textnow_db.getDBFile(), Account.Type.TEXTNOW
+                         ) 
+                self.parse_contacts(textnow_db, helper) 
+                self.parse_calllogs(textnow_db, helper)
+                self.parse_messages(textnow_db, helper)
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            finally:
                 textnow_db.close()
-        except (SQLException, TskCoreException) as ex:
+
+    def parse_contacts(self, textnow_db, helper):
+        #Query for contacts and iterate row by row adding
+        #each contact artifact
+        try:
+            contacts_parser = TextNowContactsParser(textnow_db)
+            while contacts_parser.next():
+                helper.addContact( 
+                    contacts_parser.get_account_name(), 
+                    contacts_parser.get_contact_name(), 
+                    contacts_parser.get_phone(),
+                    contacts_parser.get_home_phone(),
+                    contacts_parser.get_mobile_phone(),
+                    contacts_parser.get_email()
+                )
+            contacts_parser.close()
+        except SQLException as ex:
             #Error parsing TextNow db
-            self._logger.log(Level.WARNING, "Error parsing TextNow Databases", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, "Error parsing TextNow databases for contacts", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except TskCoreException as ex:
+            #Error adding artifacts to the case database.. case database is not complete.
+            self._logger.log(Level.SEVERE, 
+                    "Error adding TextNow contacts artifacts to the case database", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+            #Error posting notification to blackboard...
+            self._logger.log(Level.WARNING, 
+                    "Error posting TextNow contacts artifact to the blackboard", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+
+    def parse_calllogs(self, textnow_db, helper):
+        #Query for call logs and iterate row by row adding
+        #each call log artifact
+        try:
+            calllog_parser = TextNowCallLogsParser(textnow_db)
+            while calllog_parser.next():
+                helper.addCalllog(
+                    calllog_parser.get_call_direction(),
+                    calllog_parser.get_phone_number_from(),
+                    calllog_parser.get_phone_number_to(),
+                    calllog_parser.get_call_start_date_time(),
+                    calllog_parser.get_call_end_date_time(),
+                    calllog_parser.get_call_type()
+                )
+            calllog_parser.close()
+        except SQLException as ex:
+            self._logger.log(Level.WARNING, "Error parsing TextNow databases for calllogs", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except TskCoreException as ex:
+            #Error adding artifacts to the case database.. case database is not complete.
+            self._logger.log(Level.SEVERE, 
+                    "Error adding TextNow call log artifacts to the case database", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+            #Error posting notification to blackboard...
+            self._logger.log(Level.WARNING, 
+                    "Error posting TextNow call log artifact to the blackboard", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+
+    def parse_messages(self, textnow_db, helper):
+        #Query for messages and iterate row by row adding
+        #each message artifact
+        try:
+            messages_parser = TextNowMessagesParser(textnow_db)
+            while messages_parser.next():
+                helper.addMessage(
+                    messages_parser.get_message_type(),
+                    messages_parser.get_message_direction(),
+                    messages_parser.get_phone_number_from(),
+                    messages_parser.get_phone_number_to(),
+                    messages_parser.get_message_date_time(),
+                    messages_parser.get_message_read_status(),
+                    messages_parser.get_message_subject(),
+                    messages_parser.get_message_text(),
+                    messages_parser.get_thread_id()
+                )
+            messages_parser.close()
+        except SQLException as ex:
+            #Error parsing TextNow db
+            self._logger.log(Level.WARNING, "Error parsing TextNow databases for messages.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+        except TskCoreException as ex:
+            #Error adding artifacts to the case database.. case database is not complete.
+            self._logger.log(Level.SEVERE, 
+                    "Error adding TextNow messages artifacts to the case database", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
+        except BlackboardException as ex:
+            #Error posting notification to blackboard...
+            self._logger.log(Level.WARNING, 
+                    "Error posting TextNow messages artifact to the blackboard", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
 
 class TextNowCallLogsParser(TskCallLogsParser):
     """
@@ -128,6 +200,9 @@ class TextNowCallLogsParser(TskCallLogsParser):
     """
 
     def __init__(self, calllog_db):
+        """
+            message_type of 100 or 102 are for calls (audio, video) 
+        """
         super(TextNowCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
                      SELECT contact_value     AS num, 
@@ -141,7 +216,6 @@ class TextNowCallLogsParser(TskCallLogsParser):
         )
         self._INCOMING_CALL_TYPE = 1
         self._OUTGOING_CALL_TYPE = 2
-        self._has_errors = False
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
@@ -169,7 +243,6 @@ class TextNowCallLogsParser(TskCallLogsParser):
         try:
             return start + long(duration)
         except ValueError as ve:
-            self._has_errors = True 
             return super(TextNowCallLogsParser, self).get_call_end_date_time() 
 
 class TextNowContactsParser(TskContactsParser):
@@ -211,15 +284,6 @@ class TextNowMessagesParser(TskMessagesParser):
 
     def __init__(self, message_db):
         """
-            The TextNow database in v6.41.0.2 is structured as follows:
-                - A messages table, which stores messages from/to a number
-                - A contacts table, which stores phone numbers
-                - A groups table, which stores each group the device owner is a part of
-                - A group_members table, which stores who is in each group
-
-            The messages table contains both call logs and messages, with a type
-            column differentiating the two.
-            
             The query below does the following:
                 - The group_info inner query creates a comma seperated list of group recipients
                   for each group. This result is then joined on the groups table to get the thread id. 
@@ -311,7 +375,7 @@ class TextNowMessagesParser(TskMessagesParser):
         text = self.result_set.getString("message_text")
         attachment = self.result_set.getString("attach")
         if attachment != "":
-            text = appendAttachmentList(text, [attachment]) 
+            text = general.appendAttachmentList(text, [attachment]) 
         return text
 
     def get_thread_id(self):
