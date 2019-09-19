@@ -103,7 +103,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
 
         except NoCurrentCaseException as ex:
             self._logger.log(Level.WARNING, "No case currently open.", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, traceback.format_exc())
         
         for message_db in messages_db:
             message_db.close()
@@ -126,15 +126,15 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
             contacts_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for contacts.", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, traceback.format_exc())
         except TskCoreException as ex:
             self._logger.log(Level.SEVERE, 
                     "Error adding viber contacts artifact to case database.", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exec())
+            self._logger.log(Level.SEVERE, traceback.format_exc())
         except BlackboardException as ex:
             self._logger.log(Level.WARNING, 
                     "Error posting viber contacts artifact to the blackboard.", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, traceback.format_exc())
 
     def parse_calllogs(self, calllogs_db, helper):
         try:
@@ -151,15 +151,15 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
             calllog_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for calllogs.", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, traceback.format_exc())
         except TskCoreException as ex:
             self._logger.log(Level.SEVERE, 
                     "Error adding viber calllogs artifact to case database.", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exec())
+            self._logger.log(Level.SEVERE, traceback.format_exc())
         except BlackboardException as ex:
             self._logger.log(Level.WARNING, 
                     "Error posting viber calllogs artifact to the blackboard.", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, traceback.format_exc())
 
 
     def parse_messages(self, messages_db, helper):
@@ -180,15 +180,15 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
             messages_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error querying the viber database for messages.", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, traceback.format_exc())
         except TskCoreException as ex:
             self._logger.log(Level.SEVERE, 
                     "Error adding viber messages artifact to case database.", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exec())
+            self._logger.log(Level.SEVERE, traceback.format_exc())
         except BlackboardException as ex:
             self._logger.log(Level.WARNING, 
                     "Error posting viber messages artifact to the blackboard.", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
+            self._logger.log(Level.WARNING, traceback.format_exc())
         
 class ViberCallLogsParser(TskCallLogsParser):
     """
