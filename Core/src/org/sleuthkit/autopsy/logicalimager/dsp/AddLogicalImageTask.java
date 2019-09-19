@@ -367,6 +367,10 @@ final class AddLogicalImageTask implements Runnable {
 
             List<Long> fileIds = entry.getValue();
             for (Long fileId: fileIds) {
+                if (cancelled) {
+                    postArtifacts(artifacts);
+                    return;
+                }
                 if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
                     progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFile(lineNumber, totalFiles));
                 }
