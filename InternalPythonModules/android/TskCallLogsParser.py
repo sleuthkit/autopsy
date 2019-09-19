@@ -17,7 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from ResultSetIterator import ResultSetIterator
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CallMediaType
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from org.sleuthkit.datamodel import Account
 
 class TskCallLogsParser(ResultSetIterator):
@@ -35,14 +36,15 @@ class TskCallLogsParser(ResultSetIterator):
     def __init__(self, result_set):
         super(TskCallLogsParser, self).__init__(result_set)
         self._DEFAULT_STRING = ""
-        self._DEFAULT_DIRECTION = AppDBParserHelper.CommunicationDirection.UNKNOWN
+        self._DEFAULT_DIRECTION = CommunicationDirection.UNKNOWN
         self._DEFAULT_ADDRESS = None 
-        self._DEFAULT_CALL_TYPE = AppDBParserHelper.CallMediaType.UNKNOWN
+        self._DEFAULT_CALL_TYPE = CallMediaType.UNKNOWN
+        self._DEFAULT_LONG = -1L
 
-        self.INCOMING_CALL = AppDBParserHelper.CommunicationDirection.INCOMING
-        self.OUTGOING_CALL = AppDBParserHelper.CommunicationDirection.OUTGOING
-        self.AUDIO_CALL = AppDBParserHelper.CallMediaType.AUDIO
-        self.VIDEO_CALL = AppDBParserHelper.CallMediaType.VIDEO
+        self.INCOMING_CALL = CommunicationDirection.INCOMING
+        self.OUTGOING_CALL = CommunicationDirection.OUTGOING
+        self.AUDIO_CALL = CallMediaType.AUDIO
+        self.VIDEO_CALL = CallMediaType.VIDEO
 
     def get_call_direction(self):
         return self._DEFAULT_DIRECTION 

@@ -18,8 +18,9 @@ limitations under the License.
 """
 from ResultSetIterator import ResultSetIterator
 from org.sleuthkit.datamodel import Account
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
-
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
+ 
 class TskMessagesParser(ResultSetIterator):
     """
         Generic TSK_MESSAGE artifact template. Each of these methods
@@ -35,14 +36,14 @@ class TskMessagesParser(ResultSetIterator):
         super(TskMessagesParser, self).__init__(result_set)
         self._DEFAULT_TEXT = ""
         self._DEFAULT_LONG = -1L
-        self._DEFAULT_MSG_READ_STATUS = AppDBParserHelper.MessageReadStatusEnum.UNKNOWN
+        self._DEFAULT_MSG_READ_STATUS = MessageReadStatus.UNKNOWN
         self._DEFAULT_ACCOUNT_ADDRESS = None 
-        self._DEFAULT_COMMUNICATION_DIRECTION = AppDBParserHelper.CommunicationDirection.UNKNOWN
+        self._DEFAULT_COMMUNICATION_DIRECTION = CommunicationDirection.UNKNOWN
 
-        self.INCOMING = AppDBParserHelper.CommunicationDirection.INCOMING
-        self.OUTGOING = AppDBParserHelper.CommunicationDirection.OUTGOING
-        self.READ = AppDBParserHelper.MessageReadStatusEnum.READ
-        self.UNREAD = AppDBParserHelper.MessageReadStatusEnum.UNREAD
+        self.INCOMING = CommunicationDirection.INCOMING
+        self.OUTGOING = CommunicationDirection.OUTGOING
+        self.READ = MessageReadStatus.READ
+        self.UNREAD = MessageReadStatus.UNREAD
 
     def get_message_type(self):
         return self._DEFAULT_TEXT
