@@ -24,15 +24,12 @@ import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -82,9 +79,7 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
-import org.sleuthkit.datamodel.TimelineEvent;
 
 /**
  *
@@ -269,7 +264,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
     }
 
     /**
-     * defer tooltip content creation till needed, this had a surprisingly large
+     * defer tooltip content creation until needed, this had a surprisingly large
      * impact on speed of loading the chart
      */
     @NbBundle.Messages({"# {0} - counts",
@@ -293,37 +288,9 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
 
                 @Override
                 protected String call() throws Exception {
-                    HashMap<String, Long> hashSetCounts = new HashMap<>();
-                    if (tlEvent.getEventIDsWithHashHits().isEmpty() == false) {
-                        try {
-                            //TODO:push this to DB
-                            for (TimelineEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
-                                Set<String> hashSetNames = sleuthkitCase.getContentById(tle.getFileObjID()).getHashSetNames();
-                                for (String hashSetName : hashSetNames) {
-                                    hashSetCounts.merge(hashSetName, 1L, Long::sum);
-                                }
-                            }
-                        } catch (TskCoreException ex) {
-                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex); //NON-NLS
-                        }
-                    }
-                    String hashSetCountsString = hashSetCounts.entrySet().stream()
-                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
-                            .collect(Collectors.joining("\n"));
-
-                    Map<String, Long> tagCounts = new HashMap<>();
-                    if (tlEvent.getEventIDsWithTags().isEmpty() == false) {
-                        tagCounts.putAll(eventsModel.getTagCountsByTagName(tlEvent.getEventIDsWithTags()));
-                    }
-                    String tagCountsString = tagCounts.entrySet().stream()
-                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
-                            .collect(Collectors.joining("\n"));
-
                     return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
-                            TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
-                           + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
-                           + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
+                            TimeLineController.getZonedFormatter().print(getEndMillis() + 1000));
                 }
 
                 @Override
