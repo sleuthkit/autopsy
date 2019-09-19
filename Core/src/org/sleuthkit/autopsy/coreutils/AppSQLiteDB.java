@@ -95,8 +95,8 @@ public final class AppSQLiteDB implements Closeable {
      * AppSQLiteDB to help query the DB. 
      * 
      * A list of AppSQLiteDB instances is returned, one for each 
-     * match found., 
-     * .
+     * match found.
+     * 
      * @param dataSource data source to search in 
      * @param dbName db file name to search
      * @param matchExactName whether to look for exact file name or a pattern match
@@ -174,7 +174,7 @@ public final class AppSQLiteDB implements Closeable {
      * @param dbName db file name to search
      * @param matchExactName whether to look for exact file name or a pattern match
      * @param dbPath path to match
-     * @param matchExactName whether to look for exact path name or a substring match
+     * @param matchExactPath whether to look for exact path name or a substring match
      * 
      * @return a collection of AppSQLiteDBFileBundle
      * 

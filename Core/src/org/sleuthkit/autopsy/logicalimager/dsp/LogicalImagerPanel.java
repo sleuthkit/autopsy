@@ -518,7 +518,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     }
                 } catch (IOException ignored) {
                     //unable to get this removable drive for default selection will try and select next removable drive by default 
-                    logger.log(Level.INFO, "Unable to select first removable drive found", ignored);
+                    logger.log(Level.INFO, String.format("Unable to select first removable drive found: %s", ignored.getMessage()));
                 }
             }
             i++;
