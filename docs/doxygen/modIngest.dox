@@ -198,27 +198,23 @@ See \ref platform_blackboard  for details on posting results to it.  You use the
 The blackboard defines artifacts for specific data types (such as web bookmarks). 
 You can use one of the standard artifact types or create your own.
 
-When modules add data to the blackboard, they should notify listeners of the new 
-data by invoking the org.sleuthkit.autopsy.ingest.IngestServices.fireModuleDataEvent() method. 
-Do so as soon as you have added an artifact to the blackboard.
-This allows other modules (and the main UI) to know when to query the blackboard 
-for the latest data.  However, if you are writing a large number of blackboard 
-artifacts in a loop, it is better to invoke org.sleuthkit.autopsy.ingest.IngestServices.fireModuleDataEvent() 
-only once after the bulk write, so as not to flood the system with events.
+After you make an artifact, you should call <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifact()</a>, which will:
+<ul>
+<li>Analyze the artifact and add any timestamps to the new timeline tables
+<li>Send an event over its new EventBus that the artifact(s) was added.
+<ul>
+<li>Autopsy is a listener of this new eventbus and will rebroadcast it to other Autopsy modules
+<li>Keyword search will also listen for this and will index the artifact
+</ul>
+</ul>
 
-Further, when modules create artifacts, they should be indexed for keyword search,
-using the method org.sleuthkit.autopsy.casemodule.services.Blackboard.indexArtifact(BlackboardArtifact artifact). This can be done
-in the following way:
-
-\code
-Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
-try {
-	blackboard.indexArtifact(artifact); //Your artifact as the argument.
-}
-catch (BlackboardException ex) {
-	//YOUR EXCEPTION BEHAVIOR HERE.
-}
-\endcode
+This means you no longer have to make calls to:
+ - Index the artifact
+ - Fire the event to refresh the UI.
+ 
+If you are creating a large number of artifacts, you may see better performance if you save all the artifacts and do one bulk write at the end using <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6/classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html">sleuthkit.Blackboard.postArtifacts()</a>
+ 
+You should not be using the Autopsy version of Blackboard. Those methods have all been deprecated and is another example of us moving "services" into the TSK data model.
 
 
 \subsection ingest_modules_making_results_report Making a Report 
