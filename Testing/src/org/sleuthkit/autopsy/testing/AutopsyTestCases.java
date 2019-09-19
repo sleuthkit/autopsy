@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
 import javax.swing.text.JTextComponent;
@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.TskData;
 
 public class AutopsyTestCases {
 
-    private static final Logger logger = Logger.getLogger(AutopsyTestCases.class.getName());
+    private static final Logger logger = Logger.getLogger(AutopsyTestCases.class.getName()); // DO NOT USE AUTOPSY LOGGER
     private long start;
 
     /**

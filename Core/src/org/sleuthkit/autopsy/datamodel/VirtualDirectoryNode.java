@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -119,7 +117,19 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
         }
 
         //Otherwise default to the AAFN createSheet method.
-        return super.createSheet();
+        Sheet defaultSheet = super.createSheet();
+        Sheet.Set defaultSheetSet = defaultSheet.get(Sheet.PROPERTIES);
+        
+        //Pick out the location column
+        //This path should not show because VDs are not part of the data source
+        String locationCol = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.locationColLbl");
+        for (Property<?> p : defaultSheetSet.getProperties()) {
+            if(locationCol.equals(p.getName())) {
+                defaultSheetSet.remove(p.getName());
+            }
+        }
+        
+        return defaultSheet;
     }
 
     @Override

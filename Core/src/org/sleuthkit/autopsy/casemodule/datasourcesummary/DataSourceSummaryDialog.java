@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
@@ -38,6 +40,7 @@ import org.sleuthkit.datamodel.IngestJobInfo;
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private final DataSourceSummaryCountsPanel countsPanel;
     private final DataSourceSummaryDetailsPanel detailsPanel;
     private final DataSourceBrowser dataSourcesPanel;
@@ -77,7 +80,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             }
         });
         //add listener to refresh jobs with Started status when they complete
-        IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
             if (evt instanceof DataSourceAnalysisCompletedEvent) {
                 DataSourceAnalysisCompletedEvent dsEvent = (DataSourceAnalysisCompletedEvent) evt;
                 if (dsEvent.getResult() == Reason.ANALYSIS_COMPLETED) {
