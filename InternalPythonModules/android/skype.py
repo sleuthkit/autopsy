@@ -26,18 +26,25 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.coreutils import Logger
+from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
+
+from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from TskMessagesParser import TskMessagesParser
 from TskContactsParser import TskContactsParser
 from TskCallLogsParser import TskCallLogsParser
@@ -66,9 +73,10 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
               all 1 to 1 communications, we could simply join the person and chatItem tables. 
               This would mean we'd need to do a second pass to get all the group information
               as they would be excluded in the join. Since the chatItem table stores both the
-              group id or skype_id in one column, the person and particiapnt table are unioned
-              together so that all rows are matched in one join with chatItem. This result is
-              labeled contact_list_with_groups in the following queries.
+              group id or skype_id in one column, an implementation decision was made to union 
+              the person and particiapnt table together so that all rows are matched in one join 
+              with chatItem. This result is consistently labeled contact_list_with_groups in the 
+              following queries.
             - In order to keep the formatting of the name consistent throughout each query,
               a _format_user_name() function was created to encapsulate the CASE statement 
               that was being shared across them. Refer to the method for more details.
@@ -95,19 +103,18 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         return None
 
     def analyze(self, dataSource, fileManager, context):
-        try:
-            #Skype databases are of the form: live:XYZ.db, where
-            #XYZ is the skype id of the user.
-            skype_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
-                    "live", False, "") #self._SKYPE_PACKAGE_NAME)
-
-            for skype_db in skype_dbs:
+        #Skype databases are of the form: live:XYZ.db, where
+        #XYZ is the skype id of the user.
+        skype_dbs = AppSQLiteDB.findAppDatabases(dataSource, 
+                        "live", False, self._SKYPE_PACKAGE_NAME)
+        for skype_db in skype_dbs:
+            try:
                 account_instance = self.get_account_instance(skype_db) 
                 if account_instance is None:
-                    helper = AppDBParserHelper(self._PARSER_NAME, 
+                    helper = CommunicationArtifactsHelper(self._PARSER_NAME, 
                             skype_db.getDBFile(), Account.Type.SKYPE) 
                 else:
-                    helper = AppDBParserHelper(self._PARSER_NAME,
+                    helper = CommunicationArtifactsHelper(self._PARSER_NAME,
                             skype_db.getDBFile(), Account.Type.SKYPE,
                             Account.Type.SKYPE, account_instance)
                 
@@ -155,12 +162,17 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                         messages_parser.get_thread_id()
                     )
                 messages_parser.close()
-    
+            except SQLException as ex:
+                #Error parsing Skype db
+                self._logger.log(Level.WARNING, "Error parsing Skype Databases", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except (TskCoreException, BlackboardException) as ex:
+                #Severe error trying to add to case database.. case is not complete.
+                self._logger.log(Level.SEVERE, "Failed to add message artifacts" +
+                        " to the case database.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            finally:
                 skype_db.close()
-        except (SQLException, TskCoreException) as ex:
-            #Error parsing Skype db
-            self._logger.log(Level.WARNING, "Error parsing Skype Databases", ex)
-            self._logger.log(Level.WARNING, traceback.format_exec())
 
 class SkypeCallLogsParser(TskCallLogsParser):
     """
@@ -170,6 +182,20 @@ class SkypeCallLogsParser(TskCallLogsParser):
     """
 
     def __init__(self, calllog_db):
+        """
+            Big picture:
+                The query below creates a contacts_list_with_groups table, which
+                represents the recipient info. A chatItem record holds ids for
+                both the recipient and sender. The first join onto chatItem fills 
+                in the blanks for the recipients. The second join back onto person
+                handles the sender info. The result is a table with all of the
+                communication details.
+            
+            Implementation details:
+                - message_type w/ value 3 appeared to be the call type, regardless
+                  of if it was audio or video.
+            
+        """
         super(SkypeCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
                     SELECT contacts_list_with_groups.conversation_id,                         
@@ -281,6 +307,11 @@ class SkypeMessagesParser(TskMessagesParser):
     """
 
     def __init__(self, message_db):
+        """
+            This query is very similar to the call logs query, the only difference is
+            it grabs more columns in the SELECT and excludes message_types which have
+            the call type value (3).
+        """
         super(SkypeMessagesParser, self).__init__(message_db.runQuery(
                  """
                     SELECT contacts_list_with_groups.conversation_id, 
@@ -392,7 +423,8 @@ def _format_user_name():
         column and a last_name column. Some of these columns can be null 
         and our goal is to produce the cleanest data possible. In the event
         that both the first and last name columns are null, we return the skype_id
-        which is stored in the database as 'entry_id'. 
+        which is stored in the database as 'entry_id'.  Commas are removed from the name
+        so that we can concatenate names into a comma seperate list for group chats.
     """
 
     return """
