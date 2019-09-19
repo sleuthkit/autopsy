@@ -367,21 +367,19 @@ final class AddLogicalImageTask implements Runnable {
 
             List<Long> fileIds = entry.getValue();
             for (Long fileId: fileIds) {
-                if (lineNumber % 100 == 0) {
+                if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
                     progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFile(lineNumber, totalFiles));
+                }
+                if (lineNumber % POST_ARTIFACT_INTERVAL == 0) {
+                    postArtifacts(artifacts);
+                    artifacts.clear();
                 }
                 addInterestingFileToArtifacts(fileId, ruleSetName, ruleName, artifacts);
                 lineNumber++;
             }
             iterator.remove();
         }
-
-        try {
-            // index the artifact for keyword search
-            blackboard.postArtifacts(artifacts, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
-        }
+        postArtifacts(artifacts);
     }
 
     private void addInterestingFileToArtifacts(long fileId, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
@@ -429,11 +427,7 @@ final class AddLogicalImageTask implements Runnable {
                 String parentPath = fields[8];
 
                 if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
-                    progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFile(lineNumber, totalFiles));
-                }
-                if (lineNumber % POST_ARTIFACT_INTERVAL == 0) {
-                    postArtifacts(artifacts);
-                    artifacts.clear();
+                    progressMonitor.setProgressText(Bundle.AddLogicalImageTask_searchingInterestingFile(lineNumber, totalFiles));
                 }
 
                 String query = makeQuery(vhdFilename, fileMetaAddressStr, parentPath, filename);
@@ -450,8 +444,6 @@ final class AddLogicalImageTask implements Runnable {
                 }
                 lineNumber++;
             } // end reading file
-
-            postArtifacts(artifacts);
         }
         return interestingFileMap;
     }
