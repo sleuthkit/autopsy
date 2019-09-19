@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
@@ -102,8 +103,8 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for transfer", ex)
-            except TskCoreException as ex:
-                self._logger.log(Level.WARNING, "Failed to create CommunicationArtifactsHelper for adding artifacts.", ex)
+            except (TskCoreException, BlackboardException) as ex:
+                self._logger.log(Level.WARNING, "Failed to create Zapya message artifacts.", ex)
 
             finally:
                 transferDb.close()
