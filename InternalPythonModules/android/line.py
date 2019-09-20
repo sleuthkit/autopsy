@@ -75,27 +75,26 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                 helper = CommunicationArtifactsHelper(
                             current_case.getSleuthkitCase(), self._PARSER_NAME, 
                             contact_and_message_db.getDBFile(), Account.Type.LINE) 
-
                 self.parse_contacts(contact_and_message_db, helper)
                 self.parse_messages(contact_and_message_db, helper)
-                contact_and_message_db.close()
 
             for calllog_db in calllog_dbs:
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                             current_case.getSleuthkitCase(), self._PARSER_NAME,
                             calllog_db.getDBFile(), Account.Type.LINE)
+                self.parse_calllogs(dataSource, calllog_db, helper)
 
-                calllog_db.attachDatabase(
-                        dataSource, "naver_line", 
-                        calllog_db.getDBFile().getParentPath(), "naver")
-
-                self.parse_calllogs(calllog_db, helper)
-                calllog_db.close()
         except NoCurrentCaseException as ex:
             # Error parsing Line databases.
             self._logger.log(Level.WARNING, "Error parsing the Line App Databases", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())   
+        
+        for contact_and_message_db in contact_and_message_dbs:
+            contact_and_message_db.close()
+
+        for calllog_db in calllog_dbs:
+            calllog_db.close()
 
     def parse_contacts(self, contacts_db, helper):
         try:
@@ -124,8 +123,12 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting Line contact artifacts to blackboard.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())   
 
-    def parse_calllogs(self, calllogs_db, helper):
+    def parse_calllogs(self, dataSource, calllogs_db, helper):
         try:
+            calllogs_db.attachDatabase(
+                        dataSource, "naver_line", 
+                        calllogs_db.getDBFile().getParentPath(), "naver")
+
             calllog_parser = LineCallLogsParser(calllogs_db)
             while calllog_parser.next():
                 helper.addCalllog(
@@ -153,6 +156,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
     
     def parse_messages(self, messages_db, helper):
         try:
+           
             messages_parser = LineMessagesParser(messages_db)
             while messages_parser.next():
                 helper.addMessage(
