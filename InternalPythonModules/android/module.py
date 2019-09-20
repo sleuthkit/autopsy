@@ -47,7 +47,20 @@ import tangomessage
 import textmessage
 import wwfmessage
 import imo
+import xender
+import zapya
+import shareit
+import viber
+import skype
+import line
+import whatsapp
+import textnow
+import sbrowser
+import operabrowser
+import oruxmaps
+import installedapps
 import fbmessenger
+
 
 class AndroidModuleFactory(IngestModuleFactoryAdapter):
 
@@ -93,7 +106,13 @@ class AndroidIngestModule(DataSourceIngestModule):
                      tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(),
                      googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(),
                      cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(),
-                     fbmessenger.FBMessengerAnalyzer()]
+                     xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(), shareit.ShareItAnalyzer(),
+                     line.LineAnalyzer(), whatsapp.WhatsAppAnalyzer(), 
+                     textnow.TextNowAnalyzer(), skype.SkypeAnalyzer(), viber.ViberAnalyzer(),
+                     fbmessenger.FBMessengerAnalyzer()
+                     sbrowser.SBrowserAnalyzer(), operabrowser.OperaAnalyzer(),
+                     oruxmaps.OruxMapsAnalyzer(),
+                     installedapps.InstalledApplicationsAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 
