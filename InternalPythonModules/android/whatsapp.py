@@ -90,7 +90,7 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                         current_case.getSleuthkitCase(), self._PARSER_NAME,
                         calllog_and_message_db.getDBFile(), Account.Type.WHATSAPP)
                 self.parse_calllogs(calllog_and_message_db, helper)
-                self.parse_messages(calllog_and_message_db, helper)
+                self.parse_messages(dataSource, calllog_and_message_db, helper)
 
         except NoCurrentCaseException as ex:
             #If there is no current case, bail out immediately.
@@ -166,7 +166,7 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting calllog artifact to the blackboard.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
 
-    def parse_messages(self, messages_db, helper):
+    def parse_messages(self, dataSource, messages_db, helper):
         try:
             messages_db.attachDatabase(dataSource, "wa.db",
                         messages_db.getDBFile().getParentPath(), "wadb")
