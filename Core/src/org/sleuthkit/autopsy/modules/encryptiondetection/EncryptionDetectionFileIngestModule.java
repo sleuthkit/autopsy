@@ -78,7 +78,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
     private static final String[] FILE_IGNORE_LIST = {"hiberfile.sys", "pagefile.sys"};
 
-    private final Map<String, String> knownEncryptedLocationExtensions = createLocationExtensionMap();
+    private static final Map<String, String> knownEncryptedLocationExtensions = createLocationExtensionMap();
 
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
@@ -427,20 +427,21 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      */
     private boolean checkFileLocationExtension(AbstractFile file) {
         String filePath = file.getParentPath().replace("/", "");
-        if (knownEncryptedLocationExtensions.containsKey(filePath)) {
-            if (knownEncryptedLocationExtensions.get(filePath).equals(file.getNameExtension())) {
-               return true; 
-            }
+        if ((knownEncryptedLocationExtensions.containsKey(filePath)) 
+             && (knownEncryptedLocationExtensions.get(filePath).equals(file.getNameExtension()))) 
+        {
+            return true;
         }
         return false;
     }
-    
+
     /*
-     * This method creates the map of paths and extensions that are known to have encrypted files
-     * 
+     * This method creates the map of paths and extensions that are known to
+     * have encrypted files
+     *
      * @return Map of path and extension of files
      */
-    private Map<String, String> createLocationExtensionMap() {
+    private static Map<String, String> createLocationExtensionMap() {
         Map<String, String> locationExtensionMap = new HashMap<String, String>();
         locationExtensionMap.put(".android_secure", "asec");
         return locationExtensionMap;
