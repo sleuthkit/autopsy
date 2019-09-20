@@ -129,9 +129,7 @@ final public class FiltersPanel extends JPanel {
     public FiltersPanel() {
         initComponents();
 
-        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
-        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
-        accountTypeListPane.add(panel);
+       initalizeDeviceAccountType();
 
         deviceRequiredLabel.setVisible(false);
         accountTypeRequiredLabel.setVisible(false);
@@ -257,9 +255,11 @@ final public class FiltersPanel extends JPanel {
             //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesListPane.removeAll();
-
-            accountTypeMap.clear();
-            accountTypeListPane.removeAll();
+            
+            accountTypeMap.clear();           
+            accountTypeListPane.removeAll(); 
+            
+            initalizeDeviceAccountType();
         });
     }
 
@@ -268,6 +268,12 @@ final public class FiltersPanel extends JPanel {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
+    }
+    
+    private void initalizeDeviceAccountType() {
+        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
+        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
+        accountTypeListPane.add(panel);
     }
 
     /**
