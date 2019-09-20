@@ -55,6 +55,11 @@ import skype
 import line
 import whatsapp
 import textnow
+import sbrowser
+import operabrowser
+import oruxmaps
+import installedapps
+
 
 class AndroidModuleFactory(IngestModuleFactoryAdapter):
 
@@ -102,7 +107,10 @@ class AndroidIngestModule(DataSourceIngestModule):
                      cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(),
                      xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(), shareit.ShareItAnalyzer(),
                      line.LineAnalyzer(), whatsapp.WhatsAppAnalyzer(), 
-                     textnow.TextNowAnalyzer(), skype.SkypeAnalyzer(), viber.ViberAnalyzer()]
+                     textnow.TextNowAnalyzer(), skype.SkypeAnalyzer(), viber.ViberAnalyzer(),
+                     sbrowser.SBrowserAnalyzer(), operabrowser.OperaAnalyzer(),
+                     oruxmaps.OruxMapsAnalyzer(),
+                     installedapps.InstalledApplicationsAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 
