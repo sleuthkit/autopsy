@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2019 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,23 +17,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-MODULE_NAME = "Android Analyzer"
+class ResultSetIterator(object):
+    """
+        Generic base class for iterating through database recordms
+    """
 
-"""
-A parent class of the analyzers
-"""
-class AndroidComponentAnalyzer:
-    # The Analyzer should implement this method
-    def analyze(self, dataSource, fileManager, context):
-        raise NotImplementedError
+    def __init__(self, result_set):
+        self.result_set = result_set
 
-"""
-A utility method to append list of attachments to msg body
-"""
-def appendAttachmentList(msgBody, attachmentsList):
-    body = msgBody
-    if attachmentsList:
-        body = body + "\n\n------------Attachments------------\n"
-        body = body + "\n".join(attachmentsList)
+    def next(self):
+        if self.result_set is None:
+            return False
+        return self.result_set.next()
 
-    return body
+    def close(self):
+        if self.result_set is not None:
+            self.result_set.close()
