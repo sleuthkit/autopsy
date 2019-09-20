@@ -350,8 +350,10 @@ class LineMessagesParser(TskMessagesParser):
 
     def get_phone_number_from(self):
         if self.get_message_direction() == self.INCOMING:
-            return Account.Address(self.result_set.getString("from_mid"),
-                     self.result_set.getString("from_name"))
+            from_mid = self.result_set.getString("from_mid")
+            if from_mid is not None:
+                return Account.Address(from_mid,
+                         self.result_set.getString("from_name"))
         return super(LineMessagesParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
