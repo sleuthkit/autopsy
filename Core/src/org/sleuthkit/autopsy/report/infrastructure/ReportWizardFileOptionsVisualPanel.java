@@ -80,8 +80,10 @@ class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
         optionsList.setCellRenderer(new OptionsListRenderer());
         optionsList.setVisibleRowCount(-1);
 
-        selectAllButton.setEnabled(true);
-        deselectAllButton.setEnabled(false);
+        selectAllButton.setEnabled(false);
+        deselectAllButton.setEnabled(true);
+        
+        wizPanel.setFinish(true);
 
         // Add the ability to enable and disable Tag checkboxes to the list
         optionsList.addMouseListener(new MouseAdapter() {
