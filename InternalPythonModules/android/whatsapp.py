@@ -379,8 +379,7 @@ class WhatsAppMessagesParser(TskMessagesParser):
                             M.timestamp       AS send_timestamp, 
                             M.received_timestamp, 
                             M.remote_resource AS group_sender,
-                            M.media_url As attachment,
-	                    M.media_mime_type as attachment_mimetype
+                            M.media_url As attachment
                      FROM   (SELECT jid, 
                                     recipients 
                              FROM   wadb.wa_contacts AS WC 
@@ -449,9 +448,6 @@ class WhatsAppMessagesParser(TskMessagesParser):
         message = self.result_set.getString("content") 
         attachment = self.result_set.getString("attachment")
         if attachment is not None:
-            mime_type = self.result_set.getString("attachment_mimetype")
-            if mime_type is not None:
-                attachment += "\nMIME type: " + mime_type 
             return general.appendAttachmentList(message, [attachment])
         return message
     
