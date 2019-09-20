@@ -59,6 +59,7 @@ import sbrowser
 import operabrowser
 import oruxmaps
 import installedapps
+import fbmessenger
 
 
 class AndroidModuleFactory(IngestModuleFactoryAdapter):
@@ -108,6 +109,7 @@ class AndroidIngestModule(DataSourceIngestModule):
                      xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(), shareit.ShareItAnalyzer(),
                      line.LineAnalyzer(), whatsapp.WhatsAppAnalyzer(), 
                      textnow.TextNowAnalyzer(), skype.SkypeAnalyzer(), viber.ViberAnalyzer(),
+                     fbmessenger.FBMessengerAnalyzer(),
                      sbrowser.SBrowserAnalyzer(), operabrowser.OperaAnalyzer(),
                      oruxmaps.OruxMapsAnalyzer(),
                      installedapps.InstalledApplicationsAnalyzer()]
