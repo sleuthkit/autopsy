@@ -105,7 +105,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.WARNING, "No case currently open.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())
         
-        for message_db in messages_db:
+        for message_db in message_dbs:
             message_db.close()
         
         for contact_and_calllog_db in contact_and_calllog_dbs:
