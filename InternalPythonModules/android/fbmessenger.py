@@ -29,6 +29,7 @@ from java.util.logging import Level
 from java.util import ArrayList
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
@@ -55,10 +56,17 @@ and adds artifacts to the case.
 """
 class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
     
-    selfAccountAddress = None
-    
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        
+        self._FB_MESSENGER_PACKAGE_NAME = "com.facebook.orca"
+        self._FACEBOOK_PACKAGE_NAME = "com.facebook.katana"
+        self._MODULE_NAME = "FB Messenger Analyzer"
+        self._MESSAGE_TYPE = "Facebook Messenger"
+        self._VERSION = "239.0.0.41"  ## FB version number. Did not find independent version number in FB Messenger
+
+        self.selfAccountAddress = None
+        self.current_case = None
 
     ## Analyze contacts
     def analyzeContacts(self, dataSource, fileManager, context):
@@ -66,18 +74,23 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
         ## In our example the FB Messenger database was empty.
         ## But the FB database had the data.
         
-        contactsDbs = AppSQLiteDB.findAppDatabases(dataSource, "contacts_db2", True, "com.facebook.katana")
+        contactsDbs = AppSQLiteDB.findAppDatabases(dataSource, "contacts_db2", True, self._FACEBOOK_PACKAGE_NAME)
         for contactsDb in contactsDbs:
             try:
                 selfAccountResultSet = contactsDb.runQuery("SELECT fbid, display_name FROM contacts WHERE added_time_ms = 0")
                 if selfAccountResultSet:
-                
                     if not self.selfAccountAddress:
                         self.selfAccountAddress = Account.Address(selfAccountResultSet.getString("fbid"), selfAccountResultSet.getString("display_name"))
 
-                contactsDBHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                        "Facebook Parser", contactsDb.getDBFile(),
+                if self.selfAccountAddress is not None:
+                    contactsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                        self._MODULE_NAME, contactsDb.getDBFile(),
                                         Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountAddress )
+                else:
+                    contactsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                        self._MODULE_NAME, contactsDb.getDBFile(),
+                                        Account.Type.FACEBOOK)
+                    
                 contactsResultSet = contactsDb.runQuery("SELECT fbid, display_name FROM contacts WHERE added_time_ms <> " + self.selfAccountAddress.getUniqueID() )
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
@@ -91,8 +104,11 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for account", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
-            except (TskCoreException, BlackboardException) as ex:
-                self._logger.log(Level.WARNING, "Failed to add Facebook Messenger contact artifacts.", ex)
+            except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to add Facebook Messenger contact artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 contactsDb.close()
@@ -111,15 +127,21 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
             
     ## Analyze messages 
     def analyzeMessages(self, dataSource, fileManager, context):
-        threadsDbs = AppSQLiteDB.findAppDatabases(dataSource, "threads_db2", True, "com.facebook.orca")
+        threadsDbs = AppSQLiteDB.findAppDatabases(dataSource, "threads_db2", True, self._FB_MESSENGER_PACKAGE_NAME)
         for threadsDb in threadsDbs:
             try:
-                threadsDBHelper = CommunicationArtifactsHelper(Case.getCurrentCase().getSleuthkitCase(),
-                                        "FB Messenger Parser", threadsDb.getDBFile(),
+                if self.selfAccountAddress is not None:
+                    threadsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                        self._MODULE_NAME, threadsDb.getDBFile(),
                                         Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountAddress )
+                else:
+                    threadsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
+                                        self._MODULE_NAME, threadsDb.getDBFile(),
+                                        Account.Type.FACEBOOK)
                 
                 ## Messages are found in the messages table.  The participant ids can be found in the thread_participants table.
                 ## Participant names are found in thread_users table.
+                ## Joining these tables produces multiple rows per message, one row for each recipient
                 sqlString = "SELECT msg_id, text, sender, timestamp_ms, messages.thread_key as thread_key,"\
                             " snippet, thread_participants.user_key as user_key, thread_users.name as name FROM messages"\
                             " JOIN thread_participants ON messages.thread_key = thread_participants.thread_key"\
@@ -145,13 +167,13 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                             # Create message artifact with collected attributes
                             if oldMsgId is not None:
                                 messageArtifact = threadsDBHelper.addMessage( 
-                                                            "FB Messenger Message",
+                                                            self._MESSAGE_TYPE,
                                                             direction,
                                                             fromAddress,
                                                             recipientAddressList,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
-                                                            "", 
+                                                            "",     # subject
                                                             msgText,
                                                             threadId)
 
@@ -191,35 +213,43 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
                             threadId = messagesResultSet.getString("thread_key")
 
-                           
                         else:   # same msgId as last, just collect recipient from current row
-                            
                              self.addRecipientToList(messagesResultSet.getString("user_key"), messagesResultSet.getString("name"),
                                                     fromAddress, recipientAddressList)
 
     
                     # at the end of the loop, add last message 
                     messageArtifact = threadsDBHelper.addMessage( 
-                                            "FB Messenger Message",
+                                            self._MESSAGE_TYPE,
                                             direction,
                                             fromAddress,
                                             recipientAddressList,
                                             timeStamp,
                                             MessageReadStatus.UNKNOWN,
-                                            "", 
+                                            "",     # subject
                                             msgText,
                                             threadId)
                         
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for FB Messenger messages.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
-            except (TskCoreException, BlackboardException) as ex:
-                self._logger.log(Level.WARNING, "Failed to add FB Messenger message artifacts.", ex)
+            except TskCoreException as ex:
+                self._logger.log(Level.SEVERE, "Failed to add FB Messenger message artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 threadsDb.close()
 
     def analyze(self, dataSource, fileManager, context):
+        try:
+            self.current_case = Case.getCurrentCaseThrows()
+        except NoCurrentCaseException as ex:
+            self._logger.log(Level.WARNING, "No case currently open.", ex)
+            self._logger.log(Level.WARNING, traceback.format_exc())
+            return
+
         self.analyzeContacts(dataSource, fileManager, context)
         self.analyzeMessages(dataSource, fileManager, context)
         
