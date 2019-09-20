@@ -109,7 +109,7 @@ class AndroidIngestModule(DataSourceIngestModule):
                      xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(), shareit.ShareItAnalyzer(),
                      line.LineAnalyzer(), whatsapp.WhatsAppAnalyzer(), 
                      textnow.TextNowAnalyzer(), skype.SkypeAnalyzer(), viber.ViberAnalyzer(),
-                     fbmessenger.FBMessengerAnalyzer()
+                     fbmessenger.FBMessengerAnalyzer(),
                      sbrowser.SBrowserAnalyzer(), operabrowser.OperaAnalyzer(),
                      oruxmaps.OruxMapsAnalyzer(),
                      installedapps.InstalledApplicationsAnalyzer()]
