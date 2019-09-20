@@ -419,19 +419,20 @@ final class VcardParser {
                 try {
                     BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
                     if (attributeType == null) {
-                        // Add this attribute type to the case database.
-                        attributeType = tskCase.addArtifactAttributeType(attributeTypeName,
-                                BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
-                                String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
-
+                        try{
+                            // Add this attribute type to the case database.
+                            attributeType = tskCase.addArtifactAttributeType(attributeTypeName,
+                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                                    String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                        }catch (TskDataException ex) {
+                            attributeType = tskCase.getAttributeType(attributeTypeName);
+                        }
                     }
-                    ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephone.getText(), attributeType, attributes);
+                    ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephoneText, attributeType, attributes);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-                } catch (TskDataException ex) {
-                    logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                    logger.log(Level.WARNING, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
                 }
-            }
+            } 
         }
     }
     
