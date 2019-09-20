@@ -388,7 +388,6 @@ class SkypeMessagesParser(TskMessagesParser):
                            contacts_list_with_groups.participants, 
                            time, 
                            content, 
-                           file_name, 
                            device_gallery_path, 
                            is_sender_me,
                            person_id as sender_id,
@@ -467,13 +466,11 @@ class SkypeMessagesParser(TskMessagesParser):
         content = self.result_set.getString("content")
 
         if content is not None:
-            file_name = self.result_set.getString("file_name")
             file_path = self.result_set.getString("device_gallery_path")
 
             #if a file name and file path are associated with a message, append it
-            if file_name is not None and file_path is not None:
-                attachment = "File Name: "+file_name +"\n"+ "File Path: "+file_path
-                return general.appendAttachmentList(content, [attachment]) 
+            if file_path is not None:
+                return general.appendAttachmentList(content, [file_path]) 
 
             return content
 
