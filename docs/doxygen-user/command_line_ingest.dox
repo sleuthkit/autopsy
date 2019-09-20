@@ -2,7 +2,7 @@
 
 \section command_line_ingest_overview Overview
 
-The Command Line Ingest feature allows you to process a \ref ds_page "data source" with Autopsy from the command line. Autopsy will automatically create a case with the settings you specify and will generate a \ref report_case_uco report.
+The Command Line Ingest feature allows you to run many of Autopsy's functions from the command line. You can add data sources to cases, choose which ingest modules to run, and automatically generate a report. When complete, these cases can be opened as normal or you can simply use the reports and other output without opening Autopsy.
 
 \section command_line_ingest_config Configuration
 
@@ -10,31 +10,137 @@ Go to Tools->Options and then select the "Command Line Ingest" tab.
 
 \image html command_line_ingest_options.png
 
-First, enter the output folder for the cases. Next, use the button to open the ingest module settings. Here you can configure the \ref ingest_page settings that will be used when running from the command line. 
+Use the ingest module settings to configure how you want to run ingest. This is the same as normal \ref ingest_page "ingest module" configuration - choose a file filter then enable or disable the individual ingest modules, changing their settings if desired. Press "OK" to save your settings.
 
-\section command_line_ingest_run Running Autopsy
+Use the report module settings to choose and configure a report type. Only the selected report type will be generated. Configuration is generally the same as normal \ref reporting_page "report generation" with some slight differences. This is mainly seen in places where your options are dependent on the open case, such as choosing \ref tagging_page "tags" to report on or \ref interesting_files_identifier_page "interesting file" set names to include. For example, the HTML report normally allows you to choose specific tags to include but for command line ingest it will only have the option to include all tags.
+
+\section command_line_ingest_config Choosing Parameters
 
 In a command prompt, navigate to the Autopsy bin folder. This is normally located at "C:\Program Files\Autopsy-version\bin".
 
 \image html command_line_ingest_bin_dir.png
 
-Now run autopsy with the following parameters, substituting the path to your data source and your desired case name. Both \ref ds_img "disk images" and \ref ds_log "logical files" are supported. Note that the case name must be unique for each run.
+The table below shows a summary of the command line operations. You can run one or more at a time, though you must always either create a case or open an existing case, and you can't add a data source and run ingest on an existing data source at the same time. 
+
+<table>
+<tr><th>Operation</th><th>Parameter(s)</th><th>Description</th><th>Example</th></tr>
+<tr><td><b>Create New Case</b><td>--createCase</td><td>Flag for creating a case</td><td>--createCase</td></tr>
+<tr><td>&nbsp;</td><td>--caseName</td><td>Name for case</td><td>--caseName="test5"</td></tr>
+<tr><td>&nbsp;</td><td>--caseBaseDir</td><td>Base folder for case</td><td>--caseBaseDir="C:\work\cases"</td></tr>
+<tr><td colspan=4>&nbsp;</td></tr>
+
+<tr><td><b>Open Existing Case</b></td><td>--caseDir</td><td>Path to existing case</td><td>--caseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</td></tr>
+<tr><td colspan=4>&nbsp;</td></tr>
+
+<tr><td><b>Add a Data Source</b></td><td>--addDataSource</td><td>Flag for adding a data source</td><td>--addDataSource</td></tr>
+<tr><td>&nbsp;</td><td>--dataSourcePath</td><td>Full path to the data source</td><td>--dataSourcePath="R:\work\images\small2.
+img"</td></tr>
+<tr><td>&nbsp;</td><td>--runIngest</td><td>(Optional) Run ingest modules on the new data source</td><td>--runIngest</td></tr>
+<tr><td colspan=4>&nbsp;</td></tr>
+
+<tr><td><b>Run Ingest on Existing Data Source</b><td>--dataSourceObjectId</td><td>The object ID of the data source</td><td>--dataSourceObjectId=1</td></tr>
+<tr><td>&nbsp;</td><td>--runIngest</td><td>Run ingest modules on the indicated data source</td><td>--runIngest</td></tr>
+<tr><td colspan=4>&nbsp;</td></tr>
+
+<tr><td><b>Generate Reports</b></td><td>--generateReports</td><td>Generate reports for all data sources in the case</td><td>--generateReports</td></tr>
+<tr><td colspan=4>&nbsp;</td></tr>
+
+<tr><td><b>Misc.</b></td><td>--listAllDataSources</td><td>Creates a report with all data sources and object IDs</td><td></td>--listAllDataSources</tr>
+</table>
+
+More details on each operation along with additional examples are given below. 
+
+\subsection command_line_cases Creating and Opening Cases
+
+You will always need to either create a case or give the path to an existing case. When creating a case, the current timestamp will be added to the case name. For example, running this command:
 
 \verbatim
-autopsy64.exe --inputPath=(data source path) --caseName=(case name) --runFromCommandLine=true
+autopsy64.exe --createCase --caseName="test5" --caseBaseDir="C:\work\cases"
 \endverbatim
 
-In the example below, we're going to process a disk image with path "R:\work\images\xp-sp3-v4.E01" and name the case "xpCase".
+could create a case folder "test5_2019_09_20_11_01_29". Note that even though a timestamp is added to the name, the --caseName field must be unique for each run. 
+
+\image html command_line_ingest_case_folder.png
+
+Once a case is created you will need to use the full path to the case instead of the case name and base folder. For example, if we created the empty case "test5" as above, we could use the following command to add a data source to it:
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\Cases\test5_2019_09_20_11_01_29" --addDataSource --dataSourcePath="R:\work\images\small2.img"
+\endverbatim
+
+\subsection command_line_ds Adding a New Data Source and Running Ingest
+
+You can add a data source to a new case or an existing case using the --addDataSource option and then giving the path to the data source. If you use the --runIngest option, the ingest modules you selected in the \ref command_line_ingest_config "configuration step" will be run on the data source. Both \ref ds_img "disk images" and \ref ds_log "logical files" are supported.
+
+In this example, we'll create a new case named "test6" and add the data source "blue_images.img".
+
+\verbatim
+autopsy64.exe --createCase --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource --dataSourcePath="R:\work\images\blue_images.img"
+\endverbatim
+
+And here we'll add another data source ("green_images.img") to the case we just made and run ingest on it. Note that ingest will only run on the new data source ("green_images.img"), not the one already in the case ("blue_images.img").
+
+\verbatim
+autopsy64.exe --createCase --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest --dataSourcePath="R:\work\images\green_images.img"
+\endverbatim
+
+\subsection command_line_existing_ds Running Ingest on an Existing Data Source
+
+You can run ingest on a data source already in the case if you know its object ID. To find this, go to the case folder and open the "Command Output" folder. 
+
+\image html command_line_ingest_output_folder.png
+
+If you've run with the --listAllDataSources option, there will be at least one file starting "listAllDataSources". Open the most recent one - the format will be similar to this:
+
+\verbatim
+{
+  "@dataSourceName" : "blue_images.img",
+  "@dataSourceObjectId" : "1"
+} {
+  "@dataSourceName" : "green_images.img",
+  "@dataSourceObjectId" : "84"
+}
+\endverbatim
+
+You can also look through the addDataSource files to find the one corresponding to the file you want to ingest. The format will be the same. Once you know the data source object ID, you can use the --dataSourceObjectId option to specify it. For example, this will run ingest on "blue_images.img":
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --runIngest --dataSourceObjectId="1"
+\endverbatim
+
+\subsection command_line_report Generating Reports
+
+You can generate a report on the case using the --generateReports option. You can select which report type to export through the Autopsy options panel (see the \ref command_line_ingest_config "configuration section"). This option can be run alone or at the same time as you're processing a data source. In this example we're adding a new data source ("small2.img") and generating a report.
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest --generateReports
+\endverbatim
+
+\subsection command_line_misc Miscellaneous Operations
+
+You can add the --listAllDataSources at any time to output a list of all data sources currently in the case along with their object IDs, to be used when \ref command_line_existing_ds "running on an existing data source". This command can even be run alone with just the path to the case.
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --listAllDataSources
+\endverbatim
+
+
+\section command_line_ingest_run Running Autopsy
+
+Once you determine which parameters you need, it's time to run Autopsy. In the example below we're creating a new case ("xpCase"), adding a data source to it ("xp-sp3-v4.001"), running ingest and generating a report. The report type was \ref command_line_ingest_config "configured" earlier to be an HTML report.
 
 \image html command_line_ingest_command_entry.png
 
-You'll start seeing output in the command prompt and the Autopsy UI will open. In the middle of the UI you'll see the following dialog:
+If you've entered everything correctly, Autopsy will load and you'll see this dialog in the middle of the screen:
 
 \image html command_line_ingest_dialog.png
 
-Once Autopsy finishes processing you'll be back at the command window. Press enter to return to the command prompt.
+If you instead see the normal case open dialog, it most likely means that your command line is malformed. Verify that there are no typos and that you have the appropriate parameters for the operation(s) you're attempting. 
+
+If everything works correctly, you'll see a log of the processing being done and Autopsy will close when finished.
 
 \image html command_line_ingest_console_output.png
+
 
 \section command_line_ingest_results Viewing Results
 
@@ -42,7 +148,7 @@ You can open the case created on the command line like any other Autopsy case. S
 
 \image html command_line_ingest_open_case.png
 
-If you are only interested in the \ref report_case_uco report then you don't need to open Autopsy. The report can be found in the case folder under "Reports\CASE-UCO" and then an automatically generated data source name containing the ID and timestamp.
+If you are only interested in the reports then you don't need to open Autopsy. You can just browse to the "Reports" folder in the case and access the reports directly.
 
 \image html command_line_ingest_report.png
 
