@@ -257,9 +257,14 @@ final public class FiltersPanel extends JPanel {
             //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesListPane.removeAll();
-
-            accountTypeMap.clear();
+            
+            accountTypeMap.clear();           
             accountTypeListPane.removeAll();
+            
+            CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
+            accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
+            accountTypeListPane.add(panel);
+                   
         });
     }
 
