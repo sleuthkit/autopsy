@@ -50,6 +50,11 @@ import imo
 import xender
 import zapya
 import shareit
+import viber
+import skype
+import line
+import whatsapp
+import textnow
 import sbrowser
 import operabrowser
 import oruxmaps
@@ -101,6 +106,8 @@ class AndroidIngestModule(DataSourceIngestModule):
                      googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(),
                      cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(),
                      xender.XenderAnalyzer(), zapya.ZapyaAnalyzer(), shareit.ShareItAnalyzer(),
+                     line.LineAnalyzer(), whatsapp.WhatsAppAnalyzer(), 
+                     textnow.TextNowAnalyzer(), skype.SkypeAnalyzer(), viber.ViberAnalyzer(),
                      sbrowser.SBrowserAnalyzer(), operabrowser.OperaAnalyzer(),
                      oruxmaps.OruxMapsAnalyzer(),
                      installedapps.InstalledApplicationsAnalyzer()]
