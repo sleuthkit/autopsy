@@ -89,8 +89,6 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME,
                         calllog_and_message_db.getDBFile(), Account.Type.WHATSAPP)
-                calllog_and_message_db.attachDatabase(dataSource, "wa.db",
-                        calllog_and_message_db.getDBFile().getParentPath(), "wadb")
                 self.parse_calllogs(calllog_and_message_db, helper)
                 self.parse_messages(calllog_and_message_db, helper)
 
@@ -170,6 +168,9 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
 
     def parse_messages(self, messages_db, helper):
         try:
+            messages_db.attachDatabase(dataSource, "wa.db",
+                        messages_db.getDBFile().getParentPath(), "wadb")
+
             messages_parser = WhatsAppMessagesParser(messages_db)
             while messages_parser.next():
                 helper.addMessage(
