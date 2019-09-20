@@ -64,6 +64,8 @@ final class AddLogicalImageTask implements Runnable {
     private final static String MODULE_NAME = "Logical Imager"; //NON-NLS
     private final static String ROOT_STR = "root"; // NON-NLS
     private final static String VHD_EXTENSION = ".vhd"; // NON-NLS
+    private final static int REPORT_PROGRESS_INTERVAL = 100;
+    private final static int POST_ARTIFACT_INTERVAL = 1000;
     private final String deviceId;
     private final String timeZone;
     private final File src;
@@ -145,7 +147,7 @@ final class AddLogicalImageTask implements Runnable {
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
             return;
         }
-        
+
         // Add the SearchResults.txt and users.txt to the case report
         String resultsFilename;
         if (Paths.get(dest.toString(), SEARCH_RESULTS_TXT).toFile().exists()) {
@@ -200,7 +202,7 @@ final class AddLogicalImageTask implements Runnable {
 
         List<Content> newDataSources = new ArrayList<>();
         Map<String, List<Long>> interestingFileMap = new HashMap<>();
-        
+
         if (imagePaths.isEmpty()) {
             createVHD = false;
             // No VHD in src directory, try ingest the root directory as local files
@@ -241,7 +243,7 @@ final class AddLogicalImageTask implements Runnable {
                 if (addMultipleImagesTask.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
                     LOGGER.log(Level.SEVERE, "Failed to add VHD datasource"); // NON-NLS
                     callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, addMultipleImagesTask.getErrorMessages(), emptyDataSources);
-                    return;                    
+                    return;
                 }
                 try {
                     interestingFileMap = getInterestingFileMapForVHD(Paths.get(dest.toString(), resultsFilename));
@@ -250,7 +252,7 @@ final class AddLogicalImageTask implements Runnable {
                     LOGGER.log(Level.SEVERE, "Failed to add interesting files", ex); // NON-NLS
                     callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS, errorList, emptyDataSources);
                 }
-                
+
             } catch (NoCurrentCaseException ex) {
                 String msg = Bundle.AddLogicalImageTask_noCurrentCase();
                 errorList.add(msg);
@@ -261,7 +263,7 @@ final class AddLogicalImageTask implements Runnable {
 
         if (cancelled) {
             if (!createVHD) {
-                // TODO: When 5453 is fixed, we should be able to delete it when adding VHD. 
+                // TODO: When 5453 is fixed, we should be able to delete it when adding VHD.
                 deleteDestinationDirectory();
             }
             errorList.add(Bundle.AddLogicalImageTask_addImageCancelled());
@@ -345,7 +347,7 @@ final class AddLogicalImageTask implements Runnable {
     private void addInterestingFiles(Map<String, List<Long>> interestingFileMap) throws IOException, TskCoreException {
         int lineNumber = 0;
         List<BlackboardArtifact> artifacts = new ArrayList<>();
-        
+
         Iterator<Map.Entry<String, List<Long>>> iterator = interestingFileMap.entrySet().iterator();
         while (iterator.hasNext()) {
 
@@ -365,21 +367,23 @@ final class AddLogicalImageTask implements Runnable {
 
             List<Long> fileIds = entry.getValue();
             for (Long fileId: fileIds) {
-                if (lineNumber % 100 == 0) {
+                if (cancelled) {
+                    postArtifacts(artifacts);
+                    return;
+                }
+                if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
                     progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingInterestingFile(lineNumber, totalFiles));
+                }
+                if (lineNumber % POST_ARTIFACT_INTERVAL == 0) {
+                    postArtifacts(artifacts);
+                    artifacts.clear();
                 }
                 addInterestingFileToArtifacts(fileId, ruleSetName, ruleName, artifacts);
                 lineNumber++;
             }
             iterator.remove();
         }
-        
-        try {
-            // index the artifact for keyword search
-            blackboard.postArtifacts(artifacts, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
-        }
+        postArtifacts(artifacts);
     }
 
     private void addInterestingFileToArtifacts(long fileId, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
@@ -400,7 +404,7 @@ final class AddLogicalImageTask implements Runnable {
         Map<Long, List<String>> objIdToimagePathsMap = currentCase.getSleuthkitCase().getImagePaths();
         imagePathToObjIdMap = imagePathsToDataSourceObjId(objIdToimagePathsMap);
         Map<String, List<Long>> interestingFileMap = new HashMap<>();
-        
+
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                       new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
             String line;
@@ -426,7 +430,7 @@ final class AddLogicalImageTask implements Runnable {
                 String filename = fields[7];
                 String parentPath = fields[8];
 
-                if (lineNumber % 100 == 0) {
+                if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
                     progressMonitor.setProgressText(Bundle.AddLogicalImageTask_searchingInterestingFile(lineNumber, totalFiles));
                 }
 
@@ -443,9 +447,18 @@ final class AddLogicalImageTask implements Runnable {
                     interestingFileMap.put(key, fileIds);
                 }
                 lineNumber++;
-            } // end reading file            }
+            } // end reading file
         }
         return interestingFileMap;
+    }
+
+    private void postArtifacts(List<BlackboardArtifact> artifacts) {
+        try {
+            // index the artifact for keyword search
+            blackboard.postArtifacts(artifacts, MODULE_NAME);
+        } catch (Blackboard.BlackboardException ex) {
+            LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
+        }
     }
 
     @Messages({
@@ -455,7 +468,7 @@ final class AddLogicalImageTask implements Runnable {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
         Map<String, List<Long>> interestingFileMap = new HashMap<>();
-        
+
         try {
             trans = skCase.beginTransaction();
             LocalFilesDataSource localFilesDataSource = skCase.addLocalFilesDataSource(deviceId, this.src.getName(), timeZone, trans);
@@ -492,7 +505,7 @@ final class AddLogicalImageTask implements Runnable {
                     String ctime = fields[13];
                     parentPath = ROOT_STR + "/" + vhdFilename + "/" + parentPath;
 
-                    if (lineNumber % 100 == 0) {
+                    if (lineNumber % REPORT_PROGRESS_INTERVAL == 0) {
                         progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFile(lineNumber, totalFiles));
                     }
 
