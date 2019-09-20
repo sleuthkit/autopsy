@@ -47,6 +47,7 @@ import tangomessage
 import textmessage
 import wwfmessage
 import imo
+import viber
 import skype
 import line
 import whatsapp
@@ -96,7 +97,7 @@ class AndroidIngestModule(DataSourceIngestModule):
                      tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(),
                      googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(),
                      cachelocation.CacheLocationAnalyzer(), imo.IMOAnalyzer(), line.LineAnalyzer(), whatsapp.WhatsAppAnalyzer(), 
-                     textnow.TextNowAnalyzer(), skype.SkypeAnalyzer()]
+                     textnow.TextNowAnalyzer(), skype.SkypeAnalyzer(), viber.ViberAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 
