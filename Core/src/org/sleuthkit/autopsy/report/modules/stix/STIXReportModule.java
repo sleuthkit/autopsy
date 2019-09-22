@@ -267,6 +267,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param stix STIXPackage
      * @param output
+     * @param progressPanel
      */
     private void processIndicators(STIXPackage stix, BufferedWriter output, ReportProgressPanel progressPanel) throws TskCoreException {
         if (stix.getIndicators() != null) {
@@ -304,6 +305,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param ind
      * @param result
+     * @param progressPanel
      *
      * @throws TskCoreException
      */
