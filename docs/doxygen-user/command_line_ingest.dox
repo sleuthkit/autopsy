@@ -20,33 +20,25 @@ In a command prompt, navigate to the Autopsy bin folder. This is normally locate
 
 \image html command_line_ingest_bin_dir.png
 
-The table below shows a summary of the command line operations. You can run one or more at a time, though you must always either create a case or open an existing case, and you can't add a data source and run ingest on an existing data source at the same time. 
+The table below shows a summary of the command line operations. You can run one or more at a time, though you must always either create a case or open an existing case.
 
 <table>
-<tr><th>Operation</th><th>Parameter(s)</th><th>Description</th><th>Example</th></tr>
-<tr><td><b>Create New Case</b><td>--createCase</td><td>Flag for creating a case</td><td>--createCase</td></tr>
-<tr><td>&nbsp;</td><td>--caseName</td><td>Name for case</td><td>--caseName="test5"</td></tr>
-<tr><td>&nbsp;</td><td>--caseBaseDir</td><td>Base folder for case</td><td>--caseBaseDir="C:\work\cases"</td></tr>
-<tr><td colspan=4>&nbsp;</td></tr>
+<tr><th>Operation</th><th>Command(s)</th><th>Parameter(s)</th><th>Example</th></tr>
+<tr><td><b>Create New Case</b><td><pre>--createCase</pre></td><td><pre>--caseName
+--caseBaseDir</pre></td><td><pre>--createCase --caseName="test5" --caseBaseDir="C:\work\cases"</pre></td></tr>
 
-<tr><td><b>Open Existing Case</b></td><td>--caseDir</td><td>Path to existing case</td><td>--caseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</td></tr>
-<tr><td colspan=4>&nbsp;</td></tr>
+<tr><td><b>Open Existing Case</b></td><td>&nbsp;</td><td><pre>--caseDir</pre></td><td><pre>--caseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</pre></td></tr>
 
-<tr><td><b>Add a Data Source</b></td><td>--addDataSource</td><td>Flag for adding a data source</td><td>--addDataSource</td></tr>
-<tr><td>&nbsp;</td><td>--dataSourcePath</td><td>Full path to the data source</td><td>--dataSourcePath="R:\work\images\small2.
-img"</td></tr>
-<tr><td>&nbsp;</td><td>--runIngest</td><td>(Optional) Run ingest modules on the new data source</td><td>--runIngest</td></tr>
-<tr><td colspan=4>&nbsp;</td></tr>
+<tr><td><b>Add a Data Source</b></td><td><pre>--addDataSource
+--runIngest (optional)</pre></td><td><pre>--dataSourcePath</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
 
-<tr><td><b>Run Ingest on Existing Data Source</b><td>--dataSourceObjectId</td><td>The object ID of the data source</td><td>--dataSourceObjectId=1</td></tr>
-<tr><td>&nbsp;</td><td>--runIngest</td><td>Run ingest modules on the indicated data source</td><td>--runIngest</td></tr>
-<tr><td colspan=4>&nbsp;</td></tr>
+<tr><td><b>Run Ingest on Existing Data Source</b><td><pre>--runIngest</pre></td><td><pre>--dataSourceObjectId</pre></td><td><pre>--runIngest --dataSourceObjectId=1</pre></td></tr>
 
-<tr><td><b>Generate Reports</b></td><td>--generateReports</td><td>Generate reports for all data sources in the case</td><td>--generateReports</td></tr>
-<tr><td colspan=4>&nbsp;</td></tr>
+<tr><td><b>Generate Reports</b></td><td><pre>--generateReports</pre></td><td>&nbsp;</td><td><pre>--generateReports</pre></td></tr>
 
-<tr><td><b>Misc.</b></td><td>--listAllDataSources</td><td>Creates a report with all data sources and object IDs</td><td></td>--listAllDataSources</tr>
+<tr><td><b>Create List of Data Sources</b></td><td><pre>--listAllDataSources</pre></td><td>&nbps;</td><td></td><pre>--listAllDataSources</pre></tr>
 </table>
+
 
 More details on each operation along with additional examples are given below. 
 
@@ -70,7 +62,7 @@ autopsy64.exe --caseDir="C:\work\Cases\test5_2019_09_20_11_01_29" --addDataSourc
 
 \subsection command_line_ds Adding a New Data Source and Running Ingest
 
-You can add a data source to a new case or an existing case using the --addDataSource option and then giving the path to the data source. If you use the --runIngest option, the ingest modules you selected in the \ref command_line_ingest_config "configuration step" will be run on the data source. Both \ref ds_img "disk images" and \ref ds_log "logical files" are supported.
+You can add a data source to a new case or an existing case using the --addDataSource option and then giving the path to the data source. If you use the --runIngest option, the ingest modules you selected in the \ref command_line_ingest_config "configuration step" will be run on the data source. Both \ref ds_img "disk images" and \ref ds_log "logical files" are supported. You can only add one data source at a time.
 
 In this example, we'll create a new case named "test6" and add the data source "blue_images.img".
 
@@ -116,7 +108,7 @@ You can generate a report on the case using the --generateReports option. You ca
 autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest --generateReports
 \endverbatim
 
-\subsection command_line_misc Miscellaneous Operations
+\subsection command_line_listds Listing All Data Sources
 
 You can add the --listAllDataSources at any time to output a list of all data sources currently in the case along with their object IDs, to be used when \ref command_line_existing_ds "running on an existing data source". This command can even be run alone with just the path to the case.
 
