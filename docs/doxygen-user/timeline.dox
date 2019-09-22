@@ -9,6 +9,8 @@ This document outlines the use of the Timeline feature of Autopsy.  This feature
 - When were pictures with EXIF information added?
 - What websites were accessed that resulted in file system modifications immediately after?
 
+Note that as of Autopsy 4.13, timeline events are now generated during ingest and stored in the case database instead of a separate database. For this reason, older cases will not longer work with timeline.
+
 \section timeline_quickstart Quick Start
 
 Use this section to learn the basics of timeline. More details on the display options can be found later in this document.
