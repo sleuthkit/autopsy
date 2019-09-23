@@ -166,10 +166,7 @@ __Truncate Descriptions__:  The user can select ‘truncate descriptions’ and 
 
 __Description Visibility__:  The user may choose a description visibility level of ‘show’, ‘counts only’, or ‘hide’.  Show is the default.  If Counts only is selected, only the count in parenthesis is shown, if hide is selected the entire text label is hidden.  Counts only and hide are useful if the user wants to get a less cluttered view, focussed more on when event clusters occurred and their type, and is not interested in the descriptions.
 
-Clicking the small green [+] button in a cluster will expand it with the next level of detail. The events in the cluster will be displayed clustered at a time scale appropriate for their extent and the detail level chosen.  This can be repeated for the subclusters, to create a nested hierarchy of clusters. Clicking the red [-] button collapses a cluster to a lower level of detail.  As with the global description level, care should be used when fully expanding large clusters, as this may cause an enormous amount of detail to be shown, slowing the tool down.
-
-
-When the Detail View is active, the Events tab next to the Filters tab is enabled.  This tab shows a list of all the descriptions presented in the visualization.  Selecting a description in the list highlights all the event clusters with that description.  
+Clicking the small green [+] button in a cluster will expand it with the next level of detail. The events in the cluster will be displayed clustered at a time scale appropriate for their extent and the detail level chosen.  This can be repeated for the subclusters, to create a nested hierarchy of clusters. Clicking the red [-] button collapses a cluster to a lower level of detail.  As with the global description level, care should be used when fully expanding large clusters, as this may cause an enormous amount of detail to be shown, slowing the tool down. 
 
 
 \subsection timeline_list_view Visualization Area: List View
