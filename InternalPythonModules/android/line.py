@@ -355,9 +355,6 @@ class LineMessagesParser(TskMessagesParser):
     """
 
     def __init__(self, message_db):
-        """
-
-        """
         super(LineMessagesParser, self).__init__(message_db.runQuery(
                 """
                     SELECT contact_list_with_groups.name,
