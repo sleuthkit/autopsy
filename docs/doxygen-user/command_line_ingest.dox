@@ -22,6 +22,7 @@ In a command prompt, navigate to the Autopsy bin folder. This is normally locate
 
 The table below shows a summary of the command line operations. You can run one or more at a time, though you must always either create a case or open an existing case.
 
+<br>
 <table>
 <tr><th>Operation</th><th>Command(s)</th><th>Parameter(s)</th><th>Example</th></tr>
 <tr><td><b>Create New Case</b><td><pre>--createCase</pre></td><td><pre>--caseName
