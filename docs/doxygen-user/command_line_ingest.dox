@@ -73,7 +73,7 @@ autopsy64.exe --createCase --caseName="test6" --caseBaseDir="C:\work\cases" --ad
 And here we'll add another data source ("green_images.img") to the case we just made and run ingest on it. Note that ingest will only run on the new data source ("green_images.img"), not the one already in the case ("blue_images.img").
 
 \verbatim
-autopsy64.exe --createCase --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest --dataSourcePath="R:\work\images\green_images.img"
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest --dataSourcePath="R:\work\images\green_images.img"
 \endverbatim
 
 \subsection command_line_existing_ds Running Ingest on an Existing Data Source
