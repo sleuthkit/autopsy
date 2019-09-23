@@ -56,6 +56,67 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
     """
         Parses the WhatsApp databases for TSK contact, message 
         and calllog artifacts.
+    
+        About WhatsApp parser for v2.19.244:
+            - Database Design Details:
+                There are 2 databases and 6 tables this parser uses.
+
+                1) Prerequisties:
+                    Each user is assigned a whatsapp id, refered to as jid in the
+                    database. A jid is of the form:
+
+                             ####...####@whatsapp.net
+
+                    where # is a placeholder for an arbitrary length of digits 1-9.
+
+                2) Databases:
+                    - databases/msgstore.db: contains msg and call log info
+                    - databases/wa.db: contains contact info
+
+                3) Tables:
+                    - wa/wa_contacts:                   Each record maps a jid to a users personal 
+                                                        details, such as name and phone number.
+
+                    - msgstore/call_log:                Each call made on the device is a single row 
+                                                        in the call_log table. Each record holds 
+                                                        information such as duration, direction, and 
+                                                        type (Video or Audio). 
+
+                    - msgstore/call_log_participant_v2: Each row of this table maps a jid to
+                                                        a call_log record. Multiple rows that 
+                                                        share a call_log id indicate a group call.
+
+                    - msgstore/messages:                Each message is represented as a single row. 
+                                                        A row maps a jid or a gjid (group jid) to some
+                                                        message details. Both the jid and gjid are 
+                                                        stored in 1 column, called key_remote_jid. 
+                                                        gjid's are of the form:
+                            
+                                                              #####...###-#####...####@g.us
+
+                                                        where # is a place holder for a digit 1-9. The
+                                                        '-' is a fixed character surrounded by digits 
+                                                        of arbiturary length n and m. 
+
+                                                        If the message is not from a group, the jid the
+                                                        message is to/from is stored in key_remote_jid 
+                                                        column. If it is a group, the key_remote_jid 
+                                                        column contains the gjid and the 'from' jid is 
+                                                        stored in a secondary column called 
+                                                        remote_resource.
+
+                    - msgstore/group_participants:      Each row of this table maps a jid to a gjid.
+
+                    - msgstore/jid:                     This table stores raw jid string. Some tables 
+                                                        only store the jid_row. A join must be 
+                                                        performed to get the jid value out. 
+            - Implementation details:
+                1) Group calls and single calls are extracted in two different queries. 
+                2) Group messages and single messages are extracted in 1 query.
+                    - The general approach was to build one complete contacts table containing
+                      both jid and gjid. A join can be performed once on all of the messages. 
+                      All jids that are part of a gjid were concatenated into a comma seperated 
+                      list of jids.
     """
    
     def __init__(self):
