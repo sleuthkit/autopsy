@@ -469,74 +469,219 @@ final public class FiltersPanel extends JPanel {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        setMinimumSize(new java.awt.Dimension(300, 750));
         setLayout(new java.awt.GridBagLayout());
 
-        scrollPane.setBorder(null);
+        topPane.setLayout(new java.awt.GridBagLayout());
 
-        mainPanel.setLayout(new java.awt.GridBagLayout());
-
-        limitPane.setLayout(new java.awt.GridBagLayout());
-
-        mostRecentLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.mostRecentLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 9);
-        limitPane.add(mostRecentLabel, gridBagConstraints);
-
-        limitComboBox.setEditable(true);
-        limitComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "10000", "5000", "1000", "500", "100" }));
-        limitComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                limitComboBoxActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        limitPane.add(limitComboBox, gridBagConstraints);
-
-        limitTitlePanel.setLayout(new java.awt.GridBagLayout());
-
-        limitHeaderLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.limitHeaderLabel.text")); // NOI18N
+        filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
+        filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        limitTitlePanel.add(limitHeaderLabel, gridBagConstraints);
+        topPane.add(filtersTitleLabel, gridBagConstraints);
 
-        limitErrorMsgLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
-        limitErrorMsgLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.limitErrorMsgLabel.text")); // NOI18N
-        limitErrorMsgLabel.setForeground(new java.awt.Color(255, 0, 0));
-        limitErrorMsgLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
+        refreshButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.refreshButton.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        topPane.add(refreshButton, gridBagConstraints);
+
+        applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/tick.png"))); // NOI18N
+        applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        limitTitlePanel.add(limitErrorMsgLabel, gridBagConstraints);
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
+        topPane.add(applyFiltersButton, gridBagConstraints);
+
+        needsRefreshLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.needsRefreshLabel.text")); // NOI18N
+        needsRefreshLabel.setForeground(new java.awt.Color(255, 0, 0));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        topPane.add(needsRefreshLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 15, 0, 15);
+        add(topPane, gridBagConstraints);
+
+        devicesPane.setMinimumSize(new java.awt.Dimension(300, 200));
+        devicesPane.setPreferredSize(new java.awt.Dimension(300, 200));
+        devicesPane.setLayout(new java.awt.GridBagLayout());
+
+        unCheckAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllDevicesButton.text")); // NOI18N
+        unCheckAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unCheckAllDevicesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 9);
+        devicesPane.add(unCheckAllDevicesButton, gridBagConstraints);
+
+        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png"))); // NOI18N
+        devicesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.devicesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
-        limitPane.add(limitTitlePanel, gridBagConstraints);
+        devicesPane.add(devicesLabel, gridBagConstraints);
+
+        checkAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllDevicesButton.text")); // NOI18N
+        checkAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkAllDevicesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        devicesPane.add(checkAllDevicesButton, gridBagConstraints);
+
+        devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 75));
+        devicesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
+
+        devicesListPane.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
+        devicesListPane.setMinimumSize(new java.awt.Dimension(300, 300));
+        devicesListPane.setLayout(new javax.swing.BoxLayout(devicesListPane, javax.swing.BoxLayout.Y_AXIS));
+        devicesScrollPane.setViewportView(devicesListPane);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 0);
-        mainPanel.add(limitPane, gridBagConstraints);
+        devicesPane.add(devicesScrollPane, gridBagConstraints);
+
+        deviceRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        deviceRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.deviceRequiredLabel.text")); // NOI18N
+        deviceRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
+        deviceRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
+        devicesPane.add(deviceRequiredLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 15, 0, 15);
+        add(devicesPane, gridBagConstraints);
+
+        accountTypesPane.setMinimumSize(new java.awt.Dimension(300, 200));
+        accountTypesPane.setPreferredSize(new java.awt.Dimension(300, 200));
+        accountTypesPane.setLayout(new java.awt.GridBagLayout());
+
+        unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
+        unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unCheckAllAccountTypesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 9);
+        accountTypesPane.add(unCheckAllAccountTypesButton, gridBagConstraints);
+
+        accountTypesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/accounts.png"))); // NOI18N
+        accountTypesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        accountTypesPane.add(accountTypesLabel, gridBagConstraints);
+
+        checkAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllAccountTypesButton.text")); // NOI18N
+        checkAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkAllAccountTypesButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        accountTypesPane.add(checkAllAccountTypesButton, gridBagConstraints);
+
+        accountTypesScrollPane.setMinimumSize(new java.awt.Dimension(32, 75));
+        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
+
+        accountTypeListPane.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
+        accountTypeListPane.setMinimumSize(new java.awt.Dimension(300, 300));
+        accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.PAGE_AXIS));
+        accountTypesScrollPane.setViewportView(accountTypeListPane);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        accountTypesPane.add(accountTypesScrollPane, gridBagConstraints);
+
+        accountTypeRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        accountTypeRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypeRequiredLabel.text")); // NOI18N
+        accountTypeRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
+        accountTypeRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        accountTypesPane.add(accountTypeRequiredLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 15, 0, 15);
+        add(accountTypesPane, gridBagConstraints);
 
         startDatePicker.setEnabled(false);
 
@@ -602,221 +747,70 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
-        mainPanel.add(dateRangePane, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(15, 15, 0, 15);
+        add(dateRangePane, gridBagConstraints);
 
-        devicesPane.setLayout(new java.awt.GridBagLayout());
+        limitPane.setLayout(new java.awt.GridBagLayout());
 
-        unCheckAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllDevicesButton.text")); // NOI18N
-        unCheckAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
+        mostRecentLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.mostRecentLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 9);
+        limitPane.add(mostRecentLabel, gridBagConstraints);
+
+        limitComboBox.setEditable(true);
+        limitComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "10000", "5000", "1000", "500", "100" }));
+        limitComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                unCheckAllDevicesButtonActionPerformed(evt);
+                limitComboBoxActionPerformed(evt);
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 9);
-        devicesPane.add(unCheckAllDevicesButton, gridBagConstraints);
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        limitPane.add(limitComboBox, gridBagConstraints);
 
-        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png"))); // NOI18N
-        devicesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.devicesLabel.text")); // NOI18N
+        limitTitlePanel.setLayout(new java.awt.GridBagLayout());
+
+        limitHeaderLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.limitHeaderLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        limitTitlePanel.add(limitHeaderLabel, gridBagConstraints);
+
+        limitErrorMsgLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        limitErrorMsgLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.limitErrorMsgLabel.text")); // NOI18N
+        limitErrorMsgLabel.setForeground(new java.awt.Color(255, 0, 0));
+        limitErrorMsgLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        limitTitlePanel.add(limitErrorMsgLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
-        devicesPane.add(devicesLabel, gridBagConstraints);
-
-        checkAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllDevicesButton.text")); // NOI18N
-        checkAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkAllDevicesButtonActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
-        devicesPane.add(checkAllDevicesButton, gridBagConstraints);
-
-        devicesScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        devicesScrollPane.setMinimumSize(new java.awt.Dimension(27, 75));
-
-        devicesListPane.setMinimumSize(new java.awt.Dimension(4, 100));
-        devicesListPane.setLayout(new javax.swing.BoxLayout(devicesListPane, javax.swing.BoxLayout.Y_AXIS));
-        devicesScrollPane.setViewportView(devicesListPane);
+        limitPane.add(limitTitlePanel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        devicesPane.add(devicesScrollPane, gridBagConstraints);
-
-        deviceRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
-        deviceRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.deviceRequiredLabel.text")); // NOI18N
-        deviceRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
-        deviceRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 0);
-        devicesPane.add(deviceRequiredLabel, gridBagConstraints);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.ipady = 100;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
-        mainPanel.add(devicesPane, gridBagConstraints);
-
-        accountTypesPane.setLayout(new java.awt.GridBagLayout());
-
-        unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
-        unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                unCheckAllAccountTypesButtonActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 9);
-        accountTypesPane.add(unCheckAllAccountTypesButton, gridBagConstraints);
-
-        accountTypesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/accounts.png"))); // NOI18N
-        accountTypesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypesLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        accountTypesPane.add(accountTypesLabel, gridBagConstraints);
-
-        checkAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllAccountTypesButton.text")); // NOI18N
-        checkAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkAllAccountTypesButtonActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
-        accountTypesPane.add(checkAllAccountTypesButton, gridBagConstraints);
-
-        accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
-
-        accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.PAGE_AXIS));
-        accountTypesScrollPane.setViewportView(accountTypeListPane);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
-        accountTypesPane.add(accountTypesScrollPane, gridBagConstraints);
-
-        accountTypeRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
-        accountTypeRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypeRequiredLabel.text")); // NOI18N
-        accountTypeRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
-        accountTypeRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        accountTypesPane.add(accountTypeRequiredLabel, gridBagConstraints);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
-        mainPanel.add(accountTypesPane, gridBagConstraints);
-
-        topPane.setLayout(new java.awt.GridBagLayout());
-
-        filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
-        filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        topPane.add(filtersTitleLabel, gridBagConstraints);
-
-        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
-        refreshButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.refreshButton.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        topPane.add(refreshButton, gridBagConstraints);
-
-        applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/tick.png"))); // NOI18N
-        applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
-        topPane.add(applyFiltersButton, gridBagConstraints);
-
-        needsRefreshLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.needsRefreshLabel.text")); // NOI18N
-        needsRefreshLabel.setForeground(new java.awt.Color(255, 0, 0));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        topPane.add(needsRefreshLabel, gridBagConstraints);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
-        gridBagConstraints.weightx = 1.0;
-        mainPanel.add(topPane, gridBagConstraints);
-
-        scrollPane.setViewportView(mainPanel);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 15, 0, 0);
-        add(scrollPane, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(15, 15, 15, 15);
+        add(limitPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     /**
@@ -1070,11 +1064,9 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JLabel limitHeaderLabel = new javax.swing.JLabel();
     private final javax.swing.JPanel limitPane = new javax.swing.JPanel();
     private final javax.swing.JPanel limitTitlePanel = new javax.swing.JPanel();
-    private final javax.swing.JPanel mainPanel = new javax.swing.JPanel();
     private final javax.swing.JLabel mostRecentLabel = new javax.swing.JLabel();
     private final javax.swing.JLabel needsRefreshLabel = new javax.swing.JLabel();
     private final javax.swing.JButton refreshButton = new javax.swing.JButton();
-    private final javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane();
     private final javax.swing.JCheckBox startCheckBox = new javax.swing.JCheckBox();
     private final com.github.lgooddatepicker.components.DatePicker startDatePicker = new com.github.lgooddatepicker.components.DatePicker();
     private final javax.swing.JPanel topPane = new javax.swing.JPanel();
