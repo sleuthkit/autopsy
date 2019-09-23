@@ -71,27 +71,28 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                     self._MODULE_NAME, historyDb.getDBFile(),
                                     Account.Type.SHAREIT)
 
-                queryString = "SELECT history_type, device_id, device_name, description, timestamp, import_path FROM history"
+                queryString = "SELECT history_type, device_id, device_name, description, timestamp, file_path FROM history"\
+                              " JOIN item where history.content_id = item.item_id"
                 historyResultSet = historyDb.runQuery(queryString)
                 if historyResultSet is not None:
                     while historyResultSet.next():
                         direction = ""
                         fromAddress = None
-                        toAdddress = None
+                        toAddress = None
                         
                         if (historyResultSet.getInt("history_type") == 1):
-                            direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
-                        else:
                             direction = CommunicationDirection.INCOMING
                             fromAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
+                        else:
+                            direction = CommunicationDirection.OUTGOING
+                            toAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
                             
                         msgBody = ""    # there is no body.
-                        attachments = [historyResultSet.getString("import_path")]
+                        attachments = [historyResultSet.getString("file_path")]
                         msgBody = general.appendAttachmentList(msgBody, attachments)
                         
                         timeStamp = historyResultSet.getLong("timestamp") / 1000
-                        messageArtifact = transferDbHelper.addMessage(
+                        messageArtifact = historyDbHelper.addMessage(
                                                             self._MESSAGE_TYPE,
                                                             direction,
                                                             fromAddress,
