@@ -469,7 +469,6 @@ final public class FiltersPanel extends JPanel {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        setMinimumSize(new java.awt.Dimension(300, 750));
         setLayout(new java.awt.GridBagLayout());
 
         topPane.setLayout(new java.awt.GridBagLayout());
@@ -523,7 +522,6 @@ final public class FiltersPanel extends JPanel {
         add(topPane, gridBagConstraints);
 
         devicesPane.setMinimumSize(new java.awt.Dimension(300, 200));
-        devicesPane.setPreferredSize(new java.awt.Dimension(300, 200));
         devicesPane.setLayout(new java.awt.GridBagLayout());
 
         unCheckAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllDevicesButton.text")); // NOI18N
@@ -567,7 +565,6 @@ final public class FiltersPanel extends JPanel {
         devicesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
 
         devicesListPane.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
-        devicesListPane.setMinimumSize(new java.awt.Dimension(300, 300));
         devicesListPane.setLayout(new javax.swing.BoxLayout(devicesListPane, javax.swing.BoxLayout.Y_AXIS));
         devicesScrollPane.setViewportView(devicesListPane);
 
@@ -604,7 +601,6 @@ final public class FiltersPanel extends JPanel {
         add(devicesPane, gridBagConstraints);
 
         accountTypesPane.setMinimumSize(new java.awt.Dimension(300, 200));
-        accountTypesPane.setPreferredSize(new java.awt.Dimension(300, 200));
         accountTypesPane.setLayout(new java.awt.GridBagLayout());
 
         unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
@@ -647,7 +643,6 @@ final public class FiltersPanel extends JPanel {
         accountTypesScrollPane.setPreferredSize(new java.awt.Dimension(2, 200));
 
         accountTypeListPane.setMaximumSize(new java.awt.Dimension(2147483647, 2147483647));
-        accountTypeListPane.setMinimumSize(new java.awt.Dimension(300, 300));
         accountTypeListPane.setLayout(new javax.swing.BoxLayout(accountTypeListPane, javax.swing.BoxLayout.PAGE_AXIS));
         accountTypesScrollPane.setViewportView(accountTypeListPane);
 
