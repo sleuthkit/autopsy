@@ -54,7 +54,48 @@ import general
 
 class LineAnalyzer(general.AndroidComponentAnalyzer):
     """
-        Parses the Line App databases for TSK contacts & message artifacts.
+        Parses the Line App databases for contacts, 
+        message and call log artifacts.
+
+        About Line parser for v9.15.1:
+
+            - Line Database Design Details:
+                Line has unique ids associated with their users and with their groups. These ids
+                are referred to as mid in the database. 
+
+                Databases:
+                    - naver_line: contains contact and msg artifacts
+                    - call_history: contains call artifacts
+
+                Tables:
+                    - naver_line/groups:        This table contains group ids paired with metadata
+                                                about the group (such as creator, group name, etc). 
+
+                    - naver_line/membership     This table maps user mids to group ids. Each record
+                                                contains 1 group id and 1 user mid.
+
+                    - naver_line/chat_history   This table contains all chat history for private
+                                                (1 to 1) and group conversations. It maps a user mid
+                                                or group id to the message details. The user mid and
+                                                group id are stored into the same column "chat_id".
+                                                If the message direction is incoming, the sender mid
+                                                is stored in the from_mid column.
+
+                    - naver_line/contacts       This table contains all Line contacts known to the 
+                                                device.
+
+                    - call_history/call_history This table contains all call history for private
+                                                and group calls. It maps a user mid or a group id
+                                                to the call details. The user mid and group id are
+                                                stored in the "caller_mid" column. 
+
+            - Implementation Details:
+                1)  Both group calls and single calls are extracted in one query. The general approach
+                    is to build one result table with both contact mids and group ids.
+                    This result is consistently labeled contact_list_with_groups queries below.
+                    This table is then joined once onto the messages table to produce all communication
+                    data.
+                2)  Both group chats and single chats are extracted in one query. 
     """
 
     def __init__(self):
@@ -195,22 +236,38 @@ class LineCallLogsParser(TskCallLogsParser):
     def __init__(self, calllog_db):
         super(LineCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
-                     SELECT substr(CallH.call_type, -1) AS direction, 
-                            CallH.start_time            AS start_time, 
-                            CallH.end_time              AS end_time, 
-                            ConT.server_name            AS name, 
-                            CallH.voip_type             AS call_type, 
-                            ConT.m_id 
-                            FROM   call_history AS CallH 
-                                   JOIN naver.contacts AS ConT 
-                                     ON CallH.caller_mid = ConT.m_id
+                    SELECT Substr(CH.call_type, -1)               AS direction, 
+                           CH.start_time                          AS start_time, 
+                           CH.end_time                            AS end_time, 
+                           contacts_list_with_groups.members      AS group_members, 
+                           contacts_list_with_groups.member_names AS names, 
+                           CH.caller_mid, 
+                           CH.voip_type                           AS call_type, 
+                           CH.voip_gc_media_type                  AS group_call_type 
+                    FROM   (SELECT id, 
+                                   Group_concat(M.m_id)                          AS members, 
+                                   Group_concat(Replace(C.server_name, ",", "")) AS member_names 
+                            FROM   membership AS M 
+                                   JOIN naver.contacts AS C 
+                                     ON M.m_id = C.m_id 
+                            GROUP  BY id 
+                            UNION 
+                            SELECT m_id, 
+                                   NULL, 
+                                   server_name 
+                            FROM   naver.contacts) AS contacts_list_with_groups 
+                           JOIN call_history AS CH 
+                             ON CH.caller_mid = contacts_list_with_groups.id
                  """
-             )
+              )
         )
         self._OUTGOING_CALL_TYPE = "O"
         self._INCOMING_CALL_TYPE = "I"
         self._VIDEO_CALL_TYPE = "V"
         self._AUDIO_CALL_TYPE = "A"
+        self._GROUP_CALL_TYPE = "G"
+        self._GROUP_VIDEO_CALL_TYPE = "VIDEO"
+        self._GROUP_AUDIO_CALL_TYPE = "AUDIO"
 
     def get_call_direction(self):
         direction = self.result_set.getString("direction")
@@ -232,21 +289,40 @@ class LineCallLogsParser(TskCallLogsParser):
     
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
-            return Account.Address(self.result_set.getString("m_id"), 
-                        self.result_set.getString("name"))
+            group_members = self.result_set.getString("group_members")
+            if group_members is not None:
+                group_members = group_members.split(",")
+                group_names = self.result_set.getString("names").split(",") 
+
+                recipients = []
+
+                for member_id, member_name in zip(group_members, group_names):
+                    recipients.append(Account.Address(member_id, member_name)) 
+                
+                return recipients
+
+            return Account.Address(self.result_set.getString("caller_mid"), 
+                        self.result_set.getString("names"))
         return super(LineCallLogsParser, self).get_phone_number_to()
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
-            return Account.Address(self.result_set.getString("m_id"),
-                        self.result_set.getString("name"))
+            return Account.Address(self.result_set.getString("caller_mid"),
+                        self.result_set.getString("names"))
         return super(LineCallLogsParser, self).get_phone_number_from()
 
     def get_call_type(self):
-        if self.result_set.getString("call_type") == self._VIDEO_CALL_TYPE:
+        call_type = self.result_set.getString("call_type")
+        if call_type == self._VIDEO_CALL_TYPE:
             return self.VIDEO_CALL
-        if self.result_set.getString("call_type") == self._AUDIO_CALL_TYPE:
+        if call_type == self._AUDIO_CALL_TYPE:
             return self.AUDIO_CALL
+        if call_type == self._GROUP_CALL_TYPE:
+            g_type = self.result_set.getString("group_call_type")
+            if g_type == self._GROUP_VIDEO_CALL_TYPE:
+                return self.VIDEO_CALL
+            if g_type == self._GROUP_AUDIO_CALL_TYPE:
+                return self.AUDIO_CALL
         return super(LineCallLogsParser, self).get_call_type()
 
 class LineContactsParser(TskContactsParser):
