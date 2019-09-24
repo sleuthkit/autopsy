@@ -77,7 +77,10 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private static final String MIME_TYPE_PDF = "application/pdf";
 
     private static final String[] FILE_IGNORE_LIST = {"hiberfile.sys", "pagefile.sys"};
-
+    
+    /**
+     * This maps file locations to file extensions that are known to be encrypted
+     */
     private static final Map<String, String> knownEncryptedLocationExtensions = createLocationExtensionMap();
 
     private final IngestServices services = IngestServices.getInstance();
@@ -123,7 +126,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
     @Messages({
         "EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.",
-        "EncryptionDetectionFileIngestModule.artifactComment.location=Location/File Extension determine encrypted file.",
+        "EncryptionDetectionFileIngestModule.artifactComment.location=High entropy and known location/extension.",
         "EncryptionDetectionFileIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
     })
     @Override
