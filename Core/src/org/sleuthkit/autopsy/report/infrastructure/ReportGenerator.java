@@ -282,6 +282,7 @@ public class ReportGenerator {
     /**
      * Run the TableReportModules using a SwingWorker.
      *
+     * @param tableReport
      * @param tableReportSettings settings for the table report
      */
     private void generateTableReport(TableReportModule tableReport, TableReportSettings tableReportSettings) throws IOException {
@@ -301,6 +302,7 @@ public class ReportGenerator {
     /**
      * Run the FileReportModules using a SwingWorker.
      *
+     * @param fileReportModule
      * @param fileReportSettings settings for the file report
      */
     private void generateFileListReport(FileReportModule fileReportModule, FileReportSettings fileReportSettings) throws IOException {

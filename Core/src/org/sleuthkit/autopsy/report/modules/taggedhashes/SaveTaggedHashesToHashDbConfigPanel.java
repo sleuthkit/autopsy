@@ -56,7 +56,8 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
     private TagNamesListModel tagsNamesListModel = new TagNamesListModel();
     private TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
-    private HashDb selectedHashSet = null;
+    private String selectedHashSetName;
+    private List<HashDb> updateableHashSets = new ArrayList<>();
 
     SaveTaggedHashesToHashDbConfigPanel() {
         initComponents();
@@ -74,7 +75,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }
     
     HashesReportModuleSettings getConfiguration() {
-        return new HashesReportModuleSettings(jAllTagsCheckBox.isSelected(), selectedHashSet);
+        return new HashesReportModuleSettings(jAllTagsCheckBox.isSelected(), selectedHashSetName);
     }
     
     void setConfiguration(HashesReportModuleSettings settings) {
@@ -84,11 +85,14 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         
         // update tag selection
         jAllTagsCheckBox.setSelected(settings.isExportAllTags());
+        if (settings.isExportAllTags()) {
+            selectAllTags(true);
+        }
         
         // update hash database selection
-        if (settings.getHashDb() != null) {
+        if (settings.getHashDbName() != null) {
             populateHashSetComponents();
-            hashSetsComboBox.setSelectedItem(settings.getHashDb());
+            hashSetsComboBox.setSelectedItem(settings.getHashDbName());
         }
     }
 
@@ -147,13 +151,14 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         // Clear the components because this method is called both during construction
         // and when the user changes the hash set configuration.
         hashSetsComboBox.removeAllItems();
-
+        selectedHashSetName = "";
+        
         // Get the updateable hash databases and add their hash set names to the
         // JComboBox component.
-        List<HashDb> updateableHashSets = HashDbManager.getInstance().getUpdateableHashSets();
+        updateableHashSets = HashDbManager.getInstance().getUpdateableHashSets();
         if (!updateableHashSets.isEmpty()) {
             for (HashDb hashDb : updateableHashSets) {
-                hashSetsComboBox.addItem(hashDb);
+                hashSetsComboBox.addItem(hashDb.getHashSetName());
             }
             hashSetsComboBox.setEnabled(true);
         } else {
@@ -182,7 +187,12 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
      * @return A HashDb object representing the database or null.
      */
     HashDb getSelectedHashDatabase() {
-        return selectedHashSet;
+        for (HashDb hashDb : updateableHashSets) {
+            if (hashDb.getHashSetName().equals(selectedHashSetName)) {
+                return hashDb;
+            }
+        }
+        return null;
     }
 
     // This class is a list model for the tag names JList component.
@@ -341,7 +351,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void hashSetsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashSetsComboBoxActionPerformed
-        selectedHashSet = (HashDb)hashSetsComboBox.getSelectedItem();
+        selectedHashSetName = (String)hashSetsComboBox.getSelectedItem();
     }//GEN-LAST:event_hashSetsComboBoxActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
@@ -377,7 +387,7 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton configureHashDatabasesButton;
     private javax.swing.JButton deselectAllButton;
-    private javax.swing.JComboBox<HashDb> hashSetsComboBox;
+    private javax.swing.JComboBox<String> hashSetsComboBox;
     private javax.swing.JCheckBox jAllTagsCheckBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
