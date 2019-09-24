@@ -190,7 +190,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         switch( result) {
             case OK:
-                processEmails(parser.getPartialEmailMessages(), parser.getEmailMessageIterator(), abstractFile);
+                Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
+                if (pstMsgIterator != null) {
+                    processEmails(parser.getPartialEmailMessages(), pstMsgIterator , abstractFile);
+                }
                 break;
 
             case ENCRYPT:
