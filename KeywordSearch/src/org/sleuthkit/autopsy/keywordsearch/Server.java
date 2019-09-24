@@ -130,6 +130,18 @@ public class Server {
                 return "content_ws"; //NON-NLS
             }
         },
+        CONTENT_JA {
+            @Override
+            public String toString() {
+                return "content_ja"; //NON-NLS
+            }
+        },
+        LANGUAGE {
+            @Override
+            public String toString() {
+                return "language"; //NON-NLS
+            }
+        },
         FILE_NAME {
             @Override
             public String toString() {
@@ -174,6 +186,17 @@ public class Server {
             @Override
             public String toString() {
                 return "chunk_size"; //NON-NLS
+            }
+        },
+        /**
+         * termfreq is a function which returns the number of times the term appears.
+         * This is not an actual field defined in schema.xml, but can be gotten from returned documents
+         * in the same way as fields.
+         */
+        TERMFREQ {
+            @Override
+            public String toString() {
+                return "termfreq"; //NON-NLS
             }
         }
     };
@@ -1635,7 +1658,8 @@ public class Server {
         private int queryNumFileChunks(long contentID) throws SolrServerException, IOException {
             String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q
-                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*");
+                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*"
+                        + " NOT " + Server.Schema.ID + ":*" + MiniChunkHelper.SUFFIX);
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
         }
