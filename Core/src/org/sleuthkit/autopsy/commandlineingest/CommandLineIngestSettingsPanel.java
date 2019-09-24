@@ -20,20 +20,13 @@ package org.sleuthkit.autopsy.commandlineingest;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
-import java.io.File;
-import java.nio.file.Files;
 import java.util.List;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
-import java.nio.file.Paths;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.report.infrastructure.ReportWizardAction.doReportWizard;
 
 /**
  * Configuration panel for auto ingest settings.
@@ -41,10 +34,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
 
-    private final CommandLineIngestSettingsPanelController controller;
-    private final JFileChooser fc = new JFileChooser();
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(CommandLineIngestSettingsPanel.class.getName());
+    
+    private static final String REPORTING_CONFIGURATION_NAME = "CommandLineIngest";
+    private static final boolean DISPLAY_CASE_SPECIFIC_DATA = false; // do not try to display case specific data
+    private static final boolean RUN_REPORTS = false; // do not generate reports as part of running the report wizard
 
     /**
      * Creates new form AutoIngestSettingsPanel
@@ -52,171 +47,14 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
      * @param theController Controller to notify of changes.
      */
     public CommandLineIngestSettingsPanel(CommandLineIngestSettingsPanelController theController) {
-        controller = theController;
         initComponents();
-
-        load(true);
-        outputPathTextField.getDocument().addDocumentListener(new MyDocumentListener());
-        jLabelInvalidResultsFolder.setText("");
     }
-
-    private class MyDocumentListener implements DocumentListener {
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            valid();
-            controller.changed();
-        }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            valid();
-            controller.changed();
-        }
-
-        @Override
-        public void insertUpdate(DocumentEvent e) {
-            valid();
-            controller.changed();
-        }
-    };
-
+    
     /**
-     * Load mode from persistent storage.
-     *
-     * @param inStartup True if we're doing the initial population of the UI
+     * @return the REPORTING_CONFIGURATION_NAME
      */
-    final void load(boolean inStartup) {
-
-        String results = org.sleuthkit.autopsy.commandlineingest.UserPreferences.getCommandLineModeResultsFolder();
-        if (results != null) {
-            outputPathTextField.setText(results);
-        } else {
-            outputPathTextField.setText("");
-        }
-
-        valid();
-    }
-
-    /**
-     * Save mode to persistent storage.
-     */
-    void store() {
-        String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-        org.sleuthkit.autopsy.commandlineingest.UserPreferences.setCommandLineModeResultsFolder(resultsFolderPath);
-    }
-
-    /**
-     * Validate current panel settings.
-     */
-    boolean valid() {
-
-        if (validateResultsPath()) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Normalizes a path to make sure there are no "space" characters at the end
-     *
-     * @param path Path to a directory
-     *
-     * @return Path without "space" characters at the end
-     */
-    String normalizePath(String path) {
-
-        while (path.length() > 0) {
-            if (path.charAt(path.length() - 1) == ' ') {
-                path = path.substring(0, path.length() - 1);
-            } else {
-                break;
-            }
-        }
-        return path;
-    }
-
-    /**
-     * Validates that a path is valid and points to a folder.
-     *
-     * @param path A path to be validated
-     *
-     * @return boolean returns true if valid and points to a folder, false
-     *         otherwise
-     */
-    boolean isFolderPathValid(String path) {
-        try {
-            File file = new File(normalizePath(path));
-
-            // check if it's a symbolic link
-            if (Files.isSymbolicLink(file.toPath())) {
-                return true;
-            }
-
-            // local folder
-            if (file.exists() && file.isDirectory()) {
-                return true;
-            }
-        } catch (Exception ex) {
-            // Files.isSymbolicLink (and other "files" methods) throw exceptions on seemingly innocent inputs.
-            // For example, it will throw an exception when either " " is last character in path or
-            // a path starting with ":". 
-            // We can just ignore these exceptions as they occur in process of user typing in the path.
-            return false;
-        }
-        return false;
-    }
-
-    /**
-     * Returns a path that was normalized by file system.
-     *
-     * @param path A path to be normalized. Normalization occurs inside a call
-     *             to new File().
-     *
-     * @return String returns normalized OS path
-     */
-    String getNormalizedFolderPath(String path) {
-        // removes "/", "\", and " " characters at the end of path string.
-        // normalizePath() removes spaces at the end of path and a call to "new File()" 
-        // internally formats the path string to remove "/" and "\" characters at the end of path.
-        File file = new File(normalizePath(path));
-        return file.getPath();
-    }
-
-    /**
-     * Validate results path. Display warnings if invalid.
-     */
-    boolean validateResultsPath() {
-
-        String outputPath = outputPathTextField.getText().trim();
-
-        if (outputPath.isEmpty()) {
-            jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.ResultsDirectoryUnspecified"));
-            /*
-            NOTE: JIRA-4850: Returning false disables OK and Apply buttons for the entire
-            Tools->Options bar until the path is set. It was decided to only validate 
-            the path if the path is set.
-            */
-            return true;
-        }
-
-        if (!isFolderPathValid(outputPath)) {
-            jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.PathInvalid"));
-            return false;
-        }
-
-        if (false == permissionsAppropriate(outputPath)) {
-            jLabelInvalidResultsFolder.setVisible(true);
-            jLabelInvalidResultsFolder.setText(NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.CannotAccess")
-                    + " " + outputPath + "   "
-                    + NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.CheckPermissions"));
-            return false;
-        }
-
-        jLabelInvalidResultsFolder.setVisible(false);
-        return true;
+    public static String getReportingConfigName() {
+        return REPORTING_CONFIGURATION_NAME;
     }
 
     private void displayIngestJobSettingsPanel() {
@@ -261,14 +99,17 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         nodeScrollPane = new javax.swing.JScrollPane();
         nodePanel = new javax.swing.JPanel();
         bnEditIngestSettings = new javax.swing.JButton();
-        browseOutputFolderButton = new javax.swing.JButton();
-        outputPathTextField = new javax.swing.JTextField();
-        jLabelInvalidResultsFolder = new javax.swing.JLabel();
-        jLabelSelectOutputFolder = new javax.swing.JLabel();
+        jLabelBaselineConfig = new javax.swing.JLabel();
+        jLabelReportConfig = new javax.swing.JLabel();
+        bnEditReportSettings = new javax.swing.JButton();
+
+        setPreferredSize(new java.awt.Dimension(810, 422));
 
         nodeScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+        nodeScrollPane.setPreferredSize(new java.awt.Dimension(803, 553));
 
         nodePanel.setMinimumSize(new java.awt.Dimension(100, 100));
+        nodePanel.setPreferredSize(new java.awt.Dimension(801, 551));
 
         org.openide.awt.Mnemonics.setLocalizedText(bnEditIngestSettings, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditIngestSettings.text")); // NOI18N
         bnEditIngestSettings.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditIngestSettings.toolTipText")); // NOI18N
@@ -279,21 +120,18 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseOutputFolderButton, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.browseOutputFolderButton.text")); // NOI18N
-        browseOutputFolderButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelBaselineConfig, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelBaselineConfig.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelReportConfig, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelReportConfig.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(bnEditReportSettings, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.text")); // NOI18N
+        bnEditReportSettings.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.toolTipText")); // NOI18N
+        bnEditReportSettings.setActionCommand(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.actionCommand")); // NOI18N
+        bnEditReportSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                browseOutputFolderButtonActionPerformed(evt);
+                bnEditReportSettingsActionPerformed(evt);
             }
         });
-
-        outputPathTextField.setText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.outputPathTextField.text")); // NOI18N
-        outputPathTextField.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.outputPathTextField.toolTipText")); // NOI18N
-
-        jLabelInvalidResultsFolder.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidResultsFolder, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelInvalidResultsFolder.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectOutputFolder, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelSelectOutputFolder.text")); // NOI18N
-        jLabelSelectOutputFolder.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
 
         javax.swing.GroupLayout nodePanelLayout = new javax.swing.GroupLayout(nodePanel);
         nodePanel.setLayout(nodePanelLayout);
@@ -302,36 +140,25 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
             .addGroup(nodePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(nodePanelLayout.createSequentialGroup()
-                        .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 630, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(browseOutputFolderButton))
                     .addComponent(bnEditIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(nodePanelLayout.createSequentialGroup()
-                        .addComponent(jLabelSelectOutputFolder)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabelInvalidResultsFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 544, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(355, Short.MAX_VALUE))
+                    .addComponent(jLabelBaselineConfig)
+                    .addComponent(jLabelReportConfig)
+                    .addComponent(bnEditReportSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(362, Short.MAX_VALUE))
         );
         nodePanelLayout.setVerticalGroup(
             nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(nodePanelLayout.createSequentialGroup()
-                .addGap(40, 40, 40)
-                .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabelSelectOutputFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabelInvalidResultsFolder))
-                .addGap(1, 1, 1)
-                .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(browseOutputFolderButton)
-                    .addComponent(outputPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(25, 25, 25)
+                .addGap(27, 27, 27)
+                .addComponent(jLabelBaselineConfig)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(bnEditIngestSettings)
-                .addContainerGap(389, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jLabelReportConfig)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(bnEditReportSettings)
+                .addContainerGap(376, Short.MAX_VALUE))
         );
-
-        browseOutputFolderButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.browseOutputFolderButton.text")); // NOI18N
-        jLabelInvalidResultsFolder.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelInvalidResultsFolder.text")); // NOI18N
-        jLabelSelectOutputFolder.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelSelectOutputFolder.text")); // NOI18N
 
         nodeScrollPane.setViewportView(nodePanel);
 
@@ -339,7 +166,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodeScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 864, Short.MAX_VALUE)
+            .addComponent(nodeScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -347,54 +174,22 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void browseOutputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseOutputFolderButtonActionPerformed
-        String oldText = outputPathTextField.getText().trim();
-        // set the current directory of the FileChooser if the oldText is valid
-        File currentDir = new File(oldText);
-        if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
-        }
-
-        fc.setDialogTitle("Select case output folder:");
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            outputPathTextField.setText(path);
-            valid();
-            controller.changed();
-        }
-    }//GEN-LAST:event_browseOutputFolderButtonActionPerformed
+    private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        doReportWizard(getReportingConfigName(), DISPLAY_CASE_SPECIFIC_DATA, RUN_REPORTS);
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_bnEditReportSettingsActionPerformed
 
     private void bnEditIngestSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditIngestSettingsActionPerformed
         displayIngestJobSettingsPanel();
     }//GEN-LAST:event_bnEditIngestSettingsActionPerformed
 
-    boolean permissionsAppropriate(String path) {
-        return FileUtil.hasReadWriteAccess(Paths.get(path));
-    }
-
-    private void resetUI() {
-        load(true);
-        controller.changed();
-    }
-
-    void setEnabledState(boolean enabled) {
-        bnEditIngestSettings.setEnabled(enabled);
-        browseOutputFolderButton.setEnabled(enabled);
-        jLabelInvalidResultsFolder.setEnabled(enabled);
-        jLabelSelectOutputFolder.setEnabled(enabled);
-        outputPathTextField.setEnabled(enabled);
-    }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnEditIngestSettings;
-    private javax.swing.JButton browseOutputFolderButton;
-    private javax.swing.JLabel jLabelInvalidResultsFolder;
-    private javax.swing.JLabel jLabelSelectOutputFolder;
+    private javax.swing.JButton bnEditReportSettings;
+    private javax.swing.JLabel jLabelBaselineConfig;
+    private javax.swing.JLabel jLabelReportConfig;
     private javax.swing.JPanel nodePanel;
     private javax.swing.JScrollPane nodeScrollPane;
-    private javax.swing.JTextField outputPathTextField;
     // End of variables declaration//GEN-END:variables
 }

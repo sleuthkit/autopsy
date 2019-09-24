@@ -80,7 +80,7 @@ public class Services implements Closeable {
     /**
      * Gets the artifacts blackboard for the current case.
      *
-     * @return @org.sleuthkit.datamodel.Blackboard Blackboard for the current
+     * @return org.sleuthkit.datamodel.Blackboard Blackboard for the current
      *         case.
      */
     public org.sleuthkit.datamodel.Blackboard getArtifactsBlackboard() {

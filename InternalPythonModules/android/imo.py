@@ -29,12 +29,11 @@ from java.util.logging import Level
 from java.util import ArrayList
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
-from org.sleuthkit.autopsy.coreutils import AppDBParserHelper
-from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import MessageReadStatusEnum
-from org.sleuthkit.autopsy.coreutils.AppDBParserHelper import CommunicationDirection
+
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.datamodel import AbstractFile
@@ -42,7 +41,11 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
+from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
 import traceback
 import general
@@ -54,10 +57,14 @@ and adds artifacts to the case.
 class IMOAnalyzer(general.AndroidComponentAnalyzer):
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
+        self._PACKAGE_NAME = "com.imo.android.imous"
+        self._PARSER_NAME = "IMO Parser"
+        self._MESSAGE_TYPE = "IMO Message"
+        self._VERSION = "9.8.0"
 
     def analyze(self, dataSource, fileManager, context):
         selfAccountAddress = None
-        accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", True, "com.imo.android.imous")
+        accountDbs = AppSQLiteDB.findAppDatabases(dataSource, "accountdb.db", True, self._PACKAGE_NAME)
         for accountDb in accountDbs:
             try:
                 accountResultSet = accountDb.runQuery("SELECT uid, name FROM account")
@@ -69,15 +76,26 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         selfAccountAddress = Account.Address(accountResultSet.getString("uid"), accountResultSet.getString("name"))
             
             except SQLException as ex:
-                self._logger.log(Level.SEVERE, "Error processing query result for account", ex)       
+                self._logger.log(Level.WARNING, "Error processing query result for account", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 accountDb.close()
                         
-        friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", True, "com.imo.android.imous")
+        friendsDbs = AppSQLiteDB.findAppDatabases(dataSource, "imofriends.db", True, self._PACKAGE_NAME)
         for friendsDb in friendsDbs:
             try:
-                friendsDBHelper = AppDBParserHelper("IMO Parser", friendsDb.getDBFile(),
+                current_case = Case.getCurrentCaseThrows()
+                if selfAccountAddress is not None:
+                    friendsDBHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+                                                    self._PARSER_NAME,
+                                                    friendsDb.getDBFile(),
                                                     Account.Type.IMO, Account.Type.IMO, selfAccountAddress )
+                else:
+                   friendsDBHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
+                                                    self._PARSER_NAME,
+                                                    friendsDb.getDBFile(),
+                                                    Account.Type.IMO
+                                                                  ) 
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
@@ -108,17 +126,17 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                         
                         message_read = messagesResultSet.getInt("message_read")
                         if (message_read == 1):
-                            msgReadStatus = MessageReadStatusEnum.READ
+                            msgReadStatus = MessageReadStatus.READ
                         elif (message_read == 0):
-                            msgReadStatus = MessageReadStatusEnum.UNREAD
+                            msgReadStatus = MessageReadStatus.UNREAD
                         else:
-                            msgReadStatus = MessageReadStatusEnum.UNKNOWN
+                            msgReadStatus = MessageReadStatus.UNKNOWN
                                                 
                         timeStamp = messagesResultSet.getLong("timestamp") / 1000000000
 
 
                         messageArtifact = friendsDBHelper.addMessage( 
-                                                            "IMO Message",
+                                                            self._MESSAGE_TYPE,
                                                             direction,
                                                             fromAddress,
                                                             toAddress,
@@ -134,8 +152,16 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                     
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for IMO friends", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             except TskCoreException as ex:
-                self._logger.log(Level.WARNING, "Failed to create AppDBParserHelper for adding artifacts.", ex)
+                self._logger.log(Level.SEVERE, "Failed to add IMO message artifacts.", ex)
+                self._logger.log(Level.SEVERE, traceback.format_exc())
+            except BlackboardException as ex:
+                self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
+            except NoCurrentCaseException as ex:
+                self._logger.log(Level.WARNING, "No case currently open.", ex)
+                self._logger.log(Level.WARNING, traceback.format_exc())
             finally:
                 friendsDb.close()
                 
