@@ -1141,7 +1141,9 @@ class ExtractRegistry extends Extract {
                 line = bufferedReader.readLine();
                 while (line != null && !line.isEmpty()) {
                     entry = getSAMKeyValue(line);
-                    userInfo.put(entry.getKey(), entry.getValue());
+                    if (entry != null) {
+                        userInfo.put(entry.getKey(), entry.getValue());
+                    }
                     line = bufferedReader.readLine();
                 }
                 users.add(userInfo);
@@ -1208,14 +1210,18 @@ class ExtractRegistry extends Extract {
      */
     private BlackboardArtifact.Type getShellBagArtifact() throws TskCoreException {
         if (shellBagArtifactType == null) {
-            try {
-                tskCase.addBlackboardArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name()); //NON-NLS
-            } catch (TskDataException ex) {
-                // Artifact already exists
-                logger.log(Level.INFO, String.format("%s may have already been defined for this case", SHELLBAG_ARTIFACT_NAME), ex);
-            }
-
             shellBagArtifactType = tskCase.getArtifactType(SHELLBAG_ARTIFACT_NAME);
+            
+            if(shellBagArtifactType == null) {
+                try {
+                    tskCase.addBlackboardArtifactType(SHELLBAG_ARTIFACT_NAME, Bundle.Shellbag_Artifact_Display_Name()); //NON-NLS
+                } catch (TskDataException ex) {
+                    // Artifact already exists
+                    logger.log(Level.INFO, String.format("%s may have already been defined for this case", SHELLBAG_ARTIFACT_NAME));
+                }
+
+                shellBagArtifactType = tskCase.getArtifactType(SHELLBAG_ARTIFACT_NAME);
+            }
         }
 
         return shellBagArtifactType;
