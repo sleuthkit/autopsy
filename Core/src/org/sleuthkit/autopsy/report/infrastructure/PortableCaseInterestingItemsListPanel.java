@@ -73,7 +73,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         customizeComponents();
         
         // update tag selection
-        jAllSetsCheckBox.setSelected(settings.areAllTagsSelected());
+        jAllSetsCheckBox.setSelected(settings.areAllSetsSelected());
         setNamesListBox.setEnabled(!jAllSetsCheckBox.isSelected());
         selectButton.setEnabled(!jAllSetsCheckBox.isSelected());
         deselectButton.setEnabled(!jAllSetsCheckBox.isSelected());

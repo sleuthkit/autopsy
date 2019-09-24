@@ -61,7 +61,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         About version 8.15.0.428 (9/17/2019) Skype database:
             - There are 4 tables this parser uses:
                 1) person - this table appears to hold all contacts known to the user.
-                2) user - this table holds information pertaining to the user. 
+                2) user - this table holds information about the user. 
                 3) particiapnt - Yes, that is not a typo. This table maps group chat
                                  ids to skype ids (1 to many).
                 4) chatItem - This table contains all messages. It maps the group id or

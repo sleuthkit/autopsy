@@ -461,7 +461,7 @@ public class HTMLReport implements TableReportModule {
      * temporary workaround to avoid modifying the TableReportModule interface.
      *
      * @param name Name of the data type
-     * @param comment Comment on the data type, may be the empty string
+     * @param description Comment on the data type, may be the empty string
      */
     @Override
     public void startDataType(String name, String description) {
@@ -644,7 +644,6 @@ public class HTMLReport implements TableReportModule {
      * temporary workaround to avoid modifying the TableReportModule interface.
      *
      * @param columnHeaders column headers
-     * @param sourceArtifact source blackboard artifact for the table data
      */
     public void startContentTagsTable(List<String> columnHeaders) {
         StringBuilder htmlOutput = new StringBuilder();
@@ -718,12 +717,10 @@ public class HTMLReport implements TableReportModule {
 
     /**
      * Saves a local copy of a tagged file and adds a row with a hyper link to
-     * the file. The content of the hyperlink is provided in linkHTMLContent.
+     * the file. 
      *
      * @param row Values for each data cell in the row
-     * @param file The file to link to in the report.
-     * @param tagName the name of the tag that the content was flagged by
-     * @param linkHTMLContent the html that will be the body of the link
+     * @param contentTag The tag
      */
     public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
         Content content = contentTag.getContent();

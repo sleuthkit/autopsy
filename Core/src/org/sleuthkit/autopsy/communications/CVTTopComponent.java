@@ -19,15 +19,14 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
-import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -79,9 +78,6 @@ public final class CVTTopComponent extends TopComponent {
         CVTEvents.getCVTEventBus().register(vizPanel);
         CVTEvents.getCVTEventBus().register(accountsBrowser);
         CVTEvents.getCVTEventBus().register(filtersPane);
-        
-        mainSplitPane.setResizeWeight(0.5);
-        mainSplitPane.setDividerLocation(0.25);
     }
 
     @Subscribe
@@ -98,28 +94,22 @@ public final class CVTTopComponent extends TopComponent {
     private void initComponents() {
         GridBagConstraints gridBagConstraints;
 
-        mainSplitPane = new JSplitPane();
         filtersPane = new FiltersPanel();
         browseVisualizeTabPane = new JTabbedPane();
         accountsBrowser = new AccountsBrowser();
         vizPanel = new VisualizationPanel();
 
-        setLayout(new GridBagLayout());
+        setLayout(new BorderLayout());
 
-        mainSplitPane.setLeftComponent(filtersPane);
+        filtersPane.setMinimumSize(new Dimension(300, 700));
+        add(filtersPane, BorderLayout.WEST);
 
         browseVisualizeTabPane.setFont(new Font("Tahoma", 0, 18)); // NOI18N
         browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
         browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
 
-        mainSplitPane.setRightComponent(browseVisualizeTabPane);
+        add(browseVisualizeTabPane, BorderLayout.CENTER);
         browseVisualizeTabPane.getAccessibleContext().setAccessibleName(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        add(mainSplitPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
@@ -127,7 +117,6 @@ public final class CVTTopComponent extends TopComponent {
     private AccountsBrowser accountsBrowser;
     private JTabbedPane browseVisualizeTabPane;
     private FiltersPanel filtersPane;
-    private JSplitPane mainSplitPane;
     private VisualizationPanel vizPanel;
     // End of variables declaration//GEN-END:variables
 

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.report.modules.taggedhashes;
 
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
 
 /**
@@ -28,7 +27,7 @@ class HashesReportModuleSettings implements ReportModuleSettings {
 
     private static final long serialVersionUID = 1L;
     private final boolean exportAllTags;
-    private final HashDb hashDb;
+    private final String hashDbName;
 
     @Override
     public long getVersionNumber() {
@@ -40,18 +39,18 @@ class HashesReportModuleSettings implements ReportModuleSettings {
      */
     HashesReportModuleSettings() {
         exportAllTags = true;
-        hashDb = null;
+        hashDbName = "";
     }
 
     /**
      * Configuration for the Tagged Hashes report module.
      *
      * @param exportAllTags Flag whether to export all tags.
-     * @param hashDb Selected HashDb object to export to
+     * @param hashDbName Name of selected hash database to export to
      */
-    HashesReportModuleSettings(boolean exportAllTags, HashDb hashDb) {
+    HashesReportModuleSettings(boolean exportAllTags, String hashDbName) {
         this.exportAllTags = exportAllTags;
-        this.hashDb = hashDb;
+        this.hashDbName = hashDbName;
     }
 
     /**
@@ -64,9 +63,11 @@ class HashesReportModuleSettings implements ReportModuleSettings {
     }
 
     /**
+     * Get name of the selected hash database.
+     * 
      * @return the hashDb
      */
-    public HashDb getHashDb() {
-        return hashDb;
+    public String getHashDbName() {
+        return hashDbName;
     }
 }
