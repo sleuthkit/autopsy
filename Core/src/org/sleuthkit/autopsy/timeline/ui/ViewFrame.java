@@ -367,7 +367,7 @@ final public class ViewFrame extends BorderPane {
         syncViewMode();
 
         ActionUtils.configureButton(new AddManualEvent(controller), addEventButton);
-        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
+        ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent, this), snapShotButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.ViewFrame_startLabel_text());

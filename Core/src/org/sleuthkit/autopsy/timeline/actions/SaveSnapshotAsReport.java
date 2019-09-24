@@ -37,6 +37,8 @@ import javafx.scene.control.Control;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.HyperlinkLabel;
@@ -90,7 +92,7 @@ public class SaveSnapshotAsReport extends Action {
         "SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report.",
         "SaveSnapShotAsReport.duplicateReportNameError.text=A report with that name already exists."
     })
-    public SaveSnapshotAsReport(TimeLineController controller, Supplier<Node> nodeSupplier) {
+    public SaveSnapshotAsReport(TimeLineController controller, Supplier<Node> nodeSupplier, BorderPane parent) {
         super(Bundle.SaveSnapShotAsReport_action_name_text());
         setLongText(Bundle.SaveSnapShotAsReport_action_longText());
         setGraphic(new ImageView(SNAP_SHOT));
@@ -105,6 +107,8 @@ public class SaveSnapshotAsReport extends Action {
 
             //prompt user to pick report name
             TextInputDialog textInputDialog = new TextInputDialog();
+            textInputDialog.initModality(Modality.WINDOW_MODAL);
+            textInputDialog.initOwner(parent.getScene().getWindow());
             PromptDialogManager.setDialogIcons(textInputDialog);
             textInputDialog.setTitle(Bundle.SaveSnapShotAsReport_action_dialogs_title());
             textInputDialog.getEditor().setPromptText(Bundle.SaveSnapShotAsReport_reportName_prompt(defaultReportName));
