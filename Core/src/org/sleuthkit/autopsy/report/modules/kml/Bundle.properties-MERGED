@@ -1,0 +1,9 @@
+ReportKML.progress.querying=Querying files...
+ReportKML.progress.loading=Loading files...
+ReportKML.getName.text=Google Earth KML
+ReportKML.getDesc.text=KML format report with coordinates for relevant files. This format can be used for google earth views.
+ReportKML.getFilePath.text=ReportKML.kml:
+ReportKML.genReport.srcModuleName.text=Geospatial Data
+ReportKML.genReport.reportName=KML Report
+ReportKML.latLongStartPoint={0};{1};;{2} (Start)\n
+ReportKML.latLongEndPoint={0};{1};;{2} (End)\n

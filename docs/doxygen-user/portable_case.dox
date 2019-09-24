@@ -2,7 +2,7 @@
 
 \section portable_case_overview Overview
 
-A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners.  
+A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners. Portable cases will contain a \ref report_case_uco report detailing the contents of the portable case.
 
 
 The general use case is as follows:
@@ -29,7 +29,7 @@ A portable case can contain tagged files and results and data from the Interesti
 
 \image html portable_case_interesting_items.png
 
-You can tag any additional files you want to include in the portable case. See the \ref tagging_page page for details on how to create tags. You can see what tags you've added in the \ref tree_viewer_page.
+You can tag any additional files you want to include in the portable case. See the \ref tagging_page page for details on how to create tags. Note that the outlines from \ref image_tagging "image tags" will also be visible in the portable case. You can see what tags you've added in the \ref tree_viewer_page.
 
 \image html portable_case_tags.png
 
@@ -39,7 +39,7 @@ The portable case will be placed in the "Reports" folder in the current case.
 
 \image html portable_case_report_panel.png
 
-Here you can see an unpackaged portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. 
+Here you can see an unpackaged portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. It will however start with a "Reports" folder that contains an automatically generated \ref report_case_uco report.
 
 \image html portable_case_folder.png
 
