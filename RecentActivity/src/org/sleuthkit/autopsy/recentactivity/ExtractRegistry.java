@@ -658,7 +658,7 @@ class ExtractRegistry extends Extract {
                                 results.get(0).addAttributes(bbattributes);
                             }
                         } catch (TskCoreException ex) {
-                            logger.log(Level.WARNING, "Error adding os info artifact to blackboard.", ex); //NON-NLS
+                            logger.log(Level.SEVERE, "Error adding os info artifact to blackboard.", ex); //NON-NLS
                         }
                         break;
                     default:
@@ -718,7 +718,7 @@ class ExtractRegistry extends Extract {
                                                 itemMtime /= MS_IN_SEC;
                                             }
                                         } catch (ParseException ex) {
-                                            logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact.", ex); //NON-NLS
+                                            logger.log(Level.SEVERE, "Failed to parse epoch time for installed program artifact.", ex); //NON-NLS
                                         }
 
                                         try {
@@ -729,7 +729,7 @@ class ExtractRegistry extends Extract {
 
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.WARNING, "Error adding installed program artifact to blackboard.", ex); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
                                     case "office": //NON-NLS
@@ -748,7 +748,7 @@ class ExtractRegistry extends Extract {
 
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.WARNING, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
 
@@ -786,7 +786,7 @@ class ExtractRegistry extends Extract {
                                                     }
                                                 }
                                             } catch (TskCoreException ex) {
-                                                logger.log(Level.WARNING, "Error getting existing os account artifact", ex);
+                                                logger.log(Level.SEVERE, "Error getting existing os account artifact", ex);
                                             }
                                             if (bbart == null) {
                                                 //create new artifact
@@ -814,7 +814,7 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.WARNING, "Error adding account artifact to blackboard.", ex); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
 
@@ -830,7 +830,7 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.WARNING, "Error adding network artifact to blackboard.", ex); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding network artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
                                     case "SSID": // NON-NLS
@@ -845,7 +845,7 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
-                                            logger.log(Level.WARNING, "Error adding SSID artifact to blackboard.", ex); //NON-NLS
+                                            logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard.", ex); //NON-NLS
                                         }
                                         break;
                                     case "shellfolders": // NON-NLS
@@ -855,7 +855,7 @@ class ExtractRegistry extends Extract {
                                         break;
 
                                     default:
-                                        logger.log(Level.WARNING, "Unrecognized node name: {0}", dataType); //NON-NLS
+                                        logger.log(Level.SEVERE, "Unrecognized node name: {0}", dataType); //NON-NLS
                                         break;
                                 }
                             }
@@ -865,13 +865,13 @@ class ExtractRegistry extends Extract {
             } // for
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.WARNING, String.format("Error finding the registry file: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error finding the registry file: %s", regFilePath), ex); //NON-NLS
         } catch (SAXException ex) {
-            logger.log(Level.WARNING, String.format("Error parsing the registry XML: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error parsing the registry XML: %s", regFilePath), ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("Error building the document parser: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error building the document parser: %s", regFilePath), ex); //NON-NLS
         } catch (ParserConfigurationException ex) {
-            logger.log(Level.WARNING, String.format("Error configuring the registry parser: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error configuring the registry parser: %s", regFilePath), ex); //NON-NLS
         } finally {
             try {
                 if (fstream != null) {
@@ -947,13 +947,13 @@ class ExtractRegistry extends Extract {
             }
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error building the document parser: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
         } catch (ParseException ex) {
-            logger.log(Level.WARNING, "Error parsing the the date from the registry file", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         } finally {
             postArtifacts(newArtifacts);
         }
