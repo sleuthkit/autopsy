@@ -55,6 +55,20 @@ and adds artifacts to the case.
 """
 class ShareItAnalyzer(general.AndroidComponentAnalyzer):
 
+    """
+        ShareIt is a file transfer utility app.
+        
+        This module finds the SQLite DB for Xender, parses the DB for contacts & messages,
+        and adds artifacts to the case.
+
+        ShareIt version 5.0.28 has the following database structure:
+            - history.db 
+                -- A history table, with records of file transfers 
+                -- An item table with details of the files transfered
+                    
+                
+    """
+
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
         self._PACKAGE_NAME = "com.lenovo.anyshare.gps"
@@ -71,8 +85,11 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                     self._MODULE_NAME, historyDb.getDBFile(),
                                     Account.Type.SHAREIT)
 
-                queryString = "SELECT history_type, device_id, device_name, description, timestamp, file_path FROM history"\
-                              " JOIN item where history.content_id = item.item_id"
+                queryString = """
+                                SELECT history_type, device_id, device_name, description, timestamp, file_path
+                                FROM history
+                                JOIN item where history.content_id = item.item_id
+                              """
                 historyResultSet = historyDb.runQuery(queryString)
                 if historyResultSet is not None:
                     while historyResultSet.next():

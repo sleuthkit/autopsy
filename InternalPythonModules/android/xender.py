@@ -48,11 +48,22 @@ from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import
 import traceback
 import general
 
-"""
-Finds the SQLite DB for Xender, parses the DB for contacts & messages,
-and adds artifacts to the case.
-"""
+
 class XenderAnalyzer(general.AndroidComponentAnalyzer):
+
+    """
+        Xender is a file transfer utility app.
+        
+        This module finds the SQLite DB for Xender, parses the DB for contacts & messages,
+        and adds artifacts to the case.
+
+        Xender version 4.6.5 has the following database structure:
+            - trans-history.db 
+                -- A profile table with the device_id/name of users interacted with
+                -- A new_history table, with records of files exchanged with other users
+                    --- f_path - path of the file sent/received
+                
+    """
    
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
@@ -84,7 +95,11 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                                             self._MODULE_NAME, transactionDb.getDBFile(),
                                             Account.Type.XENDER)
 
-                queryString = "SELECT f_path, f_display_name, f_size_str, f_create_time, c_direction, c_session_id, s_name, s_device_id, r_name, r_device_id FROM new_history "
+                queryString = """
+                                SELECT f_path, f_display_name, f_size_str, f_create_time, c_direction, c_session_id,
+                                    s_name, s_device_id, r_name, r_device_id
+                                FROM new_history
+                              """
                 messagesResultSet = transactionDb.runQuery(queryString)
                 if messagesResultSet is not None:
                     while messagesResultSet.next():
@@ -118,7 +133,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                         # TBD: add the file as attachment ??
 
             except SQLException as ex:
-                self._logger.log(Level.WARNING, "Error processing query result for profiles", ex)
+                self._logger.log(Level.WARNING, "Error processing query result for profiles.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
             except TskCoreException as ex:
                 self._logger.log(Level.SEVERE, "Failed to create Xender message artifacts.", ex)
