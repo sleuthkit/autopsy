@@ -104,9 +104,13 @@ public class ReportProgressLogger implements ReportProgressPanel {
      * Logs the final status of the report generation.
      *
      * @param reportStatus The final status, must be COMPLETE or ERROR.
+     * @param statusMessage String to use as label or error text.
      */
     @Override
-    public void complete(ReportStatus reportStatus) {
+    public void complete(ReportStatus reportStatus, String statusMessage) {
+        if (!statusMessage.isEmpty()) {
+            logger.log(Level.INFO, statusMessage);
+        }
         if (status != ReportStatus.CANCELED) {
             switch (reportStatus) {
                 case COMPLETE: {
@@ -124,6 +128,16 @@ public class ReportProgressLogger implements ReportProgressPanel {
                 }
             }
         }
+    }
+    
+    /**
+     * Logs the final status of the report generation.
+     *
+     * @param reportStatus The final status, must be COMPLETE or ERROR.
+     */
+    @Override
+    public void complete(ReportStatus reportStatus) {
+        complete(reportStatus, "");
     }
 
     /**

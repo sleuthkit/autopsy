@@ -19,12 +19,12 @@
 package org.sleuthkit.autopsy.report;
 
 /**
- * This interface is necessary in order to not break backwards compatibility 
- * of GeneralReportModule interface. See JIRA-5354.
+ * This interface is necessary in order to not break backwards compatibility of
+ * GeneralReportModule interface. See JIRA-5354.
  */
 public interface ReportProgressPanel {
-    
-     /**
+
+    /**
      * Used by a report generation module to communicate report generation
      * status to this panel and its listeners.
      */
@@ -35,8 +35,8 @@ public interface ReportProgressPanel {
         COMPLETE,
         CANCELED,
         ERROR
-    }   
-    
+    }
+
     /**
      * Gets the current status of the generation of the report.
      *
@@ -74,7 +74,7 @@ public interface ReportProgressPanel {
      * indeterminate.
      *
      * @param indeterminate True if the progress bar should be set to
-     *                      indeterminate.
+     * indeterminate.
      */
     public void setIndeterminate(boolean indeterminate);
 
@@ -96,11 +96,20 @@ public interface ReportProgressPanel {
     public void complete(ReportStatus reportStatus);
 
     /**
+     * Makes the components of this panel indicate the final status of
+     * generation of the report.
+     *
+     * @param reportStatus The final status, must be COMPLETE or ERROR.
+     * @param statusMessage String to use as label or error text.
+     */
+    public void complete(ReportStatus reportStatus, String statusMessage);
+
+    /**
      * Makes the components of this panel indicate the generation of the report
      * is completed.
      *
      * @deprecated Use {@link #complete(ReportStatus)}
      */
     @Deprecated
-    public void complete();    
+    public void complete();
 }

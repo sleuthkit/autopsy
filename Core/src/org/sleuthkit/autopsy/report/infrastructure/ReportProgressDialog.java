@@ -205,7 +205,7 @@ class ReportProgressDialog extends javax.swing.JPanel implements ReportProgressP
             }
         });
     }
-
+    
     /**
      * Makes the components of this panel indicate the final status of
      * generation of the report.
@@ -214,6 +214,29 @@ class ReportProgressDialog extends javax.swing.JPanel implements ReportProgressP
      */
     @Override
     public void complete(ReportStatus reportStatus) {
+        
+        switch (reportStatus) {
+            case COMPLETE:
+                complete(reportStatus, NbBundle.getMessage(this.getClass(), "ReportProgressDialog.complete.processLbl.text"));
+                break;
+            case ERROR:
+                complete(reportStatus, NbBundle.getMessage(this.getClass(), "ReportProgressDialog.complete.processLb2.text"));
+                break;
+            default:
+                complete(reportStatus, "");
+                break;
+        }        
+    }
+
+    /**
+     * Makes the components of this panel indicate the final status of
+     * generation of the report.
+     *
+     * @param reportStatus The final status, must be COMPLETE or ERROR.
+     * @param statusMessage String to use as label or error text.
+     */
+    @Override
+    public void complete(ReportStatus reportStatus, String statusMessage) {
         EventQueue.invokeLater(() -> {
             reportProgressBar.setIndeterminate(false);
             if (status != ReportStatus.CANCELED) {
@@ -222,7 +245,7 @@ class ReportProgressDialog extends javax.swing.JPanel implements ReportProgressP
                         ReportStatus oldValue = status;
                         status = ReportStatus.COMPLETE;
                         statusMessageLabel.setForeground(Color.BLACK);
-                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.complete.processLbl.text"));
+                        statusMessageLabel.setText(statusMessage);
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(GREEN);
@@ -234,7 +257,7 @@ class ReportProgressDialog extends javax.swing.JPanel implements ReportProgressP
                         ReportStatus oldValue = status;
                         status = ReportStatus.ERROR;
                         statusMessageLabel.setForeground(RED);
-                        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressDialog.complete.processLb2.text"));
+                        statusMessageLabel.setText(statusMessage);
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(RED);

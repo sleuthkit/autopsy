@@ -79,13 +79,16 @@ public final class CaseUcoFormatExporter {
      * @param progressPanel ReportProgressPanel to update progress
      */
     @NbBundle.Messages({
-        "ReportCaseUco.noCaseOpen=Unable to open currect case",
         "ReportCaseUco.unableToCreateDirectories=Unable to create directory for CASE-UCO report",
         "ReportCaseUco.initializing=Creating directories...",
         "ReportCaseUco.querying=Querying files...",
         "ReportCaseUco.ingestWarning=Warning, this report will be created before ingest services completed",
         "ReportCaseUco.datasourceMsg=Generating CASE-UCO Report for %s",
-        "ReportCaseUco.srcModuleName.text=CASE-UCO Report"
+        "ReportCaseUco.srcModuleName.text=CASE-UCO Report",
+        "ReportCaseUco.databaseError=Failed to get list of files from case database",
+        "ReportCaseUco.jsonError=Failed to create JSON output for the CASE-UCO report",
+        "ReportCaseUco.resultSetError=Unable to read result set",
+        "ReportCaseUco.noOpenCase=No current case open"
     })
     @SuppressWarnings("deprecation")
     public static void generateReport(String reportOutputPath, ReportProgressPanel progressPanel) {
@@ -102,8 +105,7 @@ public final class CaseUcoFormatExporter {
             Files.createDirectories(Paths.get(reportFile.getParent()));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to create directory for CASE-UCO report", ex); //NON-NLS
-            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_unableToCreateDirectories());
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ReportCaseUco_unableToCreateDirectories());
             return;
         }
 
@@ -178,17 +180,17 @@ public final class CaseUcoFormatExporter {
 
             progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            logger.log(Level.SEVERE, Bundle.ReportCaseUco_databaseError(), ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ReportCaseUco_databaseError());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to create JSON output for the CASE-UCO report", ex); //NON-NLS
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            logger.log(Level.SEVERE, Bundle.ReportCaseUco_jsonError(), ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ReportCaseUco_jsonError());
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Unable to read result set", ex); //NON-NLS
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            logger.log(Level.WARNING, Bundle.ReportCaseUco_resultSetError(), ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ReportCaseUco_resultSetError());
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "No current case open", ex); //NON-NLS
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            logger.log(Level.SEVERE, Bundle.ReportCaseUco_noOpenCase(), ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ReportCaseUco_noOpenCase());
         } finally {
             if (jsonGenerator != null) {
                 try {
