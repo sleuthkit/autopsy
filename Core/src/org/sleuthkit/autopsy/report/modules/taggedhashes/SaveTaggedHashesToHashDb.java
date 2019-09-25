@@ -198,7 +198,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        configPanel = new SaveTaggedHashesToHashDbConfigPanel();
+        initializePanel();
         return configPanel;
     }
     

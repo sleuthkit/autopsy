@@ -62,7 +62,29 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     SaveTaggedHashesToHashDbConfigPanel() {
         initComponents();
         customizeComponents();
-              
+
+        // Set up the tag names JList component to be a collection of check boxes
+        // for selecting tag names. The mouse click listener updates tagNameSelections
+        // to reflect user choices.
+        tagNamesListBox.setModel(tagsNamesListModel);
+        tagNamesListBox.setCellRenderer(tagsNamesRenderer);
+        tagNamesListBox.setVisibleRowCount(-1);
+        tagNamesListBox.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent evt) {
+                if (jAllTagsCheckBox.isSelected()) {
+                    return;
+                }
+                JList<?> list = (JList) evt.getSource();
+                int index = list.locationToIndex(evt.getPoint());
+                if (index > -1) {
+                    String value = tagsNamesListModel.getElementAt(index);
+                    tagNameSelections.put(value, !tagNameSelections.get(value));
+                    list.repaint();
+                }
+            }
+        });
+ 
         this.jAllTagsCheckBox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -123,28 +145,6 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         for (TagName tagName : tagNames) {
             tagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
         }
-        
-        // Set up the tag names JList component to be a collection of check boxes
-        // for selecting tag names. The mouse click listener updates tagNameSelections
-        // to reflect user choices.
-        tagNamesListBox.setModel(tagsNamesListModel);
-        tagNamesListBox.setCellRenderer(tagsNamesRenderer);
-        tagNamesListBox.setVisibleRowCount(-1);
-        tagNamesListBox.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent evt) {
-                if (jAllTagsCheckBox.isSelected()) {
-                    return;
-                }
-                JList<?> list = (JList) evt.getSource();
-                int index = list.locationToIndex(evt.getPoint());
-                if (index > -1) {
-                    String value = tagsNamesListModel.getElementAt(index);
-                    tagNameSelections.put(value, !tagNameSelections.get(value));
-                    list.repaint();
-                }
-            }
-        });
     }
 
     private void populateHashSetComponents() {
