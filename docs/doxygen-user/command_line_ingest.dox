@@ -37,7 +37,7 @@ The table below shows a summary of the command line operations. You can run one 
 
 <tr><td><b>Generate Reports</b></td><td><pre>--generateReports</pre></td><td>&nbsp;</td><td><pre>--generateReports</pre></td></tr>
 
-<tr><td><b>Create List of Data Sources</b></td><td><pre>--listAllDataSources</pre></td><td>&nbps;</td><td></td><pre>--listAllDataSources</pre></tr>
+<tr><td><b>Create List of Data Sources</b></td><td><pre>--listAllDataSources</pre></td><td>&nbsp;</td><td></td><pre>--listAllDataSources</pre></tr>
 </table>
 
 
