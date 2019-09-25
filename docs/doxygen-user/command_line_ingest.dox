@@ -80,6 +80,13 @@ autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSourc
    --dataSourcePath="R:\work\images\green_images.img"
 \endverbatim
 
+Finally we'll add a folder ("Test files") as a logical file set to a new case ("test9"). 
+
+\verbatim
+autopsy64.exe --createCase --caseName="test9" --caseBaseDir="C:\work\Cases" --addDataSource 
+   --dataSourcePath="R:\work\images\Test files" --runIngest
+\endverbatim
+
 \subsection command_line_existing_ds Running Ingest on an Existing Data Source
 
 You can run ingest on a data source already in the case if you know its object ID. To find this, go to the case folder and open the "Command Output" folder. 
