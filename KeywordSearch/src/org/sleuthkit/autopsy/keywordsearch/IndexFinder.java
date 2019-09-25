@@ -39,7 +39,7 @@ class IndexFinder {
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
     private static final String CURRENT_SOLR_VERSION = "4";
-    private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.2";
+    private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.1";
 
     static String getCurrentSolrVersion() {
         return CURRENT_SOLR_VERSION;
