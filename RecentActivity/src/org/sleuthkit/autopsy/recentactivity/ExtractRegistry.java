@@ -865,13 +865,13 @@ class ExtractRegistry extends Extract {
             } // for
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, String.format("Error finding the registry file: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error finding the registry file: %s", regFilePath), ex); //NON-NLS
         } catch (SAXException ex) {
-            logger.log(Level.SEVERE, String.format("Error parsing the registry XML: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error parsing the registry XML: %s", regFilePath), ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Error building the document parser: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error building the document parser: %s", regFilePath), ex); //NON-NLS
         } catch (ParserConfigurationException ex) {
-            logger.log(Level.SEVERE, String.format("Error configuring the registry parser: %s", regFilePath), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error configuring the registry parser: %s", regFilePath), ex); //NON-NLS
         } finally {
             try {
                 if (fstream != null) {
@@ -947,13 +947,13 @@ class ExtractRegistry extends Extract {
             }
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error building the document parser: {0}", ex); //NON-NLS
         } catch (ParseException ex) {
-            logger.log(Level.SEVERE, "Error parsing the the date from the registry file", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         } finally {
             postArtifacts(newArtifacts);
         }
