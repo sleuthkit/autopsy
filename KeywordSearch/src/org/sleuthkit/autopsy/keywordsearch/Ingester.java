@@ -184,7 +184,7 @@ class Ingester {
                 return false;
             }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
+            logger.log(Level.WARNING, "Unexpected error while indexing content from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
             if (context != null && context.fileIngestIsCancelled()) {
