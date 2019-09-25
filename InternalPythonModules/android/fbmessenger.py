@@ -91,7 +91,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                         self._MODULE_NAME, contactsDb.getDBFile(),
                                         Account.Type.FACEBOOK)
                     
-                contactsResultSet = contactsDb.runQuery("SELECT fbid, display_name FROM contacts WHERE added_time_ms <> " + self.selfAccountAddress.getUniqueID() )
+                contactsResultSet = contactsDb.runQuery("SELECT fbid, display_name FROM contacts WHERE added_time_ms <> 0")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
                         contactsDBHelper.addContact( contactsResultSet.getString("fbid"),  ##  unique id for account
