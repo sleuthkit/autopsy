@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -189,6 +190,8 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
                 setDisplayError(Bundle.UnpackageWorker_doInBackground_errorCompressingCase());
                 throw new TskCoreException("Error unpackaging case", ex); // NON-NLS
             }
+            
+            Case.openAsCurrentCase(FilenameUtils.removeExtension(packagedCase) + File.separator + FilenameUtils.getBaseName(packagedCase) + ".aut");
 
             success.set(true);
             return null;
