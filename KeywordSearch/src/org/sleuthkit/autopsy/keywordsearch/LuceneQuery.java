@@ -134,7 +134,6 @@ class LuceneQuery implements KeywordSearchQuery {
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;
         boolean allResultsProcessed = false;
         List<KeywordHit> matches = new ArrayList<>();
-        LanguageSpecificContentQueryHelper.QueryResults languageSpecificQueryResults = new LanguageSpecificContentQueryHelper.QueryResults();
         while (!allResultsProcessed) {
             solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, cursorMark);
             QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
@@ -142,18 +141,7 @@ class LuceneQuery implements KeywordSearchQuery {
             // objectId_chunk -> "text" -> List of previews
             Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
 
-            if (2.2 <= indexSchemaVersion) {
-                languageSpecificQueryResults.highlighting.putAll(response.getHighlighting());
-            }
-
             for (SolrDocument resultDoc : resultList) {
-                if (2.2 <= indexSchemaVersion) {
-                    Object language = resultDoc.getFieldValue(Server.Schema.LANGUAGE.toString());
-                    if (language != null) {
-                        LanguageSpecificContentQueryHelper.updateQueryResults(languageSpecificQueryResults, resultDoc);
-                    }
-                }
-
                 try {
                     /*
                      * for each result doc, check that the first occurence of
@@ -164,11 +152,6 @@ class LuceneQuery implements KeywordSearchQuery {
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
                     final Collection<Object> content = resultDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
-
-                    // if the document has language, it should be hit in language specific content fields. So skip here.
-                    if (resultDoc.containsKey(Server.Schema.LANGUAGE.toString())) {
-                        continue;
-                    }
 
                     if (indexSchemaVersion < 2.0) {
                         //old schema versions don't support chunk_size or the content_str fields, so just accept hits
@@ -196,16 +179,9 @@ class LuceneQuery implements KeywordSearchQuery {
             cursorMark = nextCursorMark;
         }
 
-        List<KeywordHit> mergedMatches;
-        if (2.2 <= indexSchemaVersion) {
-            mergedMatches = LanguageSpecificContentQueryHelper.mergeKeywordHits(matches, originalKeyword, languageSpecificQueryResults);
-        } else {
-            mergedMatches = matches;
-        }
-
         QueryResults results = new QueryResults(this);
         //in case of single term literal query there is only 1 term
-        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), mergedMatches);
+        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), matches);
 
         return results;
     }
@@ -286,25 +262,19 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @return
      */
-    private SolrQuery createAndConfigureSolrQuery(boolean snippets) throws NoOpenCoreException, KeywordSearchModuleException {
-        double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
-
+    private SolrQuery createAndConfigureSolrQuery(boolean snippets) {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
         // Wrap the query string in quotes if this is a literal search term.
         String queryStr = originalKeyword.searchTermIsLiteral()
-            ? KeywordSearchUtil.quoteQuery(keywordStringEscaped) : keywordStringEscaped;
+                ? KeywordSearchUtil.quoteQuery(keywordStringEscaped) : keywordStringEscaped;
 
         // Run the query against an optional alternative field. 
         if (field != null) {
             //use the optional field
             queryStr = field + ":" + queryStr;
-            q.setQuery(queryStr);
-        } else if (2.2 <= indexSchemaVersion && originalKeyword.searchTermIsLiteral()) {
-            q.setQuery(LanguageSpecificContentQueryHelper.expandQueryString(queryStr));
-        } else {
-            q.setQuery(queryStr);
         }
+        q.setQuery(queryStr);
         q.setRows(MAX_RESULTS_PER_CURSOR_MARK);
         // Setting the sort order is necessary for cursor based paging to work.
         q.setSort(SolrQuery.SortClause.asc(Server.Schema.ID.toString()));
@@ -312,11 +282,6 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setFields(Server.Schema.ID.toString(),
                 Server.Schema.CHUNK_SIZE.toString(),
                 Server.Schema.CONTENT_STR.toString());
-
-        if (2.2 <= indexSchemaVersion && originalKeyword.searchTermIsLiteral()) {
-            q.addField(Server.Schema.LANGUAGE.toString());
-            LanguageSpecificContentQueryHelper.configureTermfreqQuery(q, keywordStringEscaped);
-        }
 
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
@@ -335,16 +300,8 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @param q The SolrQuery to configure.
      */
-    private static void configurwQueryForHighlighting(SolrQuery q) throws NoOpenCoreException {
-        double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
-        if (2.2 <= indexSchemaVersion) {
-            for (Server.Schema field : LanguageSpecificContentQueryHelper.getQueryFields()) {
-                q.addHighlightField(field.toString());
-            }
-        } else {
-            q.addHighlightField(HIGHLIGHT_FIELD);
-        }
-
+    private static void configurwQueryForHighlighting(SolrQuery q) {
+        q.addHighlightField(HIGHLIGHT_FIELD);
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
 
@@ -447,13 +404,7 @@ class LuceneQuery implements KeywordSearchQuery {
             if (responseHighlightID == null) {
                 return "";
             }
-            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
-            List<String> contentHighlights;
-            if (2.2 <= indexSchemaVersion) {
-                contentHighlights = LanguageSpecificContentQueryHelper.getHighlights(responseHighlightID).orElse(null);
-            } else {
-                contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
-            }
+            List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
             if (contentHighlights == null) {
                 return "";
             } else {

@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="Autopsy Keyword Search" version="2.2">
+<schema name="Autopsy Keyword Search" version="2.1">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.4" is Solr's version number for the schema syntax and semantics.  It should
@@ -62,7 +62,6 @@
        2.0 added chunk_size field
        2.1 to facilitate case insensitive regex search,no longer copying content into content_str.
            content_str will be populated with lowercase content by Autopsy.
-       2.2 added text_ja type, content_ja and language fields to support Japanese text search
      -->
 
   <types>
@@ -240,18 +239,6 @@
         <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="200000"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords_en.txt" enablePositionIncrements="true" />
         <!--<filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>-->
-        <filter class="solr.LowerCaseFilterFactory"/>
-      </analyzer>
-    </fieldType>
-
-    <fieldType name="text_ja" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="false">
-      <analyzer>
-        <tokenizer class="solr.JapaneseTokenizerFactory" mode="search"/>
-        <filter class="solr.JapaneseBaseFormFilterFactory"/>
-        <filter class="solr.JapanesePartOfSpeechStopFilterFactory" tags="lang/stoptags_ja.txt" />
-        <filter class="solr.CJKWidthFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_ja.txt" />
-        <filter class="solr.JapaneseKatakanaStemFilterFactory" minimumLength="4"/>
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
@@ -569,11 +556,6 @@
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->
    <field name="text" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
-
-   <!-- Store language detection result. Only parents of text documents have this -->
-   <field name="language" type="string" indexed="false" stored="true" required="false"/>
-
-   <field name="content_ja" type="text_ja" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->

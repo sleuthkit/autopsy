@@ -38,7 +38,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -347,8 +346,6 @@ class HighlightedText implements IndexedText {
         String chunkID = "";
         String highlightField = "";
         try {
-            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
-
             loadPageInfo(); //inits once
             SolrQuery q = new SolrQuery();
             q.setShowDebugInfo(DEBUG); //debug
@@ -362,46 +359,22 @@ class HighlightedText implements IndexedText {
 
             highlightField = LuceneQuery.HIGHLIGHT_FIELD;
             if (isLiteral) {
-                if (2.2 <= indexSchemaVersion) {
-                    //if the query is literal try to get solr to do the highlighting
-                    final String highlightQuery = keywords.stream().map(s ->
-                        LanguageSpecificContentQueryHelper.expandQueryString(KeywordSearchUtil.quoteQuery(KeywordSearchUtil.escapeLuceneQuery(s))))
-                        .collect(Collectors.joining(" OR "));
-                    q.setQuery(highlightQuery);
-                    for (Server.Schema field : LanguageSpecificContentQueryHelper.getQueryFields()) {
-                        q.addField(field.toString());
-                        q.addHighlightField(field.toString());
-                    }
-                    q.addField(Server.Schema.LANGUAGE.toString());
-                    // in case of single term literal query there is only 1 term
-                    LanguageSpecificContentQueryHelper.configureTermfreqQuery(q, keywords.iterator().next());
-                    q.addFilterQuery(filterQuery);
-                    q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
-                } else {
-                    //if the query is literal try to get solr to do the highlighting
-                    final String highlightQuery = keywords.stream()
-                            .map(HighlightedText::constructEscapedSolrQuery)
-                            .collect(Collectors.joining(" "));
+                //if the query is literal try to get solr to do the highlighting
+                final String highlightQuery = keywords.stream()
+                        .map(HighlightedText::constructEscapedSolrQuery)
+                        .collect(Collectors.joining(" "));
 
-                    q.setQuery(highlightQuery);
-                    q.addField(highlightField);
-                    q.addFilterQuery(filterQuery);
-                    q.addHighlightField(highlightField);
-                    q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
-                }
+                q.setQuery(highlightQuery);
+                q.addField(highlightField);
+                q.addFilterQuery(filterQuery);
+                q.addHighlightField(highlightField);
+                q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
                 //tune the highlighter
-                if (shouldUseOriginalHighlighter(contentIdStr)) {
-                    // use original highlighter
-                    q.setParam("hl.useFastVectorHighlighter", "off");
-                    q.setParam("hl.simple.pre", HIGHLIGHT_PRE);
-                    q.setParam("hl.simple.post", HIGHLIGHT_POST);
-                } else {
-                    q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
-                    q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-                    q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
-                    q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
-                }
+                q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+                q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
 
                 //docs says makes sense for the original Highlighter only, but not really
                 q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
@@ -433,40 +406,12 @@ class HighlightedText implements IndexedText {
                 if (responseHighlightID == null) {
                     highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
                 } else {
-                    SolrDocument document = response.getResults().get(0);
-                    Object language = document.getFieldValue(Server.Schema.LANGUAGE.toString());
-                    if (2.2 <= indexSchemaVersion && language != null) {
-                        List<String> contentHighlights = LanguageSpecificContentQueryHelper.getHighlights(responseHighlightID).orElse(null);
-                        if (contentHighlights == null) {
-                            highlightedContent = "";
-                        } else {
-                            int hitCountInMiniChunk = LanguageSpecificContentQueryHelper.queryChunkTermfreq(keywords, MiniChunkHelper.getChunkIdString(contentIdStr));
-                            String s = contentHighlights.get(0).trim();
-                            // If there is a mini-chunk, trim the content not to show highlighted text in it.
-                            if (0 < hitCountInMiniChunk) {
-                                int hitCountInChunk = ((Float) document.getFieldValue(Server.Schema.TERMFREQ.toString())).intValue();
-                                int idx = LanguageSpecificContentQueryHelper.findNthIndexOf(
-                                    s,
-                                    HIGHLIGHT_PRE,
-                                    // trim after the last hit in chunk
-                                    hitCountInChunk - hitCountInMiniChunk);
-                                if (idx != -1) {
-                                    highlightedContent = s.substring(0, idx);
-                                } else {
-                                    highlightedContent = s;
-                                }
-                            } else {
-                                highlightedContent = s;
-                            }
-                        }
+                    List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
+                    if (contentHighlights == null) {
+                        highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
                     } else {
-                        List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
-                        if (contentHighlights == null) {
-                            highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
-                        } else {
-                            // extracted content (minus highlight tags) is HTML-escaped
-                            highlightedContent = contentHighlights.get(0).trim();
-                        }
+                        // extracted content (minus highlight tags) is HTML-escaped
+                        highlightedContent = contentHighlights.get(0).trim();
                     }
                 }
             }
@@ -606,37 +551,4 @@ class HighlightedText implements IndexedText {
         return buf.toString();
     }
 
-    /**
-     * Return true if we should use original highlighter instead of FastVectorHighlighter.
-     *
-     * In the case Japanese text and phrase query, FastVectorHighlighter does not work well.
-     *
-     * Note about highlighters:
-     *   If the query is "雨が降る" (phrase query), Solr divides it into 雨 and 降る. が is a stop word here.
-     *   It seems that FastVector highlighter does not produce any snippet when there is a stop word between terms.
-     *   On the other hand, original highlighter produces multiple matches, for example:
-     *   > <em>雨</em>が<em>降っ</em>ています
-     *   Unified highlighter (from Solr 6.4) handles the case as expected:
-     *   > <em>雨が降っ</em>ています。
-     */
-    private boolean shouldUseOriginalHighlighter(String contentID) throws NoOpenCoreException, KeywordSearchModuleException {
-        final SolrQuery q = new SolrQuery();
-        q.setQuery("*:*");
-        q.addFilterQuery(Server.Schema.ID.toString() + ":" + contentID);
-        q.setFields(Server.Schema.LANGUAGE.toString());
-
-        QueryResponse response = solrServer.query(q, METHOD.POST);
-        SolrDocumentList solrDocuments = response.getResults();
-
-        if (!solrDocuments.isEmpty()) {
-            SolrDocument solrDocument = solrDocuments.get(0);
-            if (solrDocument != null) {
-                Object languageField = solrDocument.getFieldValue(Server.Schema.LANGUAGE.toString());
-                if (languageField != null) {
-                    return languageField.equals("ja");
-                }
-            }
-        }
-        return false;
-    }
 }

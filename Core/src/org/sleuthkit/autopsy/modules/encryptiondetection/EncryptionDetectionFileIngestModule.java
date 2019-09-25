@@ -29,8 +29,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
@@ -77,11 +75,6 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private static final String MIME_TYPE_PDF = "application/pdf";
 
     private static final String[] FILE_IGNORE_LIST = {"hiberfile.sys", "pagefile.sys"};
-    
-    /**
-     * This maps file locations to file extensions that are known to be encrypted
-     */
-    private static final Map<String, String> knownEncryptedLocationExtensions = createLocationExtensionMap();
 
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
@@ -113,7 +106,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
             validateSettings();
-            this.context = context;
+	    this.context = context;
             blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             fileTypeDetector = new FileTypeDetector();
@@ -126,7 +119,6 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
     @Messages({
         "EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.",
-        "EncryptionDetectionFileIngestModule.artifactComment.location=High entropy and known location/extension.",
         "EncryptionDetectionFileIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
     })
     @Override
@@ -138,12 +130,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
              * verify the file hasn't been deleted.
              */
             if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
-                    && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
-                    && !file.getKnown().equals(TskData.FileKnown.KNOWN)
-                    && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
+                && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
+                && !file.getKnown().equals(TskData.FileKnown.KNOWN)
+                && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
                 /*
                  * Is the file in FILE_IGNORE_LIST?
                  */
@@ -163,9 +155,6 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  */
                 String mimeType = fileTypeDetector.getMIMEType(file);
                 if (mimeType.equals("application/octet-stream") && isFileEncryptionSuspected(file)) {
-                    if (checkFileLocationExtension(file)) {
-                        return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_location());
-                    }
                     return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
                             String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
                 } else if (isFilePasswordProtected(file)) {
@@ -209,7 +198,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             if (context.fileIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
-
+            
             BlackboardArtifact artifact = file.newArtifact(artifactType);
             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                     EncryptionDetectionModuleFactory.getModuleName(), comment));
@@ -336,7 +325,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     try {
                         accessDatabase = databaseBuilder.open();
                     } catch (IOException | BufferUnderflowException | IndexOutOfBoundsException ignored) {
-                        return passwordProtected;
+                        return passwordProtected; 
                     }
                     /*
                      * No exception has been thrown at this point, so the file
@@ -416,37 +405,5 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         }
 
         return possiblyEncrypted;
-    }
-
-    /**
-     * This method checks if the AbstractFile input is in a location that is
-     * known to hold encrypted files. It must meet the requirements and location
-     * of known encrypted file(s)
-     *
-     * @param file AbstractFile to be checked.
-     *
-     * @return True if file extension and location match known values.
-     *
-     */
-    private boolean checkFileLocationExtension(AbstractFile file) {
-        String filePath = file.getParentPath().replace("/", "");
-        if ((knownEncryptedLocationExtensions.containsKey(filePath)) 
-             && (knownEncryptedLocationExtensions.get(filePath).equals(file.getNameExtension()))) 
-        {
-            return true;
-        }
-        return false;
-    }
-
-    /*
-     * This method creates the map of paths and extensions that are known to
-     * have encrypted files
-     *
-     * @return Map of path and extension of files
-     */
-    private static Map<String, String> createLocationExtensionMap() {
-        Map<String, String> locationExtensionMap = new HashMap<String, String>();
-        locationExtensionMap.put(".android_secure", "asec");
-        return locationExtensionMap;
     }
 }
