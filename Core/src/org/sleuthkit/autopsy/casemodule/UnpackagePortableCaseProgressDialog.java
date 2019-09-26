@@ -194,7 +194,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             try {
                 Case.openAsCurrentCase(FilenameUtils.removeExtension(packagedCase) + File.separator + FilenameUtils.getBaseName(packagedCase) + ".aut"); // NON-NLS
             } catch (CaseActionException ex) {
-                throw new TskCoreException("Error opening case", ex); // NON-NLS
+                throw new TskCoreException("Error opening case after unpacking it.", ex); // NON-NLS
             }
             
             success.set(true);
