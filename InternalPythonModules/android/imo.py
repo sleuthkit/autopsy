@@ -99,8 +99,8 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
-                        friendsDBHelper.addContact( contactsResultSet.getString("buid"),  ##  unique id for account
-                                                    contactsResultSet.getString("name"),  ## contact name
+                        contactAddress = Account.Address(contactsResultSet.getString("buid"), contactsResultSet.getString("name"))
+                        friendsDBHelper.addContact( contactAddress,       ##  contact address
                                                     "", 	## phone
                                                     "", 	## home phone
                                                     "", 	## mobile
