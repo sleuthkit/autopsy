@@ -298,7 +298,15 @@ class MimeJ4MessageParser {
             logger.log(Level.SEVERE, Bundle.MimeJ4MessageParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
             return;
         }
-        String filename = FileUtil.escapeFileName(e.getFilename());
+        String filename = e.getFilename();
+        
+        if (filename == null) {
+            filename = "attachment" + e.hashCode();
+            logger.log(Level.WARNING, String.format("Attachment has no file name using '%s'", filename));
+            filename = "attachment" + e.hashCode();
+        }
+        
+        filename = FileUtil.escapeFileName(filename);
 
         // also had some crazy long names, so make random one if we get those.
         // also from Japanese image that had encoded name
