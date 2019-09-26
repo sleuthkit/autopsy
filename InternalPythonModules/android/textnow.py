@@ -108,8 +108,7 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
             contacts_parser = TextNowContactsParser(textnow_db)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_name(), 
-                    contacts_parser.get_contact_name(), 
+                    contacts_parser.get_account_instance(), 
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
@@ -267,12 +266,10 @@ class TextNowContactsParser(TskContactsParser):
              )
         )
     
-    def get_account_name(self):
-        return self.result_set.getString("number")
-        
-    def get_contact_name(self):
-        return self.result_set.getString("name")
-
+    def get_account_instance(self):
+        return Account.Address(self.result_set.getString("number"),
+                    self.result_set.getString("name"))
+    
     def get_phone(self):
         return self.result_set.getString("number")
 
