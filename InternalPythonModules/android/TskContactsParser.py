@@ -31,7 +31,7 @@ class TskContactsParser(ResultSetIterator):
         self._DEFAULT_VALUE = ""
         self._DEFAULT_ACCOUNT_ADDRESS = None
 
-    def get_account_instance(self):
+    def get_account_address(self):
         return self._DEFAULT_ACCOUNT_ADDRESS
 
     def get_phone(self):
