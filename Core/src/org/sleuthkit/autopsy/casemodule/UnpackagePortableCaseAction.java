@@ -29,7 +29,7 @@ import org.openide.windows.WindowManager;
 
 @ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.UnpackagePortableCaseAction")
 @ActionRegistration(displayName = "#CTL_UnpackagePortableCaseAction", lazy = false)
-@Messages({"CTL_UnpackagePortableCaseAction=Unpackage and Open Portable Case"})
+@Messages({"CTL_UnpackagePortableCaseAction=Unpack and Open Portable Case"})
 /**
  * Unpackage Portable Case action for the Case menu to allow the user to
  * decompress a portable case and open it.
