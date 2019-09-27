@@ -202,7 +202,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                                     "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
                     logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
                     // delete the temp file
-                    file.delete();
+                    if (file.delete() == false) {
+                        logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+                    }
                     return ProcessResult.ERROR;
                 }
                 break;
@@ -234,7 +236,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                                 "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
                 logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
                 // delete the temp file
-                file.delete();
+                if (file.delete() == false) {
+                    logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
+                }
                 return ProcessResult.ERROR;
         }
 
