@@ -124,13 +124,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
             attachmentDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
             
-             if (account.getAccountType().equals(Account.Type.DEVICE)) {
-                contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
-                mentionsDataLabel.setText("0");
-            } else {
-                mentionsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
-                contactsDataLabel.setText("0");
-            }
+            contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
 
             fileReferencesPanel.showOutlineView();
 
@@ -161,7 +155,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         caseReferencesPanel.setEnabled(enabled);
         fileReferencesPanel.setEnabled(enabled);
         countsPanel.setEnabled(enabled);
-        mentionsLabel.setEnabled(enabled);
         attachmentsLabel.setEnabled(enabled);
     }
 
@@ -176,7 +169,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         attachmentDataLabel.setText("");
         accountLabel.setText("");
         accoutDescriptionLabel.setText("");
-        mentionsDataLabel.setText("");
         
         fileReferencesPanel.setNode(new AbstractNode(Children.LEAF));
         caseReferencesPanel.setNode(new AbstractNode(Children.LEAF));
@@ -229,9 +221,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         contanctsPanel = new javax.swing.JPanel();
         contactsLabel = new javax.swing.JLabel();
         contactsDataLabel = new javax.swing.JLabel();
-        mentionsLabel = new javax.swing.JLabel();
-        mentionsDataLabel = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -381,31 +370,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 9, 15);
         contanctsPanel.add(contactsDataLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(mentionsLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.mentionsLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 15, 9, 15);
-        contanctsPanel.add(mentionsLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(mentionsDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.mentionsDataLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 15);
-        contanctsPanel.add(mentionsDataLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.jLabel1.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 0);
-        contanctsPanel.add(jLabel1, gridBagConstraints);
-
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -428,9 +392,6 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private javax.swing.JPanel contanctsPanel;
     private javax.swing.JPanel countsPanel;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel fileReferencesPanel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel mentionsDataLabel;
-    private javax.swing.JLabel mentionsLabel;
     private javax.swing.JLabel messagesDataLabel;
     private javax.swing.JLabel messagesLabel;
     private javax.swing.JPanel summaryPanel;
