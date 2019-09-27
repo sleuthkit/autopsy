@@ -201,6 +201,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                             NbBundle.getMessage(this.getClass(),
                                     "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
                     logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
+                    // delete the temp file
+                    file.delete();
                     return ProcessResult.ERROR;
                 }
                 break;
@@ -231,6 +233,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                         NbBundle.getMessage(this.getClass(),
                                 "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
                 logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
+                // delete the temp file
+                file.delete();
                 return ProcessResult.ERROR;
         }
 
