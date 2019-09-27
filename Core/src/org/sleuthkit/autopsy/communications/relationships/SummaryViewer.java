@@ -47,9 +47,10 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_CaseRefNameColumn_Title=Case Name",
         "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other Occurrences>",
         "SummaryViewer_Creation_Date_Title=Creation Date",
-        "SummaryViewer_FileRef_Message=<Select one Accout to see File References>",
+        "SummaryViewer_FileRef_Message=<Select a single account to see File References>",
         "SummaryViewer_Device_Account_Description=This account was referenced by a device in the case.",
         "SummaryViewer_Account_Description=This account represents a device in the case.",
+        "SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected."
     })
 
     /**
@@ -102,6 +103,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         if (info.getAccounts().size() != 1) {
             setEnabled(false);
             clearControls();
+            
+            accoutDescriptionLabel.setText(Bundle.SummaryViewer_Account_Description_MuliSelect());
 
             fileReferencesPanel.hideOutlineView(Bundle.SummaryViewer_FileRef_Message());
         } else {

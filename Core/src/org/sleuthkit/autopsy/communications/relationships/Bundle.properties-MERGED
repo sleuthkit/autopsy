@@ -44,6 +44,7 @@ SummaryViewer.contactsDataLabel.text=contacts
 SummaryViewer.messagesLabel.text=Messages:
 SummaryViewer.callLogsLabel.text=Call Logs:
 SummaryViewer_Account_Description=This account represents a device in the case.
+SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected.
 SummaryViewer_CaseRefNameColumn_Title=Case Name
 SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other Occurrences>
 SummaryViewer_Creation_Date_Title=Creation Date
