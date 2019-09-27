@@ -52,6 +52,30 @@ and adds artifacts to the case.
 """
 class OperaAnalyzer(general.AndroidComponentAnalyzer):
 
+    """
+        Opera is a web browser on Android phones.
+        
+        This module finds the SQLite DB for Opera, parses the DB for bookmarks,
+            downloads, web history, cookies, autofill and creates artifacts.
+
+        
+        Opera version 53.1.2569 has the following database structure:
+            
+            - cookies
+                -- A cookies table to store cookies
+            - history
+                -- A urls table to store history of visted urls
+                -- A downloads table to store downloads
+            - Web Data
+                -- A autofill table to store discrete autofill name/value pairs
+                -- A autofill_profile_names to store name fields (first name, middle name, last name)
+                -- A autofill_profiles to store the physical snailmail address (street address, city, state, country, zip)
+                -- A autofill_profile_phones to store phone numbers
+                -- A autofill_profile_emails to store email addresses
+                    
+                
+    """
+
     moduleName = "Opera Parser"
     progName = "Opera"
     
@@ -68,7 +92,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for cookiesDb in cookiesDbs:
                 try:
                     cookiesDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                        self.moduleName, cookiesDb.getDBFile())
+                                        self._MODULE_NAME, cookiesDb.getDBFile())
                     cookiesResultSet = cookiesDb.runQuery("SELECT host_key, name, value, creation_utc FROM cookies")
                     if cookiesResultSet is not None:
                         while cookiesResultSet.next():
@@ -98,7 +122,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for historyDb in historyDbs:
                 try:
                     historyDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self.moduleName, historyDb.getDBFile())
+                                            self._MODULE_NAME, historyDb.getDBFile())
                     historyResultSet = historyDb.runQuery("SELECT url, title, last_visit_time FROM urls")
                     if historyResultSet is not None:
                         while historyResultSet.next():
@@ -127,7 +151,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for downloadsDb in downloadsDbs:
                 try:
                     downloadsDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self.moduleName, downloadsDb.getDBFile())
+                                            self._MODULE_NAME, downloadsDb.getDBFile())
                     queryString = "SELECT target_path, start_time, url FROM downloads"\
                                   " INNER JOIN downloads_url_chains ON downloads.id = downloads_url_chains.id"
                     downloadsResultSet = downloadsDb.runQuery(queryString)
@@ -156,7 +180,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for autofillDb in autofillDbs:
                 try:
                     autofillDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self.moduleName, autofillDb.getDBFile())
+                                            self._MODULE_NAME, autofillDb.getDBFile())
                     autofillsResultSet = autofillDb.runQuery("SELECT name, value, count, date_created FROM autofill")
                     if autofillsResultSet is not None:
                         while autofillsResultSet.next():
@@ -184,14 +208,15 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for webFormAddressDb in webFormAddressDbs:
                 try:
                     webFormAddressDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                                self.moduleName, webFormAddressDb.getDBFile())
-                    queryString = "SELECT street_address, city, state, zipcode, country_code, date_modified, first_name, last_name, number, email FROM autofill_profiles "\
-                                " INNER JOIN autofill_profile_names"\
-                                " ON autofill_profiles.guid = autofill_profile_names.guid"\
-                                " INNER JOIN autofill_profile_phones"\
-                                " ON autofill_profiles.guid = autofill_profile_phones.guid"\
-                                " INNER JOIN autofill_profile_emails"\
-                                " ON autofill_profiles.guid = autofill_profile_emails.guid"
+                                                self._MODULE_NAME, webFormAddressDb.getDBFile())
+                    queryString = """
+                                SELECT street_address, city, state, zipcode, country_code,
+                                       date_modified, first_name, last_name, number, email
+                                FROM autofill_profiles
+                                INNER JOIN autofill_profile_names ON autofill_profiles.guid = autofill_profile_names.guid
+                                INNER JOIN autofill_profile_phones ON autofill_profiles.guid = autofill_profile_phones.guid
+                                INNER JOIN autofill_profile_emails ON autofill_profiles.guid = autofill_profile_emails.guid
+                                """
                     webFormAddressResultSet = webFormAddressDb.runQuery(queryString)
                     if webFormAddressResultSet is not None:
                         while webFormAddressResultSet.next():
