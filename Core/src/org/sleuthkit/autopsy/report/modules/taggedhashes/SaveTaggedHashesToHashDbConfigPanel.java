@@ -66,9 +66,9 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         // Set up the tag names JList component to be a collection of check boxes
         // for selecting tag names. The mouse click listener updates tagNameSelections
         // to reflect user choices.
-        tagNamesListBox.setModel(tagsNamesListModel);
-        tagNamesListBox.setCellRenderer(tagsNamesRenderer);
-        tagNamesListBox.setVisibleRowCount(-1);
+        //tagNamesListBox.setModel(tagsNamesListModel);
+        //tagNamesListBox.setCellRenderer(tagsNamesRenderer);
+        //tagNamesListBox.setVisibleRowCount(-1);
         tagNamesListBox.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
@@ -122,6 +122,9 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         tagNameSelections = new LinkedHashMap<>();
         tagsNamesListModel = new TagNamesListModel();
         tagsNamesRenderer = new TagsNamesListCellRenderer();
+        tagNamesListBox.setModel(tagsNamesListModel);
+        tagNamesListBox.setCellRenderer(tagsNamesRenderer);
+        tagNamesListBox.setVisibleRowCount(-1);
         populateTagNameComponents();
         populateHashSetComponents();
     }
@@ -145,6 +148,8 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         for (TagName tagName : tagNames) {
             tagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
         }
+        
+        tagNamesListBox.repaint();
     }
 
     private void populateHashSetComponents() {
