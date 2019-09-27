@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.Multipart;
+import org.apache.james.mime4j.dom.SingleBody;
 import org.apache.james.mime4j.dom.TextBody;
 import org.apache.james.mime4j.dom.address.AddressList;
 import org.apache.james.mime4j.dom.address.Mailbox;
@@ -303,7 +305,6 @@ class MimeJ4MessageParser {
         if (filename == null) {
             filename = "attachment" + e.hashCode();
             logger.log(Level.WARNING, String.format("Attachment has no file name using '%s'", filename));
-            filename = "attachment" + e.hashCode();
         }
         
         filename = FileUtil.escapeFileName(filename);
@@ -316,40 +317,25 @@ class MimeJ4MessageParser {
 
         String uniqueFilename = fileID + "-" + index + "-" + email.getSentDate() + "-" + filename;
         String outPath = outputDirPath + uniqueFilename;
-        EncodedFileOutputStream fos;
-        BinaryBody bb;
-        try {
-            fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
-            return;
-        }
-
-        try {
-            Body b = e.getBody();
-            if (b instanceof BinaryBody) {
-                bb = (BinaryBody) b;
-                bb.writeTo(fos);
-            } else {
-                // This could potentially be other types. Only seen this once.
-            }
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to write mbox email attachment to disk.", ex); //NON-NLS
-            return;
-        } finally {
-            try {
-                fos.close();
+        
+        Body body = e.getBody();
+        if (body instanceof SingleBody) {
+            try (EncodedFileOutputStream fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1)) {
+                ((SingleBody) body).writeTo(fos);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to close file output stream", ex); //NON-NLS
+                logger.log(Level.WARNING, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
+                return;
             }
-        }
-
-        EmailMessage.Attachment attach = new EmailMessage.Attachment();
-        attach.setName(filename);
-        attach.setLocalPath(relModuleOutputPath + uniqueFilename);
-        attach.setSize(new File(outPath).length());
-        attach.setEncodingType(TskData.EncodingType.XOR1);
-        email.addAttachment(attach);
+            
+            EmailMessage.Attachment attach = new EmailMessage.Attachment();
+            attach.setName(filename);
+            attach.setLocalPath(relModuleOutputPath + uniqueFilename);
+            attach.setSize(new File(outPath).length());
+            attach.setEncodingType(TskData.EncodingType.XOR1);
+            email.addAttachment(attach);
+        } 
+        
+        
     }
 
     /**
