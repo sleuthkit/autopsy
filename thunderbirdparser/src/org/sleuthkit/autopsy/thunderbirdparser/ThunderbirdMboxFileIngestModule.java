@@ -193,6 +193,15 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 Iterator<EmailMessage> pstMsgIterator = parser.getEmailMessageIterator();
                 if (pstMsgIterator != null) {
                     processEmails(parser.getPartialEmailMessages(), pstMsgIterator , abstractFile);
+                } else {
+                    // sometimes parser returns ParseResult=OK but there are no messages
+                    postErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
+                                    abstractFile.getName()),
+                            NbBundle.getMessage(this.getClass(),
+                                    "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
+                    logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
+                    return ProcessResult.ERROR;
                 }
                 break;
 
@@ -418,6 +427,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @param abstractFile
      */
     private void processEmails(List<EmailMessage> partialEmailsForThreading, Iterator<EmailMessage> fullMessageIterator, AbstractFile abstractFile) {
+        
         // Putting try/catch around this to catch any exception and still allow
         // the creation of the artifacts to continue.
         try{
