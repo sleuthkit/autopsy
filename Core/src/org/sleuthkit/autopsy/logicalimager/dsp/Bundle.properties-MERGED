@@ -41,6 +41,7 @@ AddLogicalImageTask.failedToGetTotalFilesCount=Failed to get total files count: 
 # {0} - file
 AddLogicalImageTask.failToGetCanonicalPath=Fail to get canonical path for {0}
 AddLogicalImageTask.ingestionCancelled=Ingestion cancelled
+AddLogicalImageTask.logicalImagerResults=Logical Imager results
 AddLogicalImageTask.noCurrentCase=No current case
 # {0} - line number
 # {1} - fields length
