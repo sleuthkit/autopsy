@@ -25,7 +25,7 @@ Selecting an account in the middle column will bring up the data for that accoun
 
 \image html cvt_summary_tab.png
 
-<li> The <b>Messages</b> tab displays any messages or call logs associated with the account. The Messages will either be in a thread, or listed under a node called "Unthreaded". Clicking on the "Unthreaded" node will show all the messages that are not "Threaded". Call logs will all be under a node named "Call Logs".
+<li> The <b>Messages</b> tab displays any messages or call logs associated with the account. The Messages will either be in a thread, or listed under a node called "Unthreaded". Clicking on the "Unthreaded" node will show all the messages that are not "Threaded".
 
 \image html cvt_messages_threaded.png
 
@@ -37,11 +37,15 @@ If the message has attachments, you can view them on the Attachments tab. If you
 
 \image html cvt_message_attach.png
 
+<li> The <b>Call Logs</b> tab shows all call log entries involving the selected account.
+
+\image html cvt_call_log.png
+
 <li> The <b>Contacts</b> tab shows any information on this account that was found in a contacts file.
 
 \image html cvt_contacts.png
 
-<li> The <b>Media</b> tab shows thumbnails of any media files in messages for that account. If you click on one, it will show the message the media file came from.
+<li> The <b>Media Attachments</b> tab shows thumbnails of any media files in messages for that account. If you click on one, it will show the message the media file came from.
 
 \image html cvt_media.png
 
