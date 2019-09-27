@@ -91,15 +91,23 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                         self._MODULE_NAME, contactsDb.getDBFile(),
                                         Account.Type.FACEBOOK)
                     
-                contactsResultSet = contactsDb.runQuery("SELECT fbid, display_name FROM contacts WHERE added_time_ms <> " + self.selfAccountAddress.getUniqueID() )
+                contactsResultSet = contactsDb.runQuery("SELECT fbid, display_name, added_time_ms FROM contacts WHERE added_time_ms <> 0")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
-                        contactsDBHelper.addContact( contactsResultSet.getString("fbid"),  ##  unique id for account
-                                                    contactsResultSet.getString("display_name"),  ## contact name
+                        fbid = contactsResultSet.getString("fbid")
+                        contactAddress = Account.Address(contactsResultSet.getString("fbid"), contactsResultSet.getString("display_name"))
+                        dateCreated = contactsResultSet.getLong("added_time_ms") / 1000
+
+                        ## create additional attributes for contact.
+                        additionalAttributes = ArrayList();
+                        additionalAttributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, self._MODULE_NAME, dateCreated))
+
+                        contactsDBHelper.addContact( contactAddress,    ##  contact account 
                                                     "", 	## phone
                                                     "", 	## home phone
                                                     "", 	## mobile
-                                                    "")	        ## email
+                                                    "",	        ## email
+                                                    additionalAttributes)
                         
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for account", ex)

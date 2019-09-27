@@ -151,8 +151,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
             contacts_parser = SkypeContactsParser(skype_db)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_name(), 
-                    contacts_parser.get_contact_name(), 
+                    contacts_parser.get_account_address(), 
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
@@ -362,11 +361,9 @@ class SkypeContactsParser(TskContactsParser):
               )
         )
     
-    def get_account_name(self):
-        return self.result_set.getString("entry_id")
-        
-    def get_contact_name(self):
-        return self.result_set.getString("name")
+    def get_account_address(self):
+        return Account.Address(self.result_set.getString("entry_id"),
+                    self.result_set.getString("name"))
 
 class SkypeMessagesParser(TskMessagesParser):
     """

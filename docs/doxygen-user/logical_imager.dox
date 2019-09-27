@@ -43,9 +43,13 @@ In either case you can now configure your imager. If the configuration file alre
 On the left side you can see each rule in the configuration file. Each of these rules will be applied against the live system. A rule has a name, an optional description, one or more conditions, and settings for what should happen when a file matching the rule is found. When you select a rule you'll see all the settings for that rule on the right side of the panel. You can edit or delete rules once you select them. There are also global settings in the bottom right that apply to the configuration file as a whole:
 <ul>
 <li><b>Alert if encryption programs are found</b> - This will add a predefined rule to find encryption programs and alert and export any that are found. You will not be able to edit this rule.
-<li><b>Continue imaging after searches are performed</b> - Only relevant when creating a VHD. By default, the logical imager will only copy sectors that it uses or that are part of matching files being exported. If this option is selected, logical imager will go back through the image after the rule matching is complete and copy over any remaining sectors. This will take longer to run and result in much larger VHD images. 
+
+
 <li><b>Prompt before exiting imager</b> - If selected, you will have to press a key at the end of the logical imager run. This keeps the command prompt window open so you can look at the output. 
 <li><b>Create VHD</b> - If selected, a sparse VHD will be created while running logical imager. See more details below.
+<ul>
+<li><b>Continue imaging after searches are performed</b> - Only relevant when creating a VHD. By default, the logical imager will only copy sectors that it uses or that are part of matching files being exported. If this option is selected, logical imager will go back through the image after the rule matching is complete and copy over any remaining sectors. This will take longer to run and result in much larger VHD images. 
+</ul>
 </ul>
 
 More information on creating a VHD versus saving any matching files directly:
@@ -146,7 +150,7 @@ Folder contents:
 <li> <b>users.txt</b> contains information on user accounts found in the system. It will also be added to the Autopsy case as a \ref reporting_page "report".
 </ul>
 
-If logical imager was set to create VHDs, you'll see those VHDs in the output folder (along with the other output files described above):
+If logical imager was set to create VHDs, you'll see those VHDs in the output folder (along with the other output files described above except the root folder):
 
 \image html LogicalImager/VHDfolder.png
 
