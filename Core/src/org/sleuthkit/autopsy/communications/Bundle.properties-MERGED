@@ -92,7 +92,6 @@ VisualizationPanel.forwardButton.text=
 VisualizationPanel.zoomPercentLabel.text=100%
 VisualizationPanel.zoomLabel.text=Zoom:
 VisualizationPanel.snapshotButton.toolTipText=Generate Snapshot report.
-SummaryViewer.contactsLabel.text=Entries in Book*:
 VisualizationPanel_action_dialogs_title=Communications
 VisualizationPanel_action_name_text=Snapshot Report
 VisualizationPanel_module_name=Communications
