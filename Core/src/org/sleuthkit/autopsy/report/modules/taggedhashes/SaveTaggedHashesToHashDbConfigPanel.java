@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -54,8 +55,8 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private List<TagName> tagNames;
     private Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
-    private TagNamesListModel tagsNamesListModel = new TagNamesListModel();
-    private TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
+    private TagNamesListModel tagsNamesListModel;
+    private TagsNamesListCellRenderer tagsNamesRenderer;
     private String selectedHashSetName;
     private List<HashDb> updateableHashSets = new ArrayList<>();
 
@@ -118,20 +119,22 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         }
     }
 
-    private void customizeComponents() {
-        tagNameSelections = new LinkedHashMap<>();
+    private void customizeComponents() {        
+        populateTagNameComponents();
+        
         tagsNamesListModel = new TagNamesListModel();
         tagsNamesRenderer = new TagsNamesListCellRenderer();
         tagNamesListBox.setModel(tagsNamesListModel);
         tagNamesListBox.setCellRenderer(tagsNamesRenderer);
         tagNamesListBox.setVisibleRowCount(-1);
-        populateTagNameComponents();
+        
         populateHashSetComponents();
     }
 
     private void populateTagNameComponents() {
         // Get the tag names in use for the current case.
         tagNames = new ArrayList<>();
+        Map<String, Boolean> updatedTagNameSelections = new LinkedHashMap<>();
         try {
             // There may not be a case open when configuring report modules for Command Line execution
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
@@ -139,17 +142,22 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
             Logger.getLogger(SaveTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
         } catch (NoCurrentCaseException ex) {
             // There may not be a case open when configuring report modules for Command Line execution
-            Logger.getLogger(SaveTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex);
+            if (Case.isCaseOpen()) {
+                Logger.getLogger(SaveTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
+            }
         }
 
-        // Mark the tag names as unselected. Note that tagNameSelections is a
+        // Preserve the previous selections. Note that tagNameSelections is a
         // LinkedHashMap so that order is preserved and the tagNames and tagNameSelections
         // containers are "parallel" containers.
         for (TagName tagName : tagNames) {
-            tagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
+            if (tagNameSelections.get(tagName.getDisplayName()) != null && Objects.equals(tagNameSelections.get(tagName.getDisplayName()), Boolean.TRUE)) {
+                updatedTagNameSelections.put(tagName.getDisplayName(), Boolean.TRUE);
+            } else {
+                updatedTagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
+            }
         }
-        
-        tagNamesListBox.repaint();
+        tagNameSelections = updatedTagNameSelections;
     }
 
     private void populateHashSetComponents() {
