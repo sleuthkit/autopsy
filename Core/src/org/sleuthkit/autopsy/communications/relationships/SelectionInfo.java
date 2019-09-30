@@ -24,7 +24,6 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -148,88 +147,6 @@ public final class SelectionInfo {
         }
 
         return accountArtifacts;
-    }
-
-    public SelectionSummary getSummary() {
-        if (summary == null) {
-            summary = new SelectionSummary();
-        }
-
-        return summary;
-    }
-
-    final class SelectionSummary {
-
-        int attachmentCnt;
-        int messagesCnt;
-        int emailCnt;
-        int callLogCnt;
-        int contactsCnt;
-        int mediaCnt;
-
-        SelectionSummary() {
-            getCounts();
-        }
-
-        private void getCounts() {
-            for (BlackboardArtifact artifact : getArtifacts()) {
-                BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
-                if (null != fromID) {
-                    switch (fromID) {
-                        case TSK_EMAIL_MSG:
-                            emailCnt++;
-                            break;
-                        case TSK_CALLLOG:
-                            callLogCnt++;
-                            break;
-                        case TSK_MESSAGE:
-                            messagesCnt++;
-                            break;
-                        case TSK_CONTACT:
-                            contactsCnt++;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                try {
-                    attachmentCnt += artifact.getChildrenCount();
-                    for (Content childContent : artifact.getChildren()) {
-                        if (ImageUtils.thumbnailSupported(childContent)) {
-                            mediaCnt++;
-                        }
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, String.format("Exception thrown "
-                            + "from getChildrenCount artifactID: %d",
-                            artifact.getArtifactID()), ex); //NON-NLS
-                }
-            }
-        }
-
-        public int getAttachmentCnt() {
-            return attachmentCnt;
-        }
-
-        public int getMessagesCnt() {
-            return messagesCnt;
-        }
-
-        public int getEmailCnt() {
-            return emailCnt;
-        }
-
-        public int getCallLogCnt() {
-            return callLogCnt;
-        }
-
-        public int getContactsCnt() {
-            return contactsCnt;
-        }
-
-        public int getThumbnailCnt() {
-            return mediaCnt;
-        }
     }
 
     /**

@@ -5,7 +5,7 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -26,11 +26,11 @@ class SelectionSummary {
     private int referenceCnt;
 
     private final Account selectedAccount;
-    private final List<BlackboardArtifact> artifacts;
+    private final Set<BlackboardArtifact> artifacts;
 
     private static final Logger logger = Logger.getLogger(SelectionSummary.class.getName());
 
-    SelectionSummary(Account selectedAccount, List<BlackboardArtifact> artifacts) {
+    SelectionSummary(Account selectedAccount, Set<BlackboardArtifact> artifacts) {
         this.selectedAccount = selectedAccount;
         this.artifacts = artifacts;
         initCounts();
