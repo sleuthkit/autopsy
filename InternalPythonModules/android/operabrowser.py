@@ -75,9 +75,6 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                     
                 
     """
-
-    moduleName = "Opera Parser"
-    progName = "Opera"
     
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
