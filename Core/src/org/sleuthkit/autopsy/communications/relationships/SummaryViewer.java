@@ -44,7 +44,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_TabTitle=Summary",
         "SummaryViewer_FileRefNameColumn_Title=Path",
         "SummaryViewer_CaseRefNameColumn_Title=Case Name",
-        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other Occurrences>",
+        "SummaryViewer_CentralRepository_Message=<Enable Central Respository to see Other Occurrences>",
         "SummaryViewer_Creation_Date_Title=Creation Date",
         "SummaryViewer_FileRef_Message=<Select a single account to see File References>",
         "SummaryViewer_Device_Account_Description=This account was referenced by a device in the case.",
@@ -374,7 +374,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 9, 15);
+        gridBagConstraints.insets = new java.awt.Insets(9, 9, 9, 15);
         contanctsPanel.add(contactsDataLabel, gridBagConstraints);
 
         referencesLabel.setLabelFor(referencesDataLabel);
@@ -391,6 +391,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 0);
         contanctsPanel.add(referencesDataLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
