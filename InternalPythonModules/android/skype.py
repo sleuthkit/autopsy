@@ -99,8 +99,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         )
 
         if account_query_result is not None and account_query_result.next():
-            return Account.Address(account_query_result.getString("entry_id"),
-                        account_query_result.getString("name")) 
+            return account_query_result.getString("entry_id")
         return None
 
     def analyze(self, dataSource, fileManager, context):

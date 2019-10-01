@@ -345,7 +345,7 @@ class ViberMessagesParser(TskMessagesParser):
         return self.OUTGOING
     
     def get_phone_number_to(self):
-        return self.result_set.getString("recipients").split(","):
+        return self.result_set.getString("recipients").split(",")
 
     def get_message_date_time(self):
         #transform from ms to seconds
