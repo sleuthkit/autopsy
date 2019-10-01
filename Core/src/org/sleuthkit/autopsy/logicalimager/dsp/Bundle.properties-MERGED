@@ -83,7 +83,7 @@ LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
 LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
 LogicalImagerDSProcessor.noCurrentCase=No current case
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
-LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
+LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date (GMT)
 LogicalImagerPanel.imageTable.columnModel.title2=Path
 # {0} - sparseImageDirectory
 LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images
