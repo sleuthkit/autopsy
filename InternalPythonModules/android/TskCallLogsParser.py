@@ -49,10 +49,10 @@ class TskCallLogsParser(ResultSetIterator):
         return self._DEFAULT_DIRECTION 
 
     def get_phone_number_from(self):
-        return None
+        return self._DEFAULT_STRING
 
     def get_phone_number_to(self):
-        return None
+        return self._DEFAULT_STRING
 
     def get_call_start_date_time(self):
         return self._DEFAULT_LONG 
