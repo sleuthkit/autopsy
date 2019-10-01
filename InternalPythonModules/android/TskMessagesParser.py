@@ -51,10 +51,10 @@ class TskMessagesParser(ResultSetIterator):
         return self._DEFAULT_COMMUNICATION_DIRECTION
 
     def get_phone_number_from(self):
-        return None
+        return self._DEFAULT_TEXT
 
     def get_phone_number_to(self):
-        return None
+        return self._DEFAULT_TEXT
 
     def get_message_date_time(self):
         return self._DEFAULT_LONG
