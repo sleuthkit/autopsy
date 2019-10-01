@@ -303,7 +303,7 @@ class WhatsAppGroupCallLogsParser(TskCallLogsParser):
         if self.get_call_direction() == self.OUTGOING_CALL:
             #group_members column stores comma seperated list of groups or single contact
             group = self.result_set.getString("group_members")
-            return group.split(","):
+            return group.split(",")
         return super(WhatsAppGroupCallLogsParser, self).get_phone_number_to()
 
     def get_call_start_date_time(self):
