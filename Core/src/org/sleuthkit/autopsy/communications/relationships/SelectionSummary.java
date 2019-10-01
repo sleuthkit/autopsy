@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
@@ -15,6 +28,10 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * 
+ * Class representing the Summary data for a given account.
+ */
 class SelectionSummary {
 
     private int attachmentCnt;
@@ -30,12 +47,21 @@ class SelectionSummary {
 
     private static final Logger logger = Logger.getLogger(SelectionSummary.class.getName());
 
+    /**
+     * Summary constructor.
+     * 
+     * @param selectedAccount Selected account object
+     * @param artifacts List of relationship source artifacts
+     */
     SelectionSummary(Account selectedAccount, Set<BlackboardArtifact> artifacts) {
         this.selectedAccount = selectedAccount;
         this.artifacts = artifacts;
         initCounts();
     }
 
+    /**
+     * Initialize the counts based on the selected account and the given artifacts.
+     */
     private void initCounts() {
         for (BlackboardArtifact artifact : artifacts) {
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
@@ -89,30 +115,65 @@ class SelectionSummary {
         }
     }
 
+    /**
+     * Total number of attachments that this account is referenced.
+     * 
+     * @return Attachment count
+     */
     public int getAttachmentCnt() {
         return attachmentCnt;
     }
 
+    /**
+     * Total number of messages that this account is referenced.
+     * 
+     * @return Message count
+     */
     public int getMessagesCnt() {
         return messagesCnt;
     }
 
+    /**
+     * Total number of Emails that this account is referenced.
+     * 
+     * @return Email count
+     */
     public int getEmailCnt() {
         return emailCnt;
     }
 
+    /**
+     * Total number of call logs that this account is referenced.
+     * 
+     * @return call log count
+     */
     public int getCallLogCnt() {
         return callLogCnt;
     }
 
+    /**
+     * Total number of contacts in this accounts contact book.
+     * 
+     * @return contact count
+     */
     public int getContactsCnt() {
         return contactsCnt;
     }
 
+    /**
+     * Total number of thumbnail\media attachments that this account is referenced.
+     * 
+     * @return Thumbnail count
+     */
     public int getThumbnailCnt() {
         return mediaCnt;
     }
     
+    /**
+     * Total number of contacts that this account is referenced.
+     * 
+     * @return Contact count
+     */
     public int getReferenceCnt() {
         return referenceCnt;
     }

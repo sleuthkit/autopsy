@@ -72,6 +72,8 @@ final class RelationshipsNodeUtilities {
     	/**
 	 * Normalize the phone number by removing all non numeric characters, except
 	 * for leading +.
+         * 
+         * This function copied from CommunicationManager.
 	 *
 	 * @param phoneNum The phone number to normalize
 	 *
@@ -93,6 +95,8 @@ final class RelationshipsNodeUtilities {
 
     /**
      * Normalize the given email address by converting it to lowercase.
+     * 
+     * This function copied from CommunicationManager.
      *
      * @param emailAddress The email address tot normalize
      *
