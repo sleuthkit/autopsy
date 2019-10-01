@@ -24,7 +24,7 @@ import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
-import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * An Action that hides, in the given chart, events that have the given
@@ -36,7 +36,7 @@ class HideDescriptionAction extends Action {
 
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
 
-    HideDescriptionAction(String description, TimelineEvent.DescriptionLevel descriptionLoD, DetailsChart chart) {
+    HideDescriptionAction(String description, TimelineLevelOfDetail descriptionLoD, DetailsChart chart) {
         super(Bundle.HideDescriptionAction_displayName());
         setLongText(Bundle.HideDescriptionAction_displayMsg());
         setGraphic(new ImageView(HIDE));

@@ -39,9 +39,9 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
         
          selectedProperty().addListener(selectedProperty -> {
            if (filter instanceof TimelineFilter.TagsFilter) {
-               ((TimelineFilter.TagsFilter)filter).setTagged(isSelected());
+               ((TimelineFilter.TagsFilter)filter).setEventSourcesAreTagged(isSelected());
            } else  if (filter instanceof TimelineFilter.HashHitsFilter) {
-               ((TimelineFilter.HashHitsFilter)filter).setTagged(isSelected());
+               ((TimelineFilter.HashHitsFilter)filter).setEventSourcesHaveHashSetHits(isSelected());
            }
         });
         

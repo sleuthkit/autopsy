@@ -98,6 +98,7 @@ import static org.sleuthkit.datamodel.TimelineEventType.FILE_CREATED;
 import static org.sleuthkit.datamodel.TimelineEventType.FILE_MODIFIED;
 import static org.sleuthkit.datamodel.TimelineEventType.FILE_SYSTEM;
 import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * The inner component that makes up the List view. Manages the TableView.
@@ -232,11 +233,11 @@ class ListTimeline extends BorderPane {
         //// set up cell and cell-value factories for columns
         dateTimeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         dateTimeColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
-                -> TimeLineController.getZonedFormatter().print(singleEvent.getStartMillis())));
+                -> TimeLineController.getZonedFormatter().print(singleEvent.getEventTimeInMs())));
 
         descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         descriptionColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
-                -> singleEvent.getDescription(TimelineEvent.DescriptionLevel.FULL)));
+                -> singleEvent.getDescription(TimelineLevelOfDetail.HIGH)));
 
         typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         typeColumn.setCellFactory(col -> new EventTypeCell());
@@ -409,11 +410,11 @@ class ListTimeline extends BorderPane {
                 setGraphic(null);
                 setTooltip(null);
             } else {
-                if (item.getEventTypes().stream().allMatch(TimelineEventType.FILE_SYSTEM.getSubTypes()::contains)) {
+                if (item.getEventTypes().stream().allMatch(TimelineEventType.FILE_SYSTEM.getChildren()::contains)) {
                     String typeString = ""; //NON-NLS
                     VBox toolTipVbox = new VBox(5);
 
-                    for (TimelineEventType type : TimelineEventType.FILE_SYSTEM.getSubTypes()) {
+                    for (TimelineEventType type : TimelineEventType.FILE_SYSTEM.getChildren()) {
                         if (item.getEventTypes().contains(type)) {
                             if (type.equals(FILE_MODIFIED)) {
                                 typeString += "M"; //NON-NLS
@@ -472,7 +473,7 @@ class ListTimeline extends BorderPane {
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
-            if (empty || item == null || (getEvent().isTagged() == false)) {
+            if (empty || item == null || (getEvent().eventSourceIsTagged() == false)) {
                 setGraphic(null);
                 setTooltip(null);
             } else {
@@ -485,13 +486,13 @@ class ListTimeline extends BorderPane {
                 SortedSet<String> tagNames = new TreeSet<>();
                 try {
                     //get file tags
-                    Content file = sleuthkitCase.getContentById(getEvent().getFileObjID());
+                    Content file = sleuthkitCase.getContentById(getEvent().getContentObjID());
                     tagsManager.getContentTagsByContent(file).stream()
                             .map(tag -> tag.getName().getDisplayName())
                             .forEach(tagNames::add);
 
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileObjID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getContentObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -544,7 +545,7 @@ class ListTimeline extends BorderPane {
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
-            if (empty || item == null || (getEvent().isHashHit() == false)) {
+            if (empty || item == null || (getEvent().eventSourceHasHashHits()== false)) {
                 setGraphic(null);
                 setTooltip(null);
             } else {
@@ -555,12 +556,12 @@ class ListTimeline extends BorderPane {
                  */
                 setGraphic(new ImageView(HASH_HIT));
                 try {
-                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getContentById(getEvent().getFileObjID()).getHashSetNames());
+                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getContentById(getEvent().getContentObjID()).getHashSetNames());
                     Tooltip tooltip = new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames))); //NON-NLS
                     tooltip.setGraphic(new ImageView(HASH_HIT));
                     setTooltip(tooltip);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileObjID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getContentObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
