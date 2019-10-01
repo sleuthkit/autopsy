@@ -46,12 +46,34 @@ from org.sleuthkit.datamodel.blackboardutils import WebBrowserArtifactsHelper
 import traceback
 import general
 
-"""
-Finds the SQLite DB for S-Browser, parses the DB for Bookmarks, Cookies, Web History
-and adds artifacts to the case.
-"""
+
 class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
 
+    """
+        SBrowser is the default/native browser on Android phones.
+        
+        This module finds the SQLite DB for SBrowser, parses the DB for bookmarks,
+            downloads, web history, cookies, autofill and creates artifacts.
+
+        
+        SBrowser has the following database structure:
+            - sbrowser.db 
+                -- A bookmarks table that store bookmarks 
+            - cookies
+                -- A cookies table to store cookies
+            - history
+                -- A urls table to store history of visted urls
+                -- A downloads table to store downloads
+            - Web Data
+                -- A autofill table to store discrete autofill name/value pairs
+                -- A autofill_profile_names to store name fields (first name, middle name, last name)
+                -- A autofill_profiles to store the physical snailmail address (street address, city, state, country, zip)
+                -- A autofill_profile_phones to store phone numbers
+                -- A autofill_profile_emails to store email addresses
+                    
+                
+    """
+ 
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
         self._PACKAGE_NAME = "com.sec.android.app.sbrowser"
@@ -182,7 +204,12 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     autofillDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
                                             self._MODULE_NAME, autofillDb.getDBFile())
-                    autofillsResultSet = autofillDb.runQuery("SELECT name, value, count, date_created FROM autofill INNER JOIN autofill_dates ON autofill.pair_id = autofill_dates.pair_id")
+                    queryString = """
+                                SELECT name, value, count, date_created
+                                FROM autofill
+                                INNER JOIN autofill_dates ON autofill.pair_id = autofill_dates.pair_id
+                                """
+                    autofillsResultSet = autofillDb.runQuery(queryString)
                     if autofillsResultSet is not None:
                         while autofillsResultSet.next():
                             creationTime = autofillsResultSet.getLong("date_created") / 1000000 - 11644473600 # Webkit time
@@ -210,13 +237,16 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
                 try:                    
                     webFormAddressDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
                                                 self._MODULE_NAME, webFormAddressDb.getDBFile())
-                    queryString = "SELECT street_address, city, state, zipcode, country_code, date_modified, first_name, last_name, number, email FROM autofill_profiles "\
-                                " INNER JOIN autofill_profile_names"\
-                                " ON autofill_profiles.guid = autofill_profile_names.guid"\
-                                " INNER JOIN autofill_profile_phones"\
-                                " ON autofill_profiles.guid = autofill_profile_phones.guid"\
-                                " INNER JOIN autofill_profile_emails"\
-                                " ON autofill_profiles.guid = autofill_profile_emails.guid"
+                    """
+                        Autofill form data is split across multiple tables. The quqery below joins the various tables.
+                    """
+                    queryString = """
+                                SELECT street_address, city, state, zipcode, country_code, date_modified, first_name, last_name, number, email 
+                                FROM autofill_profiles
+                                INNER JOIN autofill_profile_names ON autofill_profiles.guid = autofill_profile_names.guid 
+                                INNER JOIN autofill_profile_phones ON autofill_profiles.guid = autofill_profile_phones.guid
+                                INNER JOIN autofill_profile_emails ON autofill_profiles.guid = autofill_profile_emails.guid
+                            """
                     webFormAddressResultSet = webFormAddressDb.runQuery(queryString)
                     if webFormAddressResultSet is not None:
                         while webFormAddressResultSet.next():

@@ -50,11 +50,25 @@ from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import
 import traceback
 import general
 
-"""
-Finds the SQLite DB for IMO, parses the DB for contacts & messages,
-and adds artifacts to the case.
-"""
+
 class IMOAnalyzer(general.AndroidComponentAnalyzer):
+    """
+        Finds the SQLite DB for IMO, parses the DB for contacts & messages,
+        and adds artifacts to the case.
+
+        IMO version 9.8.0 has the following database structure:
+            - accountdb.db 
+                -- A 'account' table with the id/name of the IMO account of the owner - used as the self account
+            - imofriends.db - a database with contacts and messages
+                -- A friends table, with id and name of the friends
+                    --- buid - application specific unique id
+                    --- name of contact
+                -- A messages table which stores the message details
+                    --- sender/receiver buid, timestamp, message_type (1: incoming, 0: outgoing), message_read...
+                    --- 'imdata' column stores a json structure with all the message details, including attachments
+
+    """
+    
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
         self._PACKAGE_NAME = "com.imo.android.imous"
@@ -105,8 +119,11 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                                                     "", 	## home phone
                                                     "", 	## mobile
                                                     "")	        ## email
-                queryString = "SELECT messages.buid AS buid, imdata, last_message, timestamp, message_type, message_read, name FROM messages "\
-                                  "INNER JOIN friends ON friends.buid = messages.buid"
+                queryString = """
+                                SELECT messages.buid AS buid, imdata, last_message, timestamp, message_type, message_read, name
+                                FROM messages
+                                INNER JOIN friends ON friends.buid = messages.buid
+                              """
                 messagesResultSet = friendsDb.runQuery(queryString)
                 if messagesResultSet is not None:
                     while messagesResultSet.next():

@@ -150,16 +150,16 @@
                     <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
             </folder>
+            <file name="org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.instance"/>
+                <attr name="position" intvalue="103"/>
+            </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAct.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
-                <attr name="position" intvalue="103"/>
+                <attr name="position" intvalue="104"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
-                <attr name="position" intvalue="104"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.instance"/>
                 <attr name="position" intvalue="105"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">

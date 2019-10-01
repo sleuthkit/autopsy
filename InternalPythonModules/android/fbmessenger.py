@@ -50,12 +50,52 @@ import json
 import traceback
 import general
 
-"""
-Finds the SQLite DB for Facebook messenger, parses the DB for contacts & messages,
-and adds artifacts to the case.
-"""
+
 class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
-    
+
+    """
+        Facebook Messenger is a messaging application for Facebook users.
+        It can be used to have one-to-one as well as group message conversations -
+        text, send photos videos and other media file. It can also be used to make
+        phone calls - audio as well as video.
+        
+        This module finds the SQLite DB for FB messenger, parses the DB for contacts,
+            messages, and call logs and creates artifacts.
+
+        FB messenger requires Facebook accounts.  Although Facebook and Facebook Messenger are
+        two different applications with separate packages, their database structure is very similar
+        and FB messenger seems to share the FB database if FB is inatalled.
+
+        FB assigns each user a unique FB id, fbid - a long numeric id.
+        Each user also has a display name.
+
+        FB uses a notion of user key, which is of the form FACEBOOK:<fbid> 
+        
+        FB messenger version 239.0.0.41 has the following database structure:
+            - contacts_db2 
+                -- A contacts table that stores the contacts/friends. 
+            
+            - threads_db2
+                -- A messages table to store the messages
+                    --- A sender column - this is a JSON structure which has a the FB user key of sender.
+                    --- A attachments column - a JSON structure that has details of the attachments,
+                    --- A msg_type column: message type - indicates whether its a text/mms message or a audio/video call
+                    --- A thread_key column - identifies the message thread
+                    --- A timestamp_ms column - date/time message was sent
+                    --- A text column - message text, if applicable
+                
+                -- A thread_participants table to identify participants in a particular thread
+                    --- A thread_key column - identifies a message thread
+                    --- A user_key column to identify a particpant in the thread
+                
+                
+                -- A thread_users to identify the user details, primarliy name, of a user that has been a particiapnt in any thread
+                    --- A user_key column - identifies a unique user
+                    --- A name column - user display name
+                    
+                
+    """
+     
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
         
@@ -70,13 +110,15 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
     ## Analyze contacts
     def analyzeContacts(self, dataSource, fileManager, context):
+        
         ## FB messenger and FB have same database structure for contacts.
-        ## In our example the FB Messenger database was empty.
+        ## In our dataset, the FB Messenger database was empty.
         ## But the FB database had the data.
         
         contactsDbs = AppSQLiteDB.findAppDatabases(dataSource, "contacts_db2", True, self._FACEBOOK_PACKAGE_NAME)
         for contactsDb in contactsDbs:
             try:
+                ## The device owner's FB account details can be found in the contacts table in a row with added_time_ms of 0.
                 selfAccountResultSet = contactsDb.runQuery("SELECT fbid, display_name FROM contacts WHERE added_time_ms = 0")
                 if selfAccountResultSet:
                     if not self.selfAccountAddress:
@@ -90,7 +132,8 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                     contactsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, contactsDb.getDBFile(),
                                         Account.Type.FACEBOOK)
-                    
+
+                ## get the other contacts/friends
                 contactsResultSet = contactsDb.runQuery("SELECT fbid, display_name, added_time_ms FROM contacts WHERE added_time_ms <> 0")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
@@ -147,14 +190,20 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                         self._MODULE_NAME, threadsDb.getDBFile(),
                                         Account.Type.FACEBOOK)
                 
-                ## Messages are found in the messages table.  The participant ids can be found in the thread_participants table.
+                ## Messages are found in the messages table.
+                ## The participant ids can be found in the thread_participants table.
                 ## Participant names are found in thread_users table.
-                ## Joining these tables produces multiple rows per message, one row for each recipient
-                sqlString = "SELECT msg_id, text, sender, timestamp_ms, messages.thread_key as thread_key,"\
-                            " snippet, thread_participants.user_key as user_key, thread_users.name as name FROM messages"\
-                            " JOIN thread_participants ON messages.thread_key = thread_participants.thread_key"\
-                            " JOIN thread_users ON thread_participants.user_key = thread_users.user_key"\
-                            " ORDER BY msg_id"
+                ## Joining these tables produces multiple rows per message, one row for each recipient.
+                ## The result set is processed to collect the multiple recipients for a given message.
+                    
+                sqlString = """
+                            SELECT msg_id, text, sender, timestamp_ms, messages.thread_key as thread_key, 
+                                 snippet, thread_participants.user_key as user_key, thread_users.name as name
+                            FROM messages
+                            JOIN thread_participants ON messages.thread_key = thread_participants.thread_key
+                            JOIN thread_users ON thread_participants.user_key = thread_users.user_key
+                            ORDER BY msg_id
+                            """
                 
                 messagesResultSet = threadsDb.runQuery(sqlString)
                 if messagesResultSet is not None:
@@ -212,7 +261,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
                             # Get msg text
                             # Sometimes there may not be an explict msg text,
-                            # but a app genrated snippet instead
+                            # but an app generated snippet instead
                             msgText = messagesResultSet.getString("text")
                             if not msgText:
                                 msgText = messagesResultSet.getString("snippet")
