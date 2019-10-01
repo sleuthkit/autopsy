@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * 
  * Class representing the Summary data for a given account.
  */
-class SelectionSummary {
+class AccountSummary {
 
     private int attachmentCnt;
     private int messagesCnt;
@@ -45,7 +46,7 @@ class SelectionSummary {
     private final Account selectedAccount;
     private final Set<BlackboardArtifact> artifacts;
 
-    private static final Logger logger = Logger.getLogger(SelectionSummary.class.getName());
+    private static final Logger logger = Logger.getLogger(AccountSummary.class.getName());
 
     /**
      * Summary constructor.
@@ -53,7 +54,7 @@ class SelectionSummary {
      * @param selectedAccount Selected account object
      * @param artifacts List of relationship source artifacts
      */
-    SelectionSummary(Account selectedAccount, Set<BlackboardArtifact> artifacts) {
+    AccountSummary(Account selectedAccount, Set<BlackboardArtifact> artifacts) {
         this.selectedAccount = selectedAccount;
         this.artifacts = artifacts;
         initCounts();
@@ -79,19 +80,38 @@ class SelectionSummary {
                     case TSK_CONTACT:
                         if (selectedAccount.getAccountType() != Account.Type.DEVICE) {
                             String typeSpecificID = selectedAccount.getTypeSpecificID();
-                     
-                            String name = RelationshipsNodeUtilities.getAttributeDisplayString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-                            String phoneNumber = RelationshipsNodeUtilities.getAttributeDisplayString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER);
-                            String email = RelationshipsNodeUtilities.getAttributeDisplayString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL);
                             
-                            if(typeSpecificID.equals(name) ||
-                                    (RelationshipsNodeUtilities.normalizeEmailAddress(typeSpecificID).equals(RelationshipsNodeUtilities.normalizeEmailAddress(email))) ||
-                                    (RelationshipsNodeUtilities.normalizePhoneNum(typeSpecificID).equals(RelationshipsNodeUtilities.normalizePhoneNum(phoneNumber)))) {
+                            List<BlackboardAttribute> attributes = null;
+                            
+                            try{
+                                attributes = artifact.getAttributes();
+                            } catch(TskCoreException ex) {
+                                logger.log(Level.WARNING, String.format("Unable to getAttributes for artifact: %d", artifact.getArtifactID()), ex);
+                                break;
+                            }
+                            
+                            boolean isReference = false;
+                            
+                            for (BlackboardAttribute attribute: attributes) {
+                                String attributeTypeName = attribute.getAttributeType().getTypeName();
+                                String attributeValue = attribute.getValueString();
+                                
+                                if (attributeTypeName.contains("PHONE")) {
+                                    attributeValue = RelationshipsNodeUtilities.normalizePhoneNum(attributeValue);
+                                } else if (attributeTypeName.contains("EMAIL")) {
+                                    attributeValue = RelationshipsNodeUtilities.normalizeEmailAddress(attributeValue);
+                                }
+                                
+                                if ( typeSpecificID.equals(attributeValue) ) {
+                                    isReference = true;
+                                    break;
+                                }
+                            }
+                            if (isReference) {
                                 referenceCnt++;
                             } else {
-                               contactsCnt++; 
+                                contactsCnt++;
                             }
-                          
                         } else {
                             contactsCnt++;
                         }

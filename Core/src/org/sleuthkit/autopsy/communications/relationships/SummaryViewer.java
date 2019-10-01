@@ -118,7 +118,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                 accoutDescriptionLabel.setText(Bundle.SummaryViewer_Device_Account_Description());
             }
             
-            SelectionSummary summaryDetails = new SelectionSummary(account, info.getArtifacts());
+            AccountSummary summaryDetails = new AccountSummary(account, info.getArtifacts());
 
             thumbnailsDataLabel.setText(Integer.toString(summaryDetails.getThumbnailCnt()));
             callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));

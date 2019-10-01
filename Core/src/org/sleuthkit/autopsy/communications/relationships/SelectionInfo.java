@@ -46,7 +46,6 @@ public final class SelectionInfo {
     private final Set<Account> accounts;
 
     private Set<BlackboardArtifact> accountArtifacts = null;
-    private SelectionSummary summary = null;
 
     /**
      * Wraps the details of the currently selected accounts.
