@@ -481,8 +481,7 @@ public class IngestEventsListener {
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMSI_TYPE_ID
-                                    || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.MAC_TYPE_ID
-                                    || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.SSID_TYPE_ID)) {
+                                    || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.MAC_TYPE_ID)) {
                                 try {
                                     //only alert to previous instances when they were in another case
                                     List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
