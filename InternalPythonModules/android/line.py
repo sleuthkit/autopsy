@@ -139,14 +139,15 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
 
     def parse_contacts(self, contacts_db, helper):
         try:
-            contacts_parser = LineContactsParser(contacts_db)
+            contacts_parser = LineContactsParser(contacts_db, self._PARSER_NAME)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_address(),
+                    contacts_parser.get_contact_name(),
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
+                    contacts_parser.get_email(),
+                    contacts_parser.get_other_attributes()
                 )
             contacts_parser.close()
         except SQLException as ex:
@@ -291,23 +292,14 @@ class LineCallLogsParser(TskCallLogsParser):
             group_members = self.result_set.getString("group_members")
             if group_members is not None:
                 group_members = group_members.split(",")
-                group_names = self.result_set.getString("names").split(",") 
+                return group_members
 
-                recipients = []
-
-                for member_id, member_name in zip(group_members, group_names):
-                    recipients.append(Account.Address(member_id, member_name)) 
-                
-                return recipients
-
-            return Account.Address(self.result_set.getString("caller_mid"), 
-                        self.result_set.getString("names"))
+            return self.result_set.getString("caller_mid") 
         return super(LineCallLogsParser, self).get_phone_number_to()
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
-            return Account.Address(self.result_set.getString("caller_mid"),
-                        self.result_set.getString("names"))
+            return self.result_set.getString("caller_mid")
         return super(LineCallLogsParser, self).get_phone_number_from()
 
     def get_call_type(self):
@@ -331,7 +323,7 @@ class LineContactsParser(TskContactsParser):
         a default value inherited from the super class. 
     """
 
-    def __init__(self, contact_db):
+    def __init__(self, contact_db, analyzer):
         super(LineContactsParser, self).__init__(contact_db.runQuery(
                  """
                      SELECT m_id,
@@ -341,9 +333,17 @@ class LineContactsParser(TskContactsParser):
               )
         )
 
-    def get_account_address(self):
-        return Account.Address(self.result_set.getString("m_id"),
-                    self.result_set.getString("server_name"))
+        self._PARENT_ANALYZER = analyzer
+
+    def get_contact_name(self):
+        return self.result_set.getString("server_name")
+    
+    def get_other_attributes(self):
+        return [BlackboardAttribute(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, 
+                    self._PARENT_ANALYZER, 
+                    self.result_set.getString("m_id"))]
+
 
 class LineMessagesParser(TskMessagesParser):
     """
@@ -430,8 +430,7 @@ class LineMessagesParser(TskMessagesParser):
         if self.get_message_direction() == self.INCOMING:
             from_mid = self.result_set.getString("from_mid")
             if from_mid is not None:
-                return Account.Address(from_mid,
-                         self.result_set.getString("from_name"))
+                return from_mid
         return super(LineMessagesParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
@@ -439,17 +438,9 @@ class LineMessagesParser(TskMessagesParser):
             group = self.result_set.getString("members")
             if group is not None:
                 group = group.split(",")
-                names = self.result_set.getString("member_names").split(",")
-                
-                recipients = []
+                return group
 
-                for recipient_id, recipient_name in zip(group, names):
-                    recipients.append(Account.Address(recipient_id, recipient_name))
-
-                return recipients
-
-            return Account.Address(self.result_set.getString("id"), 
-                    self.result_set.getString("name"))
+            return self.result_set.getString("id") 
 
         return super(LineMessagesParser, self).get_phone_number_to()
 

@@ -37,7 +37,6 @@ class TskMessagesParser(ResultSetIterator):
         self._DEFAULT_TEXT = ""
         self._DEFAULT_LONG = -1L
         self._DEFAULT_MSG_READ_STATUS = MessageReadStatus.UNKNOWN
-        self._DEFAULT_ACCOUNT_ADDRESS = None 
         self._DEFAULT_COMMUNICATION_DIRECTION = CommunicationDirection.UNKNOWN
 
         self.INCOMING = CommunicationDirection.INCOMING
@@ -52,10 +51,10 @@ class TskMessagesParser(ResultSetIterator):
         return self._DEFAULT_COMMUNICATION_DIRECTION
 
     def get_phone_number_from(self):
-        return self._DEFAULT_ACCOUNT_ADDRESS
+        return None
 
     def get_phone_number_to(self):
-        return self._DEFAULT_ACCOUNT_ADDRESS
+        return None
 
     def get_message_date_time(self):
         return self._DEFAULT_LONG
