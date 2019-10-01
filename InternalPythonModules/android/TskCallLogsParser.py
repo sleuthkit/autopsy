@@ -37,7 +37,6 @@ class TskCallLogsParser(ResultSetIterator):
         super(TskCallLogsParser, self).__init__(result_set)
         self._DEFAULT_STRING = ""
         self._DEFAULT_DIRECTION = CommunicationDirection.UNKNOWN
-        self._DEFAULT_ADDRESS = None 
         self._DEFAULT_CALL_TYPE = CallMediaType.UNKNOWN
         self._DEFAULT_LONG = -1L
 
@@ -50,10 +49,10 @@ class TskCallLogsParser(ResultSetIterator):
         return self._DEFAULT_DIRECTION 
 
     def get_phone_number_from(self):
-        return self._DEFAULT_ADDRESS 
+        return None
 
     def get_phone_number_to(self):
-        return self._DEFAULT_ADDRESS 
+        return None
 
     def get_call_start_date_time(self):
         return self._DEFAULT_LONG 

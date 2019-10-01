@@ -116,7 +116,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
             contacts_parser = ViberContactsParser(contacts_db)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_address(), 
+                    contacts_parser.get_contact_name(), 
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
@@ -217,16 +217,14 @@ class ViberCallLogsParser(TskCallLogsParser):
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
-            return Account.Address(self.result_set.getString("number"),
-                        self.result_set.getString("number"))
+            return self.result_set.getString("number")
         #Give default value if the call is outgoing, 
         #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
-            return Account.Address(self.result_set.getString("number"),
-                        self.result_set.getString("number"))
+            return self.result_set.getString("number")
         #Give default value if the call is incoming, 
         #the device's # is not stored in the database.
         return super(ViberCallLogsParser, self).get_phone_number_to()
@@ -272,9 +270,8 @@ class ViberContactsParser(TskContactsParser):
              )
         )
     
-    def get_account_address(self):
-        return Account.Address(self.result_set.getString("number"),
-                    self.result_set.getString("name"))
+    def get_contact_name(self):
+        return self.result_set.getString("name")
 
     def get_phone(self):
         return self.result_set.getString("number")
@@ -339,8 +336,7 @@ class ViberMessagesParser(TskMessagesParser):
         return self._VIBER_MESSAGE_TYPE 
 
     def get_phone_number_from(self):
-        return Account.Address(self.result_set.getString("from_number"), 
-                self.result_set.getString("from_number"))
+        return self.result_set.getString("from_number") 
 
     def get_message_direction(self):  
         direction = self.result_set.getInt("direction")
@@ -349,10 +345,7 @@ class ViberMessagesParser(TskMessagesParser):
         return self.OUTGOING
     
     def get_phone_number_to(self):
-        recipients = []
-        for token in self.result_set.getString("recipients").split(","):
-            recipients.append(Account.Address(token, token))
-        return recipients
+        return self.result_set.getString("recipients").split(","):
 
     def get_message_date_time(self):
         #transform from ms to seconds
