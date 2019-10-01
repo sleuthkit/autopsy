@@ -151,6 +151,7 @@ public class ImageUtils {
                 "image/x-ms-bmp", //NON-NLS
                 "image/x-portable-graymap", //NON-NLS
                 "image/x-portable-bitmap", //NON-NLS
+                "image/webp", //NON-NLS
                 "application/x-123")); //TODO: is this correct? -jm //NON-NLS
         SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals); //NON-NLS
 
