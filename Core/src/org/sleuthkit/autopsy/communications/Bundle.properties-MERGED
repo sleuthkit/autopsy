@@ -56,7 +56,6 @@ CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1=Browse
 CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName=Visualize
 CVTTopComponent.vizPanel.TabConstraints.tabTitle_1=Visualize
 VisualizationPanel.fitGraphButton.text=
-VisualizationPanel.jTextArea1.text=Right-click an account in the Browse Accounts table, and select 'Visualize' to begin.
 VisualizationPanel.fitZoomButton.toolTipText=Fit visualization to available space.
 VisualizationPanel.fitZoomButton.text=
 # {0} -  layout name
@@ -92,6 +91,9 @@ VisualizationPanel.forwardButton.text=
 VisualizationPanel.zoomPercentLabel.text=100%
 VisualizationPanel.zoomLabel.text=Zoom:
 VisualizationPanel.snapshotButton.toolTipText=Generate Snapshot report.
+VisualizationPanel.emptyChartTextField.text=To see Visualization, pin an Account from the Browse tab.
+CVTTopComponent.accountsBrowser1.TabConstraints.tabTitle=Browse
+CVTTopComponent.vizPanel1.TabConstraints.tabTitle=Visualize
 VisualizationPanel_action_dialogs_title=Communications
 VisualizationPanel_action_name_text=Snapshot Report
 VisualizationPanel_module_name=Communications

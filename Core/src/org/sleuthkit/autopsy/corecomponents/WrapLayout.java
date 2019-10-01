@@ -32,7 +32,7 @@ import javax.swing.SwingUtilities;
 *  Originally written by Rob Camick
 *  https://tips4java.wordpress.com/2008/11/06/wrap-layout/
 */
-class WrapLayout extends FlowLayout {
+public class WrapLayout extends FlowLayout {
 
         /**
          * Constructs a new <code>WrapLayout</code> with a left alignment and a

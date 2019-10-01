@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -104,6 +105,7 @@ public final class CVTTopComponent extends TopComponent {
         accountsBrowser = new AccountsBrowser();
         vizPanel = new VisualizationPanel();
 
+        setPreferredSize(new Dimension(1750, 1245));
         setLayout(new GridBagLayout());
 
         mainSplitPane.setLeftComponent(filtersPane);
