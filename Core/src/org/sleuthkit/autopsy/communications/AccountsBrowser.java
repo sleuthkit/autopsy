@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -76,8 +77,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     public AccountsBrowser() {
         initComponents();
         
-        jSplitPane1.setResizeWeight(0.5);
-        jSplitPane1.setDividerLocation(0.75);
+
         
         outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
@@ -91,9 +91,23 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
         
+        // set sizes for table so that slider doesn't hide it
+        outlineView.setMinimumSize((new Dimension(200, 200)));
+        outlineView.setPreferredSize((new Dimension(500, 200)));
+        
         relationshipBrowser = new RelationshipBrowser();
+        // NOTE: This appears to not be doing anything....
+        relationshipBrowser.setPreferredSize((new Dimension(1000, 20)));
+        
         jSplitPane1.setRightComponent(relationshipBrowser);
-
+        
+        // Give the relationships area more space
+        jSplitPane1.setDividerLocation(0.25);
+        
+        // when CVT is expanded, give more of the new area to the relationships area. 
+        // Messages tab needs a lot of space
+        jSplitPane1.setResizeWeight(0.25);
+        
         accountsTableEM.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
@@ -179,7 +193,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
         setLayout(new java.awt.BorderLayout());
 
-        jSplitPane1.setDividerLocation(500);
         jSplitPane1.setLeftComponent(outlineView);
 
         add(jSplitPane1, java.awt.BorderLayout.CENTER);

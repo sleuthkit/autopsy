@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Dimension;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
@@ -130,6 +131,11 @@ final public class FiltersPanel extends JPanel {
         initComponents();
 
        initalizeDeviceAccountType();
+       
+       // set min/pref to make slider size appropriately
+       // scrollPane's seem to advertise their minimum as 0
+       scrollPane.setMinimumSize(new Dimension(80, 80));
+       scrollPane.setPreferredSize(new Dimension(300, 300));
 
         deviceRequiredLabel.setVisible(false);
         accountTypeRequiredLabel.setVisible(false);

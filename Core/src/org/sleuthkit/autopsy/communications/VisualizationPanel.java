@@ -230,8 +230,18 @@ final public class VisualizationPanel extends JPanel {
         graphComponent.getGraphControl().addMouseWheelListener(graphMouseListener);
         graphComponent.getGraphControl().addMouseListener(graphMouseListener);
         
+        // set minimums for the slider
+        borderLayoutPanel.setMinimumSize(new Dimension(240, 240));
+        borderLayoutPanel.setPreferredSize(new Dimension(700, 700));
+        
         relationshipBrowser = new RelationshipBrowser();
         splitPane.setRightComponent(relationshipBrowser);
+        
+        // initially split the area between the two
+        // when more area is given, give it ot both sides. Unlike the accounts table,
+        // the graph needs lots of space too.  So, share it equally and let the user adjust
+        splitPane.setResizeWeight(0.5);
+        splitPane.setDividerLocation(0.5);
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(mxEvent.CHANGE, new SelectionListener());
@@ -416,13 +426,11 @@ final public class VisualizationPanel extends JPanel {
 
         setLayout(new BorderLayout());
 
-        splitPane.setResizeWeight(0.5);
-
         borderLayoutPanel.setLayout(new GridBagLayout());
 
         toolbar.setBorder(BorderFactory.createCompoundBorder());
 
-        tbHistoryPanel.setLayout(new GridLayout());
+        tbHistoryPanel.setLayout(new GridLayout(1, 0));
 
         backButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_previous.png"))); // NOI18N
         backButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.text_1")); // NOI18N
@@ -449,7 +457,7 @@ final public class VisualizationPanel extends JPanel {
 
         toolbar.add(tbHistoryPanel);
 
-        tbCleanupPanel.setLayout(new GridLayout());
+        tbCleanupPanel.setLayout(new GridLayout(1, 0));
 
         clearVizButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/broom.png"))); // NOI18N
         clearVizButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.text_1")); // NOI18N
@@ -498,7 +506,7 @@ final public class VisualizationPanel extends JPanel {
 
         toolbar.add(zoomLabelPanel);
 
-        tbZoomButtonPanel.setLayout(new GridLayout());
+        tbZoomButtonPanel.setLayout(new GridLayout(1, 0));
 
         zoomActualButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-actual.png"))); // NOI18N
         zoomActualButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.text")); // NOI18N

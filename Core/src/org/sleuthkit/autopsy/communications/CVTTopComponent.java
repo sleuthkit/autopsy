@@ -81,8 +81,14 @@ public final class CVTTopComponent extends TopComponent {
         CVTEvents.getCVTEventBus().register(accountsBrowser);
         CVTEvents.getCVTEventBus().register(filtersPane);
         
-        mainSplitPane.setResizeWeight(0.5);
-        mainSplitPane.setDividerLocation(0.25);
+        // Ensure filters are shown when CVT opens
+        mainSplitPane.setDividerLocation(300 + mainSplitPane.getInsets().left);
+        
+        // When the window is expanded, give the increase in size to non-filter area
+        // The downside of this low number, is that when the user shrinks the CVT down real small,
+        // the Filter area gets small and won't get bigger until the user manually expands it.
+        // But, I think we shoudl optimize for the CVT starting off too small and the user expanding it.
+        mainSplitPane.setResizeWeight(.05);
     }
 
     @Subscribe
@@ -105,9 +111,10 @@ public final class CVTTopComponent extends TopComponent {
         accountsBrowser = new AccountsBrowser();
         vizPanel = new VisualizationPanel();
 
-        setPreferredSize(new Dimension(1750, 1245));
+        setPreferredSize(new Dimension(1500, 800));
         setLayout(new GridBagLayout());
 
+        mainSplitPane.setPreferredSize(new Dimension(1500, 800));
         mainSplitPane.setLeftComponent(filtersPane);
 
         browseVisualizeTabPane.setFont(new Font("Tahoma", 0, 18)); // NOI18N
