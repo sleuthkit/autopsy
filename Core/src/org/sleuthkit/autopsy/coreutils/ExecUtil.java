@@ -162,8 +162,11 @@ public final class ExecUtil {
      *
      * @param processBuilder           A process builder used to configure and
      *                                 construct the process to be run.
-     * @param terminationCheckInterval The duration of the timeout.
-     * @param units                    The units for the timeout.
+     * @param terminationCheckInterval The interval at which to query the
+     *                                 process terminator to see if the process
+     *                                 should be killed.
+     * @param units                    The units for the termination check
+     *                                 interval.
      * @param terminator               The terminator.
      *
      * @return The exit value of the process.
@@ -183,8 +186,11 @@ public final class ExecUtil {
      * @param processName              The name of the process, for logging
      *                                 purposes.
      * @param process                  The process.
-     * @param terminationCheckInterval The duration of the timeout.
-     * @param units                    The units for the timeout.
+     * @param terminationCheckInterval The interval at which to query the
+     *                                 process terminator to see if the process
+     *                                 should be killed.
+     * @param units                    The units for the termination check
+     *                                 interval.
      * @param terminator               The process terminator.
      *
      * @return The exit value of the process.
