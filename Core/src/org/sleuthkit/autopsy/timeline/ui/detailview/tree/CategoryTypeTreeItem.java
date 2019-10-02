@@ -29,9 +29,9 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
- * EventTreeItem for base event types (file system, misc, web, ...)
+ * EventTreeItem for category event types (file system, misc, web, ...)
  */
-class BaseTypeTreeItem extends EventTypeTreeItem {
+class CategoryTypeTreeItem extends EventTypeTreeItem {
 
     /**
      * A map of the children TreeItems, keyed by EventTypes if the children are
@@ -46,8 +46,8 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    BaseTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
-        super(event.getEventType().getBaseType(), comparator);
+    CategoryTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
+        super(event.getEventType().getCategory(), comparator);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -61,7 +61,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
          * if the stripe and this tree item have the same type, create a
          * description tree item, else create a sub-type tree item
          */
-        if (head.getEventType().getTypeLevel() == TimelineEventType.TypeLevel.SUB_TYPE) {
+        if (head.getEventType().getTypeHierarchyLevel() == TimelineEventType.HierarchyLevel.CATEGORY) {
             descriptionKey = head.getEventType().getDisplayName();
             treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(head, getComparator()));
         } else {
@@ -87,7 +87,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
          * if the stripe and this tree item have the same type, get the child
          * item keyed on event type, else keyed on description.
          */
-        if (head.getEventType().getTypeLevel() == TimelineEventType.TypeLevel.SUB_TYPE) {
+        if (head.getEventType().getTypeHierarchyLevel()== TimelineEventType.HierarchyLevel.CATEGORY) {
             descTreeItem = childMap.get(head.getEventType().getDisplayName());
         } else {
             path.remove(0); //remove head of list if we are going straight to description

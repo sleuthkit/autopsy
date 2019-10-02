@@ -57,6 +57,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * * Explorer Node for a TimelineEvent.
@@ -113,7 +114,7 @@ public class EventNode extends DisplayableItemNode {
 
         properties.put(new NodeProperty<>("icon", Bundle.NodeProperty_displayName_icon(), "icon", true)); // NON-NLS //gets overridden with icon
         properties.put(new TimeProperty("time", Bundle.NodeProperty_displayName_dateTime(), "time ", getDateTimeString()));// NON-NLS
-        properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getFullDescription())); // NON-NLS
+        properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getDescription(TimelineLevelOfDetail.HIGH))); // NON-NLS
         properties.put(new NodeProperty<>("eventType", Bundle.NodeProperty_displayName_eventType(), "event type", event.getEventType().getDisplayName())); // NON-NLS
 
         return sheet;
@@ -127,7 +128,7 @@ public class EventNode extends DisplayableItemNode {
      *         controller's time zone setting.
      */
     private String getDateTimeString() {
-        return new DateTime(event.getStartMillis(), DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
+        return new DateTime(event.getEventTimeInMs(), DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
     }
 
     @Override
@@ -270,7 +271,7 @@ public class EventNode extends DisplayableItemNode {
          * data in the lookup.
          */
             final TimelineEvent eventById = eventsModel.getEventById(eventID);
-        Content file = sleuthkitCase.getContentById(eventById.getFileObjID());
+        Content file = sleuthkitCase.getContentById(eventById.getContentObjID());
 
         if (eventById.getArtifactID().isPresent()) {
             BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());

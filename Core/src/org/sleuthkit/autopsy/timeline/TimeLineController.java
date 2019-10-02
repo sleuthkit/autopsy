@@ -93,6 +93,7 @@ import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -296,9 +297,9 @@ public class TimeLineController {
 
         try {
             InitialZoomState = new ZoomState(filteredEvents.getSpanningInterval(),
-                    TimelineEventType.TypeLevel.BASE_TYPE,
+                    TimelineEventType.HierarchyLevel.CATEGORY,
                     filteredEvents.filterProperty().get(),
-                    TimelineEvent.DescriptionLevel.SHORT);
+                    TimelineLevelOfDetail.LOW);
         } catch (TskCoreException ex) {
             throw new TskCoreException("Error getting spanning interval.", ex);
         }
@@ -492,7 +493,7 @@ public class TimeLineController {
         return topComponent;
     }
 
-    synchronized public void pushEventTypeZoom(TimelineEventType.TypeLevel typeZoomeLevel) {
+    synchronized public void pushEventTypeZoom(TimelineEventType.HierarchyLevel typeZoomeLevel) {
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
@@ -554,7 +555,7 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void pushDescrLOD(TimelineEvent.DescriptionLevel newLOD) {
+    synchronized public void pushDescrLOD(TimelineLevelOfDetail newLOD) {
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withDescrLOD(newLOD));
@@ -564,7 +565,7 @@ public class TimeLineController {
     }
 
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
-    synchronized public void pushTimeAndType(Interval timeRange, TimelineEventType.TypeLevel typeZoom) throws TskCoreException {
+    synchronized public void pushTimeAndType(Interval timeRange, TimelineEventType.HierarchyLevel typeZoom) throws TskCoreException {
         Interval overlappingTimeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
@@ -745,7 +746,7 @@ public class TimeLineController {
             case DATA_ADDED:
                 ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                 if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == TSK_HASHSET_HIT.getTypeID()) {
-                    logFutureException(executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts(), true)),
+                    logFutureException(executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts())),
                             "Error executing task in response to DATA_ADDED event.",
                             "Error executing response to new data.");
                 }
