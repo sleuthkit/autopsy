@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 public final class ExecUtil {
 
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
-    private static final long DEFAULT_TIMEOUT = 5;
-    private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
+    private static final long DEFAULT_CHECK_INTERVAL = 5;
+    private static final TimeUnit DEFAULT_CHECK_INTERVAL_UNITS = TimeUnit.SECONDS;
 
     /**
      * The execute() methods do a wait() with a timeout on the executing process
@@ -153,7 +153,7 @@ public final class ExecUtil {
      * @throws IOException       If an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder, ProcessTerminator terminator) throws SecurityException, IOException {
-        return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
+        return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_CHECK_INTERVAL, ExecUtil.DEFAULT_CHECK_INTERVAL_UNITS, terminator);
     }
 
     /**
