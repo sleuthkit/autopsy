@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  */
 public final class ExecUtil {
 
+    private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private static final long DEFAULT_TIMEOUT = 5;
     private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
 
@@ -116,16 +117,16 @@ public final class ExecUtil {
     }
 
     /**
-     * Runs a process without a timeout and terminator.
+     * Runs a process without a timeout or process terminator.
      *
      * @param processBuilder A process builder used to configure and construct
      *                       the process to be run.
      *
-     * @return the exit value of the process
+     * @return The exit value of the process.
      *
-     * @throws SecurityException if a security manager exists and vetoes any
+     * @throws SecurityException If a security manager exists and vetoes any
      *                           aspect of running the process.
-     * @throws IOException       if an I/O error occurs.
+     * @throws IOException       If an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
         return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
@@ -137,24 +138,24 @@ public final class ExecUtil {
     }
 
     /**
-     * Runs a process using the default timeout and a custom terminator.
+     * Runs a process using the default timeout and a process terminator.
      *
      * @param processBuilder A process builder used to configure and construct
      *                       the process to be run.
      * @param terminator     The terminator.
      *
-     * @return the exit value of the process
+     * @return The exit value of the process.
      *
-     * @throws SecurityException if a security manager exists and vetoes any
+     * @throws SecurityException If a security manager exists and vetoes any
      *                           aspect of running the process.
-     * @throws IOException       if an I/O error occurs.
+     * @throws IOException       If an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder, ProcessTerminator terminator) throws SecurityException, IOException {
         return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
     }
 
     /**
-     * Runs a process using a custom terminator.
+     * Runs a process using a custom timeout and a process terminator.
      *
      * @param processBuilder A process builder used to configure and construct
      *                       the process to be run.
@@ -162,70 +163,42 @@ public final class ExecUtil {
      * @param units          The units for the timeout.
      * @param terminator     The terminator.
      *
-     * @return the exit value of the process
+     * @return The exit value of the process.
      *
-     * @throws SecurityException if a security manager exists and vetoes any
+     * @throws SecurityException If a security manager exists and vetoes any
      *                           aspect of running the process.
-     * @throws IOException       if an I/o error occurs.
+     * @throws IOException       If an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
-        Process process = processBuilder.start();
-        try {
-            do {
-                process.waitFor(timeOut, units);
-                if (process.isAlive() && terminator.shouldTerminateProcess()) {
-                    killProcess(process);
-                    try {
-                        process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
-                    } catch (InterruptedException exx) {
-                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
-                    }
-                }
-            } while (process.isAlive());
-        } catch (InterruptedException ex) {
-            if (process.isAlive()) {
-                killProcess(process);
-            }
-            try {
-                process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
-            } catch (InterruptedException exx) {
-                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
-            }
-            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0)); // NON-NLS
-            Thread.currentThread().interrupt();
-        }
-        return process.exitValue();
-    }
-    
-    /**
-     * Wait for the given process to finish, using the given ProcessTerminator.
-     *
-     * @param command    The command that was used to start the process. Used
-     *                   only for logging purposes.
-     * @param process    The process to wait for.
-     * @param terminator The ProcessTerminator used to determine if the process
-     *                   should be killed.
-     *
-     * @return the exit value of the process
-     *
-     * @throws SecurityException if a security manager exists and vetoes any
-     *                           aspect of running the process.
-     * @throws IOException       if an I/o error occurs.
-     */
-    public static int waitForTermination(String command, Process process, ProcessTerminator terminator) throws SecurityException, IOException {
-        return ExecUtil.waitForTermination(command, process, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
+        return waitForTermination(processBuilder.command().get(0), processBuilder.start(), timeOut, units, terminator);
     }
 
-    private static int waitForTermination(String command, Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
+    /**
+     * Waits for an existing process to finish, a custom timeout and a process
+     * terminator.
+     *
+     * @param processName The name of the process, for logging purposes.
+     * @param process     The process.
+     * @param timeOut     The duration of the timeout.
+     * @param units       The units for the timeout.
+     * @param terminator  The process terminator.
+     *
+     * @return The exit value of the process.
+     *
+     * @throws SecurityException If a security manager exists and vetoes any
+     *                           aspect of running the process.
+     * @throws IOException       If an I/O error occurs.
+     */
+    public static int waitForTermination(String processName, Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         try {
             do {
                 process.waitFor(timeOut, units);
                 if (process.isAlive() && terminator.shouldTerminateProcess()) {
                     killProcess(process);
                     try {
-                        process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
-                    } catch (InterruptedException exx) {
-                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", command));
+                        process.waitFor();
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.WARNING, String.format("Thread running %s was interrupted before the process completed", processName), ex);
                     }
                 }
             } while (process.isAlive());
@@ -236,9 +209,9 @@ public final class ExecUtil {
             try {
                 process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
             } catch (InterruptedException exx) {
-                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", command));
+                logger.log(Level.WARNING, String.format("Thread running %s was interrupted before the process completed", processName), exx);
             }
-            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", command); // NON-NLS
+            logger.log(Level.WARNING, String.format("Thread running %s was interrupted before the process completed", processName), ex);
             Thread.currentThread().interrupt();
         }
         return process.exitValue();
@@ -271,7 +244,9 @@ public final class ExecUtil {
         }
     }
 
-    private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
+    /*
+     * Used by deprecated methods.
+     */
     private Process proc = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
     private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
@@ -287,6 +262,9 @@ public final class ExecUtil {
      * @param params   parameters of the command
      *
      * @return string buffer with captured stdout
+     *
+     * @throws java.io.IOException
+     * @throws java.lang.InterruptedException
      */
     @Deprecated
     public synchronized String execute(final String aCommand, final String... params) throws IOException, InterruptedException {
@@ -333,7 +311,8 @@ public final class ExecUtil {
      * @param aCommand     command to be executed
      * @param params       parameters of the command
      *
-     * @return string buffer with captured stdout
+     * @throws java.io.IOException
+     * @throws java.lang.InterruptedException
      */
     @Deprecated
     public synchronized void execute(final Writer stdoutWriter, final String aCommand, final String... params) throws IOException, InterruptedException {

@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import static java.util.Objects.nonNull;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
@@ -163,7 +164,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             try (BufferedReader log2TimeLineOutpout = new BufferedReader(new InputStreamReader(log2TimeLineProcess.getInputStream()))) {
                 L2TStatusProcessor statusReader = new L2TStatusProcessor(log2TimeLineOutpout, statusHelper, moduleOutputPath);
                 new Thread(statusReader, "log2timeline status reader").start();  //NON-NLS
-                ExecUtil.waitForTermination(LOG2TIMELINE_EXECUTABLE, log2TimeLineProcess, new DataSourceIngestModuleProcessTerminator(context));
+                ExecUtil.waitForTermination(LOG2TIMELINE_EXECUTABLE, log2TimeLineProcess, 5, TimeUnit.SECONDS, new DataSourceIngestModuleProcessTerminator(context));
                 statusReader.cancel();
             }
 
