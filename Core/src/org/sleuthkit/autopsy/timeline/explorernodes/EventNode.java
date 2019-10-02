@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -175,6 +176,26 @@ public class EventNode extends DisplayableItemNode {
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
+    /**
+     * Gets the file, if any, linked to an artifact via a TSK_PATH_ID attribute
+     *
+     * @param artifact The artifact.
+     *
+     * @return An AbstractFile or null.
+     *
+     * @throws TskCoreException
+     */
+    private static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
+        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+        if (pathIDAttribute != null) {
+            long contentID = pathIDAttribute.getValueLong();
+            if (contentID != -1) {
+                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
+            }
+        }
+        return null;
+    }    
+    
     @Override
     public boolean isLeafTypeNode() {
         return true;
