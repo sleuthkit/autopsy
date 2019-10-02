@@ -206,7 +206,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                         Account.Type.FACEBOOK)
                 
                 ## Messages are found in the messages table.
-                ## This query filters messages by msg_type to only get actual conversation messages (msg_type 0 or 8).
+                ## This query filters messages by msg_type to only get actual user created conversation messages (msg_type 0).
                 ## The participant ids can be found in the thread_participants table.
                 ## Participant names are found in thread_users table.
                 ## Joining these tables produces multiple rows per message, one row for each recipient.
@@ -217,7 +217,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                             FROM messages
                             JOIN thread_participants ON messages.thread_key = thread_participants.thread_key
                             JOIN thread_users ON thread_participants.user_key = thread_users.user_key
-                            WHERE msg_type = 0 OR msg_type = 8
+                            WHERE msg_type = 0
                             ORDER BY msg_id
                             """
                 
