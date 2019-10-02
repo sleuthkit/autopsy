@@ -20,7 +20,6 @@ limitations under the License.
 from java.io import File
 from java.lang import Class
 from java.lang import ClassNotFoundException
-from java.lang import IllegalArgumentException
 from java.lang import Long
 from java.lang import String
 from java.sql import ResultSet
@@ -172,13 +171,10 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
 
     ## Adds a recipient to given list
-    def addRecipientToList(self, user_key, fromId, recipientList):
+    def addRecipientToList(self, user_key, recipientList):
         if user_key is not None: 
             recipientId = user_key.replace('FACEBOOK:', '')                    
-            # ensure sender, if known, isn't added to recipientList.
-            if (fromId and (fromId != recipientId)) or (not fromId) :
-                # add recipient to list
-                recipientList.append(recipientId)
+            recipientList.append(recipientId)
             
     ## Analyze messages 
     def analyzeMessages(self, dataSource, fileManager, context):
@@ -259,7 +255,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
                             # Get recipient and add to list
                             self.addRecipientToList(messagesResultSet.getString("user_key"),
-                                                    fromId, recipientIdsList)
+                                                    recipientIdsList)
 
                             timeStamp = messagesResultSet.getLong("timestamp_ms") / 1000
 
@@ -276,7 +272,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
                         else:   # same msgId as last, just collect recipient from current row
                              self.addRecipientToList(messagesResultSet.getString("user_key"),
-                                                    fromId, recipientIdsList)
+                                                    recipientIdsList)
 
     
                     # at the end of the loop, add last message 
@@ -297,9 +293,6 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
             except TskCoreException as ex:
                 self._logger.log(Level.SEVERE, "Failed to add FB Messenger message artifacts.", ex)
                 self._logger.log(Level.SEVERE, traceback.format_exc())
-            except IllegalArgumentException as ex:
-                self._logger.log(Level.WARNING, "Invalid arguments for FB Messenger message artifact.", ex)
-                self._logger.log(Level.WARNING, traceback.format_exc())
             except BlackboardException as ex:
                 self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())

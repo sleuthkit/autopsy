@@ -20,7 +20,6 @@ limitations under the License.
 from java.io import File
 from java.lang import Class
 from java.lang import ClassNotFoundException
-from java.lang import IllegalArgumentException
 from java.lang import Long
 from java.lang import String
 from java.sql import ResultSet
@@ -121,9 +120,6 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
             except TskCoreException as ex:
                 self._logger.log(Level.SEVERE, "Failed to create Zapya message artifacts.", ex)
                 self._logger.log(Level.SEVERE, traceback.format_exc())
-            except IllegalArgumentException as ex:
-                self._logger.log(Level.WARNING, "Invalid arguments for Zapya message artifact.", ex)
-                self._logger.log(Level.WARNING, traceback.format_exc())
             except BlackboardException as ex:
                 self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
