@@ -74,7 +74,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
         
 
     def analyze(self, dataSource, fileManager, context):
-        selfAccountAddress = None
+        selfAccountId = None
         transactionDbs = AppSQLiteDB.findAppDatabases(dataSource, "trans-history-db", True, self._PACKAGE_NAME)
         for transactionDb in transactionDbs:
             try:
@@ -83,13 +83,13 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                 profilesResultSet = transactionDb.runQuery("SELECT device_id, nick_name FROM profile WHERE connect_times = 0")
                 if profilesResultSet:
                     while profilesResultSet.next():
-                        if not selfAccountAddress:
-                            selfAccountAddress = Account.Address(profilesResultSet.getString("device_id"), profilesResultSet.getString("nick_name"))
+                        if not selfAccountId:
+                            selfAccountId = profilesResultSet.getString("device_id")
                 # create artifacts helper
-                if selfAccountAddress is not None:
+                if selfAccountId is not None:
                     transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                             self._MODULE_NAME, transactionDb.getDBFile(),
-                                            Account.Type.XENDER, Account.Type.XENDER, selfAccountAddress )
+                                            Account.Type.XENDER, Account.Type.XENDER, selfAccountId )
                 else:
                     transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                             self._MODULE_NAME, transactionDb.getDBFile(),
@@ -104,15 +104,15 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                 if messagesResultSet is not None:
                     while messagesResultSet.next():
                         direction = CommunicationDirection.UNKNOWN
-                        fromAddress = None
-                        toAdddress = None
+                        fromId = None
+                        toId = None
                     
                         if (messagesResultSet.getInt("c_direction") == 1):
                             direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(messagesResultSet.getString("r_device_id"), messagesResultSet.getString("r_name"))
+                            toId = messagesResultSet.getString("r_device_id")
                         else:
                             direction = CommunicationDirection.INCOMING
-                            fromAddress = Account.Address(messagesResultSet.getString("s_device_id"), messagesResultSet.getString("s_name"))                            
+                            fromId = messagesResultSet.getString("s_device_id")                          
 
                         msgBody = ""    # there is no body.
                         attachments = [messagesResultSet.getString("f_path")]
@@ -122,8 +122,8 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                         messageArtifact = transactionDbHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            toAddress,
+                                                            fromId,
+                                                            toId,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject

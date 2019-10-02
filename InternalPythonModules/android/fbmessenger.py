@@ -105,7 +105,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
         self._MESSAGE_TYPE = "Facebook Messenger"
         self._VERSION = "239.0.0.41"  ## FB version number. Did not find independent version number in FB Messenger
 
-        self.selfAccountAddress = None
+        self.selfAccountId = None
         self.current_case = None
 
     ## Analyze contacts
@@ -121,13 +121,13 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                 ## The device owner's FB account details can be found in the contacts table in a row with added_time_ms of 0.
                 selfAccountResultSet = contactsDb.runQuery("SELECT fbid, display_name FROM contacts WHERE added_time_ms = 0")
                 if selfAccountResultSet:
-                    if not self.selfAccountAddress:
-                        self.selfAccountAddress = Account.Address(selfAccountResultSet.getString("fbid"), selfAccountResultSet.getString("display_name"))
+                    if not self.selfAccountId:
+                        self.selfAccountId = selfAccountResultSet.getString("fbid")
 
-                if self.selfAccountAddress is not None:
+                if self.selfAccountId is not None:
                     contactsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, contactsDb.getDBFile(),
-                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountAddress )
+                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountId )
                 else:
                     contactsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, contactsDb.getDBFile(),
@@ -138,14 +138,15 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                 if contactsResultSet is not None:
                     while contactsResultSet.next():
                         fbid = contactsResultSet.getString("fbid")
-                        contactAddress = Account.Address(contactsResultSet.getString("fbid"), contactsResultSet.getString("display_name"))
+                        contactName = contactsResultSet.getString("display_name")
                         dateCreated = contactsResultSet.getLong("added_time_ms") / 1000
 
                         ## create additional attributes for contact.
                         additionalAttributes = ArrayList();
+                        additionalAttributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, self._MODULE_NAME, fbid))
                         additionalAttributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, self._MODULE_NAME, dateCreated))
 
-                        contactsDBHelper.addContact( contactAddress,    ##  contact account 
+                        contactsDBHelper.addContact( contactName, ##  contact name 
                                                     "", 	## phone
                                                     "", 	## home phone
                                                     "", 	## mobile
@@ -156,7 +157,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                 self._logger.log(Level.WARNING, "Error processing query result for account", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
             except TskCoreException as ex:
-                self._logger.log(Level.SEVERE, "Failed to add Facebook Messenger contact artifacts.", ex)
+                self._logger.log(Level.SEVERE, "Failed to add FB Messenger contact artifacts.", ex)
                 self._logger.log(Level.SEVERE, traceback.format_exc())
             except BlackboardException as ex:
                 self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
@@ -167,24 +168,20 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
 
 
     ## Adds a recipient to given list
-    def addRecipientToList(self, user_key, name, fromAddress, recipientList):
+    def addRecipientToList(self, user_key, recipientList):
         if user_key is not None: 
             recipientId = user_key.replace('FACEBOOK:', '')                    
-            toAddress = Account.Address(recipientId, name)
-            # ensure sender, if known, isn't added to recipientList.
-            if (fromAddress and fromAddress.getUniqueID() != toAddress.getUniqueID()) or (not fromAddress) :
-                # add recipient to list
-                recipientList.append(toAddress)
+            recipientList.append(recipientId)
             
     ## Analyze messages 
     def analyzeMessages(self, dataSource, fileManager, context):
         threadsDbs = AppSQLiteDB.findAppDatabases(dataSource, "threads_db2", True, self._FB_MESSENGER_PACKAGE_NAME)
         for threadsDb in threadsDbs:
             try:
-                if self.selfAccountAddress is not None:
+                if self.selfAccountId is not None:
                     threadsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, threadsDb.getDBFile(),
-                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountAddress )
+                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountId )
                 else:
                     threadsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, threadsDb.getDBFile(),
@@ -210,8 +207,8 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                     oldMsgId = None
 
                     direction = CommunicationDirection.UNKNOWN
-                    fromAddress = None
-                    recipientAddressList = None
+                    fromId = None
+                    recipientIdsList = None
                     timeStamp = -1
                     msgText = ""
                     threadId = ""
@@ -226,8 +223,8 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                 messageArtifact = threadsDBHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            recipientAddressList,
+                                                            fromId,
+                                                            recipientIdsList,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             "",     # subject
@@ -237,25 +234,25 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                             oldMsgId = msgId
 
                             # New message - collect all attributes
-                            recipientAddressList = []
+                            recipientIdsList = []
 
-                            ## get sender address by parsing JSON in sender column
+                            ## get sender id by parsing JSON in sender column
                             senderJsonStr = messagesResultSet.getString("sender")
                             if senderJsonStr is not None: 
                                 sender_dict = json.loads(senderJsonStr)
                                 senderId = sender_dict['user_key']
                                 senderId = senderId.replace('FACEBOOK:', '')
                                 senderName = sender_dict['name']
-                                fromAddress = Account.Address(senderId, senderName)
-                                if senderId == self.selfAccountAddress.getUniqueID():
+                                fromId = senderId
+                                if senderId == self.selfAccountId:
                                     direction = CommunicationDirection.OUTGOING
                                 else:
                                     direction = CommunicationDirection.INCOMING
                                 
 
                             # Get recipient and add to list
-                            self.addRecipientToList(messagesResultSet.getString("user_key"), messagesResultSet.getString("name"),
-                                                    fromAddress, recipientAddressList)
+                            self.addRecipientToList(messagesResultSet.getString("user_key"),
+                                                    recipientIdsList)
 
                             timeStamp = messagesResultSet.getLong("timestamp_ms") / 1000
 
@@ -271,16 +268,16 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                             threadId = messagesResultSet.getString("thread_key")
 
                         else:   # same msgId as last, just collect recipient from current row
-                             self.addRecipientToList(messagesResultSet.getString("user_key"), messagesResultSet.getString("name"),
-                                                    fromAddress, recipientAddressList)
+                             self.addRecipientToList(messagesResultSet.getString("user_key"),
+                                                    recipientIdsList)
 
     
                     # at the end of the loop, add last message 
                     messageArtifact = threadsDBHelper.addMessage( 
                                             self._MESSAGE_TYPE,
                                             direction,
-                                            fromAddress,
-                                            recipientAddressList,
+                                            fromId,
+                                            recipientIdsList,
                                             timeStamp,
                                             MessageReadStatus.UNKNOWN,
                                             "",     # subject

@@ -86,15 +86,15 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                 if transfersResultSet is not None:
                     while transfersResultSet.next():
                         direction = CommunicationDirection.UNKNOWN
-                        fromAddress = None
-                        toAddress = None
+                        fromId = None
+                        toId = None
                     
                         if (transfersResultSet.getInt("direction") == 1):
                             direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(transfersResultSet.getString("device"), transfersResultSet.getString("name") )
+                            toId = transfersResultSet.getString("device")
                         else:
                             direction = CommunicationDirection.INCOMING
-                            fromAddress = Account.Address(transfersResultSet.getString("device"), transfersResultSet.getString("name") )
+                            fromId = transfersResultSet.getString("device")
 
                         msgBody = ""    # there is no body.
                         attachments = [transfersResultSet.getString("path")]
@@ -104,8 +104,8 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                         messageArtifact = transferDbHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            toAddress,
+                                                            fromId,
+                                                            toId,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
