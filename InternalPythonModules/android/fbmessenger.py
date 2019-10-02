@@ -174,9 +174,6 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
             except TskCoreException as ex:
                 self._logger.log(Level.SEVERE, "Failed to add FB Messenger contact artifacts.", ex)
                 self._logger.log(Level.SEVERE, traceback.format_exc())
-            except IllegalArgumentException as ex:
-                self._logger.log(Level.WARNING, "Invalid arguments for FB Messenger contact artifact.", ex)
-                self._logger.log(Level.WARNING, traceback.format_exc())
             except BlackboardException as ex:
                 self._logger.log(Level.WARNING, "Failed to post artifacts.", ex)
                 self._logger.log(Level.WARNING, traceback.format_exc())
