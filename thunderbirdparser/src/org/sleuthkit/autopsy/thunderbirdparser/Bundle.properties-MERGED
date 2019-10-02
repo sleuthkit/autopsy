@@ -12,6 +12,8 @@ PstParser.noOpenCase.errMsg=Exception while getting open case.
 PstParser.parse.errMsg.failedToParseNMsgs=Failed to extract {0} email messages.
 PstParser.extractAttch.errMsg.failedToExtractToDisk=Failed to extract PST attachment to disk: {0}
 ThunderbirdMboxFileIngestModule.addArtifact.indexError.message=Failed to index email message detected artifact for keyword search.
+# {0} - file name
+# {1} - file ID
 ThunderbirdMboxFileIngestModule.errorMessage.outOfDiskSpace=Out of disk space. Cannot copy '{0}' (id={1}) to parse.
 ThunderbirdMboxFileIngestModule.moduleName=Email Parser
 ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case.
