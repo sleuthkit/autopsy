@@ -80,6 +80,21 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                     --- A sender column - this is a JSON structure which has a the FB user key of sender.
                     --- A attachments column - a JSON structure that has details of the attachments,
                     --- A msg_type column: message type - indicates whether its a text/mms message or a audio/video call
+                        Following values have been observed:
+                         -1:  UNKNOWN - need more research, have no meaningful text though.
+                              observed for 1-to-1, Group message hreads as well as Montage (wall messages)
+                          0:  User messages in 1-to-1, Group and montage threads
+                          8:  System generated messages in 1-to-1, Group and montage threads
+                              e.g. "You created a the group", "You can now talk to XYZ".....
+                          9:  System generated event records for one to one calls ??
+                              * have no text,
+                              * admin_text_thread_rtc_event has the specific event
+                                  "one-to-one-call-ended", "missed-call"  (havent seen a "one-to-one-call-started" event??)
+                          203: System generated event records for group calls ??
+                                * have no text,
+                                * admin_text_thread_rtc_event has the specific event
+                                  "group-call-started", "group-call_ended"
+                    --- A admin_text_thread_rtc_event column - has specific text events such as- "one-on-one-call-ended"      
                     --- A thread_key column - identifies the message thread
                     --- A timestamp_ms column - date/time message was sent
                     --- A text column - message text, if applicable
@@ -191,17 +206,18 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                         Account.Type.FACEBOOK)
                 
                 ## Messages are found in the messages table.
+                ## This query filters messages by msg_type to only get actual conversation messages (msg_type 0 or 8).
                 ## The participant ids can be found in the thread_participants table.
                 ## Participant names are found in thread_users table.
                 ## Joining these tables produces multiple rows per message, one row for each recipient.
-                ## The result set is processed to collect the multiple recipients for a given message.
-                    
+                ## The result set is processed to collect the multiple recipients for a given message.    
                 sqlString = """
-                            SELECT msg_id, text, sender, timestamp_ms, messages.thread_key as thread_key, 
+                            SELECT msg_id, text, sender, timestamp_ms, msg_type, messages.thread_key as thread_key, 
                                  snippet, thread_participants.user_key as user_key, thread_users.name as name
                             FROM messages
                             JOIN thread_participants ON messages.thread_key = thread_participants.thread_key
                             JOIN thread_users ON thread_participants.user_key = thread_users.user_key
+                            WHERE msg_type = 0 OR msg_type = 8
                             ORDER BY msg_id
                             """
                 
