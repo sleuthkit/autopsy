@@ -117,7 +117,8 @@ public final class ExecUtil {
     }
 
     /**
-     * Runs a process without a timeout or process terminator.
+     * Runs a process without a termination check interval or process
+     * terminator.
      *
      * @param processBuilder A process builder used to configure and construct
      *                       the process to be run.
@@ -138,7 +139,8 @@ public final class ExecUtil {
     }
 
     /**
-     * Runs a process using the default timeout and a process terminator.
+     * Runs a process using the default termination check interval and a process
+     * terminator.
      *
      * @param processBuilder A process builder used to configure and construct
      *                       the process to be run.
@@ -155,13 +157,14 @@ public final class ExecUtil {
     }
 
     /**
-     * Runs a process using a custom timeout and a process terminator.
+     * Runs a process using a custom termination check interval and a process
+     * terminator.
      *
-     * @param processBuilder A process builder used to configure and construct
-     *                       the process to be run.
-     * @param timeOut        The duration of the timeout.
-     * @param units          The units for the timeout.
-     * @param terminator     The terminator.
+     * @param processBuilder           A process builder used to configure and
+     *                                 construct the process to be run.
+     * @param terminationCheckInterval The duration of the timeout.
+     * @param units                    The units for the timeout.
+     * @param terminator               The terminator.
      *
      * @return The exit value of the process.
      *
@@ -169,19 +172,20 @@ public final class ExecUtil {
      *                           aspect of running the process.
      * @throws IOException       If an I/O error occurs.
      */
-    public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
-        return waitForTermination(processBuilder.command().get(0), processBuilder.start(), timeOut, units, terminator);
+    public static int execute(ProcessBuilder processBuilder, long terminationCheckInterval, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
+        return waitForTermination(processBuilder.command().get(0), processBuilder.start(), terminationCheckInterval, units, terminator);
     }
 
     /**
-     * Waits for an existing process to finish, a custom timeout and a process
-     * terminator.
+     * Waits for an existing process to finish, using a custom termination check
+     * interval and a process terminator.
      *
-     * @param processName The name of the process, for logging purposes.
-     * @param process     The process.
-     * @param timeOut     The duration of the timeout.
-     * @param units       The units for the timeout.
-     * @param terminator  The process terminator.
+     * @param processName              The name of the process, for logging
+     *                                 purposes.
+     * @param process                  The process.
+     * @param terminationCheckInterval The duration of the timeout.
+     * @param units                    The units for the timeout.
+     * @param terminator               The process terminator.
      *
      * @return The exit value of the process.
      *
@@ -189,10 +193,10 @@ public final class ExecUtil {
      *                           aspect of running the process.
      * @throws IOException       If an I/O error occurs.
      */
-    public static int waitForTermination(String processName, Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
+    public static int waitForTermination(String processName, Process process, long terminationCheckInterval, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         try {
             do {
-                process.waitFor(timeOut, units);
+                process.waitFor(terminationCheckInterval, units);
                 if (process.isAlive() && terminator.shouldTerminateProcess()) {
                     killProcess(process);
                     try {
