@@ -43,9 +43,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -61,7 +64,6 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -86,7 +88,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JSplitPane;
+import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
@@ -96,7 +98,6 @@ import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
 import org.jdesktop.layout.GroupLayout;
-import org.jdesktop.layout.LayoutStyle;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -112,6 +113,7 @@ import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.corecomponents.WrapLayout;
 /**
  * A panel that goes in the Visualize tab of the Communications Visualization
  * Tool. Hosts an JGraphX mxGraphComponent that implements the communications
@@ -160,7 +162,8 @@ final public class VisualizationPanel extends JPanel {
     private final StateManager stateManager;
 
     @NbBundle.Messages("VisalizationPanel.paintingError=Problem painting visualization.")
-    public VisualizationPanel() {
+    public VisualizationPanel(RelationshipBrowser relationshipBrowser) {
+        this.relationshipBrowser = relationshipBrowser;
         initComponents();
         //initialize invisible JFXPanel that is used to show JFXNotifications over this window.
         notificationsJFXPanel.setScene(new Scene(new Pane()));
@@ -220,9 +223,6 @@ final public class VisualizationPanel extends JPanel {
         final GraphMouseListener graphMouseListener = new GraphMouseListener();
         graphComponent.getGraphControl().addMouseWheelListener(graphMouseListener);
         graphComponent.getGraphControl().addMouseListener(graphMouseListener);
-        
-        relationshipBrowser = new RelationshipBrowser();
-        splitPane.setRightComponent(relationshipBrowser);
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(mxEvent.CHANGE, new SelectionListener());
@@ -247,6 +247,8 @@ final public class VisualizationPanel extends JPanel {
         stateManager = new StateManager(pinnedAccountModel);
 
         setStateButtonsEnabled();
+        
+        toolbar.setLayout(new WrapLayout(FlowLayout.LEFT));
     }
     
     @Subscribe
@@ -373,31 +375,28 @@ final public class VisualizationPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        splitPane = new JSplitPane();
+        jSeparator4 = new JSeparator();
         borderLayoutPanel = new JPanel();
         placeHolderPanel = new JPanel();
         jTextArea1 = new JTextArea();
-        toolbar = new JPanel();
-        fastOrganicLayoutButton = new JButton();
-        zoomOutButton = new JButton();
-        zoomInButton = new JButton();
-        zoomActualButton = new JButton();
-        fitZoomButton = new JButton();
-        zoomLabel = new JLabel();
-        zoomPercentLabel = new JLabel();
-        clearVizButton = new JButton();
-        jSeparator2 = new JToolBar.Separator();
+        notificationsJFXPanel = new JFXPanel();
+        toolbar = new JToolBar();
         backButton = new JButton();
         forwardButton = new JButton();
-        snapshotButton = new JButton();
         jSeparator3 = new JToolBar.Separator();
-        jSeparator4 = new JToolBar.Separator();
-        notificationsJFXPanel = new JFXPanel();
+        clearVizButton = new JButton();
+        fastOrganicLayoutButton = new JButton();
+        jSeparator2 = new JToolBar.Separator();
+        zoomLabel = new JLabel();
+        zoomPercentLabel = new JLabel();
+        zoomOutButton = new JButton();
+        fitZoomButton = new JButton();
+        zoomActualButton = new JButton();
+        zoomInButton = new JButton();
+        jSeparator1 = new JToolBar.Separator();
+        snapshotButton = new JButton();
 
         setLayout(new BorderLayout());
-
-        splitPane.setDividerLocation(800);
-        splitPane.setResizeWeight(0.5);
 
         borderLayoutPanel.setLayout(new BorderLayout());
 
@@ -411,9 +410,9 @@ final public class VisualizationPanel extends JPanel {
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(250, Short.MAX_VALUE)
+                .addContainerGap(315, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(423, Short.MAX_VALUE))
+                .addContainerGap(482, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
@@ -423,12 +422,72 @@ final public class VisualizationPanel extends JPanel {
         );
 
         borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
+        borderLayoutPanel.add(notificationsJFXPanel, BorderLayout.PAGE_END);
+
+        add(borderLayoutPanel, BorderLayout.CENTER);
+
+        toolbar.setRollover(true);
+
+        backButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_previous.png"))); // NOI18N
+        backButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.text_1")); // NOI18N
+        backButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.toolTipText")); // NOI18N
+        backButton.setFocusable(false);
+        backButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        backButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        backButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                backButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(backButton);
+
+        forwardButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_next.png"))); // NOI18N
+        forwardButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.text")); // NOI18N
+        forwardButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.toolTipText")); // NOI18N
+        forwardButton.setFocusable(false);
+        forwardButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        forwardButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        forwardButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                forwardButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(forwardButton);
+        toolbar.add(jSeparator3);
+
+        clearVizButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/broom.png"))); // NOI18N
+        clearVizButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.text_1")); // NOI18N
+        clearVizButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.toolTipText")); // NOI18N
+        clearVizButton.setActionCommand(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.actionCommand")); // NOI18N
+        clearVizButton.setFocusable(false);
+        clearVizButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        clearVizButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        clearVizButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                clearVizButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(clearVizButton);
 
         fastOrganicLayoutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
         fastOrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.text")); // NOI18N
         fastOrganicLayoutButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.toolTipText")); // NOI18N
         fastOrganicLayoutButton.setFocusable(false);
+        fastOrganicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
         fastOrganicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        fastOrganicLayoutButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                fastOrganicLayoutButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(fastOrganicLayoutButton);
+        toolbar.add(jSeparator2);
+
+        zoomLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomLabel.text")); // NOI18N
+        toolbar.add(zoomLabel);
+
+        zoomPercentLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomPercentLabel.text")); // NOI18N
+        toolbar.add(zoomPercentLabel);
 
         zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
         zoomOutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.text")); // NOI18N
@@ -441,30 +500,7 @@ final public class VisualizationPanel extends JPanel {
                 zoomOutButtonActionPerformed(evt);
             }
         });
-
-        zoomInButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-in-green.png"))); // NOI18N
-        zoomInButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.text")); // NOI18N
-        zoomInButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.toolTipText")); // NOI18N
-        zoomInButton.setFocusable(false);
-        zoomInButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        zoomInButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-        zoomInButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                zoomInButtonActionPerformed(evt);
-            }
-        });
-
-        zoomActualButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-actual.png"))); // NOI18N
-        zoomActualButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.text")); // NOI18N
-        zoomActualButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.toolTipText")); // NOI18N
-        zoomActualButton.setFocusable(false);
-        zoomActualButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        zoomActualButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-        zoomActualButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                zoomActualButtonActionPerformed(evt);
-            }
-        });
+        toolbar.add(zoomOutButton);
 
         fitZoomButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-fit.png"))); // NOI18N
         fitZoomButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.text")); // NOI18N
@@ -477,116 +513,49 @@ final public class VisualizationPanel extends JPanel {
                 fitZoomButtonActionPerformed(evt);
             }
         });
+        toolbar.add(fitZoomButton);
 
-        zoomLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomLabel.text")); // NOI18N
-
-        zoomPercentLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomPercentLabel.text")); // NOI18N
-
-        clearVizButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/broom.png"))); // NOI18N
-        clearVizButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.text_1")); // NOI18N
-        clearVizButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.toolTipText")); // NOI18N
-        clearVizButton.setActionCommand(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.actionCommand")); // NOI18N
-        clearVizButton.addActionListener(new ActionListener() {
+        zoomActualButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-actual.png"))); // NOI18N
+        zoomActualButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.text")); // NOI18N
+        zoomActualButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.toolTipText")); // NOI18N
+        zoomActualButton.setFocusable(false);
+        zoomActualButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomActualButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        zoomActualButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                clearVizButtonActionPerformed(evt);
+                zoomActualButtonActionPerformed(evt);
             }
         });
+        toolbar.add(zoomActualButton);
 
-        jSeparator2.setOrientation(SwingConstants.VERTICAL);
-
-        backButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_previous.png"))); // NOI18N
-        backButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.text_1")); // NOI18N
-        backButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.toolTipText")); // NOI18N
-        backButton.addActionListener(new ActionListener() {
+        zoomInButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-in-green.png"))); // NOI18N
+        zoomInButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.text")); // NOI18N
+        zoomInButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.toolTipText")); // NOI18N
+        zoomInButton.setFocusable(false);
+        zoomInButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomInButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        zoomInButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                backButtonActionPerformed(evt);
+                zoomInButtonActionPerformed(evt);
             }
         });
-
-        forwardButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_next.png"))); // NOI18N
-        forwardButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.text")); // NOI18N
-        forwardButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.toolTipText")); // NOI18N
-        forwardButton.setHorizontalTextPosition(SwingConstants.LEADING);
-        forwardButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                forwardButtonActionPerformed(evt);
-            }
-        });
+        toolbar.add(zoomInButton);
+        toolbar.add(jSeparator1);
 
         snapshotButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/image.png"))); // NOI18N
         snapshotButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapshotButton.text_1")); // NOI18N
         snapshotButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapshotButton.toolTipText")); // NOI18N
+        snapshotButton.setFocusable(false);
+        snapshotButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        snapshotButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         snapshotButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 snapshotButtonActionPerformed(evt);
             }
         });
+        toolbar.add(snapshotButton);
 
-        jSeparator3.setOrientation(SwingConstants.VERTICAL);
-
-        jSeparator4.setOrientation(SwingConstants.VERTICAL);
-
-        GroupLayout toolbarLayout = new GroupLayout(toolbar);
-        toolbar.setLayout(toolbarLayout);
-        toolbarLayout.setHorizontalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(toolbarLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(backButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(forwardButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(jSeparator4, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(fastOrganicLayoutButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(clearVizButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(jSeparator2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(zoomLabel)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(zoomPercentLabel)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(zoomOutButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(zoomInButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(jSeparator3, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(snapshotButton)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        toolbarLayout.setVerticalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(toolbarLayout.createSequentialGroup()
-                .add(3, 3, 3)
-                .add(toolbarLayout.createParallelGroup(GroupLayout.CENTER)
-                    .add(fastOrganicLayoutButton)
-                    .add(zoomOutButton)
-                    .add(zoomInButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(zoomActualButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(fitZoomButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(zoomLabel)
-                    .add(zoomPercentLabel)
-                    .add(clearVizButton)
-                    .add(jSeparator2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(backButton)
-                    .add(forwardButton)
-                    .add(snapshotButton)
-                    .add(jSeparator3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jSeparator4, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(3, 3, 3))
-        );
-
-        borderLayoutPanel.add(toolbar, BorderLayout.PAGE_START);
-        borderLayoutPanel.add(notificationsJFXPanel, BorderLayout.PAGE_END);
-
-        splitPane.setLeftComponent(borderLayoutPanel);
-
-        add(splitPane, BorderLayout.CENTER);
+        add(toolbar, BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
 
     private void fitZoomButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fitZoomButtonActionPerformed
@@ -725,6 +694,10 @@ final public class VisualizationPanel extends JPanel {
             logger.log(Level.WARNING, "Unable to add report to currenct case", ex); //NON-NLS
         }
     }//GEN-LAST:event_snapshotButtonActionPerformed
+
+    private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
 
     private void fitGraph() {
         graphComponent.zoomTo(1, true);
@@ -883,15 +856,15 @@ final public class VisualizationPanel extends JPanel {
     private JButton fastOrganicLayoutButton;
     private JButton fitZoomButton;
     private JButton forwardButton;
+    private JToolBar.Separator jSeparator1;
     private JToolBar.Separator jSeparator2;
     private JToolBar.Separator jSeparator3;
-    private JToolBar.Separator jSeparator4;
+    private JSeparator jSeparator4;
     private JTextArea jTextArea1;
     private JFXPanel notificationsJFXPanel;
     private JPanel placeHolderPanel;
     private JButton snapshotButton;
-    private JSplitPane splitPane;
-    private JPanel toolbar;
+    private JToolBar toolbar;
     private JButton zoomActualButton;
     private JButton zoomInButton;
     private JLabel zoomLabel;

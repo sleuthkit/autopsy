@@ -65,7 +65,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
     private final ExplorerManager accountsTableEM = new ExplorerManager();
     
-    final RelationshipBrowser relationshipBrowser;
+    final private RelationshipBrowser relationshipBrowser;
 
     /*
      * This lookup proxies the selection lookup of both he accounts table and
@@ -73,11 +73,9 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
      */
     private final ProxyLookup proxyLookup;
 
-    public AccountsBrowser() {
+    public AccountsBrowser(RelationshipBrowser relationshipBrowser) {
+        this.relationshipBrowser = relationshipBrowser;
         initComponents();
-        
-        jSplitPane1.setResizeWeight(0.5);
-        jSplitPane1.setDividerLocation(0.75);
         
         outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
@@ -90,9 +88,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
-        
-        relationshipBrowser = new RelationshipBrowser();
-        jSplitPane1.setRightComponent(relationshipBrowser);
 
         accountsTableEM.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
@@ -174,20 +169,14 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSplitPane1 = new javax.swing.JSplitPane();
         outlineView = new org.openide.explorer.view.OutlineView();
 
         setLayout(new java.awt.BorderLayout());
-
-        jSplitPane1.setDividerLocation(500);
-        jSplitPane1.setLeftComponent(outlineView);
-
-        add(jSplitPane1, java.awt.BorderLayout.CENTER);
+        add(outlineView, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JSplitPane jSplitPane1;
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 
