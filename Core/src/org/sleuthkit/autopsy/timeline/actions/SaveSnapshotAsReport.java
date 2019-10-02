@@ -33,13 +33,11 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
-import org.controlsfx.control.HyperlinkLabel;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -47,11 +45,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.snapshot.SnapShotReportWriter;
 import org.sleuthkit.datamodel.TskCoreException;
-import javafx.application.Platform;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
@@ -62,7 +58,6 @@ public class SaveSnapshotAsReport extends Action {
 
     private static final Logger LOGGER = Logger.getLogger(SaveSnapshotAsReport.class.getName());
     private static final Image SNAP_SHOT = new Image("org/sleuthkit/autopsy/timeline/images/image.png", 16, 16, true, true); //NON_NLS
-    private static final ButtonType OPEN = new ButtonType(Bundle.OpenReportAction_DisplayName(), ButtonBar.ButtonData.NO);
     private static final ButtonType OK = new ButtonType(ButtonType.OK.getText(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
     private final Case currentCase;
