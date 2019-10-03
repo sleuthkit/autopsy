@@ -66,7 +66,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEvent;
@@ -81,6 +80,7 @@ import org.sleuthkit.datamodel.TimelineFilter.HideKnownFilter;
 import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TagsFilter;
 import org.sleuthkit.datamodel.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * This class acts as the model for a TimelineView
@@ -112,8 +112,8 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper<RootFilterState> requestedFilter = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<ZoomState> requestedZoomState = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyObjectWrapper< TimelineEventType.TypeLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(TimelineEventType.TypeLevel.BASE_TYPE);
-    private final ReadOnlyObjectWrapper< TimelineEvent.DescriptionLevel> requestedLOD = new ReadOnlyObjectWrapper<>(TimelineEvent.DescriptionLevel.SHORT);
+    private final ReadOnlyObjectWrapper<TimelineEventType.HierarchyLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(TimelineEventType.HierarchyLevel.CATEGORY);
+    private final ReadOnlyObjectWrapper<TimelineLevelOfDetail> requestedLOD = new ReadOnlyObjectWrapper<>(TimelineLevelOfDetail.LOW);
     // end Filter and zoome state
 
     //caches 
@@ -121,7 +121,9 @@ public final class FilteredEventsModel {
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
     private final LoadingCache<ZoomState, Map<TimelineEventType, Long>> eventCountsCache;
-    /** Map from datasource id to datasource name. */
+    /**
+     * Map from datasource id to datasource name.
+     */
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     // end caches
 
@@ -152,9 +154,9 @@ public final class FilteredEventsModel {
                 .build(new CacheLoaderImpl<>(this::countEventsByType));
 
         maxCache = CacheBuilder.newBuilder()
-                .build(new CacheLoaderImpl<>(ignored -> eventManager.getMaxTime()));
+                .build(new CacheLoaderImpl<>(ignored -> eventManager.getMaxEventTime()));
         minCache = CacheBuilder.newBuilder()
-                .build(new CacheLoaderImpl<>(ignored -> eventManager.getMinTime()));
+                .build(new CacheLoaderImpl<>(ignored -> eventManager.getMinEventTime()));
 
         InvalidationListener filterSyncListener = observable -> {
             RootFilterState rootFilter = filterProperty().get();
@@ -280,7 +282,7 @@ public final class FilteredEventsModel {
         return requestedTimeRange.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<TimelineEvent.DescriptionLevel> descriptionLODProperty() {
+    synchronized public ReadOnlyObjectProperty<TimelineLevelOfDetail> descriptionLODProperty() {
         return requestedLOD.getReadOnlyProperty();
     }
 
@@ -288,7 +290,7 @@ public final class FilteredEventsModel {
         return requestedFilter.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<TimelineEventType.TypeLevel> eventTypeZoomProperty() {
+    synchronized public ReadOnlyObjectProperty<TimelineEventType.HierarchyLevel> eventTypeZoomProperty() {
         return requestedTypeZoom.getReadOnlyProperty();
     }
 
@@ -301,7 +303,7 @@ public final class FilteredEventsModel {
         return getZoomState().getTimeRange();
     }
 
-    synchronized public TimelineEvent.DescriptionLevel getDescriptionLOD() {
+    synchronized public TimelineLevelOfDetail getDescriptionLOD() {
         return getZoomState().getDescriptionLOD();
     }
 
@@ -309,11 +311,12 @@ public final class FilteredEventsModel {
         return getZoomState().getFilterState();
     }
 
-    synchronized public TimelineEventType.TypeLevel getEventTypeZoom() {
+    synchronized public TimelineEventType.HierarchyLevel getEventTypeZoom() {
         return getZoomState().getTypeZoomLevel();
     }
 
-    /** Get the default filter used at startup.
+    /**
+     * Get the default filter used at startup.
      *
      * @return the default filter used at startup
      */
@@ -385,7 +388,7 @@ public final class FilteredEventsModel {
     public Map<TimelineEventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
 
         final RootFilterState filter;
-        final TimelineEventType.TypeLevel typeZoom;
+        final TimelineEventType.HierarchyLevel typeZoom;
         synchronized (this) {
             filter = getFilterState();
             typeZoom = getEventTypeZoom();
@@ -453,39 +456,40 @@ public final class FilteredEventsModel {
     synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) throws TskCoreException {
         ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
-        Set<Long> updatedEventIDs = addTag(content.getId(), null, contentTag);
+        Set<Long> updatedEventIDs = eventManager.updateEventsForContentTagAdded(content);
+        if (isNotEmpty(updatedEventIDs)) {
+            invalidateCaches(updatedEventIDs);
+        }
         return postTagsAdded(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) throws TskCoreException {
         BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
-        Set<Long> updatedEventIDs = addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);
+        Set<Long> updatedEventIDs = eventManager.updateEventsForArtifactTagAdded(artifact);
+        if (isNotEmpty(updatedEventIDs)) {
+            invalidateCaches(updatedEventIDs);
+        }
         return postTagsAdded(updatedEventIDs);
     }
 
     synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) throws TskCoreException {
         DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
-
         Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
-        boolean isContentTagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-        boolean isArtifactTagged = false;
-        
-        if(content instanceof BlackboardArtifact) {
-            isArtifactTagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact((BlackboardArtifact)content).isEmpty() == false;
+        Set<Long> updatedEventIDs = eventManager.updateEventsForContentTagDeleted(content);
+        if (isNotEmpty(updatedEventIDs)) {
+            invalidateCaches(updatedEventIDs);
         }
-        
-        Set<Long> updatedEventIDs = deleteTag(content.getId(), null, deletedTagInfo.getTagID(), isArtifactTagged || isContentTagged);
         return postTagsDeleted(updatedEventIDs);
     }
 
     synchronized public boolean handleArtifactTagDeleted(BlackBoardArtifactTagDeletedEvent evt) throws TskCoreException {
         DeletedBlackboardArtifactTagInfo deletedTagInfo = evt.getDeletedTagInfo();
-
         BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
-        boolean isArtifactTagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-        boolean isContentTagged = autoCase.getServices().getTagsManager().getContentTagsByContent(artifact).isEmpty() == false;
-        Set<Long> updatedEventIDs = deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), isArtifactTagged || isContentTagged);
+        Set<Long> updatedEventIDs = eventManager.updateEventsForArtifactTagDeleted(artifact);
+        if (isNotEmpty(updatedEventIDs)) {
+            invalidateCaches(updatedEventIDs);
+        }
         return postTagsDeleted(updatedEventIDs);
     }
 
@@ -507,7 +511,7 @@ public final class FilteredEventsModel {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Set<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
-        return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
+        return eventManager.getEventIDsForContent(file, includeDerivedArtifacts);
     }
 
     /**
@@ -599,26 +603,11 @@ public final class FilteredEventsModel {
         return eventManager.getEventTypes();
     }
 
-    synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, true);
-        if (isNotEmpty(updatedEventIDs)) {
-            invalidateCaches(updatedEventIDs);
-        }
-        return updatedEventIDs;
-    }
-
-    synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, tagged);
-        if (isNotEmpty(updatedEventIDs)) {
-            invalidateCaches(updatedEventIDs);
-        }
-        return updatedEventIDs;
-    }
-
-    synchronized public Set<Long> setHashHit(Collection<BlackboardArtifact> artifacts, boolean hasHashHit) throws TskCoreException {
+    synchronized public Set<Long> setHashHit(Collection<BlackboardArtifact> artifacts) throws TskCoreException {
         Set<Long> updatedEventIDs = new HashSet<>();
         for (BlackboardArtifact artifact : artifacts) {
-            updatedEventIDs.addAll(eventManager.setEventsHashed(artifact.getObjectID(), hasHashHit));
+            Content content = autoCase.getSleuthkitCase().getContentById(artifact.getObjectID());
+            updatedEventIDs.addAll(eventManager.updateEventsForHashSetHit(content));
         }
         if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);

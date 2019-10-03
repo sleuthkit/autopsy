@@ -94,15 +94,15 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                 if historyResultSet is not None:
                     while historyResultSet.next():
                         direction = ""
-                        fromAddress = None
-                        toAddress = None
+                        fromId = None
+                        toId = None
                         
                         if (historyResultSet.getInt("history_type") == 1):
                             direction = CommunicationDirection.INCOMING
-                            fromAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
+                            fromId = historyResultSet.getString("device_id")
                         else:
                             direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
+                            toId = historyResultSet.getString("device_id")
                             
                         msgBody = ""    # there is no body.
                         attachments = [historyResultSet.getString("file_path")]
@@ -112,8 +112,8 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                         messageArtifact = historyDbHelper.addMessage(
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            toAddress,
+                                                            fromId,
+                                                            toId,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject

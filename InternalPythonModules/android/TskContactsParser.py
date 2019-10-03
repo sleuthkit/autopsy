@@ -29,10 +29,9 @@ class TskContactsParser(ResultSetIterator):
     def __init__(self, result_set):
         super(TskContactsParser, self).__init__(result_set)
         self._DEFAULT_VALUE = ""
-        self._DEFAULT_ACCOUNT_ADDRESS = None
 
-    def get_account_address(self):
-        return self._DEFAULT_ACCOUNT_ADDRESS
+    def get_contact_name(self):
+        return self._DEFAULT_VALUE
 
     def get_phone(self):
         return self._DEFAULT_VALUE
@@ -45,3 +44,6 @@ class TskContactsParser(ResultSetIterator):
     
     def get_email(self):
         return self._DEFAULT_VALUE
+    
+    def get_other_attributes(self):
+        return None

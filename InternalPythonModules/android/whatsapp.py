@@ -167,14 +167,15 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
 
     def parse_contacts(self, contacts_db, helper):
         try:
-            contacts_parser = WhatsAppContactsParser(contacts_db)
+            contacts_parser = WhatsAppContactsParser(contacts_db, self._PARSER_NAME)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_address(), 
+                    contacts_parser.get_contact_name(), 
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
+                    contacts_parser.get_email(),
+                    contacts_parser.get_other_attributes()
                 )
             contacts_parser.close()
         except SQLException as ex:
@@ -295,16 +296,14 @@ class WhatsAppGroupCallLogsParser(TskCallLogsParser):
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
             sender = self.result_set.getString("from_id")
-            return Account.Address(sender, sender)
+            return sender
         return super(WhatsAppGroupCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
+            #group_members column stores comma seperated list of groups or single contact
             group = self.result_set.getString("group_members")
-            members = []
-            for token in group.split(","):
-                members.append(Account.Address(token, token))
-            return members
+            return group.split(",")
         return super(WhatsAppGroupCallLogsParser, self).get_phone_number_to()
 
     def get_call_start_date_time(self):
@@ -354,13 +353,13 @@ class WhatsAppSingleCallLogsParser(TskCallLogsParser):
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
             sender = self.result_set.getString("num")
-            return Account.Address(sender, sender)
+            return sender
         return super(WhatsAppSingleCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
             to = self.result_set.getString("num") 
-            return Account.Address(to, to)
+            return to
         return super(WhatsAppSingleCallLogsParser, self).get_phone_number_to()
 
     def get_call_start_date_time(self):
@@ -384,7 +383,7 @@ class WhatsAppContactsParser(TskContactsParser):
         a default value inherited from the super class. 
     """
 
-    def __init__(self, contact_db):
+    def __init__(self, contact_db, analyzer):
         super(WhatsAppContactsParser, self).__init__(contact_db.runQuery(
                  """ 
                      SELECT jid, 
@@ -409,13 +408,20 @@ class WhatsAppContactsParser(TskContactsParser):
                  """
                   )
         )
+
+        self._PARENT_ANALYZER = analyzer
     
-    def get_account_address(self):
-        return Account.Address(self.result_set.getString("jid"),
-                    self.result_set.getString("name"))
+    def get_contact_name(self):
+        return self.result_set.getString("name")
 
     def get_phone(self):
         return self.result_set.getString("number")
+
+    def get_other_attributes(self):
+        return [BlackboardAttribute(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, 
+                    self._PARENT_ANALYZER, 
+                    self.result_set.getString("jid"))]
 
 class WhatsAppMessagesParser(TskMessagesParser):
     """
@@ -468,15 +474,9 @@ class WhatsAppMessagesParser(TskMessagesParser):
             group = self.result_set.getString("recipients")
             if group is not None:
                 group = group.split(",")
-                
-                recipients = []
-                for token in group:
-                    recipients.append(Account.Address(token, token))
-               
-                return recipients 
+                return group 
 
-            return Account.Address(self.result_set.getString("id"), 
-                       self.result_set.getString("id"))
+            return self.result_set.getString("id") 
         return super(WhatsAppMessagesParser, self).get_phone_number_to()
 
     def get_phone_number_from(self):
@@ -484,10 +484,9 @@ class WhatsAppMessagesParser(TskMessagesParser):
             group_sender = self.result_set.getString("group_sender")
             group = self.result_set.getString("recipients")
             if group_sender is not None and group is not None:
-                return Account.Address(group_sender, group_sender)
+                return group_sender
             else:
-                return Account.Address(self.result_set.getString("id"), 
-                            self.result_set.getString("id"))
+                return self.result_set.getString("id") 
         return super(WhatsAppMessagesParser, self).get_phone_number_from() 
 
     def get_message_direction(self):  
