@@ -24,6 +24,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
@@ -37,7 +38,9 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.communications.relationships.RelationshipBrowser;
+import org.sleuthkit.autopsy.communications.relationships.SelectionInfo;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 
 /**
  * Top component which displays the Communications Visualization Tool.
@@ -51,11 +54,11 @@ public final class CVTTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private boolean filtersVisible = true;
-    private final RelationshipBrowser relationshipBrowser;
+    private final RelationshipBrowser relationshipBrowser = new RelationshipBrowser();
+    private CommunicationsFilter currentFilter;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
-        relationshipBrowser = new RelationshipBrowser();
         initComponents();
         
         splitPane.setRightComponent(relationshipBrowser);
@@ -77,6 +80,8 @@ public final class CVTTopComponent extends TopComponent {
                 Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
                 proxyLookup.setNewLookups(lookup);
             }
+            
+            relationshipBrowser.setSelectionInfo(new SelectionInfo(new HashSet<>(), new HashSet<>(), currentFilter));
         });
         
         
@@ -88,11 +93,19 @@ public final class CVTTopComponent extends TopComponent {
         CVTEvents.getCVTEventBus().register(vizPanel);
         CVTEvents.getCVTEventBus().register(accountsBrowser);
         CVTEvents.getCVTEventBus().register(filtersPane);
+        
+        filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-180.png")));
+        filterTabbedPane.setTitleAt(0, "");
     }
 
     @Subscribe
     void pinAccount(CVTEvents.PinAccountsEvent pinEvent) {
         browseVisualizeTabPane.setSelectedIndex(1);
+    }
+    
+    @Subscribe
+    void handle(final CVTEvents.FilterChangeEvent filterChangeEvent) {
+        currentFilter = filterChangeEvent.getNewFilter();
     }
 
     /**
@@ -103,7 +116,7 @@ public final class CVTTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        filterTabPane = new JTabbedPane();
+        filterTabbedPane = new JTabbedPane();
         filterTabPanel = new JPanel();
         filtersPane = new FiltersPanel();
         splitPane = new JSplitPane();
@@ -113,17 +126,18 @@ public final class CVTTopComponent extends TopComponent {
 
         setLayout(new BorderLayout());
 
-        filterTabPane.addMouseListener(new MouseAdapter() {
+        filterTabbedPane.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-                filterTabPaneMouseClicked(evt);
+                filterTabbedPaneMouseClicked(evt);
             }
         });
 
-        filterTabPanel.add(filtersPane);
+		filterTabPanel.setLayout(new BorderLayout());
+        filterTabPanel.add(filtersPane, BorderLayout.CENTER);
 
-        filterTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.filterTabPanel.TabConstraints.tabTitle"), filterTabPanel); // NOI18N
+        filterTabbedPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.filterTabPanel.TabConstraints.tabTitle"), filterTabPanel); // NOI18N
 
-        add(filterTabPane, BorderLayout.WEST);
+        add(filterTabbedPane, BorderLayout.WEST);
 
         splitPane.setDividerLocation(1);
         splitPane.setResizeWeight(0.25);
@@ -138,15 +152,17 @@ public final class CVTTopComponent extends TopComponent {
         add(splitPane, BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void filterTabPaneMouseClicked(MouseEvent evt) {//GEN-FIRST:event_filterTabPaneMouseClicked
-        int index = filterTabPane.indexAtLocation(evt.getX(), evt.getY());
+    private void filterTabbedPaneMouseClicked(MouseEvent evt) {//GEN-FIRST:event_filterTabPaneMouseClicked
+        int index = filterTabbedPane.indexAtLocation(evt.getX(), evt.getY());
         if(index != -1) {
             if(filtersVisible) {
+                filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow.png")));
                 filterTabPanel.removeAll();
                 filterTabPanel.revalidate();
                 filtersVisible = false;
             } else {
-                filterTabPanel.add(filtersPane);
+                filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-180.png")));
+                filterTabPanel.add(filtersPane, BorderLayout.CENTER);
                 filterTabPanel.revalidate();
                 filtersVisible = true;
             }
@@ -157,7 +173,7 @@ public final class CVTTopComponent extends TopComponent {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private AccountsBrowser accountsBrowser;
     private JTabbedPane browseVisualizeTabPane;
-    private JTabbedPane filterTabPane;
+    private JTabbedPane filterTabbedPane;
     private JPanel filterTabPanel;
     private FiltersPanel filtersPane;
     private JSplitPane splitPane;
