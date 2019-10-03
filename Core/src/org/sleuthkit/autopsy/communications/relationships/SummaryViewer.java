@@ -28,7 +28,6 @@ import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.communications.relationships.SelectionInfo.SelectionSummary;
 import org.sleuthkit.datamodel.Account;
 
 /**
@@ -45,7 +44,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_TabTitle=Summary",
         "SummaryViewer_FileRefNameColumn_Title=Path",
         "SummaryViewer_CaseRefNameColumn_Title=Case Name",
-        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Other Occurrences>",
+        "SummaryViewer_CentralRepository_Message=<Enable Central Respository to see Other Occurrences>",
         "SummaryViewer_Creation_Date_Title=Creation Date",
         "SummaryViewer_FileRef_Message=<Select a single account to see File References>",
         "SummaryViewer_Device_Account_Description=This account was referenced by a device in the case.",
@@ -119,14 +118,14 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                 accoutDescriptionLabel.setText(Bundle.SummaryViewer_Device_Account_Description());
             }
             
-            SelectionSummary summaryDetails = info.getSummary();
+            AccountSummary summaryDetails = new AccountSummary(account, info.getArtifacts());
 
             thumbnailsDataLabel.setText(Integer.toString(summaryDetails.getThumbnailCnt()));
             callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
             contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
             messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
             attachmentDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
-            
+            referencesDataLabel.setText(Integer.toString(summaryDetails.getReferenceCnt()));
             contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
 
             fileReferencesPanel.showOutlineView();
@@ -159,6 +158,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         fileReferencesPanel.setEnabled(enabled);
         countsPanel.setEnabled(enabled);
         attachmentsLabel.setEnabled(enabled);
+        referencesLabel.setEnabled(enabled);
     }
 
     /**
@@ -172,6 +172,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         attachmentDataLabel.setText("");
         accountLabel.setText("");
         accoutDescriptionLabel.setText("");
+        referencesDataLabel.setText("");
         
         fileReferencesPanel.setNode(new AbstractNode(Children.LEAF));
         caseReferencesPanel.setNode(new AbstractNode(Children.LEAF));
@@ -207,6 +208,9 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        summaryPanel = new javax.swing.JPanel();
+        accountLabel = new javax.swing.JLabel();
+        accoutDescriptionLabel = new javax.swing.JLabel();
         countsPanel = new javax.swing.JPanel();
         messagesLabel = new javax.swing.JLabel();
         callLogsLabel = new javax.swing.JLabel();
@@ -218,14 +222,30 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         attachmentDataLabel = new javax.swing.JLabel();
         fileReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
         caseReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
-        summaryPanel = new javax.swing.JPanel();
-        accountLabel = new javax.swing.JLabel();
-        accoutDescriptionLabel = new javax.swing.JLabel();
         contanctsPanel = new javax.swing.JPanel();
         contactsLabel = new javax.swing.JLabel();
         contactsDataLabel = new javax.swing.JLabel();
+        referencesLabel = new javax.swing.JLabel();
+        referencesDataLabel = new javax.swing.JLabel();
 
-        setLayout(new java.awt.GridBagLayout());
+        summaryPanel.setLayout(new java.awt.GridBagLayout());
+
+        org.openide.awt.Mnemonics.setLocalizedText(accountLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.accountLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(15, 9, 0, 9);
+        summaryPanel.add(accountLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(accoutDescriptionLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.accoutDescriptionLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(15, 9, 15, 9);
+        summaryPanel.add(accoutDescriptionLabel, gridBagConstraints);
 
         countsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.countsPanel.border.title"))); // NOI18N
         countsPanel.setLayout(new java.awt.GridBagLayout());
@@ -295,14 +315,9 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 15);
         countsPanel.add(attachmentDataLabel, gridBagConstraints);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
-        add(countsPanel, gridBagConstraints);
+        summaryPanel.add(countsPanel, new java.awt.GridBagConstraints());
+
+        setLayout(new java.awt.GridBagLayout());
 
         fileReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.fileReferencesPanel.border.title"))); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -326,36 +341,10 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
         add(caseReferencesPanel, gridBagConstraints);
 
-        summaryPanel.setLayout(new java.awt.GridBagLayout());
-
-        org.openide.awt.Mnemonics.setLocalizedText(accountLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.accountLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(15, 9, 0, 9);
-        summaryPanel.add(accountLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(accoutDescriptionLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.accoutDescriptionLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 9, 15, 9);
-        summaryPanel.add(accoutDescriptionLabel, gridBagConstraints);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        add(summaryPanel, gridBagConstraints);
-
         contanctsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.contanctsPanel.border.title"))); // NOI18N
         contanctsPanel.setLayout(new java.awt.GridBagLayout());
 
+        contactsLabel.setLabelFor(contactsDataLabel);
         org.openide.awt.Mnemonics.setLocalizedText(contactsLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.contactsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -370,8 +359,25 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 9, 15);
+        gridBagConstraints.insets = new java.awt.Insets(9, 9, 9, 15);
         contanctsPanel.add(contactsDataLabel, gridBagConstraints);
+
+        referencesLabel.setLabelFor(referencesDataLabel);
+        org.openide.awt.Mnemonics.setLocalizedText(referencesLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.referencesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 15, 9, 0);
+        contanctsPanel.add(referencesLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(referencesDataLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.referencesDataLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 0);
+        contanctsPanel.add(referencesDataLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -397,6 +403,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel fileReferencesPanel;
     private javax.swing.JLabel messagesDataLabel;
     private javax.swing.JLabel messagesLabel;
+    private javax.swing.JLabel referencesDataLabel;
+    private javax.swing.JLabel referencesLabel;
     private javax.swing.JPanel summaryPanel;
     private javax.swing.JLabel thumbnailCntLabel;
     private javax.swing.JLabel thumbnailsDataLabel;
