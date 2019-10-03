@@ -64,8 +64,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     private final Outline outline;
 
     private final ExplorerManager accountsTableEM = new ExplorerManager();
-    
-    final private RelationshipBrowser relationshipBrowser;
 
     /*
      * This lookup proxies the selection lookup of both he accounts table and
@@ -74,7 +72,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     private final ProxyLookup proxyLookup;
 
     public AccountsBrowser(RelationshipBrowser relationshipBrowser) {
-        this.relationshipBrowser = relationshipBrowser;
         initComponents();
         
         outline = outlineView.getOutline();

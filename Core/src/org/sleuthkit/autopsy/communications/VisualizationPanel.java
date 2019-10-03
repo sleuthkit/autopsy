@@ -373,7 +373,6 @@ final public class VisualizationPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSeparator4 = new JSeparator();
         borderLayoutPanel = new JPanel();
         placeHolderPanel = new JPanel();
         jTextArea1 = new JTextArea();
@@ -857,7 +856,6 @@ final public class VisualizationPanel extends JPanel {
     private JToolBar.Separator jSeparator1;
     private JToolBar.Separator jSeparator2;
     private JToolBar.Separator jSeparator3;
-    private JSeparator jSeparator4;
     private JTextArea jTextArea1;
     private JFXPanel notificationsJFXPanel;
     private JPanel placeHolderPanel;
