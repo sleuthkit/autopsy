@@ -235,7 +235,7 @@ public class SQLiteDBConnect implements AutoCloseable {
      */
     public String sDriver = "";
     public String sUrl = null;
-    public int iTimeout = 30;
+    public int iTimeout = STMT_EXEC_TIMEOUT_SECS;
     public Connection conn = null;
     public Statement statement = null;
 
