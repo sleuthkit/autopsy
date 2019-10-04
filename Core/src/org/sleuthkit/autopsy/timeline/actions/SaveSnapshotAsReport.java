@@ -84,7 +84,9 @@ public class SaveSnapshotAsReport extends Action {
         "SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report.",
         "SaveSnapShotAsReport.duplicateReportNameError.text=A report with that name already exists.",
         "SaveSnapShotAsReport_Report_Failed=Report failed",
+        "# {0} - supplied report name",
         "SaveSnapShotAsReport_Path_Failure_Report=Failed to create report. Supplied report name has invalid characters: {0}",
+        "# {0} - report location",
         "SaveSnapShotAsReport_success_message=Snapshot report successfully created at location: \n\n {0}",
         "SaveSnapShotAsReport_Open_Button=Open Report",
         "SaveSnapShotAsReport_OK_Button=OK"
