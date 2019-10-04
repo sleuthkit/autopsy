@@ -130,7 +130,7 @@ public class SQLiteDBConnect implements AutoCloseable {
     /*
      * Partially constructs a utility object for doing basic operations on a
      * SQLite database. The object is not in a usable state. Further
-     * initialization is required. See init() method.
+     * initialization is required. See methods below.
      *
      * @deprecated Do not use.
      */
