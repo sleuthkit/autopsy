@@ -166,7 +166,7 @@ public class SQLiteDBConnect implements AutoCloseable {
      *
      * @return The connection to the database, may be null.
      *
-     * @deprecated
+     * @deprecated Do not use.
      */
     @Deprecated
     public Connection getConnection() {
