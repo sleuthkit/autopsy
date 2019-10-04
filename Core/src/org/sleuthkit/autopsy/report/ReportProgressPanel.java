@@ -62,7 +62,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
         private final String displayName;
 
-        private ReportStatus(String displayName) {
+        ReportStatus(String displayName) {
             this.displayName = displayName;
         }
 
