@@ -477,6 +477,7 @@ final public class FiltersPanel extends JPanel {
 
         setLayout(new java.awt.GridBagLayout());
 
+        scrollPane.setAutoscrolls(true);
         scrollPane.setBorder(null);
 
         mainPanel.setLayout(new java.awt.GridBagLayout());
@@ -541,7 +542,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 25);
         mainPanel.add(limitPane, gridBagConstraints);
 
         startDatePicker.setEnabled(false);
@@ -608,7 +609,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(dateRangePane, gridBagConstraints);
 
         devicesPane.setLayout(new java.awt.GridBagLayout());
@@ -686,7 +687,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.ipady = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(devicesPane, gridBagConstraints);
 
         accountTypesPane.setLayout(new java.awt.GridBagLayout());
@@ -760,7 +761,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(accountTypesPane, gridBagConstraints);
 
         topPane.setLayout(new java.awt.GridBagLayout());
@@ -810,6 +811,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 25);
         mainPanel.add(topPane, gridBagConstraints);
 
         scrollPane.setViewportView(mainPanel);

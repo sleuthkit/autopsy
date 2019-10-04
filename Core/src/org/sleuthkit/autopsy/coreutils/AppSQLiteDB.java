@@ -16,10 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.coreutils;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -43,74 +41,76 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstraction around an SQLite app DB found in a data source.
- * This class makes a copy of it, along with any meta files (WAL, SHM),
- * opens a SQLite connection to it, and runs queries on it.
+ * An abstraction around an SQLite app DB found in a data source. This class
+ * makes a copy of it, along with any meta files (WAL, SHM), opens a SQLite
+ * connection to it, and runs queries on it.
  */
 public final class AppSQLiteDB {
+
     private final Logger logger = Logger.getLogger(AppSQLiteDB.class.getName());
-    
+
     private final AbstractFile dbAbstractFile;  // AbstractFile for the DB file
-    
+
     private final Connection connection;
     private final Statement statement;
-    
-    
+
     /**
-     * Class to abstract the abstract file for a DB file and its  on disk copy
-     * 
+     * Class to abstract the abstract file for a DB file and its on disk copy
+     *
      */
     private static final class AppSQLiteDBFileBundle {
+
         private final AbstractFile dbAbstractFile;
         private final File dbFileCopy;
-        
+
         AppSQLiteDBFileBundle(AbstractFile dbAbstractFile, File dbFileCopy) {
             this.dbAbstractFile = dbAbstractFile;
             this.dbFileCopy = dbFileCopy;
         }
-        
+
         AbstractFile getAbstractFile() {
             return dbAbstractFile;
         }
-        
+
         File getFileCopy() {
             return dbFileCopy;
         }
-        
+
     }
-    
+
     private AppSQLiteDB(AppSQLiteDBFileBundle appSQLiteDBFileBundle) throws ClassNotFoundException, SQLException {
         this.dbAbstractFile = appSQLiteDBFileBundle.getAbstractFile();
-        
+
         Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
         connection = DriverManager.getConnection("jdbc:sqlite:" + appSQLiteDBFileBundle.getFileCopy().getPath()); //NON-NLS
         statement = connection.createStatement();
     }
-    
-   
+
     /**
-     * Looks for the given SQLIte database filename, with matching path substring. 
-     * It looks for exact name or a pattern match based on a input parameter.
-     * It makes a copy of each matching file, and creates an instance of 
-     * AppSQLiteDB to help query the DB. 
-     * 
-     * A list of AppSQLiteDB instances is returned, one for each 
-     * match found.
-     * 
-     * @param dataSource data source to search in 
-     * @param dbName db file name to search
-     * @param matchExactName whether to look for exact file name or a pattern match
-     * @param parentPathSubstr path substring to match
-     * 
-     * @return A list of abstract files matching the specified name and path.
-     *         Returns an empty list if no matching database is found.
+     * Looks for application SQLite database files with a given name or name
+     * substring and a given parent path or parent path substring. For each
+     * database file found, a temporary copy is made and an open connection to
+     * the database in the form of an AppSQLiteDB object is created and
+     * returned.
+     *
+     * @param dataSource       The data source to be searched for the database
+     *                         files.
+     * @param dbFileName       The database file name or file name substring for
+     *                         which to search.
+     * @param matchExactName   Whether or not the database file name argument is
+     *                         the full database file name or a substring.
+     * @param parentPathSubstr The parent path substring, may pass the empty
+     *                         string to match any parent path.
+     *
+     * @return A list, possibly empty, of AppSQLiteDB objects for the files that
+     *         were found, copied, and connected to.
      */
     public static Collection<AppSQLiteDB> findAppDatabases(DataSource dataSource,
-            String dbName, boolean matchExactName, String parentPathSubstr) {
-        
-        List<AppSQLiteDB> appDbs = new ArrayList<> ();
+            String dbFileName, boolean matchExactName, String parentPathSubstr) {
+
+        List<AppSQLiteDB> appDbs = new ArrayList<>();
         try {
-            Collection<AppSQLiteDBFileBundle> dbFileBundles = findAndCopySQLiteDB( dataSource,  dbName,  matchExactName, parentPathSubstr, false);
+            Collection<AppSQLiteDBFileBundle> dbFileBundles = findAndCopySQLiteDB(dataSource, dbFileName, matchExactName, parentPathSubstr, false);
             dbFileBundles.forEach((dbFileBundle) -> {
                 try {
                     AppSQLiteDB appSQLiteDB = new AppSQLiteDB(dbFileBundle);
@@ -120,102 +120,105 @@ public final class AppSQLiteDB {
                 }
             });
         } catch (TskCoreException ex) {
-            Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.SEVERE, String.format("Error finding App database files with name = '%s' and path = '%s'.", dbName, parentPathSubstr), ex); //NON-NLS
+            Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.SEVERE, String.format("Error finding App database files with name = '%s' and path = '%s'.", dbFileName, parentPathSubstr), ex); //NON-NLS
         }
-        
+
         return appDbs;
     }
-    
+
     public AbstractFile getDBFile() {
         return this.dbAbstractFile;
     }
-    
+
     /**
      * Attaches a database to the current connection.
-     * 
-     * Finds the specified database file in the specified folder.  
-     * If found, makes copy of the database in the case folder and
-     * run ATTACH DATABASE sql.
-     * 
+     *
+     * Finds the specified database file in the specified folder. If found,
+     * makes copy of the database in the case folder and run ATTACH DATABASE
+     * sql.
+     *
      * @param dataSource data source in which to look file the db file
-     * @param dbName name of db file to look for
-     * @param dbPath path in which to look for the db file
-     * @param dbAlias alias name to attach the database as
-     * 
-     * @return abstract file for the matching db file.
-     *         null if no match is found.
+     * @param dbName     name of db file to look for
+     * @param dbPath     path in which to look for the db file
+     * @param dbAlias    alias name to attach the database as
+     *
+     * @return abstract file for the matching db file. null if no match is
+     *         found.
      *
      * @throws SQLException in case of an SQL error
      */
-    public AbstractFile attachDatabase(DataSource dataSource, String dbName, 
-                    String dbPath, String dbAlias) throws SQLException {
+    public AbstractFile attachDatabase(DataSource dataSource, String dbName,
+            String dbPath, String dbAlias) throws SQLException {
         try {
             // find and copy DB files with exact name and path.
-            Collection<AppSQLiteDBFileBundle> dbFileBundles = findAndCopySQLiteDB(dataSource,  dbName, true, dbPath, true);
+            Collection<AppSQLiteDBFileBundle> dbFileBundles = findAndCopySQLiteDB(dataSource, dbName, true, dbPath, true);
             if (!dbFileBundles.isEmpty()) {
                 AppSQLiteDBFileBundle dbFileBundle = dbFileBundles.iterator().next();
                 String attachDbSql = String.format("ATTACH DATABASE '%s' AS '%s'", dbFileBundle.getFileCopy().getPath(), dbAlias); //NON-NLS
-                statement.executeUpdate(attachDbSql); 
-                    
+                statement.executeUpdate(attachDbSql);
+
                 return dbFileBundle.getAbstractFile();
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.SEVERE, String.format("Error attaching to App database files with name = '%s' and path = '%s'.", dbName, dbPath), ex); //NON-NLS
         }
-        
+
         return null;
     }
-    
+
     /**
-     * Finds database file with the specified name, makes a copy of the file in the case directory, 
-     * and returns the AbstractFile as well as the file copy.
-     * 
-     * @param dataSource data source to search in 
-     * @param dbName db file name to search
-     * @param matchExactName whether to look for exact file name or a pattern match
-     * @param dbPath path to match
-     * @param matchExactPath whether to look for exact path name or a substring match
-     * 
+     * Finds database file with the specified name, makes a copy of the file in
+     * the case directory, and returns the AbstractFile as well as the file
+     * copy.
+     *
+     * @param dataSource     data source to search in
+     * @param dbName         db file name to search
+     * @param matchExactName whether to look for exact file name or a pattern
+     *                       match
+     * @param dbPath         path to match
+     * @param matchExactPath whether to look for exact path name or a substring
+     *                       match
+     *
      * @return a collection of AppSQLiteDBFileBundle
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    private static Collection<AppSQLiteDBFileBundle> findAndCopySQLiteDB(DataSource dataSource, String dbName, 
-                    boolean matchExactName,  String dbPath, boolean matchExactPath) throws TskCoreException {
-        
+    private static Collection<AppSQLiteDBFileBundle> findAndCopySQLiteDB(DataSource dataSource, String dbName,
+            boolean matchExactName, String dbPath, boolean matchExactPath) throws TskCoreException {
+
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Failed to get current case.", ex);
         }
-        
-        List<AppSQLiteDBFileBundle> dbFileBundles = new ArrayList<> ();
+
+        List<AppSQLiteDBFileBundle> dbFileBundles = new ArrayList<>();
         long fileId = 0;
         String localDiskPath = "";
-        
+
         SleuthkitCase skCase = openCase.getSleuthkitCase();
         String parentPath = dbPath.replace("\\", "/");
         parentPath = SleuthkitCase.escapeSingleQuotes(parentPath);
-        
+
         String whereClause;
         if (matchExactName) {
             whereClause = String.format("LOWER(name) = LOWER('%s')", dbName);
         } else {
-            whereClause = String.format("LOWER(name) LIKE LOWER('%%%s%%') AND LOWER(name) NOT LIKE LOWER('%%journal%%')", dbName );
+            whereClause = String.format("LOWER(name) LIKE LOWER('%%%s%%') AND LOWER(name) NOT LIKE LOWER('%%journal%%')", dbName);
         }
         if (matchExactPath) {
-            whereClause += String.format(" AND LOWER(parent_path) = LOWER('%s')", parentPath );
+            whereClause += String.format(" AND LOWER(parent_path) = LOWER('%s')", parentPath);
         } else {
-            whereClause += String.format(" AND LOWER(parent_path) LIKE LOWER('%%%s%%')", parentPath );
+            whereClause += String.format(" AND LOWER(parent_path) LIKE LOWER('%%%s%%')", parentPath);
         }
         whereClause += String.format(" AND data_source_obj_id = %s", dataSource.getId());
-        
+
         List<AbstractFile> absFiles = skCase.findAllFilesWhere(whereClause);
         for (AbstractFile absFile : absFiles) {
             try {
                 localDiskPath = openCase.getTempDirectory()
-                                        + File.separator + absFile.getId() + absFile.getName();
+                        + File.separator + absFile.getId() + absFile.getName();
                 File jFile = new java.io.File(localDiskPath);
                 fileId = absFile.getId();
                 ContentUtils.writeToFile(absFile, jFile);
@@ -231,61 +234,58 @@ public final class AppSQLiteDB {
                 Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", absFile.getName(), fileId), ex); //NON-NLS
             } catch (IOException | NoCurrentCaseException | TskCoreException ex) {
                 Logger.getLogger(AppSQLiteDB.class.getName()).log(Level.SEVERE, String.format("Error creating AppSQLiteDB  for file '%s' (id=%d) to  copied to '%s'.", absFile.getName(), fileId, localDiskPath), ex); //NON-NLS
-            } 
+            }
         }
-        
+
         return dbFileBundles;
     }
-    
+
     /**
      * Detaches the specified database from the connection
-     * 
+     *
      * @param dbAlias alias for database to detach
-     * 
-     * @throws SQLException 
+     *
+     * @throws SQLException
      */
-    public void detachDatabase(String dbAlias) throws SQLException  {
+    public void detachDatabase(String dbAlias) throws SQLException {
         String detachDbSql = String.format("DETACH DATABASE '%s'", dbAlias);
         statement.executeUpdate(detachDbSql); //NON-NLS
     }
-     
-    
+
     /**
      * Runs the given query on the database and returns result set.
-
+     *
      * @param queryStr SQL string for the query to run
-     * 
-     * @return ResultSet from running the query. 
-     * 
+     *
+     * @return ResultSet from running the query.
+     *
      * @throws SQLException in case of an error.
-     *         
+     *
      */
     public ResultSet runQuery(String queryStr) throws SQLException {
         ResultSet resultSet = null;
-       
+
         if (null != queryStr) {
             resultSet = statement.executeQuery(queryStr); //NON-NLS
-        } 
+        }
         return resultSet;
     }
-    
+
     /**
      * Closes the DB connection.
-     * 
+     *
      */
     public void close() {
-        
+
         // Close the DB connection
         try {
             statement.close();
             connection.close();
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error closing the database", e); //NON-NLS
-        } 
+        }
     }
-    
-    
-    
+
     /**
      * Searches for a meta file associated with the give SQLite database. If
      * found, it copies this file into the temp directory of the current case.
@@ -313,11 +313,11 @@ public final class AppSQLiteDB {
         if (metaFiles != null) {
             for (AbstractFile metaFile : metaFiles) {
                 String localDiskPath = openCase.getTempDirectory()
-                                            + File.separator + sqliteFile.getId() + metaFile.getName();
+                        + File.separator + sqliteFile.getId() + metaFile.getName();
                 File localMetaFile = new File(localDiskPath);
                 if (!localMetaFile.exists()) {
                     ContentUtils.writeToFile(metaFile, localMetaFile);
-                }  
+                }
             }
         }
     }
