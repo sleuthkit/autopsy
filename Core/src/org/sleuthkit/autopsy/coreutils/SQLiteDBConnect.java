@@ -161,7 +161,7 @@ public class SQLiteDBConnect implements AutoCloseable {
 
     /**
      * Sets or resets the connection to the SQLite database, if the SQLite
-     * driver and the dtabase URL have been set.
+     * driver and the database URL have been set.
      *
      * @throws SQLException If there is an error loading the driver or
      *                      establishing the connection.
@@ -213,7 +213,7 @@ public class SQLiteDBConnect implements AutoCloseable {
     }
 
     /**
-     * Gets the statement, if any, associated with the connection top the
+     * Gets the statement, if any, associated with the connection to the
      * database, if any.
      *
      * @return The statement, may be null.
