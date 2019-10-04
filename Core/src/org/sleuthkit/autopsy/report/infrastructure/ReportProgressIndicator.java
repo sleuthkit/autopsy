@@ -45,16 +45,6 @@ public class ReportProgressIndicator extends ReportProgressPanel {
     }
 
     @Override
-    public void setLabels(String reportName, String reportPath) {
-        /*
-         * This method is not expected to be called. It exists for use by the
-         * ReportGenerationPanel, which is not expected to be instantiated when
-         * this class is used.
-         */
-        super.setLabels(reportName, reportPath);
-    }
-
-    @Override
     @NbBundle.Messages({
         "ReportProgressIndicator.startMessage=Report generation started"
     })

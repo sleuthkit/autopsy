@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.report.infrastructure.ReportProgressIndicator;
 
 /**
  * A panel used by a report generation module to show progress.
@@ -75,7 +74,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * @param reportName The name of the report being generated.
      * @param reportPath The path to the report file.
      */
-    public void setLabels(String reportName, String reportPath) {
+    public final void setLabels(String reportName, String reportPath) {
         reportLabel.setText(reportName);
         if (null != reportPath) {
             pathLabel.setText("<html><u>" + shortenPath(reportPath) + "</u></html>"); //NON-NLS
@@ -85,10 +84,16 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
                 @Override
                 public void mouseClicked(MouseEvent mouseEvent) {
+                    /*
+                     * Do nothing for this event.
+                     */
                 }
 
                 @Override
                 public void mousePressed(MouseEvent mouseEvent) {
+                    /*
+                     * Do nothing for this event.
+                     */
                 }
 
                 @Override
