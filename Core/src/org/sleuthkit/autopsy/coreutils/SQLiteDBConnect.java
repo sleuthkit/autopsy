@@ -154,9 +154,7 @@ public class SQLiteDBConnect implements AutoCloseable {
     public final void init(String driver, String url) throws SQLException {
         sDriver = driver;
         sUrl = url;
-        if (conn != null) {
-            closeConnection();
-        }
+        closeConnection();
         setConnection();
         setStatement();
     }
@@ -195,7 +193,7 @@ public class SQLiteDBConnect implements AutoCloseable {
     public Connection getConnection() {
         return conn;
     }
-    
+
     /**
      * Creates a connection to the database if there is none, and creates a
      * statement using the connection.
