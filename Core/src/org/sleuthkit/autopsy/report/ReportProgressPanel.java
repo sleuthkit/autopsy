@@ -46,13 +46,34 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      * Used by a report generation module to communicate report generation
      * status to this panel and its listeners.
      */
+    @NbBundle.Messages({
+        "ReportProgressPanel.progress.queuing=Queuing...",
+        "ReportProgressPanel.progress.running=Running...",
+        "ReportProgressPanel.progress.complete=Complete",
+        "ReportProgressPanel.progress.canceled=Canceled",
+        "ReportProgressPanel.progress.error=Error",})
     public enum ReportStatus {
 
-        QUEUING,
-        RUNNING,
-        COMPLETE,
-        CANCELED,
-        ERROR
+        QUEUING(Bundle.ReportProgressPanel_progress_queuing()),
+        RUNNING(Bundle.ReportProgressPanel_progress_running()),
+        COMPLETE(Bundle.ReportProgressPanel_progress_complete()),
+        CANCELED(Bundle.ReportProgressPanel_progress_canceled()),
+        ERROR(Bundle.ReportProgressPanel_progress_error());
+
+        private final String displayName;
+
+        private ReportStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        /**
+         * Gets the display name of the report status.
+         *
+         * @return The display name.
+         */
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /**
@@ -267,7 +288,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(GREEN);
-                        reportProgressBar.setString("Complete"); //NON-NLS
+                        reportProgressBar.setString(ReportStatus.COMPLETE.getDisplayName());
                         firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
                         break;
                     }
@@ -279,7 +300,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(RED);
-                        reportProgressBar.setString("Error"); //NON-NLS
+                        reportProgressBar.setString(ReportStatus.ERROR.getDisplayName());
                         firePropertyChange(ReportStatus.COMPLETE.toString(), oldValue, status);
                         break;
                     }
@@ -310,7 +331,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 reportProgressBar.setValue(0);
                 reportProgressBar.setStringPainted(true);
                 reportProgressBar.setForeground(RED); // Red
-                reportProgressBar.setString("Cancelled"); //NON-NLS
+                reportProgressBar.setString(ReportStatus.CANCELED.getDisplayName());
                 firePropertyChange(ReportStatus.CANCELED.toString(), oldValue, status);
                 statusMessageLabel.setForeground(RED);
                 statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
