@@ -155,9 +155,9 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
                     if downloadsResultSet is not None:
                         while downloadsResultSet.next():
                             startTime = historyResultSet.getLong("start_time") / 1000000 - 11644473600 #Webkit time format
-                            downloadsDbHelper.addWebDownload( downloadsResultSet.getString("target_path"),
+                            downloadsDbHelper.addWebDownload( downloadsResultSet.getString("url"),
                                                         startTime,
-                                                        downloadsResultSet.getString("url"),
+                                                        downloadsResultSet.getString("target_path"),
                                                         self._PROGRAM_NAME)
                 
                 except SQLException as ex:

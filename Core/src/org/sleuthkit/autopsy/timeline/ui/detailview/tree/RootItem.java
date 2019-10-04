@@ -35,7 +35,7 @@ class RootItem extends EventsTreeItem {
     /**
      * A map of the children BaseTypeTreeItems, keyed by EventType.
      */
-    private final Map<TimelineEventType, BaseTypeTreeItem> childMap = new HashMap<>();
+    private final Map<TimelineEventType, CategoryTypeTreeItem> childMap = new HashMap<>();
 
     /**
      * Constructor
@@ -85,7 +85,7 @@ class RootItem extends EventsTreeItem {
     @Override
     void remove(List<DetailViewEvent> path) {
         DetailViewEvent event = path.get(0);
-        BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
+        CategoryTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getCategory());
 
         //remove the path from the child
         if (typeTreeItem != null) {
@@ -93,7 +93,7 @@ class RootItem extends EventsTreeItem {
 
             //if the child has no children remove it also
             if (typeTreeItem.getChildren().isEmpty()) {
-                childMap.remove(event.getEventType().getBaseType());
+                childMap.remove(event.getEventType().getCategory());
                 getChildren().remove(typeTreeItem);
             }
         }
@@ -102,8 +102,8 @@ class RootItem extends EventsTreeItem {
     @Override
     void insert(List<DetailViewEvent> path) {
         DetailViewEvent event = path.get(0);
-        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
-                baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
+        CategoryTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getCategory(),
+                baseType -> configureNewTreeItem(new CategoryTypeTreeItem(event, getComparator()))
         );
         treeItem.insert(path);
     }

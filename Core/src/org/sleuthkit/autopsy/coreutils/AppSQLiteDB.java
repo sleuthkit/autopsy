@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This class makes a copy of it, along with any meta files (WAL, SHM),
  * opens a SQLite connection to it, and runs queries on it.
  */
-public final class AppSQLiteDB implements Closeable {
+public final class AppSQLiteDB {
     private final Logger logger = Logger.getLogger(AppSQLiteDB.class.getName());
     
     private final AbstractFile dbAbstractFile;  // AbstractFile for the DB file
@@ -270,12 +270,10 @@ public final class AppSQLiteDB implements Closeable {
     }
     
     /**
-     * Closes the DB connection
+     * Closes the DB connection.
      * 
-     * @throws IOException 
      */
-    @Override
-    public void close() throws IOException {
+    public void close() {
         
         // Close the DB connection
         try {

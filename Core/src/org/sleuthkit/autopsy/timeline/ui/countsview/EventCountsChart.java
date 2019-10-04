@@ -207,7 +207,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             final Node node = item.getNode();
             if (node != null) {
                 node.setStyle("-fx-border-width: 2; "
-                              + " -fx-border-color: " + ColorUtilities.getRGBCode(getColor(eventType.getSuperType())) + "; "
+                              + " -fx-border-color: " + ColorUtilities.getRGBCode(getColor(eventType.getParent())) + "; "
                               + " -fx-bar-fill: " + ColorUtilities.getRGBCode(getColor(eventType))); // NON-NLS
                 node.setCursor(Cursor.HAND);
 
