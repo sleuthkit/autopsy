@@ -57,9 +57,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.NoReportModuleSettings;
 import org.sleuthkit.autopsy.report.ReportModuleSettings;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
 
 /**
  *

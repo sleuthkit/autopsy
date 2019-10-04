@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Allows Autopsy to be invoked with a command line arguments. Arguments exist
  * to cause Autopsy to create a case, add a specified data source, run ingest on
- * that data source, list all data sources in a case, and generate reports.
+ * that data source, list all data sources in the case, and generate reports.
  */
 public class CommandLineIngestManager {
 
@@ -287,7 +287,7 @@ public class CommandLineIngestManager {
 
                                     // generate reports
                                     ReportProgressIndicator progressIndicator = new ReportProgressIndicator(new LoggingProgressIndicator());
-                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.getReportingConfigName(), progressIndicator); //NON-NLS
+                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.getReportingConfigName(), progressIndicator);
                                     generator.generateReports();
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
