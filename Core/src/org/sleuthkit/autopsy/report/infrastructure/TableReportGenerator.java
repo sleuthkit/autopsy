@@ -60,7 +60,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
 
 class TableReportGenerator {
 
