@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
