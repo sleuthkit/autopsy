@@ -94,20 +94,6 @@ public class ReportGenerator {
 
     /**
      * Constructs a report generator that generates one or more reports by
-     * running user-selected report modules and uses a report generation panel
-     * to display progress.
-     *
-     * @param configName The name of the reporting configuration to use.
-     * @param panel      The report generation panel.
-     */
-    public ReportGenerator(String configName, ReportGenerationPanel panel) {
-        this.reportGenerationPanel = panel;
-        this.progressIndicator = panel.getProgressPanel();
-        this.configName = configName;
-    }
-
-    /**
-     * Constructs a report generator that generates one or more reports by
      * running user-selected report modules and uses a report progress indicator
      * to display progress.
      *
@@ -115,8 +101,22 @@ public class ReportGenerator {
      * @param progressIndicator The report progress indicator.
      */
     public ReportGenerator(String configName, ReportProgressIndicator progressIndicator) {
-        this.reportGenerationPanel = null;
         this.progressIndicator = progressIndicator;
+        this.reportGenerationPanel = null;
+        this.configName = configName;
+    }
+    
+    /**
+     * Constructs a report generator that generates one or more reports by
+     * running user-selected report modules and uses a report generation panel
+     * to display progress.
+     *
+     * @param configName The name of the reporting configuration to use.
+     * @param panel      The report generation panel.
+     */
+    ReportGenerator(String configName, ReportGenerationPanel panel) {
+        this.reportGenerationPanel = panel;
+        this.progressIndicator = panel.getProgressPanel();
         this.configName = configName;
     }
 
