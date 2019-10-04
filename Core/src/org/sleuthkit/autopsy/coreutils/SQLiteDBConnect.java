@@ -162,18 +162,6 @@ public class SQLiteDBConnect implements AutoCloseable {
     }
 
     /**
-     * Gets the connection, if any, to the database.
-     *
-     * @return The connection to the database, may be null.
-     *
-     * @deprecated Do not use.
-     */
-    @Deprecated
-    public Connection getConnection() {
-        return conn;
-    }
-
-    /**
      * Sets or resets the connection to the SQLite database, if the SQLite
      * driver and the dtabase URL have been set.
      *
@@ -196,6 +184,18 @@ public class SQLiteDBConnect implements AutoCloseable {
         conn = DriverManager.getConnection(sUrl);
     }
 
+    /**
+     * Gets the connection, if any, to the database.
+     *
+     * @return The connection to the database, may be null.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public Connection getConnection() {
+        return conn;
+    }
+    
     /**
      * Creates a connection to the database if there is none, and creates a
      * statement using the connection.
