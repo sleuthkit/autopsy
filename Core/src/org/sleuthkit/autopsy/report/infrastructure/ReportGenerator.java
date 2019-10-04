@@ -101,9 +101,9 @@ public class ReportGenerator {
      * @param panel      The report generation panel.
      */
     public ReportGenerator(String configName, ReportGenerationPanel panel) {
-        this.configName = configName;
         this.reportGenerationPanel = panel;
         this.progressIndicator = panel.getProgressPanel();
+        this.configName = configName;
     }
 
     /**
@@ -115,9 +115,9 @@ public class ReportGenerator {
      * @param progressIndicator The report progress indicator.
      */
     public ReportGenerator(String configName, ReportProgressIndicator progressIndicator) {
-        this.configName = configName;
         this.reportGenerationPanel = null;
         this.progressIndicator = progressIndicator;
+        this.configName = configName;
     }
 
     /**
