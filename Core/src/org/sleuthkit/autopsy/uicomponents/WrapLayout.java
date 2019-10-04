@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.uicomponents;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -32,8 +32,9 @@ import javax.swing.SwingUtilities;
 *  Originally written by Rob Camick
 *  https://tips4java.wordpress.com/2008/11/06/wrap-layout/
 */
-class WrapLayout extends FlowLayout {
-
+public class WrapLayout extends FlowLayout {
+    
+        private static final long serialVersionUID = 1L;
         /**
          * Constructs a new <code>WrapLayout</code> with a left alignment and a
          * default 5-unit horizontal and vertical gap.
