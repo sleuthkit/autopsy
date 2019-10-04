@@ -37,6 +37,7 @@ import java.util.logging.Level;
 public class SQLiteDBConnect implements AutoCloseable {
 
     private static final Logger logger = Logger.getLogger(SQLiteDBConnect.class.getName());
+    private static final int STMT_EXEC_TIMEOUT_SECS = 30;
 
     /**
      * Constructs an abstraction that loads a given SQLite driver, establishes a
@@ -60,7 +61,7 @@ public class SQLiteDBConnect implements AutoCloseable {
         }
         conn = DriverManager.getConnection(sUrl);
         statement = conn.createStatement();
-        statement.setQueryTimeout(iTimeout);
+        statement.setQueryTimeout(STMT_EXEC_TIMEOUT_SECS);
     }
 
     /**
