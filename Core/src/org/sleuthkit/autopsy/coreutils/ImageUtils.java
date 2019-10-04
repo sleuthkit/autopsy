@@ -121,7 +121,7 @@ public class ImageUtils {
         }
         DEFAULT_THUMBNAIL = tempImage;
         boolean tempFfmpegLoaded = false;
-        if (OpenCvLoader.hasOpenCvLoaded()) {
+        if (OpenCvLoader.openCvIsLoaded()) {
             try {
                 if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
                     System.loadLibrary("opencv_ffmpeg248_64"); //NON-NLS
