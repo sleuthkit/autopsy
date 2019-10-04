@@ -14,7 +14,7 @@ The Communications Visualization Tool is loaded through the Tools->Communication
 
 \image html cvt_main.png
 
-From the left hand column, you can choose which devices to display, which types of data to display, and optionally select a time range. You can also choose to limit the display to only the most recent communications. After any changes to the filters, use the Apply button to update the tables.
+From the left hand column, you can choose which devices to display, which types of data to display, and optionally select a time range. You can also choose to limit the display to only the most recent communications. After any changes to the filters, use the Apply button to update the tables. You can hide this column by clicking the left arrow at the top of the column.
 
 The middle column displays each account, its device and type, and the number of associated messages (emails, call logs, etc.). By default it will be sorted in descending order of frequency. The middle column and the right hand column both have a \ref ui_quick_search feature which can be used to quickly find a visible item in their section's table. 
 
