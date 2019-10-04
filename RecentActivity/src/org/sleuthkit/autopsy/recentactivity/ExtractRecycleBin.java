@@ -258,7 +258,7 @@ final class ExtractRecycleBin extends Extract {
                     addFileSystemFile(skCase, fsContent, parentFolder, fsContent.getName(), deletedTimeStamp);
                 } else if (fsContent.isDir()) {
                     String newPath = parentPath + "\\" + fsContent.getName();
-                    AbstractFile childFolder = getOrMakeFolder(skCase, (FsContent) fsContent, parentPath);
+                    AbstractFile childFolder = getOrMakeFolder(skCase, fsContent, parentPath);
                     popuplateDeletedDirectory(skCase, childFolder, fsContent.getChildren(), newPath, deletedTimeStamp);
                 }
             }
