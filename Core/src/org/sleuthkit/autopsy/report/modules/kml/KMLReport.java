@@ -101,6 +101,24 @@ class KMLReport implements GeneralReportModule {
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
+    @NbBundle.Messages({
+        "KMLReport.unableToExtractPhotos=Could not extract photo information.",
+        "KMLReport.exifPhotoError=Could not extract photos with EXIF metadata.",
+        "KMLReport.bookmarkError=Could not extract Bookmark information.",
+        "KMLReport.gpsBookmarkError=Could not get GPS Bookmarks from database.",
+        "KMLReport.locationError=Could not extract Last Known Location information.",
+        "KMLReport.locationDatabaseError=Could not get GPS Last Known Location from database.",
+        "KMLReport.gpsRouteError=Could not extract GPS Route information.",
+        "KMLReport.gpsRouteDatabaseError=Could not get GPS Routes from database.",
+        "KMLReport.gpsSearchDatabaseError=Could not get GPS Searches from database.",
+        "KMLReport.trackpointError=Could not extract Trackpoint information.",        
+        "KMLReport.trackpointDatabaseError=Could not get GPS Trackpoints from database.",        
+        "KMLReport.stylesheetError=Error placing KML stylesheet. The .KML file will not function properly.",
+        "KMLReport.kmlFileWriteError=Could not write the KML file.",
+        "# {0} - filePath",
+        "KMLReport.errorGeneratingReport=Error adding {0} to case as a report.",
+        "KMLReport.unableToOpenCase=Exception while getting open case."
+    })
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         try {
@@ -114,6 +132,7 @@ class KMLReport implements GeneralReportModule {
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
+        String errorMessage = "";
         
         skCase = currentCase.getSleuthkitCase();
 
@@ -235,12 +254,14 @@ class KMLReport implements GeneralReportModule {
                 } catch (ReadContentInputStreamException ex) {
                     logger.log(Level.WARNING, String.format("Error reading file '%s' (id=%d).", fileName, fileId), ex);
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract photo information.", ex); //NON-NLS
+                    errorMessage = Bundle.KMLReport_unableToExtractPhotos();
+                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
                     result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not extract photos with EXIF metadata.", ex); //NON-NLS
+            errorMessage = Bundle.KMLReport_exifPhotoError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -256,12 +277,14 @@ class KMLReport implements GeneralReportModule {
                     String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
                     gpsBookmarksFolder.addContent(makePlacemark(bookmarkName, FeatureColor.BLUE, desc, timestamp, point, formattedCoordinates));
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract Bookmark information.", ex); //NON-NLS
+                    errorMessage = Bundle.KMLReport_bookmarkError();
+                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
                     result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Bookmarks from database.", ex); //NON-NLS
+            errorMessage = Bundle.KMLReport_gpsBookmarkError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -277,12 +300,14 @@ class KMLReport implements GeneralReportModule {
                     String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
                     gpsLastKnownLocationFolder.addContent(makePlacemark("Last Known Location", FeatureColor.PURPLE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract Last Known Location information.", ex); //NON-NLS
+                    errorMessage = Bundle.KMLReport_locationError();
+                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
                     result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Last Known Location from database.", ex); //NON-NLS
+            errorMessage = Bundle.KMLReport_locationDatabaseError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -310,12 +335,14 @@ class KMLReport implements GeneralReportModule {
                     formattedCoordinates = String.format("%.2f, %.2f", latitudeEnd, longitudeEnd);
                     gpsRouteFolder.addContent(makePlacemark("End", FeatureColor.GREEN, desc, timestamp, endingPoint, formattedCoordinates)); //NON-NLS
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract GPS Route information.", ex); //NON-NLS
+                    errorMessage = Bundle.KMLReport_gpsRouteError();
+                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
                     result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Routes from database.", ex); //NON-NLS
+            errorMessage = Bundle.KMLReport_gpsRouteDatabaseError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -338,7 +365,8 @@ class KMLReport implements GeneralReportModule {
                 gpsSearchesFolder.addContent(makePlacemark(searchName, FeatureColor.WHITE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Searches from database.", ex); //NON-NLS
+            errorMessage = Bundle.KMLReport_gpsSearchDatabaseError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -364,12 +392,14 @@ class KMLReport implements GeneralReportModule {
                     }
                     gpsTrackpointsFolder.addContent(makePlacemark(trackName, FeatureColor.YELLOW, desc, timestamp, point, formattedCoordinates));
                 } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Could not extract Trackpoint information.", ex); //NON-NLS
+                    errorMessage = Bundle.KMLReport_trackpointError();
+                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
                     result = ReportProgressPanel.ReportStatus.ERROR;
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Could not get GPS Trackpoints from database.", ex); //NON-NLS
+            errorMessage = Bundle.KMLReport_trackpointDatabaseError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -379,7 +409,8 @@ class KMLReport implements GeneralReportModule {
             OutputStream output = new FileOutputStream(baseReportDir + KML_STYLE_FILE); // Preserve slash direction
             FileUtil.copy(input, output);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error placing KML stylesheet. The .KML file will not function properly.", ex); //NON-NLS
+            errorMessage = Bundle.KMLReport_stylesheetError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -394,18 +425,20 @@ class KMLReport implements GeneralReportModule {
                     NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
                     prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Could not write the KML file.", ex); //NON-NLS
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            errorMessage = Bundle.KMLReport_kmlFileWriteError();
+            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage);
         } catch (TskCoreException ex) {
-            String errorMessage = String.format("Error adding %s to case as a report", kmlFileFullPath); //NON-NLS
+            errorMessage = Bundle.KMLReport_errorGeneratingReport(kmlFileFullPath);
             logger.log(Level.SEVERE, errorMessage, ex);
             result = ReportProgressPanel.ReportStatus.ERROR;
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            errorMessage = Bundle.KMLReport_unableToOpenCase();
+            logger.log(Level.SEVERE, errorMessage, ex);
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
-        progressPanel.complete(result);
+        progressPanel.complete(result, errorMessage);
     }
 
     /**

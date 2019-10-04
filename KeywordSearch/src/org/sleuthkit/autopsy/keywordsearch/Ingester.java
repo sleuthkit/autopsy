@@ -20,10 +20,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
 import java.io.Reader;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -61,8 +59,6 @@ class Ingester {
     private final Server solrServer = KeywordSearch.getServer();
     private static final SolrFieldsVisitor SOLR_FIELDS_VISITOR = new SolrFieldsVisitor();
     private static Ingester instance;
-    private final LanguageSpecificContentIndexingHelper languageSpecificContentIndexingHelper
-        = new LanguageSpecificContentIndexingHelper();
 
     private Ingester() {
     }
@@ -97,7 +93,7 @@ class Ingester {
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        indexChunk("", file.getName().toLowerCase(), new HashMap<>(getContentFields(file)));
+        indexChunk("", file.getName().toLowerCase(), getContentFields(file));
     }
 
     /**
@@ -111,7 +107,7 @@ class Ingester {
      *                           artifact, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(BlackboardArtifact artifact, String sourceName) throws IngesterException {
-        indexChunk("", sourceName, new HashMap<>(getContentFields(artifact)));
+        indexChunk("", sourceName, getContentFields(artifact));
     }
 
     /**
@@ -147,30 +143,21 @@ class Ingester {
     < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
         
-        Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
+        Map<String, String> fields = getContentFields(source);
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
-            while (chunker.hasNext()) {
+            for (Chunk chunk : chunker) {
                 if (context != null && context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
-
-                Chunk chunk = chunker.next();
-                Map<String, Object> fields = new HashMap<>(contentFields);
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-                Optional<Language> language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
-                language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                 try {
                     //add the chunk text to Solr index
                     indexChunk(chunk.toString(), sourceName, fields);
-                    // add mini chunk when there's a language specific field
-                    if (chunker.hasNext() && language.isPresent()) {
-                        languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
-                    }
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
                     logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
@@ -184,13 +171,12 @@ class Ingester {
                 return false;
             }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
+            logger.log(Level.WARNING, "Unexpected error while indexing content from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
             if (context != null && context.fileIngestIsCancelled()) {
                 return false;
             } else {
-                Map<String, Object> fields = new HashMap<>(contentFields);
                 //after all chunks, index just the meta data, including the  numChunks, of the parent file
                 fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
                 //reset id field to base document id
@@ -216,7 +202,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    private void indexChunk(String chunk, String sourceName, Map<String, Object> fields) throws IngesterException {
+    private void indexChunk(String chunk, String sourceName, Map<String, String> fields) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //JMTODO: actually if the we couldn't get the image id it is set to -1,
             // but does this really mean we don't want to index it?

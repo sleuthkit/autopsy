@@ -37,12 +37,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Parse the ntuser and ursclass regripper output files for shellbags.
  */
-public class ShellBagParser {
+class ShellBagParser {
     private static final Logger logger = Logger.getLogger(ShellBagParser.class.getName());
     
-    static SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
     // Last Write date\time format from itempos plugin
-    static SimpleDateFormat DATE_TIME_FORMATTER2 = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyyy", Locale.getDefault());
+    private static final SimpleDateFormat DATE_TIME_FORMATTER2 = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyyy", Locale.getDefault());
 
     private ShellBagParser() {
     }

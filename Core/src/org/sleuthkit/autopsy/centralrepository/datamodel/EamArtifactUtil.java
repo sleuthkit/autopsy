@@ -211,8 +211,11 @@ public class EamArtifactUtil {
                     TskData.FileKnown.UNKNOWN,
                     bbSourceFile.getId());
 
-        } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting AbstractFile for artifact: " + bbArtifact.toString(), ex); // NON-NLS
+            return null;
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, "Error creating artifact instance for artifact: " + bbArtifact.toString(), ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Case is closed.", ex); // NON-NLS

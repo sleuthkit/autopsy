@@ -148,10 +148,10 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
             show(tagIV, false);
         }
 
-        if (chartLane.getController().getEventsModel().getEventTypeZoom() == TimelineEventType.TypeLevel.SUB_TYPE) {
+        if (chartLane.getController().getEventsModel().getEventTypeZoom() == TimelineEventType.HierarchyLevel.CATEGORY) {
             evtColor = getColor(getEventType());
         } else {
-            evtColor = getColor(getEventType().getBaseType());
+            evtColor = getColor(getEventType().getCategory());
         }
         SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
 

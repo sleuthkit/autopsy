@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -55,24 +54,33 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * A report generator that generates one or more reports by running
+ * user-selected report modules.
+ */
 public class ReportGenerator {
 
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
-
-    private ReportProgressPanel progressPanel = null;
-    private ReportGenerationPanel reportGenerationPanel = null;
-
+    private final ReportProgressPanel progressIndicator;
+    private final ReportGenerationPanel reportGenerationPanel;
     private static final String REPORT_PATH_FMT_STR = "%s" + File.separator + "%s %s %s" + File.separator;
-
     private final String configName;
-
-    public static final String REPORTS_DIR = "Reports"; //NON-NLS
-
-    private List<String> errorList;
+    private static final String REPORTS_DIR = "Reports"; //NON-NLS
+    private List<String> errorList = new ArrayList<>();
 
     /**
-     * Displays the list of errors during report generation in user-friendly
-     * way.
+     * Gets the name of the reports directory within the case direcotry
+     * hierarchy.
+     *
+     * @return The directory name.
+     */
+    public static String getReportsDirectory() {
+        return REPORTS_DIR;
+    }
+
+    /**
+     * Displays a list of errors emitted by report modules during report
+     * generation using this report generator's report progress indicator.
      */
     private void displayReportErrors() {
         if (!errorList.isEmpty()) {
@@ -80,41 +88,41 @@ public class ReportGenerator {
             for (String error : errorList) {
                 errorString += error + "\n";
             }
-            progressPanel.updateStatusLabel(errorString);
+            progressIndicator.updateStatusLabel(errorString);
         }
     }
 
     /**
-     * Creates a report generator. This constructor uses a logger instead of UI
-     * panel.
+     * Constructs a report generator that generates one or more reports by
+     * running user-selected report modules and uses a report progress indicator
+     * to display progress.
      *
-     * @param configName Name of the reporting configuration to use
-     * @param progress Fully instantiated progress logger
+     * @param configName        The name of the reporting configuration to use.
+     * @param progressIndicator The report progress indicator.
      */
-    public ReportGenerator(String configName, ReportProgressLogger progress) {
-        this.errorList = new ArrayList<>();
-        this.progressPanel = progress;
+    public ReportGenerator(String configName, ReportProgressIndicator progressIndicator) {
+        this.progressIndicator = progressIndicator;
         this.reportGenerationPanel = null;
         this.configName = configName;
     }
-
+    
     /**
-     * Creates a report generator. This constructor uses UI panel to display
-     * progress.
+     * Constructs a report generator that generates one or more reports by
+     * running user-selected report modules and uses a report generation panel
+     * to display progress.
      *
-     * @param configName Name of the reporting configuration to use
-     * @param panel Fully instantiated progress panel
+     * @param configName The name of the reporting configuration to use.
+     * @param panel      The report generation panel.
      */
-    public ReportGenerator(String configName, ReportGenerationPanel panel) {
-        this.errorList = new ArrayList<>();
+    ReportGenerator(String configName, ReportGenerationPanel panel) {
         this.reportGenerationPanel = panel;
-        this.progressPanel = panel.getProgressPanel();
+        this.progressIndicator = panel.getProgressPanel();
         this.configName = configName;
     }
 
     /**
-     * Generate reports according to previously specified reporting
-     * configuration.
+     * Generates the reports specified by the reporting configuration passed in
+     * via the constructor.
      */
     public void generateReports() {
         ReportingConfig config = null;
@@ -122,13 +130,13 @@ public class ReportGenerator {
             config = ReportingConfigLoader.loadConfig(configName);
         } catch (ReportConfigException ex) {
             logger.log(Level.SEVERE, "Unable to load reporting configuration " + configName + ". Exiting", ex);
-            progressPanel.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
+            progressIndicator.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
             return;
         }
 
         if (config == null) {
             logger.log(Level.SEVERE, "Unable to load reporting configuration {0}. Exiting", configName);
-            progressPanel.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
+            progressIndicator.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
             return;
         }
 
@@ -162,7 +170,7 @@ public class ReportGenerator {
                 ReportModule module = modules.get(moduleName);
                 if (module == null) {
                     logger.log(Level.SEVERE, "Report module {0} not found", moduleName);
-                    progressPanel.updateStatusLabel("Report module " + moduleName + " not found");
+                    progressIndicator.updateStatusLabel("Report module " + moduleName + " not found");
                     continue;
                 }
 
@@ -189,7 +197,7 @@ public class ReportGenerator {
                         TableReportSettings tableSettings = config.getTableReportSettings();
                         if (tableSettings == null) {
                             logger.log(Level.SEVERE, "No table report settings for report module {0}", moduleName);
-                            progressPanel.updateStatusLabel("No table report settings for report module " + moduleName);
+                            progressIndicator.updateStatusLabel("No table report settings for report module " + moduleName);
                             continue;
                         }
 
@@ -201,7 +209,7 @@ public class ReportGenerator {
                         FileReportSettings fileSettings = config.getFileReportSettings();
                         if (fileSettings == null) {
                             logger.log(Level.SEVERE, "No file report settings for report module {0}", moduleName);
-                            progressPanel.updateStatusLabel("No file report settings for report module " + moduleName);
+                            progressIndicator.updateStatusLabel("No file report settings for report module " + moduleName);
                             continue;
                         }
 
@@ -213,7 +221,7 @@ public class ReportGenerator {
                             settings = new PortableCaseReportModuleSettings();
                         } else if (!(settings instanceof PortableCaseReportModuleSettings)) {
                             logger.log(Level.SEVERE, "Invalid settings for report module {0}", moduleName);
-                            progressPanel.updateStatusLabel("Invalid settings for report module " + moduleName);
+                            progressIndicator.updateStatusLabel("Invalid settings for report module " + moduleName);
                             continue;
                         }
 
@@ -221,12 +229,11 @@ public class ReportGenerator {
 
                     } else {
                         logger.log(Level.SEVERE, "Report module {0} has unsupported report module type", moduleName);
-                        progressPanel.updateStatusLabel("Report module " + moduleName + " has unsupported report module type");
-                        continue;
+                        progressIndicator.updateStatusLabel("Report module " + moduleName + " has unsupported report module type");
                     }
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, "Exception while running report module {0}: {1}", new Object[]{moduleName, e.getMessage()});
-                    progressPanel.updateStatusLabel("Exception while running report module " + moduleName);
+                    progressIndicator.updateStatusLabel("Exception while running report module " + moduleName);
                 }
             }
         } finally {
@@ -244,7 +251,7 @@ public class ReportGenerator {
             return;
         }
 
-        final JDialog dialog = new JDialog((JFrame) WindowManager.getDefault().getMainWindow(), true);
+        final JDialog dialog = new JDialog(WindowManager.getDefault().getMainWindow(), true);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.setTitle(NbBundle.getMessage(this.getClass(), "ReportGenerator.displayProgress.title.text"));
         dialog.add(this.reportGenerationPanel);
@@ -275,7 +282,7 @@ public class ReportGenerator {
         if (generalReportModule != null) {
             String reportDir = createReportDirectory(generalReportModule);
             setupProgressPanel(generalReportModule, reportDir);
-            generalReportModule.generateReport(reportDir, progressPanel);
+            generalReportModule.generateReport(reportDir, progressIndicator);
         }
     }
 
@@ -290,11 +297,11 @@ public class ReportGenerator {
             String reportDir = createReportDirectory(tableReport);
             setupProgressPanel(tableReport, reportDir);
             tableReport.startReport(reportDir);
-            TableReportGenerator generator = new TableReportGenerator(tableReportSettings, progressPanel, tableReport);
+            TableReportGenerator generator = new TableReportGenerator(tableReportSettings, progressIndicator, tableReport);
             generator.execute();
             tableReport.endReport();
             // finish progress, wrap up
-            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+            progressIndicator.complete(ReportProgressPanel.ReportStatus.COMPLETE);
             errorList = generator.getErrorList();
         }
     }
@@ -315,34 +322,34 @@ public class ReportGenerator {
                 }
             }
             setupProgressPanel(fileReportModule, reportDir);
-            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
-                progressPanel.start();
-                progressPanel.updateStatusLabel(
+            if (progressIndicator.getStatus() != ReportStatus.CANCELED) {
+                progressIndicator.start();
+                progressIndicator.updateStatusLabel(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.queryingDb.text"));
             }
 
             List<AbstractFile> files = getFiles();
             int numFiles = files.size();
-            if (progressPanel.getStatus() != ReportStatus.CANCELED) {
+            if (progressIndicator.getStatus() != ReportStatus.CANCELED) {
                 fileReportModule.startReport(reportDir);
                 fileReportModule.startTable(enabled);
             }
-            progressPanel.setIndeterminate(false);
-            progressPanel.setMaximumProgress(numFiles);
+            progressIndicator.setIndeterminate(false);
+            progressIndicator.setMaximumProgress(numFiles);
 
             int i = 0;
             // Add files to report.
             for (AbstractFile file : files) {
                 // Check to see if any reports have been cancelled.
-                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                if (progressIndicator.getStatus() == ReportStatus.CANCELED) {
                     return;
                 } else {
                     fileReportModule.addRow(file, enabled);
-                    progressPanel.increment();
+                    progressIndicator.increment();
                 }
 
                 if ((i % 100) == 0) {
-                    progressPanel.updateStatusLabel(
+                    progressIndicator.updateStatusLabel(
                             NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingFile.text",
                                     file.getName()));
                 }
@@ -351,7 +358,7 @@ public class ReportGenerator {
 
             fileReportModule.endTable();
             fileReportModule.endReport();
-            progressPanel.complete(ReportStatus.COMPLETE);
+            progressIndicator.complete(ReportStatus.COMPLETE);
         }
     }
 
@@ -362,7 +369,7 @@ public class ReportGenerator {
         if (portableCaseReportModule != null) {
             String reportDir = createReportDirectory(portableCaseReportModule);
             setupProgressPanel(portableCaseReportModule, reportDir);
-            portableCaseReportModule.generateReport(reportDir, settings, progressPanel);
+            portableCaseReportModule.generateReport(reportDir, settings, progressIndicator);
         }
     }
 
@@ -378,7 +385,7 @@ public class ReportGenerator {
             absFiles = skCase.findAllFilesWhere("meta_type != " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
             return absFiles;
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage());
+            progressIndicator.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage());
             logger.log(Level.SEVERE, "failed to generate reports. Unable to get all files in the image.", ex); //NON-NLS
             return Collections.<AbstractFile>emptyList();
         }

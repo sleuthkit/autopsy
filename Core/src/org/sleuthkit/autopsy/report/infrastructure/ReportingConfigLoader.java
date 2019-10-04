@@ -55,11 +55,14 @@ final class ReportingConfigLoader {
      * an atomic, thread safe way.
      *
      * @param configName Name of the reporting configuration
+     *
      * @return ReportingConfig object if a persisted configuration exists, null
-     * otherwise
+     *         otherwise
+     *
      * @throws ReportConfigException if an error occurred while reading the
-     * configuration
+     *                               configuration
      */
+    @SuppressWarnings("unchecked")
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
         // construct the configuration directory path
@@ -77,7 +80,7 @@ final class ReportingConfigLoader {
 
         // read in the configuration
         ReportingConfig config = new ReportingConfig(configName);
-        
+
         // read table report settings
         String filePath = reportDirPath.toString() + File.separator + TABLE_REPORT_CONFIG_FILE;
         try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
@@ -85,7 +88,7 @@ final class ReportingConfigLoader {
         } catch (IOException | ClassNotFoundException ex) {
             throw new ReportConfigException("Unable to read table report settings " + filePath, ex);
         }
-        
+
         // read file report settings
         filePath = reportDirPath.toString() + File.separator + FILE_REPORT_CONFIG_FILE;
         try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
@@ -93,7 +96,7 @@ final class ReportingConfigLoader {
         } catch (IOException | ClassNotFoundException ex) {
             throw new ReportConfigException("Unable to read file report settings " + filePath, ex);
         }
-        
+
         // read map of module configuration objects
         Map<String, ReportModuleConfig> moduleConfigs = null;
         filePath = reportDirPath.toString() + File.separator + MODULE_CONFIG_FILE;
@@ -102,11 +105,11 @@ final class ReportingConfigLoader {
         } catch (IOException | ClassNotFoundException ex) {
             throw new ReportConfigException("Unable to read module configurations map " + filePath, ex);
         }
-        
+
         if (moduleConfigs == null || moduleConfigs.isEmpty()) {
             return config;
         }
-        
+
         // read each ReportModuleSettings object individually
         for (Iterator<Entry<String, ReportModuleConfig>> iterator = moduleConfigs.entrySet().iterator(); iterator.hasNext();) {
             ReportModuleConfig moduleConfig = iterator.next().getValue();
@@ -114,16 +117,19 @@ final class ReportingConfigLoader {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
                 moduleConfig.setModuleSettings((ReportModuleSettings) in.readObject());
             } catch (IOException | ClassNotFoundException ex) {
-                /* NOTE: we do not want to re-throw the exception because we do not 
-                want a single error while reading in a (3rd party) report module 
-                to prevent us from reading the entire reporting configuration.*/
+                /*
+                 * NOTE: we do not want to re-throw the exception because we do
+                 * not want a single error while reading in a (3rd party) report
+                 * module to prevent us from reading the entire reporting
+                 * configuration.
+                 */
                 logger.log(Level.SEVERE, "Unable to read module settings " + filePath, ex);
                 iterator.remove();
             }
         }
-        
+
         config.setModuleConfigs(moduleConfigs);
-        
+
         return config;
     }
 
@@ -132,15 +138,16 @@ final class ReportingConfigLoader {
      * an atomic, thread safe way.
      *
      * @param reportConfig ReportingConfig object to serialize to disk
+     *
      * @throws ReportConfigException if an error occurred while saving the
-     * configuration
+     *                               configuration
      */
     static synchronized void saveConfig(ReportingConfig reportConfig) throws ReportConfigException {
 
         if (reportConfig == null) {
             throw new ReportConfigException("Reporting configuration is NULL");
         }
-        
+
         // construct the configuration directory path
         Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName());
 
@@ -168,7 +175,7 @@ final class ReportingConfigLoader {
         }
 
         // save map of module configuration objects
-        filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;        
+        filePath = pathToConfigDir.toString() + File.separator + MODULE_CONFIG_FILE;
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             out.writeObject(reportConfig.getModuleConfigs());
         } catch (IOException ex) {
@@ -176,10 +183,13 @@ final class ReportingConfigLoader {
         }
 
         // save each ReportModuleSettings object individually
-        /* NOTE: This is done to protect us from errors in reading/writing 3rd 
-        party report module settings. If we were to serialize the entire ReportingConfig 
-        object, then a single error while reading in a 3rd party report module 
-        would prevent us from reading the entire reporting configuration.*/
+        /*
+         * NOTE: This is done to protect us from errors in reading/writing 3rd
+         * party report module settings. If we were to serialize the entire
+         * ReportingConfig object, then a single error while reading in a 3rd
+         * party report module would prevent us from reading the entire
+         * reporting configuration.
+         */
         if (reportConfig.getModuleConfigs() == null) {
             return;
         }

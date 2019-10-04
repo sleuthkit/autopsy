@@ -62,15 +62,16 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
-import org.sleuthkit.autopsy.report.infrastructure.ReportProgressLogger;
+import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
+import org.sleuthkit.autopsy.report.infrastructure.ReportProgressIndicator;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Allows Autopsy to be invoked with a command line arguments. Causes Autopsy to
- * create a case, add a specified data source, run ingest on that data source, 
- * list all data source in a case, generate reports.
+ * Allows Autopsy to be invoked with command line arguments. Arguments exist to
+ * cause Autopsy to create a case, add a specified data source, run ingest on
+ * that data source, list all data sources in the case, and generate reports.
  */
 public class CommandLineIngestManager {
 
@@ -285,7 +286,8 @@ public class CommandLineIngestManager {
                                     }
 
                                     // generate reports
-                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.getReportingConfigName(), new ReportProgressLogger()); //NON-NLS
+                                    ReportProgressIndicator progressIndicator = new ReportProgressIndicator(new LoggingProgressIndicator());
+                                    ReportGenerator generator = new ReportGenerator(CommandLineIngestSettingsPanel.getReportingConfigName(), progressIndicator);
                                     generator.generateReports();
                                 } catch (CaseActionException ex) {
                                     String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
@@ -332,9 +334,10 @@ public class CommandLineIngestManager {
          * Creates a new case using arguments passed in from command line
          * CREATE_CASE command.
          *
-         * @param baseCaseName Case name
+         * @param baseCaseName        Case name
          * @param rootOutputDirectory Full path to directory in which case
-         * output folder will be created
+         *                            output folder will be created
+         *
          * @throws CaseActionException
          */
         private void openCase(String baseCaseName, String rootOutputDirectory) throws CaseActionException {
@@ -363,6 +366,7 @@ public class CommandLineIngestManager {
          * Opens existing case.
          *
          * @param caseFolderPath full path to case directory
+         *
          * @throws CaseActionException
          */
         private void openCase(String caseFolderPath) throws CaseActionException {
@@ -415,11 +419,16 @@ public class CommandLineIngestManager {
          * @param dataSource The data source.
          *
          * @throws
-         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException if
-         * there was a DSP processing error
+         * AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorExceptioif
+         *                                                                     there
+         *                                                                     was
+         *                                                                     a
+         *                                                                     DSP
+         *                                                                     processing
+         *                                                                     error
          *
-         * @throws InterruptedException  if the thread running the job processing 
-         * task is interrupted while blocked, i.e., if auto ingest is shutting down.
+         * @throws ead running the job processing task is interrupted while
+         * blocked, i.e., if auto ingest is shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
@@ -520,14 +529,15 @@ public class CommandLineIngestManager {
          * profile (profile = ingest context + ingest filter) for ingest.
          * Otherwise use baseline configuration.
          *
-         * @param dataSource The data source to analyze.
+         * @param dataSource        The data source to analyze.
          * @param ingestProfileName Name of ingest profile to use (optional)
          *
          * @throws AnalysisStartupException if there is an error analyzing the
-         * data source.
-         * @throws InterruptedException if the thread running the job processing
-         * task is interrupted while blocked, i.e., if auto ingest is shutting
-         * down.
+         *                                  data source.
+         * @throws InterruptedException     if the thread running the job
+         *                                  processing task is interrupted while
+         *                                  blocked, i.e., if auto ingest is
+         *                                  shutting down.
          */
         private void analyze(AutoIngestDataSource dataSource, String ingestProfileName) throws AnalysisStartupException, InterruptedException {
 
@@ -628,6 +638,7 @@ public class CommandLineIngestManager {
          * ingest profiles.
          *
          * @param ingestProfileName Ingest profile name
+         *
          * @return IngestProfile object, or NULL if the profile doesn't exist
          */
         private IngestProfiles.IngestProfile getSelectedProfile(String ingestProfileName) {
@@ -649,6 +660,7 @@ public class CommandLineIngestManager {
          * filters (custom and standard).
          *
          * @param filterName Name of the file filter
+         *
          * @return FilesSet object, or NULL if the filter doesn't exist
          */
         private FilesSet getSelectedFilter(String filterName) {
@@ -711,6 +723,7 @@ public class CommandLineIngestManager {
          * Returns full path to directory where command outputs should be saved.
          *
          * @param caseForJob Case object
+         *
          * @return Full path to directory where command outputs should be saved
          */
         private String getOutputDirPath(Case caseForJob) {

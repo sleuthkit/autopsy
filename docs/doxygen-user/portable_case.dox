@@ -33,7 +33,7 @@ You can tag any additional files you want to include in the portable case. See t
 
 \image html portable_case_tags.png
 
-Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpackage Portable Case" option before loading it. This will be discussed in the next section. 
+Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpack and Open Portable Case" option to open it. This will be discussed in the next section. 
 
 The portable case will be placed in the "Reports" folder in the current case.
 
@@ -49,7 +49,7 @@ If you packaged the portable case but did not choose to split it into chunks, yo
 
 \section portable_case_usage Using a Portable Case
 
-If your portable case was packaged, you'll first need to unpackage it. Open the "Case" menu and then select "Unpackage Portable Case". This will bring up a dialog where you can browse to your packaged case and select where to extract it to. Once unpackaged you can open it normally.
+Unpackaged portable cases can be opened like any other case through Case->Open Case. If your portable case was packaged, you'll need to use the unpack option to open it. Open the "Case" menu and then select "Unpack and Open Portable Case" option. This will bring up a dialog where you can browse to your packaged case and select where to extract it to. The case will also open. Note that any changes made to the case at this point will be saved to the unpacked location, and next time you open it you will need to browse to the unpacked folder.
 
 \image html portable_case_unpackage.png
 

@@ -160,9 +160,8 @@ public class PortableCaseReportModule implements ReportModule {
         } else {
             logger.log(Level.SEVERE, logWarning, ex);
         }
-        progressPanel.updateStatusLabel(dialogWarning);
         progressPanel.setIndeterminate(false);
-        progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+        progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, dialogWarning);
         cleanup();
     }
 

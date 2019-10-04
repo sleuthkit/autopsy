@@ -55,6 +55,20 @@ and adds artifacts to the case.
 """
 class ShareItAnalyzer(general.AndroidComponentAnalyzer):
 
+    """
+        ShareIt is a file transfer utility app.
+        
+        This module finds the SQLite DB for Xender, parses the DB for contacts & messages,
+        and adds artifacts to the case.
+
+        ShareIt version 5.0.28 has the following database structure:
+            - history.db 
+                -- A history table, with records of file transfers 
+                -- An item table with details of the files transfered
+                    
+                
+    """
+
     def __init__(self):
         self._logger = Logger.getLogger(self.__class__.__name__)
         self._PACKAGE_NAME = "com.lenovo.anyshare.gps"
@@ -71,31 +85,35 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                     self._MODULE_NAME, historyDb.getDBFile(),
                                     Account.Type.SHAREIT)
 
-                queryString = "SELECT history_type, device_id, device_name, description, timestamp, import_path FROM history"
+                queryString = """
+                                SELECT history_type, device_id, device_name, description, timestamp, file_path
+                                FROM history
+                                JOIN item where history.content_id = item.item_id
+                              """
                 historyResultSet = historyDb.runQuery(queryString)
                 if historyResultSet is not None:
                     while historyResultSet.next():
                         direction = ""
-                        fromAddress = None
-                        toAdddress = None
+                        fromId = None
+                        toId = None
                         
                         if (historyResultSet.getInt("history_type") == 1):
-                            direction = CommunicationDirection.OUTGOING
-                            toAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
-                        else:
                             direction = CommunicationDirection.INCOMING
-                            fromAddress = Account.Address(historyResultSet.getString("device_id"), historyResultSet.getString("device_name") )
+                            fromId = historyResultSet.getString("device_id")
+                        else:
+                            direction = CommunicationDirection.OUTGOING
+                            toId = historyResultSet.getString("device_id")
                             
                         msgBody = ""    # there is no body.
-                        attachments = [historyResultSet.getString("import_path")]
+                        attachments = [historyResultSet.getString("file_path")]
                         msgBody = general.appendAttachmentList(msgBody, attachments)
                         
                         timeStamp = historyResultSet.getLong("timestamp") / 1000
-                        messageArtifact = transferDbHelper.addMessage(
+                        messageArtifact = historyDbHelper.addMessage(
                                                             self._MESSAGE_TYPE,
                                                             direction,
-                                                            fromAddress,
-                                                            toAddress,
+                                                            fromId,
+                                                            toId,
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject

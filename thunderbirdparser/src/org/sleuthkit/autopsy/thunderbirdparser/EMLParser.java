@@ -44,9 +44,8 @@ class EMLParser extends MimeJ4MessageParser {
         String ext = abFile.getNameExtension();
         boolean isEMLFile = ext != null && ext.equals("eml");
         if (isEMLFile) {
-            isEMLFile = (new String(buffer)).contains("To:"); //NON-NLS
+            isEMLFile = (new String(buffer)).contains(":"); //NON-NLS
         }
-
         return isEMLFile;
     }
 

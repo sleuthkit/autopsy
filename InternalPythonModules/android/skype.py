@@ -61,7 +61,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         About version 8.15.0.428 (9/17/2019) Skype database:
             - There are 4 tables this parser uses:
                 1) person - this table appears to hold all contacts known to the user.
-                2) user - this table holds information pertaining to the user. 
+                2) user - this table holds information about the user. 
                 3) particiapnt - Yes, that is not a typo. This table maps group chat
                                  ids to skype ids (1 to many).
                 4) chatItem - This table contains all messages. It maps the group id or
@@ -99,8 +99,7 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         )
 
         if account_query_result is not None and account_query_result.next():
-            return Account.Address(account_query_result.getString("entry_id"),
-                        account_query_result.getString("name")) 
+            return account_query_result.getString("entry_id")
         return None
 
     def analyze(self, dataSource, fileManager, context):
@@ -148,15 +147,15 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         #Query for contacts and iterate row by row adding
         #each contact artifact
         try:
-            contacts_parser = SkypeContactsParser(skype_db)
+            contacts_parser = SkypeContactsParser(skype_db, self._PARSER_NAME)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_name(), 
                     contacts_parser.get_contact_name(), 
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
+                    contacts_parser.get_email(),
+                    contacts_parser.get_other_attributes()
                 )
             contacts_parser.close()
         except SQLException as ex:
@@ -307,25 +306,17 @@ class SkypeCallLogsParser(TskCallLogsParser):
 
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
-            return Account.Address(self.result_set.getString("sender_id"),
-                       self.result_set.getString("sender_name"))
+            return self.result_set.getString("sender_id")
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
             group_ids = self.result_set.getString("participant_ids")
-            name = self.result_set.getString("participants")
 
             if group_ids is not None:
                 group_ids = group_ids.split(",")
-                name = name.split(",")
-                recipients = []
-                
-                for person_id, person_name in zip(group_ids, name):
-                    recipients.append(Account.Address(person_id, person_name))
-                
-                return recipients
+                return group_ids 
 
-            return Account.Address(self.result_set.getString("conversation_id"), name)      
+            return self.result_set.getString("conversation_id")      
 
         return super(SkypeCallLogsParser, self).get_phone_number_to()
 
@@ -352,7 +343,7 @@ class SkypeContactsParser(TskContactsParser):
         a default value inherited from the super class. 
     """
 
-    def __init__(self, contact_db):
+    def __init__(self, contact_db, analyzer):
         super(SkypeContactsParser, self).__init__(contact_db.runQuery(
                  """
                     SELECT entry_id, 
@@ -361,12 +352,17 @@ class SkypeContactsParser(TskContactsParser):
                  """                                                         
               )
         )
+        self._PARENT_ANALYZER = analyzer
     
-    def get_account_name(self):
-        return self.result_set.getString("entry_id")
-        
     def get_contact_name(self):
         return self.result_set.getString("name")
+    
+    def get_other_attributes(self):
+        return [BlackboardAttribute(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, 
+                    self._PARENT_ANALYZER, 
+                    self.result_set.getString("entry_id"))]
+
 
 class SkypeMessagesParser(TskMessagesParser):
     """
@@ -427,8 +423,7 @@ class SkypeMessagesParser(TskMessagesParser):
 
     def get_phone_number_from(self):
         if self.get_message_direction() == self.INCOMING:
-            return Account.Address(self.result_set.getString("sender_id"),
-                     self.result_set.getString("sender_name"))
+            return self.result_set.getString("sender_id") 
         return super(SkypeMessagesParser, self).get_phone_number_from()
 
     def get_message_direction(self):  
@@ -442,19 +437,12 @@ class SkypeMessagesParser(TskMessagesParser):
     def get_phone_number_to(self):
         if self.get_message_direction() == self.OUTGOING:
             group_ids = self.result_set.getString("participant_ids")
-            names = self.result_set.getString("participants")
 
             if group_ids is not None:
                 group_ids = group_ids.split(",") 
-                names = names.split(",")
-                recipients = []
-
-                for participant_id, participant_name in zip(group_ids, names):
-                    recipients.append(Account.Address(participant_id, participant_name))
-
-                return recipients  
+                return group_ids  
             
-            return Account.Address(self.result_set.getString("conversation_id"), names)
+            return self.result_set.getString("conversation_id")
 
         return super(SkypeMessagesParser, self).get_phone_number_to()
 
