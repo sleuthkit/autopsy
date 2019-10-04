@@ -69,8 +69,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Allows Autopsy to be invoked with a command line arguments. Arguments exist
- * to cause Autopsy to create a case, add a specified data source, run ingest on
+ * Allows Autopsy to be invoked with command line arguments. Arguments exist to
+ * cause Autopsy to create a case, add a specified data source, run ingest on
  * that data source, list all data sources in the case, and generate reports.
  */
 public class CommandLineIngestManager {
@@ -427,26 +427,8 @@ public class CommandLineIngestManager {
          *                                                                     processing
          *                                                                     error
          *
-         * @throws
-         *                                                                               InterruptedException                                                  if
-         *                                                                               the
-         *                                                                               thread
-         *                                                                               running
-         *                                                                               the
-         *                                                                               job
-         *                                                                               processing
-         *                                                                               task
-         *                                                                               is
-         *                                                                               interrupted
-         *                                                                               while
-         *                                                                               blocked,
-         *                                                                               i.e.,
-         *                                                                               if
-         *                                                                               auto
-         *                                                                               ingest
-         *                                                                               is
-         *                                                                               shutting
-         *                                                                               down.
+         * @throws ead running the job processing task is interrupted while
+         * blocked, i.e., if auto ingest is shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 

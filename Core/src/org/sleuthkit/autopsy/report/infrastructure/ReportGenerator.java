@@ -61,11 +61,15 @@ import org.sleuthkit.datamodel.TskData;
 public class ReportGenerator {
 
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
-    private static final String REPORT_PATH_FMT_STR = "%s" + File.separator + "%s %s %s" + File.separator;
-    private static final String REPORTS_DIR = "Reports"; //NON-NLS
-    private final String configName;
-    private final ReportGenerationPanel reportGenerationPanel;
+
     private final ReportProgressPanel progressIndicator;
+    private final ReportGenerationPanel reportGenerationPanel;
+    
+    private static final String REPORT_PATH_FMT_STR = "%s" + File.separator + "%s %s %s" + File.separator;
+    
+    private final String configName;
+    private static final String REPORTS_DIR = "Reports"; //NON-NLS
+
     private List<String> errorList = new ArrayList<>();
 
     /**
