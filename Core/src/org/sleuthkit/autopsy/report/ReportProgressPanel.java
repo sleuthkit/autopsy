@@ -83,7 +83,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         initComponents();
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
-        statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.progress.queuing"));
+        statusMessageLabel.setText(Bundle.ReportProgressPanel_progress_queuing());
         status = ReportStatus.QUEUING;
         reportLabel.setText("");
         pathLabel.setText(""); //NON-NLS
