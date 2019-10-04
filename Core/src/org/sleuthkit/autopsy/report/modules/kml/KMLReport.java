@@ -46,8 +46,8 @@ import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.report.ReportBranding;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.

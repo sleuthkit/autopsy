@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,21 +25,21 @@ import javax.swing.Box;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 
 /**
  * A panel that displays a panel used by a report generation module to show
  * progress. It provides OK and Cancel buttons.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class ReportGenerationPanel extends javax.swing.JPanel {
+final class ReportGenerationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private final GridBagConstraints constraints;
     private final Component glue;
     private ActionListener actionListener;
-    ReportProgressDialog progressPanel;
+    private final ReportProgressPanel progressPanel;
 
     /**
      * Constructs a panel that displays a panel used by a report generation
@@ -54,10 +54,10 @@ class ReportGenerationPanel extends javax.swing.JPanel {
         constraints.gridy = 0;
         constraints.weightx = 1.0;
         glue = Box.createVerticalGlue();
-        progressPanel = new ReportProgressDialog();
+        progressPanel = new ReportProgressPanel();
     }
-    
-    ReportProgressDialog getProgressPanel() {
+
+    ReportProgressPanel getProgressPanel() {
         return progressPanel;
     }
 
