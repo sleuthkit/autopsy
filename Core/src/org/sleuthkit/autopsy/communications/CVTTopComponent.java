@@ -94,7 +94,7 @@ public final class CVTTopComponent extends TopComponent {
         CVTEvents.getCVTEventBus().register(accountsBrowser);
         CVTEvents.getCVTEventBus().register(filtersPane);
         
-        filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-180.png")));
+        filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-left.png")));
         filterTabbedPane.setTitleAt(0, "");
     }
 
@@ -156,12 +156,12 @@ public final class CVTTopComponent extends TopComponent {
         int index = filterTabbedPane.indexAtLocation(evt.getX(), evt.getY());
         if(index != -1) {
             if(filtersVisible) {
-                filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow.png")));
+                filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-right.png")));
                 filterTabPanel.removeAll();
                 filterTabPanel.revalidate();
                 filtersVisible = false;
             } else {
-                filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-180.png")));
+                filterTabbedPane.setIconAt(0, new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-left.png")));
                 filterTabPanel.add(filtersPane, BorderLayout.CENTER);
                 filterTabPanel.revalidate();
                 filtersVisible = true;
