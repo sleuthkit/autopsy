@@ -100,8 +100,8 @@ public final class AppSQLiteDB {
      *                         which to search.
      * @param matchExactName   Whether or not the database file name argument is
      *                         the full database file name or a substring.
-     * @param parentPathSubstr The parent path substring, may be the empty
-     *                         string to mathc any parent path.
+     * @param parentPathSubstr The parent path substring, may pass the empty
+     *                         string to match any parent path.
      *
      * @return A list, possibly empty, of AppSQLiteDB objects for the files that
      *         were found, copied, and connected to.
