@@ -31,13 +31,14 @@ public class ReportProgressIndicator extends ReportProgressPanel {
 
     private static final long serialVersionUID = 1L;
     private final ProgressIndicator progressIndicator;
+    private int workUnitsCompleted;
 
     /**
      * Constructs an adapter that adapts the ReportProgressPanel interface to
      * the ProgressIndicator interface so that a given progress indicator can be
      * used where a ReportProgressPanel is expected.
      *
-     * @param progressIndicator The progress indicator tobe adapted.
+     * @param progressIndicator The progress indicator to be adapted.
      */
     public ReportProgressIndicator(ProgressIndicator progressIndicator) {
         this.progressIndicator = progressIndicator;
@@ -46,9 +47,11 @@ public class ReportProgressIndicator extends ReportProgressPanel {
     @Override
     public void setLabels(String reportName, String reportPath) {
         /*
-         * Not expected to be called, method exists for ReportGenerationPanel,
-         * which is not expected to be instantiated when this class is used.
+         * This method is not expected to be called. It exists for use by the
+         * ReportGenerationPanel, which is not expected to be instantiated when
+         * this class is used.
          */
+        super.setLabels(reportName, reportPath);
     }
 
     @Override
@@ -56,6 +59,7 @@ public class ReportProgressIndicator extends ReportProgressPanel {
         "ReportProgressIndicator.startMessage=Report generation started"
     })
     public void start() {
+        workUnitsCompleted = 0;
         setStatus(ReportStatus.RUNNING);
         progressIndicator.start(Bundle.ReportProgressIndicator_startMessage());
     }
@@ -69,8 +73,15 @@ public class ReportProgressIndicator extends ReportProgressPanel {
     }
 
     @Override
+    public void increment() {
+        ++workUnitsCompleted;
+        progressIndicator.progress(workUnitsCompleted);
+    }
+
+    @Override
     public void setProgress(int value) {
-        progressIndicator.progress(value);
+        workUnitsCompleted = value;
+        progressIndicator.progress(workUnitsCompleted);
     }
 
     @Override
