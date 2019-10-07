@@ -172,19 +172,7 @@ public class FileUtil {
         //for now escaping /:"*?<>| (not valid in file name, at least on Windows)
         //with underscores. We are only keeping \ as it could be part of the path.
         return fileName.replaceAll("[\\p{Cntrl}/:\"*?<>|]+", "_");
-    }
-    
-    /**
-     * UTF-8 sanitize and escape special characters in a file name or a file name component
-     *
-     * @param fileName to escape
-     *
-     * @return Sanitized string
-     */
-    public static String utf8SanitizeFileName(String fileName) {
-        Charset charset = StandardCharsets.UTF_8;
-        return charset.decode(charset.encode(escapeFileName(fileName))).toString();
-    }    
+    } 
 
     /**
      * Test if the current user has read and write access to the dirPath.
