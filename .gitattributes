@@ -1,7 +1,7 @@
 *.java                   text diff=java
 
 *.txt                   text
-*.sh                   text
+*.sh                   eol=lf
 *.mf                   text
 *.xml                   text
 *.form                   text

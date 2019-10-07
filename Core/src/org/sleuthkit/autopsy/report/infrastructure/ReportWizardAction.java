@@ -1,19 +1,19 @@
 /*
  *
  * Autopsy Forensic Browser
- * 
- * Copyright 2013-2018 Basis Technology Corp.
- * 
+ *
+ * Copyright 2012-2019 Basis Technology Corp.
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,10 +74,11 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
      * reporting wizard. When the wizard is finished, create a ReportGenerator
      * with the wizard information, and start all necessary reports.
      *
-     * @param configName Name of the reporting configuration to use
+     * @param configName              Name of the reporting configuration to use
      * @param displayCaseSpecificData Flag whether to use case specific data in
-     * UI panels or to use all possible result types
-     * @param runReports Flag whether to produce report(s)
+     *                                UI panels or to use all possible result
+     *                                types
+     * @param runReports              Flag whether to produce report(s)
      */
     @SuppressWarnings("unchecked")
     public static void doReportWizard(String configName, boolean displayCaseSpecificData, boolean runReports) {
@@ -92,7 +93,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             } catch (ReportConfigException ex) {
                 logger.log(Level.SEVERE, "Failed to save reporting configuration " + configName, ex); //NON-NLS
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-                        NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.unableToSaveConfig.errorLabel.text"), 
+                        NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.unableToSaveConfig.errorLabel.text"),
                         NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(descriptor);
             }
@@ -110,6 +111,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         }
     }
 
+    @SuppressWarnings(value = "unchecked")
     private static void saveReportingConfiguration(String configName, WizardDescriptor wiz) throws ReportConfigException {
 
         ReportingConfig reportingConfig = new ReportingConfig(configName);

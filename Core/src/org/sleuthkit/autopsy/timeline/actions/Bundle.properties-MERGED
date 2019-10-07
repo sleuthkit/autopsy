@@ -38,8 +38,10 @@ SaveSnapShotAsReport.ReportSavedAt=Report saved at [{0}]
 SaveSnapShotAsReport.Success=Success
 SaveSnapShotAsReport_OK_Button=OK
 SaveSnapShotAsReport_Open_Button=Open Report
+# {0} - supplied report name
 SaveSnapShotAsReport_Path_Failure_Report=Failed to create report. Supplied report name has invalid characters: {0}
 SaveSnapShotAsReport_Report_Failed=Report failed
+# {0} - report location
 SaveSnapShotAsReport_success_message=Snapshot report successfully created at location: \n\n {0}
 Timeline.ModuleName=Timeline
 ViewArtifactInTimelineAction.displayName=View Result in Timeline... 
