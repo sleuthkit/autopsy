@@ -770,8 +770,11 @@ final public class ViewFrame extends BorderPane {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.ViewFrame_pickerListener_errorMessage())
                             .showError();
-                    logger.log(Level.SEVERE, "Error responding to date/time picker change.", ex);
+                    logger.log(Level.WARNING, "Error responding to date/time picker change.", ex); //NON-NLS
+                } catch (IllegalArgumentException ex ) {
+                    logger.log(Level.INFO, "Timeline: User supplied invalid time range."); //NON-NLS
                 }
+                
                 Platform.runLater(ViewFrame.this::refreshTimeUI);
             }
         }

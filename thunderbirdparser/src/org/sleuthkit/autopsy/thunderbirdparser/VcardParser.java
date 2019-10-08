@@ -224,8 +224,6 @@ final class VcardParser {
             if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, attributes)) {
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                 artifact.addAttributes(attributes);
-                List<BlackboardArtifact> blackboardArtifacts = new ArrayList<>();
-                blackboardArtifacts.add(artifact);
                 
                  extractPhotos(vcard, abstractFile, artifact);
                 
@@ -388,8 +386,12 @@ final class VcardParser {
      */
     private void addPhoneAttributes(Telephone telephone, AbstractFile abstractFile, Collection<BlackboardAttribute> attributes) {
         String telephoneText = telephone.getText();
+       
         if (telephoneText == null || telephoneText.isEmpty()) {
-            return;
+            telephoneText =  telephone.getUri().getNumber();
+            if (telephoneText == null || telephoneText.isEmpty()) {
+                return;
+            }
         }
 
         // Add phone number to collection for later creation of TSK_CONTACT.
@@ -397,34 +399,40 @@ final class VcardParser {
         if (telephoneTypes.isEmpty()) {
             ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephone.getText(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, attributes);
         } else {
-            for (TelephoneType type : telephoneTypes) {
-                /*
-                 * Unfortunately, if the types are lower-case, they don't
-                 * get separated correctly into individual TelephoneTypes by
-                 * ez-vcard. Therefore, we must read them manually
-                 * ourselves.
-                 */
-                List<String> splitTelephoneTypes = Arrays.asList(
-                        type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
+            TelephoneType type = telephoneTypes.get(0);
+            /*
+             * Unfortunately, if the types are lower-case, they don't
+             * get separated correctly into individual TelephoneTypes by
+             * ez-vcard. Therefore, we must read them manually
+             * ourselves.
+             */
+            List<String> splitTelephoneTypes = Arrays.asList(
+                    type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
 
-                for (String splitType : splitTelephoneTypes) {
-                    String attributeTypeName = "TSK_PHONE_NUMBER_" + splitType;
-                    try {
-                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
-                        if (attributeType == null) {
+            if (splitTelephoneTypes.size() > 0) {
+                String splitType = splitTelephoneTypes.get(0);
+                String attributeTypeName = "TSK_PHONE_NUMBER";
+                if (splitType != null && !splitType.isEmpty()) {
+                    attributeTypeName = "TSK_PHONE_NUMBER_" + splitType;
+                }
+
+                try {
+                    BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                    if (attributeType == null) {
+                        try{
                             // Add this attribute type to the case database.
                             attributeType = tskCase.addArtifactAttributeType(attributeTypeName,
                                     BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
-                                    String.format("Phone (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                                    String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                        }catch (TskDataException ex) {
+                            attributeType = tskCase.getAttributeType(attributeTypeName);
                         }
-                        ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephone.getText(), attributeType, attributes);
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-                    } catch (TskDataException ex) {
-                        logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
                     }
+                    ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephoneText, attributeType, attributes);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
                 }
-            }
+            } 
         }
     }
     
@@ -447,34 +455,36 @@ final class VcardParser {
         if (emailTypes.isEmpty()) {
             ThunderbirdMboxFileIngestModule.addArtifactAttribute(email.getValue(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, attributes);
         } else {
-            for (EmailType type : emailTypes) {
-                /*
-                 * Unfortunately, if the types are lower-case, they don't
-                 * get separated correctly into individual EmailTypes by
-                 * ez-vcard. Therefore, we must read them manually
-                 * ourselves.
-                 */
-                List<String> splitEmailTypes = Arrays.asList(
-                        type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
+            EmailType type = emailTypes.get(0);                /*
+            * Unfortunately, if the types are lower-case, they don't
+            * get separated correctly into individual EmailTypes by
+            * ez-vcard. Therefore, we must read them manually
+            * ourselves.
+            */
+           List<String> splitEmailTypes = Arrays.asList(
+                   type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
 
-                for (String splitType : splitEmailTypes) {
-                    String attributeTypeName = "TSK_EMAIL_" + splitType;
-                    try {
-                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
-                        if (attributeType == null) {
-                            // Add this attribute type to the case database.
-                            attributeType = tskCase.addArtifactAttributeType(attributeTypeName, 
-                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, 
-                                    String.format("Email (%s)", StringUtils.capitalize(splitType.toLowerCase())));
-                        }
-                        ThunderbirdMboxFileIngestModule.addArtifactAttribute(email.getValue(), attributeType, attributes);
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-                    } catch (TskDataException ex) {
-                        logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-                    }
-                }
-            }
+           if (splitEmailTypes.size() > 0) {
+               String splitType = splitEmailTypes.get(0);
+               String attributeTypeName = "TSK_EMAIL_" + splitType;
+               if(splitType.isEmpty()) {
+                   attributeTypeName = "TSK_EMAIL";
+               }
+               try {
+                   BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                   if (attributeType == null) {
+                       // Add this attribute type to the case database.
+                       attributeType = tskCase.addArtifactAttributeType(attributeTypeName, 
+                               BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, 
+                               String.format("Email (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                   }
+                   ThunderbirdMboxFileIngestModule.addArtifactAttribute(email.getValue(), attributeType, attributes);
+               } catch (TskCoreException ex) {
+                   logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+               } catch (TskDataException ex) {
+                   logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+               }
+           }  
         }
     }
     
@@ -490,7 +500,11 @@ final class VcardParser {
     private void addPhoneAccountInstances(Telephone telephone, AbstractFile abstractFile, Collection<AccountFileInstance> accountInstances) {
         String telephoneText = telephone.getText();
         if (telephoneText == null || telephoneText.isEmpty()) {
-            return;
+            telephoneText =  telephone.getUri().getNumber();
+            if (telephoneText == null || telephoneText.isEmpty()) {
+                return;
+            }
+
         }
 
         // Add phone number as a TSK_ACCOUNT.
