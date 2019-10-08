@@ -72,9 +72,9 @@ GStreamer for viewing video files
 - Web page: http://gstreamer.freedesktop.org/
 - License: http://www.gnu.org/licenses/lgpl.html
 
-GStreamer-java for viewing video files
-- Web page: http://code.google.com/p/gstreamer-java/
-- License: http://www.gnu.org/licenses/lgpl.html
+GStreamer 1.x Java Core for viewing video files
+- Web page: https://github.com/gstreamer-java/gst1-java-core
+- License: https://github.com/gstreamer-java/gst1-java-core/blob/master/LICENSE.md
 
 Regripper for pulling recently activity
 (Including custom plugins)
