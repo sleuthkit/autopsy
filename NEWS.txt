@@ -1,3 +1,93 @@
+---------------- VERSION 4.13.0  --------------
+General:
+- Switch from Oracle JDK to OpenJDK.
+- Full command line support (case creation, adding of data sources, running ingest, and generating reports). 
+
+Logical Imager:
+- Output can be individual files instead of VHD image (uses less space).
+- More fine grained progress during collection and importing.
+- Log of files and make artifacts.
+- All console messages are saved to a log file too.
+- Improved handling of cancellation when adding results into a case.
+
+Ingest Modules:
+- Added Android support as Python modules for: Android installed apps, Android browser, Facebook Messenger, IMO, LINE, Opera, ORUX Maps, Samsung SBrowser, Skype, ShareIt, TextNow, Viber, WhatsApp, Xender, Zapya.
+- Recycle Bin files are parsed in Recent Activity module, new artifacts are created, and deleted file entries are created at the original location of the deleted files.  Code is based on Mark McKinnon’s RecycleBin module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/Recycle_Bin).
+- ShellBag registry data is extracted from RegRipper in the Recent Activity module. New artifacts are recreated for the data. Based on Mark McKinnon’s “Parse ShellBags” module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/Parse_Shellbags).
+- Additional data is extracted about users from SAM hive in Recent Activity module. Data includes password dates, permissions, groups, and full name. Based on Mark McKinnon’s “Parse SAM” module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/Parse_SAM). 
+- Email ingest module parses EML files. Based on Mark McKinnon’s “EML Parser” module (https://github.com/markmckinnon/Autopsy-Plugins/tree/master/EML_Parser).
+- Fixed bug in MBOX module that caused attachments to have a “_” in the name. 
+- New Plaso ingest module that runs Plaso and generates events for the timeline. 
+- Fixed bug in Email module for VCard files to better parse phone number types. 
+- Keyword Search module waits longer for Solr to start to prevent incorrectly reporting a problem and disabling the feature. 
+- Embedded file extractor module was updated to not report compression bombs for GZIP files. 
+
+Timeline:
+- New approach for storing event data. A dedicated events table exists and is populated as files and artifacts are added to the database. No longer requires an explicit step of populating a local events table.
+- Users can create their own events from the Timeline UI.
+- Filtering was simplified based or existence of tag or hash set hit versus a specific name. 
+
+Communications:
+- Fixed bug that hid contact book entries with duplicate numbers. 
+
+Image Gallery:
+- Fixed bug in schema that caused errors with very long file names.
+
+Report:
+- CASE report is included in a portable case.
+- Image tags are included in portable case.
+- More size options for a packaged portable case.
+- New Infrastructure to support command line-based generation.
+
+Backend:
+- Developers should use new new Blackboard.postArtifact() method to ensure artifact is indexed and added to the timeline. 
+- New classes were created to make it easier to write modules for apps. 
+
+---------------- VERSION 4.12.0  --------------
+Collection
+- Added ability to configure a USB drive to use new logical imager tool.
+- Added logical imager tool that runs on a live Windows computer and saves results to a USB drive.
+- Added ability to import logical imager results into Autopsy as a data source.
+
+Ingest Modules:
+- Changed file type detection so that Tika does not rely only on extension.
+- Email ingest module assigns thread IDs to messages.
+- Android ingest modules store thread ID from their databases.
+
+Content Viewers (lower right of UI):
+- New “Text” viewer that consolidates previous Strings and “Indexed Text” viewers.
+- New “Translation” panel was added to the new “Text” viewer.
+- Added integration with Google and Bing translation (credentials required).
+- Redesigned “Other Occurrences” viewer to have 4th column with details of selected item.
+- Added Willi Ballentin’s “Registry Hive Viewer” panel to the “Application” viewer.
+- Improved HTML viewer to use style sheets and better layout.
+- Added ability to draw a box on a picture while tagging it.
+
+Result Table (upper right of UI)
+- Added paging to all views for faster loading of large data sets.
+- Improved speed of displaying results when a column was sorted.
+
+Reporting
+- Portable cases can contain files marked as Interesting Items
+- Portable cases can be compressed and chunked
+- “Files - Text” report can use either tabs or commas as the delimiter
+- “Files - Text” report better handles Unicode text.
+- Added ability to create a CSV report for the contents of a table
+- HTML report for tagged pictures includes a copy with the overlay box
+
+Communications:
+- Added Account Summary view
+- Added Contacts panel to show all contacts associated with an account.
+- Added Media panel to show media attachments associated with an account
+- Added filter to show accounts if they involved with the most recent messages.
+- Messages can be grouped by thread.
+
+Auto Ingest
+- New Test button was added to help diagnose permission and configuration issues.
+
+Documentation:
+- Created new Triage Standard Operating Procedure (SOP) section to the User Docs
+
 ---------------- VERSION 4.11.0  --------------
 New Features:
 

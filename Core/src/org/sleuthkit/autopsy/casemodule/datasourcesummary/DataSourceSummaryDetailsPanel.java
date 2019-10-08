@@ -22,7 +22,7 @@ import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.DataSource;
