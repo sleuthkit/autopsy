@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -159,7 +161,8 @@ class DocumentEmbeddedContentExtractor {
     void extractEmbeddedContent(AbstractFile abstractFile) {
         List<ExtractedFile> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
-        this.parentFileName = EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile);
+        //save the parent file name with out illegal windows characters
+        this.parentFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile));
 
         // Skip files that already have been unpacked.
         try {
@@ -501,8 +504,9 @@ class DocumentEmbeddedContentExtractor {
             });
             
             return extractedFiles;
-        } catch (IOException | SAXException | TikaException ex) {
-            LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs", ex); //NON-NLS
+        } catch (IOException | SAXException | TikaException | InvalidPathException ex) {
+            LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs for file Name: " + abstractFile.getName() + " ID: " + abstractFile.getId(), ex); //NON-NLS
+             
         }
         return Collections.emptyList();
     }
@@ -669,6 +673,8 @@ class DocumentEmbeddedContentExtractor {
                 //that might be included in the name) and make sure
                 //to normalize the name
                 name = FilenameUtils.normalize(FilenameUtils.getName(name));
+                //remove any illegal characters from name
+                name = FileUtil.escapeFileName(name);
             }
 
             // Get the suggested extension based on mime type.
