@@ -1,4 +1,4 @@
-﻿This document outlines how to run a packaged version of Autopsy on Linux or OS X.  It does not cover how to compile it from source or the Windows installer. 
+This document outlines how to run a packaged version of Autopsy on Linux or OS X.  It does not cover how to compile it from source or the Windows installer. 
 
 
 * Prerequisites *
