@@ -37,8 +37,8 @@ public class GoogleTranslatorTest {
 //        //It's unrealistic to expect the same answer every time, but sometimes
 //        //it's helpful to have this in your debug process.
 //        
-//          String expResult = "translate"; assertEquals(expResult, result);
-//          System.out.println(result);
+//        String expResult = "translate"; assertEquals(expResult, result);
+//        assertEquals("Result did not match expected result" expResult, result);
          
     }
 //Commented out because using TranslateOption with the current version of Guava is not supported JIRA-5063
@@ -63,7 +63,6 @@ public class GoogleTranslatorTest {
 //        //It's unrealistic to expect the same answer every time, but sometimes
 //        //it's helpful to have this in your debug process.
 //        String expResult = "¡Hola Mundo!";
-//        assertEquals(expResult, result);
-//        System.out.println(result);
+//        assertEquals("Result did not match expected result", expResult, result);
 //    }
 }

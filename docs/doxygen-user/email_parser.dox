@@ -3,7 +3,7 @@
 What Does It Do
 ========
 
-The Email Parser module identifies Thunderbird MBOX files and PST format files based on file signatures, extracting the e-mails from them, adding the results to the Blackboard. This module skips known files and creates a Blackboard artifact for each message. It adds email attachments as derived files.
+The Email Parser module identifies MBOX, EML and PST format files based on file signatures, extracting the e-mails from them, adding the results to the Blackboard. This module skips known files and creates a Blackboard artifact for each message. It adds email attachments as derived files.
 
 This allows the user to identify email-based communications from the system being analyzed.
 

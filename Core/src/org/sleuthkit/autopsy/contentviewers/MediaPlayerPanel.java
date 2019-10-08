@@ -187,7 +187,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      */
     public MediaPlayerPanel() throws GstException, UnsatisfiedLinkError {
         initComponents();
-        initGst();
         customizeComponents();
     }
 
@@ -249,11 +248,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 Gst.getExecutor().submit(() -> gstPlayBin.pause());
             }
         };
-    }
-
-    private void initGst() throws GstException, UnsatisfiedLinkError {
-        logger.log(Level.INFO, "Attempting initializing of gstreamer for video/audio viewing"); //NON-NLS
-        Gst.init();
     }
 
     /**
@@ -453,6 +447,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 if(this.isCancelled()) {
                     return;
                 }
+
+                // Initialize Gstreamer. It is safe to call this for every file.
+                // It was moved here from the constructor because having it happen
+                // earlier resulted in conflicts on Linux.
+                Gst.init();
+
                 //Video is ready for playback. Create new components
                 gstPlayBin = new PlayBin("VideoPlayer", tempFile.toURI());
                 //Configure event handling

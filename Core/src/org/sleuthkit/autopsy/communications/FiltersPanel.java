@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2018 Basis Technology Corp.
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -81,7 +82,8 @@ final public class FiltersPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
-
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
     /**
      * Map from Account.Type to the checkbox for that account type's filter.
      */
@@ -120,17 +122,15 @@ final public class FiltersPanel extends JPanel {
      * initially.
      */
     private boolean deviceAccountTypeEnabled;
-    
+
     private Case openCase = null;
 
     @NbBundle.Messages({"refreshText=Refresh Results", "applyText=Apply"})
     public FiltersPanel() {
         initComponents();
-        
-        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
-        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
-        accountTypeListPane.add(panel);
-        
+
+       initalizeDeviceAccountType();
+
         deviceRequiredLabel.setVisible(false);
         accountTypeRequiredLabel.setVisible(false);
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
@@ -151,8 +151,8 @@ final public class FiltersPanel extends JPanel {
 
         updateFilters(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
-            if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME) ||
-                    preferenceChangeEvent.getKey().equals(UserPreferences.TIME_ZONE_FOR_DISPLAYS)) {
+            if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)
+                    || preferenceChangeEvent.getKey().equals(UserPreferences.TIME_ZONE_FOR_DISPLAYS)) {
                 updateTimeZone();
             }
         });
@@ -166,22 +166,21 @@ final public class FiltersPanel extends JPanel {
                         && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
-                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()))
-                    {
-                        updateFilters(true);
-                        needsRefresh = true;
-                        validateFilters();
+                        || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())) {
+                    updateFilters(true);
+                    needsRefresh = true;
+                    validateFilters();
                 }
             }
         };
-        
+
         this.ingestJobListener = pce -> {
             String eventType = pce.getPropertyName();
-            if (eventType.equals(COMPLETED.toString()) &&
-                    updateFilters(true)) {
-               
-                    needsRefresh = true;
-                    validateFilters();
+            if (eventType.equals(COMPLETED.toString())
+                    && updateFilters(true)) {
+
+                needsRefresh = true;
+                validateFilters();
             }
         };
 
@@ -208,16 +207,16 @@ final public class FiltersPanel extends JPanel {
         refreshButton.setEnabled(someDevice && someAccountType && needsRefresh && validLimit);
         needsRefreshLabel.setVisible(needsRefresh);
     }
-    
+
     private boolean validateLimitValue() {
-        String selectedValue = (String)limitComboBox.getSelectedItem();
-        if(selectedValue.trim().equalsIgnoreCase("all")) {
+        String selectedValue = (String) limitComboBox.getSelectedItem();
+        if (selectedValue.trim().equalsIgnoreCase("all")) {
             return true;
         } else {
-            try{
+            try {
                 int value = Integer.parseInt(selectedValue);
                 return value > 0;
-            } catch( NumberFormatException ex) {
+            } catch (NumberFormatException ex) {
                 return false;
             }
         }
@@ -242,7 +241,7 @@ final public class FiltersPanel extends JPanel {
     private boolean updateFilters(boolean initialState) {
         boolean newAccountType = updateAccountTypeFilter(initialState);
         boolean newDeviceFilter = updateDeviceFilter(initialState);
-        
+
         // both or either are true, return true;
         return newAccountType || newDeviceFilter;
     }
@@ -250,15 +249,17 @@ final public class FiltersPanel extends JPanel {
     @Override
     public void addNotify() {
         super.addNotify();
-        IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
-        IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, ingestListener);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestJobListener);
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesListPane.removeAll();
             
-            accountTypeMap.clear();
-            accountTypeListPane.removeAll();
+            accountTypeMap.clear();           
+            accountTypeListPane.removeAll(); 
+            
+            initalizeDeviceAccountType();
         });
     }
 
@@ -268,12 +269,18 @@ final public class FiltersPanel extends JPanel {
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
     }
+    
+    private void initalizeDeviceAccountType() {
+        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
+        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
+        accountTypeListPane.add(panel);
+    }
 
     /**
      * Populate the Account Types filter widgets
-     * 
+     *
      * @param selected the initial value for the account type checkbox
-     * 
+     *
      * @return True, if a new accountType was found
      */
     private boolean updateAccountTypeFilter(boolean selected) {
@@ -281,9 +288,9 @@ final public class FiltersPanel extends JPanel {
         try {
             final CommunicationsManager communicationsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
             List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
-            
+
             for (Account.Type type : accountTypesInUse) {
-               
+
                 if (!accountTypeMap.containsKey(type) && !type.equals(Account.Type.CREDIT_CARD)) {
                     CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(type, selected);
                     accountTypeMap.put(type, panel.getCheckBox());
@@ -305,14 +312,14 @@ final public class FiltersPanel extends JPanel {
 
         return newOneFound;
     }
-    
+
     /**
      * Helper function to create a new instance of the CheckBoxIconPanel base on
      * the Account.Type and initalState (check box state).
-     * 
-     * @param type Account.Type to display on the panel
+     *
+     * @param type        Account.Type to display on the panel
      * @param initalState initial check box state
-     * 
+     *
      * @return instance of the CheckBoxIconPanel
      */
     private CheckBoxIconPanel createAccoutTypeCheckBoxPanel(Account.Type type, boolean initalState) {
@@ -324,12 +331,12 @@ final public class FiltersPanel extends JPanel {
         panel.addItemListener(validationListener);
         return panel;
     }
-    
+
     /**
      * Populate the devices filter widgets
-     * 
+     *
      * @param selected Sets the initial state of device check box
-     * 
+     *
      * @return true if a new device was found
      */
     private boolean updateDeviceFilter(boolean selected) {
@@ -339,15 +346,15 @@ final public class FiltersPanel extends JPanel {
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
-                if(devicesMap.containsKey(dataSource.getDeviceId())) {
+                if (devicesMap.containsKey(dataSource.getDeviceId())) {
                     continue;
                 }
-                
+
                 final JCheckBox jCheckBox = new JCheckBox(dsName, selected);
                 jCheckBox.addItemListener(validationListener);
                 devicesListPane.add(jCheckBox);
                 devicesMap.put(dataSource.getDeviceId(), jCheckBox);
-                
+
                 newOneFound = true;
 
             }
@@ -356,36 +363,36 @@ final public class FiltersPanel extends JPanel {
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }
-        
-        if(newOneFound) {
+
+        if (newOneFound) {
             devicesListPane.revalidate();
         }
-        
+
         return newOneFound;
     }
-    
+
     /**
-     * Given a list of subFilters, set the states of the panel controls 
+     * Given a list of subFilters, set the states of the panel controls
      * accordingly.
-     * 
+     *
      * @param commFilter Contains a list of subFilters
      */
     public void setFilters(CommunicationsFilter commFilter) {
         List<CommunicationsFilter.SubFilter> subFilters = commFilter.getAndFilters();
         subFilters.forEach(subFilter -> {
-            if( subFilter instanceof DeviceFilter ) {
-                setDeviceFilter((DeviceFilter)subFilter);
-            } else if( subFilter instanceof AccountTypeFilter) {
+            if (subFilter instanceof DeviceFilter) {
+                setDeviceFilter((DeviceFilter) subFilter);
+            } else if (subFilter instanceof AccountTypeFilter) {
                 setAccountTypeFilter((AccountTypeFilter) subFilter);
-            } else if (subFilter instanceof MostRecentFilter ) {
-                setMostRecentFilter((MostRecentFilter)subFilter);
+            } else if (subFilter instanceof MostRecentFilter) {
+                setMostRecentFilter((MostRecentFilter) subFilter);
             }
         });
     }
-    
+
     /**
      * Sets the state of the device filter check boxes
-     * 
+     *
      * @param deviceFilter Selected devices
      */
     private void setDeviceFilter(DeviceFilter deviceFilter) {
@@ -394,23 +401,24 @@ final public class FiltersPanel extends JPanel {
             cb.setSelected(deviceIDs.contains(type));
         });
     }
-    
-     /**
-     * Set the state of the account type checkboxes to match the passed in filter
-     * 
+
+    /**
+     * Set the state of the account type checkboxes to match the passed in
+     * filter
+     *
      * @param typeFilter Account Types to be selected
      */
-    private void setAccountTypeFilter(AccountTypeFilter typeFilter){
-       
+    private void setAccountTypeFilter(AccountTypeFilter typeFilter) {
+
         accountTypeMap.forEach((type, cb) -> {
             cb.setSelected(typeFilter.getAccountTypes().contains(type));
         });
     }
-    
+
     /**
-     * Set up the startDatePicker and startCheckBox based on the passed in 
+     * Set up the startDatePicker and startCheckBox based on the passed in
      * DateControlState.
-     * 
+     *
      * @param state new control state
      */
     private void setStartDateControlState(DateControlState state) {
@@ -418,11 +426,11 @@ final public class FiltersPanel extends JPanel {
         startCheckBox.setSelected(state.isEnabled());
         startDatePicker.setEnabled(state.isEnabled());
     }
-    
+
     /**
-     * Set up the endDatePicker and endCheckBox based on the passed in 
-     * DateControlState. 
-     * 
+     * Set up the endDatePicker and endCheckBox based on the passed in
+     * DateControlState.
+     *
      * @param state new control state
      */
     private void setEndDateControlState(DateControlState state) {
@@ -430,25 +438,25 @@ final public class FiltersPanel extends JPanel {
         endCheckBox.setSelected(state.isEnabled());
         endDatePicker.setEnabled(state.isEnabled());
     }
-    
+
     /**
      * Sets the state of the most recent UI controls based on the current values
      * in MostRecentFilter.
-     * 
+     *
      * @param filter The MostRecentFilter state to be set
      */
     private void setMostRecentFilter(MostRecentFilter filter) {
         int limit = filter.getLimit();
-        if(limit > 0) {
+        if (limit > 0) {
             limitComboBox.setSelectedItem(filter.getLimit());
         } else {
             limitComboBox.setSelectedItem("All");
         }
     }
-    
+
     @Subscribe
     void filtersBack(CVTEvents.StateChangeEvent event) {
-        if(event.getCommunicationsState().getCommunicationsFilter() != null){
+        if (event.getCommunicationsState().getCommunicationsFilter() != null) {
             setFilters(event.getCommunicationsState().getCommunicationsFilter());
             setStartDateControlState(event.getCommunicationsState().getStartControlState());
             setEndDateControlState(event.getCommunicationsState().getEndControlState());
@@ -469,6 +477,7 @@ final public class FiltersPanel extends JPanel {
 
         setLayout(new java.awt.GridBagLayout());
 
+        scrollPane.setAutoscrolls(true);
         scrollPane.setBorder(null);
 
         mainPanel.setLayout(new java.awt.GridBagLayout());
@@ -533,7 +542,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 25);
         mainPanel.add(limitPane, gridBagConstraints);
 
         startDatePicker.setEnabled(false);
@@ -600,7 +609,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(dateRangePane, gridBagConstraints);
 
         devicesPane.setLayout(new java.awt.GridBagLayout());
@@ -678,7 +687,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.ipady = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(devicesPane, gridBagConstraints);
 
         accountTypesPane.setLayout(new java.awt.GridBagLayout());
@@ -752,7 +761,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(accountTypesPane, gridBagConstraints);
 
         topPane.setLayout(new java.awt.GridBagLayout());
@@ -802,6 +811,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 25);
         mainPanel.add(topPane, gridBagConstraints);
 
         scrollPane.setViewportView(mainPanel);
@@ -828,10 +838,10 @@ final public class FiltersPanel extends JPanel {
 
     /**
      * Get an instance of CommunicationsFilters base on the current panel state.
-     * 
+     *
      * @return an instance of CommunicationsFilter
      */
-    protected CommunicationsFilter getFilter() {
+    private CommunicationsFilter getFilter() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
@@ -877,36 +887,37 @@ final public class FiltersPanel extends JPanel {
      */
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = Utils.getUserPreferredZoneId();
-        
-        return new DateRangeFilter( startCheckBox.isSelected() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0, 
-                                    endCheckBox.isSelected() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0);
+
+        return new DateRangeFilter(startCheckBox.isSelected() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0,
+                endCheckBox.isSelected() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0);
     }
-    
+
     /**
-     * Get a MostRecentFilter that based on the current state of the ui controls.
-     * 
-     * @return A new instance of MostRecentFilter 
+     * Get a MostRecentFilter that based on the current state of the ui
+     * controls.
+     *
+     * @return A new instance of MostRecentFilter
      */
     private MostRecentFilter getMostRecentFilter() {
-        String value = (String)limitComboBox.getSelectedItem();
-        if(value.trim().equalsIgnoreCase("all")){
+        String value = (String) limitComboBox.getSelectedItem();
+        if (value.trim().equalsIgnoreCase("all")) {
             return new MostRecentFilter(-1);
-        } else{
+        } else {
             try {
                 int count = Integer.parseInt(value);
                 return new MostRecentFilter(count);
-            } catch(NumberFormatException ex) {
+            } catch (NumberFormatException ex) {
                 return null;
             }
         }
     }
-    
+
     private DateControlState getStartControlState() {
-        return new DateControlState (startDatePicker.getDate(), startCheckBox.isSelected());
+        return new DateControlState(startDatePicker.getDate(), startCheckBox.isSelected());
     }
-    
+
     private DateControlState getEndControlState() {
-        return new DateControlState (endDatePicker.getDate(), endCheckBox.isSelected());
+        return new DateControlState(endDatePicker.getDate(), endCheckBox.isSelected());
     }
 
     /**
@@ -940,32 +951,32 @@ final public class FiltersPanel extends JPanel {
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
     }
-    
+
     /**
      * initalize the DateTimePickers by grabbing the earliest and latest time
      * from the autopsy db.
      */
     private void initalizeDateTimeFilters() {
         Case currentCase = null;
-        try{
+        try {
             currentCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) { 
-           logger.log(Level.INFO, "Tried to intialize communication filters date range filters without an open case, using default values");
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.INFO, "Tried to intialize communication filters date range filters without an open case, using default values");
         }
-        
-        if(currentCase == null) {
+
+        if (currentCase == null) {
             setDateTimeFiltersToDefault();
             openCase = null;
             return;
         }
-                      
-        if(!currentCase.equals(openCase)) {
+
+        if (!currentCase.equals(openCase)) {
             setDateTimeFiltersToDefault();
             openCase = currentCase;
             (new DatePickerWorker()).execute();
         }
     }
-    
+
     private void setDateTimeFiltersToDefault() {
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDate(LocalDate.now());
@@ -1002,46 +1013,47 @@ final public class FiltersPanel extends JPanel {
     }//GEN-LAST:event_limitComboBoxActionPerformed
 
     /**
-     * A class to wrap the state of the date controls that consist of a date picker
-     * and a checkbox.
-     * 
+     * A class to wrap the state of the date controls that consist of a date
+     * picker and a checkbox.
+     *
      */
     final class DateControlState {
+
         private final LocalDate date;
         private final boolean enabled;
-        
+
         /**
          * Wraps the state of the date controls that consist of a date picker
          * and checkbox
-         * 
-         * @param date LocalDate value of the datepicker
+         *
+         * @param date    LocalDate value of the datepicker
          * @param enabled State of the checkbox
          */
         protected DateControlState(LocalDate date, boolean enabled) {
             this.date = date;
             this.enabled = enabled;
         }
-        
+
         /**
-         * Returns the given LocalDate from the datepicker 
-         * 
+         * Returns the given LocalDate from the datepicker
+         *
          * @return Current state LocalDate
          */
-        public LocalDate getDate(){
+        public LocalDate getDate() {
             return date;
         }
-        
+
         /**
          * Returns the given state of the datepicker checkbox
-         * 
+         *
          * @return boolean, whether or not the datepicker was enabled
          */
         public boolean isEnabled() {
             return enabled;
         }
-        
+
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private final javax.swing.JPanel accountTypeListPane = new javax.swing.JPanel();
     private final javax.swing.JLabel accountTypeRequiredLabel = new javax.swing.JLabel();
@@ -1078,59 +1090,61 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
 
-    
     /**
-     * This class is a small panel that appears to just be a checkbox but 
-     * adds the functionality of being able to show an icon between the checkbox
-     * and label.
+     * This class is a small panel that appears to just be a checkbox but adds
+     * the functionality of being able to show an icon between the checkbox and
+     * label.
      */
-    final class CheckBoxIconPanel extends JPanel{
+    final class CheckBoxIconPanel extends JPanel {
+
+        private static final long serialVersionUID = 1L;
+
         private final JCheckBox checkbox;
         private final JLabel label;
-        
+
         /**
          * Creates a JPanel instance with the specified label and image.
-         * 
+         *
          * @param labelText The text to be displayed by the checkbox label.
-         * @param image The image to be dispayed by the label.
+         * @param image     The image to be dispayed by the label.
          */
         private CheckBoxIconPanel(String labelText, Icon image) {
             checkbox = new JCheckBox();
             label = new JLabel(labelText);
             label.setIcon(image);
             setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-            
+
             add(checkbox);
             add(label);
             add(Box.createHorizontalGlue());
         }
-        
+
         /**
          * Sets the state of the checkbox.
-         * 
+         *
          * @param selected true if the button is selected, otherwise false
          */
         void setSelected(boolean selected) {
             checkbox.setSelected(selected);
         }
-        
+
         @Override
         public void setEnabled(boolean enabled) {
             checkbox.setEnabled(enabled);
         }
-        
+
         /**
          * Returns the instance of the JCheckBox.
-         * 
+         *
          * @return JCheckbox instance
          */
         JCheckBox getCheckBox() {
             return checkbox;
         }
-        
+
         /**
          * Adds an ItemListener to the checkbox.
-         * 
+         *
          * @param l the ItemListener to be added.
          */
         void addItemListener(ItemListener l) {
@@ -1139,8 +1153,8 @@ final public class FiltersPanel extends JPanel {
     }
 
     /**
-     * A simple class that implements CaseDbAccessQueryCallback. Can be used
-     * as an anonymous innerclass with the CaseDbAccessManager select function.
+     * A simple class that implements CaseDbAccessQueryCallback. Can be used as
+     * an anonymous innerclass with the CaseDbAccessManager select function.
      */
     class FilterPanelQueryCallback implements CaseDbAccessQueryCallback {
 
@@ -1149,7 +1163,7 @@ final public class FiltersPanel extends JPanel {
             // Subclasses can implement their own process function.
         }
     }
-    
+
     final class DatePickerWorker extends SwingWorker<Map<String, Integer>, Void> {
 
         @Override

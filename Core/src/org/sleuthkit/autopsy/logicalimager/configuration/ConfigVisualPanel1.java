@@ -29,7 +29,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -66,8 +70,8 @@ final class ConfigVisualPanel1 extends JPanel {
     ConfigVisualPanel1() {
         initComponents();
         configFileTextField.getDocument().addDocumentListener(new MyDocumentListener(this));
-        refreshDriveList();
         SwingUtilities.invokeLater(() -> {
+            refreshDriveList();
             updateControls();
         });
     }
@@ -241,10 +245,31 @@ final class ConfigVisualPanel1 extends JPanel {
         firePropertyChange(UPDATE_UI_EVENT_NAME, false, true); // NON-NLS
     }//GEN-LAST:event_driveListMouseReleasedSelection
 
+    /*
+     * Return the Windows file system name of the drive
+     * @param drive File system drive, should be of the form "C:\"
+     *
+     */
+    @Messages({"ConfigVisualPanel1.unknown=Unknown"})
+    private String getFileSystemName(String drive) {
+        FileSystem fileSystem = FileSystems.getDefault();
+        FileSystemProvider provider = fileSystem.provider();
+        try {
+            FileStore fileStore = provider.getFileStore(Paths.get(drive));
+            return fileStore.type();
+        } catch (IOException ex) {
+            return Bundle.ConfigVisualPanel1_unknown();
+        }
+    }
+
     /**
      * Refresh the list of local drives on the current machine
      */
-    @Messages({"ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found"})
+    @NbBundle.Messages({
+        "ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found",
+        "# {0} - root", "# {1} - description", "# {2} - size with unit", "# {3} - file system",
+        "ConfigVisualPanel1.driveListItem={0} ({1}) ({2}) - File system: {3}"
+    })
     private void refreshDriveList() {
         List<String> listData = new ArrayList<>();
         File[] roots = File.listRoots();
@@ -257,7 +282,8 @@ final class ConfigVisualPanel1 extends JPanel {
             String description = FileSystemView.getFileSystemView().getSystemTypeDescription(root);
             long spaceInBytes = root.getTotalSpace();
             String sizeWithUnit = DriveListUtils.humanReadableByteCount(spaceInBytes, false);
-            listData.add(root + " (" + description + ") (" + sizeWithUnit + ")");
+            String fileSystem = getFileSystemName(root.toString());
+            listData.add(Bundle.ConfigVisualPanel1_driveListItem(root, description, sizeWithUnit, fileSystem));
             if (firstRemovableDrive == -1) {
                 try {
                     FileStore fileStore = Files.getFileStore(root.toPath());
@@ -266,7 +292,7 @@ final class ConfigVisualPanel1 extends JPanel {
                     }
                 } catch (IOException ignored) {
                     //unable to get this removable drive for default selection will try and select next removable drive by default 
-                    logger.log(Level.INFO, "Unable to select first removable drive found", ignored);
+                    logger.log(Level.INFO, String.format("Unable to select first removable drive found %s", root.toString())); // NON-NLS
                 }
             }
             i++;
@@ -431,8 +457,7 @@ final class ConfigVisualPanel1 extends JPanel {
         return UPDATE_UI_EVENT_NAME;
     }
 
-    void setConfigFilename(String filename
-    ) {
+    void setConfigFilename(String filename) {
         configFileTextField.setText(filename);
     }
 
@@ -442,9 +467,11 @@ final class ConfigVisualPanel1 extends JPanel {
      * @return true if panel has valid settings selected, false otherwise
      */
     boolean isPanelValid() {
-        return !StringUtils.isBlank(getConfigPath()) && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
-                || (configureFolderRadioButton.isSelected() && (!configFileTextField.getText().isEmpty())));
-
+        return !StringUtils.isBlank(getConfigPath()) 
+                && !(getFileSystemName(getConfigPath().substring(0, 3)).equals("FAT") // NON-NLS
+                    || getFileSystemName(getConfigPath().substring(0, 3)).equals("FAT32")) // NON-NLS
+                && ((configureDriveRadioButton.isSelected() && !StringUtils.isBlank(driveList.getSelectedValue()))
+                    || (configureFolderRadioButton.isSelected() && (!configFileTextField.getText().isEmpty())));
     }
 
     /**
