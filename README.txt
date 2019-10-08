@@ -76,7 +76,7 @@ GStreamer 1.x Java Core for viewing video files
 - Web page: https://github.com/gstreamer-java/gst1-java-core
 - License: https://github.com/gstreamer-java/gst1-java-core/blob/master/LICENSE.md
 
-Regripper for pulling recently activity
+Regripper for pulling recent activity
 (Including custom plugins)
 - Web page: http://regripper.wordpress.com/
 - License: http://www.gnu.org/licenses/gpl.html
