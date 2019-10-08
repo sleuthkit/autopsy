@@ -37,6 +37,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -57,6 +58,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TimelineFilter;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * Model for the Details View. Uses FilteredEventsModel as underlying datamodel
@@ -115,19 +117,21 @@ final public class DetailsViewModel {
         DateTimeZone timeZone = TimeLineController.getJodaTimeZone();
         //unpack params
         Interval timeRange = zoom.getTimeRange();
-        TimelineEvent.DescriptionLevel descriptionLOD = zoom.getDescriptionLOD();
-        TimelineEventType.TypeLevel typeZoomLevel = zoom.getTypeZoomLevel();
+        TimelineLevelOfDetail descriptionLOD = zoom.getDescriptionLOD();
 
         //intermediate results 
         Map<TimelineEventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();
         try {
             eventCache.get(zoom).stream()
                     .filter(uiFilter)
-                    .forEach(event -> {
-                        TimelineEventType clusterType = event.getEventType(typeZoomLevel);
-                        eventClusters.computeIfAbsent(clusterType, eventType -> HashMultimap.create())
-                                .put(event.getDescription(descriptionLOD), new EventCluster(event, clusterType, descriptionLOD));
-                    });
+                    .forEach(new Consumer<TimelineEvent>() {
+                @Override
+                public void accept(TimelineEvent event) {
+                    TimelineEventType clusterType = event.getEventType().getCategory();
+                    eventClusters.computeIfAbsent(clusterType, eventType -> HashMultimap.create())
+                            .put(event.getDescription(descriptionLOD), new EventCluster(event, clusterType, descriptionLOD));
+                }
+            });
             //get some info about the time range requested
             TimeUnits periodSize = RangeDivision.getRangeDivision(timeRange, timeZone).getPeriodSize();
             return mergeClustersToStripes(periodSize.toUnitPeriod(), eventClusters);

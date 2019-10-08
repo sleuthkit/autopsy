@@ -80,10 +80,10 @@ class TableReportGenerator {
         this.progressPanel = progressPanel;
         this.tableReport = tableReport;
         this.columnHeaderMap = new HashMap<>();
-        errorList = new ArrayList<>();        
+        errorList = new ArrayList<>();
         this.settings = settings;
     }
-    
+
     private void getAllExistingTags() throws NoCurrentCaseException, TskCoreException {
         List<String> tagNames = new ArrayList<>();
 
@@ -98,6 +98,7 @@ class TableReportGenerator {
         tagNamesFilter = new HashSet<>(tagNames);
     }
 
+    @SuppressWarnings("deprecation")
     private void getAllExistingArtiactTypes() throws NoCurrentCaseException, TskCoreException {
         // get all possible artifact types
         ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
@@ -116,7 +117,7 @@ class TableReportGenerator {
 
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.readingTagsArtifacts.text"));
-        
+
         if (settings.useStoredTagsAndArtifactsLists()) {
             // Get the artifact types selected by the user.
             artifactTypes = settings.getArtifactSelections();
@@ -130,7 +131,7 @@ class TableReportGenerator {
                 if (settings.getSelectedReportOption() == TableReportSettings.TableReportOption.ALL_TAGGED_RESULTS) {
                     getAllExistingTags();
                 }
-                
+
                 // get all possible artifact types
                 getAllExistingArtiactTypes();
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -139,11 +140,11 @@ class TableReportGenerator {
                 return;
             }
         }
-        
+
         // Start the progress indicators for each active TableReportModule.
         progressPanel.setIndeterminate(false);
         progressPanel.setMaximumProgress(this.artifactTypes.size() + 2); // +2 for content and blackboard artifact tags
-        
+
         // report on the blackboard results
         if (progressPanel.getStatus() != ReportProgressPanel.ReportStatus.CANCELED) {
             makeBlackboardArtifactTables();

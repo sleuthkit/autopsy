@@ -353,7 +353,8 @@ final class AddLogicalImageTask implements Runnable {
     @Messages({
         "# {0} - line number", "# {1} - fields length", "# {2} - expected length", "AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}",
         "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}",
-        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting files ({0}/{1})"
+        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting files ({0}/{1})",
+        "AddLogicalImageTask.logicalImagerResults=Logical Imager results"
     })
     private void addInterestingFiles(Map<String, List<Long>> interestingFileMap) throws IOException, TskCoreException {
         int lineNumber = 0;
@@ -370,10 +371,8 @@ final class AddLogicalImageTask implements Runnable {
 
             Map.Entry<String, List<Long>> entry = iterator.next();
             String key = entry.getKey();
-            String ruleSetName;
             String ruleName;
             String[] split = key.split("\t");
-            ruleSetName = split[0];
             ruleName = split[1];
 
             List<Long> fileIds = entry.getValue();
@@ -389,7 +388,7 @@ final class AddLogicalImageTask implements Runnable {
                     postArtifacts(artifacts);
                     artifacts.clear();
                 }
-                addInterestingFileToArtifacts(fileId, ruleSetName, ruleName, artifacts);
+                addInterestingFileToArtifacts(fileId, Bundle.AddLogicalImageTask_logicalImagerResults(), ruleName, artifacts);
                 lineNumber++;
             }
             iterator.remove();

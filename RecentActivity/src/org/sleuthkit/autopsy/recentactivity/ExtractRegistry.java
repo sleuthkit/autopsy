@@ -431,6 +431,7 @@ class ExtractRegistry extends Extract {
      */
     private boolean parseAutopsyPluginOutput(String regFilePath, AbstractFile regFile) {
         FileInputStream fstream = null;
+        List<BlackboardArtifact> newArtifacts = new ArrayList<>();
         try {
             // Read the file in and create a Document and elements
             File regfile = new File(regFilePath);
@@ -447,7 +448,7 @@ class ExtractRegistry extends Extract {
             String stringdoc = startdoc + result + enddoc;
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
-
+            
             // cycle through the elements in the doc
             Element oroot = doc.getDocumentElement();
             NodeList children = oroot.getChildNodes();
@@ -538,7 +539,7 @@ class ExtractRegistry extends Extract {
                                                 String Tempdate = installtime.toString();
                                                 installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                                             } catch (ParseException e) {
-                                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                                logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
                                             }
                                         }
                                         break;
@@ -564,8 +565,7 @@ class ExtractRegistry extends Extract {
                                 BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                                 bbart.addAttributes(bbattributes);
 
-                                // index the artifact for keyword search
-                                postArtifact(bbart);
+                                newArtifacts.add(bbart);
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -615,8 +615,7 @@ class ExtractRegistry extends Extract {
                                 BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                                 bbart.addAttributes(bbattributes);
 
-                                // index the artifact for keyword search
-                                postArtifact(bbart);
+                                newArtifacts.add(bbart);
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -654,13 +653,12 @@ class ExtractRegistry extends Extract {
                                 BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                                 bbart.addAttributes(bbattributes);
 
-                                // index the artifact for keyword search
-                                postArtifact(bbart);
+                                newArtifacts.add(bbart);
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
                         } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Error adding os info artifact to blackboard."); //NON-NLS
+                            logger.log(Level.SEVERE, "Error adding os info artifact to blackboard.", ex); //NON-NLS
                         }
                         break;
                     default:
@@ -706,8 +704,7 @@ class ExtractRegistry extends Extract {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, value));
                                             bbart.addAttributes(bbattributes);
 
-                                            // index the artifact for keyword search
-                                            postArtifact(bbart);
+                                            newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.", ex); //NON-NLS
                                         }
@@ -721,7 +718,7 @@ class ExtractRegistry extends Extract {
                                                 itemMtime /= MS_IN_SEC;
                                             }
                                         } catch (ParseException ex) {
-                                            logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact.", ex); //NON-NLS
+                                            logger.log(Level.SEVERE, "Failed to parse epoch time for installed program artifact.", ex); //NON-NLS
                                         }
 
                                         try {
@@ -730,8 +727,7 @@ class ExtractRegistry extends Extract {
                                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                             bbart.addAttributes(bbattributes);
 
-                                            // index the artifact for keyword search
-                                            postArtifact(bbart);
+                                            newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.", ex); //NON-NLS
                                         }
@@ -750,8 +746,7 @@ class ExtractRegistry extends Extract {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, artnode.getNodeName()));
                                             bbart.addAttributes(bbattributes);
 
-                                            // index the artifact for keyword search
-                                            postArtifact(bbart);
+                                            newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
                                         }
@@ -791,7 +786,7 @@ class ExtractRegistry extends Extract {
                                                     }
                                                 }
                                             } catch (TskCoreException ex) {
-                                                logger.log(Level.WARNING, "Error getting existing os account artifact", ex);
+                                                logger.log(Level.SEVERE, "Error getting existing os account artifact", ex);
                                             }
                                             if (bbart == null) {
                                                 //create new artifact
@@ -817,8 +812,7 @@ class ExtractRegistry extends Extract {
                                                 }
                                             }
                                             bbart.addAttributes(bbattributes);
-                                            // index the artifact for keyword search
-                                            postArtifact(bbart);
+                                            newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
                                         }
@@ -834,8 +828,7 @@ class ExtractRegistry extends Extract {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REMOTE_PATH,
                                                     parentModuleName, remoteName));
                                             bbart.addAttributes(bbattributes);
-                                            // index the artifact for keyword search
-                                            postArtifact(bbart);
+                                            newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding network artifact to blackboard.", ex); //NON-NLS
                                         }
@@ -850,8 +843,7 @@ class ExtractRegistry extends Extract {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, adapter));
                                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_WIFI_NETWORK);
                                             bbart.addAttributes(bbattributes);
-                                            // index the artifact for keyword search
-                                            postArtifact(bbart);
+                                            newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard.", ex); //NON-NLS
                                         }
@@ -863,7 +855,7 @@ class ExtractRegistry extends Extract {
                                         break;
 
                                     default:
-                                        logger.log(Level.WARNING, "Unrecognized node name: {0}", dataType); //NON-NLS
+                                        logger.log(Level.SEVERE, "Unrecognized node name: {0}", dataType); //NON-NLS
                                         break;
                                 }
                             }
@@ -887,6 +879,8 @@ class ExtractRegistry extends Extract {
                 }
             } catch (IOException ex) {
             }
+            
+            postArtifacts(newArtifacts);
         }
         return false;
     }
@@ -902,6 +896,7 @@ class ExtractRegistry extends Extract {
      */
     private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
         File regfile = new File(regFilePath);
+        List<BlackboardArtifact> newArtifacts = new ArrayList<>();
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
             // Read the file in and create a Document and elements
             String userInfoSection = "User Information";
@@ -942,23 +937,25 @@ class ExtractRegistry extends Extract {
                     }
                 }
             }
+            
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
                 BlackboardArtifact bbart = regAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
                 bbart.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userInfo.get(SID_KEY)), false));
                 // index the artifact for keyword search
-                postArtifact(bbart);
+                newArtifacts.add(bbart);
             }
-            //store set of attributes to make artifact for later in collection of artifact like objects
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error building the document parser: {0}", ex); //NON-NLS
         } catch (ParseException ex) {
-            logger.log(Level.SEVERE, "Error parsing the the date from the registry file", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
+        } finally {
+            postArtifacts(newArtifacts);
         }
         return false;
     }
@@ -1165,39 +1162,41 @@ class ExtractRegistry extends Extract {
      */
     void createShellBagArtifacts(AbstractFile regFile, List<ShellBag> shellbags) throws TskCoreException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
-        for (ShellBag bag : shellbags) {
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            BlackboardArtifact artifact = regFile.newArtifact(getShellBagArtifact().getTypeID());
-            attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
-            attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
+        try{
+            for (ShellBag bag : shellbags) {
+                Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                BlackboardArtifact artifact = regFile.newArtifact(getShellBagArtifact().getTypeID());
+                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
+                attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
 
-            long time;
-            time = bag.getLastWrite();
-            if (time != 0) {
-                attributes.add(new BlackboardAttribute(getLastWriteAttribute(), getName(), time));
+                long time;
+                time = bag.getLastWrite();
+                if (time != 0) {
+                    attributes.add(new BlackboardAttribute(getLastWriteAttribute(), getName(), time));
+                }
+
+                time = bag.getModified();
+                if (time != 0) {
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_MODIFIED, getName(), time));
+                }
+
+                time = bag.getCreated();
+                if (time != 0) {
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, getName(), time));
+                }
+
+                time = bag.getAccessed();
+                if (time != 0) {
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
+                }
+
+                artifact.addAttributes(attributes);
+
+                artifacts.add(artifact);
             }
-            
-            time = bag.getModified();
-            if (time != 0) {
-                attributes.add(new BlackboardAttribute(TSK_DATETIME_MODIFIED, getName(), time));
-            }
-
-            time = bag.getCreated();
-            if (time != 0) {
-                attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, getName(), time));
-            }
-
-            time = bag.getAccessed();
-            if (time != 0) {
-                attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
-            }
-
-            artifact.addAttributes(attributes);
-
-            artifacts.add(artifact);
+        } finally {
+            postArtifacts(artifacts);
         }
-
-        postArtifacts(artifacts);
     }
 
     /**

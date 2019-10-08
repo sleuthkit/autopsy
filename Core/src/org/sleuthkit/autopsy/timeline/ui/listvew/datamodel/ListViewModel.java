@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TimelineEventType;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * Model for the ListView. Uses FilteredEventsModel as underlying datamodel and
@@ -88,7 +89,7 @@ public class ListViewModel {
         
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
         
-        Map<CombinedEventGroup, List<TimelineEvent>> groupedEventList = events.stream().collect(groupingBy(event -> new CombinedEventGroup(event.getTime(), event.getFileObjID(), event.getFullDescription())));
+        Map<CombinedEventGroup, List<TimelineEvent>> groupedEventList = events.stream().collect(groupingBy(event -> new CombinedEventGroup(event.getTime(), event.getContentObjID(), event.getDescription(TimelineLevelOfDetail.HIGH))));
         
         for(Entry<CombinedEventGroup, List<TimelineEvent>> entry: groupedEventList.entrySet()){
             List<TimelineEvent> groupedEvents = entry.getValue();
@@ -120,7 +121,7 @@ public class ListViewModel {
     
     private boolean hasFileTypeEvents(Collection<TimelineEventType> eventTypes) {
         for (TimelineEventType type: eventTypes) {
-            if (type.getBaseType() != TimelineEventType.FILE_SYSTEM) {
+            if (type.getCategory() != TimelineEventType.FILE_SYSTEM) {
                 return false;
             }
         }
