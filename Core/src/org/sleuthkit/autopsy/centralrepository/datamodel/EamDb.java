@@ -476,6 +476,20 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
+     * Gets list of distinct case display names, where each case has 1+ Artifact
+     * Instance matching eamArtifact.
+     *
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
+     *
+     * @return List of cases containing this artifact with instances marked as
+     *         bad
+     *
+     * @throws EamDbException
+     */
+    List<String> getListCasesHavingArtifactInstances(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+
+    /**
      * Remove a reference set and all values contained in it.
      *
      * @param referenceSetID

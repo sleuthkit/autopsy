@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.commonpropertiessearch;
 
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;

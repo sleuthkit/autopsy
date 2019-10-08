@@ -24,7 +24,6 @@ import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;

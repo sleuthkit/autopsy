@@ -1943,6 +1943,58 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Gets list of distinct case display names, where each case has 1+ Artifact
+     * Instance matching eamArtifact.
+     *
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
+     *
+     * @return List of cases containing this artifact with instances marked as
+     *         bad
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<String> getListCasesHavingArtifactInstances(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+
+        String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
+
+        Connection conn = connect();
+
+        Collection<String> caseNames = new LinkedHashSet<>();
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = "SELECT DISTINCT case_name FROM "
+                + tableName
+                + " INNER JOIN cases ON "
+                + tableName
+                + ".case_id=cases.id WHERE "
+                + tableName
+                + ".value=? ";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, normalizedValue);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                caseNames.add(resultSet.getString("case_name"));
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return caseNames.stream().collect(Collectors.toList());
+    }
+
+    /**
      * Remove a reference set and all entries contained in it.
      *
      * @param referenceSetID

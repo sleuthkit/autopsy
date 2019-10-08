@@ -1,0 +1,11 @@
+AddTaggedHashesToHashDb.error.noHashSetsSelected=No hash set selected for export.
+AddTaggedHashesToHashDb.error.noTagsSelected=No tags selected for export.
+AddTaggedHashesToHashDb.error.unableToOpenCase=Exception while getting open case.
+HashDbConfigDialog.okButton.text=OK
+HashDbConfigDialog.cancelButton.text=Cancel
+SaveTaggedHashesToHashDbConfigPanel.deselectAllButton.text=Deselect All
+SaveTaggedHashesToHashDbConfigPanel.selectAllButton.text=Select All
+SaveTaggedHashesToHashDbConfigPanel.jAllTagsCheckBox.text=All Tagged Results
+SaveTaggedHashesToHashDbConfigPanel.jLabel2.text=Export to hash set:
+SaveTaggedHashesToHashDbConfigPanel.configureHashDatabasesButton.text=Configure Hash Sets...
+SaveTaggedHashesToHashDbConfigPanel.jLabel1.text=Export hashes of files tagged as:

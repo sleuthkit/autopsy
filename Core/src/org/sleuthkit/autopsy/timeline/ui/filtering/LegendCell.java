@@ -79,8 +79,8 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                     setLegendColor(filter, rect, newZoomLevel);
                 });
 
-                HBox hBox = new HBox(new Rectangle(filter.getEventType().getTypeLevel().ordinal() * 10, 5, CLEAR),
-                        new ImageView(EventTypeUtils.getImagePath(filter.getEventType())), rect
+                HBox hBox = new HBox(new Rectangle(filter.getRootEventType().getTypeHierarchyLevel().ordinal() * 10, 5, CLEAR),
+                        new ImageView(EventTypeUtils.getImagePath(filter.getRootEventType())), rect
                 );
                 hBox.setAlignment(Pos.CENTER);
                 Platform.runLater(() -> {
@@ -92,7 +92,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                 TextFilter filter = (TextFilter) item.getFilter();
                 TextField textField = new TextField();
                 textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
-                textField.textProperty().bindBidirectional(filter.textProperty());
+                textField.textProperty().bindBidirectional(filter.substringProperty());
                 Platform.runLater(() -> setGraphic(textField));
 
             } else {
@@ -104,12 +104,12 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
         }
     }
 
-    private void setLegendColor(EventTypeFilter filter, Rectangle rect, TimelineEventType.TypeLevel eventTypeZoom) {
+    private void setLegendColor(EventTypeFilter filter, Rectangle rect, TimelineEventType.HierarchyLevel eventTypeZoom) {
         //only show legend color if filter is of the same zoomlevel as requested in filteredEvents
-        if (eventTypeZoom.equals(filter.getEventType().getTypeLevel())) {
+        if (eventTypeZoom.equals(filter.getRootEventType().getTypeHierarchyLevel())) {
             Platform.runLater(() -> {
-                rect.setStroke(EventTypeUtils.getColor(filter.getEventType().getSuperType()));
-                rect.setFill(EventTypeUtils.getColor(filter.getEventType()));
+                rect.setStroke(EventTypeUtils.getColor(filter.getRootEventType().getParent()));
+                rect.setFill(EventTypeUtils.getColor(filter.getRootEventType()));
             });
         } else {
             Platform.runLater(() -> {

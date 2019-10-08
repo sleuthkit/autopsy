@@ -25,8 +25,10 @@ import static java.lang.Boolean.FALSE;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -38,10 +40,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
@@ -51,10 +51,13 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -68,17 +71,18 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class IngestEventsListener {
 
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
     private static final String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
-
-    final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int correlationModuleInstanceCount;
     private static boolean flagNotableItems;
     private static boolean flagSeenDevices;
     private static boolean createCrProperties;
-    private final ExecutorService jobProcessingExecutor;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
+    private final ExecutorService jobProcessingExecutor;
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
+    final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
 
     IngestEventsListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INGEST_EVENT_THREAD_NAME).build());
@@ -92,8 +96,8 @@ public class IngestEventsListener {
      * Add all of our Ingest Event Listeners to the IngestManager Instance.
      */
     public void installListeners() {
-        IngestManager.getInstance().addIngestModuleEventListener(pcl1);
-        IngestManager.getInstance().addIngestJobEventListener(pcl2);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl1);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl2);
     }
 
     /*
@@ -225,10 +229,13 @@ public class IngestEventsListener {
         "# {0} - typeName",
         "# {1} - count",
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
-    static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact) {
+    static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
                         Bundle.IngestEventsListener_prevExists_text()),
+                new BlackboardAttribute(
+                        TSK_COMMENT, MODULE_NAME,
+                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
                 new BlackboardAttribute(
                         TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
                         originalArtifact.getArtifactID()));
@@ -348,8 +355,7 @@ public class IngestEventsListener {
             String dataSourceName = "";
             long dataSourceObjectId = -1;
             try {
-                dataSource = ((DataSourceAnalysisCompletedEvent) event).getDataSource();
-                
+                dataSource = ((DataSourceAnalysisEvent) event).getDataSource();
                 /*
                  * We only care about Images for the purpose of
                  * updating hash values.
@@ -479,9 +485,11 @@ public class IngestEventsListener {
                                 try {
                                     //only alert to previous instances when they were in another case
                                     List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                    List<String> caseDisplayNames;
                                     for (CorrelationAttributeInstance instance : previousOccurences) {
                                         if (!instance.getCorrelationCase().getCaseUUID().equals(eamArtifact.getCorrelationCase().getCaseUUID())) {
-                                            makeAndPostPreviousSeenArtifact(bbArtifact);
+                                            caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                            makeAndPostPreviousSeenArtifact(bbArtifact, caseDisplayNames);
                                             break;
                                         }
                                     }

@@ -2,7 +2,7 @@
 
 \section portable_case_overview Overview
 
-A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners.  
+A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners. Portable cases will contain a \ref report_case_uco report detailing the contents of the portable case.
 
 
 The general use case is as follows:
@@ -29,17 +29,17 @@ A portable case can contain tagged files and results and data from the Interesti
 
 \image html portable_case_interesting_items.png
 
-You can tag any additional files you want to include in the portable case. See the \ref tagging_page page for details on how to create tags. You can see what tags you've added in the \ref tree_viewer_page.
+You can tag any additional files you want to include in the portable case. See the \ref tagging_page page for details on how to create tags. Note that the outlines from \ref image_tagging "image tags" will also be visible in the portable case. You can see what tags you've added in the \ref tree_viewer_page.
 
 \image html portable_case_tags.png
 
-Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpackage Portable Case" option before loading it. This will be discussed in the next section. 
+Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpack and Open Portable Case" option to open it. This will be discussed in the next section. 
 
 The portable case will be placed in the "Reports" folder in the current case.
 
 \image html portable_case_report_panel.png
 
-Here you can see an unpackaged portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. 
+Here you can see an unpackaged portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. It will however start with a "Reports" folder that contains an automatically generated \ref report_case_uco report.
 
 \image html portable_case_folder.png
 
@@ -49,7 +49,7 @@ If you packaged the portable case but did not choose to split it into chunks, yo
 
 \section portable_case_usage Using a Portable Case
 
-If your portable case was packaged, you'll first need to unpackage it. Open the "Case" menu and then select "Unpackage Portable Case". This will bring up a dialog where you can browse to your packaged case and select where to extract it to. Once unpackaged you can open it normally.
+Unpackaged portable cases can be opened like any other case through Case->Open Case. If your portable case was packaged, you'll need to use the unpack option to open it. Open the "Case" menu and then select "Unpack and Open Portable Case" option. This will bring up a dialog where you can browse to your packaged case and select where to extract it to. The case will also open. Note that any changes made to the case at this point will be saved to the unpacked location, and next time you open it you will need to browse to the unpacked folder.
 
 \image html portable_case_unpackage.png
 

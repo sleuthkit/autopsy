@@ -66,13 +66,16 @@ The following steps will configure Solr to run using an account that will have a
  \image html transientcache.PNG
  <br><br>
 4. <b>Log Configuration</b>: Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\resources/log4j.properties"</i> to configure Solr log settings:
-     - Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB.
-     - Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
- <br><br>
- The log file should end up looking like this (modified lines are highlighted in yellow
- <br><br>
- \image html log4j.PNG
- <br><br>
+<ol>
+<li>Increase the log rotation size threshold (_log4j\.appender\.file\.MaxFileSize_) from 4MB to 100MB.
+<li>Remove the _CONSOLE_ appender from the _log4j\.rootLogger_ line.
+<li>Add the line "log4j.logger.org.apache.solr.update.processor.LogUpdateProcessor=WARN".
+</ol>
+The log file should end up looking like this (modified lines are highlighted in yellow
+
+\image html log4j.PNG
+
+ 
 5. <b>Schema Configuration</b>: From an Autopsy installation, copy the following into <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>:
 - The folder <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\configsets"</i>
 - The folder <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\lib"</i>  

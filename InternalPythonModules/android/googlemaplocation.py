@@ -117,7 +117,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, MODULE_NAME)
+                    blackboard.postArtifact(artifact, general.MODULE_NAME)
                 except Blackboard.BlackboardException as ex:
                     self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -127,7 +127,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Unable to execute Google map locations SQL query against database.
             pass
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error parsing Google map locations to the blackboard", ex)
+            self._logger.log(Level.SEVERE, "Error processing google maps history.", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:
