@@ -391,7 +391,7 @@ class HighlightedText implements IndexedText {
                 }
 
                 //tune the highlighter
-                if (shouldUseOriginalHighlighter(contentIdStr)) {
+                if (shouldUseOriginalHighlighter(filterQuery)) {
                     // use original highlighter
                     q.setParam("hl.useFastVectorHighlighter", "off");
                     q.setParam("hl.simple.pre", HIGHLIGHT_PRE);
@@ -619,10 +619,10 @@ class HighlightedText implements IndexedText {
      *   Unified highlighter (from Solr 6.4) handles the case as expected:
      *   > <em>雨が降っ</em>ています。
      */
-    private boolean shouldUseOriginalHighlighter(String contentID) throws NoOpenCoreException, KeywordSearchModuleException {
+    private boolean shouldUseOriginalHighlighter(String filterQuery) throws NoOpenCoreException, KeywordSearchModuleException {
         final SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
-        q.addFilterQuery(Server.Schema.ID.toString() + ":" + contentID);
+        q.addFilterQuery(filterQuery);
         q.setFields(Server.Schema.LANGUAGE.toString());
 
         QueryResponse response = solrServer.query(q, METHOD.POST);
