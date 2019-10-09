@@ -53,7 +53,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.event.ChangeListener;
-import org.freedesktop.gstreamer.Clock;
 import org.freedesktop.gstreamer.GstException;
 
 /**
@@ -242,12 +241,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         endOfStreamListener = new Bus.EOS() {
             @Override
             public void endOfStream(GstObject go) {
-                gstPlayBin.seek(ClockTime.ZERO);
-                progressSlider.setValue(0);
+                playButton.setText("►");
+                System.out.println(gstPlayBin.getState());
+                //gstPlayBin.seek(ClockTime.ZERO);
+                //progressSlider.setValue(0);
                 /**
                  * Keep the video from automatically playing
                  */
-                Gst.getExecutor().submit(() -> gstPlayBin.pause());
+                //Gst.getExecutor().submit(() -> gstPlayBin.pause());
             }
         };
     }
@@ -390,19 +391,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             return Bundle.MediaPlayerPanel_unknownTime();
         }
 
-        double millis = ns / 1000000.0;
-        double seconds;
-        if (ceiling) {
-            seconds = Math.ceil(millis / 1000);
-        } else {
-            seconds = millis / 1000;
-        }
-        double hours = seconds / 3600;
-        seconds -= (int) hours * 3600;
-        double minutes = seconds / 60;
-        seconds -= (int) minutes * 60;
+        long seconds = TimeUnit.SECONDS.convert(ns, TimeUnit.NANOSECONDS);
+        long hours = TimeUnit.HOURS.convert(seconds, TimeUnit.SECONDS);
+        seconds -= TimeUnit.SECONDS.convert(hours, TimeUnit.HOURS);
+        long minutes = TimeUnit.MINUTES.convert(seconds, TimeUnit.SECONDS);
+        seconds -= TimeUnit.SECONDS.convert(minutes, TimeUnit.MINUTES);
 
-        return String.format(Bundle.MediaPlayerPanel_timeFormat(), (int) hours, (int) minutes, (int) seconds);
+        return String.format(Bundle.MediaPlayerPanel_timeFormat(), hours, minutes, seconds);
     }
 
     /**
@@ -526,17 +521,19 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         videoPanel = new javax.swing.JPanel();
         controlPanel = new javax.swing.JPanel();
         progressSlider = new javax.swing.JSlider();
-        infoLabel = new javax.swing.JLabel();
-        playButton = new javax.swing.JButton();
         progressLabel = new javax.swing.JLabel();
-        VolumeIcon = new javax.swing.JLabel();
-        audioSlider = new javax.swing.JSlider();
+        jPanel1 = new javax.swing.JPanel();
+        playButton = new javax.swing.JButton();
         fastForwardButton = new javax.swing.JButton();
         rewindButton = new javax.swing.JButton();
+        VolumeIcon = new javax.swing.JLabel();
+        audioSlider = new javax.swing.JSlider();
+        infoLabel = new javax.swing.JLabel();
 
         javax.swing.GroupLayout videoPanelLayout = new javax.swing.GroupLayout(videoPanel);
         videoPanel.setLayout(videoPanelLayout);
@@ -546,7 +543,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         );
         videoPanelLayout.setVerticalGroup(
             videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 257, Short.MAX_VALUE)
+            .addGap(0, 124, Short.MAX_VALUE)
         );
 
         progressSlider.setValue(0);
@@ -555,8 +552,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setMinimumSize(new java.awt.Dimension(36, 21));
         progressSlider.setPreferredSize(new java.awt.Dimension(200, 21));
 
-        org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.infoLabel.text")); // NOI18N
-        infoLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
+
+        jPanel1.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(playButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playButton.text")); // NOI18N
         playButton.addActionListener(new java.awt.event.ActionListener() {
@@ -564,10 +562,50 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 playButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.ipadx = 21;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
+        jPanel1.add(playButton, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(fastForwardButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.fastForwardButton.text")); // NOI18N
+        fastForwardButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fastForwardButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
+        jPanel1.add(fastForwardButton, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rewindButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.rewindButton.text")); // NOI18N
+        rewindButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rewindButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 0, 1, 0);
+        jPanel1.add(rewindButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(VolumeIcon, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.VolumeIcon.text")); // NOI18N
+        VolumeIcon.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.ipadx = 8;
+        gridBagConstraints.ipady = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
+        jPanel1.add(VolumeIcon, gridBagConstraints);
 
         audioSlider.setMajorTickSpacing(10);
         audioSlider.setMaximum(50);
@@ -576,60 +614,45 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         audioSlider.setValue(25);
         audioSlider.setMinimumSize(new java.awt.Dimension(200, 21));
         audioSlider.setPreferredSize(new java.awt.Dimension(200, 21));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.ipadx = -116;
+        gridBagConstraints.ipady = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(3, 1, 0, 10);
+        jPanel1.add(audioSlider, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(fastForwardButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.fastForwardButton.text")); // NOI18N
-        fastForwardButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fastForwardButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(rewindButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.rewindButton.text")); // NOI18N
+        infoLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.infoLabel.text")); // NOI18N
+        infoLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
+            .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addComponent(infoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 246, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 73, Short.MAX_VALUE)
-                        .addComponent(rewindButton)
+                    .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1090, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
+                        .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(playButton, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fastForwardButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 191, Short.MAX_VALUE)
-                        .addComponent(VolumeIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(audioSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(progressLabel)))
                 .addContainerGap())
         );
         controlPanelLayout.setVerticalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
-                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addComponent(infoLabel))
-                    .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(VolumeIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(playButton)
-                                .addComponent(fastForwardButton)
-                                .addComponent(rewindButton))
-                            .addComponent(audioSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(13, Short.MAX_VALUE))
+                    .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -648,6 +671,28 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void rewindButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rewindButtonActionPerformed
+        long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+        long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+        //Skip 30 seconds.
+        long skipBehind = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+        //Ensure new video position is within bounds
+        long newTime = Math.max(currentTime - skipBehind, 0);
+        gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
+        syncProgressSlider(newTime, duration);
+    }//GEN-LAST:event_rewindButtonActionPerformed
+
+    private void fastForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fastForwardButtonActionPerformed
+        long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+        long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+        //Skip 30 seconds.
+        long skipAhead = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+        //Ensure new video position is within bounds
+        long newTime = Math.min(currentTime + skipAhead, duration);
+        gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
+        syncProgressSlider(newTime, duration);
+    }//GEN-LAST:event_fastForwardButtonActionPerformed
+
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
         if (gstPlayBin.isPlaying()) {
             gstPlayBin.pause();
@@ -656,22 +701,21 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
     }//GEN-LAST:event_playButtonActionPerformed
 
-    private void fastForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fastForwardButtonActionPerformed
-        long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
-        Clock playbinClock = gstPlayBin.getClock();
-        long currentTime = playbinClock.getTime();
-        //Skip 30 seconds.
-        long skipAhead = TimeUnit.SECONDS.convert(SKIP_IN_SECONDS, TimeUnit.NANOSECONDS);
-        //Ensure new video position is within bounds
-        long newTime = Math.max(currentTime + skipAhead, duration);
-        gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
+    /**
+     * Sync progress slider to the newTime position if it is not already there.
+     * 
+     * @param newTime New time value that progress slider may or may not be positioned at
+     * @param duration Total duration of the video, used for determining slider position
+     */
+    private void syncProgressSlider(long newTime, long duration) {
         //0 <= newTimePercent <= 1.0
         double newTimePercent = ((double)newTime)/duration;
         //0 <= newProgressSliderPos <= PROGRESS_SLIDER_SIZE
         int newProgressSliderPos = (int)(PROGRESS_SLIDER_SIZE * newTimePercent);
         progressSlider.setValue(newProgressSliderPos);
-    }//GEN-LAST:event_fastForwardButtonActionPerformed
-
+        updateTimeLabel(newTime, duration);
+    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel VolumeIcon;
@@ -679,6 +723,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private javax.swing.JPanel controlPanel;
     private javax.swing.JButton fastForwardButton;
     private javax.swing.JLabel infoLabel;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JButton playButton;
     private javax.swing.JLabel progressLabel;
     private javax.swing.JSlider progressSlider;
