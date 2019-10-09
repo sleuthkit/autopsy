@@ -100,7 +100,7 @@ public interface KeywordSearchService extends Closeable {
     /**
      * Deletes the keyword search text for a specific data source.
      *
-     * @param dataSourceId The data source id to be deleted from Solr.
+     * @param dataSourceId The data source id to be deleted.
      *
      * @throws KeywordSearchServiceException if unable to delete.
      */
