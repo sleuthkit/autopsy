@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,7 +60,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
+import static org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -162,7 +164,7 @@ class DocumentEmbeddedContentExtractor {
         List<ExtractedFile> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
         //save the parent file name with out illegal windows characters
-        this.parentFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile));
+        this.parentFileName = utf8SanitizeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile));
 
         // Skip files that already have been unpacked.
         try {
@@ -292,7 +294,6 @@ class DocumentEmbeddedContentExtractor {
             // These get thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            
             //Any runtime exception escaping 
             LOGGER.log(Level.WARNING, "Word document container could not be initialized. Reason: {0}", ex.getMessage()); //NON-NLS
             return null;
@@ -311,7 +312,7 @@ class DocumentEmbeddedContentExtractor {
         byte[] data = null;
         int pictureNumber = 0; //added to ensure uniqueness in cases where suggestFullFileName returns duplicates
         for (Picture picture : listOfAllPictures) {
-            String fileName =  UNKNOWN_IMAGE_NAME_PREFIX +pictureNumber +"."+ picture.suggestFileExtension();
+            String fileName = UNKNOWN_IMAGE_NAME_PREFIX + pictureNumber + "." + picture.suggestFileExtension();
             try {
                 data = picture.getContent();
             } catch (Exception ex) {
@@ -477,11 +478,12 @@ class DocumentEmbeddedContentExtractor {
         return listOfExtractedImages;
 
     }
-    
+
     /**
      * Extracts embedded attachments from PDF files.
-     * 
+     *
      * @param abstractFile Input PDF file
+     *
      * @return List of extracted files to be made into derived file instances.
      */
     private List<ExtractedFile> extractEmbeddedContentFromPDF(AbstractFile abstractFile) {
@@ -492,21 +494,20 @@ class DocumentEmbeddedContentExtractor {
             Map<String, Path> extractedAttachments = pdfExtractor.extract(
                     new ReadContentInputStream(abstractFile), abstractFile.getId(),
                     outputDirectory);
-            
+
             //Convert output to hook into the existing logic for creating derived files
             List<ExtractedFile> extractedFiles = new ArrayList<>();
             extractedAttachments.entrySet().forEach((pathEntry) -> {
                 String fileName = pathEntry.getKey();
                 Path writeLocation = pathEntry.getValue();
                 extractedFiles.add(new ExtractedFile(fileName,
-                        getFileRelativePath(writeLocation.getFileName().toString()), 
+                        getFileRelativePath(writeLocation.getFileName().toString()),
                         writeLocation.toFile().length()));
             });
-            
+
             return extractedFiles;
         } catch (IOException | SAXException | TikaException | InvalidPathException ex) {
-            LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs for file Name: " + abstractFile.getName() + " ID: " + abstractFile.getId(), ex); //NON-NLS
-             
+            LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs for file Name: " + abstractFile.getName() + " ID: " + abstractFile.getId(), ex); //NON-NLS         
         }
         return Collections.emptyList();
     }
@@ -559,6 +560,19 @@ class DocumentEmbeddedContentExtractor {
      */
     private String getFileRelativePath(String fileName) {
         return Paths.get(moduleDirRelative, this.parentFileName, fileName).toString();
+    }
+
+    /**
+     * UTF-8 sanitize and escape special characters in a file name or a file
+     * name component
+     *
+     * @param fileName to escape
+     *
+     * @return Sanitized string
+     */
+    private static String utf8SanitizeFileName(String fileName) {
+        Charset charset = StandardCharsets.UTF_8;
+        return charset.decode(charset.encode(escapeFileName(fileName))).toString();
     }
 
     /**
@@ -674,7 +688,7 @@ class DocumentEmbeddedContentExtractor {
                 //to normalize the name
                 name = FilenameUtils.normalize(FilenameUtils.getName(name));
                 //remove any illegal characters from name
-                name = FileUtil.escapeFileName(name);
+                name = utf8SanitizeFileName(name);
             }
 
             // Get the suggested extension based on mime type.
