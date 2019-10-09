@@ -618,6 +618,8 @@ class HighlightedText implements IndexedText {
      *   > <em>雨</em>が<em>降っ</em>ています
      *   Unified highlighter (from Solr 6.4) handles the case as expected:
      *   > <em>雨が降っ</em>ています。
+     * 
+     * @param filterQuery An already properly escaped filter query. 
      */
     private boolean shouldUseOriginalHighlighter(String filterQuery) throws NoOpenCoreException, KeywordSearchModuleException {
         final SolrQuery q = new SolrQuery();
