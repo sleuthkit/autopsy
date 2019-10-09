@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mode version="2.4">
+    <name unique="geolocation"/>
+    <kind type="editor"/>
+    <state type="separated"/>
+    <bounds x="76" y="68" width="500" height="500"/>
+    <frame state="0"/>
+    
+    <empty-behavior permanent="false"/>
+</mode>
+
