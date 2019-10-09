@@ -45,8 +45,5 @@ build_script:
   - ps: popd
   - cd %APPVEYOR_BUILD_FOLDER%
   - cmd: ant -q build
-  - cd Core
-  - cmd: ant -q test
-  - cd ..
 
 test: off
