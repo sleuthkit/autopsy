@@ -1,0 +1,9 @@
+CTL_OpenGeolocation=Geolocation
+CTL_GeolocationTopComponentAction=GeolocationTopComponent
+CTL_GeolocationTopComponent=Geolocation
+GLTopComponent_name=Geolocation
+OpenGeolocationAction_displayName=Geolocation
+OpenGeolocationAction_name=Geolocation
+RefreshPanel.refreshLabel.text=The geolocation data has been updated, the visualization may be out of date.
+RefreshPanel.refreshButton.text=Refresh View
+RefreshPanel.closeButton.text=
