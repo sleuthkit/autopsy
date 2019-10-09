@@ -35,20 +35,20 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private final Long selectedDataSource;
+    private final Long dataSourceId;
     
     @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
-    public DeleteDataSourceAction(Long selectedDataSource) {
+    public DeleteDataSourceAction(Long dataSourceId) {
         super(Bundle.DeleteDataSourceAction_name_text());
-        this.selectedDataSource = selectedDataSource;
+        this.dataSourceId = dataSourceId;
     }
 
     @Override
     public void actionPerformed(ActionEvent event) {
         try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectedDataSource);
+            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceId);
         } catch (NoCurrentCaseException | TskCoreException e) {
-            logger.log(Level.WARNING, "Error Deleting Data source " + selectedDataSource, e);
+            logger.log(Level.WARNING, "Error Deleting Data source " + dataSourceId, e);
         }
     }
     private static void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
