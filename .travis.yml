@@ -8,6 +8,9 @@ env:
  global:
   - TSK_HOME=$TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
 
+jdk:
+  - openjdk8
+
 addons:
   apt:
     update: true
