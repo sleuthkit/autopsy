@@ -243,6 +243,7 @@ Server.request.exception.exception.msg=Could not issue Solr request
 Server.commit.exception.msg=Could not commit index
 Server.addDoc.exception.msg=Could not add document to index via update handler: {0}
 Server.addDoc.exception.msg2=Could not add document to index via update handler: {0}
+Server.delDoc.exception.msg=Error deleting content from Solr. Solr image id : {0}
 Server.close.exception.msg=Cannot close Core
 Server.close.exception.msg2=Cannot close Core
 Server.solrServerNoPortException.msg=Indexing server could not bind to port {0}, port is not available, consider change the default {1} port.

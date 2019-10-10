@@ -190,16 +190,16 @@ public class Server {
             }
         },
         /**
-         * termfreq is a function which returns the number of times the term appears.
-         * This is not an actual field defined in schema.xml, but can be gotten from returned documents
-         * in the same way as fields.
+         * termfreq is a function which returns the number of times the term
+         * appears. This is not an actual field defined in schema.xml, but can
+         * be gotten from returned documents in the same way as fields.
          */
         TERMFREQ {
             @Override
             public String toString() {
                 return "termfreq"; //NON-NLS
             }
-        }        
+        }
     };
 
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
@@ -526,7 +526,7 @@ public class Server {
                     @Override
                     public void run() {
                         MessageNotifyUtil.Notify.error(
-                                NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), 
+                                NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"),
                                 Bundle.Server_status_failed_msg());
                     }
                 });
@@ -891,28 +891,30 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
     }
-    
+
     /**
-     * Get the host and port for a multiuser case.
-     * If the file solrserver.txt exists, then use the values from that file.
-     * Otherwise use the settings from the properties file.
-     * 
+     * Get the host and port for a multiuser case. If the file solrserver.txt
+     * exists, then use the values from that file. Otherwise use the settings
+     * from the properties file.
+     *
      * @param caseDirectory Current case directory
-     * @return IndexingServerProperties containing the solr host/port for this case
+     *
+     * @return IndexingServerProperties containing the solr host/port for this
+     *         case
      */
     public static IndexingServerProperties getMultiUserServerProperties(String caseDirectory) {
 
         Path serverFilePath = Paths.get(caseDirectory, "solrserver.txt");
-        if(serverFilePath.toFile().exists()){
-            try{
+        if (serverFilePath.toFile().exists()) {
+            try {
                 List<String> lines = Files.readAllLines(serverFilePath);
-                if(lines.isEmpty()) {
+                if (lines.isEmpty()) {
                     logger.log(Level.SEVERE, "solrserver.txt file does not contain any data");
-                } else if (! lines.get(0).contains(",")) {
+                } else if (!lines.get(0).contains(",")) {
                     logger.log(Level.SEVERE, "solrserver.txt file is corrupt - could not read host/port from " + lines.get(0));
                 } else {
                     String[] parts = lines.get(0).split(",");
-                    if(parts.length != 2) {
+                    if (parts.length != 2) {
                         logger.log(Level.SEVERE, "solrserver.txt file is corrupt - could not read host/port from " + lines.get(0));
                     } else {
                         return new IndexingServerProperties(parts[0], parts[1]);
@@ -922,102 +924,104 @@ public class Server {
                 logger.log(Level.SEVERE, "solrserver.txt file could not be read", ex);
             }
         }
-        
+
         // Default back to the user preferences if the solrserver.txt file was not found or if an error occurred
         String host = UserPreferences.getIndexingServerHost();
         String port = UserPreferences.getIndexingServerPort();
         return new IndexingServerProperties(host, port);
     }
-    
+
     /**
-     * Pick a solr server to use for this case and record it in the case directory.
-     * Looks for a file named "solrServerList.txt" in the root output directory - 
-     * if this does not exist then no server is recorded.
-     * 
-     * Format of solrServerList.txt:
-     * (host),(port)
-     * Ex: 10.1.2.34,8983
-     * 
+     * Pick a solr server to use for this case and record it in the case
+     * directory. Looks for a file named "solrServerList.txt" in the root output
+     * directory - if this does not exist then no server is recorded.
+     *
+     * Format of solrServerList.txt: (host),(port) Ex: 10.1.2.34,8983
+     *
      * @param rootOutputDirectory
      * @param caseDirectoryPath
-     * @throws KeywordSearchModuleException 
+     *
+     * @throws KeywordSearchModuleException
      */
     public static void selectSolrServerForCase(Path rootOutputDirectory, Path caseDirectoryPath) throws KeywordSearchModuleException {
         // Look for the solr server list file
         String serverListName = "solrServerList.txt";
         Path serverListPath = Paths.get(rootOutputDirectory.toString(), serverListName);
-        if(serverListPath.toFile().exists()){
-            
+        if (serverListPath.toFile().exists()) {
+
             // Read the list of solr servers
             List<String> lines;
-            try{
+            try {
                 lines = Files.readAllLines(serverListPath);
-            } catch (IOException ex){
+            } catch (IOException ex) {
                 throw new KeywordSearchModuleException(serverListName + " could not be read", ex);
             }
-            
+
             // Remove any lines that don't contain a comma (these are likely just whitespace)
             for (Iterator<String> iterator = lines.iterator(); iterator.hasNext();) {
                 String line = iterator.next();
-                if (! line.contains(",")) {
+                if (!line.contains(",")) {
                     // Remove the current element from the iterator and the list.
                     iterator.remove();
                 }
             }
-            if(lines.isEmpty()) {
+            if (lines.isEmpty()) {
                 throw new KeywordSearchModuleException(serverListName + " had no valid server information");
             }
-                
+
             // Choose which server to use
             int rnd = new Random().nextInt(lines.size());
             String[] parts = lines.get(rnd).split(",");
-            if(parts.length != 2) {
+            if (parts.length != 2) {
                 throw new KeywordSearchModuleException("Invalid server data: " + lines.get(rnd));
             }
-                
+
             // Split it up just to do a sanity check on the data
             String host = parts[0];
-            String port = parts[1];                
-            if(host.isEmpty() || port.isEmpty()) {
+            String port = parts[1];
+            if (host.isEmpty() || port.isEmpty()) {
                 throw new KeywordSearchModuleException("Invalid server data: " + lines.get(rnd));
             }
-                
+
             // Write the server data to a file
             Path serverFile = Paths.get(caseDirectoryPath.toString(), "solrserver.txt");
             try {
                 caseDirectoryPath.toFile().mkdirs();
-                if (! caseDirectoryPath.toFile().exists()) {
+                if (!caseDirectoryPath.toFile().exists()) {
                     throw new KeywordSearchModuleException("Case directory " + caseDirectoryPath.toString() + " does not exist");
                 }
                 Files.write(serverFile, lines.get(rnd).getBytes());
-            } catch (IOException ex){
+            } catch (IOException ex) {
                 throw new KeywordSearchModuleException(serverFile.toString() + " could not be written", ex);
             }
         }
     }
-    
+
     /**
      * Helper class to store the current server properties
      */
     public static class IndexingServerProperties {
+
         private final String host;
         private final String port;
-        
-        IndexingServerProperties (String host, String port) {
+
+        IndexingServerProperties(String host, String port) {
             this.host = host;
             this.port = port;
         }
 
         /**
          * Get the host
+         *
          * @return host
          */
         public String getHost() {
             return host;
         }
-        
+
         /**
          * Get the port
+         *
          * @return port
          */
         public String getPort() {
@@ -1268,12 +1272,12 @@ public class Server {
 
     /**
      * Delete a data source from SOLR.
-     * 
+     *
      * @param dataSourceId to delete
-     * 
+     *
      * @throws NoOpenCoreException
      */
-    public void deleteDataSource(Long dataSourceId) throws NoOpenCoreException {
+    public void deleteDataSource(Long dataSourceId) throws KeywordSearchModuleException, NoOpenCoreException {
         currentCoreLock.writeLock().lock();
         try {
             if (null == currentCore) {
@@ -1281,13 +1285,14 @@ public class Server {
             }
             currentCore.deleteDataSource(dataSourceId);
             currentCore.commit();
-        } catch (SolrServerException ex) {
-            logger.log(Level.SEVERE, "Solr delete data dource failed for data source: " + dataSourceId, ex); //NON-NLS
+        } catch (SolrServerException | KeywordSearchModuleException ex) {
+            throw new KeywordSearchModuleException(
+                    NbBundle.getMessage(this.getClass(), "Server.delDoc.exception.msg", dataSourceId), ex);
         } finally {
             currentCoreLock.writeLock().unlock();
-        }    
+        }
     }
-    
+
     /**
      * Get the text contents of the given file as stored in SOLR.
      *
@@ -1398,10 +1403,10 @@ public class Server {
      * @throws IOException
      */
     void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
-        TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");            
+        TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
         CoreAdminRequest statusRequest = new CoreAdminRequest();
-        statusRequest.setCoreName( null );
-        statusRequest.setAction( CoreAdminParams.CoreAdminAction.STATUS );
+        statusRequest.setCoreName(null);
+        statusRequest.setAction(CoreAdminParams.CoreAdminAction.STATUS);
         statusRequest.setIndexInfoNeeded(false);
         statusRequest.process(solrServer);
         HealthMonitor.submitTimingMetric(metric);
@@ -1458,7 +1463,7 @@ public class Server {
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
         private final HttpSolrServer solrCore;
-        
+
         private final int QUERY_TIMEOUT_MILLISECONDS = 86400000; // 24 Hours = 86,400,000 Milliseconds
 
         private Core(String name, CaseType caseType, Index index) {
@@ -1470,7 +1475,7 @@ public class Server {
 
             //TODO test these settings
             // socket read timeout, make large enough so can index larger files
-            solrCore.setSoTimeout(QUERY_TIMEOUT_MILLISECONDS);  
+            solrCore.setSoTimeout(QUERY_TIMEOUT_MILLISECONDS);
             //solrCore.setConnectionTimeout(1000);
             solrCore.setDefaultMaxConnectionsPerHost(32);
             solrCore.setMaxTotalConnections(32);
@@ -1529,17 +1534,18 @@ public class Server {
             }
         }
 
-        private void deleteDataSource(Long dsObjId) {
+        private void deleteDataSource(Long dsObjId) throws KeywordSearchModuleException {
             String dataSourceId = Long.toString(dsObjId);
             String deleteQuery = "image_id:" + dataSourceId;
             try {
                 // Get the first result. 
                 UpdateResponse updateResponse = solrCore.deleteByQuery(deleteQuery);
             } catch (SolrServerException | IOException ex) {
-                logger.log(Level.SEVERE, "Error deleting content from Solr. Solr image id " + dataSourceId, ex); //NON-NLS
+                throw new KeywordSearchModuleException(
+                        NbBundle.getMessage(this.getClass(), "Server.delDoc.exception.msg", dataSourceId), ex); //NON-NLS
             }
         }
-        
+
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
             try {
                 solrCore.add(doc);
@@ -1561,7 +1567,8 @@ public class Server {
          * @param chunkID   Chunk ID of the Solr document
          *
          * @return Text from matching Solr document (as String). Null if no
-         * matching Solr document found or error while getting content from Solr
+         *         matching Solr document found or error while getting content
+         *         from Solr
          */
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();

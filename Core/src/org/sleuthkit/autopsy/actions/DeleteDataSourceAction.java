@@ -47,7 +47,8 @@ public final class DeleteDataSourceAction extends AbstractAction {
     public void actionPerformed(ActionEvent event) {
         try {
             Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceId);
-        } catch (NoCurrentCaseException | TskCoreException e) {
+            deleteDataSource(dataSourceId);
+        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
             logger.log(Level.WARNING, "Error Deleting Data source " + dataSourceId, e);
         }
     }
