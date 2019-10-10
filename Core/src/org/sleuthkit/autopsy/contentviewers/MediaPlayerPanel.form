@@ -55,7 +55,7 @@
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="infoLabel" max="32767" attributes="0"/>
-                      <Component id="jPanel1" alignment="1" pref="738" max="32767" attributes="0"/>
+                      <Component id="buttonPanel" alignment="1" pref="738" max="32767" attributes="0"/>
                       <Group type="102" alignment="1" attributes="0">
                           <Component id="progressSlider" max="32767" attributes="0"/>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -75,7 +75,7 @@
                       <Component id="progressSlider" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                  <Component id="jPanel1" max="32767" attributes="0"/>
+                  <Component id="buttonPanel" max="32767" attributes="0"/>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Component id="infoLabel" pref="28" max="32767" attributes="0"/>
               </Group>
@@ -105,7 +105,7 @@
             </Property>
           </Properties>
         </Component>
-        <Container class="javax.swing.JPanel" name="jPanel1">
+        <Container class="javax.swing.JPanel" name="buttonPanel">
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout"/>
           <SubComponents>

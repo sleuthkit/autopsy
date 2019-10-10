@@ -241,8 +241,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         endOfStreamListener = new Bus.EOS() {
             @Override
             public void endOfStream(GstObject go) {
+                gstPlayBin.seek(ClockTime.ZERO);	
+                progressSlider.setValue(0);	
+                /**	
+                 * Keep the video from automatically playing	
+                 */	
                 Gst.getExecutor().submit(() -> gstPlayBin.pause());
-                gstPlayBin.seek(ClockTime.ZERO);
             }
         };
     }
@@ -265,7 +269,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         try {
             //Pushing off initialization to the background
             extractMediaWorker = new ExtractMedia(file, VideoUtils.getVideoFileInTempDir(file));
-            extractMediaWorker.execute();     
+            extractMediaWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             infoLabel.setText(String.format("<html><font color='red'>%s</font></html>", Bundle.GstVideoPanel_noOpenCase_errMsg()));
@@ -314,6 +318,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setEnabled(isEnabled);
         videoPanel.setEnabled(isEnabled);
         audioSlider.setEnabled(isEnabled);
+        rewindButton.setEnabled(isEnabled);
+        fastForwardButton.setEnabled(isEnabled);
     }
 
     @Override
@@ -434,8 +440,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         protected void done() {
             try {
                 super.get();
-                
-                if(this.isCancelled()) {
+
+                if (this.isCancelled()) {
                     return;
                 }
 
@@ -451,8 +457,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 playBinBus.connect(endOfStreamListener);
                 playBinBus.connect(stateChangeListener);
                 playBinBus.connect(errorListener);
-                
-                if(this.isCancelled()) {
+
+                if (this.isCancelled()) {
                     return;
                 }
 
@@ -462,14 +468,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 videoPanel.add(fxPanel);
                 fxAppSink = new JavaFxAppSink("JavaFxAppSink", fxPanel);
                 gstPlayBin.setVideoSink(fxAppSink);
-                
-                if(this.isCancelled()) {
+
+                if (this.isCancelled()) {
                     return;
                 }
 
                 gstPlayBin.setVolume((audioSlider.getValue() * 2.0) / 100.0);
                 gstPlayBin.pause();
-                
+
                 timer.start();
                 enableComponents(true);
             } catch (CancellationException ex) {
@@ -497,7 +503,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                  * pipeline. We start this updater when data-flow has just been
                  * initiated so buffering may still be in progress.
                  */
-                if (duration != -1) {
+                if (duration > 0 && position > 0) {
                     double relativePosition = (double) position / duration;
                     progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
                 }
@@ -521,7 +527,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         controlPanel = new javax.swing.JPanel();
         progressSlider = new javax.swing.JSlider();
         progressLabel = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        buttonPanel = new javax.swing.JPanel();
         playButton = new javax.swing.JButton();
         fastForwardButton = new javax.swing.JButton();
         rewindButton = new javax.swing.JButton();
@@ -548,7 +554,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
 
-        jPanel1.setLayout(new java.awt.GridBagLayout());
+        buttonPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(playButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playButton.text")); // NOI18N
         playButton.addActionListener(new java.awt.event.ActionListener() {
@@ -562,7 +568,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.ipadx = 21;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
-        jPanel1.add(playButton, gridBagConstraints);
+        buttonPanel.add(playButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(fastForwardButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.fastForwardButton.text")); // NOI18N
         fastForwardButton.addActionListener(new java.awt.event.ActionListener() {
@@ -575,7 +581,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
-        jPanel1.add(fastForwardButton, gridBagConstraints);
+        buttonPanel.add(fastForwardButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(rewindButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.rewindButton.text")); // NOI18N
         rewindButton.addActionListener(new java.awt.event.ActionListener() {
@@ -588,7 +594,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(5, 0, 1, 0);
-        jPanel1.add(rewindButton, gridBagConstraints);
+        buttonPanel.add(rewindButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(VolumeIcon, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.VolumeIcon.text")); // NOI18N
         VolumeIcon.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
@@ -599,7 +605,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.ipady = 7;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
-        jPanel1.add(VolumeIcon, gridBagConstraints);
+        buttonPanel.add(VolumeIcon, gridBagConstraints);
 
         audioSlider.setMajorTickSpacing(10);
         audioSlider.setMaximum(50);
@@ -615,7 +621,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.ipady = 7;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(3, 1, 0, 10);
-        jPanel1.add(audioSlider, gridBagConstraints);
+        buttonPanel.add(audioSlider, gridBagConstraints);
 
         infoLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.infoLabel.text")); // NOI18N
@@ -629,7 +635,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 .addContainerGap()
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
+                    .addComponent(buttonPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
                         .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -644,7 +650,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE))
         );
@@ -680,7 +686,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //Skip 30 seconds.
         long skipAhead = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
         //Ensure new video position is within bounds
-        long newTime = Math.min(currentTime + skipAhead, duration);
+        long newTime = Math.min(currentTime + skipAhead, duration - 1);
         gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
     }//GEN-LAST:event_fastForwardButtonActionPerformed
 
@@ -695,10 +701,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel VolumeIcon;
     private javax.swing.JSlider audioSlider;
+    private javax.swing.JPanel buttonPanel;
     private javax.swing.JPanel controlPanel;
     private javax.swing.JButton fastForwardButton;
     private javax.swing.JLabel infoLabel;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JButton playButton;
     private javax.swing.JLabel progressLabel;
     private javax.swing.JSlider progressSlider;
