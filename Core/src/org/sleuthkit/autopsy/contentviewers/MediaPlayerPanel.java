@@ -37,7 +37,6 @@ import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import org.freedesktop.gstreamer.Bus;
-import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Gst;
 import org.freedesktop.gstreamer.GstObject;
 import org.freedesktop.gstreamer.State;
@@ -53,6 +52,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.event.ChangeListener;
+import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.GstException;
 
 /**
@@ -241,14 +241,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         endOfStreamListener = new Bus.EOS() {
             @Override
             public void endOfStream(GstObject go) {
-                playButton.setText("►");
-                System.out.println(gstPlayBin.getState());
-                //gstPlayBin.seek(ClockTime.ZERO);
-                //progressSlider.setValue(0);
-                /**
-                 * Keep the video from automatically playing
-                 */
-                //Gst.getExecutor().submit(() -> gstPlayBin.pause());
+                Gst.getExecutor().submit(() -> gstPlayBin.pause());
+                gstPlayBin.seek(ClockTime.ZERO);
             }
         };
     }
@@ -376,7 +370,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      * @param total
      */
     private void updateTimeLabel(long start, long total) {
-        progressLabel.setText(formatTime(start, false) + "/" + formatTime(total, true));
+        progressLabel.setText(formatTime(start) + "/" + formatTime(total));
     }
 
     /**
@@ -386,7 +380,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         "MediaPlayerPanel.unknownTime=Unknown",
         "MediaPlayerPanel.timeFormat=%02d:%02d:%02d"
     })
-    private String formatTime(long ns, boolean ceiling) {
+    private String formatTime(long ns) {
         if (ns == -1) {
             return Bundle.MediaPlayerPanel_unknownTime();
         }
@@ -635,7 +629,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 .addContainerGap()
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1090, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
                         .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -672,14 +666,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }// </editor-fold>//GEN-END:initComponents
 
     private void rewindButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rewindButtonActionPerformed
-        long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
         long skipBehind = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
         //Ensure new video position is within bounds
         long newTime = Math.max(currentTime - skipBehind, 0);
         gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
-        syncProgressSlider(newTime, duration);
     }//GEN-LAST:event_rewindButtonActionPerformed
 
     private void fastForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fastForwardButtonActionPerformed
@@ -690,7 +682,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //Ensure new video position is within bounds
         long newTime = Math.min(currentTime + skipAhead, duration);
         gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
-        syncProgressSlider(newTime, duration);
     }//GEN-LAST:event_fastForwardButtonActionPerformed
 
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
@@ -700,22 +691,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             gstPlayBin.play();
         }
     }//GEN-LAST:event_playButtonActionPerformed
-
-    /**
-     * Sync progress slider to the newTime position if it is not already there.
-     * 
-     * @param newTime New time value that progress slider may or may not be positioned at
-     * @param duration Total duration of the video, used for determining slider position
-     */
-    private void syncProgressSlider(long newTime, long duration) {
-        //0 <= newTimePercent <= 1.0
-        double newTimePercent = ((double)newTime)/duration;
-        //0 <= newProgressSliderPos <= PROGRESS_SLIDER_SIZE
-        int newProgressSliderPos = (int)(PROGRESS_SLIDER_SIZE * newTimePercent);
-        progressSlider.setValue(newProgressSliderPos);
-        updateTimeLabel(newTime, duration);
-    }
-    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel VolumeIcon;
