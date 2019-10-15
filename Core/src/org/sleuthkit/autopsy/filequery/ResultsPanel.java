@@ -249,7 +249,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     }
 
     @Subscribe
-    void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEven) {
+    void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEvent) {
         SwingUtilities.invokeLater(() -> {
             groupSize = 0;
             currentPage = 0;

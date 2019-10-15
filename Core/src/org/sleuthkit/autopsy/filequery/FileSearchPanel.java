@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.common.eventbus.Subscribe;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -32,6 +34,7 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JList;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
@@ -1169,7 +1172,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        searchButton.setEnabled(false);
+        enableSearch(false);
+        DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         FileType searchType = fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex());
         DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(searchType));
         // For testing, allow the user to run different searches in loop
@@ -1183,10 +1187,69 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        searchWorker = new SearchWorker(centralRepoDb, searchButton, filters, groupingAttr, groupSortAlgorithm, fileSort);
+        searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
 
+    private void enableSearch(boolean enabled) {
+        searchButton.setEnabled(enabled);
+        fileTypeComboBox.setEnabled(enabled);
+        orderByCombobox.setEnabled(enabled);
+        groupByCombobox.setEnabled(enabled);
+        attributeRadioButton.setEnabled(enabled);
+        groupSizeRadioButton.setEnabled(enabled);
+        sizeCheckbox.setEnabled(enabled);
+        sizeScrollPane.setEnabled(enabled && sizeCheckbox.isSelected());
+        sizeList.setEnabled(enabled && sizeCheckbox.isSelected());
+        dataSourceCheckbox.setEnabled(enabled);
+        dataSourceList.setEnabled(enabled && dataSourceCheckbox.isSelected());
+        dataSourceScrollPane.setEnabled(enabled && dataSourceCheckbox.isSelected());
+        crFrequencyCheckbox.setEnabled(enabled);
+        crFrequencyScrollPane.setEnabled(enabled && crFrequencyCheckbox.isSelected());
+        crFrequencyList.setEnabled(enabled && crFrequencyCheckbox.isSelected());
+        keywordCheckbox.setEnabled(enabled);
+        keywordList.setEnabled(enabled && keywordCheckbox.isSelected());
+        keywordScrollPane.setEnabled(enabled && keywordCheckbox.isSelected());
+        hashSetCheckbox.setEnabled(enabled);
+        hashSetScrollPane.setEnabled(enabled && hashSetCheckbox.isSelected());
+        hashSetList.setEnabled(enabled && hashSetCheckbox.isSelected());
+        objectsCheckbox.setEnabled(enabled);
+        objectsScrollPane.setEnabled(enabled && objectsCheckbox.isSelected());
+        objectsList.setEnabled(enabled && objectsCheckbox.isSelected());
+        tagsCheckbox.setEnabled(enabled);
+        tagsScrollPane.setEnabled(enabled && tagsCheckbox.isSelected());
+        tagsList.setEnabled(enabled && tagsCheckbox.isSelected());
+        interestingItemsCheckbox.setEnabled(enabled);
+        interestingItemsScrollPane.setEnabled(enabled && interestingItemsCheckbox.isSelected());
+        interestingItemsList.setEnabled(enabled && interestingItemsCheckbox.isSelected());
+        scoreCheckbox.setEnabled(enabled);
+        scoreScrollPane.setEnabled(enabled && scoreCheckbox.isSelected());
+        scoreList.setEnabled(enabled && scoreCheckbox.isSelected());
+        exifCheckbox.setEnabled(enabled);
+        notableCheckbox.setEnabled(enabled);
+        parentCheckbox.setEnabled(enabled);
+        parentScrollPane.setEnabled(enabled && parentCheckbox.isSelected());
+        parentList.setEnabled(enabled && parentCheckbox.isSelected());
+        parentTextField.setEnabled(enabled && parentCheckbox.isSelected());
+        addButton.setEnabled(enabled && parentCheckbox.isSelected());
+        deleteButton.setEnabled(enabled && parentCheckbox.isSelected() && !parentListModel.isEmpty());
+        fullRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
+        substringRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
+    }
+
+    @Subscribe
+    void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEvent) {
+        SwingUtilities.invokeLater(() -> {
+            enableSearch(true);
+        });
+    }
+
+    @Subscribe
+    void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
+        SwingUtilities.invokeLater(() -> {
+            enableSearch(true);
+        });
+    }
 
     private void parentCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parentCheckboxActionPerformed
         parentList.setEnabled(parentCheckbox.isSelected());
@@ -1194,7 +1257,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         substringRadioButton.setEnabled(parentCheckbox.isSelected());
         parentTextField.setEnabled(parentCheckbox.isSelected());
         addButton.setEnabled(parentCheckbox.isSelected());
-        deleteButton.setEnabled(parentCheckbox.isSelected());
+        deleteButton.setEnabled(parentCheckbox.isSelected() && !parentListModel.isEmpty());
     }//GEN-LAST:event_parentCheckboxActionPerformed
 
     private void keywordCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordCheckboxActionPerformed
@@ -1230,7 +1293,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         int index = parentList.getSelectedIndex();
-        parentListModel.remove(index);
+        if (index >= 0) {
+            parentListModel.remove(index);
+        }
         validateFields();
     }//GEN-LAST:event_deleteButtonActionPerformed
 

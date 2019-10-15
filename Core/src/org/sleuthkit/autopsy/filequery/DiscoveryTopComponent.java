@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.awt.KeyboardFocusManager;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -46,6 +45,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
+    private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
@@ -61,6 +61,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         setName(Bundle.DiscoveryTopComponent_name());
         explorerManager = new ExplorerManager();
         fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
+        DiscoveryEvents.getDiscoveryEventBus().register(fileSearchPanel);
         dataContentPanel = DataContentPanel.createInstance();
         resultsPanel = new ResultsPanel(explorerManager, centralRepoDb);
         DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
@@ -109,6 +110,17 @@ public final class DiscoveryTopComponent extends TopComponent {
         });
     }
 
+    /**
+     * Gets the singleton Image Gallery top component. Note that calling this
+     * method will cause the top component to be constructed if it does not
+     * already exist.
+     *
+     * @return The top component.
+     */
+    public static DiscoveryTopComponent getTopComponent() {
+        return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+    }
+
     @Override
     public void componentOpened() {
         super.componentOpened();
@@ -119,6 +131,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     protected void componentClosed() {
         fileSearchPanel.cancelSearch();
         FileSearch.clearCache();
+        DiscoveryEvents.getDiscoveryEventBus().unregister(fileSearchPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(resultsPanel);
         super.componentClosed();
