@@ -18,22 +18,27 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import java.awt.Cursor;
+import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Create a dialog for displaying the file discovery tool
@@ -42,10 +47,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
 @NbBundle.Messages("DiscoveryTopComponent.name= File Discovery")
-public final class DiscoveryTopComponent extends TopComponent {
+final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
+    private final static Logger logger = Logger.getLogger(DiscoveryTopComponent.class.getName());
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
@@ -56,17 +62,23 @@ public final class DiscoveryTopComponent extends TopComponent {
      * Creates new form FileDiscoveryDialog
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public DiscoveryTopComponent(SleuthkitCase caseDb, EamDb centralRepoDb) {
+    DiscoveryTopComponent() {
         initComponents();
+        // Load the central repository database.
+        EamDb centralRepoDb = null;
+        if (EamDb.isEnabled()) {
+            try {
+                centralRepoDb = EamDb.getInstance();
+            } catch (EamDbException ex) {
+                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
+            }
+        }
         setName(Bundle.DiscoveryTopComponent_name());
         explorerManager = new ExplorerManager();
-        fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
-        DiscoveryEvents.getDiscoveryEventBus().register(fileSearchPanel);
+        fileSearchPanel = new FileSearchPanel(Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
         dataContentPanel = DataContentPanel.createInstance();
         resultsPanel = new ResultsPanel(explorerManager, centralRepoDb);
-        DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
         groupListPanel = new GroupListPanel();
-        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
@@ -110,21 +122,32 @@ public final class DiscoveryTopComponent extends TopComponent {
         });
     }
 
-    /**
-     * Gets the singleton Image Gallery top component. Note that calling this
-     * method will cause the top component to be constructed if it does not
-     * already exist.
-     *
-     * @return The top component.
-     */
-    public static DiscoveryTopComponent getTopComponent() {
-        return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+    static void openTopComponent() {
+        final DiscoveryTopComponent tc = (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        if (tc != null) {
+            WindowManager.getDefault().isTopComponentFloating(tc);
+
+            if (tc.isOpened() == false) {
+                Mode mode = WindowManager.getDefault().findMode("discovery"); // NON-NLS
+                if (mode != null) {
+                    mode.dockInto(tc);
+                }
+                tc.open();
+            }
+        }
+    }
+
+    static void changeCursor(Cursor cursor) {
+        WindowManager.getDefault().findTopComponent(PREFERRED_ID).setCursor(cursor);
     }
 
     @Override
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
+        DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
+        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
+        DiscoveryEvents.getDiscoveryEventBus().register(fileSearchPanel);
     }
 
     @Override

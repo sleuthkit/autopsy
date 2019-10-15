@@ -212,6 +212,17 @@ final class DiscoveryEvents {
         }
     }
 
+    static final class SearchCancelledEvent {
+
+        /**
+         * Construct a new SearchCancelledEvent.
+         */
+        SearchCancelledEvent() {
+            //no arg conustructor
+        }
+
+    }
+
     /**
      * Event to signal that a group has been selected.
      */

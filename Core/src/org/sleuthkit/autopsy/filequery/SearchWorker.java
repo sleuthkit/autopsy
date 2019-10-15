@@ -77,8 +77,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     @Override
     protected void done() {
         if (!searchCompleted) {
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.NoResultsEvent());
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchCancelledEvent());
         }
-        DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 }

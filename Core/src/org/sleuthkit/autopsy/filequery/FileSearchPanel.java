@@ -1119,6 +1119,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
 
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.cancelButton.text")); // NOI18N
+        cancelButton.setEnabled(false);
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -1173,7 +1174,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         enableSearch(false);
-        DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
         FileType searchType = fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex());
         DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(searchType));
         // For testing, allow the user to run different searches in loop
@@ -1192,7 +1193,13 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void enableSearch(boolean enabled) {
+        if (enabled) {
+            DiscoveryTopComponent.changeCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        } else {
+            DiscoveryTopComponent.changeCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        }
         searchButton.setEnabled(enabled);
+        cancelButton.setEnabled(!enabled);
         fileTypeComboBox.setEnabled(enabled);
         orderByCombobox.setEnabled(enabled);
         groupByCombobox.setEnabled(enabled);
@@ -1238,7 +1245,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     @Subscribe
-    void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEvent) {
+    void handleSearchCancelledEvent(DiscoveryEvents.SearchCancelledEvent SearchCancelledEvent) {
         SwingUtilities.invokeLater(() -> {
             enableSearch(true);
         });

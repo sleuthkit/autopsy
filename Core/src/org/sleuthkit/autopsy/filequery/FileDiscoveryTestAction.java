@@ -18,16 +18,12 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -53,22 +49,7 @@ public final class FileDiscoveryTestAction extends CallableSystemAction {
     @Override
     @SuppressWarnings("fallthrough")
     public void performAction() {
-
-        // Load the central repository database.
-        EamDb crDb = null;
-        if (EamDb.isEnabled()) {
-            try {
-                crDb = EamDb.getInstance();
-            } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error loading central repository database", ex);
-                return;
-            }
-        }
-        //modal set to true currently to prevent multiple dialogs being opened because messaging uses a shared eventbus
-        DiscoveryTopComponent discoveryTc = new DiscoveryTopComponent(Case.getCurrentCase().getSleuthkitCase(), crDb);
-        // Display the dialog
-        discoveryTc.open();
-
+        DiscoveryTopComponent.openTopComponent();
     }
 
     @Override
