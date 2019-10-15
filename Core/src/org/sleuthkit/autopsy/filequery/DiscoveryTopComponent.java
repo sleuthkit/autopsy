@@ -126,7 +126,6 @@ final class DiscoveryTopComponent extends TopComponent {
         final DiscoveryTopComponent tc = (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             WindowManager.getDefault().isTopComponentFloating(tc);
-
             if (tc.isOpened() == false) {
                 Mode mode = WindowManager.getDefault().findMode("discovery"); // NON-NLS
                 if (mode != null) {
@@ -134,6 +133,7 @@ final class DiscoveryTopComponent extends TopComponent {
                 }
                 tc.open();
             }
+            tc.toFront();
         }
     }
 
