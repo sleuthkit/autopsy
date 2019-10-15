@@ -35,18 +35,13 @@
 
 import jarray
 import inspect
-import os
 from java.lang import Class
 from java.lang import System
-from java.sql  import DriverManager, SQLException
 from java.util.logging import Level
 from java.util import ArrayList
 from java.io import File
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
-from org.sleuthkit.datamodel import ReadContentInputStream
-from org.sleuthkit.datamodel import BlackboardArtifact
-from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
@@ -56,17 +51,20 @@ from org.sleuthkit.autopsy.ingest import IngestServices
 from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
-from org.sleuthkit.autopsy.datamodel import ContentUtils
-from org.sleuthkit.autopsy.casemodule.services import Services
-from org.sleuthkit.autopsy.casemodule.services import FileManager
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
-
-
+from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel.Blackboard import BlackboardException
+from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
+from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from java.sql import ResultSet
+from java.sql import SQLException
+from org.sleuthkit.autopsy.coreutils import AppSQLiteDB
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
 class ContactsDbIngestModuleFactory(IngestModuleFactoryAdapter):
 
+    # TODO - Replace with your modules name
     moduleName = "Contacts Db Analyzer"
 
     def getModuleDisplayName(self):
@@ -103,98 +101,78 @@ class ContactsDbIngestModule(DataSourceIngestModule):
         self.context = context
 
     # Where the analysis is done.
-    # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
+    # The 'data_source' object being passed in is of type org.sleuthkit.datamodel.Content.
     # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.6.0/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
-    # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
+    # 'progress_bar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
     # See: http://sleuthkit.org/autopsy/docs/api-docs/4.6.0/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
-    def process(self, dataSource, progressBar):
+    def process(self, data_source, progress_bar):
 
         # we don't know how much work there is yet
-        progressBar.switchToIndeterminate()
+        progress_bar.switchToIndeterminate()
 
-        # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
-
-        # Find files named contacts.db, regardless of parent path
-        fileManager = Case.getCurrentCase().getServices().getFileManager()
-        files = fileManager.findFiles(dataSource, "contacts.db")
-
-        numFiles = len(files)
-        progressBar.switchToDeterminate(numFiles)
-        fileCount = 0
-        for file in files:
-
-            # Check if the user pressed cancel while we were busy
-            if self.context.isJobCancelled():
-                return IngestModule.ProcessResult.OK
-
-            self.log(Level.INFO, "Processing file: " + file.getName())
-            fileCount += 1
-
-            # Save the DB locally in the temp folder. use file id as name to reduce collisions
-            lclDbPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getId()) + ".db")
-            ContentUtils.writeToFile(file, File(lclDbPath))
-                        
-            # Open the DB using JDBC
-            try: 
-                Class.forName("org.sqlite.JDBC").newInstance()
-                dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % lclDbPath)
-            except SQLException as e:
-                self.log(Level.INFO, "Could not open database file (not SQLite) " + file.getName() + " (" + e.getMessage() + ")")
-                return IngestModule.ProcessResult.OK
-            
-            # Query the contacts table in the database and get all columns. 
-            try:
-                stmt = dbConn.createStatement()
-                resultSet = stmt.executeQuery("SELECT * FROM contacts")
-            except SQLException as e:
-                self.log(Level.INFO, "Error querying database for contacts table (" + e.getMessage() + ")")
-                return IngestModule.ProcessResult.OK
-
-            # Cycle through each row and create artifacts
-            while resultSet.next():
-                try: 
-                    name  = resultSet.getString("name")
-                    email = resultSet.getString("email")
-                    phone = resultSet.getString("phone")
-                except SQLException as e:
-                    self.log(Level.INFO, "Error getting values from contacts table (" + e.getMessage() + ")")
+        # Find files named contacts.db anywhere in the data source.
+        # TODO - replace with your database name and parent path.
+        app_databases = AppSQLiteDB.findAppDatabases(data_source, "contacts.db", True, "")
                 
-                
-                # Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
-                art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-                attributes = ArrayList()
+        num_databases = len(app_databases)
+        progress_bar.switchToDeterminate(num_databases)
+        databases_processed = 0
 
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(), 
-                    ContactsDbIngestModuleFactory.moduleName, name))
-                
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), 
-                    ContactsDbIngestModuleFactory.moduleName, email))
+        try:
+            # Iterate through all the database files returned
+            for app_database in app_databases:
 
-                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), 
-                    ContactsDbIngestModuleFactory.moduleName, phone))
+                # Check if the user pressed cancel while we were busy
+                if self.context.isJobCancelled():
+                    return IngestModule.ProcessResult.OK
+
+                self.log(Level.INFO, "Processing file: " + app_database.getDBFile().getName())
                 
-                art.addAttributes(attributes)
+                # Query the contacts table in the database and get all columns. 
                 try:
-                    # index the artifact for keyword search
-                    blackboard.indexArtifact(art)
-                except Blackboard.BlackboardException as e:
-                    self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
-                
-            # Fire an event to notify the UI and others that there are new artifacts
-            IngestServices.getInstance().fireModuleDataEvent(
-                ModuleDataEvent(ContactsDbIngestModuleFactory.moduleName, 
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, None))
-                
-            # Clean up
-            stmt.close()
-            dbConn.close()
-            os.remove(lclDbPath)
+                    # TODO - replace with your query
+                    result_set = app_database.runQuery("SELECT * FROM contacts")
+                except SQLException as e:
+                    self.log(Level.INFO, "Error querying database for contacts table (" + e.getMessage() + ")")
+                    return IngestModule.ProcessResult.OK
 
-            
+                try:
+                    #Get the current case for the CommunicationArtifactsHelper.
+                    current_case = Case.getCurrentCaseThrows()
+                except NoCurrentCaseException as ex:
+                    self.log(Level.INFO, "Case is closed (" + ex.getMessage() + ")")
+                    return IngestModule.ProcessResult.OK
+                        
+                # Create an instance of the helper class
+                # TODO - Replace with your parser name and Account.Type
+                helper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(), 
+                                ContactsDbIngestModuleFactory.moduleName, app_database.getDBFile(), Account.Type.DEVICE) 
+
+                # Iterate through each row and create artifacts
+                while result_set.next():
+                    try: 
+                        # TODO - Replace these calls with your column names and types
+                        # Ex of other types: result_set.getInt("contact_type") or result_set.getLong("datetime")
+                        name  = result_set.getString("name")
+                        email = result_set.getString("email")
+                        phone = result_set.getString("phone")
+                    except SQLException as e:
+                        self.log(Level.INFO, "Error getting values from contacts table (" + e.getMessage() + ")")
+                    
+                    helper.addContact(name, phone, "", "", email)
+                
+                app_database.close()
+                databases_processed += 1
+                progress_bar.progress(databases_processed)
+        except TskCoreException as e:
+            self.log(Level.INFO, "Error inserting or reading from the Sleuthkit case (" + e.getMessage() + ")")
+        except BlackboardException as e:
+            self.log(Level.INFO, "Error posting artifact to the Blackboard (" + e.getMessage() + ")")
+
         # After all databases, post a message to the ingest messages in box.
+        # TODO - update your module name here
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
-            "ContactsDb Analyzer", "Found %d files" % fileCount)
+                ContactsDbIngestModuleFactory.moduleName, "Found %d files" % num_databases)
         IngestServices.getInstance().postMessage(message)
-
+        
         return IngestModule.ProcessResult.OK
