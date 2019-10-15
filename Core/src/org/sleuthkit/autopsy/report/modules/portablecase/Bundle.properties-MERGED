@@ -1,0 +1,42 @@
+PortableCaseReportModule.compressCase.canceled=Compression canceled by user
+PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case
+# {0} - Temp folder path
+PortableCaseReportModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}
+PortableCaseReportModule.compressCase.errorFinding7zip=Could not locate 7-Zip executable
+# {0} - File name
+PortableCaseReportModule.copyContentToPortableCase.copyingFile=Copying file {0}
+# {0} - case folder
+PortableCaseReportModule.createCase.caseDirExists=Case folder {0} already exists
+PortableCaseReportModule.createCase.errorCreatingCase=Error creating case
+# {0} - folder
+PortableCaseReportModule.createCase.errorCreatingFolder=Error creating folder {0}
+PortableCaseReportModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
+PortableCaseReportModule.generateReport.caseClosed=Current case has been closed
+PortableCaseReportModule.generateReport.compressingCase=Compressing case...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingFiles=Copying files tagged as {0}...
+PortableCaseReportModule.generateReport.copyingTags=Copying tags...
+PortableCaseReportModule.generateReport.creatingCase=Creating portable case database...
+PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
+PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files
+PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files
+PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results
+PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
+PortableCaseReportModule.generateReport.errorCreatingImageTagTable=Error creating image tags table
+PortableCaseReportModule.generateReport.errorCreatingReportFolder=Could not make report folder
+PortableCaseReportModule.generateReport.errorGeneratingUCOreport=Problem while generating CASE-UCO report
+# {0} - attribute type name
+PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
+PortableCaseReportModule.generateReport.errorReadingSets=Error while reading interesting items sets from case database
+PortableCaseReportModule.generateReport.errorReadingTags=Error while reading tags from case database
+PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items
+PortableCaseReportModule.generateReport.noContentToCopy=No interesting files, results, or tagged items to copy
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
+PortableCaseReportModule.generateReport.verifying=Verifying selected parameters...
+PortableCaseReportModule.getDescription.description=Copies selected items to a new single-user case that can be easily shared
+PortableCaseReportModule.getName.name=Portable Case

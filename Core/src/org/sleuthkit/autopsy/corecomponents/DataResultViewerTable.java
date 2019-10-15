@@ -892,6 +892,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             "DataResultViewerTable.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}",
             "DataResultViewerTable.goToPageTextField.err=Invalid page number"})
         void gotoPage() {
+            int originalPage = currentPage;
+
             try {
                 currentPage = Integer.decode(gotoPageTextField.getText());
             } catch (NumberFormatException e) {
@@ -900,7 +902,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
 
             if (currentPage > totalPages || currentPage < 1) {
-                currentPage = 1;
+                currentPage = originalPage;
                 JOptionPane.showMessageDialog(DataResultViewerTable.this,
                         Bundle.DataResultViewerTable_goToPageTextField_msgDlg(totalPages),
                         Bundle.DataResultViewerTable_goToPageTextField_err(),

@@ -335,7 +335,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         eventsTreeTab.setGraphic(new ImageView("org/sleuthkit/autopsy/timeline/images/timeline_marker.png")); // NON-NLS
         eventsTreeTab.disableProperty().bind(controller.viewModeProperty().isNotEqualTo(ViewMode.DETAIL));
 
-        final TabPane leftTabPane = new TabPane(filterTab, eventsTreeTab);
+        // There is a bug in the sort of the EventsTree, it doesn't seem to 
+        //sort anything.  For now removing from tabpane until fixed
+        final TabPane leftTabPane = new TabPane(filterTab);
         VBox.setVgrow(leftTabPane, Priority.ALWAYS);
         controller.viewModeProperty().addListener(viewMode -> {
             if (controller.getViewMode() != ViewMode.DETAIL) {

@@ -129,9 +129,7 @@ final public class FiltersPanel extends JPanel {
     public FiltersPanel() {
         initComponents();
 
-        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
-        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
-        accountTypeListPane.add(panel);
+       initalizeDeviceAccountType();
 
         deviceRequiredLabel.setVisible(false);
         accountTypeRequiredLabel.setVisible(false);
@@ -257,9 +255,11 @@ final public class FiltersPanel extends JPanel {
             //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesListPane.removeAll();
-
-            accountTypeMap.clear();
-            accountTypeListPane.removeAll();
+            
+            accountTypeMap.clear();           
+            accountTypeListPane.removeAll(); 
+            
+            initalizeDeviceAccountType();
         });
     }
 
@@ -268,6 +268,12 @@ final public class FiltersPanel extends JPanel {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
+    }
+    
+    private void initalizeDeviceAccountType() {
+        CheckBoxIconPanel panel = createAccoutTypeCheckBoxPanel(Account.Type.DEVICE, true);
+        accountTypeMap.put(Account.Type.DEVICE, panel.getCheckBox());
+        accountTypeListPane.add(panel);
     }
 
     /**
@@ -471,6 +477,7 @@ final public class FiltersPanel extends JPanel {
 
         setLayout(new java.awt.GridBagLayout());
 
+        scrollPane.setAutoscrolls(true);
         scrollPane.setBorder(null);
 
         mainPanel.setLayout(new java.awt.GridBagLayout());
@@ -535,7 +542,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 25);
         mainPanel.add(limitPane, gridBagConstraints);
 
         startDatePicker.setEnabled(false);
@@ -602,7 +609,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(dateRangePane, gridBagConstraints);
 
         devicesPane.setLayout(new java.awt.GridBagLayout());
@@ -680,7 +687,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.ipady = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(devicesPane, gridBagConstraints);
 
         accountTypesPane.setLayout(new java.awt.GridBagLayout());
@@ -754,7 +761,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 0, 25);
         mainPanel.add(accountTypesPane, gridBagConstraints);
 
         topPane.setLayout(new java.awt.GridBagLayout());
@@ -804,6 +811,7 @@ final public class FiltersPanel extends JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 25);
         mainPanel.add(topPane, gridBagConstraints);
 
         scrollPane.setViewportView(mainPanel);

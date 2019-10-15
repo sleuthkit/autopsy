@@ -107,7 +107,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, MODULE_NAME)
+                    blackboard.postArtifact(artifact, general.MODULE_NAME)
                 except Blackboard.BlackboardException as ex:
                     self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactTypeName()), ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -117,7 +117,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Unable to execute browser location SQL query against database.
             pass
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error putting artifacts to blackboard", ex)
+            self._logger.log(Level.SEVERE, "Error processing browser location history.", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:

@@ -41,11 +41,15 @@ AddLogicalImageTask.failedToGetTotalFilesCount=Failed to get total files count: 
 # {0} - file
 AddLogicalImageTask.failToGetCanonicalPath=Fail to get canonical path for {0}
 AddLogicalImageTask.ingestionCancelled=Ingestion cancelled
+AddLogicalImageTask.logicalImagerResults=Logical Imager results
 AddLogicalImageTask.noCurrentCase=No current case
 # {0} - line number
 # {1} - fields length
 # {2} - expected length
 AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}
+# {0} - file number
+# {1} - total files
+AddLogicalImageTask.searchingInterestingFile=Searching for interesting files ({0}/{1})
 # {0} - imageFilePath
 AddMultipleImagesTask.adding=Adding: {0}
 # {0} - file
@@ -79,7 +83,7 @@ LogicalImagerDSProcessor.failToCreateDirectory=Failed to create directory {0}
 LogicalImagerDSProcessor.imageDirPathNotFound={0} not found.\nUSB drive has been ejected.
 LogicalImagerDSProcessor.noCurrentCase=No current case
 LogicalImagerPanel.imageTable.columnModel.title0=Hostname
-LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date
+LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date (GMT)
 LogicalImagerPanel.imageTable.columnModel.title2=Path
 # {0} - sparseImageDirectory
 LogicalImagerPanel.messageLabel.directoryDoesNotContainSparseImage=Directory {0} does not contain any images

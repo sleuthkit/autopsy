@@ -567,7 +567,7 @@ public class DataResultFilterNode extends FilterNode {
             // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
             // to set that wrapped node as the selection and root context of the 
             // directory tree explorer manager (sourceEm)
-            if(sourceEm == null) {
+            if(sourceEm == null || sourceEm.getSelectedNodes().length == 0) {
                 return null;
             }
             final Node currentSelectionInDirectoryTree = sourceEm.getSelectedNodes()[0];
