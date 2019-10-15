@@ -43,8 +43,6 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
     @ActionReference(path = "Menu/Tools", position = 102)})
 public class OpenGeolocationAction extends CallableSystemAction {
 
-    private final PropertyChangeListener caseChangeListener;
-
     @Messages({
         "OpenGeolocationAction_name=Geolocation",
         "OpenGeolocationAction_displayName=Geolocation"
@@ -56,7 +54,7 @@ public class OpenGeolocationAction extends CallableSystemAction {
     public OpenGeolocationAction() {
         setEnabled(false); //disabled by default.  Will be enabled in Case.java when a case is opened.
 
-        caseChangeListener = (PropertyChangeEvent evt) -> {
+        PropertyChangeListener caseChangeListener = (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 setEnabled(RuntimeProperties.runningWithGUI() && evt.getNewValue() != null);
             }

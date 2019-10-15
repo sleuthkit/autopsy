@@ -35,13 +35,15 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Top component which displays the Geolocation Tool.
@@ -54,15 +56,16 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public final class GeolocationTopComponent extends TopComponent {
 
     private static final Logger logger = Logger.getLogger(GeolocationTopComponent.class.getName());
-    
+
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
-    
+
     private final PropertyChangeListener ingestListener;
-    
+
     final RefreshPanel refreshPanel = new RefreshPanel();
 
     @Messages({
-        "GLTopComponent_name=Geolocation"
+        "GLTopComponent_name=Geolocation",
+        "GLTopComponent_initilzation_error=An error occurred during waypoint initilization.  Geolocation data maybe incomplete."
     })
 
     /**
@@ -73,7 +76,7 @@ public final class GeolocationTopComponent extends TopComponent {
         initComponents();
         initWaypoints();
         setName(Bundle.GLTopComponent_name());
-        
+
         this.ingestListener = pce -> {
             String eventType = pce.getPropertyName();
             if (eventType.equals(DATA_ADDED.toString())) {
@@ -86,13 +89,11 @@ public final class GeolocationTopComponent extends TopComponent {
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()
                         || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID())) {
-                    
-                   showRefreshPanel(true);
+
+                    showRefreshPanel(true);
                 }
             }
         };
-        
-       
 
         refreshPanel.addCloseActionListener(new ActionListener() {
             @Override
@@ -110,14 +111,14 @@ public final class GeolocationTopComponent extends TopComponent {
             }
         });
     }
-    
+
     @Override
     public void addNotify() {
         super.addNotify();
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, ingestListener);
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             mapPanel.clearWaypoints();
-            if(evt.getNewValue() != null) {
+            if (evt.getNewValue() != null) {
                 initWaypoints();
             }
         });
@@ -128,14 +129,14 @@ public final class GeolocationTopComponent extends TopComponent {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
     }
-    
+
     /**
      * Set the state of the refresh panel at the top of the mapPanel.
-     * 
+     *
      * @param show Whether to show or hide the panel.
      */
     private void showRefreshPanel(boolean show) {
-        if(show) {
+        if (show) {
             mapPanel.add(refreshPanel, BorderLayout.NORTH);
         } else {
             mapPanel.remove(refreshPanel);
@@ -154,72 +155,37 @@ public final class GeolocationTopComponent extends TopComponent {
             protected List<Waypoint> doInBackground() throws Exception {
                 List<Waypoint> waypoints = new ArrayList<>();
 
-                Case currentCase;
-                try {
-                    currentCase = Case.getCurrentCaseThrows();
-                } catch (NoCurrentCaseException ex) {
-                    logger.log(Level.WARNING, "Unable to get artifacts for geolocation window, no current open", ex);
-                    // Popup a message or something?
-                    return waypoints;
-                }
+                Case currentCase = Case.getCurrentCaseThrows();
 
-                // TSK_GPS_TRACKPOINT, TSK_GPS_SEARCH, TSK_GPS_LAST_KNOWN_LOCATION 
-                // and TSK_GPS_BOOKMARK have similar attributes and can be processed
-                // similarly
-                List<BlackboardArtifact> artifacts = new ArrayList<>();
-                artifacts.addAll(currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT));
-                artifacts.addAll(currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH));
-                artifacts.addAll(currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION));
-                artifacts.addAll(currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK));
-                
-                for (BlackboardArtifact artifact : artifacts) {
-                    Waypoint point = new SimpleArtifactWaypoint(artifact);
-
-                    if (point.getPosition() != null) {
-                        waypoints.add(new SimpleArtifactWaypoint(artifact));
-                    }
-                }
-
-                // Handle the TSK_GPS_ROUTE artifacts
-                List<BlackboardArtifact> routes = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
-                for (BlackboardArtifact artifact : routes) {
-                    Route route = new Route(artifact);
-                    for (ArtifactWaypoint point : route.getRoute()) {
-                        waypoints.add(point);
-                    }
-                }
-                
-                artifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
-                for (BlackboardArtifact artifact : artifacts) {
-                    Waypoint point = new EXIFWaypoint(artifact);
-
-                    if (point.getPosition() != null) {
-                        waypoints.add(new SimpleArtifactWaypoint(artifact));
-                    }
-                }
+//                waypoints.addAll(getGPSRouteWaypoints(currentCase.getSleuthkitCase()));
+//                waypoints.addAll(getEXIFWaypoints(currentCase.getSleuthkitCase()));
+//                waypoints.addAll(getSimpleWaypoints(currentCase.getSleuthkitCase()));
 
                 return waypoints;
             }
 
             @Override
             protected void done() {
-                if(isDone() && !isCancelled()) {
+                if (isDone() && !isCancelled()) {
                     try {
                         List<Waypoint> waypoints = get();
-                        if(waypoints == null || waypoints.isEmpty()) {
+                        if (waypoints == null || waypoints.isEmpty()) {
                             return;
                         }
-                        
-                        for(Waypoint point: waypoints) {
+
+                        for (Waypoint point : waypoints) {
                             mapPanel.addWaypoint(point);
                         }
-                        
+
                         // There might be a better way to decide how to center
                         // but for now just use the first way point.
                         mapPanel.setCenterLocation(waypoints.get(0));
-                        
-                    } catch (InterruptedException | ExecutionException ex) {
-                        logger.log(Level.WARNING, "Unable to add points to geolocation.", ex);
+
+                    } catch (ExecutionException ex) {
+                        logger.log(Level.WARNING, "An exception occured while initalizing waypoints for geolocation window.", ex);
+                        MessageNotifyUtil.Message.error(Bundle.GLTopComponent_initilzation_error());
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.WARNING, "The initilization thread for geolocation window was interrupted.", ex);
                     }
                 }
             }
@@ -227,6 +193,7 @@ public final class GeolocationTopComponent extends TopComponent {
 
         worker.execute();
     }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
