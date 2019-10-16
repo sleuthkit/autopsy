@@ -84,10 +84,16 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.setFileFilter(caseMetadataFileFilter);
+
         if (null != ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE)) {
             fileChooser.setCurrentDirectory(new File(ModuleSettings.getConfigSetting("Case", PROP_BASECASE))); //NON-NLS
         }
-        
+
+        /**
+         * If the open multi user case dialog is open make sure it's not set
+         * to always be on top as this hides the file chooser on macOS.
+         */
+        OpenMultiUserCaseDialog.getInstance().setAlwaysOnTop(false);
         String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
         String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
@@ -95,7 +101,12 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
              * Pop up a file chooser to allow the user to select a case metadata
              * file (.aut file).
              */
-            int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
+            /**
+             * Passing the fileChooser as its own parent gets around an issue
+             * where the fileChooser was hidden behind the CueBannerPanel ("Welcome" dialog)
+             * on macOS.
+             */
+            int retval = fileChooser.showOpenDialog(fileChooser);
             if (retval == JFileChooser.APPROVE_OPTION) {
                 /*
                  * Close the startup window, if it is open.
@@ -159,6 +170,8 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
 
             OpenMultiUserCaseDialog multiUserCaseWindow = OpenMultiUserCaseDialog.getInstance();
             multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+            // Workaround to ensure that dialog is not hidden on macOS.
+            multiUserCaseWindow.setAlwaysOnTop(true);
             multiUserCaseWindow.setVisible(true);
 
             WindowManager.getDefault().getMainWindow().setCursor(null);
