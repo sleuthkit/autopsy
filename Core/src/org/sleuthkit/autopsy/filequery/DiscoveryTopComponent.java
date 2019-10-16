@@ -122,6 +122,9 @@ final class DiscoveryTopComponent extends TopComponent {
         });
     }
 
+    /**
+     * Open the instance of the DiscoveryTopComponent which exists.
+     */
     static void openTopComponent() {
         final DiscoveryTopComponent tc = (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
@@ -137,6 +140,12 @@ final class DiscoveryTopComponent extends TopComponent {
         }
     }
 
+    /**
+     * Sets the cursor for the instance of the DiscoveryTopComponent which
+     * exists.
+     *
+     * @param cursor The Cursor which you want to have displayed.
+     */
     static void changeCursor(Cursor cursor) {
         WindowManager.getDefault().findTopComponent(PREFERRED_ID).setCursor(cursor);
     }

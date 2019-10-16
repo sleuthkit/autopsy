@@ -248,6 +248,12 @@ public class ResultsPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Handle and respond to NoResultsEvent, updating the panel to reflect that
+     * there were no results.
+     *
+     * @param noResultsEvent the NoResultsEvent received.
+     */
     @Subscribe
     void handleNoResultsEvent(DiscoveryEvents.NoResultsEvent noResultsEvent) {
         SwingUtilities.invokeLater(() -> {

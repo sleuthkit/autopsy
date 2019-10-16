@@ -25,7 +25,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Class to test the file search API. Allows the user to run searches and see
@@ -37,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @NbBundle.Messages({"CTL_FileDiscoveryTestAction=Test file discovery"})
 public final class FileDiscoveryTestAction extends CallableSystemAction {
 
-    private final static Logger logger = Logger.getLogger(FileDiscoveryTestAction.class.getName());
     private static final String DISPLAY_NAME = "Test file discovery";
     private static final long serialVersionUID = 1L;
 

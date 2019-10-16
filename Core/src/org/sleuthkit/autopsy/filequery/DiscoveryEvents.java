@@ -212,6 +212,9 @@ final class DiscoveryEvents {
         }
     }
 
+    /**
+     * Event to signal that a search has been cancelled
+     */
     static final class SearchCancelledEvent {
 
         /**
