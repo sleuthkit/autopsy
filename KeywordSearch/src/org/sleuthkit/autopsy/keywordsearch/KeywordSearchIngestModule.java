@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -639,9 +638,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     return;
                 }
                 if (fileType.equals(MimeTypes.PLAIN_TEXT)) {
-                    Charset decodetectCharset = TextExtractor.getEncoding(aFile);
-                    if (decodetectCharset != null) {
-                        indexTextFile(aFile, decodetectCharset);
+                    if (indexTextFile(aFile)) {
                         return;
                     }
                 }
@@ -666,8 +663,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt") && !(aFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)))) {
                 //Carved Files should be the only type of unallocated files capable of a txt extension and 
                 //should be ignored by the TextFileExtractor because they may contain more than one text encoding
-                Charset decodetectCharset = TextExtractor.getEncoding(aFile);
-                wasTextAdded = indexTextFile(aFile, decodetectCharset);
+                wasTextAdded = indexTextFile(aFile);
             }
 
             // if it wasn't supported or had an error, default to strings
@@ -683,10 +679,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @param aFile Text file to analyze
          * @param detectedCharset the encoding of the file
          */
-        private boolean indexTextFile(AbstractFile aFile, Charset encoding) {
+        private boolean indexTextFile(AbstractFile aFile) {
             try {
                 TextFileExtractor textFileExtractor = new TextFileExtractor();
-                Reader textReader = textFileExtractor.getReader(aFile, encoding);
+                Reader textReader = textFileExtractor.getReader(aFile);
                 if (textReader == null) {
                     logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
                 } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
@@ -694,7 +690,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     return true;
                 }
             } catch (IngesterException ex) {
-                logger.log(Level.WARNING, "Unable to index as " + encoding.displayName(), ex);
+                logger.log(Level.WARNING, "Unable to index " + aFile.getName(), ex);
             } catch (TextFileExtractorException ex) {
                 logger.log(Level.INFO, "Could not extract text with TextFileExtractor", ex);
             }

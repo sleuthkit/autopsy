@@ -23,6 +23,7 @@ import java.io.BufferedInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import org.apache.tika.mime.MimeTypes;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
@@ -35,37 +36,16 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 final class TextFileExtractor {
 
-    //Set a Minimum confidence value to reject matches that may not have a valid text encoding
-    //Values of valid text encodings were generally 100, xml code sometimes had a value around 50, 
-    //and pictures and other files with a .txt extention were showing up with a value of 5 or less in limited testing.
-    //This limited information was used to select the current value as one that would filter out clearly non-text 
-    //files while hopefully working on all files with a valid text encoding
-    static final private int MIN_MATCH_CONFIDENCE = 20;
+    public Reader getReader(AbstractFile source) throws TextFileExtractorException {
+        Charset encoding = TextExtractor.getEncoding(source);
+        if (encoding == TextExtractor.UNKNOWN_CHARSET) {
+            encoding = StandardCharsets.UTF_8;
+        }
+        return getReader(source, encoding);
+    }
 
     public Reader getReader(AbstractFile source, Charset encoding) throws TextFileExtractorException {
-        String mimeType = source.getMIMEType();
-        if (mimeType.equals(MimeTypes.PLAIN_TEXT)) {
-            if (encoding != TextExtractor.UNKNOWN_CHARSET) {
-                return new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(source)), encoding);
-            }
-        }
-
-        CharsetDetector detector = new CharsetDetector();
-        //wrap stream in a BufferedInputStream so that it supports the mark/reset methods necessary for the CharsetDetector
-        InputStream stream = new BufferedInputStream(new ReadContentInputStream(source));
-        try {
-            detector.setText(stream);
-        } catch (IOException ex) {
-            throw new TextFileExtractorException("Unable to get string from detected text in TextFileExtractor", ex);
-        }
-        CharsetMatch match = detector.detect();
-        if (match == null) {
-            throw new TextFileExtractorException("Unable to detect any matches using TextFileExtractor");
-        } else if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
-            throw new TextFileExtractorException("Text does not match any character set with a high enough confidence for TextFileExtractor");
-        }
-
-        return match.getReader();
+        return new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(source)), encoding);
     }
     
     public class TextFileExtractorException extends Exception {
