@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filequery;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -40,6 +41,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final int pageSize;
     private final FileSearchData.FileType resultType;
     private final EamDb centralRepo;
+    private final List<ResultFile> results = new ArrayList<>();
 
     /**
      * Construct a new PageWorker.
@@ -75,16 +77,24 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            List<ResultFile> results = FileSearch.getFilesInGroup(searchfilters,
+            results.addAll(FileSearch.getFilesInGroup(searchfilters,
                     groupingAttribute,
                     groupSort,
                     fileSortMethod, groupName, startingEntry, pageSize,
-                    Case.getCurrentCase().getSleuthkitCase(), centralRepo);
-            int currentPage = startingEntry / pageSize; //integer division should round down to get page number correctly
-            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageRetrievedEvent(resultType, currentPage, results));
+                    Case.getCurrentCase().getSleuthkitCase(), centralRepo));
         } catch (FileSearchException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
+            cancel(true);
         }
         return null;
     }
+
+    @Override
+    protected void done() {
+        if (!isCancelled()) {
+            int currentPage = startingEntry / pageSize; //integer division should round down to get page number correctly
+            DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageRetrievedEvent(resultType, currentPage, results));
+        }
+    }
+
 }
