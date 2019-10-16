@@ -198,7 +198,7 @@ public class Server {
             public String toString() {
                 return "termfreq"; //NON-NLS
             }
-        }
+        }        
     };
 
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
@@ -1658,8 +1658,7 @@ public class Server {
         private int queryNumFileChunks(long contentID) throws SolrServerException, IOException {
             String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q
-                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*"
-                        + " NOT " + Server.Schema.ID + ":*" + MiniChunkHelper.SUFFIX);
+                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
         }

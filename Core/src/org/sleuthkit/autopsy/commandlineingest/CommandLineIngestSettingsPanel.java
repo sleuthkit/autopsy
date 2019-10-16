@@ -99,8 +99,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         nodeScrollPane = new javax.swing.JScrollPane();
         nodePanel = new javax.swing.JPanel();
         bnEditIngestSettings = new javax.swing.JButton();
-        jLabelBaselineConfig = new javax.swing.JLabel();
-        jLabelReportConfig = new javax.swing.JLabel();
+        jLabelDescription = new javax.swing.JLabel();
         bnEditReportSettings = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(810, 422));
@@ -120,9 +119,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelBaselineConfig, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelBaselineConfig.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelReportConfig, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelReportConfig.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelDescription, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.jLabelDescription.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(bnEditReportSettings, org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.text")); // NOI18N
         bnEditReportSettings.setToolTipText(org.openide.util.NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.bnEditReportSettings.toolTipText")); // NOI18N
@@ -141,23 +138,20 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(bnEditIngestSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabelBaselineConfig)
-                    .addComponent(jLabelReportConfig)
+                    .addComponent(jLabelDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(bnEditReportSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(362, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         nodePanelLayout.setVerticalGroup(
             nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(nodePanelLayout.createSequentialGroup()
                 .addGap(27, 27, 27)
-                .addComponent(jLabelBaselineConfig)
+                .addComponent(jLabelDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(bnEditIngestSettings)
-                .addGap(18, 18, 18)
-                .addComponent(jLabelReportConfig)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnEditReportSettings)
-                .addContainerGap(376, Short.MAX_VALUE))
+                .addContainerGap(381, Short.MAX_VALUE))
         );
 
         nodeScrollPane.setViewportView(nodePanel);
@@ -187,8 +181,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnEditIngestSettings;
     private javax.swing.JButton bnEditReportSettings;
-    private javax.swing.JLabel jLabelBaselineConfig;
-    private javax.swing.JLabel jLabelReportConfig;
+    private javax.swing.JLabel jLabelDescription;
     private javax.swing.JPanel nodePanel;
     private javax.swing.JScrollPane nodeScrollPane;
     // End of variables declaration//GEN-END:variables

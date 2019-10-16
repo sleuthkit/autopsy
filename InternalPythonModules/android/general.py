@@ -34,6 +34,6 @@ def appendAttachmentList(msgBody, attachmentsList):
     body = msgBody
     if attachmentsList:
         body = body + "\n\n------------Attachments------------\n"
-        body = body + "\n".join(attachmentsList)
+        body = body + "\n".join(list(filter(None, attachmentsList)))
 
     return body

@@ -46,6 +46,8 @@
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
         <dependency conf="core->default" org="com.beetstra.jutf7" name="jutf7" rev="1.0.0"/>
         
+        <dependency org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
+        
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         <dependency org="com.squareup.okhttp" name="okhttp" rev="2.7.5"/>

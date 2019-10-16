@@ -108,7 +108,6 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
             contacts_parser = TextNowContactsParser(textnow_db)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_name(), 
                     contacts_parser.get_contact_name(), 
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
@@ -221,14 +220,12 @@ class TextNowCallLogsParser(TskCallLogsParser):
     def get_phone_number_from(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
             return super(TextNowCallLogsParser, self).get_phone_number_from()
-        return Account.Address(self.result_set.getString("num"),
-                        self.result_set.getString("num"))
+        return self.result_set.getString("num")
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.INCOMING_CALL:
             return super(TextNowCallLogsParser, self).get_phone_number_to() 
-        return Account.Address(self.result_set.getString("num"), 
-                        self.result_set.getString("num"))
+        return self.result_set.getString("num") 
 
     def get_call_direction(self):
         if self.result_set.getInt("direction") == self._INCOMING_CALL_TYPE:
@@ -267,12 +264,9 @@ class TextNowContactsParser(TskContactsParser):
              )
         )
     
-    def get_account_name(self):
-        return self.result_set.getString("number")
-        
     def get_contact_name(self):
         return self.result_set.getString("name")
-
+    
     def get_phone(self):
         return self.result_set.getString("number")
 
@@ -344,8 +338,7 @@ class TextNowMessagesParser(TskMessagesParser):
     def get_phone_number_from(self):
         if self.result_set.getString("from_address") == "":
             return super(TextNowMessagesParser, self).get_phone_number_from() 
-        return Account.Address(self.result_set.getString("from_address"),
-                    self.result_set.getString("from_address"))
+        return self.result_set.getString("from_address")
 
     def get_message_direction(self):  
         direction = self.result_set.getInt("message_direction")
@@ -357,12 +350,7 @@ class TextNowMessagesParser(TskMessagesParser):
         if self.result_set.getString("to_address") == "":
             return super(TextNowMessagesParser, self).get_phone_number_to() 
         recipients = self.result_set.getString("to_address").split(",")
-
-        recipient_accounts = []
-        for recipient in recipients:
-            recipient_accounts.append(Account.Address(recipient, recipient))
-
-        return recipient_accounts            
+        return recipients            
 
     def get_message_date_time(self):
         #convert ms to s
