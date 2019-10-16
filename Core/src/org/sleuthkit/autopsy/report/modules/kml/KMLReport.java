@@ -36,6 +36,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.logging.Level;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -45,9 +46,13 @@ import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.geolocation.datamodel.EXIFMetadataPoint;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationManager;
+import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.autopsy.geolocation.datamodel.BlackboardArtifactPoint;
 
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
@@ -64,6 +69,13 @@ class KMLReport implements GeneralReportModule {
     private final SimpleDateFormat kmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
     private Namespace ns;
     private final String SEP = "<br>";
+    
+    private Element gpsExifMetadataFolder;
+    private Element gpsBookmarksFolder;
+    private Element gpsLastKnownLocationFolder;
+    private Element gpsRouteFolder;
+    private Element gpsSearchesFolder;
+    private Element gpsTrackpointsFolder;
 
     private enum FeatureColor {
         RED("style.kml#redFeature"),
@@ -138,270 +150,18 @@ class KMLReport implements GeneralReportModule {
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
 
-        ns = Namespace.getNamespace("", "http://www.opengis.net/kml/2.2"); //NON-NLS
-
-        Element kml = new Element("kml", ns); //NON-NLS
-        kml.addNamespaceDeclaration(Namespace.getNamespace("gx", "http://www.google.com/kml/ext/2.2")); //NON-NLS
-        kml.addNamespaceDeclaration(Namespace.getNamespace("kml", "http://www.opengis.net/kml/2.2")); //NON-NLS
-        kml.addNamespaceDeclaration(Namespace.getNamespace("atom", "http://www.w3.org/2005/Atom")); //NON-NLS
-        Document kmlDocument = new Document(kml);
-
-        Element document = new Element("Document", ns); //NON-NLS
-        kml.addContent(document);
-
-        Element name = new Element("name", ns); //NON-NLS
-        ReportBranding rb = new ReportBranding();
-        name.setText(rb.getReportTitle() + " KML"); //NON-NLS
-        document.addContent(name);
-
-        // Check if ingest has finished
-        if (IngestManager.getInstance().isIngestRunning()) {
-            Element ingestwarning = new Element("snippet", ns); //NON-NLS
-            ingestwarning.addContent(NbBundle.getMessage(this.getClass(), "ReportBodyFile.ingestWarning.text")); //NON-NLS
-            document.addContent(ingestwarning);
-        }
-
-        // Create folder structure
-        Element gpsExifMetadataFolder = new Element("Folder", ns); //NON-NLS
-        CDATA cdataExifMetadataFolder = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/camera-icon-16.png"); //NON-NLS
-        Element hrefExifMetadata = new Element("href", ns).addContent(cdataExifMetadataFolder); //NON-NLS
-        gpsExifMetadataFolder.addContent(new Element("Icon", ns).addContent(hrefExifMetadata)); //NON-NLS
-
-        Element gpsBookmarksFolder = new Element("Folder", ns); //NON-NLS
-        CDATA cdataBookmarks = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gpsfav.png"); //NON-NLS
-        Element hrefBookmarks = new Element("href", ns).addContent(cdataBookmarks); //NON-NLS
-        gpsBookmarksFolder.addContent(new Element("Icon", ns).addContent(hrefBookmarks)); //NON-NLS
-
-        Element gpsLastKnownLocationFolder = new Element("Folder", ns); //NON-NLS
-        CDATA cdataLastKnownLocation = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-lastlocation.png"); //NON-NLS
-        Element hrefLastKnownLocation = new Element("href", ns).addContent(cdataLastKnownLocation); //NON-NLS
-        gpsLastKnownLocationFolder.addContent(new Element("Icon", ns).addContent(hrefLastKnownLocation)); //NON-NLS
-
-        Element gpsRouteFolder = new Element("Folder", ns); //NON-NLS
-        CDATA cdataRoute = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
-        Element hrefRoute = new Element("href", ns).addContent(cdataRoute); //NON-NLS
-        gpsRouteFolder.addContent(new Element("Icon", ns).addContent(hrefRoute)); //NON-NLS
-
-        Element gpsSearchesFolder = new Element("Folder", ns); //NON-NLS
-        CDATA cdataSearches = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-search.png"); //NON-NLS
-        Element hrefSearches = new Element("href", ns).addContent(cdataSearches); //NON-NLS
-        gpsSearchesFolder.addContent(new Element("Icon", ns).addContent(hrefSearches)); //NON-NLS
-
-        Element gpsTrackpointsFolder = new Element("Folder", ns); //NON-NLS
-        CDATA cdataTrackpoints = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
-        Element hrefTrackpoints = new Element("href", ns).addContent(cdataTrackpoints); //NON-NLS
-        gpsTrackpointsFolder.addContent(new Element("Icon", ns).addContent(hrefTrackpoints)); //NON-NLS
-
-        gpsExifMetadataFolder.addContent(new Element("name", ns).addContent("EXIF Metadata")); //NON-NLS
-        gpsBookmarksFolder.addContent(new Element("name", ns).addContent("GPS Bookmarks")); //NON-NLS
-        gpsLastKnownLocationFolder.addContent(new Element("name", ns).addContent("GPS Last Known Location")); //NON-NLS
-        gpsRouteFolder.addContent(new Element("name", ns).addContent("GPS Routes")); //NON-NLS
-        gpsSearchesFolder.addContent(new Element("name", ns).addContent("GPS Searches")); //NON-NLS
-        gpsTrackpointsFolder.addContent(new Element("name", ns).addContent("GPS Trackpoints")); //NON-NLS
-
-        document.addContent(gpsExifMetadataFolder);
-        document.addContent(gpsBookmarksFolder);
-        document.addContent(gpsLastKnownLocationFolder);
-        document.addContent(gpsRouteFolder);
-        document.addContent(gpsSearchesFolder);
-        document.addContent(gpsTrackpointsFolder);
+        Document kmlDocument = setupReportDocument();
 
         ReportProgressPanel.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
-
-        /**
-         * In the following code, nulls are okay, and are handled when we go to
-         * write out the KML feature. Nulls are expected to be returned from any
-         * method where the artifact is not found and is handled in the
-         * individual feature creation methods. This is done because we don't
-         * know beforehand which attributes will be included for which artifact,
-         * as anyone could write a module that adds additional attributes to an
-         * artifact.
-         *
-         * If there are any issues reading the database getting artifacts and
-         * attributes, or any exceptions thrown during this process, a severe
-         * error is logged, the report is marked as "Incomplete KML Report", and
-         * we use a best-effort method to generate KML information on everything
-         * we can successfully pull out of the database.
-         */
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
-                String fileName = "";
-                long fileId = 0;
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
-                    String desc = getDescriptionFromArtifact(artifact, "EXIF Metadata With Locations"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Element point = makePoint(lat, lon, getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
-
-                    if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
-                        AbstractFile abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-                        fileName = abstractFile.getName();
-                        fileId = abstractFile.getId();
-                        Path path;
-                        copyFileUsingStream(abstractFile, Paths.get(baseReportDir, abstractFile.getName()).toFile());
-                        try {
-                            path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
-                        } catch (TskCoreException ex) {
-                            path = Paths.get(abstractFile.getParentPath(), abstractFile.getName());
-                        }
-                        String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                        if (path == null) {
-                            path = Paths.get(abstractFile.getName());
-                        }
-                        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, desc, timestamp, point, path, formattedCoordinates));
-                    }
-                } catch (ReadContentInputStreamException ex) {
-                    logger.log(Level.WARNING, String.format("Error reading file '%s' (id=%d).", fileName, fileId), ex);
-                } catch (Exception ex) {
-                    errorMessage = Bundle.KMLReport_unableToExtractPhotos();
-                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            errorMessage = Bundle.KMLReport_exifPhotoError();
+            
+         try {
+             makeRoutes(skCase);
+             addLocationsToReport(skCase, baseReportDir);
+         } catch(TskCoreException | IOException ex) {
+             errorMessage = "Failed to complete report.";
             logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Bookmark"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Element point = makePoint(lat, lon, getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
-                    String bookmarkName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-                    String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                    gpsBookmarksFolder.addContent(makePlacemark(bookmarkName, FeatureColor.BLUE, desc, timestamp, point, formattedCoordinates));
-                } catch (Exception ex) {
-                    errorMessage = Bundle.KMLReport_bookmarkError();
-                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            errorMessage = Bundle.KMLReport_gpsBookmarkError();
-            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Last Known Location"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Double alt = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-                    Element point = makePoint(lat, lon, alt);
-                    String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                    gpsLastKnownLocationFolder.addContent(makePlacemark("Last Known Location", FeatureColor.PURPLE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
-                } catch (Exception ex) {
-                    errorMessage = Bundle.KMLReport_locationError();
-                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            errorMessage = Bundle.KMLReport_locationDatabaseError();
-            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Route");
-                    Double latitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
-                    Double longitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
-                    Double latitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
-                    Double longitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
-                    Double altitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-
-                    Element route = makeLineString(latitudeStart, longitudeStart, altitude, latitudeEnd, longitudeEnd, altitude);
-                    Element startingPoint = makePoint(latitudeStart, longitudeStart, altitude);
-                    Element endingPoint = makePoint(latitudeEnd, longitudeEnd, altitude);
-
-                    String formattedCoordinates = String.format("%.2f, %.2f to %.2f, %.2f", latitudeStart, longitudeStart, latitudeEnd, longitudeEnd);
-                    gpsRouteFolder.addContent(makePlacemark("As-the-crow-flies Route", FeatureColor.GREEN, desc, timestamp, route, formattedCoordinates)); //NON-NLS
-
-                    formattedCoordinates = String.format("%.2f, %.2f", latitudeStart, longitudeStart);
-                    gpsRouteFolder.addContent(makePlacemark("Start", FeatureColor.GREEN, desc, timestamp, startingPoint, formattedCoordinates)); //NON-NLS
-
-                    formattedCoordinates = String.format("%.2f, %.2f", latitudeEnd, longitudeEnd);
-                    gpsRouteFolder.addContent(makePlacemark("End", FeatureColor.GREEN, desc, timestamp, endingPoint, formattedCoordinates)); //NON-NLS
-                } catch (Exception ex) {
-                    errorMessage = Bundle.KMLReport_gpsRouteError();
-                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            errorMessage = Bundle.KMLReport_gpsRouteDatabaseError();
-            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH)) {
-                Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                String desc = getDescriptionFromArtifact(artifact, "GPS Search"); //NON-NLS
-                Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                Double alt = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-                Element point = makePoint(lat, lon, alt);
-                String formattedCoordinates = String.format("%.2f, %.2f", lat, lon);
-                String searchName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-                if (searchName == null || searchName.isEmpty()) {
-                    searchName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
-                }
-                if (searchName == null || searchName.isEmpty()) {
-                    searchName = "GPS Search";
-                }
-                gpsSearchesFolder.addContent(makePlacemark(searchName, FeatureColor.WHITE, desc, timestamp, point, formattedCoordinates)); //NON-NLS
-            }
-        } catch (TskCoreException ex) {
-            errorMessage = Bundle.KMLReport_gpsSearchDatabaseError();
-            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
-
-        try {
-            for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)) {
-                try {
-                    Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-                    String desc = getDescriptionFromArtifact(artifact, "GPS Trackpoint"); //NON-NLS
-                    Double lat = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-                    Double lon = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-                    Double alt = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-                    Element point = makePoint(lat, lon, alt);
-                    String formattedCoordinates = String.format("%.2f, %.2f, %.2f", lat, lon, alt);
-                    String trackName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-                    if (trackName == null || trackName.isEmpty()) {
-                        trackName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
-                    }
-                    if (trackName == null || trackName.isEmpty()) {
-                        trackName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
-                    }
-                    if (trackName == null || trackName.isEmpty()) {
-                        trackName = "GPS Trackpoint";
-                    }
-                    gpsTrackpointsFolder.addContent(makePlacemark(trackName, FeatureColor.YELLOW, desc, timestamp, point, formattedCoordinates));
-                } catch (Exception ex) {
-                    errorMessage = Bundle.KMLReport_trackpointError();
-                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-                    result = ReportProgressPanel.ReportStatus.ERROR;
-                }
-            }
-        } catch (TskCoreException ex) {
-            errorMessage = Bundle.KMLReport_trackpointDatabaseError();
-            logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
-            result = ReportProgressPanel.ReportStatus.ERROR;
-        }
+         }
 
         // Copy the style sheet
         try {
@@ -440,241 +200,169 @@ class KMLReport implements GeneralReportModule {
 
         progressPanel.complete(result, errorMessage);
     }
+    
+    
+    private Document setupReportDocument() {
+        ns = Namespace.getNamespace("", "http://www.opengis.net/kml/2.2"); //NON-NLS
 
-    /**
-     * Get a Double from an artifact if it exists, return null otherwise.
-     *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
-     *
-     * @return The Double if it exists, or null if not
-     */
-    private Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        Double returnValue = null;
-        try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                Double value = bba.getValueDouble();
-                returnValue = value;
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting Double value: " + type.toString(), ex); //NON-NLS
+        Element kml = new Element("kml", ns); //NON-NLS
+        kml.addNamespaceDeclaration(Namespace.getNamespace("gx", "http://www.google.com/kml/ext/2.2")); //NON-NLS
+        kml.addNamespaceDeclaration(Namespace.getNamespace("kml", "http://www.opengis.net/kml/2.2")); //NON-NLS
+        kml.addNamespaceDeclaration(Namespace.getNamespace("atom", "http://www.w3.org/2005/Atom")); //NON-NLS
+        Document kmlDocument = new Document(kml);
+
+        Element document = new Element("Document", ns); //NON-NLS
+        kml.addContent(document);
+
+        Element name = new Element("name", ns); //NON-NLS
+        ReportBranding rb = new ReportBranding();
+        name.setText(rb.getReportTitle() + " KML"); //NON-NLS
+        document.addContent(name);
+
+        // Check if ingest has finished
+        if (IngestManager.getInstance().isIngestRunning()) {
+            Element ingestwarning = new Element("snippet", ns); //NON-NLS
+            ingestwarning.addContent(NbBundle.getMessage(this.getClass(), "ReportBodyFile.ingestWarning.text")); //NON-NLS
+            document.addContent(ingestwarning);
         }
-        return returnValue;
-    }
 
-    /**
-     * Get a Long from an artifact if it exists, return null otherwise.
-     *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
-     *
-     * @return The Long if it exists, or null if not
-     */
-    private Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        Long returnValue = null;
-        try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                Long value = bba.getValueLong();
-                returnValue = value;
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting Long value: " + type.toString(), ex); //NON-NLS
+        // Create folder structure
+        gpsExifMetadataFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataExifMetadataFolder = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/camera-icon-16.png"); //NON-NLS
+        Element hrefExifMetadata = new Element("href", ns).addContent(cdataExifMetadataFolder); //NON-NLS
+        gpsExifMetadataFolder.addContent(new Element("Icon", ns).addContent(hrefExifMetadata)); //NON-NLS
+
+        gpsBookmarksFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataBookmarks = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gpsfav.png"); //NON-NLS
+        Element hrefBookmarks = new Element("href", ns).addContent(cdataBookmarks); //NON-NLS
+        gpsBookmarksFolder.addContent(new Element("Icon", ns).addContent(hrefBookmarks)); //NON-NLS
+
+        gpsLastKnownLocationFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataLastKnownLocation = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-lastlocation.png"); //NON-NLS
+        Element hrefLastKnownLocation = new Element("href", ns).addContent(cdataLastKnownLocation); //NON-NLS
+        gpsLastKnownLocationFolder.addContent(new Element("Icon", ns).addContent(hrefLastKnownLocation)); //NON-NLS
+
+        gpsRouteFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataRoute = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
+        Element hrefRoute = new Element("href", ns).addContent(cdataRoute); //NON-NLS
+        gpsRouteFolder.addContent(new Element("Icon", ns).addContent(hrefRoute)); //NON-NLS
+
+        gpsSearchesFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataSearches = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-search.png"); //NON-NLS
+        Element hrefSearches = new Element("href", ns).addContent(cdataSearches); //NON-NLS
+        gpsSearchesFolder.addContent(new Element("Icon", ns).addContent(hrefSearches)); //NON-NLS
+
+        gpsTrackpointsFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataTrackpoints = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
+        Element hrefTrackpoints = new Element("href", ns).addContent(cdataTrackpoints); //NON-NLS
+        gpsTrackpointsFolder.addContent(new Element("Icon", ns).addContent(hrefTrackpoints)); //NON-NLS
+
+        gpsExifMetadataFolder.addContent(new Element("name", ns).addContent("EXIF Metadata")); //NON-NLS
+        gpsBookmarksFolder.addContent(new Element("name", ns).addContent("GPS Bookmarks")); //NON-NLS
+        gpsLastKnownLocationFolder.addContent(new Element("name", ns).addContent("GPS Last Known Location")); //NON-NLS
+        gpsRouteFolder.addContent(new Element("name", ns).addContent("GPS Routes")); //NON-NLS
+        gpsSearchesFolder.addContent(new Element("name", ns).addContent("GPS Searches")); //NON-NLS
+        gpsTrackpointsFolder.addContent(new Element("name", ns).addContent("GPS Trackpoints")); //NON-NLS
+
+        document.addContent(gpsExifMetadataFolder);
+        document.addContent(gpsBookmarksFolder);
+        document.addContent(gpsLastKnownLocationFolder);
+        document.addContent(gpsRouteFolder);
+        document.addContent(gpsSearchesFolder);
+        document.addContent(gpsTrackpointsFolder);
+        
+        return kmlDocument;
+    }
+    
+    
+    void addExifMetadataContent(EXIFMetadataPoint location, String baseReportDirectory) throws IOException{
+        Element point = makePoint(location);
+        if(point == null) {
+            return;
         }
-        return returnValue;
-    }
+        
+        AbstractFile abstractFile = location.getImage();
+        String details = "<h3>EXIF Metadata With Locations</h3>" + location.getDetails();
 
-    /**
-     * Get an Integer from an artifact if it exists, return null otherwise.
-     *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
-     *
-     * @return The Integer if it exists, or null if not
-     */
-    private Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        Integer returnValue = null;
+        Path path;
+        copyFileUsingStream(abstractFile, Paths.get(baseReportDirectory, abstractFile.getName()).toFile());
         try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                Integer value = bba.getValueInt();
-                returnValue = value;
-            }
+            path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting Integer value: " + type.toString(), ex); //NON-NLS
+            path = Paths.get(abstractFile.getParentPath(), abstractFile.getName());
         }
-        return returnValue;
+        if (path == null) {
+            path = Paths.get(abstractFile.getName());
+        } 
+        
+        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, location.getTimestamp(), point, path, location.getFormattedCoordinates()));
     }
+    
+    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws TskCoreException, IOException {
+        List<BlackboardArtifactPoint> points = GeolocationManager.getPoints(skCase, false);
 
-    /**
-     * Get a String from an artifact if it exists, return null otherwise.
-     *
-     * @param artifact The artifact to query
-     * @param type     The attribute type we're looking for
-     *
-     * @return The String if it exists, or null if not
-     */
-    private String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) {
-        String returnValue = null;
-        try {
-            BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
-            if (bba != null) {
-                String value = bba.getValueString();
-                if (value != null && !value.isEmpty()) {
-                    returnValue = value;
+        for (BlackboardArtifactPoint point : points) {
+            Element reportPoint = makePoint(point);
+            if (reportPoint == null) {
+                continue;
+            }
+            if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                addExifMetadataContent((EXIFMetadataPoint) point, baseReportDir);
+
+            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
+                gpsBookmarksFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.BLUE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
+            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
+                gpsLastKnownLocationFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.PURPLE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
+            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()) {
+                gpsSearchesFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
+            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID()) {
+                gpsTrackpointsFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
+            }
+        }
+    }
+    
+    void makeRoutes(SleuthkitCase skCase) throws TskCoreException {
+        List<Route> routes = GeolocationManager.getGPSRoutes(skCase);
+
+        if (routes != null) {
+            for (Route route : routes) {
+                List<BlackboardArtifactPoint> routePoints = route.getRoute();
+                BlackboardArtifactPoint start = null;
+                BlackboardArtifactPoint end = null;
+                // This is hardcoded knowledge that there is only two points
+                // a start and end.  In the long run it would be nice to 
+                // support the idea of a route with multiple points.  The Route
+                // class supports that idea.  Would be nice to figure out how to support
+                // for report.
+                if (routePoints != null && routePoints.size() > 1) {
+                    start = routePoints.get(0);
+                    end = routePoints.get(1);
                 }
+
+                if (start == null || end == null) {
+                    continue;
+                }
+
+                Element reportRoute = makeLineString(start.getLatitude(), start.getLongitude(), start.getAltitude(), end.getLatitude(), end.getLongitude(), end.getAltitude());
+                Element startingPoint = makePoint(start.getLatitude(), start.getLongitude(), start.getAltitude());
+                Element endingPoint = makePoint(end.getLatitude(), end.getLongitude(), end.getAltitude());
+
+                String formattedCoordinates = String.format("%s to %s", start.getFormattedCoordinates(), end.getFormattedCoordinates());
+
+                gpsRouteFolder.addContent(makePlacemark("As-the-crow-flies Route", FeatureColor.GREEN, route.getDetails(), route.getTimestamp(), reportRoute, formattedCoordinates)); //NON-NLS
+                gpsRouteFolder.addContent(makePlacemark(start.getLabel(), FeatureColor.GREEN, start.getDetails(), start.getTimestamp(), startingPoint, start.getFormattedCoordinates())); //NON-NLS
+                gpsRouteFolder.addContent(makePlacemark(end.getLabel(), FeatureColor.GREEN, end.getDetails(), end.getTimestamp(), endingPoint, end.getFormattedCoordinates())); //NON-NLS
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting String value: " + type.toString(), ex); //NON-NLS
         }
-        return returnValue;
     }
 
-    /**
-     * This method creates a text description for a map feature using all the
-     * geospatial and time data we can for the Artifact. It queries the
-     * following attributes:
-     *
-     * TSK_GEO_LATITUDE 54; TSK_GEO_LONGITUDE 55; TSK_GEO_LATITUDE_START 98;
-     * TSK_GEO_LATITUDE_END 99; TSK_GEO_LONGITUDE_START 100;
-     * TSK_GEO_LONGITUDE_END 101; TSK_GEO_VELOCITY 56; TSK_GEO_ALTITUDE 57;
-     * TSK_GEO_BEARING 58; TSK_GEO_HPRECISION 59; TSK_GEO_VPRECISION 60;
-     * TSK_GEO_MAPDATUM 61; TSK_DATETIME_START 83; TSK_DATETIME_END 84;
-     * TSK_LOCATION 86; TSK_PATH_SOURCE 94;
-     *
-     * @param artifact    the artifact to query.
-     * @param featureType the type of Artifact we're working on.
-     *
-     * @return a String with the information we have available
-     */
-    private String getDescriptionFromArtifact(BlackboardArtifact artifact, String featureType) {
-        StringBuilder result = new StringBuilder("<h3>" + featureType + "</h3>"); //NON-NLS
-
-        String name = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-        if (name != null && !name.isEmpty()) {
-            result.append("<b>Name:</b> ").append(name).append(SEP); //NON-NLS
-        }
-
-        String location = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
-        if (location != null && !location.isEmpty()) {
-            result.append("<b>Location:</b> ").append(location).append(SEP); //NON-NLS
-        }
-
-        Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-        if (timestamp != null) {
-            result.append("<b>Timestamp:</b> ").append(getTimeStamp(timestamp)).append(SEP); //NON-NLS
-            result.append("<b>Unix timestamp:</b> ").append(timestamp).append(SEP); //NON-NLS
-        }
-
-        Long startingTimestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START);
-        if (startingTimestamp != null) {
-            result.append("<b>Starting Timestamp:</b> ").append(getTimeStamp(startingTimestamp)).append(SEP); //NON-NLS
-            result.append("<b>Starting Unix timestamp:</b> ").append(startingTimestamp).append(SEP); //NON-NLS
-        }
-
-        Long endingTimestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END);
-        if (endingTimestamp != null) {
-            result.append("<b>Ending Timestamp:</b> ").append(getTimeStamp(endingTimestamp)).append(SEP); //NON-NLS
-            result.append("<b>Ending Unix timestamp:</b> ").append(endingTimestamp).append(SEP); //NON-NLS
-        }
-
-        Long createdTimestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
-        if (createdTimestamp != null) {
-            result.append("<b>Created Timestamp:</b> ").append(getTimeStamp(createdTimestamp)).append(SEP); //NON-NLS
-            result.append("<b>Created Unix timestamp:</b> ").append(createdTimestamp).append(SEP); //NON-NLS
-        }
-
-        Double latitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-        if (latitude != null) {
-            result.append("<b>Latitude:</b> ").append(latitude).append(SEP); //NON-NLS
-        }
-
-        Double longitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-        if (longitude != null) {
-            result.append("<b>Longitude:</b> ").append(longitude).append(SEP); //NON-NLS
-        }
-
-        Double latitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
-        if (latitudeStart != null) {
-            result.append("<b>Latitude Start:</b> ").append(latitudeStart).append(SEP); //NON-NLS
-        }
-
-        Double longitudeStart = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
-        if (longitudeStart != null) {
-            result.append("<b>Longitude Start:</b> ").append(longitudeStart).append(SEP); //NON-NLS
-        }
-
-        Double latitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
-        if (latitudeEnd != null) {
-            result.append("<b>Latitude End:</b> ").append(latitudeEnd).append(SEP); //NON-NLS
-        }
-
-        Double longitudeEnd = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
-        if (longitudeEnd != null) {
-            result.append("<b>Longitude End:</b> ").append(longitudeEnd).append(SEP); //NON-NLS
-        }
-
-        Double velocity = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_VELOCITY);
-        if (velocity != null) {
-            result.append("<b>Velocity:</b> ").append(velocity).append(SEP); //NON-NLS
-        }
-
-        Double altitude = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
-        if (altitude != null) {
-            result.append("<b>Altitude:</b> ").append(altitude).append(SEP); //NON-NLS
-        }
-
-        Double bearing = getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_BEARING);
-        if (bearing != null) {
-            result.append("<b>Bearing:</b> ").append(bearing).append(SEP); //NON-NLS
-        }
-
-        Integer hPrecision = getInteger(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_HPRECISION);
-        if (hPrecision != null) {
-            result.append("<b>Horizontal Precision Figure of Merit:</b> ").append(hPrecision).append(SEP); //NON-NLS
-        }
-
-        Integer vPrecision = getInteger(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_VPRECISION);
-        if (vPrecision != null) {
-            result.append("<b>Vertical Precision Figure of Merit:</b> ").append(vPrecision).append(SEP); //NON-NLS
-        }
-
-        String mapDatum = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_MAPDATUM);
-        if (mapDatum != null && !mapDatum.isEmpty()) {
-            result.append("<b>Map Datum:</b> ").append(mapDatum).append(SEP); //NON-NLS
-        }
-
-        String programName = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
-        if (programName != null && !programName.isEmpty()) {
-            result.append("<b>Reported by:</b> ").append(programName).append(SEP); //NON-NLS
-        }
-
-        String flag = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
-        if (flag != null && !flag.isEmpty()) {
-            result.append("<b>Flag:</b> ").append(flag).append(SEP); //NON-NLS
-        }
-
-        String pathSource = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_SOURCE);
-        if (pathSource != null && !pathSource.isEmpty()) {
-            result.append("<b>Source:</b> ").append(pathSource).append(SEP); //NON-NLS
-        }
-
-        String deviceMake = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE);
-        if (deviceMake != null && !deviceMake.isEmpty()) {
-            result.append("<b>Device Make:</b> ").append(deviceMake).append(SEP); //NON-NLS
-        }
-
-        String deviceModel = getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL);
-        if (deviceModel != null && !deviceModel.isEmpty()) {
-            result.append("<b>Device Model:</b> ").append(deviceModel).append(SEP); //NON-NLS
-        }
-
-        return result.toString();
-    }
 
     private String getTimeStamp(long timeStamp) {
         return kmlDateFormat.format(new java.util.Date(timeStamp * 1000));
+    }
+    
+    private Element makePoint(BlackboardArtifactPoint location) {
+        return makePoint(location.getLatitude(), location.getLongitude(), location.getAltitude());
     }
 
     /**
@@ -691,12 +379,10 @@ class KMLReport implements GeneralReportModule {
      * @return the Point as an Element
      */
     private Element makePoint(Double latitude, Double longitude, Double altitude) {
-        if (latitude == null) {
-            latitude = 0.0;
+        if (latitude == null || longitude == null) {
+          return null;
         }
-        if (longitude == null) {
-            longitude = 0.0;
-        }
+       
         if (altitude == null) {
             altitude = 0.0;
         }
