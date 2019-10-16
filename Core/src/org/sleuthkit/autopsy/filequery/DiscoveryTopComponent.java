@@ -153,7 +153,6 @@ final class DiscoveryTopComponent extends TopComponent {
     @Override
     protected void componentClosed() {
         fileSearchPanel.cancelSearch();
-        FileSearch.clearCache();
         DiscoveryEvents.getDiscoveryEventBus().unregister(fileSearchPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(resultsPanel);

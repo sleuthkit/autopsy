@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.awt.Cursor;
 import java.util.LinkedHashMap;
 import javax.swing.SwingWorker;
 import java.util.List;
