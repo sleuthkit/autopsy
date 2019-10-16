@@ -50,7 +50,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ResultsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private final DataResultViewerTable tableViewer;
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
@@ -70,10 +69,9 @@ public class ResultsPanel extends javax.swing.JPanel {
     /**
      * Creates new form ResultsPanel.
      */
-    public ResultsPanel(ExplorerManager explorerManager, EamDb centralRepo) {
+    public ResultsPanel(EamDb centralRepo) {
         initComponents();
         this.centralRepo = centralRepo;
-        tableViewer = new DataResultViewerTable(explorerManager);
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
@@ -162,15 +160,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
                 populateVideoViewer(pageRetrievedEvent.getSearchResults());
                 resultsViewerPanel.add(videoThumbnailViewer);
-            } else {
-                resultsViewerPanel.add(tableViewer);
-                if (pageRetrievedEvent.getSearchResults().size() > 0) {
-                    List<AbstractFile> filesList = pageRetrievedEvent.getSearchResults().stream().map(file -> file.getFirstInstance()).collect(Collectors.toList());
-                    tableViewer.setNode(new TableFilterNode(new SearchNode(filesList), true));
-                } else {
-                    tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
-                }
-            }
+            } 
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         }
@@ -183,8 +173,6 @@ public class ResultsPanel extends javax.swing.JPanel {
      */
     private synchronized void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
-        tableViewer.resetComponent();
-        resultsViewerPanel.remove(tableViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
 
         //cancel any unfished thumb workers
@@ -262,7 +250,6 @@ public class ResultsPanel extends javax.swing.JPanel {
             updateControls();
             videoThumbnailViewer.clearViewer();
             imageThumbnailViewer.clearViewer();
-            tableViewer.setNode(new TableFilterNode(new DataResultFilterNode(Node.EMPTY), true));
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         });

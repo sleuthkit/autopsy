@@ -56,7 +56,6 @@ final class DiscoveryTopComponent extends TopComponent {
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
     private final ResultsPanel resultsPanel;
-    private final ExplorerManager explorerManager;
 
     /**
      * Creates new form FileDiscoveryDialog
@@ -74,10 +73,9 @@ final class DiscoveryTopComponent extends TopComponent {
             }
         }
         setName(Bundle.DiscoveryTopComponent_name());
-        explorerManager = new ExplorerManager();
         fileSearchPanel = new FileSearchPanel(Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
         dataContentPanel = DataContentPanel.createInstance();
-        resultsPanel = new ResultsPanel(explorerManager, centralRepoDb);
+        resultsPanel = new ResultsPanel(centralRepoDb);
         groupListPanel = new GroupListPanel();
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
@@ -98,26 +96,6 @@ final class DiscoveryTopComponent extends TopComponent {
                         }
                     });
                 }
-            }
-        });
-        this.explorerManager.addPropertyChangeListener((evt) -> {
-            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES) && dataContentPanel != null) {
-                /*
-                 * Pass a single node selection in a result viewer to the
-                 * content view. Note that passing null to the content view
-                 * signals that either multiple nodes are selected, or a
-                 * previous selection has been cleared. This is important to the
-                 * content view, since its child content viewers only work for a
-                 * single node.
-                 */
-                Node[] selectedNodes = explorerManager.getSelectedNodes();
-                SwingUtilities.invokeLater(() -> {
-                    if (selectedNodes.length == 1) {
-                        dataContentPanel.setNode(selectedNodes[0]);
-                    } else {
-                        dataContentPanel.setNode(null);
-                    }
-                });
             }
         });
     }
