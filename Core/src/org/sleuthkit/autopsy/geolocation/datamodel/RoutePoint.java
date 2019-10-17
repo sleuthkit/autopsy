@@ -19,39 +19,34 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
+
 public class RoutePoint extends DefaultPoint {
 
     private final Route parent;
 
     /**
-     * Construct a route way point.
+     * Construct a route for a route.
      *
      * @param parent    The parent route object.
-     * @param latitude  Latitude for waypoint
-     * @param longitude Longitude for waypoint
+     * @param latitude  Latitude for point
+     * @param longitude Longitude for point
      * @param label     Way point label.
      */
-    protected RoutePoint(Route parent, double latitude, double longitude, String label) {
-        super(parent.getArtifact());
-        
+    protected RoutePoint(BlackboardArtifact artifact, Route parent, double latitude, double longitude, String label) {
+        super(artifact, latitude, longitude, label);   
         this.parent = parent;
-        setLabel(label);
-        setLongitude(longitude);
-        setLatitude(latitude);
     }
 
     @Override
-    public void initPosition() {
+    public void initPoint()  throws TskCoreException{
+        setDetails(getDetailsFromArtifact());
     }
 
     @Override
     public Long getTimestamp() {
         return parent.getTimestamp();
-    }
-
-    @Override
-    public String getDetails() {
-        return parent.getDetails();
     }
     
     @Override

@@ -26,41 +26,73 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
+ * Static functions for the creations of geolocation points for artifacts.
  *
- * 
  */
 public class GeolocationManager {
-    
-    static public List<BlackboardArtifactPoint> getPoints(SleuthkitCase skCase, boolean includeRoute) throws TskCoreException {
+
+    /**
+     * Returns a list of points for the artifacts with geolocation information.
+     *
+     * List will include artifacts of type: TSK_GPS_TRACKPOINT TSK_GPS_SEARCH
+     * TSK_GPS_LAST_KNOWN_LOCATION TSK_GPS_BOOKMARK TSK_METADATA_EXIF
+     *
+     * Optionally TSK_GPS_ROUTE points can also be added to the list.
+     *
+     * @param skCase        Currently open SleuthkitCase
+     * @param includeRoutes True to include the points at are in TSK_GPS_ROUTE
+     *                      objects
+     *
+     * @return List of BlackboardArtifactPoints
+     *
+     * @throws TskCoreException
+     */
+    static public List<BlackboardArtifactPoint> getPoints(SleuthkitCase skCase, boolean includeRoutes) throws TskCoreException {
         List<BlackboardArtifactPoint> points = new ArrayList<>();
-        
+
         points.addAll(getSimplePoints(skCase));
         points.addAll(getEXIFPoints(skCase));
-        
-        if(includeRoute) {
-            points.addAll(getGPSRouteWaypoints(skCase));
+
+        if (includeRoutes) {
+            points.addAll(getGPSRoutePoints(skCase));
         }
-        
-        
+
         return points;
     }
-    
-    static public List<Route> getGPSRoutes(SleuthkitCase skCase) throws TskCoreException{
+
+    /**
+     * Gets the list of Routes from the TSK_GPS_ROUTE artifacts.
+     *
+     * @param skCase Currently open SleuthkitCase
+     *
+     * @return List of Route objects, empty list will be returned if no Routes
+     *         where found
+     *
+     * @throws TskCoreException
+     */
+    static public List<Route> getGPSRoutes(SleuthkitCase skCase) throws TskCoreException {
         List<Route> routes = new ArrayList<>();
         List<BlackboardArtifact> artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
-         for (BlackboardArtifact artifact : artifacts) {
+        for (BlackboardArtifact artifact : artifacts) {
             Route route = new Route(artifact);
             route.initRoute();
             routes.add(route);
-         }
+        }
         return routes;
     }
 
     /**
+     * Get a list of BlackboardArtifactPoints for the "simple" GPS artifacts.
+     * Artifacts that will be included: TSK_GPS_TRACKPOINT TSK_GPS_SEARCH
+     * TSK_GPS_LAST_KNOWN_LOCATION TSK_GPS_BOOKMARK
      *
-     * @param skCase
+     * BlackboardArtifactPoint objects will be created and added to the list
+     * only for artifacts with TSK_GEO_LONGITUDE and TSK_LATITUDE attributes.
      *
-     * @return
+     * @param skCase Currently open SleuthkitCase
+     *
+     * @return List of BlackboardArtifactPoints for above artifacts or empty
+     *         list if none where found.
      *
      * @throws TskCoreException
      */
@@ -68,9 +100,6 @@ public class GeolocationManager {
 
         List<BlackboardArtifactPoint> points = new ArrayList<>();
 
-        // TSK_GPS_TRACKPOINT, TSK_GPS_SEARCH, TSK_GPS_LAST_KNOWN_LOCATION 
-        // and TSK_GPS_BOOKMARK have similar attributes and can be processed
-        // similarly
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         artifacts.addAll(skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT));
         artifacts.addAll(skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH));
@@ -79,9 +108,10 @@ public class GeolocationManager {
 
         for (BlackboardArtifact artifact : artifacts) {
             BlackboardArtifactPoint point = new SimplePoint(artifact);
-            point.initPosition();
-            // Good point only if it has the location
-            if(point.getLatitude() != null && point.getLongitude() != null) {
+            point.initPoint();
+            // Only add to the list if the point has a valid latitude 
+            // and longitude. 
+            if (point.getLatitude() != null && point.getLongitude() != null) {
                 points.add(point);
             }
         }
@@ -90,10 +120,15 @@ public class GeolocationManager {
     }
 
     /**
+     * Get a list of BlackboardArtifactPoints for TSK_METADATA_EXIF artifacts.
      *
-     * @param skCase
+     * BlackboardArtifactPoint objects will be created and added to the list
+     * only for artifacts with TSK_GEO_LONGITUDE and TSK_LATITUDE attributes.
      *
-     * @return
+     * @param skCase Currently open SleuthkitCase
+     *
+     * @return List of BlackboardArtifactPoints for above artifacts or empty
+     *         list if none where found.
      *
      * @throws TskCoreException
      */
@@ -103,24 +138,25 @@ public class GeolocationManager {
         for (BlackboardArtifact artifact : artifacts) {
             BlackboardArtifactPoint point = new EXIFMetadataPoint(artifact);
 
-            point.initPosition();
-            if(point.getLatitude() != null && point.getLongitude() != null) {
+            point.initPoint();
+            if (point.getLatitude() != null && point.getLongitude() != null) {
                 points.add(point);
             }
         }
 
         return points;
     }
-    
-         /**
+
+    /**
+     * Get a list of BlackboardArtifactPoints from the list of routes.
      *
-     * @param skCase
+     * @param skCase Currently open SleuthkitCase
      *
-     * @return
+     * @return A list of route points, or empty list if none were found.
      *
      * @throws TskCoreException
      */
-    static private List<BlackboardArtifactPoint> getGPSRouteWaypoints(SleuthkitCase skCase) throws TskCoreException {
+    static private List<BlackboardArtifactPoint> getGPSRoutePoints(SleuthkitCase skCase) throws TskCoreException {
         List<BlackboardArtifactPoint> points = new ArrayList<>();
 
         for (Route route : getGPSRoutes(skCase)) {
@@ -129,5 +165,5 @@ public class GeolocationManager {
 
         return points;
     }
-    
+
 }

@@ -25,14 +25,15 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Extends SimplePoint for TSK_EXIF_METADATA artifacts.
  * 
  */
 public class EXIFMetadataPoint extends SimplePoint{
     private AbstractFile imageFile;
     
     /**
-     * Construct a EXIF way point
+     * Construct a EXIF point
+     * 
      * @param artifact 
      */
     EXIFMetadataPoint(BlackboardArtifact artifact) {
@@ -40,8 +41,8 @@ public class EXIFMetadataPoint extends SimplePoint{
     }
     
     @Override
-    public void initPosition() throws TskCoreException{
-        super.initPosition();
+    public void initPoint() throws TskCoreException{
+        super.initPoint();
 
         setTimestamp(getLong(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED));
        
@@ -53,6 +54,11 @@ public class EXIFMetadataPoint extends SimplePoint{
         setLabel(imageFile.getName());
     }
     
+    /**
+     * Get the image for this point.
+     * 
+     * @return Return the AbstractFile image for the EXIF_METADATA artifact.
+     */
     public AbstractFile getImage() {
         return imageFile;
     }

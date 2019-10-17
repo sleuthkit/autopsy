@@ -26,12 +26,14 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * A Route represents a TSK_GPS_ROUTE artifact which has a start and end point
+ * however the class was written with the assumption that some routes may have 
+ * more that two points.
  * 
  */
 public class Route {
     private final BlackboardArtifact artifact;
-    private final List<BlackboardArtifactPoint> waypoints;
+    private final List<BlackboardArtifactPoint> points;
     private long timestamp;
     private String details;
     private Double altitude = null;
@@ -43,7 +45,7 @@ public class Route {
      */
     protected Route(BlackboardArtifact artifact) {
         this.artifact = artifact;
-        waypoints = new ArrayList<>();
+        points = new ArrayList<>();
     }
 
     /**
@@ -52,7 +54,7 @@ public class Route {
      * @return List of ArtifactWaypoints for this route
      */
     public List<BlackboardArtifactPoint> getRoute() {
-        return waypoints;
+        return points;
     }
     
     public String getDetails() {
@@ -81,36 +83,38 @@ public class Route {
         
         Double latitude;
         Double longitude;
+        BlackboardAttribute attribute;
+
+        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START));
+        latitude = attribute != null ? attribute.getValueDouble() : null;
         
-        latitude = getDoubleAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
-        longitude = getDoubleAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
+        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START));
+        longitude = attribute != null ? attribute.getValueDouble() : null;
         
         if (latitude != null && longitude != null) {
-            waypoints.add(new RoutePoint(this, latitude, longitude, "Start"));
+            RoutePoint point = new RoutePoint(artifact, this, latitude, longitude, "Start");
+            point.initPoint();
+            points.add(point);
         }
         
-        latitude = getDoubleAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
-        longitude = getDoubleAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
+        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END));
+        latitude = attribute != null ? attribute.getValueDouble() : null;
+        
+        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END));
+        longitude = attribute != null ? attribute.getValueDouble() : null;
         
         if (latitude != null && longitude != null) {
-            waypoints.add(new RoutePoint(this, latitude, longitude, "End"));
+            RoutePoint point = new RoutePoint(artifact, this, latitude, longitude, "End");
+            point.initPoint();
+            points.add(point);
         }
 
-        altitude = getDoubleAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
+        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
+        altitude = attribute != null ? attribute.getValueDouble() : null;
 
         // Get the creation date
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-        Long dateTime = attribute != null ? attribute.getValueLong() : null;
-        if (dateTime != null) {
-            timestamp = dateTime * 1000;
-        }
-    }
-    
-    private Double getDoubleAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type)  throws TskCoreException{
-       BlackboardAttribute attribute;
-        
-       attribute = artifact.getAttribute(new BlackboardAttribute.Type(type));
-       return attribute != null ? attribute.getValueDouble() : null; 
+        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+        timestamp = attribute != null ? attribute.getValueLong() : null;
     }
 
 }

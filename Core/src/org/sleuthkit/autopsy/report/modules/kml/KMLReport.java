@@ -201,7 +201,11 @@ class KMLReport implements GeneralReportModule {
         progressPanel.complete(result, errorMessage);
     }
     
-    
+    /**
+     * Do all of the setting up of elements needed for the report.
+     * 
+     * @return The report document object.
+     */
     private Document setupReportDocument() {
         ns = Namespace.getNamespace("", "http://www.opengis.net/kml/2.2"); //NON-NLS
 
@@ -274,15 +278,22 @@ class KMLReport implements GeneralReportModule {
         return kmlDocument;
     }
     
-    
-    void addExifMetadataContent(EXIFMetadataPoint location, String baseReportDirectory) throws IOException{
-        Element point = makePoint(location);
-        if(point == null) {
+    /**
+     * For the given point, create the data needed for the EXIF_METADATA
+     * 
+     * @param location The geolocation of the data
+     * @param baseReportDirectory The report directory where the image will be created.
+     * 
+     * @throws IOException 
+     */
+    void addExifMetadataContent(EXIFMetadataPoint point, String baseReportDirectory) throws IOException{
+        Element mapPoint = makePoint(point);
+        if(mapPoint == null) {
             return;
         }
         
-        AbstractFile abstractFile = location.getImage();
-        String details = "<h3>EXIF Metadata With Locations</h3>" + location.getDetails();
+        AbstractFile abstractFile = point.getImage();
+        String details = point.getDetails();
 
         Path path;
         copyFileUsingStream(abstractFile, Paths.get(baseReportDirectory, abstractFile.getName()).toFile());
@@ -295,9 +306,17 @@ class KMLReport implements GeneralReportModule {
             path = Paths.get(abstractFile.getName());
         } 
         
-        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, location.getTimestamp(), point, path, location.getFormattedCoordinates()));
+        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, point.getFormattedCoordinates()));
     }
     
+    /**
+     * Add the new location to the correct folder based on artifact type.
+     * @param skCase Currently open case
+     * @param baseReportDir Output directory for the report.
+     * 
+     * @throws TskCoreException
+     * @throws IOException 
+     */
     void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws TskCoreException, IOException {
         List<BlackboardArtifactPoint> points = GeolocationManager.getPoints(skCase, false);
 
@@ -321,6 +340,13 @@ class KMLReport implements GeneralReportModule {
         }
     }
     
+    /**
+     * Add the route to the route folder in the document.
+     * 
+     * @param skCase Currently open case.
+     * 
+     * @throws TskCoreException 
+     */
     void makeRoutes(SleuthkitCase skCase) throws TskCoreException {
         List<Route> routes = GeolocationManager.getGPSRoutes(skCase);
 
@@ -349,28 +375,47 @@ class KMLReport implements GeneralReportModule {
 
                 String formattedCoordinates = String.format("%s to %s", start.getFormattedCoordinates(), end.getFormattedCoordinates());
 
-                gpsRouteFolder.addContent(makePlacemark("As-the-crow-flies Route", FeatureColor.GREEN, route.getDetails(), route.getTimestamp(), reportRoute, formattedCoordinates)); //NON-NLS
-                gpsRouteFolder.addContent(makePlacemark(start.getLabel(), FeatureColor.GREEN, start.getDetails(), start.getTimestamp(), startingPoint, start.getFormattedCoordinates())); //NON-NLS
-                gpsRouteFolder.addContent(makePlacemark(end.getLabel(), FeatureColor.GREEN, end.getDetails(), end.getTimestamp(), endingPoint, end.getFormattedCoordinates())); //NON-NLS
+                if(reportRoute != null) {
+                    gpsRouteFolder.addContent(makePlacemark("As-the-crow-flies Route", FeatureColor.GREEN, "", route.getTimestamp(), reportRoute, formattedCoordinates)); //NON-NLS
+                }
+                
+                if(startingPoint != null) {
+                    gpsRouteFolder.addContent(makePlacemark(start.getLabel(), FeatureColor.GREEN, start.getDetails(), start.getTimestamp(), startingPoint, start.getFormattedCoordinates())); //NON-NLS
+                }
+                
+                if(endingPoint != null) {
+                    gpsRouteFolder.addContent(makePlacemark(end.getLabel(), FeatureColor.GREEN, end.getDetails(), end.getTimestamp(), endingPoint, end.getFormattedCoordinates())); //NON-NLS
+                }
             }
         }
     }
 
-
+    /**
+     * Format a point time stamp (in seconds) to the report format.
+     * 
+     * @param timeStamp The timestamp in epoch seconds.
+     * 
+     * @return The formatted timestamp
+     */
     private String getTimeStamp(long timeStamp) {
         return kmlDateFormat.format(new java.util.Date(timeStamp * 1000));
     }
     
-    private Element makePoint(BlackboardArtifactPoint location) {
-        return makePoint(location.getLatitude(), location.getLongitude(), location.getAltitude());
+    /**
+     * Create the point for the given artifact.
+     * 
+     * @param point Artifact point.
+     * 
+     * @return point element. 
+     */
+    private Element makePoint(BlackboardArtifactPoint point) {
+        return makePoint(point.getLatitude(), point.getLongitude(), point.getAltitude());
     }
 
     /**
      * Create a Point for use in a Placemark. Note in this method altitude is
      * ignored, as Google Earth apparently has trouble using altitudes for
-     * LineStrings, though the parameters are still in the call. Also note that
-     * any null value passed in will be set to 0.0, under the idea that it is
-     * better to show some data with gaps, than to show nothing at all.
+     * LineStrings, though the parameters are still in the call.
      *
      * @param latitude  point latitude
      * @param longitude point longitude
@@ -411,9 +456,10 @@ class KMLReport implements GeneralReportModule {
      * Create a LineString for use in a Placemark. Note in this method, start
      * and stop altitudes get ignored, as Google Earth apparently has trouble
      * using altitudes for LineStrings, though the parameters are still in the
-     * call. Also note that any null value passed in will be set to 0.0, under
-     * the idea that it is better to show some data with gaps, than to show
-     * nothing at all.
+     * call. 
+     * 
+     * If null values are pass for the latitudes or longitudes a line will not be
+     * drawn.
      *
      * @param startLatitude  Starting latitude
      * @param startLongitude Starting longitude
@@ -425,20 +471,12 @@ class KMLReport implements GeneralReportModule {
      * @return the Line as an Element
      */
     private Element makeLineString(Double startLatitude, Double startLongitude, Double startAltitude, Double stopLatitude, Double stopLongitude, Double stopAltitude) {
-        if (startLatitude == null) {
-            startLatitude = 0.0;
+        if(startLatitude == null || startLongitude == null || stopLatitude == null || stopLongitude == null) {
+            return null;
         }
-        if (startLongitude == null) {
-            startLongitude = 0.0;
-        }
+        
         if (startAltitude == null) {
             startAltitude = 0.0;
-        }
-        if (stopLatitude == null) {
-            stopLatitude = 0.0;
-        }
-        if (stopLongitude == null) {
-            stopLongitude = 0.0;
         }
         if (stopAltitude == null) {
             stopAltitude = 0.0;

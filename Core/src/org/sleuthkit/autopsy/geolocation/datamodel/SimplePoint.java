@@ -25,18 +25,28 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
+ * A basic Artifact point for artifacts that use the following attributes:
+ * TSK_GEO_LONGITUDE
+ * TSK_GEO_LATITUDE
+ * TSK_GEO_ALTITUDE
+ * TSK_DATETIME
  * 
  */
 public class SimplePoint extends DefaultPoint{
     
+    /**
+     * Construct a simple point object.
+     * 
+     * @param artifact 
+     */
     SimplePoint(BlackboardArtifact artifact) {
         super(artifact);
     }
     
     @Override
-    public void initPosition() throws TskCoreException{        
-        setLongitude(getDouble(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE));
-        setLatitude(getDouble(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE));
+    public void initPoint() throws TskCoreException{        
+        setLongitude(getDouble(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE));
+        setLatitude(getDouble(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE));
         setAltitude(getDouble(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
         setTimestamp(getLong(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
    
@@ -44,6 +54,16 @@ public class SimplePoint extends DefaultPoint{
         setLabel(getLabelBasedOnType());
     }
     
+    /**
+     * Create the point label based on the artifact type.
+     * 
+     * This code needs to be revisited to make sure these back up labels make
+     * sense.
+     * 
+     * @return A label for the point.
+     * 
+     * @throws TskCoreException 
+     */
     String getLabelBasedOnType() throws TskCoreException{
         String label = getString(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         

@@ -25,13 +25,12 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * 
+ * Abstract class representing the basics of a BlackboardARtifacrPoint.
  */
 public abstract class DefaultPoint implements BlackboardArtifactPoint{
     final private BlackboardArtifact artifact;
     
-    private String label = null;
+    private String label = "";
     private Long timestamp = null;
     private String details = null;
     private Double longitude = null;
@@ -40,9 +39,29 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
     
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
     private static final String DEFAULT_COORD_FORMAT = "%.2f, %.2f";
-        
+      
+    /**
+     * Construct a new point with the given artifact.
+     * 
+     * @param artifact 
+     */
     public DefaultPoint(BlackboardArtifact artifact) {
         this.artifact = artifact;
+    }
+    
+    /**
+     * Construct a new point with the given parameters.
+     * 
+     * @param artifact The BlackboardArtifact object that this point represents
+     * @param latitude The latitude for the given artifact
+     * @param longitude The longitude for the given artifact
+     * @param label  A label for the point
+     */
+    public DefaultPoint(BlackboardArtifact artifact, Double latitude, Double longitude, String label) {
+        this.artifact = artifact;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.label = label;
     }
     
     @Override
@@ -55,6 +74,11 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         return timestamp;
     }
     
+    /**
+     * Set the timestamp for this point.
+     * 
+     * @param timestamp Epoch seconds
+     */
     protected void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
@@ -64,6 +88,11 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         return label;
     }
     
+    /**
+     * Set the label for this point.
+     * 
+     * @param label String label for the point.
+     */
     protected void setLabel(String label) {
         this.label = label;
     }
@@ -73,6 +102,11 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         return details;
     }
     
+    /**
+     * Set the details information for the point.
+     * 
+     * @param details Formatted detail information for display.
+     */
     protected void setDetails(String details) {
         this.details = details;
     }
@@ -82,6 +116,11 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         return latitude;
     }
     
+    /**
+     * Set the latitude for this point.
+     * 
+     * @param latitude Double latitude value
+     */
     protected void setLatitude(Double latitude) {
         this.latitude = latitude;
     }
@@ -91,6 +130,11 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         return longitude;
     }
     
+    /**
+     * Set the longitude for this point.
+     * 
+     * @param longitude Double longitude value
+     */
     protected void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
@@ -100,6 +144,11 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         return altitude;
     }
     
+    /**
+     * Set the altitude for the point.
+     * 
+     * @param altitude Double altitude value
+     */
     protected void setAltitude(Double altitude) {
         this.altitude = altitude;
     }
@@ -115,6 +164,8 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
     }
     
     /**
+     * This function with its formatting is from the original KMLReport.
+     * 
      * This method creates a text description for a map feature using all the
      * geospatial and time data we can for the Artifact. It queries the
      * following attributes:
@@ -136,7 +187,7 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         StringBuilder result = new StringBuilder(); //NON-NLS
         
         result.append("<h3>");
-        result.append(getArtifact().getArtifactTypeName());
+        result.append(BlackboardArtifact.ARTIFACT_TYPE.fromLabel(getArtifact().getArtifactTypeName()).getDisplayName());
         result.append("</h3>");
 
         String name = getString(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
@@ -237,27 +288,77 @@ public abstract class DefaultPoint implements BlackboardArtifactPoint{
         return result.toString();
     }
     
+    /**
+     * Helper function for getting a String attribute from an artifact.
+     * 
+     * @param type BlackboardAttribute type 
+     * 
+     * @return String value for the given attribute.
+     * 
+     * @throws TskCoreException 
+     */
     String getString(BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException{
         BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(type));
         return (attribute != null ? attribute.getValueString() : null);
     }
     
+    /**
+     * Helper function for getting a Double attribute from an artifact.
+     * 
+     * @param type BlackboardAttribute type 
+     * 
+     * @return Double value for the given attribute.
+     * 
+     * @throws TskCoreException 
+     */
     Double getDouble(BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException{
         BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(type));
         return (attribute != null ? attribute.getValueDouble() : null);
     }
     
+    /**
+     * Helper function for getting a Long attribute from an artifact.
+     * 
+     * @param type BlackboardAttribute type 
+     * 
+     * @return Long value for the given attribute.
+     * 
+     * @throws TskCoreException 
+     */
     Long getLong(BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException{
         BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(type));
         return (attribute != null ? attribute.getValueLong() : null);
     }
     
+    /**
+     * Helper function for getting a Integer attribute from an artifact.
+     * 
+     * @param type BlackboardAttribute type 
+     * 
+     * @return Integer value for the given attribute.
+     * 
+     * @throws TskCoreException 
+     */
     Integer getInteger(BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException{
         BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(type));
         return (attribute != null ? attribute.getValueInt() : null);
     }
     
+    /**
+     * Helper function for consistently formatting the timestamp.
+     * 
+     * @param type BlackboardAttribute type 
+     * 
+     * @return The timestamp value formatted as string, or empty string if no
+     * timestamp is available.
+     * 
+     * @throws TskCoreException 
+     */
     String getTimeStamp(long timeStamp) {
-        return DATE_FORMAT.format(new java.util.Date(getTimestamp() * 1000));
+        if(getTimestamp() != null) {
+            return DATE_FORMAT.format(new java.util.Date(getTimestamp() * 1000));
+        } else {
+            return "";
+        }
     }
 }
