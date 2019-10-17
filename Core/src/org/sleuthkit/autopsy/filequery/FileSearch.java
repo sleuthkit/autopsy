@@ -663,7 +663,7 @@ class FileSearch {
     private static class ParentPathGroupKey extends GroupKey {
 
         private String parentPath;
-        private Long parentID = -1L;
+        private Long parentID;
 
         ParentPathGroupKey(ResultFile file) {
             if (file.getFirstInstance().getParentPath() != null) {
@@ -673,9 +673,11 @@ class FileSearch {
                     parentID = file.getFirstInstance().getParent().getId();
                 } catch (TskCoreException ingored) {
                     parentPath = file.getFirstInstance().getParentPath();
+                    parentID = -1L;
                 }
             } else {
                 parentPath = ""; // NON-NLS
+                parentID = -1L;
             }
         }
 
