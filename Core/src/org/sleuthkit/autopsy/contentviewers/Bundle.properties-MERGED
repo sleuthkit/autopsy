@@ -161,7 +161,8 @@ MediaPlayerPanel.rewindButton.text=\u2bc7\u2bc7
 MediaPlayerPanel.fastForwardButton.text=\u25ba\u25ba
 MediaPlayerPanel.playButton.text=\u25ba
 MediaPlayerPanel.infoLabel.text=No Errors
-MediaPlayerPanel.VolumeIcon.text=\ \ \ \ \ Volume
+MediaPlayerPanel.VolumeIcon.text=Volume
+MediaPlayerPanel.playBackSpeedLabel.text=Speed:
 # {0} - tableName
 SQLiteViewer.readTable.errorText=Error getting rows for table: {0}
 # {0} - tableName
