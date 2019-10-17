@@ -50,7 +50,7 @@ public class ExternalViewerAction extends AbstractAction {
     final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr", ".cmd"}; //NON-NLS
     private boolean isExecutable;
 
-    ExternalViewerAction(String title, AbstractFile file, boolean isSlackFile) {
+    public ExternalViewerAction(String title, AbstractFile file, boolean isSlackFile) {
         super(title);
         this.fileObject = file;
 

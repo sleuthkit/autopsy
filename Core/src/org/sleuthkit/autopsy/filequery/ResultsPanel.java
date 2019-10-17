@@ -21,12 +21,15 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -34,6 +37,9 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -78,6 +84,19 @@ public class ResultsPanel extends javax.swing.JPanel {
                 populateInstancesList();
             }
         });
+        instancesList.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
+                    JPopupMenu menu = new JPopupMenu();
+                    menu.add(new ViewContextAction("View File in Directory", instancesList.getSelectedValue()));
+                    menu.add(new ExternalViewerAction("Open in External Viewer", instancesList.getSelectedValue(), false));
+                    menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
+                    menu.show(instancesList, e.getPoint().x, e.getPoint().y);
+                }
+            }
+        });
+
         // Disable manual editing of page size spinner
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
@@ -154,7 +173,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
                 populateVideoViewer(pageRetrievedEvent.getSearchResults());
                 resultsViewerPanel.add(videoThumbnailViewer);
-            } 
+            }
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         }
