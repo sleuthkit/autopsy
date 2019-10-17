@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filequery;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 
 /**
  * Class for storing files that belong to a particular group.
@@ -28,7 +29,7 @@ import java.util.List;
 class FileGroup implements Comparable<FileGroup> {
 
     private final FileGroup.GroupSortingAlgorithm groupSortingType;
-    private final FileSearch.GroupKey groupKey;
+    private final GroupKey groupKey;
     private final List<ResultFile> files;
     private final String displayName;
 
@@ -38,7 +39,7 @@ class FileGroup implements Comparable<FileGroup> {
      * @param groupSortingType The method for sorting the group
      * @param groupKey         The GroupKey for this group
      */
-    FileGroup(FileGroup.GroupSortingAlgorithm groupSortingType, FileSearch.GroupKey groupKey) {
+    FileGroup(FileGroup.GroupSortingAlgorithm groupSortingType, GroupKey groupKey) {
         this.groupSortingType = groupSortingType;
         this.groupKey = groupKey;
         files = new ArrayList<>();
@@ -54,19 +55,27 @@ class FileGroup implements Comparable<FileGroup> {
         if (files.contains(file)) {
             ResultFile existingCopy = files.get(files.indexOf(file)); //get the copy of this which exists in the list
             existingCopy.addDuplicate(file.getFirstInstance());
-        }
-        else {
+        } else {
             files.add(file);
         }
     }
 
     /**
-     * Get the display name for this group. This must be unique for each group.
+     * Get the display name for this group.
      *
-     * @return the display name
+     * @return The display name of the group.
      */
     String getDisplayName() {
         return displayName; // NON-NLS
+    }
+
+    /**
+     * Get the key which uniquely identifies each group.
+     *
+     * @return The unique key for the group.
+     */
+    GroupKey getGroupKey() {
+        return groupKey;
     }
 
     /**
