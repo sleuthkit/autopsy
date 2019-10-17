@@ -111,6 +111,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
 
     @Messages({
         "AddTaggedHashesToHashDb.error.noHashSetsSelected=No hash set selected for export.",
+        "AddTaggedHashesToHashDb.error.unableToOpenCase=Exception while getting open case.",
         "AddTaggedHashesToHashDb.error.noTagsSelected=No tags selected for export."
     })
     @Override
@@ -120,8 +121,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
-            progressPanel.updateStatusLabel("Exception while getting open case.");
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.AddTaggedHashesToHashDb_error_unableToOpenCase());
             return;
         }
         progressPanel.setIndeterminate(true);
@@ -131,9 +131,8 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
         HashDb hashSet = configPanel.getSelectedHashDatabase();
         if (hashSet == null) {
             logger.log(Level.WARNING, "No hash set selected for export."); //NON-NLS
-            progressPanel.updateStatusLabel(Bundle.AddTaggedHashesToHashDb_error_noHashSetsSelected());
             progressPanel.setIndeterminate(false);
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.AddTaggedHashesToHashDb_error_noHashSetsSelected());
             return;
         }
         
@@ -143,9 +142,8 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
         List<TagName> tagNames = configPanel.getSelectedTagNames();
         if (tagNames.isEmpty()) {
             logger.log(Level.WARNING, "No tags selected for export."); //NON-NLS
-            progressPanel.updateStatusLabel(Bundle.AddTaggedHashesToHashDb_error_noTagsSelected());
             progressPanel.setIndeterminate(false);
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.AddTaggedHashesToHashDb_error_noTagsSelected());
             return;
         }
         

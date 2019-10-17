@@ -51,11 +51,13 @@ import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * * Explorer Node for a TimelineEvent.
@@ -112,7 +114,7 @@ public class EventNode extends DisplayableItemNode {
 
         properties.put(new NodeProperty<>("icon", Bundle.NodeProperty_displayName_icon(), "icon", true)); // NON-NLS //gets overridden with icon
         properties.put(new TimeProperty("time", Bundle.NodeProperty_displayName_dateTime(), "time ", getDateTimeString()));// NON-NLS
-        properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getFullDescription())); // NON-NLS
+        properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getDescription(TimelineLevelOfDetail.HIGH))); // NON-NLS
         properties.put(new NodeProperty<>("eventType", Bundle.NodeProperty_displayName_eventType(), "event type", event.getEventType().getDisplayName())); // NON-NLS
 
         return sheet;
@@ -126,7 +128,7 @@ public class EventNode extends DisplayableItemNode {
      *         controller's time zone setting.
      */
     private String getDateTimeString() {
-        return new DateTime(event.getStartMillis(), DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
+        return new DateTime(event.getEventTimeInMs(), DateTimeZone.UTC).toString(TimeLineController.getZonedFormatter());
     }
 
     @Override
@@ -175,6 +177,26 @@ public class EventNode extends DisplayableItemNode {
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
+    /**
+     * Gets the file, if any, linked to an artifact via a TSK_PATH_ID attribute
+     *
+     * @param artifact The artifact.
+     *
+     * @return An AbstractFile or null.
+     *
+     * @throws TskCoreException
+     */
+    private static AbstractFile findLinked(BlackboardArtifact artifact) throws TskCoreException {
+        BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+        if (pathIDAttribute != null) {
+            long contentID = pathIDAttribute.getValueLong();
+            if (contentID != -1) {
+                return artifact.getSleuthkitCase().getAbstractFileById(contentID);
+            }
+        }
+        return null;
+    }    
+    
     @Override
     public boolean isLeafTypeNode() {
         return true;
@@ -249,7 +271,7 @@ public class EventNode extends DisplayableItemNode {
          * data in the lookup.
          */
             final TimelineEvent eventById = eventsModel.getEventById(eventID);
-        Content file = sleuthkitCase.getContentById(eventById.getFileObjID());
+        Content file = sleuthkitCase.getContentById(eventById.getContentObjID());
 
         if (eventById.getArtifactID().isPresent()) {
             BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());

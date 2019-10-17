@@ -60,11 +60,10 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="bnEditIngestSettings" alignment="0" min="-2" pref="155" max="-2" attributes="0"/>
-                          <Component id="jLabelBaselineConfig" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="jLabelReportConfig" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabelDescription" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="bnEditReportSettings" alignment="0" min="-2" pref="155" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="362" max="32767" attributes="0"/>
+                      <EmptySpace pref="-34" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -72,14 +71,12 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="27" max="-2" attributes="0"/>
-                      <Component id="jLabelBaselineConfig" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabelDescription" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="bnEditIngestSettings" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="jLabelReportConfig" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="bnEditReportSettings" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="376" max="32767" attributes="0"/>
+                      <EmptySpace pref="381" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -101,17 +98,10 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnEditIngestSettingsActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JLabel" name="jLabelBaselineConfig">
+            <Component class="javax.swing.JLabel" name="jLabelDescription">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.jLabelBaselineConfig.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JLabel" name="jLabelReportConfig">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.jLabelReportConfig.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/commandlineingest/Bundle.properties" key="CommandLineIngestSettingsPanel.jLabelDescription.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>

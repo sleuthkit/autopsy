@@ -56,6 +56,67 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
     """
         Parses the WhatsApp databases for TSK contact, message 
         and calllog artifacts.
+    
+        About WhatsApp parser for v2.19.244:
+            - Database Design Details:
+                There are 2 databases and 6 tables this parser uses.
+
+                1) Prerequisties:
+                    Each user is assigned a whatsapp id, refered to as jid in the
+                    database. A jid is of the form:
+
+                             ####...####@whatsapp.net
+
+                    where # is a placeholder for an arbitrary length of digits 1-9.
+
+                2) Databases:
+                    - databases/msgstore.db: contains msg and call log info
+                    - databases/wa.db: contains contact info
+
+                3) Tables:
+                    - wa/wa_contacts:                   Each record maps a jid to a users personal 
+                                                        details, such as name and phone number.
+
+                    - msgstore/call_log:                Each call made on the device is a single row 
+                                                        in the call_log table. Each record holds 
+                                                        information such as duration, direction, and 
+                                                        type (Video or Audio). 
+
+                    - msgstore/call_log_participant_v2: Each row of this table maps a jid to
+                                                        a call_log record. Multiple rows that 
+                                                        share a call_log id indicate a group call.
+
+                    - msgstore/messages:                Each message is represented as a single row. 
+                                                        A row maps a jid or a gjid (group jid) to some
+                                                        message details. Both the jid and gjid are 
+                                                        stored in 1 column, called key_remote_jid. 
+                                                        gjid's are of the form:
+                            
+                                                              #####...###-#####...####@g.us
+
+                                                        where # is a place holder for a digit 1-9. The
+                                                        '-' is a fixed character surrounded by digits 
+                                                        of arbiturary length n and m. 
+
+                                                        If the message is not from a group, the jid the
+                                                        message is to/from is stored in key_remote_jid 
+                                                        column. If it is a group, the key_remote_jid 
+                                                        column contains the gjid and the 'from' jid is 
+                                                        stored in a secondary column called 
+                                                        remote_resource.
+
+                    - msgstore/group_participants:      Each row of this table maps a jid to a gjid.
+
+                    - msgstore/jid:                     This table stores raw jid string. Some tables 
+                                                        only store the jid_row. A join must be 
+                                                        performed to get the jid value out. 
+            - Implementation details:
+                1) Group calls and single calls are extracted in two different queries. 
+                2) Group messages and single messages are extracted in 1 query.
+                    - The general approach was to build one complete contacts table containing
+                      both jid and gjid. A join can be performed once on all of the messages. 
+                      All jids that are part of a gjid were concatenated into a comma seperated 
+                      list of jids.
     """
    
     def __init__(self):
@@ -106,15 +167,15 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
 
     def parse_contacts(self, contacts_db, helper):
         try:
-            contacts_parser = WhatsAppContactsParser(contacts_db)
+            contacts_parser = WhatsAppContactsParser(contacts_db, self._PARSER_NAME)
             while contacts_parser.next():
                 helper.addContact( 
-                    contacts_parser.get_account_name(), 
                     contacts_parser.get_contact_name(), 
                     contacts_parser.get_phone(),
                     contacts_parser.get_home_phone(),
                     contacts_parser.get_mobile_phone(),
-                    contacts_parser.get_email()
+                    contacts_parser.get_email(),
+                    contacts_parser.get_other_attributes()
                 )
             contacts_parser.close()
         except SQLException as ex:
@@ -235,16 +296,14 @@ class WhatsAppGroupCallLogsParser(TskCallLogsParser):
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
             sender = self.result_set.getString("from_id")
-            return Account.Address(sender, sender)
+            return sender
         return super(WhatsAppGroupCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
+            #group_members column stores comma seperated list of groups or single contact
             group = self.result_set.getString("group_members")
-            members = []
-            for token in group.split(","):
-                members.append(Account.Address(token, token))
-            return members
+            return group.split(",")
         return super(WhatsAppGroupCallLogsParser, self).get_phone_number_to()
 
     def get_call_start_date_time(self):
@@ -294,13 +353,13 @@ class WhatsAppSingleCallLogsParser(TskCallLogsParser):
     def get_phone_number_from(self):
         if self.get_call_direction() == self.INCOMING_CALL:
             sender = self.result_set.getString("num")
-            return Account.Address(sender, sender)
+            return sender
         return super(WhatsAppSingleCallLogsParser, self).get_phone_number_from()
 
     def get_phone_number_to(self):
         if self.get_call_direction() == self.OUTGOING_CALL:
             to = self.result_set.getString("num") 
-            return Account.Address(to, to)
+            return to
         return super(WhatsAppSingleCallLogsParser, self).get_phone_number_to()
 
     def get_call_start_date_time(self):
@@ -324,7 +383,7 @@ class WhatsAppContactsParser(TskContactsParser):
         a default value inherited from the super class. 
     """
 
-    def __init__(self, contact_db):
+    def __init__(self, contact_db, analyzer):
         super(WhatsAppContactsParser, self).__init__(contact_db.runQuery(
                  """ 
                      SELECT jid, 
@@ -350,14 +409,19 @@ class WhatsAppContactsParser(TskContactsParser):
                   )
         )
 
-    def get_account_name(self):
-        return self.result_set.getString("jid")
-
+        self._PARENT_ANALYZER = analyzer
+    
     def get_contact_name(self):
         return self.result_set.getString("name")
 
     def get_phone(self):
         return self.result_set.getString("number")
+
+    def get_other_attributes(self):
+        return [BlackboardAttribute(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID, 
+                    self._PARENT_ANALYZER, 
+                    self.result_set.getString("jid"))]
 
 class WhatsAppMessagesParser(TskMessagesParser):
     """
@@ -379,8 +443,7 @@ class WhatsAppMessagesParser(TskMessagesParser):
                             M.timestamp       AS send_timestamp, 
                             M.received_timestamp, 
                             M.remote_resource AS group_sender,
-                            M.media_url As attachment,
-	                    M.media_mime_type as attachment_mimetype
+                            M.media_url As attachment
                      FROM   (SELECT jid, 
                                     recipients 
                              FROM   wadb.wa_contacts AS WC 
@@ -411,15 +474,9 @@ class WhatsAppMessagesParser(TskMessagesParser):
             group = self.result_set.getString("recipients")
             if group is not None:
                 group = group.split(",")
-                
-                recipients = []
-                for token in group:
-                    recipients.append(Account.Address(token, token))
-               
-                return recipients 
+                return group 
 
-            return Account.Address(self.result_set.getString("id"), 
-                       self.result_set.getString("id"))
+            return self.result_set.getString("id") 
         return super(WhatsAppMessagesParser, self).get_phone_number_to()
 
     def get_phone_number_from(self):
@@ -427,10 +484,9 @@ class WhatsAppMessagesParser(TskMessagesParser):
             group_sender = self.result_set.getString("group_sender")
             group = self.result_set.getString("recipients")
             if group_sender is not None and group is not None:
-                return Account.Address(group_sender, group_sender)
+                return group_sender
             else:
-                return Account.Address(self.result_set.getString("id"), 
-                            self.result_set.getString("id"))
+                return self.result_set.getString("id") 
         return super(WhatsAppMessagesParser, self).get_phone_number_from() 
 
     def get_message_direction(self):  
@@ -449,9 +505,6 @@ class WhatsAppMessagesParser(TskMessagesParser):
         message = self.result_set.getString("content") 
         attachment = self.result_set.getString("attachment")
         if attachment is not None:
-            mime_type = self.result_set.getString("attachment_mimetype")
-            if mime_type is not None:
-                attachment += "\nMIME type: " + mime_type 
             return general.appendAttachmentList(message, [attachment])
         return message
     

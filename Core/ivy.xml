@@ -43,6 +43,8 @@
         <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
         <dependency conf="core->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
         
+        <dependency org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
+        
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         <dependency org="com.squareup.okhttp" name="okhttp" rev="2.7.5"/>

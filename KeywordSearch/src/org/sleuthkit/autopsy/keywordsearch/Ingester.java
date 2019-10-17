@@ -97,7 +97,7 @@ class Ingester {
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        indexChunk("", file.getName().toLowerCase(), new HashMap<>(getContentFields(file)));
+        indexChunk("", "", file.getName().toLowerCase(), new HashMap<>(getContentFields(file)));
     }
 
     /**
@@ -111,7 +111,7 @@ class Ingester {
      *                           artifact, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(BlackboardArtifact artifact, String sourceName) throws IngesterException {
-        indexChunk("", sourceName, new HashMap<>(getContentFields(artifact)));
+        indexChunk("", "", sourceName, new HashMap<>(getContentFields(artifact)));
     }
 
     /**
@@ -156,7 +156,7 @@ class Ingester {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
-
+                
                 Chunk chunk = chunker.next();
                 Map<String, Object> fields = new HashMap<>(contentFields);
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
@@ -166,7 +166,7 @@ class Ingester {
                 language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                 try {
                     //add the chunk text to Solr index
-                    indexChunk(chunk.toString(), sourceName, fields);
+                    indexChunk(chunk.toString(), chunk.geLowerCasedChunk(), sourceName, fields);
                     // add mini chunk when there's a language specific field
                     if (chunker.hasNext() && language.isPresent()) {
                         languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
@@ -197,7 +197,7 @@ class Ingester {
                 fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
                 //"parent" docs don't have chunk_size
                 fields.remove(Server.Schema.CHUNK_SIZE.toString());
-                indexChunk(null, sourceName, fields);
+                indexChunk(null, null, sourceName, fields);
             }
         }
         return true;
@@ -211,12 +211,13 @@ class Ingester {
      * 4.0.0), see if possible to stream with UpdateRequestHandler
      *
      * @param chunk  The chunk content as a string, or null for metadata only
+     * @param lowerCasedChunk The lower cased chunk content as a string, or null for metadata only
      * @param fields
      * @param size
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    private void indexChunk(String chunk, String sourceName, Map<String, Object> fields) throws IngesterException {
+    private void indexChunk(String chunk, String lowerCasedChunk, String sourceName, Map<String, Object> fields) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //JMTODO: actually if the we couldn't get the image id it is set to -1,
             // but does this really mean we don't want to index it?
@@ -245,7 +246,7 @@ class Ingester {
             // insensitive substring/regular expression search.
             double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
             if (indexSchemaVersion >= 2.1) {
-                updateDoc.addField(Server.Schema.CONTENT_STR.toString(), ((chunk == null) ? "" : chunk.toLowerCase()));
+                updateDoc.addField(Server.Schema.CONTENT_STR.toString(), ((chunk == null) ? "" : lowerCasedChunk));
             }
 
             TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");

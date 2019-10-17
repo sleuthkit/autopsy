@@ -115,17 +115,13 @@ public class STIXReportModule implements GeneralReportModule {
 
         if (stixFileName == null) {
             logger.log(Level.SEVERE, "STIXReportModuleConfigPanel.stixFile not initialized "); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             new File(baseReportDir).delete();
             return;
         }
         if (stixFileName.isEmpty()) {
             logger.log(Level.SEVERE, "No STIX file/directory provided "); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
             new File(baseReportDir).delete();
             return;
         }
@@ -133,9 +129,7 @@ public class STIXReportModule implements GeneralReportModule {
 
         if (!stixFile.exists()) {
             logger.log(Level.SEVERE, String.format("Unable to open STIX file/directory %s", stixFileName)); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
             new File(baseReportDir).delete();
             return;
         }
@@ -177,17 +171,13 @@ public class STIXReportModule implements GeneralReportModule {
             // the "complete" message to indicate this.
             Case.getCurrentCaseThrows().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
             if (hadErrors) {
-                progressPanel.complete(ReportStatus.ERROR);
-                progressPanel.updateStatusLabel(
-                        NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
+                progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
             } else {
                 progressPanel.complete(ReportStatus.COMPLETE);
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to complete STIX report.", ex); //NON-NLS
-            progressPanel.complete(ReportStatus.ERROR);
-            progressPanel.updateStatusLabel(
-                    NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
+            progressPanel.complete(ReportStatus.ERROR, NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Unable to add report to database.", ex);
         }
@@ -267,6 +257,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param stix STIXPackage
      * @param output
+     * @param progressPanel
      */
     private void processIndicators(STIXPackage stix, BufferedWriter output, ReportProgressPanel progressPanel) throws TskCoreException {
         if (stix.getIndicators() != null) {
@@ -304,6 +295,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param ind
      * @param result
+     * @param progressPanel
      *
      * @throws TskCoreException
      */

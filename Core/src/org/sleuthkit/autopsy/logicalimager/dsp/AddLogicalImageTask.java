@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.logicalimager.dsp;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -53,14 +54,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A runnable that - copy the logical image folder to a destination folder - add
- * SearchResults.txt and users.txt files to report - add an image data source to the
+ * SearchResults.txt and *_users.txt files to report - add an image data source to the
  * case database.
  */
 final class AddLogicalImageTask implements Runnable {
 
     private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
-    private final static String USERS_TXT = "users.txt"; //NON-NLS
+    private final static String USERS_TXT = "_users.txt"; //NON-NLS
     private final static String MODULE_NAME = "Logical Imager"; //NON-NLS
     private final static String ROOT_STR = "root"; // NON-NLS
     private final static String VHD_EXTENSION = ".vhd"; // NON-NLS
@@ -102,7 +103,7 @@ final class AddLogicalImageTask implements Runnable {
     }
 
     /**
-     * Add SearchResults.txt and users.txt to the case
+     * Add SearchResults.txt and *_users.txt to the case
      * report Adds the image to the case database.
      */
     @Messages({
@@ -148,7 +149,7 @@ final class AddLogicalImageTask implements Runnable {
             return;
         }
 
-        // Add the SearchResults.txt and users.txt to the case report
+        // Add the SearchResults.txt and *_users.txt to the case report
         String resultsFilename;
         if (Paths.get(dest.toString(), SEARCH_RESULTS_TXT).toFile().exists()) {
             resultsFilename = SEARCH_RESULTS_TXT;
@@ -167,15 +168,25 @@ final class AddLogicalImageTask implements Runnable {
         }
         progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingToReport(resultsFilename));
 
-        progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingToReport(USERS_TXT));
-        status = addReport(Paths.get(dest.toString(), USERS_TXT), USERS_TXT + " " + src.getName());
-        if (status != null) {
-            errorList.add(status);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
-            return;
+        // All all *_users.txt files to report
+        File[] userFiles = dest.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(USERS_TXT);
+            }
+        });
+        
+        for (File userFile : userFiles) {
+            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingToReport(userFile.getName()));
+            status = addReport(userFile.toPath(), userFile.getName() + " " + src.getName());
+            if (status != null) {
+                errorList.add(status);
+                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
+                return;
+            }            
+            progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingToReport(userFile.getName()));
         }
-        progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingToReport(USERS_TXT));
-
+    
         // Get all VHD files in the dest directory
         List<String> imagePaths = new ArrayList<>();
         for (File f : dest.listFiles()) {
@@ -342,7 +353,8 @@ final class AddLogicalImageTask implements Runnable {
     @Messages({
         "# {0} - line number", "# {1} - fields length", "# {2} - expected length", "AddLogicalImageTask.notEnoughFields=File does not contain enough fields at line {0}, got {1}, expecting {2}",
         "# {0} - target image path", "AddLogicalImageTask.cannotFindDataSourceObjId=Cannot find obj_id in tsk_image_names for {0}",
-        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting files ({0}/{1})"
+        "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting files ({0}/{1})",
+        "AddLogicalImageTask.logicalImagerResults=Logical Imager results"
     })
     private void addInterestingFiles(Map<String, List<Long>> interestingFileMap) throws IOException, TskCoreException {
         int lineNumber = 0;
@@ -359,10 +371,8 @@ final class AddLogicalImageTask implements Runnable {
 
             Map.Entry<String, List<Long>> entry = iterator.next();
             String key = entry.getKey();
-            String ruleSetName;
             String ruleName;
             String[] split = key.split("\t");
-            ruleSetName = split[0];
             ruleName = split[1];
 
             List<Long> fileIds = entry.getValue();
@@ -378,7 +388,7 @@ final class AddLogicalImageTask implements Runnable {
                     postArtifacts(artifacts);
                     artifacts.clear();
                 }
-                addInterestingFileToArtifacts(fileId, ruleSetName, ruleName, artifacts);
+                addInterestingFileToArtifacts(fileId, Bundle.AddLogicalImageTask_logicalImagerResults(), ruleName, artifacts);
                 lineNumber++;
             }
             iterator.remove();
