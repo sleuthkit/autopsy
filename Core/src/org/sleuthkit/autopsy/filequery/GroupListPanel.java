@@ -21,7 +21,10 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
 /**
@@ -31,12 +34,12 @@ class GroupListPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private FileType resultType = null;
-    private Map<String, Integer> groupMap = null;
+    private Map<GroupKey, Integer> groupMap = null;
     private List<FileSearchFiltering.FileFilter> searchfilters;
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
-    private String selectedGroupName;
+    private GroupKey selectedGroupKey;
 
     /**
      * Creates new form GroupListPanel
@@ -53,7 +56,7 @@ class GroupListPanel extends javax.swing.JPanel {
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
         resultType = searchStartedEvent.getType();
-        groupDisplayNameList.setListData(new String[0]);
+        groupKeyList.setListData(new GroupKey[0]);
     }
 
     /**
@@ -69,10 +72,9 @@ class GroupListPanel extends javax.swing.JPanel {
         groupingAttribute = searchCompleteEvent.getGroupingAttr();
         groupSort = searchCompleteEvent.getGroupSort();
         fileSortMethod = searchCompleteEvent.getFileSort();
-        List<String> groupNames = groupMap.entrySet().stream().map(e -> e.getKey() + " (" + e.getValue() + ")").collect(Collectors.toList());
-        groupDisplayNameList.setListData(groupNames.toArray(new String[groupNames.size()]));
-        if (groupDisplayNameList.getModel().getSize() > 0) {
-            groupDisplayNameList.setSelectedIndex(0);
+        groupKeyList.setListData(groupMap.keySet().toArray(new GroupKey[groupMap.keySet().size()]));
+        if (groupKeyList.getModel().getSize() > 0) {
+            groupKeyList.setSelectedIndex(0);
         }
     }
 
@@ -86,15 +88,17 @@ class GroupListPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         groupListScrollPane = new javax.swing.JScrollPane();
-        groupDisplayNameList = new javax.swing.JList<>();
+        groupKeyList = new javax.swing.JList<>();
 
-        groupDisplayNameList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        groupDisplayNameList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+        groupKeyList.setModel(new DefaultListModel<GroupKey>());
+        groupKeyList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        groupKeyList.setCellRenderer(new GroupListRenderer());
+        groupKeyList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 groupSelected(evt);
             }
         });
-        groupListScrollPane.setViewportView(groupDisplayNameList);
+        groupListScrollPane.setViewportView(groupKeyList);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -119,13 +123,13 @@ class GroupListPanel extends javax.swing.JPanel {
      */
     private void groupSelected(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_groupSelected
         if (!evt.getValueIsAdjusting()) {
-            if (groupDisplayNameList.getSelectedValue() != null) {
-                String selectedGroup = groupDisplayNameList.getSelectedValue().replaceAll(" \\([0-9]+\\)$", "");
-                for (String groupName : groupMap.keySet()) {
-                    if (selectedGroup.equalsIgnoreCase(groupName)) {
-                        selectedGroupName = groupName;
+            if (groupKeyList.getSelectedValue() != null) {
+                GroupKey selectedGroup = groupKeyList.getSelectedValue();
+                for (GroupKey groupKey : groupMap.keySet()) {
+                    if (selectedGroup.equals(groupKey)) {
+                        selectedGroupKey = groupKey;
                         DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.GroupSelectedEvent(
-                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, groupMap.get(selectedGroupName), resultType));
+                                searchfilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, groupMap.get(selectedGroupKey), resultType));
                         break;
                     }
                 }
@@ -136,7 +140,32 @@ class GroupListPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_groupSelected
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<String> groupDisplayNameList;
+    private javax.swing.JList<GroupKey> groupKeyList;
     private javax.swing.JScrollPane groupListScrollPane;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * GroupListCellRenderer displays GroupKeys as their String value followed
+     * by the number of items in the group.
+     */
+    private class GroupListRenderer extends DefaultListCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public java.awt.Component getListCellRendererComponent(
+                JList<?> list,
+                Object value,
+                int index,
+                boolean isSelected,
+                boolean cellHasFocus) {
+            Object newValue = value;
+            if (newValue instanceof GroupKey) {
+                newValue = newValue.toString() + " (" + groupMap.get(newValue) + ")";
+            }
+            super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
+            return this;
+        }
+    }
+
 }

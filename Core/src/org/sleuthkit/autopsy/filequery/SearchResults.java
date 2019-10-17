@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 
 /**
  * Class to hold the results of the filtering/grouping/sorting operations
@@ -150,15 +151,15 @@ class SearchResults {
      * 
      * @return the grouped and sorted results
      */
-    Map<String, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
-        Map<String, List<ResultFile>> map = new LinkedHashMap<>();
+    Map<GroupKey, List<ResultFile>> toLinkedHashMap() throws FileSearchException {
+        Map<GroupKey, List<ResultFile>> map = new LinkedHashMap<>();
         
         // Sort the groups and files
         sortGroupsAndFiles();
         
         // groupList is sorted and a LinkedHashMap will preserve that order.
         for (FileGroup group : groupList) {
-            map.put(group.getDisplayName(), group.getAbstractFiles());
+            map.put(group.getGroupKey(), group.getAbstractFiles());
         }
         
         return map;

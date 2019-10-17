@@ -69,7 +69,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
-    private static final Cache<String, List<ResultFile>> groupCache = CacheBuilder.newBuilder().build();
+    private static final Cache<GroupKey, List<ResultFile>> groupCache = CacheBuilder.newBuilder().build();
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
@@ -116,15 +116,15 @@ class FileSearch {
 
         // Sort and group the results
         searchResults.sortGroupsAndFiles();
-        Map<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
-        for (String groupName : resultHashMap.keySet()) {
-            groupCache.put(groupName, resultHashMap.get(groupName));
+        Map<GroupKey, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
+        for (GroupKey groupKey : resultHashMap.keySet()) {
+            groupCache.put(groupKey, resultHashMap.get(groupKey));
         }
         return searchResults;
     }
 
     /**
-     * Run the file search to get the group names and sizes. Clears cache of
+     * Run the file search to get the group keys and sizes. Clears cache of
      * search results, caching new results for access at later time.
      *
      * @param filters            The filters to apply
@@ -140,17 +140,17 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static LinkedHashMap<String, Integer> getGroupSizes(
+    static LinkedHashMap<GroupKey, Integer> getGroupSizes(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        Map<String, List<ResultFile>> searchResults = runFileSearch(filters,
+        Map<GroupKey, List<ResultFile>> searchResults = runFileSearch(filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
-        LinkedHashMap<String, Integer> groupSizes = new LinkedHashMap<>();
-        for (String groupName : searchResults.keySet()) {
-            groupSizes.put(groupName, searchResults.get(groupName).size());
+        LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
+        for (GroupKey groupKey : searchResults.keySet()) {
+            groupSizes.put(groupKey, searchResults.get(groupKey).size());
         }
         return groupSizes;
     }
@@ -164,7 +164,8 @@ class FileSearch {
      * @param groupSortingType   The method to use to sort the groups
      * @param fileSortingMethod  The method to use to sort the files within the
      *                           groups
-     * @param groupName          Name of the group to get entries from
+     * @param groupKey           The key which uniquely identifies the group to
+     *                           get entries from
      * @param startingEntry      The first entry to return
      * @param numberOfEntries    The number of entries to return
      * @param caseDb             The case database
@@ -180,19 +181,19 @@ class FileSearch {
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
-            String groupName,
+            GroupKey groupKey,
             int startingEntry,
             int numberOfEntries,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
         //the group should be in the cache at this point
-        List<ResultFile> filesInGroup = groupCache.getIfPresent(groupName);
+        List<ResultFile> filesInGroup = groupCache.getIfPresent(groupKey);
         List<ResultFile> page = new ArrayList<>();
         if (filesInGroup == null) {
-            logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupName);
+            logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupKey);
             runFileSearch(filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
-            filesInGroup = groupCache.getIfPresent(groupName);
+            filesInGroup = groupCache.getIfPresent(groupKey);
             if (filesInGroup == null) {
-                logger.log(Level.WARNING, "Group {0} did not exist in cache or new search results", groupName);
+                logger.log(Level.WARNING, "Group {0} did not exist in cache or new search results", groupKey);
                 return page; //group does not exist
             }
         }
@@ -226,7 +227,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private synchronized static Map<String, List<ResultFile>> runFileSearch(
+    private synchronized static Map<GroupKey, List<ResultFile>> runFileSearch(
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -251,9 +252,9 @@ class FileSearch {
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         searchResults.add(resultFiles);
-        Map<String, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
-        for (String groupName : resultHashMap.keySet()) {
-            groupCache.put(groupName, resultHashMap.get(groupName));
+        Map<GroupKey, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
+        for (GroupKey groupKey : resultHashMap.keySet()) {
+            groupCache.put(groupKey, resultHashMap.get(groupKey));
         }
         // Return a version of the results in general Java objects
         return resultHashMap;
@@ -581,6 +582,11 @@ class FileSearch {
         int compareClassNames(GroupKey otherGroupKey) {
             return this.getClass().getName().compareTo(otherGroupKey.getClass().getName());
         }
+
+        @Override
+        public String toString() {
+            return getDisplayName();
+        }
     }
 
     /**
@@ -657,12 +663,14 @@ class FileSearch {
     private static class ParentPathGroupKey extends GroupKey {
 
         private String parentPath;
+        private Long parentID = -1L;
 
         ParentPathGroupKey(ResultFile file) {
             if (file.getFirstInstance().getParentPath() != null) {
 
                 try {
                     parentPath = file.getFirstInstance().getParent().getUniquePath();
+                    parentID = file.getFirstInstance().getParent().getId();
                 } catch (TskCoreException ingored) {
                     parentPath = file.getFirstInstance().getParentPath();
                 }
@@ -680,7 +688,11 @@ class FileSearch {
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof ParentPathGroupKey) {
                 ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey) otherGroupKey;
-                return parentPath.compareTo(otherParentPathGroupKey.parentPath);
+                int comparisonResult = parentPath.compareTo(otherParentPathGroupKey.parentPath);
+                if (comparisonResult == 0) {
+                    comparisonResult = parentID.compareTo(otherParentPathGroupKey.parentID);
+                }
+                return comparisonResult;
             } else {
                 return compareClassNames(otherGroupKey);
             }
@@ -697,12 +709,15 @@ class FileSearch {
             }
 
             ParentPathGroupKey otherParentPathGroupKey = (ParentPathGroupKey) otherKey;
-            return parentPath.equals(otherParentPathGroupKey.parentPath);
+            return parentPath.equals(otherParentPathGroupKey.parentPath) && parentID.equals(otherParentPathGroupKey.parentID);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(parentPath);
+            int hashCode = 11;
+            hashCode = 61 * hashCode + Objects.hash(parentPath);
+            hashCode = 61 * hashCode + Objects.hash(parentID);
+            return hashCode;
         }
     }
 

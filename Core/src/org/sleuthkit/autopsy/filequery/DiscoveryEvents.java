@@ -22,6 +22,7 @@ import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 
 /**
@@ -74,7 +75,7 @@ final class DiscoveryEvents {
      */
     static final class SearchCompleteEvent {
 
-        private final Map<String, Integer> groupMap;
+        private final Map<GroupKey, Integer> groupMap;
         private final List<FileSearchFiltering.FileFilter> searchFilters;
         private final FileSearch.AttributeType groupingAttribute;
         private final FileGroup.GroupSortingAlgorithm groupSort;
@@ -91,7 +92,7 @@ final class DiscoveryEvents {
          * @param groupSort         The sorting algorithm used for groups.
          * @param fileSortMethod    The sorting method used for files.
          */
-        SearchCompleteEvent(Map<String, Integer> groupMap, List<FileSearchFiltering.FileFilter> searchfilters,
+        SearchCompleteEvent(Map<GroupKey, Integer> groupMap, List<FileSearchFiltering.FileFilter> searchfilters,
                 FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
                 FileSorter.SortingMethod fileSortMethod) {
             this.groupMap = groupMap;
@@ -106,7 +107,7 @@ final class DiscoveryEvents {
          *
          * @return The map of groups which were found by the search.
          */
-        Map<String, Integer> getGroupMap() {
+        Map<GroupKey, Integer> getGroupMap() {
             return Collections.unmodifiableMap(groupMap);
         }
 
@@ -232,7 +233,7 @@ final class DiscoveryEvents {
     static final class GroupSelectedEvent {
 
         private final FileType resultType;
-        private final String groupName;
+        private final GroupKey groupKey;
         private final int groupSize;
         private final List<FileSearchFiltering.FileFilter> searchfilters;
         private final FileSearch.AttributeType groupingAttribute;
@@ -247,19 +248,20 @@ final class DiscoveryEvents {
          * @param groupingAttribute The grouping attribute used by the search.
          * @param groupSort         The sorting algorithm used for groups.
          * @param fileSortMethod    The sorting method used for files.
-         * @param groupName         The name of the group which was selected.
+         * @param groupKey          The key associated with the group which was
+         *                          selected.
          * @param groupSize         The number of files in the group which was
          *                          selected.
          * @param resultType        The type of files which exist in the group.
          */
         GroupSelectedEvent(List<FileSearchFiltering.FileFilter> searchfilters,
                 FileSearch.AttributeType groupingAttribute, FileGroup.GroupSortingAlgorithm groupSort,
-                FileSorter.SortingMethod fileSortMethod, String groupName, int groupSize, FileType resultType) {
+                FileSorter.SortingMethod fileSortMethod, GroupKey groupKey, int groupSize, FileType resultType) {
             this.searchfilters = searchfilters;
             this.groupingAttribute = groupingAttribute;
             this.groupSort = groupSort;
             this.fileSortMethod = fileSortMethod;
-            this.groupName = groupName;
+            this.groupKey = groupKey;
             this.groupSize = groupSize;
             this.resultType = resultType;
         }
@@ -274,12 +276,14 @@ final class DiscoveryEvents {
         }
 
         /**
-         * Get the name of the group which was selected.
+         * Get the group key which is used to uniquely identify the group
+         * selected.
          *
-         * @return The name of the group which was selected.
+         * @return The group key which is used to uniquely identify the group
+         *         selected.
          */
-        String getGroupName() {
-            return groupName;
+        GroupKey getGroupKey() {
+            return groupKey;
         }
 
         /**
