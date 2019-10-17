@@ -24,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -53,7 +54,10 @@ import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.event.ChangeListener;
 import org.freedesktop.gstreamer.ClockTime;
+import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
+import org.freedesktop.gstreamer.event.SeekFlags;
+import org.freedesktop.gstreamer.event.SeekType;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -175,6 +179,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private Bus.ERROR errorListener;
     private Bus.STATE_CHANGED stateChangeListener;
     private Bus.EOS endOfStreamListener;
+    private double playBackRate;
 
     //Update progress bar and time label during video playback
     private final Timer timer = new Timer(75, new VideoPanelUpdater());
@@ -196,6 +201,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setMinimum(0);
         progressSlider.setMaximum(PROGRESS_SLIDER_SIZE);
         progressSlider.setValue(0);
+        playBackRate = 1.0;
         //Manage the gstreamer video position when a user is dragging the slider in the panel.
         progressSlider.addChangeListener(new ChangeListener() {
             @Override
@@ -203,11 +209,19 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 if (progressSlider.getValueIsAdjusting()) {
                     long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
                     double relativePosition = progressSlider.getValue() * 1.0 / PROGRESS_SLIDER_SIZE;
-                    long newPos = (long) (relativePosition * duration);
-                    gstPlayBin.seek(newPos, TimeUnit.NANOSECONDS);
+                    long newStartTime = (long) (relativePosition * duration);
+                    gstPlayBin.seek(playBackRate,
+                            Format.TIME,
+                            //FLUSH - flushes the pipeline
+                            //ACCURATE - video will seek exactly to the position requested
+                            EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                            //Set the start position to newTime
+                            SeekType.SET, newStartTime,
+                            //Do nothing for the end position
+                            SeekType.NONE, -1);
                     //Keep constantly updating the time label so users have a sense of
                     //where the slider they are dragging is in relation to the video time
-                    updateTimeLabel(newPos, duration);
+                    updateTimeLabel(newStartTime, duration);
                 }
             }
         });
@@ -241,11 +255,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         endOfStreamListener = new Bus.EOS() {
             @Override
             public void endOfStream(GstObject go) {
-                gstPlayBin.seek(ClockTime.ZERO);	
-                progressSlider.setValue(0);	
-                /**	
-                 * Keep the video from automatically playing	
-                 */	
+                gstPlayBin.seek(ClockTime.ZERO);
+                progressSlider.setValue(0);
+                /**
+                 * Keep the video from automatically playing
+                 */
                 Gst.getExecutor().submit(() -> gstPlayBin.pause());
             }
         };
@@ -674,20 +688,36 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private void rewindButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rewindButtonActionPerformed
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
-        long skipBehind = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+        long rewindDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
         //Ensure new video position is within bounds
-        long newTime = Math.max(currentTime - skipBehind, 0);
-        gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
+        long newTime = Math.max(currentTime - rewindDelta, 0);
+        gstPlayBin.seek(playBackRate,
+                Format.TIME,
+                //FLUSH - flushes the pipeline
+                //ACCURATE - video will seek exactly to the position requested
+                EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                //Set the start position to newTime
+                SeekType.SET, newTime,
+                //Do nothing for the end position
+                SeekType.NONE, -1);
     }//GEN-LAST:event_rewindButtonActionPerformed
 
     private void fastForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fastForwardButtonActionPerformed
         long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
-        long skipAhead = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+        long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
         //Ensure new video position is within bounds
-        long newTime = Math.min(currentTime + skipAhead, duration - 1);
-        gstPlayBin.seek(newTime, TimeUnit.NANOSECONDS);
+        long newTime = Math.min(currentTime + fastForwardDelta, duration);
+        gstPlayBin.seek(playBackRate,
+                Format.TIME,
+                //FLUSH - flushes the pipeline
+                //ACCURATE - video will seek exactly to the position requested
+                EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                //Set the start position to newTime
+                SeekType.SET, newTime,
+                //Do nothing for the end position
+                SeekType.NONE, -1);
     }//GEN-LAST:event_fastForwardButtonActionPerformed
 
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
