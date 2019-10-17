@@ -1,0 +1,133 @@
+name: firefox_cache
+type: format
+description: Mozilla Firefox cache version 1 and 2 file formats
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/Firefox%20cache%20file%20format.asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: char
+type: integer
+attributes:
+  format: signed
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: int32
+type: integer
+attributes:
+  format: signed
+  size: 4
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint32be
+type: integer
+attributes:
+  byte_order: big-endian
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: firefox_cache1_map_header
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: major_format_version
+  data_type: uint16
+- name: minor_format_version
+  data_type: uint16
+- name: data_size
+  data_type: uint32
+- name: number_of_entries
+  data_type: int32
+- name: is_dirty_flag
+  data_type: uint32
+- name: number_of_records
+  data_type: int32
+- name: eviction_ranks
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 32
+- name: bucket_usage
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 32
+---
+name: firefox_cache1_map_record
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: hash_number
+  data_type: uint32
+- name: eviction_rank
+  data_type: uint32
+- name: data_location
+  data_type: uint32
+- name: metadata_location
+  data_type: uint32
+---
+name: firefox_cache1_entry_header
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: major_format_version
+  data_type: uint16
+- name: minor_format_version
+  data_type: uint16
+- name: location
+  data_type: uint32
+- name: fetch_count
+  data_type: int32
+- name: last_fetched_time
+  data_type: uint32
+- name: last_modified_time
+  data_type: uint32
+- name: expiration_time
+  data_type: uint32
+- name: cached_data_size
+  data_type: uint32
+- name: request_size
+  data_type: uint32
+- name: information_size
+  data_type: uint32
+---
+name: firefox_cache2_file_metadata_header
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: format_version
+  data_type: uint32
+- name: fetch_count
+  data_type: int32
+- name: last_fetched_time
+  data_type: uint32
+- name: last_modified_time
+  data_type: uint32
+- name: frequency
+  data_type: uint32
+- name: expiration_time
+  data_type: uint32
+- name: key_size
+  data_type: uint32

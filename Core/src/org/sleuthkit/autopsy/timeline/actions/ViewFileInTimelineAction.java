@@ -19,11 +19,15 @@
 package org.sleuthkit.autopsy.timeline.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -33,6 +37,8 @@ import org.sleuthkit.datamodel.TskData;
 public final class ViewFileInTimelineAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
+
+    private static final Logger logger = Logger.getLogger(ViewFileInTimelineAction.class.getName());
 
     private final AbstractFile file;
 
@@ -62,6 +68,11 @@ public final class ViewFileInTimelineAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SystemAction.get(OpenTimelineAction.class).showFileInTimeline(file);
+        try {
+            SystemAction.get(OpenTimelineAction.class).showFileInTimeline(file);
+        } catch (TskCoreException ex) {
+            MessageNotifyUtil.Message.error("Error opening Timeline");
+            logger.log(Level.SEVERE, "Error showing timeline.", ex);
+        }
     }
 }

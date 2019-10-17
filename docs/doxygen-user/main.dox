@@ -10,14 +10,24 @@ Help Topics
 -------
 The following topics are available here:
 
-- \subpage installation_page
+- Installation
+ - \subpage installation_page
+ - \subpage performance_page
+ - Multi-user Cluster 
+  - \subpage install_multiuser_page
+  - \subpage multiuser_sec_page
+  - \subpage multiuser_page
+
 - \subpage quick_start_guide "Quick Start Guide"
-- \subpage workflow_page 
+
 - Cases and Adding Data Sources
+ - \subpage workflow_page 
  - \subpage cases_page
  - \subpage ds_page
- - \subpage uilayout_page
-- Automated Analysis (Modules)
+ - \subpage logs_and_output_page
+
+
+- Ingest Modules
  - \subpage ingest_page "Ingest Modules"
  - \subpage recent_activity_page
  - \subpage hash_db_page 
@@ -34,44 +44,55 @@ The following topics are available here:
  - \subpage cr_ingest_module
  - \subpage encryption_page
  - \subpage vm_extractor_page
-- Manual Analysis
+
+- Reviewing the Results
+ - \subpage uilayout_page
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
  - \subpage content_viewer_page
+ - \subpage machine_translation_page
+
+- Searching
  - \subpage ui_quick_search
- - \subpage image_gallery_page
  - \subpage file_search_page
  - \subpage ad_hoc_keyword_search_page
- - \subpage timeline_page
  - \subpage stix_page
- - \subpage central_repo_page
- - \subpage communications_page
  - \subpage common_properties_page
  - \subpage search_all_cases_page
- - \subpage logs_and_output_page
- - \subpage machine_translation_page
+
+- Specialized Viewers
+ - \subpage image_gallery_page
+ - \subpage timeline_page
+ - \subpage communications_page
+
+
 - Reporting
  - \subpage tagging_page
  - \subpage reporting_page
-- \subpage module_install_page
-- \subpage performance_page
-- Multi-user Collaborative Deployments
- - \subpage install_multiuser_page
-  - \subpage install_activemq
-  - \subpage install_postgresql
-  - \subpage install_solr
-  - \subpage windows_authentication
- - \subpage multiuser_sec_page
- - \subpage multiuser_page
-- Triage
- - \subpage triage_page
- - \subpage live_triage_page
-- \subpage advanced_page
-- \subpage experimental_page
-- \subpage command_line_ingest_page
-- \subpage logical_imager_page
-- \subpage translations_page
 
-If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.
+- \subpage module_install_page
+- \subpage central_repo_page
+
+- Other Workflows
+ - Triage
+  - \subpage triage_page
+  - \subpage live_triage_page
+ - \subpage logical_imager_page
+ - \subpage command_line_ingest_page
+ 
+
+- Experimental Module
+  - \subpage experimental_page
+  - \ref auto_ingest_page
+  - \ref object_detection_page
+  - \ref volatility_dsp_page
+
+- \subpage translations_page
+ 
+
+If the topic you need is not listed, then you can:
+- Refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> 
+- Ask a question on the <a href="http://forum.sleuthkit.org">Forum</a>
+- Ask a question on the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">Email List</a>.
 
 */

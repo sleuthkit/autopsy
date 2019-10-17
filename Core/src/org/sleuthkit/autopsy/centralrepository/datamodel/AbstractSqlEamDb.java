@@ -1943,6 +1943,58 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Gets list of distinct case display names, where each case has 1+ Artifact
+     * Instance matching eamArtifact.
+     *
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
+     *
+     * @return List of cases containing this artifact with instances marked as
+     *         bad
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<String> getListCasesHavingArtifactInstances(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+
+        String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
+
+        Connection conn = connect();
+
+        Collection<String> caseNames = new LinkedHashSet<>();
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = "SELECT DISTINCT case_name FROM "
+                + tableName
+                + " INNER JOIN cases ON "
+                + tableName
+                + ".case_id=cases.id WHERE "
+                + tableName
+                + ".value=? ";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, normalizedValue);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                caseNames.add(resultSet.getString("case_name"));
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return caseNames.stream().collect(Collectors.toList());
+    }
+
+    /**
      * Remove a reference set and all entries contained in it.
      *
      * @param referenceSetID
@@ -3215,7 +3267,15 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws EamDbException
      */
-    @Messages({"AbstractSqlEamDb.upgradeSchema.incompatible=The selected Central Repository is not compatible with the current version of the application, please upgrade the application if you wish to use this Central Repository."})
+    @Messages({"AbstractSqlEamDb.upgradeSchema.incompatible=The selected Central Repository is not compatible with the current version of the application, please upgrade the application if you wish to use this Central Repository.",
+        "# {0} - minorVersion",
+        "AbstractSqlEamDb.badMinorSchema.message=Bad value for schema minor version ({0}) - database is corrupt.",
+        "AbstractSqlEamDb.failedToReadMinorVersion.message=Failed to read schema minor version for Central Repository.",
+        "# {0} - majorVersion",
+        "AbstractSqlEamDb.badMajorSchema.message=Bad value for schema version ({0}) - database is corrupt.",
+        "AbstractSqlEamDb.failedToReadMajorVersion.message=Failed to read schema version for Central Repository.",
+        "# {0} - platformName",
+        "AbstractSqlEamDb.cannotUpgrage.message=Currently selected database platform \"{0}\" can not be upgraded."})
     @Override
     public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException {
 
@@ -3238,10 +3298,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 try {
                     minorVersion = Integer.parseInt(minorVersionStr);
                 } catch (NumberFormatException ex) {
-                    throw new EamDbException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt", ex);
+                    throw new EamDbException(Bundle.AbstractSqlEamDb_badMinorSchema_message(minorVersionStr), ex);
                 }
             } else {
-                throw new EamDbException("Failed to read schema minor version from db_info table");
+                throw new EamDbException(Bundle.AbstractSqlEamDb_failedToReadMinorVersion_message());
             }
 
             int majorVersion = 0;
@@ -3252,10 +3312,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 try {
                     majorVersion = Integer.parseInt(majorVersionStr);
                 } catch (NumberFormatException ex) {
-                    throw new EamDbException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt", ex);
+                    throw new EamDbException(Bundle.AbstractSqlEamDb_badMajorSchema_message(majorVersionStr), ex);
                 }
             } else {
-                throw new EamDbException("Failed to read schema major version from db_info table");
+                throw new EamDbException(Bundle.AbstractSqlEamDb_failedToReadMajorVersion_message());
             }
 
             /*
@@ -3333,7 +3393,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         addObjectIdIndexTemplate = SqliteEamDbSettings.getAddObjectIdIndexTemplate();
                         break;
                     default:
-                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
+                        throw new EamDbException(Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
                 final String dataSourcesTableName = "data_sources";
                 final String dataSourceObjectIdColumnName = "datasource_obj_id";
@@ -3493,13 +3553,12 @@ abstract class AbstractSqlEamDb implements EamDb {
                         statement.execute("DROP TABLE old_data_sources");
                         break;
                     default:
-                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
+                        throw new EamDbException(Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
             }
             updateSchemaVersion(conn);
             conn.commit();
             logger.log(Level.INFO, String.format("Central Repository schema updated to version %s", SOFTWARE_CR_DB_SCHEMA_VERSION));
-
         } catch (SQLException | EamDbException ex) {
             try {
                 if (conn != null) {

@@ -199,7 +199,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         imageTaggingOptions.setPopupSize(300, 150);
         
         //Disable image tagging for non-windows users or upon failure to load OpenCV.
-        if (!PlatformUtil.isWindowsOS() || !OpenCvLoader.hasOpenCvLoaded()) {
+        if (!PlatformUtil.isWindowsOS() || !OpenCvLoader.openCvIsLoaded()) {
             tagsMenu.setEnabled(false);
             imageTaggingOptions.setEnabled(false);
         }

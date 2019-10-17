@@ -47,7 +47,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
@@ -229,11 +228,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
             if (!subject.isEmpty()) {
                 threadNameLabel.setText(subject);
             } else {
-                if (threadIDList.contains(MessageNode.CALL_LOG_ID)) {
-                    threadNameLabel.setText(Bundle.MessageViewer_viewMessage_calllogs());
-                } else {
-                    threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
-                }
+                threadNameLabel.setText(Bundle.MessageViewer_viewMessage_unthreaded());
             }
             
            showMessagesPane();
@@ -401,7 +396,7 @@ public class MessageViewer extends JPanel implements RelationshipsViewer {
         try {
             rootTablePane.getExplorerManager().setSelectedNodes(new Node[0]);
         } catch (PropertyVetoException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error setting selected nodes", ex);
         }
         showThreadsPane();
     }//GEN-LAST:event_backButtonActionPerformed

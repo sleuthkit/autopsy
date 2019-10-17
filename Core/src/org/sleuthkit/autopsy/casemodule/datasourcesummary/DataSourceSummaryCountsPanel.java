@@ -21,13 +21,13 @@ package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JLabel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 import org.sleuthkit.datamodel.DataSource;
 
 /**

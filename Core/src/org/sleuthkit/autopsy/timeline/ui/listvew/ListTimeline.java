@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,31 +78,34 @@ import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ChronoFieldListCell;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.datamodel.AbstractFile;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
+import org.sleuthkit.autopsy.timeline.ui.listvew.datamodel.CombinedEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TimelineEventType;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_ACCESSED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_CHANGED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_CREATED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_MODIFIED;
+import static org.sleuthkit.datamodel.TimelineEventType.FILE_SYSTEM;
+import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * The inner component that makes up the List view. Manages the TableView.
  */
 class ListTimeline extends BorderPane {
 
-    private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
+    private static final Logger logger = Logger.getLogger(ListTimeline.class.getName());
 
     private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");  //NON-NLS 
     private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png");  //NON-NLS
@@ -128,22 +131,16 @@ class ListTimeline extends BorderPane {
 
     @FXML
     private HBox navControls;
-
     @FXML
     private ComboBox<ChronoField> scrollInrementComboBox;
-
     @FXML
     private Button firstButton;
-
     @FXML
     private Button previousButton;
-
     @FXML
     private Button nextButton;
-
     @FXML
     private Button lastButton;
-
     @FXML
     private Label eventCountLabel;
     @FXML
@@ -157,15 +154,13 @@ class ListTimeline extends BorderPane {
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> typeColumn;
     @FXML
-    private TableColumn<CombinedEvent, CombinedEvent> knownColumn;
-    @FXML
     private TableColumn<CombinedEvent, CombinedEvent> taggedColumn;
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
 
     /**
      * Since TableView does not expose what cells/items are visible, we track
-     * them in this set. It is sorted by index in the TableView's model.
+     * them in this set. Sorted by time.
      */
     private final SortedSet<CombinedEvent> visibleEvents;
 
@@ -181,10 +176,16 @@ class ListTimeline extends BorderPane {
     private final ListChangeListener<CombinedEvent> selectedEventListener = new ListChangeListener<CombinedEvent>() {
         @Override
         public void onChanged(ListChangeListener.Change<? extends CombinedEvent> c) {
-            controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
-                    .filter(Objects::nonNull)
-                    .map(CombinedEvent::getRepresentativeEventID)
-                    .collect(Collectors.toSet()));
+            try {
+                controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
+                        .filter(Objects::nonNull)
+                        .map(CombinedEvent::getRepresentativeEventID)
+                        .collect(Collectors.toSet()));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error selecting events.", ex);
+                Notifications.create().owner(getScene().getWindow())
+                        .text("Error selecting events.").showError();
+            }
         }
     };
 
@@ -198,7 +199,7 @@ class ListTimeline extends BorderPane {
         sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
         tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
         FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml"); //NON-NLS
-        this.visibleEvents = new ConcurrentSkipListSet<>(Comparator.comparing(table.getItems()::indexOf));
+        this.visibleEvents = new ConcurrentSkipListSet<>(Comparator.comparing(CombinedEvent::getStartMillis));
     }
 
     @FXML
@@ -212,7 +213,6 @@ class ListTimeline extends BorderPane {
         assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
-        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
 
         //configure scroll controls
         scrollInrementComboBox.setButtonCell(new ChronoFieldListCell());
@@ -232,19 +232,15 @@ class ListTimeline extends BorderPane {
 
         //// set up cell and cell-value factories for columns
         dateTimeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        dateTimeColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
-                TimeLineController.getZonedFormatter().print(singleEvent.getStartMillis())));
+        dateTimeColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
+                -> TimeLineController.getZonedFormatter().print(singleEvent.getEventTimeInMs())));
 
         descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        descriptionColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
-                singleEvent.getDescription(DescriptionLoD.FULL)));
+        descriptionColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
+                -> singleEvent.getDescription(TimelineLevelOfDetail.HIGH)));
 
         typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         typeColumn.setCellFactory(col -> new EventTypeCell());
-
-        knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
-                singleEvent.getKnown().getName()));
 
         taggedColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         taggedColumn.setCellFactory(col -> new TaggedCell());
@@ -358,6 +354,43 @@ class ListTimeline extends BorderPane {
     }
 
     /**
+     * Base class for TableCells that represent a CombinedEvent by way of a
+     * representative TimeLineEvent.
+     */
+    private abstract class EventTableCell extends TableCell<CombinedEvent, CombinedEvent> {
+
+        private TimelineEvent event;
+
+        /**
+         * Get the representative TimeLineEvent for this cell.
+         *
+         * @return The representative TimeLineEvent for this cell.
+         */
+        TimelineEvent getEvent() {
+            return event;
+        }
+
+        @NbBundle.Messages({"EventTableCell.updateItem.errorMessage=Error getting event by id."})
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                event = null;
+            } else {
+                try {
+                    //stash the event in the cell for derived classed to use.
+                    event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
+                } catch (TskCoreException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.EventTableCell_updateItem_errorMessage()).showError();
+                    logger.log(Level.SEVERE, "Error getting event by id.", ex);
+                }
+            }
+        }
+    }
+
+    /**
      * TableCell to show the (sub) type of an event.
      */
     private class EventTypeCell extends EventTableCell {
@@ -377,46 +410,43 @@ class ListTimeline extends BorderPane {
                 setGraphic(null);
                 setTooltip(null);
             } else {
-                if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
+                if (item.getEventTypes().stream().allMatch(TimelineEventType.FILE_SYSTEM.getChildren()::contains)) {
                     String typeString = ""; //NON-NLS
                     VBox toolTipVbox = new VBox(5);
 
-                    for (FileSystemTypes type : Arrays.asList(FileSystemTypes.FILE_MODIFIED, FileSystemTypes.FILE_ACCESSED, FileSystemTypes.FILE_CHANGED, FileSystemTypes.FILE_CREATED)) {
+                    for (TimelineEventType type : TimelineEventType.FILE_SYSTEM.getChildren()) {
                         if (item.getEventTypes().contains(type)) {
-                            switch (type) {
-                                case FILE_MODIFIED:
-                                    typeString += "M"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_ACCESSED:
-                                    typeString += "A"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_CREATED:
-                                    typeString += "B"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_CHANGED:
-                                    typeString += "C"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                default:
-                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name()); //NON-NLS
+                            if (type.equals(FILE_MODIFIED)) {
+                                typeString += "M"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_ACCESSED)) {
+                                typeString += "A"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_CREATED)) {
+                                typeString += "B"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_CHANGED)) {
+                                typeString += "C"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(),
+                                        new ImageView(getImagePath(type))));
                             }
                         } else {
                             typeString += "_"; //NON-NLS
                         }
                     }
                     setText(typeString);
-                    setGraphic(new ImageView(BaseTypes.FILE_SYSTEM.getFXImage()));
+                    setGraphic(new ImageView(getImagePath(FILE_SYSTEM)));
                     Tooltip tooltip = new Tooltip();
                     tooltip.setGraphic(toolTipVbox);
                     setTooltip(tooltip);
 
                 } else {
-                    EventType eventType = Iterables.getOnlyElement(item.getEventTypes());
+                    TimelineEventType eventType = Iterables.getOnlyElement(item.getEventTypes());
                     setText(eventType.getDisplayName());
-                    setGraphic(new ImageView(eventType.getFXImage()));
+                    setGraphic(new ImageView(getImagePath(eventType)));
                     setTooltip(new Tooltip(eventType.getDisplayName()));
                 };
             }
@@ -443,7 +473,7 @@ class ListTimeline extends BorderPane {
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
-            if (empty || item == null || (getEvent().isTagged() == false)) {
+            if (empty || item == null || (getEvent().eventSourceIsTagged() == false)) {
                 setGraphic(null);
                 setTooltip(null);
             } else {
@@ -456,13 +486,13 @@ class ListTimeline extends BorderPane {
                 SortedSet<String> tagNames = new TreeSet<>();
                 try {
                     //get file tags
-                    AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(getEvent().getFileID());
-                    tagsManager.getContentTagsByContent(abstractFileById).stream()
+                    Content file = sleuthkitCase.getContentById(getEvent().getContentObjID());
+                    tagsManager.getContentTagsByContent(file).stream()
                             .map(tag -> tag.getName().getDisplayName())
                             .forEach(tagNames::add);
 
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getContentObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -478,7 +508,7 @@ class ListTimeline extends BorderPane {
                                 .map(tag -> tag.getName().getDisplayName())
                                 .forEach(tagNames::add);
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())
@@ -515,7 +545,7 @@ class ListTimeline extends BorderPane {
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
 
-            if (empty || item == null || (getEvent().isHashHit() == false)) {
+            if (empty || item == null || (getEvent().eventSourceHasHashHits()== false)) {
                 setGraphic(null);
                 setTooltip(null);
             } else {
@@ -526,12 +556,12 @@ class ListTimeline extends BorderPane {
                  */
                 setGraphic(new ImageView(HASH_HIT));
                 try {
-                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
+                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getContentById(getEvent().getContentObjID()).getHashSetNames());
                     Tooltip tooltip = new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames))); //NON-NLS
                     tooltip.setGraphic(new ImageView(HASH_HIT));
                     setTooltip(tooltip);
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getContentObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -544,19 +574,20 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * TableCell to show text derived from a SingleEvent by the given Function.
+     * TableCell to show text derived from a TimeLineEvent by the given
+     * Function.
      */
     private class TextEventTableCell extends EventTableCell {
 
-        private final Function<SingleEvent, String> textSupplier;
+        private final Function<TimelineEvent, String> textSupplier;
 
         /**
          * Constructor
          *
-         * @param textSupplier Function that takes a SingleEvent and produces a
-         *                     String to show in this TableCell.
+         * @param textSupplier Function that takes a TimeLineEvent and produces
+         *                     a String to show in this TableCell.
          */
-        TextEventTableCell(Function<SingleEvent, String> textSupplier) {
+        TextEventTableCell(Function<TimelineEvent, String> textSupplier) {
             this.textSupplier = textSupplier;
             setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
             setEllipsisString(" ... "); //NON-NLS
@@ -577,53 +608,13 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Base class for TableCells that represent a MergedEvent by way of a
-     * representative SingleEvent.
-     */
-    private abstract class EventTableCell extends TableCell<CombinedEvent, CombinedEvent> {
-
-        private SingleEvent event;
-
-        /**
-         * Get the representative SingleEvent for this cell.
-         *
-         * @return The representative SingleEvent for this cell.
-         */
-        SingleEvent getEvent() {
-            return event;
-        }
-
-        @Override
-        protected void updateItem(CombinedEvent item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                event = null;
-            } else {
-                //stash the event in the cell for derived classed to use.
-                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
-            }
-        }
-    }
-
-    /**
      * TableRow that adds a right-click context menu.
      */
     private class EventRow extends TableRow<CombinedEvent> {
 
-        private SingleEvent event;
-
-        /**
-         * Get the representative SingleEvent for this row .
-         *
-         * @return The representative SingleEvent for this row .
-         */
-        SingleEvent getEvent() {
-            return event;
-        }
-
         @NbBundle.Messages({
-            "ListChart.errorMsg=There was a problem getting the content for the selected event."})
+            "ListChart.errorMsg=There was a problem getting the content for the selected event.",
+            "EventRow.updateItem.errorMessage=Error getting event by id."})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             CombinedEvent oldItem = getItem();
@@ -633,11 +624,9 @@ class ListTimeline extends BorderPane {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
-                event = null;
+                setOnContextMenuRequested(ListTimeline::NOOPConsumer);
             } else {
                 visibleEvents.add(item);
-                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
-
                 setOnContextMenuRequested(contextMenuEvent -> {
                     //make a new context menu on each request in order to include uptodate tag names and hash sets
                     try {
@@ -667,16 +656,13 @@ class ListTimeline extends BorderPane {
                                     }
                                 }
                             }
-                        };
+                        }
 
                         //show new context menu.
                         new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()]))
                                 .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
-                    } catch (NoCurrentCaseException ex) {
-                        //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a TimelineEvent.", ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())
@@ -685,9 +671,11 @@ class ListTimeline extends BorderPane {
                         });
                     }
                 });
-
             }
         }
+    }
+
+    public static <X> void NOOPConsumer(X event) {
     }
 
     private class ScrollToFirst extends org.controlsfx.control.action.Action {
@@ -729,14 +717,14 @@ class ListTimeline extends BorderPane {
                     ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
                     ZoneId timeZoneID = TimeLineController.getTimeZoneID();
                     TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
-                    
+
                     int focusedIndex = table.getFocusModel().getFocusedIndex();
                     CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
                     if (-1 == focusedIndex || null == focusedItem) {
                         focusedItem = visibleEvents.first();
                         focusedIndex = table.getItems().indexOf(focusedItem);
                     }
-                    
+
                     ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
                     ZonedDateTime nextDateTime = focusedDateTime.plus(1, selectedUnit);//
                     for (ChronoField field : SCROLL_BY_UNITS) {
@@ -745,7 +733,7 @@ class ListTimeline extends BorderPane {
                         }
                     }
                     long nextMillis = nextDateTime.toInstant().toEpochMilli();
-                    
+
                     int nextIndex = table.getItems().size() - 1;
                     for (int i = focusedIndex; i < table.getItems().size(); i++) {
                         if (table.getItems().get(i).getStartMillis() >= nextMillis) {
@@ -773,24 +761,24 @@ class ListTimeline extends BorderPane {
                     ZoneId timeZoneID = TimeLineController.getTimeZoneID();
                     ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
                     TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
-                    
+
                     int focusedIndex = table.getFocusModel().getFocusedIndex();
                     CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
                     if (-1 == focusedIndex || null == focusedItem) {
                         focusedItem = visibleEvents.last();
                         focusedIndex = table.getItems().indexOf(focusedItem);
                     }
-                    
+
                     ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
                     ZonedDateTime previousDateTime = focusedDateTime.minus(1, selectedUnit);//
-                    
+
                     for (ChronoField field : SCROLL_BY_UNITS) {
                         if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
                             previousDateTime = previousDateTime.with(field, field.rangeRefinedBy(previousDateTime).getMaximum());//
                         }
                     }
                     long previousMillis = previousDateTime.toInstant().toEpochMilli();
-                    
+
                     int previousIndex = 0;
                     for (int i = focusedIndex; i > 0; i--) {
                         if (table.getItems().get(i).getStartMillis() <= previousMillis) {
@@ -798,7 +786,7 @@ class ListTimeline extends BorderPane {
                             break;
                         }
                     }
-                    
+
                     scrollToAndFocus(previousIndex);
                 }
             });
@@ -806,5 +794,4 @@ class ListTimeline extends BorderPane {
             disabledProperty().bind(table.getFocusModel().focusedIndexProperty().lessThan(1));
         }
     }
-
 }

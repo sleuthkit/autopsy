@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  * TreeItem for the root of all the events in the EventsTree.
@@ -35,7 +35,7 @@ class RootItem extends EventsTreeItem {
     /**
      * A map of the children BaseTypeTreeItems, keyed by EventType.
      */
-    private final Map<EventType, BaseTypeTreeItem> childMap = new HashMap<>();
+    private final Map<TimelineEventType, CategoryTypeTreeItem> childMap = new HashMap<>();
 
     /**
      * Constructor
@@ -43,7 +43,7 @@ class RootItem extends EventsTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    RootItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
+    RootItem(Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(comparator);
     }
 
@@ -53,7 +53,7 @@ class RootItem extends EventsTreeItem {
      * @param event event to add
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(TimeLineEvent event) {
+    public void insert(DetailViewEvent event) {
         insert(getTreePath(event));
     }
 
@@ -62,14 +62,14 @@ class RootItem extends EventsTreeItem {
      *
      * @param event the event to remove
      */
-    void remove(TimeLineEvent event) {
+    void remove(DetailViewEvent event) {
         remove(getTreePath(event));
     }
 
     @Override
-    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+    void sort(Comparator<TreeItem<DetailViewEvent>> comp, Boolean recursive) {
         setComparator(comp);
-        childMap.values().forEach(ti -> ti.sort(comp, true));
+        childMap.values().forEach(treeItem -> treeItem.sort(comp, true));
     }
 
     @Override
@@ -78,14 +78,14 @@ class RootItem extends EventsTreeItem {
     }
 
     @Override
-    EventType getEventType() {
+    TimelineEventType getEventType() {
         return null;
     }
 
     @Override
-    void remove(List<TimeLineEvent> path) {
-        TimeLineEvent event = path.get(0);
-        BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
+    void remove(List<DetailViewEvent> path) {
+        DetailViewEvent event = path.get(0);
+        CategoryTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getCategory());
 
         //remove the path from the child
         if (typeTreeItem != null) {
@@ -93,17 +93,17 @@ class RootItem extends EventsTreeItem {
 
             //if the child has no children remove it also
             if (typeTreeItem.getChildren().isEmpty()) {
-                childMap.remove(event.getEventType().getBaseType());
+                childMap.remove(event.getEventType().getCategory());
                 getChildren().remove(typeTreeItem);
             }
         }
     }
 
     @Override
-    void insert(List<TimeLineEvent> path) {
-        TimeLineEvent event = path.get(0);
-        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
-                baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
+    void insert(List<DetailViewEvent> path) {
+        DetailViewEvent event = path.get(0);
+        CategoryTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getCategory(),
+                baseType -> configureNewTreeItem(new CategoryTypeTreeItem(event, getComparator()))
         );
         treeItem.insert(path);
     }
