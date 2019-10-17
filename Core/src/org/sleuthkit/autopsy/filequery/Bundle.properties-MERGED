@@ -1,5 +1,4 @@
 CTL_FileDiscoveryTestAction=Test file discovery
-CTL_FileSearchTestAction=Test file search
 DiscoveryTopComponent.name=\ File Discovery
 # {0} - Data source name
 # {1} - Data source ID
