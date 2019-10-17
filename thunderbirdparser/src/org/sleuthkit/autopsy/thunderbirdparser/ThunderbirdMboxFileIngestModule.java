@@ -458,12 +458,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             if (partialEmailsForThreading.size() > msgCnt) {
                 EmailMessage threaded = partialEmailsForThreading.get(msgCnt++);
 
-                if (threaded.getMessageID() != null) {
-                    if (threaded.getMessageID().equals(current.getMessageID())
-                            && threaded.getSubject().equals(current.getSubject())) {
+                if ((threaded.getMessageID() != null) &&
+                        (threaded.getMessageID().equals(current.getMessageID())
+                            && threaded.getSubject().equals(current.getSubject()))) {
                         current.setMessageThreadID(threaded.getMessageThreadID());
                     }
-                }
             }
 
             BlackboardArtifact msgArtifact = addEmailArtifact(current, abstractFile);
