@@ -517,7 +517,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                  * pipeline. We start this updater when data-flow has just been
                  * initiated so buffering may still be in progress.
                  */
-                if (duration > 0 && position > 0) {
+                if (duration >= 0 && position >= 0) {
                     double relativePosition = (double) position / duration;
                     progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
                 }
@@ -707,8 +707,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
         long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
-        //Ensure new video position is within bounds
-        long newTime = Math.min(currentTime + fastForwardDelta, duration);
+        
+        //Ignore fast forward requests if there are less than 30 seconds left.
+        if(currentTime + fastForwardDelta >= duration) {
+            return;
+        }
+        
+        long newTime = currentTime + fastForwardDelta;
         gstPlayBin.seek(playBackRate,
                 Format.TIME,
                 //FLUSH - flushes the pipeline
