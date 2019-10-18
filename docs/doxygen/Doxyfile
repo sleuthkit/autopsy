@@ -772,8 +772,9 @@ INPUT                  = main.dox \
                          regressionTesting.dox \
                          native_libs.dox \
                          modDevPython.dox \
-						 modFileIngestTutorial.dox \
-						 modDSIngestTutorial.dox \
+                         modFileIngestTutorial.dox \
+                         modDSIngestTutorial.dox \
+                         modReportModuleTutorial.dox \
                          debugTsk.dox \
                          ../../Core/src \
                          ../../CoreLibs/src \
