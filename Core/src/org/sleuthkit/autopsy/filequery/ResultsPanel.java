@@ -23,8 +23,11 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import javax.swing.Action;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -34,13 +37,21 @@ import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionListener;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbContextMenuActionsProvider;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -51,6 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ResultsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(ResultsPanel.class.getName());
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
@@ -86,14 +98,35 @@ public class ResultsPanel extends javax.swing.JPanel {
             }
         });
         instancesList.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
-                    JPopupMenu menu = new JPopupMenu();
-                    menu.add(new ViewContextAction("View File in Directory", instancesList.getSelectedValue()));
-                    menu.add(new ExternalViewerAction("Open in External Viewer", instancesList.getSelectedValue(), false));
-                    menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
-                    menu.show(instancesList, e.getPoint().x, e.getPoint().y);
+                    SwingUtilities.invokeLater(() -> {
+                        instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
+                        //set up the explorer manager so that the Utilities.actionsGlobalContext() will have the correct information
+                        FileNode fileNode = new FileNode(instancesList.getSelectedValue());
+                        FileNode[] fileNodeArray = {fileNode};
+                        Children.Array children = new Children.Array();
+                        children.add(fileNodeArray);
+                        DiscoveryTopComponent.getTopComponent().getExplorerManager().setRootContext(new AbstractNode(children));
+                        try {
+                            DiscoveryTopComponent.getTopComponent().getExplorerManager().setSelectedNodes(fileNodeArray);
+                        } catch (PropertyVetoException ex) {
+                            logger.log(Level.SEVERE, "File Discovery Explorer manager selection was vetoed.", ex); //NON-NLS
+                        }
+
+                        JPopupMenu menu = new JPopupMenu();
+                        menu.add(new ViewContextAction("View File in Directory", instancesList.getSelectedValue()));
+                        menu.add(new ExternalViewerAction("Open in External Viewer", fileNode));
+                        menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
+                        menu.add(ExtractAction.getInstance());
+                        menu.add(AddContentTagAction.getInstance());
+                        menu.add(DeleteFileContentTagAction.getInstance());
+                        for (Action action : (new HashDbContextMenuActionsProvider().getActions())) {
+                            menu.add(action);
+                        }
+                        menu.show(instancesList, e.getPoint().x, e.getPoint().y);
+                    });
                 }
             }
         });

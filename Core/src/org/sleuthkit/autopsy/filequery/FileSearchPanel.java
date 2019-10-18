@@ -1222,9 +1222,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      */
     private void enableSearch(boolean enabled) {
         if (enabled) {
-            DiscoveryTopComponent.changeCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         } else {
-            DiscoveryTopComponent.changeCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
         searchButton.setEnabled(enabled);
         cancelButton.setEnabled(!enabled);
