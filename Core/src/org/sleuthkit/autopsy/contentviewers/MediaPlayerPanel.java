@@ -787,7 +787,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //Skip 30 seconds.
         long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
         
-        //Ignore any fast forward requests if we are nearing the end.
+        //Ignore fast forward requests if there are less than 30 seconds left.
         if(currentTime + fastForwardDelta >= duration) {
             return;
         }
