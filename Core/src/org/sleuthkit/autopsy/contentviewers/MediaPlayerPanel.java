@@ -24,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -37,7 +38,6 @@ import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import org.freedesktop.gstreamer.Bus;
-import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Gst;
 import org.freedesktop.gstreamer.GstObject;
 import org.freedesktop.gstreamer.State;
@@ -53,7 +53,11 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.event.ChangeListener;
+import org.freedesktop.gstreamer.ClockTime;
+import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
+import org.freedesktop.gstreamer.event.SeekFlags;
+import org.freedesktop.gstreamer.event.SeekType;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -175,10 +179,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private Bus.ERROR errorListener;
     private Bus.STATE_CHANGED stateChangeListener;
     private Bus.EOS endOfStreamListener;
+    private double playBackRate;
 
     //Update progress bar and time label during video playback
     private final Timer timer = new Timer(75, new VideoPanelUpdater());
     private static final int PROGRESS_SLIDER_SIZE = 2000;
+    private static final int SKIP_IN_SECONDS = 30;
 
     private ExtractMedia extractMediaWorker;
 
@@ -195,6 +201,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setMinimum(0);
         progressSlider.setMaximum(PROGRESS_SLIDER_SIZE);
         progressSlider.setValue(0);
+        playBackRate = 1.0;
         //Manage the gstreamer video position when a user is dragging the slider in the panel.
         progressSlider.addChangeListener(new ChangeListener() {
             @Override
@@ -202,11 +209,19 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 if (progressSlider.getValueIsAdjusting()) {
                     long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
                     double relativePosition = progressSlider.getValue() * 1.0 / PROGRESS_SLIDER_SIZE;
-                    long newPos = (long) (relativePosition * duration);
-                    gstPlayBin.seek(newPos, TimeUnit.NANOSECONDS);
+                    long newStartTime = (long) (relativePosition * duration);
+                    gstPlayBin.seek(playBackRate,
+                            Format.TIME,
+                            //FLUSH - flushes the pipeline
+                            //ACCURATE - video will seek exactly to the position requested
+                            EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                            //Set the start position to newTime
+                            SeekType.SET, newStartTime,
+                            //Do nothing for the end position
+                            SeekType.NONE, -1);
                     //Keep constantly updating the time label so users have a sense of
                     //where the slider they are dragging is in relation to the video time
-                    updateTimeLabel(newPos, duration);
+                    updateTimeLabel(newStartTime, duration);
                 }
             }
         });
@@ -268,7 +283,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         try {
             //Pushing off initialization to the background
             extractMediaWorker = new ExtractMedia(file, VideoUtils.getVideoFileInTempDir(file));
-            extractMediaWorker.execute();     
+            extractMediaWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             infoLabel.setText(String.format("<html><font color='red'>%s</font></html>", Bundle.GstVideoPanel_noOpenCase_errMsg()));
@@ -301,8 +316,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         if (gstPlayBin != null) {
             gstPlayBin.stop();
             gstPlayBin.getBus().disconnect(endOfStreamListener);
-            gstPlayBin.getBus().disconnect(endOfStreamListener);
-            gstPlayBin.getBus().disconnect(endOfStreamListener);
+            gstPlayBin.getBus().disconnect(stateChangeListener);
+            gstPlayBin.getBus().disconnect(errorListener);
             gstPlayBin.dispose();
             fxAppSink.clear();
             gstPlayBin = null;
@@ -317,6 +332,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setEnabled(isEnabled);
         videoPanel.setEnabled(isEnabled);
         audioSlider.setEnabled(isEnabled);
+        rewindButton.setEnabled(isEnabled);
+        fastForwardButton.setEnabled(isEnabled);
     }
 
     @Override
@@ -373,7 +390,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      * @param total
      */
     private void updateTimeLabel(long start, long total) {
-        progressLabel.setText(formatTime(start, false) + "/" + formatTime(total, true));
+        progressLabel.setText(formatTime(start) + "/" + formatTime(total));
     }
 
     /**
@@ -383,24 +400,18 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         "MediaPlayerPanel.unknownTime=Unknown",
         "MediaPlayerPanel.timeFormat=%02d:%02d:%02d"
     })
-    private String formatTime(long ns, boolean ceiling) {
+    private String formatTime(long ns) {
         if (ns == -1) {
             return Bundle.MediaPlayerPanel_unknownTime();
         }
 
-        double millis = ns / 1000000.0;
-        double seconds;
-        if (ceiling) {
-            seconds = Math.ceil(millis / 1000);
-        } else {
-            seconds = millis / 1000;
-        }
-        double hours = seconds / 3600;
-        seconds -= (int) hours * 3600;
-        double minutes = seconds / 60;
-        seconds -= (int) minutes * 60;
+        long seconds = TimeUnit.SECONDS.convert(ns, TimeUnit.NANOSECONDS);
+        long hours = TimeUnit.HOURS.convert(seconds, TimeUnit.SECONDS);
+        seconds -= TimeUnit.SECONDS.convert(hours, TimeUnit.HOURS);
+        long minutes = TimeUnit.MINUTES.convert(seconds, TimeUnit.SECONDS);
+        seconds -= TimeUnit.SECONDS.convert(minutes, TimeUnit.MINUTES);
 
-        return String.format(Bundle.MediaPlayerPanel_timeFormat(), (int) hours, (int) minutes, (int) seconds);
+        return String.format(Bundle.MediaPlayerPanel_timeFormat(), hours, minutes, seconds);
     }
 
     /**
@@ -443,8 +454,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         protected void done() {
             try {
                 super.get();
-                
-                if(this.isCancelled()) {
+
+                if (this.isCancelled()) {
                     return;
                 }
 
@@ -460,8 +471,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 playBinBus.connect(endOfStreamListener);
                 playBinBus.connect(stateChangeListener);
                 playBinBus.connect(errorListener);
-                
-                if(this.isCancelled()) {
+
+                if (this.isCancelled()) {
                     return;
                 }
 
@@ -471,14 +482,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 videoPanel.add(fxPanel);
                 fxAppSink = new JavaFxAppSink("JavaFxAppSink", fxPanel);
                 gstPlayBin.setVideoSink(fxAppSink);
-                
-                if(this.isCancelled()) {
+
+                if (this.isCancelled()) {
                     return;
                 }
 
                 gstPlayBin.setVolume((audioSlider.getValue() * 2.0) / 100.0);
                 gstPlayBin.pause();
-                
+
                 timer.start();
                 enableComponents(true);
             } catch (CancellationException ex) {
@@ -506,7 +517,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                  * pipeline. We start this updater when data-flow has just been
                  * initiated so buffering may still be in progress.
                  */
-                if (duration != -1) {
+                if (duration >= 0 && position >= 0) {
                     double relativePosition = (double) position / duration;
                     progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
                 }
@@ -524,15 +535,19 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         videoPanel = new javax.swing.JPanel();
         controlPanel = new javax.swing.JPanel();
         progressSlider = new javax.swing.JSlider();
-        infoLabel = new javax.swing.JLabel();
-        playButton = new javax.swing.JButton();
         progressLabel = new javax.swing.JLabel();
+        buttonPanel = new javax.swing.JPanel();
+        playButton = new javax.swing.JButton();
+        fastForwardButton = new javax.swing.JButton();
+        rewindButton = new javax.swing.JButton();
         VolumeIcon = new javax.swing.JLabel();
         audioSlider = new javax.swing.JSlider();
+        infoLabel = new javax.swing.JLabel();
 
         javax.swing.GroupLayout videoPanelLayout = new javax.swing.GroupLayout(videoPanel);
         videoPanel.setLayout(videoPanelLayout);
@@ -542,7 +557,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         );
         videoPanelLayout.setVerticalGroup(
             videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 259, Short.MAX_VALUE)
+            .addGap(0, 124, Short.MAX_VALUE)
         );
 
         progressSlider.setValue(0);
@@ -551,8 +566,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setMinimumSize(new java.awt.Dimension(36, 21));
         progressSlider.setPreferredSize(new java.awt.Dimension(200, 21));
 
-        org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.infoLabel.text")); // NOI18N
-        infoLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
+
+        buttonPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(playButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playButton.text")); // NOI18N
         playButton.addActionListener(new java.awt.event.ActionListener() {
@@ -560,56 +576,97 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 playButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.ipadx = 21;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
+        buttonPanel.add(playButton, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(fastForwardButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.fastForwardButton.text")); // NOI18N
+        fastForwardButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fastForwardButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 6, 0, 0);
+        buttonPanel.add(fastForwardButton, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rewindButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.rewindButton.text")); // NOI18N
+        rewindButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rewindButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(5, 0, 1, 0);
+        buttonPanel.add(rewindButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(VolumeIcon, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.VolumeIcon.text")); // NOI18N
+        VolumeIcon.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.ipadx = 8;
+        gridBagConstraints.ipady = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
+        buttonPanel.add(VolumeIcon, gridBagConstraints);
 
         audioSlider.setMajorTickSpacing(10);
         audioSlider.setMaximum(50);
         audioSlider.setMinorTickSpacing(5);
-        audioSlider.setPaintTicks(true);
         audioSlider.setToolTipText(org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.audioSlider.toolTipText")); // NOI18N
         audioSlider.setValue(25);
         audioSlider.setMinimumSize(new java.awt.Dimension(200, 21));
         audioSlider.setPreferredSize(new java.awt.Dimension(200, 21));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.ipadx = -116;
+        gridBagConstraints.ipady = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(3, 1, 0, 10);
+        buttonPanel.add(audioSlider, gridBagConstraints);
+
+        infoLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.infoLabel.text")); // NOI18N
+        infoLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
+            .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addComponent(playButton, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(progressLabel))
-                    .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(VolumeIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(2, 2, 2)
-                        .addComponent(audioSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 229, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(buttonPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
+                        .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(progressLabel)))
                 .addContainerGap())
         );
         controlPanelLayout.setVerticalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelLayout.createSequentialGroup()
-                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(playButton))
+                .addGap(0, 0, 0)
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(audioSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(VolumeIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(infoLabel)))
-                .addGap(13, 13, 13))
+                .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -628,6 +685,46 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void rewindButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rewindButtonActionPerformed
+        long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+        //Skip 30 seconds.
+        long rewindDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+        //Ensure new video position is within bounds
+        long newTime = Math.max(currentTime - rewindDelta, 0);
+        gstPlayBin.seek(playBackRate,
+                Format.TIME,
+                //FLUSH - flushes the pipeline
+                //ACCURATE - video will seek exactly to the position requested
+                EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                //Set the start position to newTime
+                SeekType.SET, newTime,
+                //Do nothing for the end position
+                SeekType.NONE, -1);
+    }//GEN-LAST:event_rewindButtonActionPerformed
+
+    private void fastForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fastForwardButtonActionPerformed
+        long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+        long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+        //Skip 30 seconds.
+        long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
+        
+        //Ignore fast forward requests if there are less than 30 seconds left.
+        if(currentTime + fastForwardDelta >= duration) {
+            return;
+        }
+        
+        long newTime = currentTime + fastForwardDelta;
+        gstPlayBin.seek(playBackRate,
+                Format.TIME,
+                //FLUSH - flushes the pipeline
+                //ACCURATE - video will seek exactly to the position requested
+                EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                //Set the start position to newTime
+                SeekType.SET, newTime,
+                //Do nothing for the end position
+                SeekType.NONE, -1);
+    }//GEN-LAST:event_fastForwardButtonActionPerformed
+
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
         if (gstPlayBin.isPlaying()) {
             gstPlayBin.pause();
@@ -636,15 +733,17 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
     }//GEN-LAST:event_playButtonActionPerformed
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel VolumeIcon;
     private javax.swing.JSlider audioSlider;
+    private javax.swing.JPanel buttonPanel;
     private javax.swing.JPanel controlPanel;
+    private javax.swing.JButton fastForwardButton;
     private javax.swing.JLabel infoLabel;
     private javax.swing.JButton playButton;
     private javax.swing.JLabel progressLabel;
     private javax.swing.JSlider progressSlider;
+    private javax.swing.JButton rewindButton;
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
 }
