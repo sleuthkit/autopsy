@@ -24,6 +24,7 @@ import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 
 /**
  * SwingWorker to retrieve the contents of a page.
@@ -35,7 +36,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
     private final FileSearch.AttributeType groupingAttribute;
     private final FileGroup.GroupSortingAlgorithm groupSort;
     private final FileSorter.SortingMethod fileSortMethod;
-    private final String groupName;
+    private final GroupKey groupKey;
     private final int startingEntry;
     private final int pageSize;
     private final FileSearchData.FileType resultType;
@@ -49,7 +50,8 @@ final class PageWorker extends SwingWorker<Void, Void> {
      * @param groupingAttribute The grouping attribute used by the search.
      * @param groupSort         The sorting algorithm used for groups.
      * @param fileSortMethod    The sorting method used for files.
-     * @param groupName         The name of the group which was selected.
+     * @param groupKey          The key which uniquely identifies the group
+     *                          which was selected.
      * @param startingEntry     The first entry in the group to include in this
      *                          page.
      * @param pageSize          The number of files to include in this page.
@@ -57,13 +59,13 @@ final class PageWorker extends SwingWorker<Void, Void> {
      * @param centralRepo       The central repository to be used.
      */
     PageWorker(List<FileSearchFiltering.FileFilter> searchfilters, FileSearch.AttributeType groupingAttribute,
-            FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, String groupName,
+            FileGroup.GroupSortingAlgorithm groupSort, FileSorter.SortingMethod fileSortMethod, GroupKey groupKey,
             int startingEntry, int pageSize, FileSearchData.FileType resultType, EamDb centralRepo) {
         this.searchfilters = searchfilters;
         this.groupingAttribute = groupingAttribute;
         this.groupSort = groupSort;
         this.fileSortMethod = fileSortMethod;
-        this.groupName = groupName;
+        this.groupKey = groupKey;
         this.startingEntry = startingEntry;
         this.pageSize = pageSize;
         this.resultType = resultType;
@@ -78,7 +80,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
             List<ResultFile> results = FileSearch.getFilesInGroup(searchfilters,
                     groupingAttribute,
                     groupSort,
-                    fileSortMethod, groupName, startingEntry, pageSize,
+                    fileSortMethod, groupKey, startingEntry, pageSize,
                     Case.getCurrentCase().getSleuthkitCase(), centralRepo);
             int currentPage = startingEntry / pageSize; //integer division should round down to get page number correctly
             DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.PageRetrievedEvent(resultType, currentPage, results));

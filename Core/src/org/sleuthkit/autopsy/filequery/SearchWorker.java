@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 
 /**
  * SwingWorker to perform search on a background thread
@@ -65,7 +66,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            LinkedHashMap<String, Integer> results = FileSearch.getGroupSizes(filters,
+            LinkedHashMap<GroupKey, Integer> results = FileSearch.getGroupSizes(filters,
                     groupingAttr,
                     groupSortAlgorithm,
                     fileSort,

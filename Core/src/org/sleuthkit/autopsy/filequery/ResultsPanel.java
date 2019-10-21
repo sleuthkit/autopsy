@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -57,7 +58,7 @@ public class ResultsPanel extends javax.swing.JPanel {
     private FileSearch.AttributeType groupingAttribute;
     private FileGroup.GroupSortingAlgorithm groupSort;
     private FileSorter.SortingMethod fileSortMethod;
-    private String selectedGroupName;
+    private GroupKey selectedGroupKey;
     private int currentPage = 0;
     private int previousPageSize = 10;
     private FileSearchData.FileType resultType;
@@ -241,7 +242,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             groupingAttribute = groupSelectedEvent.getGroupingAttr();
             groupSort = groupSelectedEvent.getGroupSort();
             fileSortMethod = groupSelectedEvent.getFileSort();
-            selectedGroupName = groupSelectedEvent.getGroupName();
+            selectedGroupKey = groupSelectedEvent.getGroupKey();
             resultType = groupSelectedEvent.getResultType();
             groupSize = groupSelectedEvent.getGroupSize();
             setPage(0);
@@ -274,7 +275,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             if (pageWorker != null && !pageWorker.isDone()) {
                 pageWorker.cancel(true);
             }
-            pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupName, startingEntry, pageSize, resultType, centralRepo);
+            pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, startingEntry, pageSize, resultType, centralRepo);
             pageWorker.execute();
         }
     }
