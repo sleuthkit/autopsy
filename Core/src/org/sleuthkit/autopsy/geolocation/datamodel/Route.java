@@ -218,6 +218,6 @@ public class Route {
      * @throws TskCoreException
      */
     private Map<String, String> initalizeOtherAttributes(BlackboardArtifact artifact) throws TskCoreException {
-        return GeolocationUtility.getOtherGeolocationAttributes(artifact);
+        return GeolocationUtils.getOtherGeolocationAttributes(artifact);
     }
 }

@@ -15,7 +15,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  *
  */
-public class GeolocationUtility {
+public class GeolocationUtils {
 
     private static final String DEFAULT_COORD_FORMAT = "%.2f, %.2f";
 
@@ -40,6 +40,13 @@ public class GeolocationUtility {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL
     };
+    
+    /**
+     * This is a Utility class that should not be constructed.
+     */
+    private GeolocationUtils() {
+        
+    }
 
     static public String getFormattedCoordinates(Double latitude, Double longitude) {
         if (latitude == null || longitude == null) {

@@ -50,7 +50,7 @@ import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationManager;
-import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationUtility;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationUtils;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -309,7 +309,7 @@ class KMLReport implements GeneralReportModule {
             path = Paths.get(abstractFile.getName());
         }
 
-        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, GeolocationUtility.getFormattedCoordinates(point.getLatitude(), point.getLongitude())));
+        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, GeolocationUtils.getFormattedCoordinates(point.getLatitude(), point.getLongitude())));
     }
 
     /**
@@ -330,7 +330,7 @@ class KMLReport implements GeneralReportModule {
                 continue;
             }
 
-            String formattedCords = GeolocationUtility.getFormattedCoordinates(point.getLatitude(), point.getLongitude());
+            String formattedCords = GeolocationUtils.getFormattedCoordinates(point.getLatitude(), point.getLongitude());
 
             switch (point.getType()) {
                 case METADATA_EXIF:
@@ -396,8 +396,8 @@ class KMLReport implements GeneralReportModule {
         Element startingPoint = makePoint(start.getLatitude(), start.getLongitude(), start.getAltitude());
         Element endingPoint = makePoint(end.getLatitude(), end.getLongitude(), end.getAltitude());
 
-        String formattedEnd = GeolocationUtility.getFormattedCoordinates(end.getLatitude(), end.getLongitude());
-        String formattedStart = GeolocationUtility.getFormattedCoordinates(start.getLatitude(), start.getLongitude());
+        String formattedEnd = GeolocationUtils.getFormattedCoordinates(end.getLatitude(), end.getLongitude());
+        String formattedStart = GeolocationUtils.getFormattedCoordinates(start.getLatitude(), start.getLongitude());
 
         String formattedCoordinates = String.format("%s to %s", formattedStart, formattedEnd);
 
