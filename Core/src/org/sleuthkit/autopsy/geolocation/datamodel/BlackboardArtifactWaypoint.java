@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.Map;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -39,6 +40,12 @@ public class BlackboardArtifactWaypoint implements Waypoint {
     final private BlackboardArtifact artifact;
     final private Waypoint.Type type;
     final private Map<String, String> otherAttributesMap;
+    
+    @Messages({
+        "BlackboardArtifactWaypoint_Last_Known_Label=Last Known Location",
+        "BlackboardArtifactWaypoint_GPS_Trackpoint=GPS Trackpoint",
+        "BlackboardArtifactWaypoint_GPS_Search=GPS Search"
+    })
 
     /**
      * Constructs a Waypoint from a BlackboardArtifact
@@ -50,13 +57,13 @@ public class BlackboardArtifactWaypoint implements Waypoint {
     protected BlackboardArtifactWaypoint(BlackboardArtifact artifact) throws TskCoreException {
         this.artifact = artifact;
         timestamp = getTimestampFromArtifact(artifact);
-        longitude = GeolocationUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
-        latitude = GeolocationUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
-        altitude = GeolocationUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
+        longitude = GeolocationUtility.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE);
+        latitude = GeolocationUtility.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE);
+        altitude = GeolocationUtility.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
         image = getImageFromArtifact(artifact);
         label = getLabelFromArtifact(artifact);
         type = getTypeFromArtifact(artifact);
-        otherAttributesMap = GeolocationUtils.getOtherGeolocationAttributes(artifact);
+        otherAttributesMap = GeolocationUtility.getOtherGeolocationAttributes(artifact);
     }
 
     /**
@@ -124,13 +131,11 @@ public class BlackboardArtifactWaypoint implements Waypoint {
 
         BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
 
-        switch (artifactType) {
-            case TSK_METADATA_EXIF:
-                return GeolocationUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
-            default:
-                return GeolocationUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-
+        if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF) {
+           return GeolocationUtility.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
         }
+
+        return GeolocationUtility.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
     }
 
     /**
@@ -173,34 +178,23 @@ public class BlackboardArtifactWaypoint implements Waypoint {
      * @throws TskCoreException
      */
     private String getLabelFromArtifact(BlackboardArtifact artifact) throws TskCoreException {
-        BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
-
-        if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF) {
-            if (getImage() != null) {
-                return getImage().getName();
-            }
+        String typeLabel = getLabelFromImage();
+        if (typeLabel != null && !typeLabel.isEmpty()) {
+            return typeLabel;
         }
 
-        String typeLabel = GeolocationUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
+        typeLabel = GeolocationUtility.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         if (typeLabel == null || typeLabel.isEmpty()) {
             switch (artifactType) {
                 case TSK_GPS_SEARCH:
-                    typeLabel = GeolocationUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
-                    if (typeLabel == null || typeLabel.isEmpty()) {
-                        typeLabel = "GPS Search";
-                    }
+                    typeLabel = getLabelForSearch(artifact);
                     break;
                 case TSK_GPS_TRACKPOINT:
-                    typeLabel = GeolocationUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
-                    if (typeLabel == null || typeLabel.isEmpty()) {
-                        typeLabel = GeolocationUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
-                    }
-                    if (typeLabel == null || typeLabel.isEmpty()) {
-                        typeLabel = "GPS Trackpoint";
-                    }
+                    typeLabel = getLabelforTrackpoint(artifact);
                     break;
                 case TSK_GPS_LAST_KNOWN_LOCATION:
-                    typeLabel = "Last Known Location";
+                    typeLabel = Bundle.BlackboardArtifactWaypoint_Last_Known_Label();
                     break;
                 default:
                     typeLabel = "";
@@ -208,6 +202,61 @@ public class BlackboardArtifactWaypoint implements Waypoint {
             }
         }
         return typeLabel;
+    }
+
+    /**
+     * Returns a Label for a GPS_Trackpoint artifact. This function assumes the
+     * calling function has already checked TSK_NAME.
+     *
+     * @param artifact BlackboardArtifact for waypoint
+     *
+     * @return String label for the artifacts way point.
+     *
+     * @throws TskCoreException
+     */
+    private String getLabelforTrackpoint(BlackboardArtifact artifact) throws TskCoreException {
+        String typeLabel = GeolocationUtility.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
+        if (typeLabel == null || typeLabel.isEmpty()) {
+            typeLabel = GeolocationUtility.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
+        }
+
+        if (typeLabel == null || typeLabel.isEmpty()) {
+            typeLabel = Bundle.BlackboardArtifactWaypoint_GPS_Trackpoint();
+        }
+
+        return typeLabel;
+    }
+
+    /**
+     * Returns a Label for a GPS_SEARCH artifact. This function assumes the
+     * calling function has already checked TSK_NAME.
+     *
+     * @param artifact BlackboardArtifact for waypoint
+     *
+     * @return String label for the artifacts way point.
+     *
+     * @throws TskCoreException
+     */
+    private String getLabelForSearch(BlackboardArtifact artifact) throws TskCoreException {
+        String typeLabel = GeolocationUtility.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
+        if (typeLabel == null || typeLabel.isEmpty()) {
+            typeLabel = Bundle.BlackboardArtifactWaypoint_GPS_Search();
+        }
+
+        return typeLabel;
+    }
+    
+    /**
+     * Returns a Label from an image.
+     * 
+     * @return String label for waypoint with image or null.
+     */
+    private String getLabelFromImage() {
+        if (getImage() != null) {
+            return getImage().getName();
+        } else {
+            return null;
+        }
     }
 
     /**

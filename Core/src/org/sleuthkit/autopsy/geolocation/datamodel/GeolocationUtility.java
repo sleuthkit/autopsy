@@ -15,7 +15,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  *
  */
-public class GeolocationUtils {
+public class GeolocationUtility {
 
     private static final String DEFAULT_COORD_FORMAT = "%.2f, %.2f";
 

@@ -118,7 +118,7 @@ public interface Waypoint {
          *
          * @param displayName String value title for enum
          */
-        private Type(String displayName) {
+        Type(String displayName) {
             this.displayName = displayName;
         }
 

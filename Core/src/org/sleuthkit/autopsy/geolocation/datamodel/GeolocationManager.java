@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Static functions for the creations of geolocation points for artifacts.
  *
  */
-public class GeolocationManager {
+public final class GeolocationManager {
 
     /**
      * Add a private constructor to silence codacy warning about making this
