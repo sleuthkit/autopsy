@@ -71,7 +71,6 @@ import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
 import org.freedesktop.gstreamer.event.SeekFlags;
 import org.freedesktop.gstreamer.event.SeekType;
-import org.openide.util.Exceptions;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -571,7 +570,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     sliderLock.release();
                 }
             } catch (InterruptedException ex) {
-                
+                //Video panel thread interrupted while waiting on lock.
             }
         }
     }
@@ -640,11 +639,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * the thumb progresses.
          *
          * @param b JSlider component
-         * @param width Width of the oval
-         * @param height Height of the oval.
+         * @param config Configuration object. Contains info about thumb dimensions
+         *               and colors.
          */
-        public CircularJSliderUI(JSlider b, CircularJSliderConfiguration config) {
-            super(b);
+        public CircularJSliderUI(JSlider slider, CircularJSliderConfiguration config) {
+            super(slider);
             this.config = config;
         }
 
@@ -658,23 +657,23 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * rectangle Controller.
          */
         @Override
-        public void paintThumb(Graphics g) {
+        public void paintThumb(Graphics graphic) {
             Rectangle thumb = this.thumbRect;
 
-            Color original = g.getColor();
+            Color original = graphic.getColor();
 
             //Change the thumb view from the rectangle
             //controller to an oval.
-            g.setColor(config.getThumbColor());
+            graphic.setColor(config.getThumbColor());
             Dimension thumbDimension = config.getThumbDimension();
-            g.fillOval(thumb.x, thumb.y, thumbDimension.width, thumbDimension.height);
+            graphic.fillOval(thumb.x, thumb.y, thumbDimension.width, thumbDimension.height);
 
             //Preserve the graphics original color
-            g.setColor(original);
+            graphic.setColor(original);
         }
 
         @Override
-        public void paintTrack(Graphics g) {
+        public void paintTrack(Graphics graphic) {
             //This rectangle is the bounding box for the progress bar
             //portion of the slider. The track is painted in the middle
             //of this rectangle and the thumb laid overtop.
@@ -686,20 +685,20 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             int thumbX = thumb.x;
             int thumbY = thumb.y;
 
-            Color original = g.getColor();
+            Color original = graphic.getColor();
 
             //Paint the seen side
-            g.setColor(config.getSeenTrackColor());
-            g.drawLine(track.x, track.y + track.height / 2,
+            graphic.setColor(config.getSeenTrackColor());
+            graphic.drawLine(track.x, track.y + track.height / 2,
                     thumbX, thumbY + track.height / 2);
 
             //Paint the unseen side
-            g.setColor(config.getUnseenTrackColor());
-            g.drawLine(thumbX, thumbY + track.height / 2,
+            graphic.setColor(config.getUnseenTrackColor());
+            graphic.drawLine(thumbX, thumbY + track.height / 2,
                     track.x + track.width, track.y + track.height / 2);
 
             //Preserve the graphics color.
-            g.setColor(original);
+            graphic.setColor(original);
         }
         
         @Override
@@ -728,6 +727,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 slider.setValueIsAdjusting(false);
                 sliderLock.release();
             } catch (InterruptedException ex) {
+                //Thread (EDT) interrupted while waiting on lock.
             }
         }
 
@@ -735,14 +735,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * Applies anti-aliasing if available.
          */
         @Override
-        public void update(Graphics g, JComponent c) {
-            if (g instanceof Graphics2D) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+        public void update(Graphics graphic, JComponent component) {
+            if (graphic instanceof Graphics2D) {
+                Graphics2D graphic2 = (Graphics2D) graphic;
+                graphic2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_ON);
             }
 
-            super.update(g, c);
+            super.update(graphic, component);
         }
         
         /**
