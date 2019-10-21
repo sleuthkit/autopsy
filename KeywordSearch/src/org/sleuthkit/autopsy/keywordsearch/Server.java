@@ -1277,20 +1277,14 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    public void deleteDataSource(Long dataSourceId) throws KeywordSearchModuleException, NoOpenCoreException {
+    private void deleteDataSource(Long dataSourceId) throws SolrServerException, KeywordSearchModuleException, NoOpenCoreException, IOException {
         currentCoreLock.writeLock().lock();
-        try {
-            if (null == currentCore) {
-                throw new NoOpenCoreException();
-            }
-            currentCore.deleteDataSource(dataSourceId);
-            currentCore.commit();
-        } catch (SolrServerException | KeywordSearchModuleException ex) {
-            throw new KeywordSearchModuleException(
-                    NbBundle.getMessage(this.getClass(), "Server.delDoc.exception.msg", dataSourceId), ex);
-        } finally {
-            currentCoreLock.writeLock().unlock();
+        if (null == currentCore) {
+            throw new NoOpenCoreException();
         }
+        currentCore.deleteDataSource(dataSourceId);
+        currentCore.commit();
+        currentCoreLock.writeLock().unlock();
     }
 
     /**
@@ -1534,16 +1528,11 @@ public class Server {
             }
         }
 
-        private void deleteDataSource(Long dsObjId) throws KeywordSearchModuleException {
+        private void deleteDataSource(Long dsObjId) throws SolrServerException, IOException {
             String dataSourceId = Long.toString(dsObjId);
             String deleteQuery = "image_id:" + dataSourceId;
-            try {
-                // Get the first result. 
-                UpdateResponse updateResponse = solrCore.deleteByQuery(deleteQuery);
-            } catch (SolrServerException | IOException ex) {
-                throw new KeywordSearchModuleException(
-                        NbBundle.getMessage(this.getClass(), "Server.delDoc.exception.msg", dataSourceId), ex); //NON-NLS
-            }
+            // Get the first result. 
+            UpdateResponse updateResponse = solrCore.deleteByQuery(deleteQuery);
         }
 
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
