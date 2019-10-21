@@ -208,7 +208,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     public void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
         try {
             KeywordSearch.getServer().deleteDataSource(dataSourceId);
-        } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+        } catch (NoOpenCoreException | KeywordSearchModuleException | SolrServerException | IOException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
                     "SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore"));
         }

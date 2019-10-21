@@ -1277,7 +1277,7 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    private void deleteDataSource(Long dataSourceId) throws SolrServerException, KeywordSearchModuleException, NoOpenCoreException, IOException {
+    public void deleteDataSource(Long dataSourceId) throws SolrServerException, KeywordSearchModuleException, NoOpenCoreException, IOException {
         currentCoreLock.writeLock().lock();
         if (null == currentCore) {
             throw new NoOpenCoreException();
