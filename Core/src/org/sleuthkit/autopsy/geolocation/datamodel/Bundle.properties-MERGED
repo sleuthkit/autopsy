@@ -1,0 +1,7 @@
+Route_Label=As-the-crow-flies Route
+Waypoint_Bookmark_Display_String=GPS Bookmark
+Waypoint_EXIF_Display_String=EXIF Metadata With Location
+Waypoint_Last_Known_Display_String=GPS Last Known Location
+Waypoint_Route_Point_Display_String=GPS Individual Route Point
+Waypoint_Search_Display_String=GPS Search
+Waypoint_Trackpoint_Display_String=GPS Trackpoint

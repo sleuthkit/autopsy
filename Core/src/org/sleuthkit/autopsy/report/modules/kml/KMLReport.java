@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,6 +36,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Map;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -46,13 +48,13 @@ import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.geolocation.datamodel.EXIFMetadataPoint;
+import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationManager;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationUtils;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
-import org.sleuthkit.autopsy.geolocation.datamodel.BlackboardArtifactPoint;
 
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
@@ -68,8 +70,8 @@ class KMLReport implements GeneralReportModule {
     private SleuthkitCase skCase;
     private final SimpleDateFormat kmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
     private Namespace ns;
-    private final String SEP = "<br>";
-    
+    String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
+
     private Element gpsExifMetadataFolder;
     private Element gpsBookmarksFolder;
     private Element gpsLastKnownLocationFolder;
@@ -123,8 +125,8 @@ class KMLReport implements GeneralReportModule {
         "KMLReport.gpsRouteError=Could not extract GPS Route information.",
         "KMLReport.gpsRouteDatabaseError=Could not get GPS Routes from database.",
         "KMLReport.gpsSearchDatabaseError=Could not get GPS Searches from database.",
-        "KMLReport.trackpointError=Could not extract Trackpoint information.",        
-        "KMLReport.trackpointDatabaseError=Could not get GPS Trackpoints from database.",        
+        "KMLReport.trackpointError=Could not extract Trackpoint information.",
+        "KMLReport.trackpointDatabaseError=Could not get GPS Trackpoints from database.",
         "KMLReport.stylesheetError=Error placing KML stylesheet. The .KML file will not function properly.",
         "KMLReport.kmlFileWriteError=Could not write the KML file.",
         "# {0} - filePath",
@@ -145,7 +147,7 @@ class KMLReport implements GeneralReportModule {
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
         String errorMessage = "";
-        
+
         skCase = currentCase.getSleuthkitCase();
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
@@ -153,15 +155,15 @@ class KMLReport implements GeneralReportModule {
         Document kmlDocument = setupReportDocument();
 
         ReportProgressPanel.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
-            
-         try {
-             makeRoutes(skCase);
-             addLocationsToReport(skCase, baseReportDir);
-         } catch(TskCoreException | IOException ex) {
-             errorMessage = "Failed to complete report.";
+
+        try {
+            makeRoutes(skCase);
+            addLocationsToReport(skCase, baseReportDir);
+        } catch (TskCoreException | IOException ex) {
+            errorMessage = "Failed to complete report.";
             logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
-         }
+        }
 
         // Copy the style sheet
         try {
@@ -200,10 +202,10 @@ class KMLReport implements GeneralReportModule {
 
         progressPanel.complete(result, errorMessage);
     }
-    
+
     /**
      * Do all of the setting up of elements needed for the report.
-     * 
+     *
      * @return The report document object.
      */
     private Document setupReportDocument() {
@@ -274,26 +276,27 @@ class KMLReport implements GeneralReportModule {
         document.addContent(gpsRouteFolder);
         document.addContent(gpsSearchesFolder);
         document.addContent(gpsTrackpointsFolder);
-        
+
         return kmlDocument;
     }
-    
+
     /**
      * For the given point, create the data needed for the EXIF_METADATA
-     * 
-     * @param location The geolocation of the data
-     * @param baseReportDirectory The report directory where the image will be created.
-     * 
-     * @throws IOException 
+     *
+     * @param location            The geolocation of the data
+     * @param baseReportDirectory The report directory where the image will be
+     *                            created.
+     *
+     * @throws IOException
      */
-    void addExifMetadataContent(EXIFMetadataPoint point, String baseReportDirectory) throws IOException{
+    void addExifMetadataContent(Waypoint point, String baseReportDirectory) throws IOException {
         Element mapPoint = makePoint(point);
-        if(mapPoint == null) {
+        if (mapPoint == null) {
             return;
         }
-        
+
         AbstractFile abstractFile = point.getImage();
-        String details = point.getDetails();
+        String details = getFormattedDetails(point);
 
         Path path;
         copyFileUsingStream(abstractFile, Paths.get(baseReportDirectory, abstractFile.getName()).toFile());
@@ -304,57 +307,66 @@ class KMLReport implements GeneralReportModule {
         }
         if (path == null) {
             path = Paths.get(abstractFile.getName());
-        } 
-        
-        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, point.getFormattedCoordinates()));
+        }
+
+        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, GeolocationUtils.getFormattedCoordinates(point.getLatitude(), point.getLongitude())));
     }
-    
+
     /**
      * Add the new location to the correct folder based on artifact type.
-     * @param skCase Currently open case
+     *
+     * @param skCase        Currently open case
      * @param baseReportDir Output directory for the report.
-     * 
+     *
      * @throws TskCoreException
-     * @throws IOException 
+     * @throws IOException
      */
     void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws TskCoreException, IOException {
-        List<BlackboardArtifactPoint> points = GeolocationManager.getPoints(skCase, false);
+        List<Waypoint> points = GeolocationManager.getWaypoints(skCase);
 
-        for (BlackboardArtifactPoint point : points) {
+        for (Waypoint point : points) {
             Element reportPoint = makePoint(point);
             if (reportPoint == null) {
                 continue;
             }
-            if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
-                addExifMetadataContent((EXIFMetadataPoint) point, baseReportDir);
 
-            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
-                gpsBookmarksFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.BLUE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
-            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
-                gpsLastKnownLocationFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.PURPLE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
-            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()) {
-                gpsSearchesFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
-            } else if (point.getArtifact().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID()) {
-                gpsTrackpointsFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, point.getDetails(), point.getTimestamp(), reportPoint, point.getFormattedCoordinates()));
+            String formattedCords = GeolocationUtils.getFormattedCoordinates(point.getLatitude(), point.getLongitude());
+
+            switch (point.getType()) {
+                case METADATA_EXIF:
+                    addExifMetadataContent(point, baseReportDir);
+                    break;
+                case BOOKMARK:
+                    gpsBookmarksFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.BLUE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
+                    break;
+                case LAST_KNOWN_LOCATION:
+                    gpsLastKnownLocationFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.PURPLE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
+                    break;
+                case SEARCH:
+                    gpsSearchesFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
+                    break;
+                case TRACKPOINT:
+                    gpsTrackpointsFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
+                    break;
             }
         }
     }
-    
+
     /**
      * Add the route to the route folder in the document.
-     * 
+     *
      * @param skCase Currently open case.
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     void makeRoutes(SleuthkitCase skCase) throws TskCoreException {
         List<Route> routes = GeolocationManager.getGPSRoutes(skCase);
 
         if (routes != null) {
             for (Route route : routes) {
-                List<BlackboardArtifactPoint> routePoints = route.getRoute();
-                BlackboardArtifactPoint start = null;
-                BlackboardArtifactPoint end = null;
+                List<Waypoint> routePoints = route.getRoute();
+                Waypoint start = null;
+                Waypoint end = null;
                 // This is hardcoded knowledge that there is only two points
                 // a start and end.  In the long run it would be nice to 
                 // support the idea of a route with multiple points.  The Route
@@ -373,18 +385,21 @@ class KMLReport implements GeneralReportModule {
                 Element startingPoint = makePoint(start.getLatitude(), start.getLongitude(), start.getAltitude());
                 Element endingPoint = makePoint(end.getLatitude(), end.getLongitude(), end.getAltitude());
 
-                String formattedCoordinates = String.format("%s to %s", start.getFormattedCoordinates(), end.getFormattedCoordinates());
+                String formattedEnd = GeolocationUtils.getFormattedCoordinates(end.getLatitude(), end.getLongitude());
+                String formattedStart = GeolocationUtils.getFormattedCoordinates(start.getLatitude(), start.getLongitude());
 
-                if(reportRoute != null) {
-                    gpsRouteFolder.addContent(makePlacemark("As-the-crow-flies Route", FeatureColor.GREEN, "", route.getTimestamp(), reportRoute, formattedCoordinates)); //NON-NLS
+                String formattedCoordinates = String.format("%s to %s", formattedStart, formattedEnd);
+
+                if (reportRoute != null) {
+                    gpsRouteFolder.addContent(makePlacemark(route.getLabel(), FeatureColor.GREEN, getFormattedDetails(route), route.getTimestamp(), reportRoute, formattedCoordinates)); //NON-NLS
                 }
-                
-                if(startingPoint != null) {
-                    gpsRouteFolder.addContent(makePlacemark(start.getLabel(), FeatureColor.GREEN, start.getDetails(), start.getTimestamp(), startingPoint, start.getFormattedCoordinates())); //NON-NLS
+
+                if (startingPoint != null) {
+                    gpsRouteFolder.addContent(makePlacemark(start.getLabel(), FeatureColor.GREEN, getFormattedDetails(start), start.getTimestamp(), startingPoint, formattedStart)); //NON-NLS
                 }
-                
-                if(endingPoint != null) {
-                    gpsRouteFolder.addContent(makePlacemark(end.getLabel(), FeatureColor.GREEN, end.getDetails(), end.getTimestamp(), endingPoint, end.getFormattedCoordinates())); //NON-NLS
+
+                if (endingPoint != null) {
+                    gpsRouteFolder.addContent(makePlacemark(end.getLabel(), FeatureColor.GREEN, getFormattedDetails(end), end.getTimestamp(), endingPoint, formattedEnd)); //NON-NLS
                 }
             }
         }
@@ -392,23 +407,23 @@ class KMLReport implements GeneralReportModule {
 
     /**
      * Format a point time stamp (in seconds) to the report format.
-     * 
+     *
      * @param timeStamp The timestamp in epoch seconds.
-     * 
+     *
      * @return The formatted timestamp
      */
     private String getTimeStamp(long timeStamp) {
         return kmlDateFormat.format(new java.util.Date(timeStamp * 1000));
     }
-    
+
     /**
      * Create the point for the given artifact.
-     * 
+     *
      * @param point Artifact point.
-     * 
-     * @return point element. 
+     *
+     * @return point element.
      */
-    private Element makePoint(BlackboardArtifactPoint point) {
+    private Element makePoint(Waypoint point) {
         return makePoint(point.getLatitude(), point.getLongitude(), point.getAltitude());
     }
 
@@ -425,9 +440,9 @@ class KMLReport implements GeneralReportModule {
      */
     private Element makePoint(Double latitude, Double longitude, Double altitude) {
         if (latitude == null || longitude == null) {
-          return null;
+            return null;
         }
-       
+
         if (altitude == null) {
             altitude = 0.0;
         }
@@ -456,10 +471,10 @@ class KMLReport implements GeneralReportModule {
      * Create a LineString for use in a Placemark. Note in this method, start
      * and stop altitudes get ignored, as Google Earth apparently has trouble
      * using altitudes for LineStrings, though the parameters are still in the
-     * call. 
-     * 
-     * If null values are pass for the latitudes or longitudes a line will not be
-     * drawn.
+     * call.
+     *
+     * If null values are pass for the latitudes or longitudes a line will not
+     * be drawn.
      *
      * @param startLatitude  Starting latitude
      * @param startLongitude Starting longitude
@@ -471,10 +486,10 @@ class KMLReport implements GeneralReportModule {
      * @return the Line as an Element
      */
     private Element makeLineString(Double startLatitude, Double startLongitude, Double startAltitude, Double stopLatitude, Double stopLongitude, Double stopAltitude) {
-        if(startLatitude == null || startLongitude == null || stopLatitude == null || stopLongitude == null) {
+        if (startLatitude == null || startLongitude == null || stopLatitude == null || stopLongitude == null) {
             return null;
         }
-        
+
         if (startAltitude == null) {
             startAltitude = 0.0;
         }
@@ -648,5 +663,93 @@ class KMLReport implements GeneralReportModule {
             }
         }
         return strbuf.toString();
+    }
+
+    private String getFormattedDetails(Waypoint point) {
+        StringBuilder result = new StringBuilder(); //NON-NLS
+        result.append(getDetailsHeader(point));
+        result.append(formatAttribute("Name", point.getLabel()));
+
+        Long timestamp = point.getTimestamp();
+        if (timestamp != null) {
+            result.append(formatAttribute("Timestamp", getTimeStamp(timestamp)));
+        }
+
+        result.append(formatAttribute("Latitude", point.getLatitude().toString()));
+        result.append(formatAttribute("Longitude", point.getLongitude().toString()));
+        if (point.getAltitude() != null) {
+            result.append(formatAttribute("Altitude", point.getAltitude().toString()));
+        }
+
+        Map<String, String> otherProps = point.getOtherProperties();
+        Iterator<Entry<String, String>> iterator = otherProps.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Entry<String, String> entry = iterator.next();
+            String value = entry.getValue();
+            if (value != null && !value.isEmpty()) {
+                result.append(formatAttribute(entry.getKey(), value));
+            }
+        }
+
+        return result.toString();
+    }
+
+    private String formatAttribute(String title, String value) {
+        return String.format(HTML_PROP_FORMAT, title, value);
+    }
+
+    /*
+     * This current retains the headers from the original report. There is
+     * probably a better way to do this using the display value of the
+     * blackboard artifact.
+     */
+    private String getDetailsHeader(Waypoint point) {
+        return String.format("<h3>%s</h3>", point.getType().getDisplayName());
+    }
+
+    /**
+     * Returns an HTML formatted string of all the
+     *
+     * @param route
+     *
+     * @return
+     */
+    private String getFormattedDetails(Route route) {
+        List<Waypoint> points = route.getRoute();
+        StringBuilder result = new StringBuilder(); //NON-NLS
+
+        result.append(String.format("<h3>%s</h3>", "GPS Route"));
+        result.append(formatAttribute("Name", route.getLabel()));
+
+        Long timestamp = route.getTimestamp();
+        if (timestamp != null) {
+            result.append(formatAttribute("Timestamp", getTimeStamp(timestamp)));
+        }
+
+        if (points.size() > 1) {
+            Waypoint start = points.get(0);
+            Waypoint end = points.get(1);
+
+            result.append(formatAttribute("Start Latitude", start.getLatitude().toString()));
+            result.append(formatAttribute("Start Longitude", start.getLongitude().toString()));
+            result.append(formatAttribute("End Latitude", end.getLatitude().toString()));
+            result.append(formatAttribute("End Longitude", end.getLongitude().toString()));
+        }
+
+        if (route.getAltitude() != null) {
+            result.append(formatAttribute("Altitude", route.getAltitude().toString()));
+        }
+
+        Map<String, String> otherProps = route.getOtherProperties();
+        Iterator<Entry<String, String>> iterator = otherProps.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Entry<String, String> entry = iterator.next();
+            String value = entry.getValue();
+            if (value != null && !value.isEmpty()) {
+                result.append(formatAttribute(entry.getKey(), value));
+            }
+        }
+
+        return result.toString();
     }
 }

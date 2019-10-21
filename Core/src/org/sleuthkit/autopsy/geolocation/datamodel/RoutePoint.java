@@ -19,12 +19,19 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
+import java.util.Map;
+import org.sleuthkit.datamodel.AbstractFile;
 
-public class RoutePoint extends DefaultPoint {
+/**
+ * A point in a Route. For future use this point will have a pointer to its
+ * parent route.
+ */
+public class RoutePoint implements Waypoint {
 
     private final Route parent;
+    private final Double longitude;
+    private final Double latitude;
+    private final String label;
 
     /**
      * Construct a route for a route.
@@ -34,23 +41,50 @@ public class RoutePoint extends DefaultPoint {
      * @param longitude Longitude for point
      * @param label     Way point label.
      */
-    protected RoutePoint(BlackboardArtifact artifact, Route parent, double latitude, double longitude, String label) {
-        super(artifact, latitude, longitude, label);   
+    protected RoutePoint(Route parent, double latitude, double longitude, String label) {
+        this.longitude = longitude;
+        this.latitude = latitude;
+        this.label = label;
         this.parent = parent;
-    }
-
-    @Override
-    public void initPoint()  throws TskCoreException{
-        setDetails(getDetailsFromArtifact());
     }
 
     @Override
     public Long getTimestamp() {
         return parent.getTimestamp();
     }
-    
+
+    @Override
+    public String getLabel() {
+        return label;
+    }
+
+    @Override
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    @Override
+    public Double getLongitude() {
+        return longitude;
+    }
+
     @Override
     public Double getAltitude() {
         return parent.getAltitude();
+    }
+
+    @Override
+    public Map<String, String> getOtherProperties() {
+        return parent.getOtherProperties();
+    }
+
+    @Override
+    public AbstractFile getImage() {
+        return null;
+    }
+
+    @Override
+    public Waypoint.Type getType() {
+        return Waypoint.Type.ROUTE_POINT;
     }
 }
