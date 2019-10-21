@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Format;
@@ -179,10 +180,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private Bus.ERROR errorListener;
     private Bus.STATE_CHANGED stateChangeListener;
     private Bus.EOS endOfStreamListener;
-    private double playBackRate;
 
     //Update progress bar and time label during video playback
-    private final Timer timer = new Timer(75, new VideoPanelUpdater());
+    //Updating every 16 MS = 62.5 FPS.
+    private final Timer timer = new Timer(16, new VideoPanelUpdater());
     private static final int PROGRESS_SLIDER_SIZE = 2000;
     private static final int SKIP_IN_SECONDS = 30;
 
@@ -201,7 +202,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setMinimum(0);
         progressSlider.setMaximum(PROGRESS_SLIDER_SIZE);
         progressSlider.setValue(0);
-        playBackRate = 1.0;
         //Manage the gstreamer video position when a user is dragging the slider in the panel.
         progressSlider.addChangeListener(new ChangeListener() {
             @Override
@@ -210,6 +210,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
                     double relativePosition = progressSlider.getValue() * 1.0 / PROGRESS_SLIDER_SIZE;
                     long newStartTime = (long) (relativePosition * duration);
+                    double playBackRate = getPlayBackRate();
                     gstPlayBin.seek(playBackRate,
                             Format.TIME,
                             //FLUSH - flushes the pipeline
@@ -235,10 +236,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         errorListener = new Bus.ERROR() {
             @Override
             public void errorMessage(GstObject go, int i, String string) {
-                enableComponents(false);
-                infoLabel.setText(String.format(
-                        "<html><font color='red'>%s</font></html>",
-                        MEDIA_PLAYER_ERROR_STRING));
+                SwingUtilities.invokeLater(() -> {
+                    enableComponents(false);
+                    infoLabel.setText(String.format(
+                            "<html><font color='red'>%s</font></html>",
+                            MEDIA_PLAYER_ERROR_STRING));
+                });
                 timer.stop();
             }
         };
@@ -246,9 +249,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             @Override
             public void stateChanged(GstObject go, State oldState, State currentState, State pendingState) {
                 if (State.PLAYING.equals(currentState)) {
-                    playButton.setText("||");
+                    SwingUtilities.invokeLater(() -> {
+                        playButton.setText("||");
+                    });
                 } else {
-                    playButton.setText("►");
+                    SwingUtilities.invokeLater(() -> {
+                        playButton.setText("►");
+                    });
                 }
             }
         };
@@ -256,7 +263,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             @Override
             public void endOfStream(GstObject go) {
                 gstPlayBin.seek(ClockTime.ZERO);
-                progressSlider.setValue(0);
                 /**
                  * Keep the video from automatically playing
                  */
@@ -334,6 +340,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         audioSlider.setEnabled(isEnabled);
         rewindButton.setEnabled(isEnabled);
         fastForwardButton.setEnabled(isEnabled);
+        playBackSpeedComboBox.setEnabled(isEnabled);
     }
 
     @Override
@@ -394,6 +401,17 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }
 
     /**
+     * Reads the current selected playback rate from the speed combo box.
+     *
+     * @return The selected rate.
+     */
+    private double getPlayBackRate() {
+        int selectIndex = playBackSpeedComboBox.getSelectedIndex();
+        String selectText = playBackSpeedComboBox.getItemAt(selectIndex);
+        return Double.valueOf(selectText.substring(0, selectText.length() - 1));
+    }
+
+    /**
      * Convert nanoseconds into an HH:MM:SS format.
      */
     @NbBundle.Messages({
@@ -433,7 +451,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         protected Void doInBackground() throws Exception {
             if (!tempFile.exists() || tempFile.length() < sourceFile.getSize()) {
                 progress = ProgressHandle.createHandle(NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> this.cancel(true));
-                progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
+
+                SwingUtilities.invokeLater(() -> {
+                    progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
+                });
+
                 progress.start(100);
                 try {
                     Files.createParentDirs(tempFile);
@@ -522,7 +544,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
                 }
 
-                updateTimeLabel(position, duration);
+                SwingUtilities.invokeLater(() -> {
+                    updateTimeLabel(position, duration);
+                });
             }
         }
     }
@@ -548,6 +572,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         VolumeIcon = new javax.swing.JLabel();
         audioSlider = new javax.swing.JSlider();
         infoLabel = new javax.swing.JLabel();
+        playBackPanel = new javax.swing.JPanel();
+        playBackSpeedComboBox = new javax.swing.JComboBox<>();
+        playBackSpeedLabel = new javax.swing.JLabel();
 
         javax.swing.GroupLayout videoPanelLayout = new javax.swing.GroupLayout(videoPanel);
         videoPanel.setLayout(videoPanelLayout);
@@ -557,7 +584,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         );
         videoPanelLayout.setVerticalGroup(
             videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 124, Short.MAX_VALUE)
+            .addGap(0, 131, Short.MAX_VALUE)
         );
 
         progressSlider.setValue(0);
@@ -641,6 +668,39 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.infoLabel.text")); // NOI18N
         infoLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
+        playBackSpeedComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "0.25x", "0.50x", "0.75x", "1x", "1.25x", "1.50x", "1.75x", "2x" }));
+        playBackSpeedComboBox.setSelectedIndex(3);
+        playBackSpeedComboBox.setMaximumSize(new java.awt.Dimension(53, 23));
+        playBackSpeedComboBox.setMinimumSize(new java.awt.Dimension(53, 23));
+        playBackSpeedComboBox.setPreferredSize(new java.awt.Dimension(53, 23));
+        playBackSpeedComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                playBackSpeedComboBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(playBackSpeedLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.playBackSpeedLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout playBackPanelLayout = new javax.swing.GroupLayout(playBackPanel);
+        playBackPanel.setLayout(playBackPanelLayout);
+        playBackPanelLayout.setHorizontalGroup(
+            playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(playBackPanelLayout.createSequentialGroup()
+                .addComponent(playBackSpeedLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(13, 13, 13))
+        );
+        playBackPanelLayout.setVerticalGroup(
+            playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(playBackPanelLayout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addGroup(playBackPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(playBackSpeedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(playBackSpeedLabel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
@@ -649,12 +709,16 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 .addContainerGap()
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(buttonPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
-                        .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(buttonPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 623, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(progressLabel)))
-                .addContainerGap())
+                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(playBackPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addGap(10, 10, 10)))
+                .addGap(0, 0, 0))
         );
         controlPanelLayout.setVerticalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -663,10 +727,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(infoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE))
+                .addGap(5, 5, 5)
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(playBackPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGap(14, 14, 14)
+                .addComponent(infoLabel))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -691,6 +757,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         long rewindDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
         //Ensure new video position is within bounds
         long newTime = Math.max(currentTime - rewindDelta, 0);
+        double playBackRate = getPlayBackRate();
         gstPlayBin.seek(playBackRate,
                 Format.TIME,
                 //FLUSH - flushes the pipeline
@@ -707,13 +774,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
         //Skip 30 seconds.
         long fastForwardDelta = TimeUnit.NANOSECONDS.convert(SKIP_IN_SECONDS, TimeUnit.SECONDS);
-        
+
         //Ignore fast forward requests if there are less than 30 seconds left.
-        if(currentTime + fastForwardDelta >= duration) {
+        if (currentTime + fastForwardDelta >= duration) {
             return;
         }
-        
+
         long newTime = currentTime + fastForwardDelta;
+        double playBackRate = getPlayBackRate();
         gstPlayBin.seek(playBackRate,
                 Format.TIME,
                 //FLUSH - flushes the pipeline
@@ -729,9 +797,35 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         if (gstPlayBin.isPlaying()) {
             gstPlayBin.pause();
         } else {
+            double playBackRate = getPlayBackRate();
+            long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+            //Set playback rate before play.
+            gstPlayBin.seek(playBackRate,
+                    Format.TIME,
+                    //FLUSH - flushes the pipeline
+                    //ACCURATE - video will seek exactly to the position requested
+                    EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                    //Set the start position to newTime
+                    SeekType.SET, currentTime,
+                    //Do nothing for the end position
+                    SeekType.NONE, -1);
             gstPlayBin.play();
         }
     }//GEN-LAST:event_playButtonActionPerformed
+
+    private void playBackSpeedComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playBackSpeedComboBoxActionPerformed
+        double playBackRate = getPlayBackRate();
+        long currentTime = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+        gstPlayBin.seek(playBackRate,
+                Format.TIME,
+                //FLUSH - flushes the pipeline
+                //ACCURATE - video will seek exactly to the position requested
+                EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                //Set the position to the currentTime, we are only adjusting the
+                //playback rate.
+                SeekType.SET, currentTime,
+                SeekType.NONE, 0);
+    }//GEN-LAST:event_playBackSpeedComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel VolumeIcon;
@@ -740,6 +834,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private javax.swing.JPanel controlPanel;
     private javax.swing.JButton fastForwardButton;
     private javax.swing.JLabel infoLabel;
+    private javax.swing.JPanel playBackPanel;
+    private javax.swing.JComboBox<String> playBackSpeedComboBox;
+    private javax.swing.JLabel playBackSpeedLabel;
     private javax.swing.JButton playButton;
     private javax.swing.JLabel progressLabel;
     private javax.swing.JSlider progressSlider;
