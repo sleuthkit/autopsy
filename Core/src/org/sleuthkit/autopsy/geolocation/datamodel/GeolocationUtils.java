@@ -68,7 +68,7 @@ public final class GeolocationUtils {
      *
      * @throws TskCoreException
      */
-    static protected String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
         if (artifact == null) {
             return null;
         }
@@ -87,7 +87,7 @@ public final class GeolocationUtils {
      *
      * @throws TskCoreException
      */
-    static protected Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
         if (artifact == null) {
             return null;
         }
@@ -110,7 +110,7 @@ public final class GeolocationUtils {
      *
      * @throws TskCoreException
      */
-    static protected Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
         if (artifact == null) {
             return null;
         }
@@ -134,7 +134,7 @@ public final class GeolocationUtils {
      *
      * @throws TskCoreException
      */
-    static protected Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
         if (artifact == null) {
             return null;
         }
@@ -157,7 +157,7 @@ public final class GeolocationUtils {
      *
      * @throws TskCoreException
      */
-    static protected String getFormattedTimestamp(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static String getFormattedTimestamp(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
         if (artifact == null) {
             return null;
         }
@@ -179,7 +179,7 @@ public final class GeolocationUtils {
      *
      * @return
      */
-    static protected Map<String, String> getOtherGeolocationAttributes(BlackboardArtifact artifact) throws TskCoreException {
+    static Map<String, String> getOtherGeolocationAttributes(BlackboardArtifact artifact) throws TskCoreException {
         Map<String, String> map = new HashMap<>();
 
         for (BlackboardAttribute.ATTRIBUTE_TYPE type : OTHER_GEO_ATTRIBUTES) {
