@@ -67,12 +67,16 @@ public final class AddContentToHashDbAction extends AbstractAction implements Pr
             "AddContentToHashDbAction.singleSelectionNameNoMD5");
     private final static String MULTI_SELECTION_NAME_NO_MD5 = NbBundle.getMessage(AddContentToHashDbAction.class,
             "AddContentToHashDbAction.multipleSelectionNameNoMD5");
+    private static final long serialVersionUID = 1L;
 
     /**
      * AddContentToHashDbAction is a singleton to support multi-selection of
      * nodes, since org.openide.nodes.NodeOp.findActions(Node[] nodes) will only
      * pick up an Action from a node if every node in the nodes array returns a
      * reference to the same action object from Node.getActions(boolean).
+     *
+     * @return The AddContentToHashDbAction instance which is used to provide
+     *         the menu for adding content to a HashDb.
      */
     public static synchronized AddContentToHashDbAction getInstance() {
         if (null == instance) {
@@ -127,16 +131,13 @@ public final class AddContentToHashDbAction extends AbstractAction implements Pr
                         SINGLE_SELECTION_NAME_DURING_INGEST,
                         MULTI_SELECTION_NAME_DURING_INGEST);
                 return;
-            }
-
-            if (selectedFiles.isEmpty()) {
+            } else if (numberOfFilesSelected == 0) {
                 setEnabled(false);
                 return;
-            } else {
-                setTextBasedOnNumberOfSelections(numberOfFilesSelected,
-                        SINGLE_SELECTION_NAME,
-                        MULTI_SELECTION_NAME);
             }
+            setTextBasedOnNumberOfSelections(numberOfFilesSelected,
+                    SINGLE_SELECTION_NAME,
+                    MULTI_SELECTION_NAME);
 
             // Disable the menu if md5 have not been computed or if the file size 
             // is empty. Display the appropriate reason to the user.
@@ -155,7 +156,26 @@ public final class AddContentToHashDbAction extends AbstractAction implements Pr
                     return;
                 }
             }
+            addExistingHashDatabases(selectedFiles);
+            // Add a "New Hash Set..." menu item. Selecting this item invokes a
+            // a hash database creation dialog and adds the selected files to the 
+            // the new database.
+            addSeparator();
+            JMenuItem newHashSetItem = new JMenuItem(NbBundle.getMessage(this.getClass(),
+                    "AddContentToHashDbAction.ContentMenu.createDbItem"));
+            newHashSetItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
+                    if (null != hashDb) {
+                        addFilesToHashSet(selectedFiles, hashDb);
+                    }
+                }
+            });
+            add(newHashSetItem);
+        }
 
+        private void addExistingHashDatabases(Collection<AbstractFile> selectedFiles) {
             // Get the current set of updateable hash databases and add each
             // one to the menu as a separate menu item. Selecting a hash database
             // adds the selected files to the selected database.
@@ -177,23 +197,6 @@ public final class AddContentToHashDbAction extends AbstractAction implements Pr
                 empty.setEnabled(false);
                 add(empty);
             }
-
-            // Add a "New Hash Set..." menu item. Selecting this item invokes a
-            // a hash database creation dialog and adds the selected files to the 
-            // the new database.
-            addSeparator();
-            JMenuItem newHashSetItem = new JMenuItem(NbBundle.getMessage(this.getClass(),
-                    "AddContentToHashDbAction.ContentMenu.createDbItem"));
-            newHashSetItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
-                    if (null != hashDb) {
-                        addFilesToHashSet(selectedFiles, hashDb);
-                    }
-                }
-            });
-            add(newHashSetItem);
         }
 
         /**
