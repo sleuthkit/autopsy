@@ -66,6 +66,7 @@ import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
+import javax.swing.plaf.basic.BasicSliderUI.TrackListener;
 import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
@@ -212,7 +213,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     public MediaPlayerPanel() throws GstException, UnsatisfiedLinkError {
         initComponents();
         customizeComponents();
-        sliderLock = new Semaphore(1);
+        //True for fairness. In other words,
+        //acquire() calls are processed in order of invocation.
+        sliderLock = new Semaphore(1, true);
     }
 
     private void customizeComponents() {
@@ -549,29 +552,24 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-                if (!progressSlider.getValueIsAdjusting()) {
-                    sliderLock.acquire();
-                    long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-                    long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
-                    /**
-                     * Duration may not be known until there is video data in
-                     * the pipeline. We start this updater when data-flow has
-                     * just been initiated so buffering may still be in
-                     * progress.
-                     */
-                    if (duration >= 0 && position >= 0) {
-                        double relativePosition = (double) position / duration;
-                        progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
-                    }
-
-                    SwingUtilities.invokeLater(() -> {
-                        updateTimeLabel(position, duration);
-                    });
-                    sliderLock.release();
+            if (!progressSlider.getValueIsAdjusting()) {
+                sliderLock.acquireUninterruptibly();
+                long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                /**
+                 * Duration may not be known until there is video data in the
+                 * pipeline. We start this updater when data-flow has just been
+                 * initiated so buffering may still be in progress.
+                 */
+                if (duration >= 0 && position >= 0) {
+                    double relativePosition = (double) position / duration;
+                    progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
                 }
-            } catch (InterruptedException ex) {
-                //Video panel thread interrupted while waiting on lock.
+
+                SwingUtilities.invokeLater(() -> {
+                    updateTimeLabel(position, duration);
+                });
+                sliderLock.release();
             }
         }
     }
@@ -708,27 +706,23 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         @Override
         protected void scrollDueToClickInTrack(int direction) {
-            try {
-                //Set the thumb position to the mouse press location, as opposed
-                //to the closest "block" which is the default behavior.
-                Point mousePosition = slider.getMousePosition();
-                if (mousePosition == null) {
-                    return;
-                }
-                int value = this.valueForXPosition(mousePosition.x);
-
-                //Lock the slider down, which is a shared resource.
-                //The VideoPanelUpdater (dedicated thread) keeps the
-                //slider in sync with the video position, so without 
-                //proper locking our change could be overwritten.
-                sliderLock.acquire();
-                slider.setValueIsAdjusting(true);
-                slider.setValue(value);
-                slider.setValueIsAdjusting(false);
-                sliderLock.release();
-            } catch (InterruptedException ex) {
-                //Thread (EDT) interrupted while waiting on lock.
+            //Set the thumb position to the mouse press location, as opposed
+            //to the closest "block" which is the default behavior.
+            Point mousePosition = slider.getMousePosition();
+            if (mousePosition == null) {
+                return;
             }
+            int value = this.valueForXPosition(mousePosition.x);
+
+            //Lock the slider down, which is a shared resource.
+            //The VideoPanelUpdater (dedicated thread) keeps the
+            //slider in sync with the video position, so without 
+            //proper locking our change could be overwritten.
+            sliderLock.acquireUninterruptibly();
+            slider.setValueIsAdjusting(true);
+            slider.setValue(value);
+            slider.setValueIsAdjusting(false);
+            sliderLock.release();
         }
 
         /**
@@ -774,7 +768,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 if (!slider.isEnabled()) {
                     return;
                 }
-                
+
                 super.mouseReleased(e);
 
                 //Unpause once the mouse has been released.
