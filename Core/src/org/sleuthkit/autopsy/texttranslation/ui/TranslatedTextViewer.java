@@ -188,8 +188,7 @@ public final class TranslatedTextViewer implements TextViewer {
              * executor.
              */
             SwingUtilities.invokeLater(() -> {
-                panel.display(Bundle.TranslatedContentViewer_translatingText(),
-                        ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+                panel.display(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
             });
 
             String fileText;
@@ -235,7 +234,7 @@ public final class TranslatedTextViewer implements TextViewer {
             } catch (InterruptedException | CancellationException ignored) {
                 // Task cancelled, no error.
             } catch (ExecutionException ex) {
-                logger.log(Level.WARNING, "Error occurred during background task execution", ex);
+                logger.log(Level.WARNING, String.format("Error occurred during background task execution for file %s (objId=%d)", file.getName(), file.getId()), ex);
             }
         }
 
@@ -247,9 +246,9 @@ public final class TranslatedTextViewer implements TextViewer {
          * @return Translated text or error message
          */
         @NbBundle.Messages({
-            "TranslatedContentViewer.emptyTranslation=The resulting translation was empty.",
-            "TranslatedContentViewer.noServiceProvider=Machine Translation software was not found.",
-            "TranslatedContentViewer.translationException=Error encountered while attempting translation."})
+            "TranslatedContentViewer.emptyTranslation=The translation is empty.",
+            "TranslatedContentViewer.noServiceProvider=Machine translation software was not found.",
+            "# {0} - exception message", "TranslatedContentViewer.translationException=Error encountered while attempting translation ({0})."})
         private String translate(String input) {
             try {
                 TextTranslationService translatorInstance = TextTranslationService.getInstance();
@@ -261,8 +260,8 @@ public final class TranslatedTextViewer implements TextViewer {
             } catch (NoServiceProviderException ex) {
                 return Bundle.TranslatedContentViewer_noServiceProvider();
             } catch (TranslationException ex) {
-                logger.log(Level.WARNING, "Error translating text", ex);
-                return Bundle.TranslatedContentViewer_translationException() + " (" + ex.getMessage() + ")";
+                logger.log(Level.WARNING, String.format("Error occurred translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                return Bundle.TranslatedContentViewer_translationException(ex.getMessage());
             }
         }
 
@@ -388,9 +387,9 @@ public final class TranslatedTextViewer implements TextViewer {
      */
     private abstract class SelectionChangeListener implements ActionListener {
 
-        public String currentSelection;
+        private String currentSelection;
 
-        public abstract String getSelection();
+        abstract String getSelection();
 
         @Override
         public final void actionPerformed(ActionEvent e) {
@@ -422,7 +421,7 @@ public final class TranslatedTextViewer implements TextViewer {
     private class DisplayDropDownChangeListener extends SelectionChangeListener {
 
         @Override
-        public String getSelection() {
+        String getSelection() {
             return panel.getDisplayDropDownSelection();
         }
     }
@@ -433,7 +432,7 @@ public final class TranslatedTextViewer implements TextViewer {
     private class OCRDropdownChangeListener extends SelectionChangeListener {
 
         @Override
-        public String getSelection() {
+        String getSelection() {
             return panel.getSelectedOcrLanguagePack();
         }
     }
