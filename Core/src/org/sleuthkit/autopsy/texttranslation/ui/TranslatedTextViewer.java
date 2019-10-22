@@ -172,9 +172,11 @@ public final class TranslatedTextViewer implements TextViewer {
 
         @NbBundle.Messages({
             "TranslatedContentViewer.translatingText=Translating text, please wait...",
-            "TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file.",
+            "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file ({0}).",
             "TranslatedContentViewer.fileHasNoText=File has no text.",
-            "TranslatedContentViewer.errorTranslatingText=Could not translate text from file."
+            "TranslatedContentViewer.emptyTranslation=The translation is empty.",
+            "TranslatedContentViewer.noServiceProvider=Machine translation software was not found.",
+            "# {0} - exception message", "TranslatedContentViewer.translationException=Error encountered while attempting translation ({0})."
         })
         @Override
         public String doInBackground() throws InterruptedException {
@@ -184,8 +186,8 @@ public final class TranslatedTextViewer implements TextViewer {
 
             /*
              * This message is only written to the viewer once this task starts
-             * and any previous task has been completed by the single-threaded
-             * executor.
+             * and any previous task has therefore been completed by the
+             * single-threaded executor.
              */
             SwingUtilities.invokeLater(() -> {
                 panel.display(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
@@ -196,7 +198,7 @@ public final class TranslatedTextViewer implements TextViewer {
                 fileText = getFileText(file);
             } catch (IOException | TextExtractor.InitReaderException ex) {
                 logger.log(Level.WARNING, String.format("Error getting text for file %s (objId=%d)", file.getName(), file.getId()), ex);
-                return Bundle.TranslatedContentViewer_errorExtractingText();
+                return Bundle.TranslatedContentViewer_errorExtractingText(ex.getMessage());
             }
 
             if (this.isCancelled()) {
@@ -207,16 +209,26 @@ public final class TranslatedTextViewer implements TextViewer {
                 return Bundle.TranslatedContentViewer_fileHasNoText();
             }
 
-            if (this.translateText) {
-                String translation = translate(fileText);
-                if (this.isCancelled()) {
-                    throw new InterruptedException();
-                }
-                return translation;
-            } else {
+            if (!this.translateText) {
                 return fileText;
             }
 
+            String translation;
+            try {
+                translation = translate(fileText);
+            } catch (NoServiceProviderException ex) {
+                logger.log(Level.WARNING, String.format("Error occurred translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                translation = Bundle.TranslatedContentViewer_noServiceProvider();
+            } catch (TranslationException ex) {
+                logger.log(Level.WARNING, String.format("Error occurred translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                translation = Bundle.TranslatedContentViewer_translationException(ex.getMessage());
+            }
+
+            if (this.isCancelled()) {
+                throw new InterruptedException();
+            }
+
+            return translation;
         }
 
         @Override
@@ -245,24 +257,13 @@ public final class TranslatedTextViewer implements TextViewer {
          *
          * @return Translated text or error message
          */
-        @NbBundle.Messages({
-            "TranslatedContentViewer.emptyTranslation=The translation is empty.",
-            "TranslatedContentViewer.noServiceProvider=Machine translation software was not found.",
-            "# {0} - exception message", "TranslatedContentViewer.translationException=Error encountered while attempting translation ({0})."})
-        private String translate(String input) {
-            try {
-                TextTranslationService translatorInstance = TextTranslationService.getInstance();
-                String translatedResult = translatorInstance.translate(input);
-                if (translatedResult.isEmpty()) {
-                    return Bundle.TranslatedContentViewer_emptyTranslation();
-                }
-                return translatedResult;
-            } catch (NoServiceProviderException ex) {
-                return Bundle.TranslatedContentViewer_noServiceProvider();
-            } catch (TranslationException ex) {
-                logger.log(Level.WARNING, String.format("Error occurred translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
-                return Bundle.TranslatedContentViewer_translationException(ex.getMessage());
+        private String translate(String input) throws NoServiceProviderException, TranslationException {
+            TextTranslationService translatorInstance = TextTranslationService.getInstance();
+            String translatedResult = translatorInstance.translate(input);
+            if (translatedResult.isEmpty()) {
+                return Bundle.TranslatedContentViewer_emptyTranslation();
             }
+            return translatedResult;
         }
 
         /**

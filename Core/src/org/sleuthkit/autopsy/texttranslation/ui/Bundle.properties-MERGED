@@ -3,8 +3,8 @@ OptionsCategory_Keywords_Machine_Translation_Settings=Machine Translation Settin
 TranslatedContentPanel.comboBoxOption.originalText=Original Text (Up to 25KB)
 TranslatedContentPanel.comboBoxOption.translatedText=Translated Text
 TranslatedContentViewer.emptyTranslation=The translation is empty.
-TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file.
-TranslatedContentViewer.errorTranslatingText=Could not translate text from file.
+# {0} - exception message
+TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file ({0}).
 TranslatedContentViewer.fileHasNoText=File has no text.
 TranslatedContentViewer.noServiceProvider=Machine translation software was not found.
 TranslatedContentViewer.translatingText=Translating text, please wait...
