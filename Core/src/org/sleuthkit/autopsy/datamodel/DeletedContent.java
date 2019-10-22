@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.CONTENT_CHANGED;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -190,10 +191,12 @@ public class DeletedContent implements AutopsyVisitableItem {
                     Case.Events.DATA_SOURCE_ADDED,
                     Case.Events.CURRENT_CASE
             );
+            private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+            private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(CONTENT_CHANGED);
 
             DeletedContentsChildrenObservable() {
-                IngestManager.getInstance().addIngestJobEventListener(pcl);
-                IngestManager.getInstance().addIngestModuleEventListener(pcl);
+                IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+                IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
                 Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 

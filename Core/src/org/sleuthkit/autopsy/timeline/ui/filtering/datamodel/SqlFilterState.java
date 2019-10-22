@@ -36,6 +36,15 @@ public class SqlFilterState<FilterType extends TimelineFilter> extends AbstractF
         // the "Hide Known Filters", "Tags", "Hashsets" and "Text".
         // There are better ways to do this, but this works in a pinch
         this(filter, !(filter instanceof TimelineFilter.HideKnownFilter || filter instanceof TimelineFilter.TagsFilter || filter instanceof TimelineFilter.HashHitsFilter || filter instanceof TimelineFilter.TextFilter));
+        
+         selectedProperty().addListener(selectedProperty -> {
+           if (filter instanceof TimelineFilter.TagsFilter) {
+               ((TimelineFilter.TagsFilter)filter).setEventSourcesAreTagged(isSelected());
+           } else  if (filter instanceof TimelineFilter.HashHitsFilter) {
+               ((TimelineFilter.HashHitsFilter)filter).setEventSourcesHaveHashSetHits(isSelected());
+           }
+        });
+        
     }
 
     /**

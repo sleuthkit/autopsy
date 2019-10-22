@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.timeline.actions;
 import java.awt.Desktop;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -33,27 +33,22 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Control;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
-import org.controlsfx.control.HyperlinkLabel;
 import org.controlsfx.control.action.Action;
-import org.controlsfx.validation.ValidationResult;
-import org.controlsfx.validation.ValidationSupport;
-import org.controlsfx.validation.Validator;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.snapshot.SnapShotReportWriter;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Action that saves a snapshot of the given node as an autopsy report.
@@ -63,7 +58,6 @@ public class SaveSnapshotAsReport extends Action {
 
     private static final Logger LOGGER = Logger.getLogger(SaveSnapshotAsReport.class.getName());
     private static final Image SNAP_SHOT = new Image("org/sleuthkit/autopsy/timeline/images/image.png", 16, 16, true, true); //NON_NLS
-    private static final ButtonType OPEN = new ButtonType(Bundle.OpenReportAction_DisplayName(), ButtonBar.ButtonData.NO);
     private static final ButtonType OK = new ButtonType(ButtonType.OK.getText(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
     private final Case currentCase;
@@ -86,9 +80,16 @@ public class SaveSnapshotAsReport extends Action {
         "# {0} - report path",
         "SaveSnapShotAsReport.ErrorWritingReport=Error writing report to disk at {0}.",
         "# {0} - generated default report name",
-        "SaveSnapShotAsReport.reportName.prompt=leave empty for default report name: {0}.",
+        "SaveSnapShotAsReport.reportName.prompt=Leave empty for default report name:\n{0}.",
         "SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report.",
-        "SaveSnapShotAsReport.duplicateReportNameError.text=A report with that name already exists."
+        "SaveSnapShotAsReport.duplicateReportNameError.text=A report with that name already exists.",
+        "SaveSnapShotAsReport_Report_Failed=Report failed",
+        "# {0} - supplied report name",
+        "SaveSnapShotAsReport_Path_Failure_Report=Failed to create report. Supplied report name has invalid characters: {0}",
+        "# {0} - report location",
+        "SaveSnapShotAsReport_success_message=Snapshot report successfully created at location: \n\n {0}",
+        "SaveSnapShotAsReport_Open_Button=Open Report",
+        "SaveSnapShotAsReport_OK_Button=OK"
     })
     public SaveSnapshotAsReport(TimeLineController controller, Supplier<Node> nodeSupplier) {
         super(Bundle.SaveSnapShotAsReport_action_name_text());
@@ -102,76 +103,70 @@ public class SaveSnapshotAsReport extends Action {
             Date generationDate = new Date();
             final String defaultReportName = FileUtil.escapeFileName(currentCase.getDisplayName() + " " + new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss").format(generationDate)); //NON_NLS
             BufferedImage snapshot = SwingFXUtils.fromFXImage(nodeSupplier.get().snapshot(null, null), null);
-
-            //prompt user to pick report name
-            TextInputDialog textInputDialog = new TextInputDialog();
-            PromptDialogManager.setDialogIcons(textInputDialog);
-            textInputDialog.setTitle(Bundle.SaveSnapShotAsReport_action_dialogs_title());
-            textInputDialog.getEditor().setPromptText(Bundle.SaveSnapShotAsReport_reportName_prompt(defaultReportName));
-            textInputDialog.setHeaderText(Bundle.SaveSnapShotAsReport_reportName_header());
-
-            //keep prompt even if text field has focus, until user starts typing.
-            textInputDialog.getEditor().setStyle("-fx-prompt-text-fill: derive(-fx-control-inner-background, -30%);");//NON_NLS 
-
-            /*
-             * Create a ValidationSupport to validate that a report with the
-             * entered name doesn't exist on disk already. Disable ok button if
-             * report name is not validated.
-             */
-            ValidationSupport validationSupport = new ValidationSupport();
-            validationSupport.registerValidator(textInputDialog.getEditor(), false, new Validator<String>() {
-                @Override
-                public ValidationResult apply(Control textField, String enteredReportName) {
-                    String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);
-                    boolean exists = Files.exists(Paths.get(currentCase.getReportDirectory(), reportName));
-                    return ValidationResult.fromErrorIf(textField, Bundle.SaveSnapShotAsReport_duplicateReportNameError_text(), exists);
-                }
-            });
-            textInputDialog.getDialogPane().lookupButton(ButtonType.OK).disableProperty().bind(validationSupport.invalidProperty());
-
-            //show dialog and handle result
-            textInputDialog.showAndWait().ifPresent(enteredReportName -> {
-                //reportName defaults to case name + timestamp if left blank
-                String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);
-                Path reportFolderPath = Paths.get(currentCase.getReportDirectory(), reportName, "Timeline Snapshot"); //NON_NLS
-                Path reportMainFilePath;
-
-                try {
-                    //generate and write report
-                    reportMainFilePath = new SnapShotReportWriter(currentCase,
-                            reportFolderPath,
-                            reportName,
-                            controller.getEventsModel().getZoomState(),
-                            generationDate, snapshot).writeReport();
-                } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Error writing report to disk at " + reportFolderPath, ex); //NON_NLS
-                    new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_ErrorWritingReport(reportFolderPath)).show();
-                    return;
-                }
-
-                try {
-                    //add main file as report to case
-                    Case.getCurrentCaseThrows().addReport(reportMainFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    LOGGER.log(Level.WARNING, "Failed to add " + reportMainFilePath.toString() + " to case as a report", ex); //NON_NLS
-                    new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_FailedToAddReport()).show();
-                    return;
-                } 
-
-                //notify user of report location
-                final Alert alert = new Alert(Alert.AlertType.INFORMATION, null, OPEN, OK);
-                alert.setTitle(Bundle.SaveSnapShotAsReport_action_dialogs_title());
-                alert.setHeaderText(Bundle.SaveSnapShotAsReport_Success());
-
-                //make action to open report, and hyperlinklable to invoke action
-                final OpenReportAction openReportAction = new OpenReportAction(reportMainFilePath);
-                HyperlinkLabel hyperlinkLabel = new HyperlinkLabel(Bundle.SaveSnapShotAsReport_ReportSavedAt(reportMainFilePath.toString()));
-                hyperlinkLabel.setOnAction(openReportAction);
-                alert.getDialogPane().setContent(hyperlinkLabel);
-
-                alert.showAndWait().filter(OPEN::equals).ifPresent(buttonType -> openReportAction.handle(null));
+            
+            SwingUtilities.invokeLater(() ->{
+                String message = String.format("%s\n\n%s", Bundle.SaveSnapShotAsReport_reportName_header(), Bundle.SaveSnapShotAsReport_reportName_prompt(defaultReportName));
+                
+                String reportName = JOptionPane.showInputDialog(SwingUtilities.windowForComponent(controller.getTopComponent()), message, 
+                        Bundle.SaveSnapShotAsReport_action_dialogs_title(), JOptionPane.QUESTION_MESSAGE);
+                
+                reportName = StringUtils.defaultIfBlank(reportName, defaultReportName);
+                
+                createReport(controller, reportName, generationDate, snapshot);
             });
         });
+    }
+    
+    
+    private void createReport(TimeLineController controller, String reportName, Date generationDate, BufferedImage snapshot) {
+        Path reportFolderPath;
+        try {
+            reportFolderPath = Paths.get(currentCase.getReportDirectory(), reportName, "Timeline Snapshot");
+        } catch (InvalidPathException ex) {
+            //notify user of report location
+            final Alert alert = new Alert(Alert.AlertType.ERROR, null, OK);
+            alert.setTitle(Bundle.SaveSnapShotAsReport_Report_Failed());
+            alert.setHeaderText(Bundle.SaveSnapShotAsReport_Path_Failure_Report(reportName));
+            alert.show();
+            return;
+        }
+        Path reportMainFilePath;
+
+        try {
+            //generate and write report
+            reportMainFilePath = new SnapShotReportWriter(currentCase,
+                    reportFolderPath,
+                    reportName,
+                    controller.getEventsModel().getZoomState(),
+                    generationDate, snapshot).writeReport();
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Error writing report to disk at " + reportFolderPath, ex); //NON_NLS
+             MessageNotifyUtil.Message.error( Bundle.SaveSnapShotAsReport_ErrorWritingReport(reportFolderPath));
+            return;
+        }
+
+        try {
+            //add main file as report to case
+            Case.getCurrentCaseThrows().addReport(reportMainFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            LOGGER.log(Level.WARNING, "Failed to add " + reportMainFilePath.toString() + " to case as a report", ex); //NON_NLS
+            MessageNotifyUtil.Message.error(Bundle.SaveSnapShotAsReport_FailedToAddReport());
+            return;
+        }
+        
+        Object[] options = { Bundle.SaveSnapShotAsReport_Open_Button(),
+                                Bundle.SaveSnapShotAsReport_OK_Button()};
+        
+        int result = JOptionPane.showOptionDialog(SwingUtilities.windowForComponent(controller.getTopComponent()),
+                Bundle.SaveSnapShotAsReport_success_message(reportMainFilePath),
+                Bundle.SaveSnapShotAsReport_action_dialogs_title(),
+                JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+                options, options[0]);
+        
+        if(result == 0) {
+            final OpenReportAction openReportAction = new OpenReportAction(reportMainFilePath);
+            openReportAction.handle(null);
+        }
     }
 
     /**

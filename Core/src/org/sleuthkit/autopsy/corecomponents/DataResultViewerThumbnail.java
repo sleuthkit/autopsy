@@ -56,6 +56,7 @@ import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.uicomponents.WrapLayout;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 

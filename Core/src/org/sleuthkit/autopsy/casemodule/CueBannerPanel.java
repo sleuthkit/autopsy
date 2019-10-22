@@ -249,6 +249,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private void openRecentCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentCaseButtonActionPerformed
         recentCasesWindow.setLocationRelativeTo(this);
         OpenRecentCasePanel.getInstance();  //refreshes the recent cases table
+        // Workaround to ensure that dialog is not hidden on macOS.
+        recentCasesWindow.setAlwaysOnTop(true);
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 

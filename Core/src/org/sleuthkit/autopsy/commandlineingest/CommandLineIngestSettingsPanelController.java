@@ -43,13 +43,11 @@ public final class CommandLineIngestSettingsPanelController extends OptionsPanel
 
     @Override
     public void update() {
-        getPanel().load(false);
         changed = false;
     }
 
     @Override
     public void applyChanges() {
-        getPanel().store();
         changed = false;
     }
 
@@ -59,7 +57,7 @@ public final class CommandLineIngestSettingsPanelController extends OptionsPanel
 
     @Override
     public boolean isValid() {
-        return getPanel().valid();
+        return true;
     }
 
     @Override

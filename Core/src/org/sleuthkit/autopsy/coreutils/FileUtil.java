@@ -170,7 +170,7 @@ public class FileUtil {
         //for now escaping /:"*?<>| (not valid in file name, at least on Windows)
         //with underscores. We are only keeping \ as it could be part of the path.
         return fileName.replaceAll("[\\p{Cntrl}/:\"*?<>|]+", "_");
-    }
+    } 
 
     /**
      * Test if the current user has read and write access to the dirPath.

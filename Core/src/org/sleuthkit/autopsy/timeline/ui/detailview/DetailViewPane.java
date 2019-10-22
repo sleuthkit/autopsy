@@ -62,7 +62,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
-import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -192,7 +192,7 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
      *
      * @return a new Action that will unhide events with the given description.
      */
-    public Action newUnhideDescriptionAction(String description, TimelineEvent.DescriptionLevel descriptionLoD) {
+    public Action newUnhideDescriptionAction(String description, TimelineLevelOfDetail descriptionLoD) {
         return new UnhideDescriptionAction(description, descriptionLoD, getChart());
     }
 
@@ -204,7 +204,7 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
      *
      * @return a new Action that will hide events with the given description.
      */
-    public Action newHideDescriptionAction(String description, TimelineEvent.DescriptionLevel descriptionLoD) {
+    public Action newHideDescriptionAction(String description, TimelineLevelOfDetail descriptionLoD) {
         return new HideDescriptionAction(description, descriptionLoD, getChart());
     }
 

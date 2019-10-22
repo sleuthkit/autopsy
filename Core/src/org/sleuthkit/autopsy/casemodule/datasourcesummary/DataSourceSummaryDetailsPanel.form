@@ -52,7 +52,7 @@
             <Component class="javax.swing.JLabel" name="displayNameLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.displayNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.displayNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -64,7 +64,7 @@
             <Component class="javax.swing.JLabel" name="originalNameLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.originalNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.originalNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -76,7 +76,7 @@
             <Component class="javax.swing.JLabel" name="sha1HashValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha1HashValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha1HashValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -88,10 +88,10 @@
             <Component class="javax.swing.JLabel" name="operatingSystemValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.operatingSystemValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.operatingSystemValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.operatingSystemValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.operatingSystemValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -103,7 +103,7 @@
             <Component class="javax.swing.JLabel" name="displayNameValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.displayNameValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.displayNameValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -115,7 +115,7 @@
             <Component class="javax.swing.JLabel" name="sha256HashValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha256HashValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha256HashValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -127,7 +127,7 @@
             <Component class="javax.swing.JLabel" name="originalNameValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.originalNameValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.originalNameValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -139,10 +139,10 @@
             <Component class="javax.swing.JLabel" name="deviceIdValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.deviceIdValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.deviceIdValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.deviceIdValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.deviceIdValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -179,7 +179,7 @@
                       <TableColumnModel selectionModel="0">
                         <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
                           <Title editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                            <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.filePathsTable.columnModel.title0" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                            <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.filePathsTable.columnModel.title0" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                           </Title>
                           <Editor/>
                           <Renderer/>
@@ -196,7 +196,7 @@
             <Component class="javax.swing.JLabel" name="dataSourceUsageValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.dataSourceUsageValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.dataSourceUsageValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -208,7 +208,7 @@
             <Component class="javax.swing.JLabel" name="timeZoneValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.timeZoneValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.timeZoneValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -220,10 +220,10 @@
             <Component class="javax.swing.JLabel" name="imageTypeValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.imageTypeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.imageTypeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.imageTypeValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.imageTypeValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -235,10 +235,10 @@
             <Component class="javax.swing.JLabel" name="md5HashValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.md5HashValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.md5HashValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.md5HashValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.md5HashValue.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -250,7 +250,7 @@
             <Component class="javax.swing.JLabel" name="sectorSizeValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sectorSizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sectorSizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -262,7 +262,7 @@
             <Component class="javax.swing.JLabel" name="sizeValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -274,7 +274,7 @@
             <Component class="javax.swing.JLabel" name="filePathsLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.filePathsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.filePathsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -286,7 +286,7 @@
             <Component class="javax.swing.JLabel" name="sha256HashLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha256HashLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha256HashLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -298,7 +298,7 @@
             <Component class="javax.swing.JLabel" name="sha1HashLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha1HashLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sha1HashLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -310,7 +310,7 @@
             <Component class="javax.swing.JLabel" name="md5HashLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.md5HashLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.md5HashLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -322,7 +322,7 @@
             <Component class="javax.swing.JLabel" name="sectorSizeLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sectorSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sectorSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -334,7 +334,7 @@
             <Component class="javax.swing.JLabel" name="sizeLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.sizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -346,7 +346,7 @@
             <Component class="javax.swing.JLabel" name="imageTypeLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.imageTypeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.imageTypeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -358,7 +358,7 @@
             <Component class="javax.swing.JLabel" name="acquisitionDetailsLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.acquisitionDetailsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.acquisitionDetailsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -370,7 +370,7 @@
             <Component class="javax.swing.JLabel" name="timeZoneLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.timeZoneLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.timeZoneLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -382,7 +382,7 @@
             <Component class="javax.swing.JLabel" name="dataSourceUsageLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.dataSourceUsageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.dataSourceUsageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -394,7 +394,7 @@
             <Component class="javax.swing.JLabel" name="deviceIdLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.deviceIdLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.deviceIdLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -427,7 +427,7 @@
                     </Property>
                     <Property name="rows" type="int" value="4"/>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.acquisitionDetailsTextArea.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.acquisitionDetailsTextArea.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                       <Border info="null"/>
@@ -469,7 +469,7 @@
             <Component class="javax.swing.JLabel" name="unallocatedSizeLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.unallocatedSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.unallocatedSizeLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>
@@ -481,7 +481,7 @@
             <Component class="javax.swing.JLabel" name="unallocatedSizeValue">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourcesummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.unallocatedSizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryDetailsPanel.unallocatedSizeValue.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Constraints>

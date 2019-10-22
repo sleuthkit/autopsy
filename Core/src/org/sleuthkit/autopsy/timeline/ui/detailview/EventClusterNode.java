@@ -59,7 +59,7 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.SqlFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
-import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineEvent;
@@ -181,7 +181,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                 .intersect(new SqlFilterState<>(
                         new EventTypeFilter(getEventType()), true));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
-        final TimelineEventType.TypeLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
+        final TimelineEventType.HierarchyLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
         final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLevel());
 
         DescriptionFilter descriptionFilter = new DescriptionFilter(getEvent().getDescriptionLevel(), getDescription());
@@ -191,14 +191,14 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         Task<List<EventStripe>> loggedTask;
         loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventClusterNode_loggedTask_name(), false) {
 
-            private volatile TimelineEvent.DescriptionLevel loadedDescriptionLevel = withRelativeDetail(getDescriptionLevel(), relativeDetail);
+            private volatile TimelineLevelOfDetail loadedDescriptionLevel = withRelativeDetail(getDescriptionLevel(), relativeDetail);
 
             @Override
             protected List<EventStripe> call() throws Exception {
                 //newly loaded substripes                
                 List<EventStripe> stripes;
                 //next LoD in diraction of given relativeDetail
-                TimelineEvent.DescriptionLevel next = loadedDescriptionLevel;
+                TimelineLevelOfDetail next = loadedDescriptionLevel;
                 do {
                     loadedDescriptionLevel = next;
                     if (loadedDescriptionLevel == getEvent().getDescriptionLevel()) {
@@ -311,7 +311,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
             });
 
             //disabled if the given node is already at full description level of detail
-            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(TimelineEvent.DescriptionLevel.FULL));
+            disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(TimelineLevelOfDetail.HIGH));
         }
     }
 
@@ -346,7 +346,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         LESS;
     }
 
-    private static TimelineEvent.DescriptionLevel withRelativeDetail(TimelineEvent.DescriptionLevel LoD, RelativeDetail relativeDetail) {
+    private static TimelineLevelOfDetail withRelativeDetail(TimelineLevelOfDetail LoD, RelativeDetail relativeDetail) {
         switch (relativeDetail) {
             case EQUAL:
                 return LoD;

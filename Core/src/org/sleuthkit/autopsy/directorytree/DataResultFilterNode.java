@@ -179,9 +179,7 @@ public class DataResultFilterNode extends FilterNode {
                 newPs.setShortDescription(ps.getShortDescription());
 
                 newPs.put(ps.getProperties());
-                if (newPs.remove(AbstractFsContentNode.HIDE_PARENT) != null) {
-                    newPs.remove(AbstractFilePropertyType.LOCATION.toString());
-                }
+                newPs.remove(AbstractFsContentNode.HIDE_PARENT);
                 propertySets[i] = newPs;
             }
         }
@@ -569,7 +567,7 @@ public class DataResultFilterNode extends FilterNode {
             // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
             // to set that wrapped node as the selection and root context of the 
             // directory tree explorer manager (sourceEm)
-            if(sourceEm == null) {
+            if(sourceEm == null || sourceEm.getSelectedNodes().length == 0) {
                 return null;
             }
             final Node currentSelectionInDirectoryTree = sourceEm.getSelectedNodes()[0];

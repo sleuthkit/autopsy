@@ -63,7 +63,7 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
         // set name, display name, and icon
         if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             if (file.getType().equals(TSK_DB_FILES_TYPE_ENUM.CARVED)) {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png"); //NON-NLS
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
             } else {
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
             }

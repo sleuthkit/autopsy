@@ -23,7 +23,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
@@ -44,6 +46,7 @@ import org.sleuthkit.datamodel.DataSource;
 public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private List<IngestJobInfo> ingestJobs;
     private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
@@ -69,7 +72,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
             this.ingestModuleTable.setModel(this.ingestModuleTableModel);
         });
 
-        IngestManager.getInstance().addIngestJobEventListener((PropertyChangeEvent evt) -> {
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST , (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.STARTED.toString())
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())) {

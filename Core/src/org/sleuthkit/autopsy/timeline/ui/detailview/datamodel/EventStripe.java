@@ -26,7 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import org.sleuthkit.datamodel.TimelineEvent;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
@@ -52,7 +52,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     /**
      * the description level of detail that the events were clustered at.
      */
-    private final TimelineEvent.DescriptionLevel lod;
+    private final TimelineLevelOfDetail lod;
 
     /**
      * the set of ids of the events
@@ -88,7 +88,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     private EventStripe(EventCluster parent, TimelineEventType type, String description,
-                        TimelineEvent.DescriptionLevel lod, SortedSet<EventCluster> clusters,
+                        TimelineLevelOfDetail lod, SortedSet<EventCluster> clusters,
                         Set<Long> eventIDs, Set<Long> tagged, Set<Long> hashHits) {
         this.parent = parent;
         this.type = type;
@@ -151,7 +151,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     @Override
-    public TimelineEvent.DescriptionLevel getDescriptionLevel() {
+    public TimelineLevelOfDetail getDescriptionLevel() {
         return lod;
     }
 
