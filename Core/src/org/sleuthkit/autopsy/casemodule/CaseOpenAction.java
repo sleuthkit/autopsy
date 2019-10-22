@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -93,7 +94,8 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
          * If the open multi user case dialog is open make sure it's not set
          * to always be on top as this hides the file chooser on macOS.
          */
-        OpenMultiUserCaseDialog.getInstance().setAlwaysOnTop(false);
+        OpenMultiUserCaseDialog multiUserCaseDialog = OpenMultiUserCaseDialog.getInstance();
+        multiUserCaseDialog.setAlwaysOnTop(false);
         String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
         String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
@@ -102,11 +104,11 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
              * file (.aut file).
              */
             /**
-             * Passing the fileChooser as its own parent gets around an issue
-             * where the fileChooser was hidden behind the CueBannerPanel ("Welcome" dialog)
-             * on macOS.
+             * The parent of the fileChooser will either be the multi user
+             * case dialog or the startup window.
              */
-            int retval = fileChooser.showOpenDialog(fileChooser);
+            int retval = fileChooser.showOpenDialog(multiUserCaseDialog.isVisible()
+                    ? multiUserCaseDialog : (Component) StartupWindowProvider.getInstance().getStartupWindow());
             if (retval == JFileChooser.APPROVE_OPTION) {
                 /*
                  * Close the startup window, if it is open.
@@ -116,7 +118,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                 /*
                  * Close the Open Multi-User Case window, if it is open.
                  */
-                OpenMultiUserCaseDialog.getInstance().setVisible(false);
+                multiUserCaseDialog.setVisible(false);
 
                 /*
                  * Try to open the case associated with the case metadata file
