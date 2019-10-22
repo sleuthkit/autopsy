@@ -248,6 +248,7 @@ public final class TranslatedTextViewer implements TextViewer {
                 // Task cancelled, no error.
             } catch (ExecutionException ex) {
                 logger.log(Level.WARNING, String.format("Error occurred during background task execution for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                panel.display(Bundle.TranslatedContentViewer_translationException(ex.getMessage()), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
             }
         }
 
