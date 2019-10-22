@@ -44,14 +44,21 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- *
- * @author wschaefer
+ * Helper class for methods needed by actions which extract files.
  */
 public class ExtractActionHelper {
 
     private final Logger logger = Logger.getLogger(ExtractActionHelper.class.getName());
     private String userDefinedExportPath;
 
+    /**
+     * Extract the specified collection of files with an event specified for
+     * context.
+     *
+     * @param event         The event that caused the extract method to be
+     *                      called.
+     * @param selectedFiles The files to be extracted from the current case.
+     */
     public void extract(ActionEvent event, Collection<? extends AbstractFile> selectedFiles) {
         if (selectedFiles.size() > 1) {
             extractFiles(event, selectedFiles);

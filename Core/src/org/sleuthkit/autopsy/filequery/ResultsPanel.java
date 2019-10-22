@@ -23,13 +23,10 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import javax.swing.Action;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -39,23 +36,17 @@ import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionListener;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
-import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbContextMenuActionsProvider;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -66,7 +57,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ResultsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(ResultsPanel.class.getName());
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
@@ -86,6 +76,8 @@ public class ResultsPanel extends javax.swing.JPanel {
     /**
      * Creates new form ResultsPanel.
      */
+    @Messages({"ResultsPanel.viewFileInDir.name=View File in Directory",
+        "ResultsPanel.openInExternalViewer.name=Open in External Viewer"})
     public ResultsPanel(EamDb centralRepo) {
         initComponents();
         this.centralRepo = centralRepo;
@@ -101,6 +93,7 @@ public class ResultsPanel extends javax.swing.JPanel {
                 populateInstancesList();
             }
         });
+        //Add the context menu when right clicking
         instancesList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -110,12 +103,12 @@ public class ResultsPanel extends javax.swing.JPanel {
                         Set<AbstractFile> files = new HashSet<>();
                         files.add(instancesList.getSelectedValue());
                         JPopupMenu menu = new JPopupMenu();
-                        menu.add(new ViewContextAction("View File in Directory", instancesList.getSelectedValue()));
-                        menu.add(new ExternalViewerAction("Open in External Viewer",  new FileNode(instancesList.getSelectedValue())));
+                        menu.add(new ViewContextAction(Bundle.ResultsPanel_viewFileInDir_name(), instancesList.getSelectedValue()));
+                        menu.add(new ExternalViewerAction(Bundle.ResultsPanel_openInExternalViewer_name(), new FileNode(instancesList.getSelectedValue())));
                         menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
-                        menu.add(ExtractAction2.getInstance(files));
+                        menu.add(new DiscoveryExtractAction(files));
                         menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
-                        menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));               
+                        menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));
                         menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
                         menu.show(instancesList, e.getPoint().x, e.getPoint().y);
                     });
