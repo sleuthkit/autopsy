@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -33,6 +36,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -45,6 +50,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
     private static final long serialVersionUID = 1L;
     private static final String NO_COMMENT = "";
+    private final Collection<Content> content = new HashSet<>();
 
     AddTagAction(String menuText) {
         super(menuText);
@@ -52,6 +58,17 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
     @Override
     public JMenuItem getPopupPresenter() {
+        content.clear();
+        return new TagMenu();
+    }
+    
+    Collection<Content> getContentToTag(){
+        return Collections.unmodifiableCollection(content);
+    }
+    
+    public JMenuItem getMenuForContent(Collection<? extends Content> contentToTag){
+        content.clear();
+        content.addAll(contentToTag);
         return new TagMenu();
     }
 

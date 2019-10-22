@@ -76,6 +76,8 @@ public class AddContentTagAction extends AddTagAction {
 
     @Override
     protected void addTag(TagName tagName, String comment) {
+        final Collection<AbstractFile> selectedFiles = new HashSet<>();
+        if (getContentToTag().isEmpty()) {
         /*
          * The documentation for Lookup.lookupAll() explicitly says that the
          * collection it returns may contain duplicates. Within this invocation
@@ -84,8 +86,17 @@ public class AddContentTagAction extends AddTagAction {
          *
          * We don't want VirtualFile and DerivedFile objects to be tagged.
          */
-        final Collection<AbstractFile> selectedFiles = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-
+            
+            selectedFiles.addAll(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        }
+        else {
+            for (Content content : getContentToTag()){
+                if (content instanceof AbstractFile){
+                    selectedFiles.add((AbstractFile)content);
+                }
+            }
+                
+        }
         new Thread(() -> {
             for (AbstractFile file : selectedFiles) {
                 try {

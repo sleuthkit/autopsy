@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -42,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Instances of this Action allow users to content to a hash database.
  */
-final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup {
+public final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup {
 
     private static AddContentToHashDbAction instance;
 
@@ -83,6 +84,10 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
     private AddContentToHashDbAction() {
     }
 
+    public JMenuItem getMenuForFiles(Collection<AbstractFile> selectedFiles) {
+        return new AddContentToHashDbMenu(selectedFiles);
+    }
+
     @Override
     public JMenuItem getPopupPresenter() {
         return new AddContentToHashDbMenu();
@@ -96,10 +101,10 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
     // action.
     private final class AddContentToHashDbMenu extends JMenu {
 
-        AddContentToHashDbMenu() {
+        private static final long serialVersionUID = 1L;
+
+        AddContentToHashDbMenu(Collection<AbstractFile> selectedFiles) {
             super(SINGLE_SELECTION_NAME);
-            // Get any AbstractFile objects from the lookup of the currently focused top component. 
-            final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
             int numberOfFilesSelected = selectedFiles.size();
 
             // Disable the menu if file ingest is in progress.
@@ -176,6 +181,12 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 }
             });
             add(newHashSetItem);
+        }
+
+        AddContentToHashDbMenu() {
+            // Get any AbstractFile objects from the lookup of the currently focused top component. 
+            this(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class)));
+
         }
 
         /**
