@@ -119,7 +119,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.16</specification-version>
+                        <specification-version>10.17</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -128,7 +128,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>3</release-version>
-                        <specification-version>1.2</specification-version>
+                        <specification-version>1.3</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
@@ -230,10 +230,6 @@
                 <package>org.codehaus.stax2.validation</package>
                 <package>org.noggit</package>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
-                <package>org.slf4j</package>
-                <package>org.slf4j.event</package>
-                <package>org.slf4j.helpers</package>
-                <package>org.slf4j.spi</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
@@ -282,6 +278,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/guava-17.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/guava-17.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/language-detector-0.6.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\language-detector-0.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.2.jar</runtime-relative-path>

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -30,108 +30,211 @@ import java.sql.Statement;
 import java.util.logging.Level;
 
 /**
- * Database connection class & utilities.
+ * An abstraction that loads a given SQLite driver, establishes a connection to
+ * a given database, and creates a statement for the connection to support basic
+ * SQL operations on the database.
  */
 public class SQLiteDBConnect implements AutoCloseable {
 
-    public String sDriver = "";
-    public String sUrl = null;
-    public int iTimeout = 30;
-    public Connection conn = null;
-    public Statement statement = null;
     private static final Logger logger = Logger.getLogger(SQLiteDBConnect.class.getName());
+    private static final int STMT_EXEC_TIMEOUT_SECS = 30;
 
-    /*
-     * Stub constructor for quick instantiation o/t fly for using some of the
-     * ancillary stuff
+    /**
+     * Constructs an abstraction that loads a given SQLite driver, establishes a
+     * connection to a given database, and creates a statement for the
+     * connection to support basic SQL operations on the database.
+     *
+     * @param driver The SQLite driver class name.
+     * @param url    The SQLite database URL to which to connect.
+     *
+     * @throws SQLException If there is an error loading the driver,
+     *                      establishing the connection, or creating a statement
+     *                      for the connection.
      */
-    public SQLiteDBConnect() {
-    }
-
-    /*
-     * quick and dirty constructor to test the database passing the
-     * DriverManager name and the fully loaded url to handle
-     */
- /*
-     * NB this will typically be available if you make this class concrete and
-     * not abstract
-     */
-    public SQLiteDBConnect(String sDriverToLoad, String sUrlToLoad) throws SQLException {
-        init(sDriverToLoad, sUrlToLoad);
-    }
-
-    public final void init(String sDriverVar, String sUrlVar) throws SQLException {
-        setDriver(sDriverVar);
-        setUrl(sUrlVar);
-        setConnection();
-        setStatement();
-    }
-
-    private void setDriver(String sDriverVar) {
-        sDriver = sDriverVar;
-    }
-
-    private void setUrl(String sUrlVar) {
-        sUrl = sUrlVar;
-    }
-
-    public void setConnection() throws SQLException {
+    public SQLiteDBConnect(String driver, String url) throws SQLException {
+        sDriver = driver;
+        sUrl = url;
         try {
             Class.forName(sDriver);
-        } catch (ClassNotFoundException e) {
-
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException(ex);
         }
         conn = DriverManager.getConnection(sUrl);
-    }
-
-    public Connection getConnection() {
-        return conn;
-    }
-
-    public void setStatement() throws SQLException {
-        if (conn == null) {
-            setConnection();
-        }
         statement = conn.createStatement();
-        statement.setQueryTimeout(iTimeout);  // set timeout to 30 sec.
+        statement.setQueryTimeout(STMT_EXEC_TIMEOUT_SECS);
     }
 
-    public Statement getStatement() {
-        return statement;
-    }
-
-    public void executeStmt(String instruction) throws SQLException {
-        statement.executeUpdate(instruction);
-    }
-
-    /** processes an array of instructions e.g. a set of SQL command strings
-     * passed from a file
+    /**
+     * Executes an SQL statement. For use with statements that do not return
+     * result sets.
      *
-     * NB you should ensure you either handle empty lines in files by either
-     * removing them or parsing them out since they will generate spurious
-     * SQLExceptions when they are encountered during the iteration....
+     * @param sqlStatement The SQL statement to execute.
+     *
+     * @throws SQLException If there is an error executing the statement.
      */
-    public void executeStmt(String[] instructionSet) throws SQLException {
-        for (int i = 0; i < instructionSet.length; i++) {
-            executeStmt(instructionSet[i]);
+    public void executeStmt(String sqlStatement) throws SQLException {
+        statement.executeUpdate(sqlStatement);
+    }
+
+    /**
+     * Executes one or more SQL statements in sequence. For use with statements
+     * that do not return result sets.
+     *
+     * @param sqlStatements The SQL statements to execute.
+     *
+     * @throws SQLException If there is an error executing the statements.
+     */
+    public void executeStmt(String[] sqlStatements) throws SQLException {
+        for (String stmt : sqlStatements) {
+            executeStmt(stmt);
         }
     }
 
-    public ResultSet executeQry(String instruction) throws SQLException {
-        return statement.executeQuery(instruction);
+    /**
+     * Executes an SQL query and returns a result set. The caller should close
+     * the result set when finished with it, and should not make any other calls
+     * on this object until finished with the result set.
+     *
+     * @param sqlStatement The SQL query to execute.
+     *
+     * @return The result set.
+     *
+     * @throws SQLException If there is an error executing the query.
+     */
+    public ResultSet executeQry(String sqlStatement) throws SQLException {
+        return statement.executeQuery(sqlStatement);
     }
 
+    /**
+     * Closes the connection to the database. Should be called when the use of
+     * this object is completed, unless the object was constructed in a try with
+     * resources statement, in which case the closing is automatic when the
+     * object goes out of scope.
+     */
     public void closeConnection() {
+        if (conn == null) {
+            return;
+        }
         try {
             conn.close();
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Unable to close connection to SQLite DB at " + sUrl, ex);
         }
-        //Implementing Autoclosable.close() allows this class to be used in try-with-resources.
     }
 
     @Override
     public void close() {
         closeConnection();
     }
+
+    /*
+     * Partially constructs a utility object for doing basic operations on a
+     * SQLite database. The object is not in a usable state. Further
+     * initialization is required. See methods below.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public SQLiteDBConnect() {
+    }
+
+    /**
+     * Loads a given SQLite driver, establishes a connection to a given
+     * database, and creates a statement for the connection.
+     *
+     * @param driver The SQLite driver class name.
+     * @param url    The SQLite database URL to which to connect.
+     *
+     * @throws SQLException If there is an error establishing the connection or
+     *                      creating a statement for the connection.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public final void init(String driver, String url) throws SQLException {
+        sDriver = driver;
+        sUrl = url;
+        closeConnection();
+        setConnection();
+        setStatement();
+    }
+
+    /**
+     * Sets or resets the connection to the SQLite database, if the SQLite
+     * driver and the database URL have been set.
+     *
+     * @throws SQLException If there is an error loading the driver or
+     *                      establishing the connection.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public void setConnection() throws SQLException {
+        if (sDriver == null || sDriver.isEmpty() || sUrl == null || sUrl.isEmpty()) {
+            throw new SQLException("Driver and or databse URl not initialized");
+        }
+        closeConnection();
+        try {
+            Class.forName(sDriver);
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException(ex);
+        }
+        conn = DriverManager.getConnection(sUrl);
+    }
+
+    /**
+     * Gets the connection, if any, to the database.
+     *
+     * @return The connection to the database, may be null.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public Connection getConnection() {
+        return conn;
+    }
+
+    /**
+     * Creates a connection to the database if there is none, and creates a
+     * statement using the connection.
+     *
+     * @throws SQLException If there is an error creating the connection or the
+     *                      staement.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public void setStatement() throws SQLException {
+        if (conn == null) {
+            setConnection();
+        }
+        statement = conn.createStatement();
+        statement.setQueryTimeout(iTimeout);
+    }
+
+    /**
+     * Gets the statement, if any, associated with the connection to the
+     * database, if any.
+     *
+     * @return The statement, may be null.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public Statement getStatement() {
+        return statement;
+    }
+
+    /*
+     * The lack of encapsulation of these fields is an error. Access to them
+     * outside of instances of this class is deprecated.
+     *
+     * @deprecated Do not access.
+     */
+    public String sDriver = "";
+    public String sUrl = null;
+    public int iTimeout = STMT_EXEC_TIMEOUT_SECS;
+    public Connection conn = null;
+    public Statement statement = null;
+
 }

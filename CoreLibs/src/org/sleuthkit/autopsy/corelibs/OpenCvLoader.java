@@ -59,7 +59,7 @@ public final class OpenCvLoader {
      *
      * @return True or false.
      */
-    public static boolean hasOpenCvLoaded() {
+    public static boolean openCvIsLoaded() {
         return openCvLoaded;
     }
 
@@ -78,7 +78,7 @@ public final class OpenCvLoader {
      *                              of the core OpenCV library during static
      *                              initialization of this class.
      *
-     * @deprecated Use hasOpenCvLoaded instead.
+     * @deprecated Use openCvIsLoaded instead.
      */
     @Deprecated
     public static boolean isOpenCvLoaded() throws UnsatisfiedLinkError {

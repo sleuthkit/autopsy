@@ -130,6 +130,18 @@ public class Server {
                 return "content_ws"; //NON-NLS
             }
         },
+        CONTENT_JA {
+            @Override
+            public String toString() {
+                return "content_ja"; //NON-NLS
+            }
+        },
+        LANGUAGE {
+            @Override
+            public String toString() {
+                return "language"; //NON-NLS
+            }
+        },
         FILE_NAME {
             @Override
             public String toString() {
@@ -175,7 +187,18 @@ public class Server {
             public String toString() {
                 return "chunk_size"; //NON-NLS
             }
-        }
+        },
+        /**
+         * termfreq is a function which returns the number of times the term appears.
+         * This is not an actual field defined in schema.xml, but can be gotten from returned documents
+         * in the same way as fields.
+         */
+        TERMFREQ {
+            @Override
+            public String toString() {
+                return "termfreq"; //NON-NLS
+            }
+        }        
     };
 
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)

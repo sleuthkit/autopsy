@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.testing;
 
 import java.io.File;
 import java.io.IOException;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.logging.Logger;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import org.netbeans.jemmy.Timeouts;
@@ -40,7 +40,7 @@ import org.netbeans.junit.NbModuleSuite;
  */
 public class RegressionTest extends TestCase {
 
-    private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
+    private static final Logger logger = Logger.getLogger(RegressionTest.class.getName()); // DO NOT USE AUTOPSY LOGGER
     private static final AutopsyTestCases autopsyTests = new AutopsyTestCases(Boolean.parseBoolean(System.getProperty("isMultiUser")));
 
     /**

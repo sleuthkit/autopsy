@@ -68,4 +68,43 @@ final class RelationshipsNodeUtilities {
             return "";
         }
     }
+    
+    	/**
+	 * Normalize the phone number by removing all non numeric characters, except
+	 * for leading +.
+         * 
+         * This function copied from CommunicationManager.
+	 *
+	 * @param phoneNum The phone number to normalize
+	 *
+	 * @return The normalized phone number.
+	 */
+    static String normalizePhoneNum(String phoneNum) {
+        String normailzedPhoneNum = phoneNum.replaceAll("\\D", "");
+
+        if (phoneNum.startsWith("+")) {
+            normailzedPhoneNum = "+" + normailzedPhoneNum;
+        }
+
+        if (normailzedPhoneNum.isEmpty()) {
+            normailzedPhoneNum = phoneNum;
+        }
+
+        return normailzedPhoneNum;
+    }
+
+    /**
+     * Normalize the given email address by converting it to lowercase.
+     * 
+     * This function copied from CommunicationManager.
+     *
+     * @param emailAddress The email address tot normalize
+     *
+     * @return The normalized email address.
+     */
+    static String normalizeEmailAddress(String emailAddress) {
+        String normailzedEmailAddr = emailAddress.toLowerCase();
+
+        return normailzedEmailAddr;
+    }
 }

@@ -70,8 +70,8 @@ final class ConfigVisualPanel1 extends JPanel {
     ConfigVisualPanel1() {
         initComponents();
         configFileTextField.getDocument().addDocumentListener(new MyDocumentListener(this));
-        refreshDriveList();
         SwingUtilities.invokeLater(() -> {
+            refreshDriveList();
             updateControls();
         });
     }
