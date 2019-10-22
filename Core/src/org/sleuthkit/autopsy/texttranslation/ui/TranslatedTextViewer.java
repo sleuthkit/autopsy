@@ -176,7 +176,7 @@ public final class TranslatedTextViewer implements TextViewer {
             "TranslatedContentViewer.fileHasNoText=File has no text.",
             "TranslatedContentViewer.emptyTranslation=The translation is empty.",
             "TranslatedContentViewer.noServiceProvider=Machine translation software was not found.",
-            "# {0} - exception message", "TranslatedContentViewer.translationException=Error encountered while attempting translation ({0})."
+            "# {0} - exception message", "TranslatedContentViewer.translationException=Error encountered while translating file ({0})."
         })
         @Override
         public String doInBackground() throws InterruptedException {
@@ -243,6 +243,7 @@ public final class TranslatedTextViewer implements TextViewer {
                 String orientDetectSubstring = result.substring(0, maxOrientChars);
                 ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
                 panel.display(result, orientation, Font.PLAIN);
+                
             } catch (InterruptedException | CancellationException ignored) {
                 // Task cancelled, no error.
             } catch (ExecutionException ex) {
