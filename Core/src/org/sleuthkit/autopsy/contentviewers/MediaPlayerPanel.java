@@ -200,7 +200,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private static final int SKIP_IN_SECONDS = 30;
 
     private ExtractMedia extractMediaWorker;
-    
+
     //Serialize setting the value of the Video progress slider.
     //The slider is a shared resource between the VideoPanelUpdater
     //and the TrackListener of the JSliderUI.
@@ -555,9 +555,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
                     long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
                     /**
-                     * Duration may not be known until there is video data in the
-                     * pipeline. We start this updater when data-flow has just been
-                     * initiated so buffering may still be in progress.
+                     * Duration may not be known until there is video data in
+                     * the pipeline. We start this updater when data-flow has
+                     * just been initiated so buffering may still be in
+                     * progress.
                      */
                     if (duration >= 0 && position >= 0) {
                         double relativePosition = (double) position / duration;
@@ -639,8 +640,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * the thumb progresses.
          *
          * @param b JSlider component
-         * @param config Configuration object. Contains info about thumb dimensions
-         *               and colors.
+         * @param config Configuration object. Contains info about thumb
+         * dimensions and colors.
          */
         public CircularJSliderUI(JSlider slider, CircularJSliderConfiguration config) {
             super(slider);
@@ -653,8 +654,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         /**
-         * Modifies the View to be an oval rather than the
-         * rectangle Controller.
+         * Modifies the View to be an oval rather than the rectangle Controller.
          */
         @Override
         public void paintThumb(Graphics graphic) {
@@ -700,7 +700,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             //Preserve the graphics color.
             graphic.setColor(original);
         }
-        
+
         @Override
         protected TrackListener createTrackListener(JSlider slider) {
             return new CustomTrackListener();
@@ -716,7 +716,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     return;
                 }
                 int value = this.valueForXPosition(mousePosition.x);
-                
+
                 //Lock the slider down, which is a shared resource.
                 //The VideoPanelUpdater (dedicated thread) keeps the
                 //slider in sync with the video position, so without 
@@ -744,31 +744,39 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
             super.update(graphic, component);
         }
-        
+
         /**
-         * This track listener will force the thumb to be snapped to the 
-         * mouse location. This makes grabbing and dragging the JSlider much
-         * easier. Using the default track listener, the user would have to
-         * click exactly on the slider thumb to drag it. Now the thumb positions 
+         * This track listener will force the thumb to be snapped to the mouse
+         * location. This makes grabbing and dragging the JSlider much easier.
+         * Using the default track listener, the user would have to click
+         * exactly on the slider thumb to drag it. Now the thumb positions
          * itself under the mouse so that it can always be dragged.
          */
         private class CustomTrackListener extends CircularJSliderUI.TrackListener {
-            @Override 
+
+            @Override
             public void mousePressed(MouseEvent e) {
+                if (!slider.isEnabled()) {
+                    return;
+                }
                 //Snap the thumb to position of the mouse
                 scrollDueToClickInTrack(0);
-                
+
                 //Pause the video for convenience
                 gstPlayBin.pause();
 
                 //Handle the event as normal.
                 super.mousePressed(e);
             }
-            
+
             @Override
             public void mouseReleased(MouseEvent e) {
-                super.mouseReleased(e);
+                if (!slider.isEnabled()) {
+                    return;
+                }
                 
+                super.mouseReleased(e);
+
                 //Unpause once the mouse has been released.
                 gstPlayBin.play();
             }
