@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,6 +84,15 @@ public final class AddContentToHashDbAction extends AbstractAction implements Pr
     private AddContentToHashDbAction() {
     }
 
+    /**
+     * Get the menu for adding the specified collection of Files to a HashDb.
+     *
+     * @param selectedFiles The collection of AbstractFiles the menu actions
+     *                      will be applied to.
+     *
+     * @return The menu which will allow users to add the specified files to a
+     *         HashDb.
+     */
     public JMenuItem getMenuForFiles(Collection<AbstractFile> selectedFiles) {
         return new AddContentToHashDbMenu(selectedFiles);
     }
@@ -103,6 +112,10 @@ public final class AddContentToHashDbAction extends AbstractAction implements Pr
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Construct an AddContentToHashDbMenu object using the specified
+         * collection of files as the files to be added to a HashDb.
+         */
         AddContentToHashDbMenu(Collection<AbstractFile> selectedFiles) {
             super(SINGLE_SELECTION_NAME);
             int numberOfFilesSelected = selectedFiles.size();
@@ -183,6 +196,10 @@ public final class AddContentToHashDbAction extends AbstractAction implements Pr
             add(newHashSetItem);
         }
 
+        /**
+         * Construct an AddContentToHashDbMenu object using the currently
+         * selected files as the files to be added to a HashDb.
+         */
         AddContentToHashDbMenu() {
             // Get any AbstractFile objects from the lookup of the currently focused top component. 
             this(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class)));

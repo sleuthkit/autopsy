@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2018 Basis Technology Corp.
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,6 +81,15 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
         return new TagMenu();
     }
 
+    /**
+     * Get the menu for removing tags from the specified collection of Files.
+     *
+     * @param selectedFiles The collection of AbstractFiles the menu actions
+     *                      will be applied to.
+     *
+     * @return The menu which will allow users to remove tags from the specified
+     *         collection of Files.
+     */
     public JMenuItem getMenuForFiles(Collection<AbstractFile> selectedFiles) {
         return new TagMenu(selectedFiles);
     }
@@ -145,10 +154,18 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Construct an TagMenu object using the specified collection of files
+         * as the files to remove a tag from.
+         */
         TagMenu() {
             this(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class)));
         }
 
+        /**
+         * Construct an TagMenu object using the specified collection of files
+         * as the files to remove a tag from.
+         */
         TagMenu(Collection<AbstractFile> selectedFiles) {
             super(getActionDisplayName());
 

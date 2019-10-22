@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,25 +77,24 @@ public class AddContentTagAction extends AddTagAction {
     @Override
     protected void addTag(TagName tagName, String comment) {
         final Collection<AbstractFile> selectedFiles = new HashSet<>();
+        //If the contentToTag is empty look up the selected content
         if (getContentToTag().isEmpty()) {
-        /*
-         * The documentation for Lookup.lookupAll() explicitly says that the
-         * collection it returns may contain duplicates. Within this invocation
-         * of addTag(), we don't want to tag the same AbstractFile more than
-         * once, so we dedupe the AbstractFiles by stuffing them into a HashSet.
-         *
-         * We don't want VirtualFile and DerivedFile objects to be tagged.
-         */
-            
+            /*
+             * The documentation for Lookup.lookupAll() explicitly says that the
+             * collection it returns may contain duplicates. Within this
+             * invocation of addTag(), we don't want to tag the same
+             * AbstractFile more than once, so we dedupe the AbstractFiles by
+             * stuffing them into a HashSet.
+             *
+             * We don't want VirtualFile and DerivedFile objects to be tagged.
+             */
             selectedFiles.addAll(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        }
-        else {
-            for (Content content : getContentToTag()){
-                if (content instanceof AbstractFile){
-                    selectedFiles.add((AbstractFile)content);
+        } else {
+            for (Content content : getContentToTag()) {
+                if (content instanceof AbstractFile) {
+                    selectedFiles.add((AbstractFile) content);
                 }
             }
-                
         }
         new Thread(() -> {
             for (AbstractFile file : selectedFiles) {

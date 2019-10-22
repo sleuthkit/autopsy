@@ -74,6 +74,7 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
     @Override
     protected void addTag(TagName tagName, String comment) {
         final Collection<BlackboardArtifact> selectedArtifacts = new HashSet<>();
+        //If the contentToTag is empty look up the selected content
         if (getContentToTag().isEmpty()) {
             /*
              * The documentation for Lookup.lookupAll() explicitly says that the
@@ -89,7 +90,6 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
                     selectedArtifacts.add((BlackboardArtifact) content);
                 }
             }
-
         }
         new Thread(() -> {
             for (BlackboardArtifact artifact : selectedArtifacts) {
