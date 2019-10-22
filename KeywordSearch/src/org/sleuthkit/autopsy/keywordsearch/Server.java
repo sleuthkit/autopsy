@@ -1277,14 +1277,17 @@ public class Server {
      *
      * @throws NoOpenCoreException
      */
-    public void deleteDataSource(Long dataSourceId) throws SolrServerException, KeywordSearchModuleException, NoOpenCoreException, IOException {
-        currentCoreLock.writeLock().lock();
-        if (null == currentCore) {
-            throw new NoOpenCoreException();
+    void deleteDataSource(Long dataSourceId) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException {
+        try {
+            currentCoreLock.writeLock().lock();
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            currentCore.deleteDataSource(dataSourceId);
+            currentCore.commit();
+        } finally {
+            currentCoreLock.writeLock().unlock();
         }
-        currentCore.deleteDataSource(dataSourceId);
-        currentCore.commit();
-        currentCoreLock.writeLock().unlock();
     }
 
     /**
@@ -1528,11 +1531,11 @@ public class Server {
             }
         }
 
-        private void deleteDataSource(Long dsObjId) throws SolrServerException, IOException {
+        private void deleteDataSource(Long dsObjId) throws IOException, SolrServerException {
             String dataSourceId = Long.toString(dsObjId);
             String deleteQuery = "image_id:" + dataSourceId;
-            // Get the first result. 
-            UpdateResponse updateResponse = solrCore.deleteByQuery(deleteQuery);
+
+            solrCore.deleteByQuery(deleteQuery);
         }
 
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {

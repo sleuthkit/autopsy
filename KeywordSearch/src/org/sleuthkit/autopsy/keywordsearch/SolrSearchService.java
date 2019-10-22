@@ -60,8 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * text indexing and search.
  */
 @ServiceProviders(value = {
-    @ServiceProvider(service = KeywordSearchService.class)
-    ,
+    @ServiceProvider(service = KeywordSearchService.class),
     @ServiceProvider(service = AutopsyService.class)
 })
 public class SolrSearchService implements KeywordSearchService, AutopsyService {
@@ -196,24 +195,24 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
     /**
      * Deletes a data source from Solr for a case.
-     * 
+     *
      * @param dataSourceId the id of the data source to delete.
-     * 
-     * @throws org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException 
+     *
+     * @throws
+     * org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException
      */
-    @NbBundle.Messages({
-        "SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore=DeleteDataSource did not contain a current Solr core so could not delete the Data Source",
-    })
     @Override
     public void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
+
         try {
-            KeywordSearch.getServer().deleteDataSource(dataSourceId);
-        } catch (NoOpenCoreException | KeywordSearchModuleException | SolrServerException | IOException ex) {
-            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
-                    "SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore"));
+            Server ddsServer = KeywordSearch.getServer();
+            ddsServer.deleteDataSource(dataSourceId);
+        } catch (IOException | KeywordSearchModuleException | NoOpenCoreException | SolrServerException ex) {
+            logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.DeleteDataSource.msg", dataSourceId), ex);
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.DeleteDataSource.msg", dataSourceId), ex);
         }
     }
-    
+
     /**
      * Deletes Solr core for a case.
      *
