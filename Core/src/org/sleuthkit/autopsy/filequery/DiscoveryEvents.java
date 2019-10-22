@@ -209,7 +209,7 @@ final class DiscoveryEvents {
          * Construct a new NoResultsEvent.
          */
         NoResultsEvent() {
-            //no arg conustructor
+            //no arg constructor
         }
     }
 
@@ -222,7 +222,7 @@ final class DiscoveryEvents {
          * Construct a new SearchCancelledEvent.
          */
         SearchCancelledEvent() {
-            //no arg conustructor
+            //no arg constructor
         }
 
     }
