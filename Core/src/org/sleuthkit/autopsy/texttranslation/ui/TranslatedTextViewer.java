@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.Content;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.texttranslation.ui.TranslationContentPanel.DisplayDropdownOptions;
@@ -63,7 +64,7 @@ import org.sleuthkit.autopsy.texttranslation.ui.TranslationContentPanel.DisplayD
 @ServiceProvider(service = TextViewer.class, position = 4)
 public final class TranslatedTextViewer implements TextViewer {
 
-    private static final Logger logger = Logger.getLogger(TranslatedTextViewer.class.getName()); 
+    private static final Logger logger = Logger.getLogger(TranslatedTextViewer.class.getName());
 
     private static final boolean OCR_ENABLED = true;
     private static final boolean OCR_DISABLED = false;
@@ -72,7 +73,7 @@ public final class TranslatedTextViewer implements TextViewer {
     private final TranslationContentPanel panel = new TranslationContentPanel();
 
     private volatile Node node;
-    private volatile BackgroundTranslationTask updateTask;
+    private volatile ExtractAndTranslateTextTask backgroundTask;
     private final ThreadFactory translationThreadFactory
             = new ThreadFactoryBuilder().setNameFormat("translation-content-viewer-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(translationThreadFactory);
@@ -95,7 +96,7 @@ public final class TranslatedTextViewer implements TextViewer {
                 panel.addLanguagePackNames(INSTALLED_LANGUAGE_PACKS);
             }
         }
-        
+
         int payloadMaxInKB = TextTranslationService.getInstance().getMaxTextChars() / 1000;
         panel.setWarningLabelMsg(String.format(Bundle.TranslatedTextViewer_maxPayloadSize(), payloadMaxInKB));
 
@@ -129,10 +130,10 @@ public final class TranslatedTextViewer implements TextViewer {
     public void resetComponent() {
         panel.reset();
         this.node = null;
-        if (updateTask != null) {
-            updateTask.cancel(true);
+        if (backgroundTask != null) {
+            backgroundTask.cancel(true);
         }
-        updateTask = null;
+        backgroundTask = null;
     }
 
     @Override
@@ -157,62 +158,62 @@ public final class TranslatedTextViewer implements TextViewer {
     }
 
     /**
-     * Fetches file text and performs translation.
+     * Extracts text from a file in the currently selected display node and
+     * optionally translates it.
      */
-    private class BackgroundTranslationTask extends SwingWorker<String, Void> {
+    private class ExtractAndTranslateTextTask extends SwingWorker<String, Void> {
+
+        private final AbstractFile file;
+        private final boolean translateText;
+
+        private ExtractAndTranslateTextTask(AbstractFile file, boolean translateText) {
+            this.file = file;
+            this.translateText = translateText;
+        }
 
         @NbBundle.Messages({
-            "TranslatedContentViewer.noIndexedTextMsg=Run the Keyword Search Ingest Module to get text for translation.",
-            "TranslatedContentViewer.textAlreadyIndexed=Please view the original text in the Indexed Text viewer.",
-            "TranslatedContentViewer.errorMsg=Error encountered while getting file text.",
-            "TranslatedContentViewer.errorExtractingText=Could not extract text from file.",
-            "TranslatedContentViewer.translatingText=Translating text, please wait..."
+            "TranslatedContentViewer.translatingText=Translating text, please wait...",
+            "TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file.",
+            "TranslatedContentViewer.fileHasNoText=File has no text.",
+            "TranslatedContentViewer.errorTranslatingText=Could not translate text from file."
         })
         @Override
         public String doInBackground() throws InterruptedException {
             if (this.isCancelled()) {
                 throw new InterruptedException();
             }
-            String dropdownSelection = panel.getDisplayDropDownSelection();
 
-            if (dropdownSelection.equals(DisplayDropdownOptions.ORIGINAL_TEXT.toString())) {
-                try {
-                    return getFileText(node);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error getting text", ex);
-                    return Bundle.TranslatedContentViewer_errorMsg();
-                } catch (TextExtractor.InitReaderException ex) {
-                    logger.log(Level.WARNING, "Error getting text", ex);
-                    return Bundle.TranslatedContentViewer_errorExtractingText();
-                }
-            } else {
-                try {
-                    return translate(getFileText(node));
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error translating text", ex);
-                    return Bundle.TranslatedContentViewer_errorMsg();
-                } catch (TextExtractor.InitReaderException ex) {
-                    logger.log(Level.WARNING, "Error translating text", ex);
-                    return Bundle.TranslatedContentViewer_errorExtractingText();
-                }
-            }
-        }
+            SwingUtilities.invokeLater(() -> {
+                panel.display(Bundle.TranslatedContentViewer_translatingText(),
+                        ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+            });
 
-        /**
-         * Update the extraction loading message depending on the file type.
-         *
-         * @param isImage Boolean indicating if the selecting node is an image
-         */
-        @NbBundle.Messages({"TranslatedContentViewer.extractingImageText=Extracting text from image, please wait...",
-            "TranslatedContentViewer.extractingFileText=Extracting text from file, please wait...",})
-        private void updateExtractionLoadingMessage(boolean isImage) {
-            if (isImage) {
-                panel.display(Bundle.TranslatedContentViewer_extractingImageText(),
-                        ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
-            } else {
-                panel.display(Bundle.TranslatedContentViewer_extractingFileText(),
-                        ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+            String fileText;
+            try {
+                fileText = getFileText(file);
+            } catch (IOException | TextExtractor.InitReaderException ex) {
+                logger.log(Level.WARNING, String.format("Error getting text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                return Bundle.TranslatedContentViewer_errorExtractingText();
             }
+
+            if (this.isCancelled()) {
+                throw new InterruptedException();
+            }
+
+            if (fileText == null || fileText.isEmpty()) {
+                return Bundle.TranslatedContentViewer_fileHasNoText();
+            }
+
+            if (this.translateText) {
+                String translation = translate(fileText);
+                if (this.isCancelled()) {
+                    throw new InterruptedException();
+                }
+                return translation;
+            } else {
+                return fileText;
+            }
+
         }
 
         @Override
@@ -227,8 +228,10 @@ public final class TranslatedTextViewer implements TextViewer {
                 String orientDetectSubstring = result.substring(0, maxOrientChars);
                 ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
                 panel.display(result, orientation, Font.PLAIN);
-            } catch (InterruptedException | ExecutionException | CancellationException ignored) {
-                //InterruptedException & CancellationException - User cancelled, no error.
+            } catch (InterruptedException | CancellationException ignored) {
+                // Task cancelled, no error.
+            } catch (ExecutionException ex) {
+                logger.log(Level.WARNING, "Error occurred during background task execution", ex);
             }
         }
 
@@ -243,14 +246,7 @@ public final class TranslatedTextViewer implements TextViewer {
             "TranslatedContentViewer.emptyTranslation=The resulting translation was empty.",
             "TranslatedContentViewer.noServiceProvider=Machine Translation software was not found.",
             "TranslatedContentViewer.translationException=Error encountered while attempting translation."})
-        private String translate(String input) throws InterruptedException {
-            if (this.isCancelled()) {
-                throw new InterruptedException();
-            }
-
-            panel.display(Bundle.TranslatedContentViewer_translatingText(),
-                    ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
-
+        private String translate(String input) {
             try {
                 TextTranslationService translatorInstance = TextTranslationService.getInstance();
                 String translatedResult = translatorInstance.translate(input);
@@ -277,33 +273,22 @@ public final class TranslatedTextViewer implements TextViewer {
          * @throws InterruptedException
          * @throws
          * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
-         * @throws NoOpenCoreException
-         * @throws KeywordSearchModuleException
          */
-        private String getFileText(Node node) throws IOException,
+        private String getFileText(AbstractFile file) throws IOException,
                 InterruptedException, TextExtractor.InitReaderException {
 
-            AbstractFile source = (AbstractFile) DataContentViewerUtility.getDefaultContent(node);
-            boolean isImage = false;
-
-            if (source != null) {
-                isImage = source.getMIMEType().toLowerCase().startsWith("image/");
-            }
-
-            updateExtractionLoadingMessage(isImage);
-
+            final boolean isImage = file.getMIMEType().toLowerCase().startsWith("image/"); // NON-NLS
             String result;
-
             if (isImage) {
-                result = extractText(source, OCR_ENABLED);
+                result = extractText(file, OCR_ENABLED);
             } else {
-                result = extractText(source, OCR_DISABLED);
+                result = extractText(file, OCR_DISABLED);
             }
 
             //Correct for UTF-8
             byte[] resultInUTF8Bytes = result.getBytes("UTF8");
-            byte[] trimToArraySize = Arrays.copyOfRange(resultInUTF8Bytes, 0, 
-                    Math.min(resultInUTF8Bytes.length, MAX_EXTRACT_SIZE_BYTES) );
+            byte[] trimToArraySize = Arrays.copyOfRange(resultInUTF8Bytes, 0,
+                    Math.min(resultInUTF8Bytes.length, MAX_EXTRACT_SIZE_BYTES));
             return new String(trimToArraySize, "UTF-8");
         }
 
@@ -348,7 +333,7 @@ public final class TranslatedTextViewer implements TextViewer {
                 textBuilder.append(cbuf, 0, read);
                 bytesRead += read;
             }
-            
+
             return textBuilder.toString();
         }
 
@@ -399,7 +384,7 @@ public final class TranslatedTextViewer implements TextViewer {
      */
     private abstract class SelectionChangeListener implements ActionListener {
 
-        public String currentSelection = null;
+        public String currentSelection;
 
         public abstract String getSelection();
 
@@ -408,14 +393,21 @@ public final class TranslatedTextViewer implements TextViewer {
             String selection = getSelection();
             if (!selection.equals(currentSelection)) {
                 currentSelection = selection;
-                if (updateTask != null && !updateTask.isDone()) {
-                    updateTask.cancel(true);
+
+                if (backgroundTask != null && !backgroundTask.isDone()) {
+                    backgroundTask.cancel(true);
                 }
-                updateTask = new BackgroundTranslationTask();
+
+                AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+                if (file == null) {
+                    return;
+                }
+                boolean translateText = currentSelection.equals(DisplayDropdownOptions.ORIGINAL_TEXT.toString());
+                backgroundTask = new ExtractAndTranslateTextTask(file, translateText);
 
                 //Pass the background task to a single threaded pool to keep
                 //the number of jobs running to one.
-                executorService.execute(updateTask);
+                executorService.execute(backgroundTask);
             }
         }
     }
