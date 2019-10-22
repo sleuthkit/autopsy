@@ -5,7 +5,7 @@
 
 # NOTE: update_sleuthkit_version.pl updates this value and relies
 # on it keeping the same name and whitespace.  Don't change it.
-TSK_VERSION=4.6.7
+TSK_VERSION=4.7.0
 
 
 # In the beginning...

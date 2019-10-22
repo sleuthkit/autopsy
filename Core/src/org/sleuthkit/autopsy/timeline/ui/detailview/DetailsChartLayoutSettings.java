@@ -23,7 +23,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.SetChangeListener;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 
 /**
  *
@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 final class DetailsChartLayoutSettings {
 
     DetailsChartLayoutSettings(TimeLineController controller) {
-        controller.getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
+        controller.getPinnedEvents().addListener((SetChangeListener.Change<? extends DetailViewEvent> change) -> {
             //if the pinned events change and aren't empty, show them
             setPinnedLaneShowing(change.getSet().isEmpty() == false);
         });

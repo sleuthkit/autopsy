@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,9 +40,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * startup).
  */
 // Registered as a service provider in layer.xml
-//@TopComponent.Description(preferredID = "DataContentTopComponent")
-//@TopComponent.Registration(mode = "output", openAtStartup = true)
-//@TopComponent.OpenActionRegistration(displayName = "#CTL_DataContentAction", preferredID = "DataContentTopComponent")
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DataContentTopComponent extends TopComponent implements DataContent, ExplorerManager.Provider {
 
@@ -125,15 +122,18 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     public static synchronized DataContentTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (win == null) {
-            logger.warning("Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system."); //NON-NLS
+            logger.log(Level.INFO, "Cannot find " + PREFERRED_ID + " component. It will "
+                    + "not be located properly in the window system."); //NON-NLS
             return getDefault();
         }
+        
         if (win instanceof DataContentTopComponent) {
             return (DataContentTopComponent) win;
         }
-        logger.warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
+        
+        logger.log(Level.INFO, "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
                 + "' ID. That is a potential source of errors and unexpected behavior."); //NON-NLS
+        
         return getDefault();
     }
 

@@ -22,6 +22,7 @@ import java.util.Set;
 
 /**
  * A TagsUpdatedEvent for tags that have been added to events.
+ * NOTE: This event is internal to timeline components
  */
 public class TagsAddedEvent extends TagsUpdatedEvent {
 

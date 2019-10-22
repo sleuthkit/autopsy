@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2015-18 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
@@ -9,8 +22,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
+import org.sleuthkit.datamodel.TimelineLevelOfDetail;
 
 /**
  * An Action that hides, in the given chart, events that have the given
@@ -22,7 +36,7 @@ class HideDescriptionAction extends Action {
 
     private static final Image HIDE = new Image("/org/sleuthkit/autopsy/timeline/images/eye--minus.png"); // NON-NLS
 
-    HideDescriptionAction(String description, DescriptionLoD descriptionLoD, DetailsChart chart) {
+    HideDescriptionAction(String description, TimelineLevelOfDetail descriptionLoD, DetailsChart chart) {
         super(Bundle.HideDescriptionAction_displayName());
         setLongText(Bundle.HideDescriptionAction_displayMsg());
         setGraphic(new ImageView(HIDE));
@@ -36,9 +50,13 @@ class HideDescriptionAction extends Action {
              * as the new filter for the given description. Set the (new) filter
              * active.
              */
-            final DescriptionFilter testFilter = new DescriptionFilter(descriptionLoD, description, DescriptionFilter.FilterMode.EXCLUDE);
-            DescriptionFilter descriptionFilter = chart.getController().getQuickHideFilters().stream()
-                    .filter(testFilter::equals).findFirst()
+            final DescriptionFilterState testFilter
+                    = new DescriptionFilterState(
+                            new DescriptionFilter(descriptionLoD, description));
+
+            DescriptionFilterState descriptionFilter = chart.getController().getQuickHideFilters().stream()
+                    .filter(otherFilterState -> testFilter.getFilter().equals(otherFilterState.getFilter()))
+                    .findFirst()
                     .orElseGet(() -> {
                         //if the selected state of the filter changes, do chart layout
                         testFilter.selectedProperty().addListener(selectedProperty -> chart.requestLayout());

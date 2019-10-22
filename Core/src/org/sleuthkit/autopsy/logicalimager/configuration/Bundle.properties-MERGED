@@ -26,10 +26,16 @@ ConfigVisualPanel1.chooseFileTitle=Select a Logical Imager configuration
 # {0} - filename
 ConfigVisualPanel1.configFileIsEmpty=Configuration file {0} is empty
 ConfigVisualPanel1.configurationError=Configuration error
+# {0} - root
+# {1} - description
+# {2} - size with unit
+# {3} - file system
+ConfigVisualPanel1.driveListItem={0} ({1}) ({2}) - File system: {3}
 ConfigVisualPanel1.fileNameExtensionFilter=Configuration JSON File
 ConfigVisualPanel1.invalidConfigJson=Invalid config JSON: 
 ConfigVisualPanel1.messageLabel.noExternalDriveFound=No drive found
 ConfigVisualPanel1.selectConfigurationFile=Select location
+ConfigVisualPanel1.unknown=Unknown
 ConfigVisualPanel2.cancel=Cancel
 ConfigVisualPanel2.deleteRuleSet=Delete rule 
 ConfigVisualPanel2.deleteRuleSetConfirmation=Delete rule confirmation
@@ -174,7 +180,7 @@ LogicalImagerConfigDeserializer.unsupportedKeyException=Unsupported key: {0}
 NewRulePanel.chooseLabel.text=Choose the type of rule
 ConfigVisualPanel1.configureDriveRadioButton.text_1=Configure selected external drive:
 ConfigVisualPanel1.configureFolderRadioButton.text_1=Configure in a folder:
-ConfigVisualPanel1.descriptionTextArea.text=Select a location for the Logical Imager. This location will contain the imaging program and a configuration file. If that location already contains a configuration file, it will be loaded to edit. Imaging results will be saved to this location, so ensure it has enough free space.
+ConfigVisualPanel1.descriptionTextArea.text=Select a location for the Logical Imager. This location will contain the imaging program and a configuration file. If that location already contains a configuration file, it will be loaded to edit. Imaging results will be saved to this location, so ensure it has enough free space. Drives with FAT format are not supported.
 ConfigVisualPanel1.refreshButton.text=Refresh
 ConfigVisualPanel3.saveButton.text=Save
 ConfigVisualPanel3.configLabel.text=Logical Imager config file save status:
@@ -189,6 +195,9 @@ ConfigVisualPanel2.flagEncryptionProgramsCheckBox.text=Alert if encryption progr
 ConfigVisualPanel2.finalizeImageWriter.text=Continue imaging after searches are performed
 EditNonFullPathsRulePanel.fileNamesInfoLabel.text=File names are case insensitive.
 EditNonFullPathsRulePanel.extensionsInfoLabel.text=Extensions are case insensitive.
+ConfigVisualPanel2.promptBeforeExit.text=Prompt before exiting imager
+ConfigVisualPanel2.promptBeforeExit.actionCommand=
+ConfigVisualPanel2.createVHDCheckBox.text=Create VHD
 NewRuleSetPanel.attributeRule.description=Search for files based on one or more attributes or metadata fields.
 NewRuleSetPanel.attributeRule.name=Attribute
 NewRuleSetPanel.fullPathRule.description=Search for files based on full exact match path.

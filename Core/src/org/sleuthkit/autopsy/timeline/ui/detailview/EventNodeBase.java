@@ -2,7 +2,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,15 +24,12 @@ import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -70,25 +67,24 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TimelineEventType;
 
 /**
  *
  */
-public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPane implements ContextMenuProvider {
+public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackPane implements ContextMenuProvider {
 
     private static final Logger LOGGER = Logger.getLogger(EventNodeBase.class.getName());
 
@@ -97,7 +93,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     private static final Image PIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--plus.png"); // NON-NLS //NOI18N
     private static final Image UNPIN = new Image("/org/sleuthkit/autopsy/timeline/images/marker--minus.png"); // NON-NLS //NOI18N
 
-    private static final Map<EventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
+    private static final Map<TimelineEventType, Effect> dropShadowMap = new ConcurrentHashMap<>();
 
     static void configureActionButton(ButtonBase b) {
         b.setMinSize(16, 16);
@@ -142,7 +138,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
         sleuthkitCase = chartLane.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chartLane.getController().getEventsModel();
-        eventTypeImageView.setImage(getEventType().getFXImage());
+        eventTypeImageView.setImage(new Image(getImagePath(getEventType())));
 
         if (tlEvent.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
@@ -152,10 +148,10 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             show(tagIV, false);
         }
 
-        if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
-            evtColor = getEventType().getColor();
+        if (chartLane.getController().getEventsModel().getEventTypeZoom() == TimelineEventType.HierarchyLevel.CATEGORY) {
+            evtColor = getColor(getEventType());
         } else {
-            evtColor = getEventType().getBaseType().getColor();
+            evtColor = getColor(getEventType().getCategory());
         }
         SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
 
@@ -171,6 +167,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
             showHoverControls(true);
             toFront();
         });
+
         setOnMouseExited(mouseExited -> {
             showHoverControls(false);
             if (parentNode != null) {
@@ -218,6 +215,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         setBorder(applied ? SELECTION_BORDER : null);
     }
 
+    @Override
     protected void layoutChildren() {
         super.layoutChildren();
     }
@@ -237,7 +235,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     final void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
-                eventType -> new DropShadow(-10, eventType.getColor()));
+                eventType -> new DropShadow(-10, getColor(eventType)));
         setEffect(showControls ? dropShadow : null);
         installTooltip();
         enableTooltip(showControls);
@@ -266,7 +264,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     }
 
     /**
-     * defer tooltip content creation till needed, this had a surprisingly large
+     * defer tooltip content creation until needed, this had a surprisingly large
      * impact on speed of loading the chart
      */
     @NbBundle.Messages({"# {0} - counts",
@@ -290,41 +288,13 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
                 @Override
                 protected String call() throws Exception {
-                    HashMap<String, Long> hashSetCounts = new HashMap<>();
-                    if (tlEvent.getEventIDsWithHashHits().isEmpty() == false) {
-                        try {
-                            //TODO:push this to DB
-                            for (SingleEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
-                                Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
-                                for (String hashSetName : hashSetNames) {
-                                    hashSetCounts.merge(hashSetName, 1L, Long::sum);
-                                }
-                            }
-                        } catch (TskCoreException ex) {
-                            LOGGER.log(Level.SEVERE, "Error getting hashset hit info for event.", ex); //NON-NLS
-                        }
-                    }
-                    String hashSetCountsString = hashSetCounts.entrySet().stream()
-                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
-                            .collect(Collectors.joining("\n"));
-
-                    Map<String, Long> tagCounts = new HashMap<>();
-                    if (tlEvent.getEventIDsWithTags().isEmpty() == false) {
-                        tagCounts.putAll(eventsModel.getTagCountsByTagName(tlEvent.getEventIDsWithTags()));
-                    }
-                    String tagCountsString = tagCounts.entrySet().stream()
-                            .map((Map.Entry<String, Long> t) -> t.getKey() + " : " + t.getValue())
-                            .collect(Collectors.joining("\n"));
-
                     return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
-                            TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
-                            + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
-                            + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
+                            TimeLineController.getZonedFormatter().print(getEndMillis() + 1000));
                 }
 
                 @Override
-                protected void succeeded() {
+                protected void done() {
                     super.succeeded();
                     try {
                         tooltip.setText(get());
@@ -347,7 +317,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
     }
 
-    final EventType getEventType() {
+    final TimelineEventType getEventType() {
         return tlEvent.getEventType();
     }
 
@@ -463,8 +433,8 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     void showFullDescription(final int size) {
         countLabel.setText((size == 1) ? "" : " (" + size + ")"); // NON-NLS
-        String description = getParentNode().map(pNode ->
-                "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
+        String description = getParentNode().map(pNode
+                -> "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
                 .orElseGet(getEvent()::getDescription);
 
         descrLabel.setText(description);
@@ -496,7 +466,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     private static class PinEventAction extends Action {
 
         @NbBundle.Messages({"PinEventAction.text=Pin"})
-        PinEventAction(TimeLineController controller, TimeLineEvent event) {
+        PinEventAction(TimeLineController controller, DetailViewEvent event) {
             super(Bundle.PinEventAction_text());
             setEventHandler(actionEvent -> controller.pinEvent(event));
             setGraphic(new ImageView(PIN));
@@ -506,7 +476,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     private static class UnPinEventAction extends Action {
 
         @NbBundle.Messages({"UnPinEventAction.text=Unpin"})
-        UnPinEventAction(TimeLineController controller, TimeLineEvent event) {
+        UnPinEventAction(TimeLineController controller, DetailViewEvent event) {
             super(Bundle.UnPinEventAction_text());
             setEventHandler(actionEvent -> controller.unPinEvent(event));
             setGraphic(new ImageView(UNPIN));

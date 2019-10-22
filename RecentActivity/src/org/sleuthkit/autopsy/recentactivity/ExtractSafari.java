@@ -291,12 +291,7 @@ final class ExtractSafari extends Extract {
         }
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context);
-            if (!bbartifacts.isEmpty()) {
-                services.fireModuleDataEvent(new ModuleDataEvent(
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
-            }
+            postArtifacts(getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context));
         } finally {
             tempHistoryFile.delete();
         }
@@ -323,12 +318,7 @@ final class ExtractSafari extends Extract {
         File tempFile = createTemporaryFile(context, file);
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getBookmarkArtifacts(file, tempFile, context);
-            if (!bbartifacts.isEmpty()) {
-                services.fireModuleDataEvent(new ModuleDataEvent(
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
-            }
+            postArtifacts(getBookmarkArtifacts(file, tempFile, context));
         } finally {
             tempFile.delete();
         }
@@ -356,12 +346,8 @@ final class ExtractSafari extends Extract {
         File tempFile = createTemporaryFile(context, file);
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getDownloadArtifacts(dataSource, file, tempFile);
-            if (!bbartifacts.isEmpty()) {
-                services.fireModuleDataEvent(new ModuleDataEvent(
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
-            }
+            postArtifacts(getDownloadArtifacts(dataSource, file, tempFile));
+            
         } finally {
             if (tempFile != null) {
                 tempFile.delete();
@@ -389,13 +375,8 @@ final class ExtractSafari extends Extract {
         try {
             tempFile = createTemporaryFile(context, file);
 
-            Collection<BlackboardArtifact> bbartifacts = getCookieArtifacts(file, tempFile, context);
-
-            if (!bbartifacts.isEmpty()) {
-                services.fireModuleDataEvent(new ModuleDataEvent(
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
-            }
+            postArtifacts(getCookieArtifacts(file, tempFile, context));
+           
         } finally {
             if (tempFile != null) {
                 tempFile.delete();

@@ -39,8 +39,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileSystemView;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -60,12 +60,14 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private static final long serialVersionUID = 1L;
     private static final String NO_IMAGE_SELECTED = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
     private static final String DRIVE_HAS_NO_IMAGES = Bundle.LogicalImagerPanel_messageLabel_driveHasNoImages();
+    private static final int COLUMN_TO_SORT_ON_INDEX = 1;
+    private static final int NUMBER_OF_VISIBLE_COLUMNS = 2;
     private static final String[] EMPTY_LIST_DATA = {};
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final Pattern regex = Pattern.compile("Logical_Imager_(.+)_(\\d{4})(\\d{2})(\\d{2})_(\\d{2})_(\\d{2})_(\\d{2})");
-    private Path choosenImageDirPath;
-    private TableModel imageTableModel;
+    private Path manualImageDirPath;
+    private DefaultTableModel imageTableModel;
 
     /**
      * Creates new form LogicalImagerPanel
@@ -75,8 +77,26 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      */
     private LogicalImagerPanel(String context) {
         initComponents();
+        configureImageTable();
         jScrollPane1.setBorder(null);
         clearImageTable();
+    }
+
+    /**
+     * Perform the Image Table configuration necessary when a new table model is
+     * set.
+     */
+    private void configureImageTable() {
+        //hide path column while leaving it in model
+        if (imageTable.getColumnCount() > NUMBER_OF_VISIBLE_COLUMNS) {
+            TableColumn columnToHide = imageTable.getColumn(imageTableModel.getColumnName(NUMBER_OF_VISIBLE_COLUMNS));
+            if (columnToHide != null) {
+                imageTable.removeColumn(columnToHide);
+            }
+            //sort on specified column in decending order, the first call will toggle to ascending order, the second to descending order
+            imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
+            imageTable.getRowSorter().toggleSortOrder(COLUMN_TO_SORT_ON_INDEX);
+        }
     }
 
     /**
@@ -133,7 +153,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         buttonGroup1.add(importRadioButton);
         importRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(importRadioButton, org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.importRadioButton.text")); // NOI18N
-        importRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.importRadioButton.toolTipText")); // NOI18N
+        importRadioButton.setToolTipText("");
         importRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importRadioButtonActionPerformed(evt);
@@ -148,7 +168,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
             }
         });
 
-        pathTextField.setText(org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.pathTextField.text")); // NOI18N
         pathTextField.setDisabledTextColor(java.awt.Color.black);
         pathTextField.setEnabled(false);
 
@@ -180,6 +199,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
         imageScrollPane.setPreferredSize(new java.awt.Dimension(346, 402));
 
+        imageTable.setAutoCreateRowSorter(true);
         imageTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -193,7 +213,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         imageTable.setShowHorizontalLines(false);
         imageTable.setShowVerticalLines(false);
         imageTable.getTableHeader().setReorderingAllowed(false);
-        imageTable.setUpdateSelectionOnSort(false);
         imageTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 imageTableMouseReleased(evt);
@@ -214,7 +233,6 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         messageTextArea.setForeground(java.awt.Color.red);
         messageTextArea.setLineWrap(true);
         messageTextArea.setRows(3);
-        messageTextArea.setText(org.openide.util.NbBundle.getMessage(LogicalImagerPanel.class, "LogicalImagerPanel.messageTextArea.text")); // NOI18N
         messageTextArea.setBorder(null);
         messageTextArea.setDisabledTextColor(java.awt.Color.red);
         messageTextArea.setEnabled(false);
@@ -258,7 +276,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 568, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(93, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -272,7 +290,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE))
+                    .addComponent(driveListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 198, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(refreshButton)
                 .addGap(18, 18, 18)
@@ -299,7 +317,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         imageTable.clearSelection();
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setErrorMessage(NO_IMAGE_SELECTED);
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int retval = fileChooser.showOpenDialog(this);
@@ -315,11 +333,21 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     }
                 });
                 if (vhdFiles.length == 0) {
-                    setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
-                    firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
-                    return;
+                    // No VHD files, try directories for individual files
+                    String[] directories = dir.list(new FilenameFilter() {
+                        @Override
+                        public boolean accept(File dir, String name) {
+                            return Paths.get(dir.toString(), name).toFile().isDirectory();
+                        }
+                    });
+                    if (directories.length == 0) {
+                        // No directories, bail
+                        setErrorMessage(Bundle.LogicalImagerPanel_messageLabel_directoryDoesNotContainSparseImage(path));
+                        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
+                        return;
+                    }
                 }
-                choosenImageDirPath = Paths.get(path);
+                manualImageDirPath = Paths.get(path);
                 setNormalMessage(path);
                 firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             } else {
@@ -334,21 +362,19 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private void imageTableSelect() {
         int index = imageTable.getSelectedRow();
         if (index != -1) {
-            choosenImageDirPath = Paths.get((String) imageTableModel.getValueAt(index, 2));
-            setNormalMessage(choosenImageDirPath.toString());
+            setNormalMessage((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(index), 2));
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } else {
-            choosenImageDirPath = null;
             setErrorMessage(NO_IMAGE_SELECTED);
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
         }
     }
 
-    private boolean dirHasVhdFiles(File dir) {
-        File[] fList = dir.listFiles(new FilenameFilter() {
+    private boolean dirHasImagerResult(File dir) {
+        String[] fList = dir.list(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.endsWith(".vhd");
+                return name.endsWith(".vhd") || Paths.get(dir.toString(), name).toFile().isDirectory();
             }
         });
         return (fList != null && fList.length != 0);
@@ -365,11 +391,10 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
         if (fList != null) {
             imageTableModel = new ImageTableModel();
-            int row = 0;
             // Find all directories with name like Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
-            // and has vhd files in it
+            // and has Logical Imager result in it
             for (File file : fList) {
-                if (file.isDirectory() && dirHasVhdFiles(file)) {
+                if (file.isDirectory() && dirHasImagerResult(file)) {
                     String dir = file.getName();
                     Matcher m = regex.matcher(dir);
                     if (m.find()) {
@@ -383,10 +408,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                         String second = m.group(7);
                         String extractDate = year + "/" + month + "/" + day
                                 + " " + hour + ":" + minute + ":" + second;
-                        imageTableModel.setValueAt(hostname, row, 0);
-                        imageTableModel.setValueAt(extractDate, row, 1);
-                        imageTableModel.setValueAt(imageDirPath, row, 2);
-                        row++;
+                        imageTableModel.addRow(new Object[]{hostname, extractDate, imageDirPath});
                     }
                 }
             }
@@ -394,18 +416,17 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     + " " + driveLetter);
             imageTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
             imageTable.setModel(imageTableModel);
+            configureImageTable();
             fixImageTableColumnWidth();
             // If there are any images, select the first one
             if (imageTable.getRowCount() > 0) {
                 imageTable.setRowSelectionInterval(0, 0);
                 imageTableSelect();
             } else {
-                choosenImageDirPath = null;
                 setErrorMessage(DRIVE_HAS_NO_IMAGES);
             }
         } else {
             clearImageTable();
-            choosenImageDirPath = null;
             setErrorMessage(DRIVE_HAS_NO_IMAGES);
         }
     }
@@ -430,6 +451,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private void clearImageTable() {
         imageTableModel = new ImageTableModel();
         imageTable.setModel(imageTableModel);
+        configureImageTable();
         fixImageTableColumnWidth();
     }
 
@@ -448,7 +470,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
         refreshButton.setEnabled(false);
 
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setNormalMessage("");
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
     }//GEN-LAST:event_manualRadioButtonActionPerformed
@@ -463,7 +485,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
         refreshButton.setEnabled(true);
 
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setNormalMessage("");
         refreshButton.doClick();
     }//GEN-LAST:event_importRadioButtonActionPerformed
@@ -496,7 +518,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                     }
                 } catch (IOException ignored) {
                     //unable to get this removable drive for default selection will try and select next removable drive by default 
-                    logger.log(Level.INFO, "Unable to select first removable drive found", ignored);
+                    logger.log(Level.INFO, String.format("Unable to select first removable drive found: %s", ignored.getMessage()));
                 }
             }
             i++;
@@ -561,7 +583,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     void reset() {
         //reset the UI elements to default
-        choosenImageDirPath = null;
+        manualImageDirPath = null;
         setNormalMessage("");
         driveList.setListData(EMPTY_LIST_DATA);
         clearImageTable();
@@ -576,11 +598,24 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
      * @return true if a proper image has been selected, false otherwise
      */
     boolean validatePanel() {
-        return choosenImageDirPath != null && choosenImageDirPath.toFile().exists();
+        if (manualRadioButton.isSelected()) {
+            return manualImageDirPath != null && manualImageDirPath.toFile().exists();
+        } else if (imageTable.getSelectedRow() != -1) {
+            Path path = Paths.get((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(imageTable.getSelectedRow()), 2));
+            return path != null && path.toFile().exists();
+        } else {
+            return false;
+        }
     }
 
     Path getImageDirPath() {
-        return choosenImageDirPath;
+        if (manualRadioButton.isSelected()) {
+            return manualImageDirPath;
+        } else if (imageTable.getSelectedRow() != -1) {
+            return Paths.get((String) imageTableModel.getValueAt(imageTable.convertRowIndexToModel(imageTable.getSelectedRow()), 2));
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -601,25 +636,19 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     /**
      * Image Table Model
      */
-    private class ImageTableModel extends AbstractTableModel {
+    private class ImageTableModel extends DefaultTableModel {
 
-        private final List<String> hostnames = new ArrayList<>();
-        private final List<String> extractDates = new ArrayList<>();
-        private final List<String> imageDirPaths = new ArrayList<>();
-
-        @Override
-        public int getRowCount() {
-            return hostnames.size();
-        }
+        private static final long serialVersionUID = 1L;
 
         @Override
         public int getColumnCount() {
-            return 2;
+            return 3;
         }
 
         @Messages({
             "LogicalImagerPanel.imageTable.columnModel.title0=Hostname",
-            "LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date"
+            "LogicalImagerPanel.imageTable.columnModel.title1=Extracted Date (GMT)",
+            "LogicalImagerPanel.imageTable.columnModel.title2=Path"
         })
         @Override
         public String getColumnName(int column) {
@@ -631,6 +660,9 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
                 case 1:
                     colName = Bundle.LogicalImagerPanel_imageTable_columnModel_title1();
                     break;
+                case 2:
+                    colName = Bundle.LogicalImagerPanel_imageTable_columnModel_title2();
+                    break;
                 default:
                     break;
             }
@@ -638,48 +670,8 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         }
 
         @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            Object ret = null;
-            switch (columnIndex) {
-                case 0:
-                    ret = hostnames.get(rowIndex);
-                    break;
-                case 1:
-                    ret = extractDates.get(rowIndex);
-                    break;
-                case 2:
-                    ret = imageDirPaths.get(rowIndex);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
-            }
-            return ret;
-        }
-
-        @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return false;
-        }
-
-        @Override
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    hostnames.add((String) aValue);
-                    break;
-                case 1:
-                    extractDates.add((String) aValue);
-                    break;
-                case 2:
-                    imageDirPaths.add((String) aValue);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Invalid table column index: " + columnIndex); //NON-NLS
-            }
-            // Only show the hostname and extractDates column
-            if (columnIndex < 2) {
-                super.setValueAt(aValue, rowIndex, columnIndex);
-            }
         }
     }
 }

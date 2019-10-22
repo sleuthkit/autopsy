@@ -38,7 +38,7 @@ Once a database has been configured, the lower two buttons on the main panel wil
 
 <b>Setting up PostgreSQL Deployment</b>
 
-If needed, see the \ref install_postgresql for help setting up your PostgreSQL server.
+If needed, see the \ref install_postgresql_page for help setting up your PostgreSQL server.
 
 For PostgreSQL all values are required, but some defaults are provided for convenience.
 

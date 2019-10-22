@@ -40,7 +40,7 @@ import org.netbeans.junit.NbModuleSuite;
  */
 public class RegressionTest extends TestCase {
 
-    private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
+    private static final Logger logger = Logger.getLogger(RegressionTest.class.getName()); // DO NOT USE AUTOPSY LOGGER
     private static final AutopsyTestCases autopsyTests = new AutopsyTestCases(Boolean.parseBoolean(System.getProperty("isMultiUser")));
 
     /**

@@ -35,8 +35,6 @@ import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.coreutils.JLnkParserException;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -51,7 +49,6 @@ import org.sleuthkit.datamodel.*;
 class RecentDocumentsByLnk extends Extract {
 
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
     
@@ -86,6 +83,7 @@ class RecentDocumentsByLnk extends Extract {
         }
 
         dataFound = true;
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (AbstractFile recentFile : recentFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -122,11 +120,13 @@ class RecentDocumentsByLnk extends Extract {
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
                     recentFile.getCrtime()));
-            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
+            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
+            if(bba != null) {
+                bbartifacts.add(bba);
+            }
         }
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+        
+        postArtifacts(bbartifacts);
     }
 
     @Override

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,7 +104,7 @@ public class FileSize implements AutopsyVisitableItem {
         this.skCase = skCase;
         this.filteringDSObjId = dsObjId;
     }
-    
+
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
@@ -117,6 +117,7 @@ public class FileSize implements AutopsyVisitableItem {
     long filteringDataSourceObjId() {
         return this.filteringDSObjId;
     }
+
     /*
      * Root node. Children are nodes for specific sizes.
      */
@@ -169,7 +170,7 @@ public class FileSize implements AutopsyVisitableItem {
     public static class FileSizeRootChildren extends ChildFactory<org.sleuthkit.autopsy.datamodel.FileSize.FileSizeFilter> {
 
         private SleuthkitCase skCase;
-        private final long  datasourceObjId;
+        private final long datasourceObjId;
         private Observable notifier;
 
         public FileSizeRootChildren(SleuthkitCase skCase, long datasourceObjId) {
@@ -185,10 +186,12 @@ public class FileSize implements AutopsyVisitableItem {
         private static final class FileSizeRootChildrenObservable extends Observable {
 
             private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
+            private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+            private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
 
             FileSizeRootChildrenObservable() {
-                IngestManager.getInstance().addIngestJobEventListener(pcl);
-                IngestManager.getInstance().addIngestModuleEventListener(pcl);
+                IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
+                IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
                 Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 
@@ -266,7 +269,7 @@ public class FileSize implements AutopsyVisitableItem {
          */
         public class FileSizeNode extends DisplayableItemNode {
 
-            private FileSizeFilter filter;
+            private final FileSizeFilter filter;
             private final long datasourceObjId;
 
             // use version with observer instead so that it updates
@@ -282,9 +285,10 @@ public class FileSize implements AutopsyVisitableItem {
              *
              * @param skCase
              * @param filter
-             * @param o      Observable that provides updates when events are
-             *               fired
-             * @param datasourceObjId filter by data source, if configured in user preferences
+             * @param o               Observable that provides updates when
+             *                        events are fired
+             * @param datasourceObjId filter by data source, if configured in
+             *                        user preferences
              */
             FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter, Observable o, long datasourceObjId) {
                 super(Children.create(new FileSizeChildren(filter, skCase, o, datasourceObjId), true), Lookups.singleton(filter.getDisplayName()));
@@ -360,11 +364,11 @@ public class FileSize implements AutopsyVisitableItem {
          */
         static class FileSizeChildren extends BaseChildFactory<AbstractFile> {
 
+            private static final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
             private final SleuthkitCase skCase;
             private final FileSizeFilter filter;
             private final Observable notifier;
             private final long datasourceObjId;
-            private static final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
 
             /**
              *
@@ -379,7 +383,7 @@ public class FileSize implements AutopsyVisitableItem {
                 this.filter = filter;
                 this.notifier = o;
                 this.datasourceObjId = dsObjId;
-                
+
             }
 
             @Override
@@ -429,15 +433,15 @@ public class FileSize implements AutopsyVisitableItem {
                     default:
                         throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
                 }
-                
+
                 // Ignore unallocated block files.
                 query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
-                
+
                 // filter by datasource if indicated in case preferences
                 if (filteringDSObjId > 0) {
-                    query +=  " AND data_source_obj_id = " + filteringDSObjId;
+                    query += " AND data_source_obj_id = " + filteringDSObjId;
                 }
-                
+
                 return query;
             }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,17 +19,23 @@
 package org.sleuthkit.autopsy.keywordsearchservice;
 
 import java.io.Closeable;
+import java.io.IOException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An interface for implementations of a keyword search service.
- * You can find the implementations by using Lookup, such as:
- *   Lookup.getDefault().lookup(KeywordSearchService.class)
+ * An interface for implementations of a keyword search service. You can find
+ * the implementations by using Lookup, such as:
+ * 
+ * Lookup.getDefault().lookup(KeywordSearchService.class)
+ * 
+ * although most clients should obtain a keyword search service by calling:
+ * 
+ * Case.getCurrentCase().getServices().getKeywordSearchService()
  *
- * TODO (AUT-2158: This interface should not extend Closeable.
+ * TODO (AUT-2158): This interface should not extend Closeable.
  */
 public interface KeywordSearchService extends Closeable {
 
@@ -49,12 +55,18 @@ public interface KeywordSearchService extends Closeable {
      *
      * @param artifact The artifact to index.
      *
+     * @deprecated Call org.sleuthkit.datamodel.Blackboard.postArtifact instead.
+     *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
+    @Deprecated
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
 
     /**
-     * Add the given Content object to the text index.
+     * Add the given Content object to the text index. This message should only
+     * be used in atypical cases, such as indexing a report. Artifacts are
+     * indexed when org.sleuthkit.datamodel.Blackboard.postArtifact is called
+     * and files are indexed during ingest.
      *
      * @param content The content to index.
      *
@@ -70,5 +82,19 @@ public interface KeywordSearchService extends Closeable {
      * @throws KeywordSearchServiceException if unable to delete.
      */
     public void deleteTextIndex(CaseMetadata metadata) throws KeywordSearchServiceException;
+    
+    /**
+     * Closes the keyword search service.
+     *
+     * @throws IOException If there is a problem closing the file manager.
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    default public void close() throws IOException {
+        /*
+         * No-op maintained for backwards compatibility. Clients should not
+         * attempt to close case services.
+         */
+    }    
 
 }

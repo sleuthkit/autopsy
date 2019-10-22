@@ -356,6 +356,13 @@ final class RegexQuery implements KeywordSearchQuery {
 
                     String hit = hitMatcher.group();
 
+                    /**
+                     * No need to continue on if the the string is "" nothing to find or do.
+                     */
+                    if ("".equals(hit)) {
+                        break;
+                    }
+
                     offset = hitMatcher.end();
                     final ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 
@@ -547,7 +554,7 @@ final class RegexQuery implements KeywordSearchQuery {
     }
 
     /**
-     * Posts a keyword hit artifact to the blackboard for a given keyword hit.
+     * Adds a keyword hit artifact for a given keyword hit.
      *
      * @param content      The text source object for the hit.
      * @param foundKeyword The keyword that was found by the search, this may be
@@ -563,7 +570,7 @@ final class RegexQuery implements KeywordSearchQuery {
      *         creating it.
      */
     @Override
-    public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {

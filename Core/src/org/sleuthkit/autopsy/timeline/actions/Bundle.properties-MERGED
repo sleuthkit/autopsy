@@ -1,3 +1,14 @@
+AddManualEvent.createArtifactFailed=Failed to create artifact for event.
+# {0} - datasource name
+# {1} - datasource id
+AddManualEvent.EventCreationDialogPane.dataSourceStringConverter.template={0} (ID: {1})
+AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.
+AddManualEvent.longText=Manually add an event to the timeline.
+AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard.
+AddManualEvent.text=Add Event
+AddManualEvent.validation.datetime=Invalid datetime
+AddManualEvent.validation.description=Description is required.
+AddManualEvent.validation.timezone=Invalid time zone
 # {0} - action accelerator keys 
 Back.longText=Back: {0}\nGo back to the last view settings.
 Back.text=Back
@@ -10,8 +21,6 @@ OpenReportAction.MissingReportFileMessage=The report file no longer exists.
 OpenReportAction.NoAssociatedEditorMessage=There is no associated editor for reports of this type or the associated application failed to launch.
 OpenReportAction.NoOpenInEditorSupportMessage=This platform (operating system) does not support opening a file in an editor this way.
 OpenReportAction.ReportFileOpenPermissionDeniedMessage=Permission to open the report file was denied.
-RebuildDataBase.longText=Update the DB to include new events.
-RebuildDataBase.text=Update DB
 ResetFilters.text=Reset all filters
 RestFilters.longText=Reset all filters to their default state.
 SaveSnapShotAsReport.action.dialogs.title=Timeline
@@ -23,17 +32,28 @@ SaveSnapShotAsReport.ErrorWritingReport=Error writing report to disk at {0}.
 SaveSnapShotAsReport.FailedToAddReport=Failed to add snaphot to case as a report.
 SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report.
 # {0} - generated default report name
-SaveSnapShotAsReport.reportName.prompt=leave empty for default report name: {0}.
+SaveSnapShotAsReport.reportName.prompt=Leave empty for default report name:\n{0}.
 # {0} - report file path
 SaveSnapShotAsReport.ReportSavedAt=Report saved at [{0}]
 SaveSnapShotAsReport.Success=Success
+SaveSnapShotAsReport_OK_Button=OK
+SaveSnapShotAsReport_Open_Button=Open Report
+# {0} - supplied report name
+SaveSnapShotAsReport_Path_Failure_Report=Failed to create report. Supplied report name has invalid characters: {0}
+SaveSnapShotAsReport_Report_Failed=Report failed
+# {0} - report location
+SaveSnapShotAsReport_success_message=Snapshot report successfully created at location: \n\n {0}
 Timeline.ModuleName=Timeline
 ViewArtifactInTimelineAction.displayName=View Result in Timeline... 
 ViewFileInTimelineAction.viewFile.displayName=View File in Timeline... 
 ViewFileInTimelineAction.viewSourceFile.displayName=View Source File in Timeline... 
 ZoomIn.action.text=Zoom in
+ZoomIn.errorMessage=Error zooming in.
 ZoomIn.longText=Zoom in to view about half as much time.
 ZoomOut.action.text=Zoom out
+ZoomOut.disabledProperty.errorMessage=Error getting spanning interval.
+ZoomOut.errorMessage=Error zooming out.
 ZoomOut.longText=Zoom out to view about 50% more time.
 ZoomToEvents.action.text=Zoom to events
+ZoomToEvents.disabledProperty.errorMessage=Error getting spanning interval.
 ZoomToEvents.longText=Zoom out to show the nearest events.

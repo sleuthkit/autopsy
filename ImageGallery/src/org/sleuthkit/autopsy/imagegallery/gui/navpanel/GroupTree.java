@@ -158,6 +158,11 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         String path = g.getGroupByValueDislpayName();
         if (g.getGroupByAttribute() == DrawableAttribute.PATH) {
             String[] cleanPathTokens = StringUtils.stripStart(path, "/").split("/");
+            
+            // Append obj id to the top level data source name to allow for duplicate data source names
+            if (g.getGroupKey().getDataSourceObjId() > 0) {
+                 cleanPathTokens[0] = cleanPathTokens[0].concat(String.format("(Id: %d)", g.getGroupKey().getDataSourceObjId()));
+            }
             return Arrays.asList(cleanPathTokens);
         } else {
             String stripStart = StringUtils.strip(path, "/");

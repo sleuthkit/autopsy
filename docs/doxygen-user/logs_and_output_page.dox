@@ -1,13 +1,11 @@
-/*! \page logs_and_output_page Logs, Output, and Progress
-There are several shortcuts for getting to the output folder, log folder, and progress shapshot shown below.
-<br><br>
-To open the Case output folder, use "Tools", "Open Output Folder" as shown below:
+/*! \page logs_and_output_page Viewing Case Logs and Output
+
+There are several shortcuts for getting to the case and log folders.
+
+- To open the Case output folder, use "Tools", "Open Output Folder" as shown below:
 \image html open_output_folder.PNG
-<br><br>
-To open the Case log folder, use "Help", "Open Log Folder" as shown below:
+
+- To open the Case log folder, use "Help", "Open Log Folder" as shown below:
 \image html open_log_folder.PNG
-<br><br>
-While Ingest is running, one can use the "Ingest Progress Snapshot" tool to see what activity is going on at the moment. Click on "Help", "Get Ingest Progress Snapshot" to view the dialog shown in the screenshot below.
-\image html ingest_progress_snapshot.PNG
-To refresh the view, use the "Refresh" button.
+
 */

@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -78,7 +77,7 @@ public final class ManageOrganizationsDialog extends JDialog {
             setButtonsEnabled(organizationList.getSelectedValue());
             newOrg = null;
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error getting Central Repo for Organizations dialog", ex);
         }
         display();
     }
@@ -159,7 +158,8 @@ public final class ManageOrganizationsDialog extends JDialog {
         editButton = new javax.swing.JButton();
         orgDetailsLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(545, 415));
+        setMinimumSize(new java.awt.Dimension(600, 450));
+        setPreferredSize(new java.awt.Dimension(600, 450));
 
         manageOrganizationsScrollPane.setMinimumSize(null);
         manageOrganizationsScrollPane.setPreferredSize(new java.awt.Dimension(535, 415));
@@ -331,13 +331,13 @@ public final class ManageOrganizationsDialog extends JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(manageOrganizationsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(manageOrganizationsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 603, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(manageOrganizationsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(manageOrganizationsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 443, Short.MAX_VALUE))
         );
 
         pack();

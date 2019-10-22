@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -63,11 +64,13 @@ import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
@@ -98,29 +101,45 @@ public class Server {
                 return "image_id"; //NON-NLS
             }
         },
-        // This is not stored or index . it is copied to Text and Content_Ws
+        // This is not stored or indexed. it is copied to text by the schema
         CONTENT {
             @Override
             public String toString() {
                 return "content"; //NON-NLS
             }
         },
+        // String representation for regular expression searching
         CONTENT_STR {
             @Override
             public String toString() {
                 return "content_str"; //NON-NLS
             }
         },
+        // default search field.  Populated by schema
         TEXT {
             @Override
             public String toString() {
                 return "text"; //NON-NLS
             }
         },
+        // no longer populated.  Was used for regular expression searching.
+        // Should not be used. 
         CONTENT_WS {
             @Override
             public String toString() {
                 return "content_ws"; //NON-NLS
+            }
+        },
+        CONTENT_JA {
+            @Override
+            public String toString() {
+                return "content_ja"; //NON-NLS
+            }
+        },
+        LANGUAGE {
+            @Override
+            public String toString() {
+                return "language"; //NON-NLS
             }
         },
         FILE_NAME {
@@ -129,28 +148,28 @@ public class Server {
                 return "file_name"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         CTIME {
             @Override
             public String toString() {
                 return "ctime"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         ATIME {
             @Override
             public String toString() {
                 return "atime"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         MTIME {
             @Override
             public String toString() {
                 return "mtime"; //NON-NLS
             }
         },
-        // note that we no longer index this field
+        // note that we no longer store or index this field
         CRTIME {
             @Override
             public String toString() {
@@ -168,7 +187,18 @@ public class Server {
             public String toString() {
                 return "chunk_size"; //NON-NLS
             }
-        }
+        },
+        /**
+         * termfreq is a function which returns the number of times the term appears.
+         * This is not an actual field defined in schema.xml, but can be gotten from returned documents
+         * in the same way as fields.
+         */
+        TERMFREQ {
+            @Override
+            public String toString() {
+                return "termfreq"; //NON-NLS
+            }
+        }        
     };
 
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
@@ -428,6 +458,8 @@ public class Server {
      * immediately (probably before the server is ready) and doesn't check
      * whether it was successful.
      */
+    @NbBundle.Messages({
+        "Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.",})
     void start() throws KeywordSearchModuleException, SolrServerNoPortException {
         if (isRunning()) {
             // If a Solr server is running we stop it.
@@ -469,16 +501,34 @@ public class Server {
                         Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                 "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
 
-                try {
-                    //block for 10 seconds, give time to fully start the process
-                    //so if it's restarted solr operations can be resumed seamlessly
-                    Thread.sleep(10 * 1000);
-                } catch (InterruptedException ex) {
-                    logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
+                // Wait for the Solr server to start and respond to a status request.
+                for (int numRetries = 0; numRetries < 6; numRetries++) {
+                    if (isRunning()) {
+                        final List<Long> pids = this.getSolrPIDs();
+                        logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
+                        return;
+                    }
+
+                    // Local Solr server did not respond so we sleep for
+                    // 5 seconds before trying again.
+                    try {
+                        TimeUnit.SECONDS.sleep(5);
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.WARNING, "Timer interrupted"); //NON-NLS
+                    }
                 }
 
-                final List<Long> pids = this.getSolrPIDs();
-                logger.log(Level.INFO, "New Solr process PID: {0}", pids); //NON-NLS
+                // If we get here the Solr server has not responded to connection
+                // attempts in a timely fashion.
+                logger.log(Level.WARNING, "Local Solr server failed to respond to status requests.");
+                WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+                    @Override
+                    public void run() {
+                        MessageNotifyUtil.Notify.error(
+                                NbBundle.getMessage(this.getClass(), "Installer.errorInitKsmMsg"), 
+                                Bundle.Server_status_failed_msg());
+                    }
+                });
             } catch (SecurityException ex) {
                 logger.log(Level.SEVERE, "Could not start Solr process!", ex); //NON-NLS
                 throw new KeywordSearchModuleException(
