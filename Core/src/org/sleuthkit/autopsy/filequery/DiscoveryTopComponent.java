@@ -22,9 +22,6 @@ import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.ExplorerUtils;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -47,13 +44,11 @@ import org.sleuthkit.datamodel.AbstractFile;
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
 @NbBundle.Messages("DiscoveryTopComponent.name= File Discovery")
-final class DiscoveryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
+final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
     private final static Logger logger = Logger.getLogger(DiscoveryTopComponent.class.getName());
-    private final ExplorerManager em = new ExplorerManager();
-    private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
@@ -182,13 +177,4 @@ final class DiscoveryTopComponent extends TopComponent implements ExplorerManage
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return em;
-    }
-
-    @Override
-    public Lookup getLookup() {
-        return lookup;
-    }
 }

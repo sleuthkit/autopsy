@@ -25,7 +25,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.DefaultListCellRenderer;
@@ -40,6 +42,7 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -51,6 +54,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
+import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbContextMenuActionsProvider;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -103,28 +107,16 @@ public class ResultsPanel extends javax.swing.JPanel {
                 if (SwingUtilities.isRightMouseButton(e)) {
                     SwingUtilities.invokeLater(() -> {
                         instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
-                        //set up the explorer manager so that the Utilities.actionsGlobalContext() will have the correct information
-                        FileNode fileNode = new FileNode(instancesList.getSelectedValue());
-                        FileNode[] fileNodeArray = {fileNode};
-                        Children.Array children = new Children.Array();
-                        children.add(fileNodeArray);
-                        DiscoveryTopComponent.getTopComponent().getExplorerManager().setRootContext(new AbstractNode(children));
-                        try {
-                            DiscoveryTopComponent.getTopComponent().getExplorerManager().setSelectedNodes(fileNodeArray);
-                        } catch (PropertyVetoException ex) {
-                            logger.log(Level.SEVERE, "File Discovery Explorer manager selection was vetoed.", ex); //NON-NLS
-                        }
-
+                        Set<AbstractFile> files = new HashSet<>();
+                        files.add(instancesList.getSelectedValue());
                         JPopupMenu menu = new JPopupMenu();
                         menu.add(new ViewContextAction("View File in Directory", instancesList.getSelectedValue()));
-                        menu.add(new ExternalViewerAction("Open in External Viewer", fileNode));
+                        menu.add(new ExternalViewerAction("Open in External Viewer",  new FileNode(instancesList.getSelectedValue())));
                         menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
                         menu.add(ExtractAction.getInstance());
-                        menu.add(AddContentTagAction.getInstance());
-                        menu.add(DeleteFileContentTagAction.getInstance());
-                        for (Action action : (new HashDbContextMenuActionsProvider().getActions())) {
-                            menu.add(action);
-                        }
+                        menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
+                        menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));               
+                        menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
                         menu.show(instancesList, e.getPoint().x, e.getPoint().y);
                     });
                 }
