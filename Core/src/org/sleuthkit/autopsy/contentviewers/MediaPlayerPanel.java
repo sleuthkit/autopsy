@@ -757,10 +757,21 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             public void mousePressed(MouseEvent e) {
                 //Snap the thumb to position of the mouse
                 scrollDueToClickInTrack(0);
+                
+                //Pause the video for convenience
+                gstPlayBin.pause();
 
                 //Handle the event as normal.
                 super.mousePressed(e);
-             }
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                
+                //Unpause once the mouse has been released.
+                gstPlayBin.play();
+            }
         }
     }
 
