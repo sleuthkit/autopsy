@@ -49,7 +49,7 @@ Define the following environment variables ([this guide](https://www.java.com/en
 
 ### Build
 
-1. To build the sleuthkit dependencies, navigate to the sleuthkit repo. With python, run the following:
+1. To build the sleuthkit dependencies, navigate to the `win32` subdirectory in the sleuthkit repo. With python, run the following:
 `python updateAndBuildAll.py -m`
 2. Open the sleuthkit Java bindings project in the NetBeans IDE. The project is located in the bindings/java subdirectory of your sleuthkit clone. 
     1. Build the **dist-PostgreSQL** target of the sleuthkit Java bindings in the NetBeans IDE by selecting the build.xml file and then Run Target from the context menu. 
