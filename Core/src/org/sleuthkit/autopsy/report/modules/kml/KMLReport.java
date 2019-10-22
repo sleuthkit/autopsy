@@ -65,7 +65,7 @@ class KMLReport implements GeneralReportModule {
     private SleuthkitCase skCase;
     private final SimpleDateFormat kmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
     private Namespace ns;
-    private final String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
+    private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
 
     private Element gpsExifMetadataFolder;
     private Element gpsBookmarksFolder;

@@ -27,6 +27,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * attributes.
  */
 public class AttributeUtils {
+    
+    /**
+     * Private constructor for this Utility class.
+     */
+    private AttributeUtils() {
+        
+    }
 
     /**
      * Helper function for getting a String attribute from an artifact. This
