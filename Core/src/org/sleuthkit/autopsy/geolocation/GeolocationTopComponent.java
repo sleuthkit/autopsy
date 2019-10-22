@@ -42,8 +42,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Top component which displays the Geolocation Tool.
@@ -157,11 +155,7 @@ public final class GeolocationTopComponent extends TopComponent {
 
                 Case currentCase = Case.getCurrentCaseThrows();
 
-//                waypoints.addAll(getGPSRouteWaypoints(currentCase.getSleuthkitCase()));
-//                waypoints.addAll(getEXIFWaypoints(currentCase.getSleuthkitCase()));
-//                waypoints.addAll(getSimpleWaypoints(currentCase.getSleuthkitCase()));
-
-                return waypoints;
+                return MapWaypoint.getWaypoints(currentCase.getSleuthkitCase());
             }
 
             @Override

@@ -1,6 +1,7 @@
 CTL_OpenGeolocation=Geolocation
 CTL_GeolocationTopComponentAction=GeolocationTopComponent
 CTL_GeolocationTopComponent=Geolocation
+GLTopComponent_initilzation_error=An error occurred during waypoint initilization.  Geolocation data maybe incomplete.
 GLTopComponent_name=Geolocation
 OpenGeolocationAction_displayName=Geolocation
 OpenGeolocationAction_name=Geolocation
