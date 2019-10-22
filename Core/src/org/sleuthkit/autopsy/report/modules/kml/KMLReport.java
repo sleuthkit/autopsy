@@ -358,7 +358,7 @@ class KMLReport implements GeneralReportModule {
      * @throws TskCoreException
      */
     void makeRoutes(SleuthkitCase skCase) throws TskCoreException {
-        List<Route> routes = Route.getGPSRoutes(skCase);
+        List<Route> routes = Route.getRoutes(skCase);
         
         if(routes == null) {
             return;

@@ -59,7 +59,7 @@ public class Route {
      *
      * @throws TskCoreException
      */
-    static public List<Route> getGPSRoutes(SleuthkitCase skCase) throws TskCoreException {
+    static public List<Route> getRoutes(SleuthkitCase skCase) throws TskCoreException {
         List<Route> routes = new ArrayList<>();
         List<BlackboardArtifact> artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
         for (BlackboardArtifact artifact : artifacts) {

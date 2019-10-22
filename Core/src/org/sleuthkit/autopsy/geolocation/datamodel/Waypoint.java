@@ -187,7 +187,7 @@ public interface Waypoint {
         List<BlackboardArtifact> artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH);
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
-                ArtifactWaypoint point = new GPSSearchWaypoint(artifact);
+                ArtifactWaypoint point = new SearchWaypoint(artifact);
                 // Only add to the list if the point has a valid latitude 
                 // and longitude. 
                 if (point.getLatitude() != null && point.getLongitude() != null) {

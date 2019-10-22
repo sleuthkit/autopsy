@@ -24,9 +24,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A GPSSearchWaypoint is a subclass of ArtifactWaypoint.
+ * A SearchWaypoint is a subclass of ArtifactWaypoint.
  */
-final class GPSSearchWaypoint extends ArtifactWaypoint {
+final class SearchWaypoint extends ArtifactWaypoint {
 
     @Messages({
         "SearchWaypoint_DisplayLabel=GPS Search"
@@ -35,7 +35,7 @@ final class GPSSearchWaypoint extends ArtifactWaypoint {
     /**
      * Construct a GPS Search waypoint.
      */
-    public GPSSearchWaypoint(BlackboardArtifact artifact) throws TskCoreException {
+    public SearchWaypoint(BlackboardArtifact artifact) throws TskCoreException {
         super(artifact, getLabelFromArtifact(artifact), Waypoint.Type.SEARCH);
     }
 
