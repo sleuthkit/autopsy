@@ -102,7 +102,7 @@ class ArtifactWaypoint implements Waypoint {
                 label,
                 timestamp,
                 AttributeUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE),
-                AttributeUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE),
+                AttributeUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE),
                 AttributeUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE),
                 image,
                 type);
