@@ -1,9 +1,9 @@
-BlackboardArtifactWaypoint_GPS_Search=GPS Search
-BlackboardArtifactWaypoint_GPS_Trackpoint=GPS Trackpoint
-BlackboardArtifactWaypoint_Last_Known_Label=Last Known Location
+LastKnownWaypoint_Label=Last Known Location
 Route_End_Label=End
 Route_Label=As-the-crow-flies Route
 Route_Start_Label=Start
+SearchWaypoint_DisplayLabel=GPS Search
+TrackpointWaypoint_DisplayLabel=GPS Trackpoint
 Waypoint_Bookmark_Display_String=GPS Bookmark
 Waypoint_EXIF_Display_String=EXIF Metadata With Location
 Waypoint_Last_Known_Display_String=GPS Last Known Location

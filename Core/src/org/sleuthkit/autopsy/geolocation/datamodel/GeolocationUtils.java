@@ -1,23 +1,34 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * GeolocationUtilis class for common to be share across in the package
  *
  */
-public final class GeolocationUtils {
-
-    private static final String DEFAULT_COORD_FORMAT = "%.2f, %.2f";
+final class GeolocationUtils {
 
     /**
      * This is a list of attributes that are related to a geolocation waypoint
@@ -40,160 +51,37 @@ public final class GeolocationUtils {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL
     };
-    
+
     /**
      * This is a Utility class that should not be constructed.
      */
     private GeolocationUtils() {
-        
-    }
 
-    static public String getFormattedCoordinates(Double latitude, Double longitude) {
-        if (latitude == null || longitude == null) {
-            return "";
-        }
-
-        return String.format(DEFAULT_COORD_FORMAT, latitude, longitude);
     }
 
     /**
-     * Helper function for getting a String attribute from an artifact. This
-     * will work for all attributes
+     * Get a list of Waypoint.Property objects for the given artifact.
      *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
+     * @param artifact Blackboard artifact to get attributes\properties from
      *
-     * @return String value for the given attribute or null if attribute was not
-     *         set for the given artifact
+     * @return A List of Waypoint.Property objects
      *
      * @throws TskCoreException
      */
-    static String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
-        if (artifact == null) {
-            return null;
-        }
-
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        return (attribute != null ? attribute.getDisplayString() : null);
-    }
-
-    /**
-     * Helper function for getting a Double attribute from an artifact.
-     *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
-     *
-     * @return Double value for the given attribute.
-     *
-     * @throws TskCoreException
-     */
-    static Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
-        if (artifact == null) {
-            return null;
-        }
-
-        if (attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE) {
-            return null;
-        }
-
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        return (attribute != null ? attribute.getValueDouble() : null);
-    }
-
-    /**
-     * Helper function for getting a Long attribute from an artifact.
-     *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
-     *
-     * @return Long value for the given attribute.
-     *
-     * @throws TskCoreException
-     */
-    static Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
-        if (artifact == null) {
-            return null;
-        }
-
-        if (attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG
-                || attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-            return null;
-        }
-
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        return (attribute != null ? attribute.getValueLong() : null);
-    }
-
-    /**
-     * Helper function for getting a Integer attribute from an artifact.
-     *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
-     *
-     * @return Integer value for the given attribute.
-     *
-     * @throws TskCoreException
-     */
-    static Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
-        if (artifact == null) {
-            return null;
-        }
-
-        if (attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER) {
-            return null;
-        }
-
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        return (attribute != null ? attribute.getValueInt() : null);
-    }
-
-    /**
-     * Helper function for consistently formatting the timestamp.
-     *
-     * @param type BlackboardAttribute type
-     *
-     * @return The timestamp value formatted as string, or empty string if no
-     *         timestamp is available.
-     *
-     * @throws TskCoreException
-     */
-    static String getFormattedTimestamp(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
-        if (artifact == null) {
-            return null;
-        }
-
-        if (attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-            return null;
-        }
-
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        return (attribute != null ? attribute.getDisplayString() : null);
-    }
-
-    /**
-     * Returns a Map of formatted artifact attributes for geolocation artifacts.
-     * The map key will be the display string off the attribute, the value will
-     * be either a formatted value or a an empty string.
-     *
-     * @param artifact
-     *
-     * @return
-     */
-    static Map<String, String> getOtherGeolocationAttributes(BlackboardArtifact artifact) throws TskCoreException {
-        Map<String, String> map = new HashMap<>();
+    static List<Waypoint.Property> getOtherGeolocationProperties(BlackboardArtifact artifact) throws TskCoreException {
+        List<Waypoint.Property> list = new ArrayList<>();
 
         for (BlackboardAttribute.ATTRIBUTE_TYPE type : OTHER_GEO_ATTRIBUTES) {
             String key = type.getDisplayName();
-            String value = getString(artifact, type);
+            String value = AttributeUtils.getString(artifact, type);
 
             if (value == null) {
                 value = "";
             }
 
-            map.put(key, value);
+            list.add(new Waypoint.Property(key, value));
         }
 
-        return map;
+        return list;
     }
-
 }

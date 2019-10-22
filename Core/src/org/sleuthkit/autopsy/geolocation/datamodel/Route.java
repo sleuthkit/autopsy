@@ -20,11 +20,12 @@
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -43,7 +44,30 @@ public class Route {
     private final List<Waypoint> points;
     private final Long timestamp;
     private final Double altitude;
-    private final Map<String, String> otherAttributesMap;
+
+    // This list is not expected to change after construction so the 
+    // constructor will take care of creating an unmodifiable List
+    private final List<Waypoint.Property> immutablePropertiesList;
+
+    /**
+     * Gets the list of Routes from the TSK_GPS_ROUTE artifacts.
+     *
+     * @param skCase Currently open SleuthkitCase
+     *
+     * @return List of Route objects, empty list will be returned if no Routes
+     *         where found
+     *
+     * @throws TskCoreException
+     */
+    static public List<Route> getGPSRoutes(SleuthkitCase skCase) throws TskCoreException {
+        List<Route> routes = new ArrayList<>();
+        List<BlackboardArtifact> artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
+        for (BlackboardArtifact artifact : artifacts) {
+            Route route = new Route(artifact);
+            routes.add(route);
+        }
+        return routes;
+    }
 
     /**
      * Construct a route for the given artifact.
@@ -66,7 +90,7 @@ public class Route {
 
         altitude = getRouteAltitude(artifact);
         timestamp = getRouteTimestamp(artifact);
-        otherAttributesMap = initalizeOtherAttributes(artifact);
+        immutablePropertiesList = Collections.unmodifiableList(GeolocationUtils.getOtherGeolocationProperties(artifact));
     }
 
     /**
@@ -98,12 +122,12 @@ public class Route {
 
     /**
      * Get the "Other attributes" for this route. The map will contain display
-     * name, formatted value pairs.
+     * name, formatted value pairs. This list is unmodifiable.
      *
      * @return Map of key, value pairs.
      */
-    public Map<String, String> getOtherProperties() {
-        return otherAttributesMap;
+    public List<Waypoint.Property> getOtherProperties() {
+        return immutablePropertiesList;
     }
 
     /**
@@ -206,18 +230,4 @@ public class Route {
         return attribute != null ? attribute.getValueLong() : null;
     }
 
-    /**
-     * Retrieve the "Other attributes" for this route. The map will contain
-     * display name, formatted value pairs.
-     *
-     * @param artifact The BlackboardARtifact object from which this route is
-     *                 created
-     *
-     * @return A Map of other attributes for this route.
-     *
-     * @throws TskCoreException
-     */
-    private Map<String, String> initalizeOtherAttributes(BlackboardArtifact artifact) throws TskCoreException {
-        return GeolocationUtils.getOtherGeolocationAttributes(artifact);
-    }
 }

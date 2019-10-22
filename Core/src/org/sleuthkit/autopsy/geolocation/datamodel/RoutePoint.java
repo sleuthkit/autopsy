@@ -19,14 +19,14 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
-import java.util.Map;
+import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * A point in a Route. For future use this point will have a pointer to its
  * parent route.
  */
-public class RoutePoint implements Waypoint {
+final class RoutePoint implements Waypoint {
 
     private final Route parent;
     private final Double longitude;
@@ -74,7 +74,7 @@ public class RoutePoint implements Waypoint {
     }
 
     @Override
-    public Map<String, String> getOtherProperties() {
+    public List<Waypoint.Property> getOtherProperties() {
         return parent.getOtherProperties();
     }
 

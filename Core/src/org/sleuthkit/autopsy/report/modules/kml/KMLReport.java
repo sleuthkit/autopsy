@@ -36,9 +36,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Map;
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -49,8 +46,6 @@ import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
-import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationManager;
-import org.sleuthkit.autopsy.geolocation.datamodel.GeolocationUtils;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -70,7 +65,7 @@ class KMLReport implements GeneralReportModule {
     private SleuthkitCase skCase;
     private final SimpleDateFormat kmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
     private Namespace ns;
-    String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
+    private final String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
 
     private Element gpsExifMetadataFolder;
     private Element gpsBookmarksFolder;
@@ -309,7 +304,7 @@ class KMLReport implements GeneralReportModule {
             path = Paths.get(abstractFile.getName());
         }
 
-        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, GeolocationUtils.getFormattedCoordinates(point.getLatitude(), point.getLongitude())));
+        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, formattedCoordinates(point.getLatitude(), point.getLongitude())));
     }
 
     /**
@@ -322,7 +317,7 @@ class KMLReport implements GeneralReportModule {
      * @throws IOException
      */
     void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws TskCoreException, IOException {
-        List<Waypoint> points = GeolocationManager.getWaypoints(skCase);
+        List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
 
         for (Waypoint point : points) {
             Element reportPoint = makePoint(point);
@@ -330,7 +325,7 @@ class KMLReport implements GeneralReportModule {
                 continue;
             }
 
-            String formattedCords = GeolocationUtils.getFormattedCoordinates(point.getLatitude(), point.getLongitude());
+            String formattedCords = formattedCoordinates(point.getLatitude(), point.getLongitude());
 
             switch (point.getType()) {
                 case METADATA_EXIF:
@@ -363,7 +358,7 @@ class KMLReport implements GeneralReportModule {
      * @throws TskCoreException
      */
     void makeRoutes(SleuthkitCase skCase) throws TskCoreException {
-        List<Route> routes = GeolocationManager.getGPSRoutes(skCase);
+        List<Route> routes = Route.getGPSRoutes(skCase);
         
         if(routes == null) {
             return;
@@ -392,12 +387,12 @@ class KMLReport implements GeneralReportModule {
             return;
         }
 
-        Element reportRoute = makeLineString(start.getLatitude(), start.getLongitude(), start.getAltitude(), end.getLatitude(), end.getLongitude(), end.getAltitude());
+        Element reportRoute = makeLineString(start.getLatitude(), start.getLongitude(), end.getLatitude(), end.getLongitude());
         Element startingPoint = makePoint(start.getLatitude(), start.getLongitude(), start.getAltitude());
         Element endingPoint = makePoint(end.getLatitude(), end.getLongitude(), end.getAltitude());
 
-        String formattedEnd = GeolocationUtils.getFormattedCoordinates(end.getLatitude(), end.getLongitude());
-        String formattedStart = GeolocationUtils.getFormattedCoordinates(start.getLatitude(), start.getLongitude());
+        String formattedEnd = formattedCoordinates(end.getLatitude(), end.getLongitude());
+        String formattedStart = formattedCoordinates(start.getLatitude(), start.getLongitude());
 
         String formattedCoordinates = String.format("%s to %s", formattedStart, formattedEnd);
 
@@ -452,15 +447,12 @@ class KMLReport implements GeneralReportModule {
             return null;
         }
 
-        if (altitude == null) {
-            altitude = 0.0;
-        }
         Element point = new Element("Point", ns); //NON-NLS
 
-        // KML uses lon, lat. Deliberately reversed.
-        Element coordinates = new Element("coordinates", ns).addContent(longitude + "," + latitude + "," + altitude); //NON-NLS
+        // KML uses lon, lat. Deliberately reversed.1
+        Element coordinates = new Element("coordinates", ns).addContent(longitude + "," + latitude + "," + (altitude != null ? altitude : 0.0)); //NON-NLS
 
-        if (altitude != 0) {
+        if (altitude != null && altitude != 0) {
             /*
              * Though we are including a non-zero altitude, clamp it to the
              * ground because inaccuracies from the GPS data can cause the
@@ -494,16 +486,9 @@ class KMLReport implements GeneralReportModule {
      *
      * @return the Line as an Element
      */
-    private Element makeLineString(Double startLatitude, Double startLongitude, Double startAltitude, Double stopLatitude, Double stopLongitude, Double stopAltitude) {
+    private Element makeLineString(Double startLatitude, Double startLongitude, Double stopLatitude, Double stopLongitude) {
         if (startLatitude == null || startLongitude == null || stopLatitude == null || stopLongitude == null) {
             return null;
-        }
-
-        if (startAltitude == null) {
-            startAltitude = 0.0;
-        }
-        if (stopAltitude == null) {
-            stopAltitude = 0.0;
         }
 
         Element lineString = new Element("LineString", ns); //NON-NLS
@@ -691,13 +676,11 @@ class KMLReport implements GeneralReportModule {
             result.append(formatAttribute("Altitude", point.getAltitude().toString()));
         }
 
-        Map<String, String> otherProps = point.getOtherProperties();
-        Iterator<Entry<String, String>> iterator = otherProps.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Entry<String, String> entry = iterator.next();
-            String value = entry.getValue();
-            if (value != null && !value.isEmpty()) {
-                result.append(formatAttribute(entry.getKey(), value));
+        List<Waypoint.Property> list = point.getOtherProperties();
+        for(Waypoint.Property prop: list) {
+            String value = prop.getValue();
+            if(value != null && !value.isEmpty()) {
+                result.append(formatAttribute(prop.getDisplayName(), value));
             }
         }
 
@@ -750,16 +733,22 @@ class KMLReport implements GeneralReportModule {
             result.append(formatAttribute("Altitude", route.getAltitude().toString()));
         }
 
-        Map<String, String> otherProps = route.getOtherProperties();
-        Iterator<Entry<String, String>> iterator = otherProps.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Entry<String, String> entry = iterator.next();
-            String value = entry.getValue();
-            if (value != null && !value.isEmpty()) {
-                result.append(formatAttribute(entry.getKey(), value));
+        List<Waypoint.Property> list = route.getOtherProperties();
+        for(Waypoint.Property prop: list) {
+            String value = prop.getValue();
+            if(value != null && !value.isEmpty()) {
+                result.append(formatAttribute(prop.getDisplayName(), value));
             }
         }
 
         return result.toString();
+    }
+    
+    private String formattedCoordinates(Double latitude, Double longitude) {
+        if (latitude == null || longitude == null) {
+            return "";
+        }
+
+        return String.format("%.2f, %.2f", latitude, longitude);
     }
 }
