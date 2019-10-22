@@ -113,7 +113,7 @@ public class ResultsPanel extends javax.swing.JPanel {
                         menu.add(new ViewContextAction("View File in Directory", instancesList.getSelectedValue()));
                         menu.add(new ExternalViewerAction("Open in External Viewer",  new FileNode(instancesList.getSelectedValue())));
                         menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
-                        menu.add(ExtractAction.getInstance());
+                        menu.add(ExtractAction2.getInstance(files));
                         menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
                         menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));               
                         menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));

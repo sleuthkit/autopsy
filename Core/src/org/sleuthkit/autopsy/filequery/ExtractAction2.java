@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,39 +16,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.filequery;
 
 import org.sleuthkit.autopsy.directorytree.actionhelpers.ExtractActionHelper;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
 import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
-import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Extracts AbstractFiles to a location selected by the user.
  */
-public final class ExtractAction extends AbstractAction {
+final class ExtractAction2 extends AbstractAction {
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
-    private static ExtractAction instance;
+    private static ExtractAction2 instance;
+    private final Collection<AbstractFile> selectedFiles = new HashSet<>();
 
-    public static synchronized ExtractAction getInstance() {
+    static synchronized ExtractAction2 getInstance(Collection<AbstractFile> files) {
         if (null == instance) {
-            instance = new ExtractAction();
+            instance = new ExtractAction2();
         }
+        instance.setSelectedFiles(files);
         return instance;
     }
 
     /**
      * Private constructor for the action.
      */
-    private ExtractAction() {
-        super(NbBundle.getMessage(ExtractAction.class, "ExtractAction.title.extractFiles.text"));
+    @NbBundle.Messages({"ExtractAction2.title.extractFiles.text=Extract File"})
+    private ExtractAction2() {
+        super(NbBundle.getMessage(ExtractAction2.class, "ExtractAction2.title.extractFiles.text"));
     }
 
     /**
@@ -59,10 +61,15 @@ public final class ExtractAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Lookup lookup = Utilities.actionsGlobalContext();
-        Collection<? extends AbstractFile> selectedFiles =lookup.lookupAll(AbstractFile.class);
-        ExtractActionHelper extractor = new ExtractActionHelper();
-        extractor.extract(e, selectedFiles);
+        if (!selectedFiles.isEmpty()) {
+            ExtractActionHelper extractor = new ExtractActionHelper();
+            extractor.extract(e, selectedFiles);
+        }
 
+    }
+
+    private void setSelectedFiles(Collection<AbstractFile> files) {
+        selectedFiles.clear();
+        selectedFiles.addAll(files);
     }
 }
