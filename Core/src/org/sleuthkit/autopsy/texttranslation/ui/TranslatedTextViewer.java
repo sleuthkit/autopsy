@@ -158,8 +158,7 @@ public final class TranslatedTextViewer implements TextViewer {
     }
 
     /**
-     * Extracts text from a file in the currently selected display node and
-     * optionally translates it.
+     * Extracts text from a file and optionally translates it.
      */
     private class ExtractAndTranslateTextTask extends SwingWorker<String, Void> {
 
@@ -183,6 +182,11 @@ public final class TranslatedTextViewer implements TextViewer {
                 throw new InterruptedException();
             }
 
+            /*
+             * This message is only written to the viewer once this task starts
+             * and any previous task has been completed by the single-threaded
+             * executor.
+             */
             SwingUtilities.invokeLater(() -> {
                 panel.display(Bundle.TranslatedContentViewer_translatingText(),
                         ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
