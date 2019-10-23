@@ -175,7 +175,6 @@ public final class TranslatedTextViewer implements TextViewer {
             "TranslatedContentViewer.translatingText=Translating text, please wait...",
             "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=An error occurred while extracting the text ({0}).",
             "TranslatedContentViewer.fileHasNoText=File has no text.",
-            "TranslatedContentViewer.emptyTranslation=The machine translation software did not return any text.",
             "TranslatedContentViewer.noServiceProvider=The machine translation software was not found.",
             "# {0} - exception message", "TranslatedContentViewer.translationException=An error occurred while translating the text ({0})."
         })
@@ -257,6 +256,9 @@ public final class TranslatedTextViewer implements TextViewer {
          *
          * @return Translated text or error message
          */
+        @NbBundle.Messages({
+            "TranslatedContentViewer.emptyTranslation=The machine translation software did not return any text."
+        })
         private String translate(String input) throws NoServiceProviderException, TranslationException {
             TextTranslationService translatorInstance = TextTranslationService.getInstance();
             String translatedResult = translatorInstance.translate(input);
