@@ -18,26 +18,40 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import javax.swing.JFrame;
+import java.awt.Cursor;
+import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
+import org.openide.windows.Mode;
+import org.openide.windows.RetainLocation;
+import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Create a dialog for displaying the file discovery tool
  */
-class FileDiscoveryDialog extends javax.swing.JDialog {
+@TopComponent.Description(preferredID = "DiscoveryTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
+@TopComponent.Registration(mode = "discovery", openAtStartup = false)
+@RetainLocation("discovery")
+@NbBundle.Messages("DiscoveryTopComponent.name= File Discovery")
+final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
+    private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
+    private final static Logger logger = Logger.getLogger(DiscoveryTopComponent.class.getName());
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
@@ -47,16 +61,24 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     /**
      * Creates new form FileDiscoveryDialog
      */
-    FileDiscoveryDialog(java.awt.Frame parent, boolean modal, SleuthkitCase caseDb, EamDb centralRepoDb) {
-        super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.FileSearchPanel_dialogTitle_text(), modal);
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    DiscoveryTopComponent() {
         initComponents();
+        // Load the central repository database.
+        EamDb centralRepoDb = null;
+        if (EamDb.isEnabled()) {
+            try {
+                centralRepoDb = EamDb.getInstance();
+            } catch (EamDbException ex) {
+                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
+            }
+        }
+        setName(Bundle.DiscoveryTopComponent_name());
         explorerManager = new ExplorerManager();
-        fileSearchPanel = new FileSearchPanel(caseDb, centralRepoDb);
+        fileSearchPanel = new FileSearchPanel(Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
         dataContentPanel = DataContentPanel.createInstance();
         resultsPanel = new ResultsPanel(explorerManager, centralRepoDb);
-        DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
         groupListPanel = new GroupListPanel();
-        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
         rightSplitPane.setTopComponent(resultsPanel);
@@ -101,20 +123,49 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Show the dialog
+     * Open the instance of the DiscoveryTopComponent which exists.
      */
-    void display() {
-        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        setVisible(true);
+    static void openTopComponent() {
+        final DiscoveryTopComponent tc = (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        if (tc != null) {
+            WindowManager.getDefault().isTopComponentFloating(tc);
+            if (tc.isOpened() == false) {
+                Mode mode = WindowManager.getDefault().findMode("discovery"); // NON-NLS
+                if (mode != null) {
+                    mode.dockInto(tc);
+                }
+                tc.open();
+            }
+            tc.toFront();
+        }
+    }
+
+    /**
+     * Sets the cursor for the instance of the DiscoveryTopComponent which
+     * exists.
+     *
+     * @param cursor The Cursor which you want to have displayed.
+     */
+    static void changeCursor(Cursor cursor) {
+        WindowManager.getDefault().findTopComponent(PREFERRED_ID).setCursor(cursor);
     }
 
     @Override
-    public void dispose() {
+    public void componentOpened() {
+        super.componentOpened();
+        WindowManager.getDefault().setTopComponentFloating(this, true);
+        DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
+        DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
+        DiscoveryEvents.getDiscoveryEventBus().register(fileSearchPanel);
+    }
+
+    @Override
+    protected void componentClosed() {
         fileSearchPanel.cancelSearch();
-        FileSearch.clearCache();
+        DiscoveryEvents.getDiscoveryEventBus().unregister(fileSearchPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(resultsPanel);
-        super.dispose();
+        super.componentClosed();
     }
 
     /**
@@ -130,8 +181,8 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         leftSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new javax.swing.JSplitPane();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(1100, 700));
+        setLayout(new java.awt.BorderLayout());
 
         mainSplitPane.setDividerLocation(550);
         mainSplitPane.setResizeWeight(0.2);
@@ -147,9 +198,7 @@ class FileDiscoveryDialog extends javax.swing.JDialog {
         rightSplitPane.setResizeWeight(0.5);
         mainSplitPane.setRightComponent(rightSplitPane);
 
-        getContentPane().add(mainSplitPane, java.awt.BorderLayout.CENTER);
-
-        pack();
+        add(mainSplitPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 

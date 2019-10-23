@@ -209,8 +209,22 @@ final class DiscoveryEvents {
          * Construct a new NoResultsEvent.
          */
         NoResultsEvent() {
-            //no arg conustructor
+            //no arg constructor
         }
+    }
+
+    /**
+     * Event to signal that a search has been cancelled
+     */
+    static final class SearchCancelledEvent {
+
+        /**
+         * Construct a new SearchCancelledEvent.
+         */
+        SearchCancelledEvent() {
+            //no arg constructor
+        }
+
     }
 
     /**

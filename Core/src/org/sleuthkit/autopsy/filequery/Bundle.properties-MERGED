@@ -1,4 +1,5 @@
 CTL_FileDiscoveryTestAction=Test file discovery
+DiscoveryTopComponent.name=\ File Discovery
 # {0} - Data source name
 # {1} - Data source ID
 FileSearch.DataSourceGroupKey.datasourceAndID={0}(ID: {1})

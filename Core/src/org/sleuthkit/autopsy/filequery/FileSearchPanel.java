@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.common.eventbus.Subscribe;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -32,6 +34,7 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JList;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
@@ -215,6 +218,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         addListeners(keywordCheckbox, keywordList);
     }
 
+    /**
+     * Initialize the hash filter.
+     */
     private void setUpHashFilter() {
         int count = 0;
         try {
@@ -234,6 +240,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         addListeners(hashSetCheckbox, hashSetList);
     }
 
+    /**
+     * Initialize the interesting items filter.
+     */
     private void setUpInterestingItemsFilter() {
         int count = 0;
         try {
@@ -253,6 +262,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         addListeners(interestingItemsCheckbox, interestingItemsList);
     }
 
+    /**
+     * Initialize the tags filter.
+     */
     private void setUpTagsFilter() {
         int count = 0;
         try {
@@ -329,6 +341,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         addListeners(scoreCheckbox, scoreList);
     }
 
+    /**
+     * Get the names of the sets which exist in the case database for the
+     * specified artifact and attribute types.
+     *
+     * @param artifactType     The artifact type to get the list of sets for.
+     * @param setNameAttribute The attribute type which contains the set names.
+     *
+     * @return A list of set names which exist in the case for the specified
+     *         artifact and attribute types.
+     *
+     * @throws TskCoreException
+     */
     private List<String> getSetNames(BlackboardArtifact.ARTIFACT_TYPE artifactType, BlackboardAttribute.ATTRIBUTE_TYPE setNameAttribute) throws TskCoreException {
         List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(artifactType);
         List<String> setNames = new ArrayList<>();
@@ -1116,6 +1140,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
 
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.cancelButton.text")); // NOI18N
+        cancelButton.setEnabled(false);
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -1169,7 +1194,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        searchButton.setEnabled(false);
+        enableSearch(false);
+
         FileType searchType = fileTypeComboBox.getItemAt(fileTypeComboBox.getSelectedIndex());
         DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(searchType));
         // For testing, allow the user to run different searches in loop
@@ -1183,10 +1209,92 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
-        searchWorker = new SearchWorker(centralRepoDb, searchButton, filters, groupingAttr, groupSortAlgorithm, fileSort);
+        searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
 
+    /**
+     * Set the enabled status of the search controls.
+     *
+     * @param enabled Boolean which indicates if the search should be enabled.
+     *                True if the search button and controls should be enabled,
+     *                false otherwise.
+     */
+    private void enableSearch(boolean enabled) {
+        if (enabled) {
+            DiscoveryTopComponent.changeCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        } else {
+            DiscoveryTopComponent.changeCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        }
+        searchButton.setEnabled(enabled);
+        cancelButton.setEnabled(!enabled);
+        fileTypeComboBox.setEnabled(enabled);
+        orderByCombobox.setEnabled(enabled);
+        groupByCombobox.setEnabled(enabled);
+        attributeRadioButton.setEnabled(enabled);
+        groupSizeRadioButton.setEnabled(enabled);
+        sizeCheckbox.setEnabled(enabled);
+        sizeScrollPane.setEnabled(enabled && sizeCheckbox.isSelected());
+        sizeList.setEnabled(enabled && sizeCheckbox.isSelected());
+        dataSourceCheckbox.setEnabled(enabled);
+        dataSourceList.setEnabled(enabled && dataSourceCheckbox.isSelected());
+        dataSourceScrollPane.setEnabled(enabled && dataSourceCheckbox.isSelected());
+        crFrequencyCheckbox.setEnabled(enabled);
+        crFrequencyScrollPane.setEnabled(enabled && crFrequencyCheckbox.isSelected());
+        crFrequencyList.setEnabled(enabled && crFrequencyCheckbox.isSelected());
+        keywordCheckbox.setEnabled(enabled);
+        keywordList.setEnabled(enabled && keywordCheckbox.isSelected());
+        keywordScrollPane.setEnabled(enabled && keywordCheckbox.isSelected());
+        hashSetCheckbox.setEnabled(enabled);
+        hashSetScrollPane.setEnabled(enabled && hashSetCheckbox.isSelected());
+        hashSetList.setEnabled(enabled && hashSetCheckbox.isSelected());
+        objectsCheckbox.setEnabled(enabled);
+        objectsScrollPane.setEnabled(enabled && objectsCheckbox.isSelected());
+        objectsList.setEnabled(enabled && objectsCheckbox.isSelected());
+        tagsCheckbox.setEnabled(enabled);
+        tagsScrollPane.setEnabled(enabled && tagsCheckbox.isSelected());
+        tagsList.setEnabled(enabled && tagsCheckbox.isSelected());
+        interestingItemsCheckbox.setEnabled(enabled);
+        interestingItemsScrollPane.setEnabled(enabled && interestingItemsCheckbox.isSelected());
+        interestingItemsList.setEnabled(enabled && interestingItemsCheckbox.isSelected());
+        scoreCheckbox.setEnabled(enabled);
+        scoreScrollPane.setEnabled(enabled && scoreCheckbox.isSelected());
+        scoreList.setEnabled(enabled && scoreCheckbox.isSelected());
+        exifCheckbox.setEnabled(enabled);
+        notableCheckbox.setEnabled(enabled);
+        parentCheckbox.setEnabled(enabled);
+        parentScrollPane.setEnabled(enabled && parentCheckbox.isSelected());
+        parentList.setEnabled(enabled && parentCheckbox.isSelected());
+        parentTextField.setEnabled(enabled && parentCheckbox.isSelected());
+        addButton.setEnabled(enabled && parentCheckbox.isSelected());
+        deleteButton.setEnabled(enabled && parentCheckbox.isSelected() && !parentListModel.isEmpty());
+        fullRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
+        substringRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
+    }
+
+    /**
+     * Update the user interface when a search has been cancelled.
+     *
+     * @param searchCancelledEvent The SearchCancelledEvent which was received.
+     */
+    @Subscribe
+    void handleSearchCancelledEvent(DiscoveryEvents.SearchCancelledEvent searchCancelledEvent) {
+        SwingUtilities.invokeLater(() -> {
+            enableSearch(true);
+        });
+    }
+
+    /**
+     * Update the user interface when a search has been successfully completed.
+     *
+     * @param searchCompleteEvent The SearchCompleteEvent which was received.
+     */
+    @Subscribe
+    void handleSearchCompleteEvent(DiscoveryEvents.SearchCompleteEvent searchCompleteEvent) {
+        SwingUtilities.invokeLater(() -> {
+            enableSearch(true);
+        });
+    }
 
     private void parentCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parentCheckboxActionPerformed
         parentList.setEnabled(parentCheckbox.isSelected());
@@ -1194,7 +1302,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         substringRadioButton.setEnabled(parentCheckbox.isSelected());
         parentTextField.setEnabled(parentCheckbox.isSelected());
         addButton.setEnabled(parentCheckbox.isSelected());
-        deleteButton.setEnabled(parentCheckbox.isSelected());
+        deleteButton.setEnabled(parentCheckbox.isSelected() && !parentListModel.isEmpty());
     }//GEN-LAST:event_parentCheckboxActionPerformed
 
     private void keywordCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordCheckboxActionPerformed
@@ -1222,6 +1330,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         }
     }//GEN-LAST:event_addButtonActionPerformed
 
+    /**
+     * Cancel the current search.
+     */
     void cancelSearch() {
         if (searchWorker != null) {
             searchWorker.cancel(true);
@@ -1230,7 +1341,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         int index = parentList.getSelectedIndex();
-        parentListModel.remove(index);
+        if (index >= 0) {
+            parentListModel.remove(index);
+        }
         validateFields();
     }//GEN-LAST:event_deleteButtonActionPerformed
 
