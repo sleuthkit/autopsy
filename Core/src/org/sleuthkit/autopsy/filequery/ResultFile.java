@@ -23,13 +23,25 @@ import org.sleuthkit.datamodel.AbstractFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Container for files that holds all necessary data for grouping and sorting
  */
 class ResultFile {
 
+    private final static Logger logger = Logger.getLogger(ResultFile.class.getName());
     private FileSearchData.Frequency frequency;
     private final List<String> keywordListNames;
     private final List<String> hashSetNames;
@@ -37,7 +49,9 @@ class ResultFile {
     private final List<String> interestingSetNames;
     private final List<String> objectDetectedNames;
     private final List<AbstractFile> instances = new ArrayList<>();
-    ;
+    private DataResultViewerTable.Score currentScore = DataResultViewerTable.Score.NO_SCORE;
+    private String scoreDescription = null;
+    private boolean isDeleted = false;
     private FileType fileType;
 
     /**
@@ -48,6 +62,10 @@ class ResultFile {
     ResultFile(AbstractFile abstractFile) {
         //store the file the ResultFile was created for as the first value in the instances list
         instances.add(abstractFile);
+        if (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+            isDeleted = true;
+        }
+        updateScoreAndDescription(abstractFile);
         this.frequency = FileSearchData.Frequency.UNKNOWN;
         keywordListNames = new ArrayList<>();
         hashSetNames = new ArrayList<>();
@@ -82,7 +100,23 @@ class ResultFile {
      * @param duplicate The abstract file to add as a duplicate.
      */
     void addDuplicate(AbstractFile duplicate) {
+        if (isDeleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+            isDeleted = false;
+        }
+        updateScoreAndDescription(duplicate);
         instances.add(duplicate);
+    }
+
+    DataResultViewerTable.Score getScore() {
+        return currentScore;
+    }
+
+    String getScoreDescription() {
+        return scoreDescription;
+    }
+
+    boolean getIsDeleted() {
+        return isDeleted;
     }
 
     /**
@@ -269,6 +303,58 @@ class ResultFile {
         } else {
             //if the file has a valid MD5 compare use the MD5 for equality check
             return this.getFirstInstance().getMd5Hash().equals(((ResultFile) obj).getFirstInstance().getMd5Hash());
+        }
+    }
+
+    /**
+     * Get all tags from the case database that are associated with the file
+     *
+     * @return a list of tags that are associated with the file
+     */
+    private List<ContentTag> getContentTagsFromDatabase(AbstractFile file) {
+        List<ContentTag> tags = new ArrayList<>();
+        try {
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(file));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get tags for file " + file.getName(), ex);
+        }
+        return tags;
+    }
+
+    @NbBundle.Messages({
+        "ResultFile.score.notableFile.description=File recognized as notable.",
+        "ResultFile.score.interestingResult.description=File has interesting result associated with it.",
+        "ResultFile.score.taggedFile.description=File has been tagged.",
+        "ResultFile.score.notableTaggedFile.description=File tagged with notable tag."})
+    private void updateScoreAndDescription(AbstractFile file) {
+        if (currentScore == DataResultViewerTable.Score.NOTABLE_SCORE) {
+            //already notable can return
+            return;
+        }
+        if (file.getKnown() == TskData.FileKnown.BAD) {
+            currentScore = DataResultViewerTable.Score.NOTABLE_SCORE;
+            scoreDescription = Bundle.ResultFile_score_notableFile_description();
+            return;
+        }
+        try {
+            if (currentScore == DataResultViewerTable.Score.NO_SCORE && !file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
+                currentScore = DataResultViewerTable.Score.INTERESTING_SCORE;
+                scoreDescription = Bundle.ResultFile_score_interestingResult_description();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting artifacts for file: " + file.getName(), ex);
+        }
+        List<ContentTag> tags = getContentTagsFromDatabase(file);
+        if (!tags.isEmpty()) {
+            currentScore = DataResultViewerTable.Score.INTERESTING_SCORE;
+            scoreDescription = Bundle.ResultFile_score_taggedFile_description();
+            for (Tag tag : tags) {
+                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
+                    currentScore = DataResultViewerTable.Score.NOTABLE_SCORE;
+                    scoreDescription = Bundle.ResultFile_score_notableTaggedFile_description();
+                    return;
+                }
+            }
         }
     }
 }

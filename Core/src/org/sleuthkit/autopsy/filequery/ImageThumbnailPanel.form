@@ -18,12 +18,20 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="thumbnailPanel" max="32767" attributes="0"/>
-                  <Component id="countLabel" alignment="0" pref="201" max="32767" attributes="0"/>
-                  <Component id="fileSizeLabel" alignment="0" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                      <Component id="thumbnailPanel" pref="201" max="32767" attributes="0"/>
+                      <Component id="fileSizeLabel" alignment="0" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Component id="countLabel" min="-2" pref="159" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="isDeletedLabel" min="-2" pref="16" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="scoreLabel" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -35,7 +43,11 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="fileSizeLabel" min="-2" pref="16" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="countLabel" min="-2" pref="12" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="scoreLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="isDeletedLabel" min="-2" pref="16" max="-2" attributes="0"/>
+                  <Component id="countLabel" alignment="1" min="-2" pref="12" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -62,6 +74,20 @@
     <Component class="javax.swing.JLabel" name="fileSizeLabel">
     </Component>
     <Component class="javax.swing.JLabel" name="countLabel">
+    </Component>
+    <Component class="javax.swing.JLabel" name="isDeletedLabel">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/sleuthkit/autopsy/images/delete16.png"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="scoreLabel">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/sleuthkit/autopsy/images/red-circle-exclamation.png"/>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>
