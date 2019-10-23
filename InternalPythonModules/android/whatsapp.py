@@ -433,31 +433,28 @@ class WhatsAppMessagesParser(TskMessagesParser):
     def __init__(self, message_db):
         super(WhatsAppMessagesParser, self).__init__(message_db.runQuery(
                  """
-                     SELECT M.key_remote_jid  AS id, 
-                            contact_info.recipients, 
-                            key_from_me       AS direction, 
-                            CASE 
-		              WHEN M.data IS NULL THEN ""
-		              ELSE M.data 
-	                    END AS content,
-                            M.timestamp       AS send_timestamp, 
-                            M.received_timestamp, 
-                            M.remote_resource AS group_sender,
-                            M.media_url As attachment
-                     FROM   (SELECT jid, 
-                                    recipients 
-                             FROM   wadb.wa_contacts AS WC 
-                                    LEFT JOIN (SELECT gjid, 
-                                                      group_concat(CASE 
-                                                                     WHEN jid == "" THEN NULL
-                                                                     ELSE jid
-                                                                   END) AS recipients 
-                                               FROM   group_participants 
-                                               GROUP  BY gjid) AS group_map 
-                                           ON WC.jid = group_map.gjid 
-                             GROUP  BY jid) AS contact_info 
-                            JOIN messages AS M 
-                              ON M.key_remote_jid = contact_info.jid
+                    SELECT messages.key_remote_jid  AS id, 
+                           contact_book_w_groups.recipients, 
+                           key_from_me              AS direction, 
+                           messages.data            AS content, 
+                           messages.timestamp       AS send_timestamp, 
+                           messages.received_timestamp, 
+                           messages.remote_resource AS group_sender, 
+                           messages.media_url       AS attachment 
+                    FROM   (SELECT jid, 
+                                   recipients 
+                            FROM   wadb.wa_contacts AS contacts 
+                                   left join (SELECT gjid, 
+                                                     Group_concat(CASE 
+                                                                    WHEN jid == "" THEN NULL 
+                                                                    ELSE jid 
+                                                                  END) AS recipients 
+                                              FROM   group_participants 
+                                              GROUP  BY gjid) AS groups 
+                                          ON contacts.jid = groups.gjid 
+                            GROUP  BY jid) AS contact_book_w_groups 
+                           join messages 
+                             ON messages.key_remote_jid = contact_book_w_groups.jid
                  """
               )
         )
@@ -503,6 +500,8 @@ class WhatsAppMessagesParser(TskMessagesParser):
 
     def get_message_text(self):
         message = self.result_set.getString("content") 
+        if message is None:
+            message = super(WhatsAppMessagesParser, self).get_message_text()
         attachment = self.result_set.getString("attachment")
         if attachment is not None:
             return general.appendAttachmentList(message, [attachment])
