@@ -5,11 +5,12 @@ TranslatedContentPanel.comboBoxOption.translatedText=Translated Text
 TranslatedContentViewer.emptyTranslation=The translation is empty.
 # {0} - exception message
 TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file ({0}).
+TranslatedContentViewer.extractingText=Getting text, please wait...
 TranslatedContentViewer.fileHasNoText=File has no text.
 TranslatedContentViewer.noServiceProvider=Machine translation software was not found.
 TranslatedContentViewer.translatingText=Translating text, please wait...
 # {0} - exception message
-TranslatedContentViewer.translationException=Error encountered while attempting translation ({0}).
+TranslatedContentViewer.translationException=Error encountered while translating file ({0}).
 TranslatedTextViewer.maxPayloadSize=Up to the first %dKB of text will be translated
 TranslatedTextViewer.title=Translation
 TranslatedTextViewer.toolTip=Displays translated file text.

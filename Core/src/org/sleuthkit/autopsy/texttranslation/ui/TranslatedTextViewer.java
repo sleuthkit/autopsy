@@ -171,6 +171,7 @@ public final class TranslatedTextViewer implements TextViewer {
         }
 
         @NbBundle.Messages({
+            "TranslatedContentViewer.extractingText=Getting text, please wait...",
             "TranslatedContentViewer.translatingText=Translating text, please wait...",
             "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file ({0}).",
             "TranslatedContentViewer.fileHasNoText=File has no text.",
@@ -184,15 +185,14 @@ public final class TranslatedTextViewer implements TextViewer {
                 throw new InterruptedException();
             }
 
-            /*
-             * This message is only written to the viewer once this task starts
-             * and any previous task has therefore been completed by the
-             * single-threaded executor.
-             */
             SwingUtilities.invokeLater(() -> {
-                panel.display(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+                /*
+                 * This message is only written to the viewer once this task
+                 * starts and any previous task has therefore been completed by
+                 * the single-threaded executor.
+                 */
+                panel.display(Bundle.TranslatedContentViewer_extractingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
             });
-
             String fileText;
             try {
                 fileText = getFileText(file);
@@ -213,6 +213,9 @@ public final class TranslatedTextViewer implements TextViewer {
                 return fileText;
             }
 
+            SwingUtilities.invokeLater(() -> {
+                panel.display(Bundle.TranslatedContentViewer_translatingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
+            });
             String translation;
             try {
                 translation = translate(fileText);
@@ -243,7 +246,7 @@ public final class TranslatedTextViewer implements TextViewer {
                 String orientDetectSubstring = result.substring(0, maxOrientChars);
                 ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
                 panel.display(result, orientation, Font.PLAIN);
-                
+
             } catch (InterruptedException | CancellationException ignored) {
                 // Task cancelled, no error.
             } catch (ExecutionException ex) {
@@ -405,10 +408,8 @@ public final class TranslatedTextViewer implements TextViewer {
                 }
 
                 AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-                if (file == null) {
-                    return;
-                }
-                boolean translateText = currentSelection.equals(DisplayDropdownOptions.ORIGINAL_TEXT.toString());
+                String textDisplaySelection = panel.getDisplayDropDownSelection();
+                boolean translateText = !textDisplaySelection.equals(DisplayDropdownOptions.ORIGINAL_TEXT.toString());
                 backgroundTask = new ExtractAndTranslateTextTask(file, translateText);
 
                 //Pass the background task to a single threaded pool to keep
