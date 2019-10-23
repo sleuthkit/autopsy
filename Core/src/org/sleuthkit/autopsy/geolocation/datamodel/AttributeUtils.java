@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Utilities for simplifying and reducing redundant when getting Artifact
  * attributes.
  */
-public class AttributeUtils {
+final class AttributeUtils {
     
     /**
      * Private constructor for this Utility class.
