@@ -203,7 +203,7 @@ public class ResultsPanel extends javax.swing.JPanel {
      * Reset the result viewer and any associate workers to a default empty
      * state.
      */
-    private synchronized void resetResultViewer() {
+    synchronized void resetResultViewer() {
         resultsViewerPanel.remove(imageThumbnailViewer);
         resultsViewerPanel.remove(videoThumbnailViewer);
 

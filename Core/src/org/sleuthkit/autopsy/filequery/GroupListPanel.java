@@ -117,6 +117,13 @@ class GroupListPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
+     * Reset the group list to be empty.
+     */
+    void resetGroupList() {
+        groupKeyList.setListData(new GroupKey[0]);
+    }
+
+    /**
      * Respond to a group being selected by sending a PageRetrievedEvent
      *
      * @param evt the event which indicates a selection occurs in the list
