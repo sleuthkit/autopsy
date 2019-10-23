@@ -171,7 +171,7 @@ public final class TranslatedTextViewer implements TextViewer {
         }
 
         @NbBundle.Messages({
-            "TranslatedContentViewer.extractingText=Getting text, please wait...",
+            "TranslatedContentViewer.extractingText=Extracting text, please wait...",
             "TranslatedContentViewer.translatingText=Translating text, please wait...",
             "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file ({0}).",
             "TranslatedContentViewer.fileHasNoText=File has no text.",
