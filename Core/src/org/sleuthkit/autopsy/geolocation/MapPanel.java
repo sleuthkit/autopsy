@@ -39,12 +39,12 @@ import org.jxmapviewer.viewer.WaypointPainter;
 /**
  * Main panel with the JJXMapViewer object and its basic controls.
  */
-public class MapPanel extends javax.swing.JPanel {
+final class MapPanel extends javax.swing.JPanel {
     
     private static final long serialVersionUID = 1L;
 
-    private boolean zoomChanging = false;
-    private boolean sliderReversed = false;
+    private boolean zoomChanging;
+    private final boolean sliderReversed;
     
     // Using a DefaultListModel to store the way points because we get 
     // a lot of functionality for free, like listeners.
@@ -53,8 +53,11 @@ public class MapPanel extends javax.swing.JPanel {
     /**
      * Creates new form MapPanel
      */
-    public MapPanel() {
+    MapPanel() {
         waypointListModel = new DefaultListModel<>();
+         sliderReversed = false;
+         zoomChanging = false;
+         
         initComponents();
         initMap();
     }

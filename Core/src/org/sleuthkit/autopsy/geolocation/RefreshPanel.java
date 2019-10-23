@@ -26,12 +26,14 @@ import javax.swing.JPanel;
  * due to new artifacts.
  * 
  */
-class RefreshPanel extends JPanel {
+final class RefreshPanel extends JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Creates new form RefreshPanel
      */
-    public RefreshPanel() {
+    RefreshPanel() {
         initComponents();
     }
     

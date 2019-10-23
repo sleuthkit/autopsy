@@ -136,11 +136,6 @@ public final class GeolocationTopComponent extends TopComponent {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
     }
-    
-    @Override
-    public void open() {
-        super.open();
-    }
 
     /**
      * Set the state of the refresh panel at the top of the mapPanel.
@@ -165,8 +160,6 @@ public final class GeolocationTopComponent extends TopComponent {
         SwingWorker<List<Waypoint>, Waypoint> worker = new SwingWorker<List<Waypoint>, Waypoint>() {
             @Override
             protected List<Waypoint> doInBackground() throws Exception {
-                List<Waypoint> waypoints = new ArrayList<>();
-
                 Case currentCase = Case.getCurrentCaseThrows();
 
                 return MapWaypoint.getWaypoints(currentCase.getSleuthkitCase());
