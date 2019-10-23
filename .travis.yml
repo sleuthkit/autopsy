@@ -8,9 +8,6 @@ env:
  global:
   - TSK_HOME=$TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
 
-jdk:
-  - openjdk8
-
 addons:
   apt:
     update: true
@@ -57,6 +54,15 @@ before_script:
         export PATH=/usr/bin:$PATH; 
         unset JAVA_HOME;
     fi
+  - if [ $TRAVIS_OS_NAME = osx ]; then
+        brew uninstall java --force
+        brew cask uninstall java --force
+        brew tap apoptopenjdk/openjdk
+        brew cask install adoptopenjdk8
+        wget https://cdn.azul.com/zulu/bin/zulu8.40.0.25-ca-fx-jdk8.0.222-macosx_x64.tar.gz | tar xf --strip-components=1 -C /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+        export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+    fi
+  - java -version
 
 script:
  - set -e
