@@ -42,7 +42,9 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 102)})
 public class OpenGeolocationAction extends CallableSystemAction {
-
+    
+    private static final long serialVersionUID = 1L;
+    
     @Messages({
         "OpenGeolocationAction_name=Geolocation",
         "OpenGeolocationAction_displayName=Geolocation"

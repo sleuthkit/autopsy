@@ -30,7 +30,7 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
     static List<org.jxmapviewer.viewer.Waypoint> getWaypoints(SleuthkitCase skCase) throws TskCoreException{
         List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
         
-        List<Route> routes = Route.getGPSRoutes(skCase);
+        List<Route> routes = Route.getRoutes(skCase);
         for(Route route: routes) {
             points.addAll(route.getRoute());
         }

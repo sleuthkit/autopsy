@@ -33,6 +33,7 @@ import org.jxmapviewer.viewer.Waypoint;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -52,6 +53,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 @RetainLocation("geolocation")
 @SuppressWarnings("PMD.SingularField")
 public final class GeolocationTopComponent extends TopComponent {
+    
+    private static final long serialVersionUID = 1L;
 
     private static final Logger logger = Logger.getLogger(GeolocationTopComponent.class.getName());
 
@@ -126,6 +129,17 @@ public final class GeolocationTopComponent extends TopComponent {
     public void removeNotify() {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
+    }
+    
+    @Override
+    public void componentOpened() {
+        super.componentOpened();
+        WindowManager.getDefault().setTopComponentFloating(this, true);
+    }
+    
+    @Override
+    public void open() {
+        super.open();
     }
 
     /**
