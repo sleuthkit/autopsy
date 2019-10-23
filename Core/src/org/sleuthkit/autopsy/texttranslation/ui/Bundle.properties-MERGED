@@ -2,15 +2,15 @@ OptionsCategory_Name_Machine_Translation=Machine Translation
 OptionsCategory_Keywords_Machine_Translation_Settings=Machine Translation Settings
 TranslatedContentPanel.comboBoxOption.originalText=Original Text (Up to 25KB)
 TranslatedContentPanel.comboBoxOption.translatedText=Translated Text
-TranslatedContentViewer.emptyTranslation=The translation is empty.
+TranslatedContentViewer.emptyTranslation=The machine translation software did not return any text.
 # {0} - exception message
-TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file ({0}).
-TranslatedContentViewer.extractingText=Getting text, please wait...
+TranslatedContentViewer.errorExtractingText=An error occurred while extracting the text ({0}).
+TranslatedContentViewer.extractingText=Extracting text, please wait...
 TranslatedContentViewer.fileHasNoText=File has no text.
-TranslatedContentViewer.noServiceProvider=Machine translation software was not found.
+TranslatedContentViewer.noServiceProvider=The machine translation software was not found.
 TranslatedContentViewer.translatingText=Translating text, please wait...
 # {0} - exception message
-TranslatedContentViewer.translationException=Error encountered while translating file ({0}).
+TranslatedContentViewer.translationException=An error occurred while translating the text ({0}).
 TranslatedTextViewer.maxPayloadSize=Up to the first %dKB of text will be translated
 TranslatedTextViewer.title=Translation
 TranslatedTextViewer.toolTip=Displays translated file text.

@@ -173,11 +173,11 @@ public final class TranslatedTextViewer implements TextViewer {
         @NbBundle.Messages({
             "TranslatedContentViewer.extractingText=Extracting text, please wait...",
             "TranslatedContentViewer.translatingText=Translating text, please wait...",
-            "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=Error encountered while extracting text from file ({0}).",
+            "# {0} - exception message", "TranslatedContentViewer.errorExtractingText=An error occurred while extracting the text ({0}).",
             "TranslatedContentViewer.fileHasNoText=File has no text.",
-            "TranslatedContentViewer.emptyTranslation=The translation is empty.",
-            "TranslatedContentViewer.noServiceProvider=Machine translation software was not found.",
-            "# {0} - exception message", "TranslatedContentViewer.translationException=Error encountered while translating file ({0})."
+            "TranslatedContentViewer.emptyTranslation=The machine translation software did not return any text.",
+            "TranslatedContentViewer.noServiceProvider=The machine translation software was not found.",
+            "# {0} - exception message", "TranslatedContentViewer.translationException=An error occurred while translating the text ({0})."
         })
         @Override
         public String doInBackground() throws InterruptedException {
