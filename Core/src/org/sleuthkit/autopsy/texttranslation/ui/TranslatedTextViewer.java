@@ -186,11 +186,6 @@ public final class TranslatedTextViewer implements TextViewer {
             }
 
             SwingUtilities.invokeLater(() -> {
-                /*
-                 * This message is only written to the viewer once this task
-                 * starts and any previous task has therefore been completed by
-                 * the single-threaded executor.
-                 */
                 panel.display(Bundle.TranslatedContentViewer_extractingText(), ComponentOrientation.LEFT_TO_RIGHT, Font.ITALIC);
             });
             String fileText;
