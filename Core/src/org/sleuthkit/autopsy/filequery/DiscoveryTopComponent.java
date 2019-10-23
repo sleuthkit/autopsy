@@ -146,7 +146,7 @@ final class DiscoveryTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        mainSplitPane = new javax.swing.JSplitPane();
+        javax.swing.JSplitPane mainSplitPane = new javax.swing.JSplitPane();
         leftSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new javax.swing.JSplitPane();
 
@@ -173,7 +173,6 @@ final class DiscoveryTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSplitPane leftSplitPane;
-    private javax.swing.JSplitPane mainSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables
 
