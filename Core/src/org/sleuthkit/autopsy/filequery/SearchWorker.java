@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filequery;
 import java.util.LinkedHashMap;
 import javax.swing.SwingWorker;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -38,7 +39,7 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     private final FileSorter.SortingMethod fileSort;
     private final FileGroup.GroupSortingAlgorithm groupSortAlgorithm;
     private final EamDb centralRepoDb;
-    private final LinkedHashMap<GroupKey, Integer> results = new LinkedHashMap<>();
+    private final Map<GroupKey, Integer> results = new LinkedHashMap<>();
 
     /**
      * Create a SwingWorker which performs a search
