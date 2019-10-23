@@ -192,7 +192,7 @@ public final class TranslatedTextViewer implements TextViewer {
             try {
                 fileText = getFileText(file);
             } catch (IOException | TextExtractor.InitReaderException ex) {
-                logger.log(Level.WARNING, String.format("Error getting text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                logger.log(Level.WARNING, String.format("Error extracting text for file %s (objId=%d)", file.getName(), file.getId()), ex);
                 return Bundle.TranslatedContentViewer_errorExtractingText(ex.getMessage());
             }
 
@@ -215,10 +215,10 @@ public final class TranslatedTextViewer implements TextViewer {
             try {
                 translation = translate(fileText);
             } catch (NoServiceProviderException ex) {
-                logger.log(Level.WARNING, String.format("Error occurred translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                logger.log(Level.WARNING, String.format("Error translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
                 translation = Bundle.TranslatedContentViewer_noServiceProvider();
             } catch (TranslationException ex) {
-                logger.log(Level.WARNING, String.format("Error occurred translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
+                logger.log(Level.WARNING, String.format("Error translating text for file %s (objId=%d)", file.getName(), file.getId()), ex);
                 translation = Bundle.TranslatedContentViewer_translationException(ex.getMessage());
             }
 
