@@ -637,7 +637,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * thumb at the given width and height. It also paints the track blue as
          * the thumb progresses.
          *
-         * @param b JSlider component
+         * @param slider JSlider component
          * @param config Configuration object. Contains info about thumb
          * dimensions and colors.
          */
