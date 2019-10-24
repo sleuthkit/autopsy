@@ -76,8 +76,7 @@ class FileSearch {
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
-     * Clears cache of search results, caching new results for access at later
-     * time.
+     * Caching new results for access at later time.
      *
      * @param userName           The name of the user performing the search.
      * @param filters            The filters to apply
@@ -230,8 +229,7 @@ class FileSearch {
     }
 
     /**
-     * Run the file search. Clears cache of search results, caching new results
-     * for access at later time.
+     * Run the file search. Caching new results for access at later time.
      *
      * @param userName           The name of the user performing the search.
      * @param filters            The filters to apply
