@@ -93,10 +93,10 @@ FileSearchFiltering.ParentFilter.desc=Files with paths matching: {0}
 FileSearchFiltering.ParentFilter.exact=(exact match)
 FileSearchFiltering.ParentFilter.or=\ or 
 FileSearchFiltering.ParentFilter.substring=(substring)
-# {0} - search term
-FileSearchFiltering.ParentSearchTerm.fullString=\ {0} (exact)
-# {0} - search term
-FileSearchFiltering.ParentSearchTerm.subString=\ {0} (substring)
+FileSearchFiltering.ParentSearchTerm.excludeString=\ (exclude)
+FileSearchFiltering.ParentSearchTerm.fullString=\ (exact)
+FileSearchFiltering.ParentSearchTerm.includeString=\ (include)
+FileSearchFiltering.ParentSearchTerm.subString=\ (substring)
 FileSearchFiltering.PreviouslyNotableFilter.desc=Files that were previously marked as notable
 # {0} - filters
 FileSearchFiltering.ScoreFilter.desc=Files with score(s) of : {0}
@@ -177,6 +177,8 @@ ResultsPanel.gotoPageLabel.text=Go to Page:
 ResultsPanel.pageSizeLabel.text=Page size:
 ResultsPanel.instancesList.border.title=Instances
 DiscoveryExtractAction.title.extractFiles.text=Extract File
+FileSearchPanel.includeRadioButton.text=Include
+FileSearchPanel.excludeRadioButton.text=Exclude
 ResultsPanel.viewFileInDir.name=View File in Directory
 SearchNode.getName.text=Search Result
 # {0} - numberOfInstances
