@@ -286,7 +286,7 @@ class FileSearchData {
          * @return enums that can be used to filter
          */
         static List<FileType> getOptionsForFiltering() {
-            return Arrays.asList(IMAGE, AUDIO, VIDEO, EXECUTABLE, DOCUMENTS);
+            return Arrays.asList(IMAGE, VIDEO);
         }
     }
 
