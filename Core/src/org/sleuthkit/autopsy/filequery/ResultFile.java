@@ -107,14 +107,31 @@ class ResultFile {
         instances.add(duplicate);
     }
 
+    /**
+     * Get the aggregate score of this ResultFile. Calculated as the highest
+     * score among all instances it represents.
+     *
+     * @return The score of this ResultFile.
+     */
     DataResultViewerTable.Score getScore() {
         return currentScore;
     }
 
+    /**
+     * Get the description for the score assigned to this item.
+     *
+     * @return The score description of this ResultFile.
+     */
     String getScoreDescription() {
         return scoreDescription;
     }
 
+    /**
+     * Get the aggregate deleted status of this ResultFile. A file is identified
+     * as deleted if all instances of it are deleted.
+     *
+     * @return The deleted status of this ResultFile.
+     */
     boolean getIsDeleted() {
         return isDeleted;
     }

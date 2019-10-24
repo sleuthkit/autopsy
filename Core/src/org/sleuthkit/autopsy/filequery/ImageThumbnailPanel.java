@@ -25,7 +25,6 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 
 /**
  * Class which displays a thumbnail and information for an image file.
