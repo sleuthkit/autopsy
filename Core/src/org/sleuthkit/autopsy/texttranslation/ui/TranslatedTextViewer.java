@@ -271,7 +271,7 @@ public final class TranslatedTextViewer implements TextViewer {
         /**
          * Extracts text from the given node
          *
-         * @param node Selected node in UI
+         * @param file Selected node in UI
          *
          * @return Extracted text
          *
