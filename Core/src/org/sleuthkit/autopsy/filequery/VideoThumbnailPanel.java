@@ -27,6 +27,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
+import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -35,7 +36,11 @@ import org.openide.util.NbBundle.Messages;
 final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<VideoThumbnailsWrapper> {
 
     private static final int GAP_SIZE = 4;
-    private static final Color SELECTION_COLOR = new Color(0,120,215);
+    private static final Color SELECTION_COLOR = new Color(0, 120, 215);
+    private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
+    private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
+    private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon NOTABLE_ICON_SCORE = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
     private static final long serialVersionUID = 1L;
 
     /**
@@ -96,10 +101,16 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         imagePanel = new javax.swing.JPanel();
         fileSizeLabel = new javax.swing.JLabel();
         countLabel = new javax.swing.JLabel();
+        scoreLabel = new javax.swing.JLabel();
+        deletedLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         imagePanel.setLayout(new java.awt.GridBagLayout());
+
+        scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
+
+        deletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -112,27 +123,36 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(fileSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(imagePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(fileSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 19, Short.MAX_VALUE)
-                    .addComponent(countLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(fileSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(deletedLabel)
+                        .addComponent(scoreLabel)
+                        .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel countLabel;
+    private javax.swing.JLabel deletedLabel;
     private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JPanel imagePanel;
+    private javax.swing.JLabel scoreLabel;
     // End of variables declaration//GEN-END:variables
 
     @Messages({"# {0} - fileSize",
@@ -145,6 +165,20 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         countLabel.setText(Bundle.VideoThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
+        deletedLabel.setVisible(value.getResultFile().getIsDeleted());
+        switch (value.getResultFile().getScore()) {
+            case NOTABLE_SCORE:
+                scoreLabel.setIcon(NOTABLE_ICON_SCORE);
+                break;
+            case INTERESTING_SCORE:
+                scoreLabel.setIcon(INTERESTING_SCORE_ICON);
+                break;
+            case NO_SCORE:
+            default:
+                scoreLabel.setIcon(null);
+                break;
+        }
+        setToolTipText(value.getResultFile().getScoreDescription());
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
     }

@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
  * Class which displays a thumbnail and information for an image file.
  */
 public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellRenderer<ImageThumbnailWrapper> {
-    
+
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
@@ -65,7 +65,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         thumbnailPanel.setLayout(new java.awt.GridBagLayout());
         thumbnailPanel.add(thumbnailLabel, new java.awt.GridBagConstraints());
 
-        isDeletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
+        isDeletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
 
@@ -139,5 +139,5 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
 
         return this;
     }
-    
+
 }

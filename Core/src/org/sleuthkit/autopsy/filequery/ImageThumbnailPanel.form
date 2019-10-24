@@ -78,7 +78,7 @@
     <Component class="javax.swing.JLabel" name="isDeletedLabel">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/images/delete16.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/images/file-icon-deleted.png"/>
         </Property>
       </Properties>
     </Component>
