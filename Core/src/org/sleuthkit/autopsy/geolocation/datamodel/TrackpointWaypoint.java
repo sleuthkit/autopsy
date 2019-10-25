@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A wrapper class for TSK_GPS_TRACKPOINT artifacts.
@@ -34,8 +33,10 @@ final class TrackpointWaypoint extends ArtifactWaypoint {
 
     /**
      * Construct a waypoint for trackpoints.
+     * 
+     * @throws GeoLocationDataException
      */
-    TrackpointWaypoint(BlackboardArtifact artifact) throws TskCoreException {
+    TrackpointWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         super(artifact, getLabelFromArtifact(artifact), Waypoint.Type.TRACKPOINT);
     }
 
@@ -47,18 +48,18 @@ final class TrackpointWaypoint extends ArtifactWaypoint {
      *
      * @return String label for the artifacts way point.
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws TskCoreException {
+    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
 
-        String typeLabel = AttributeUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        String typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
 
         if (typeLabel == null || typeLabel.isEmpty()) {
-            typeLabel = AttributeUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
+            typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
         }
 
         if (typeLabel == null || typeLabel.isEmpty()) {
-            typeLabel = AttributeUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
+            typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
         }
 
         if (typeLabel == null || typeLabel.isEmpty()) {

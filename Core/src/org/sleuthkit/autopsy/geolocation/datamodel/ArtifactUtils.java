@@ -18,20 +18,22 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
+import java.util.List;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Utilities for simplifying and reducing redundant when getting Artifact
  * attributes.
  */
-final class AttributeUtils {
+final class ArtifactUtils {
     
     /**
      * Private constructor for this Utility class.
      */
-    private AttributeUtils() {
+    private ArtifactUtils() {
         
     }
 
@@ -47,12 +49,17 @@ final class AttributeUtils {
      *
      * @throws TskCoreException
      */
-    static String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
         if (artifact == null) {
             return null;
         }
 
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        BlackboardAttribute attribute;
+        try{
+            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        } catch(TskCoreException ex) {
+            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
+        }
         return (attribute != null ? attribute.getDisplayString() : null);
     }
 
@@ -66,7 +73,7 @@ final class AttributeUtils {
      *
      * @throws TskCoreException
      */
-    static Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
         if (artifact == null) {
             return null;
         }
@@ -75,7 +82,12 @@ final class AttributeUtils {
             return null;
         }
 
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        BlackboardAttribute attribute;
+        try{
+            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        } catch(TskCoreException ex) {
+            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
+        }
         return (attribute != null ? attribute.getValueDouble() : null);
     }
 
@@ -89,7 +101,7 @@ final class AttributeUtils {
      *
      * @throws TskCoreException
      */
-    static Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
         if (artifact == null) {
             return null;
         }
@@ -99,7 +111,12 @@ final class AttributeUtils {
             return null;
         }
 
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        BlackboardAttribute attribute;
+        try{
+            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        } catch(TskCoreException ex) {
+            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
+        }
         return (attribute != null ? attribute.getValueLong() : null);
     }
 
@@ -113,7 +130,7 @@ final class AttributeUtils {
      *
      * @throws TskCoreException
      */
-    static Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws TskCoreException {
+    static Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
         if (artifact == null) {
             return null;
         }
@@ -122,8 +139,34 @@ final class AttributeUtils {
             return null;
         }
 
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        BlackboardAttribute attribute;
+        try{
+            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
+        } catch(TskCoreException ex) {
+            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
+        }
         return (attribute != null ? attribute.getValueInt() : null);
+    }
+    
+    /**
+     * Get a list of artifacts for the given BlackboardArtifact.Type.
+     * 
+     * @param skCase Currently open case
+     * @param type BlackboardArtifact.Type to retrieve 
+     * 
+     * @return List of BlackboardArtifacts
+     * 
+     * @throws GeoLocationDataException 
+     */
+    static List<BlackboardArtifact> getArtifactsForType(SleuthkitCase skCase, BlackboardArtifact.ARTIFACT_TYPE type) throws GeoLocationDataException {
+        List<BlackboardArtifact> artifacts;
+        try{
+            artifacts = skCase.getBlackboardArtifacts(type);
+        } catch(TskCoreException ex) {
+            throw new GeoLocationDataException(String.format("Unable to get artifacts for type: %s", type.getLabel()), ex);
+        }
+        
+        return artifacts;
     }
 
 }

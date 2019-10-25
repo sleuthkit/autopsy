@@ -45,6 +45,7 @@ import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.report.ReportBranding;
@@ -154,7 +155,7 @@ class KMLReport implements GeneralReportModule {
         try {
             makeRoutes(skCase);
             addLocationsToReport(skCase, baseReportDir);
-        } catch (TskCoreException | IOException ex) {
+        } catch (GeoLocationDataException | IOException ex) {
             errorMessage = "Failed to complete report.";
             logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
@@ -316,7 +317,7 @@ class KMLReport implements GeneralReportModule {
      * @throws TskCoreException
      * @throws IOException
      */
-    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws TskCoreException, IOException {
+    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException {
         List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
 
         for (Waypoint point : points) {
@@ -357,7 +358,7 @@ class KMLReport implements GeneralReportModule {
      *
      * @throws TskCoreException
      */
-    void makeRoutes(SleuthkitCase skCase) throws TskCoreException {
+    void makeRoutes(SleuthkitCase skCase) throws GeoLocationDataException {
         List<Route> routes = Route.getGPSRoutes(skCase);
         
         if(routes == null) {

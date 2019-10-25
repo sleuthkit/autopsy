@@ -33,9 +33,9 @@ final class EXIFWaypoint extends ArtifactWaypoint {
      *
      * @param artifact BlackboardArtifact for waypoint
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    protected EXIFWaypoint(BlackboardArtifact artifact) throws TskCoreException {
+    protected EXIFWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact, getImageFromArtifact(artifact));
     }
 
@@ -45,12 +45,12 @@ final class EXIFWaypoint extends ArtifactWaypoint {
      * @param artifact Waypoint BlackboardArtifact
      * @param image    EXIF AbstractFile image
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private EXIFWaypoint(BlackboardArtifact artifact, AbstractFile image) throws TskCoreException {
+    private EXIFWaypoint(BlackboardArtifact artifact, AbstractFile image) throws GeoLocationDataException {
         super(artifact,
                 image != null ? image.getName() : "",
-                AttributeUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED),
+                ArtifactUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED),
                 image,
                 Waypoint.Type.METADATA_EXIF);
     }
@@ -63,16 +63,21 @@ final class EXIFWaypoint extends ArtifactWaypoint {
      * @return AbstractFile image for this waypoint or null if one is not
      *         available
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private static AbstractFile getImageFromArtifact(BlackboardArtifact artifact) throws TskCoreException {
+    private static AbstractFile getImageFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
+        AbstractFile abstractFile = null;
         BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
-
         if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF) {
-            return artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
+            
+            try{
+                abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
+            } catch(TskCoreException ex) {
+                throw new GeoLocationDataException(String.format("Unable to getAbstractFileByID for artifact: %d", artifact.getArtifactID(), artifact.getArtifactID()), ex);
+            }
         }
 
-        return null;
+        return abstractFile;
     }
 
 }

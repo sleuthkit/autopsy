@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A GPSSearchWaypoint is a subclass of ArtifactWaypoint.
@@ -34,8 +33,10 @@ final class GPSSearchWaypoint extends ArtifactWaypoint {
 
     /**
      * Construct a GPS Search waypoint.
+     * 
+     * @throws GeoLocationDataException
      */
-    public GPSSearchWaypoint(BlackboardArtifact artifact) throws TskCoreException {
+    GPSSearchWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         super(artifact, getLabelFromArtifact(artifact), Waypoint.Type.SEARCH);
     }
 
@@ -46,13 +47,13 @@ final class GPSSearchWaypoint extends ArtifactWaypoint {
      *
      * @return String label for the artifacts way point.
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws TskCoreException {
-        String typeLabel = AttributeUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
+        String typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
 
         if (typeLabel == null || typeLabel.isEmpty()) {
-            typeLabel = AttributeUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
+            typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
         }
 
         if (typeLabel == null || typeLabel.isEmpty()) {

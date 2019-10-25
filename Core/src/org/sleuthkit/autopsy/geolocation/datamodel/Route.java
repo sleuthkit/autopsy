@@ -26,7 +26,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Route represents a TSK_GPS_ROUTE artifact which has a start and end point
@@ -39,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "Route_Start_Label=Start",
     "Route_End_Label=End"
 })
-public class Route {
+public final class Route {
 
     private final List<Waypoint> points;
     private final Long timestamp;
@@ -57,11 +56,12 @@ public class Route {
      * @return List of Route objects, empty list will be returned if no Routes
      *         where found
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    static public List<Route> getGPSRoutes(SleuthkitCase skCase) throws TskCoreException {
+    static public List<Route> getGPSRoutes(SleuthkitCase skCase) throws GeoLocationDataException {   
+        List<BlackboardArtifact> artifacts = ArtifactUtils.getArtifactsForType(skCase, BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
+        
         List<Route> routes = new ArrayList<>();
-        List<BlackboardArtifact> artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
         for (BlackboardArtifact artifact : artifacts) {
             Route route = new Route(artifact);
             routes.add(route);
@@ -74,7 +74,7 @@ public class Route {
      *
      * @param artifact TSK_GPS_ROUTE artifact object
      */
-    protected Route(BlackboardArtifact artifact) throws TskCoreException {
+    Route(BlackboardArtifact artifact) throws GeoLocationDataException {
         points = new ArrayList<>();
         Waypoint point = getRouteStartPoint(artifact);
 
@@ -96,10 +96,10 @@ public class Route {
     /**
      * Get the list of way points for this route;
      *
-     * @return List of ArtifactWaypoints for this route
+     * @return List an unmodifiableList of ArtifactWaypoints for this route
      */
     public List<Waypoint> getRoute() {
-        return points;
+        return Collections.unmodifiableList(points);
     }
 
     /**
@@ -149,19 +149,15 @@ public class Route {
      * @return Start RoutePoint or null if valid longitude and latitude are not
      *         found
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private Waypoint getRouteStartPoint(BlackboardArtifact artifact) throws TskCoreException {
+    private Waypoint getRouteStartPoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         Double latitude;
         Double longitude;
-        BlackboardAttribute attribute;
         RoutePoint point = null;
 
-        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START));
-        latitude = attribute != null ? attribute.getValueDouble() : null;
-
-        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START));
-        longitude = attribute != null ? attribute.getValueDouble() : null;
+        latitude = ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
+        longitude = ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
 
         if (latitude != null && longitude != null) {
             point = new RoutePoint(this, latitude, longitude, Bundle.Route_Start_Label());
@@ -179,19 +175,15 @@ public class Route {
      * @return End RoutePoint or null if valid longitude and latitude are not
      *         found
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private Waypoint getRouteEndPoint(BlackboardArtifact artifact) throws TskCoreException {
+    private Waypoint getRouteEndPoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         Double latitude;
         Double longitude;
-        BlackboardAttribute attribute;
         RoutePoint point = null;
 
-        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END));
-        latitude = attribute != null ? attribute.getValueDouble() : null;
-
-        attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END));
-        longitude = attribute != null ? attribute.getValueDouble() : null;
+        latitude = ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
+        longitude = ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
 
         if (latitude != null && longitude != null) {
             point = new RoutePoint(this, latitude, longitude, Bundle.Route_End_Label());
@@ -208,11 +200,10 @@ public class Route {
      *
      * @return The Altitude, or null if none was found
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private Double getRouteAltitude(BlackboardArtifact artifact) throws TskCoreException {
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE));
-        return attribute != null ? attribute.getValueDouble() : null;
+    private Double getRouteAltitude(BlackboardArtifact artifact) throws GeoLocationDataException {
+        return ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
     }
 
     /**
@@ -223,11 +214,10 @@ public class Route {
      *
      * @return The timestamp attribute, or null if none was found
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private Long getRouteTimestamp(BlackboardArtifact artifact) throws TskCoreException {
-        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-        return attribute != null ? attribute.getValueLong() : null;
+    private Long getRouteTimestamp(BlackboardArtifact artifact) throws GeoLocationDataException {
+        return ArtifactUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
     }
 
 }

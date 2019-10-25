@@ -23,7 +23,6 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Representation of a Waypoint created from a BlackboardArtifact.
@@ -55,9 +54,9 @@ class ArtifactWaypoint implements Waypoint {
      * @param artifact BlackboardArtifact for this waypoint
      * @param type     Waypoint type
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, Waypoint.Type type) throws TskCoreException {
+    protected ArtifactWaypoint(BlackboardArtifact artifact, Waypoint.Type type) throws GeoLocationDataException {
         this(artifact,
                 getLabelFromArtifact(artifact),
                 type);
@@ -72,9 +71,9 @@ class ArtifactWaypoint implements Waypoint {
      * @param label    String label for this waypoint
      * @param type     Waypoint type
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Waypoint.Type type) throws TskCoreException {
+    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Waypoint.Type type) throws GeoLocationDataException {
         this(artifact,
                 label,
                 getTimestampFromArtifact(artifact),
@@ -95,15 +94,15 @@ class ArtifactWaypoint implements Waypoint {
      * @param image     AbstractFile image for waypoint, this maybe null
      * @param type      Waypoint.Type value for waypoint
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, AbstractFile image, Waypoint.Type type) throws TskCoreException {
+    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, AbstractFile image, Waypoint.Type type) throws GeoLocationDataException {
         this(artifact,
                 label,
                 timestamp,
-                AttributeUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE),
-                AttributeUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE),
-                AttributeUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE),
+                ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE),
+                ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE),
+                ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE),
                 image,
                 type);
     }
@@ -120,9 +119,9 @@ class ArtifactWaypoint implements Waypoint {
      * @param image     AbstractFile image for waypoint, this maybe null
      * @param type      Waypoint.Type value for waypoint
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Waypoint.Type type) throws TskCoreException {
+    private ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Waypoint.Type type) throws GeoLocationDataException {
         this.artifact = artifact;
         this.label = label;
         this.type = type;
@@ -191,14 +190,14 @@ class ArtifactWaypoint implements Waypoint {
      *
      * @return Long timestamp or null if a value was not found.
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private static Long getTimestampFromArtifact(BlackboardArtifact artifact) throws TskCoreException {
+    private static Long getTimestampFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
         if (artifact == null) {
             return null;
         }
 
-        return AttributeUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
+        return ArtifactUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
     }
 
     /**
@@ -212,11 +211,11 @@ class ArtifactWaypoint implements Waypoint {
      * @return Returns a label for the waypoint based on artifact type, or empty
      *         string if no label was found.
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws TskCoreException {
+    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
 
-        String typeLabel = AttributeUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        String typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         if (typeLabel == null) {
             typeLabel = "";
         }

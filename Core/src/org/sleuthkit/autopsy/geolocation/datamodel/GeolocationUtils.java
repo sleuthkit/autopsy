@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * GeolocationUtilis class for common to be share across in the package
@@ -66,14 +65,14 @@ final class GeolocationUtils {
      *
      * @return A List of Waypoint.Property objects
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    static List<Waypoint.Property> getOtherGeolocationProperties(BlackboardArtifact artifact) throws TskCoreException {
+    static List<Waypoint.Property> getOtherGeolocationProperties(BlackboardArtifact artifact) throws GeoLocationDataException {
         List<Waypoint.Property> list = new ArrayList<>();
 
         for (BlackboardAttribute.ATTRIBUTE_TYPE type : OTHER_GEO_ATTRIBUTES) {
             String key = type.getDisplayName();
-            String value = AttributeUtils.getString(artifact, type);
+            String value = ArtifactUtils.getString(artifact, type);
 
             if (value == null) {
                 value = "";
