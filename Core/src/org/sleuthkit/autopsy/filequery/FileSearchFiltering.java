@@ -938,6 +938,24 @@ class FileSearchFiltering {
         }
     }
 
+    /**
+     * A filter for specifying if known files should be included.
+     */
+    static class KnownFilter extends FileFilter {
+
+        @Override
+        String getWhereClause() {
+            return "known!=" + TskData.FileKnown.KNOWN.getFileKnownValue(); // NON-NLS
+        }
+
+        @NbBundle.Messages({
+            "FileSearchFiltering.KnownFilter.desc=Files which are not known"})
+        @Override
+        String getDesc() {
+            return Bundle.FileSearchFiltering_KnownFilter_desc();
+        }
+    }
+
     @NbBundle.Messages({
         "FileSearchFiltering.concatenateSetNamesForDisplay.comma=, ",})
     private static String concatenateSetNamesForDisplay(List<String> setNames) {

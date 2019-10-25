@@ -439,6 +439,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             filters.add(new FileSearchFiltering.NotableFilter());
         }
         
+                
+        if (knownFilesCheckbox.isSelected()){
+            filters.add(new FileSearchFiltering.KnownFilter());
+        }
+        
         if (scoreCheckbox.isSelected()) {
             filters.add(new FileSearchFiltering.ScoreFilter(scoreList.getSelectedValuesList()));
         }
@@ -652,6 +657,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         scoreList = new javax.swing.JList<>();
         includeRadioButton = new javax.swing.JRadioButton();
         excludeRadioButton = new javax.swing.JRadioButton();
+        knownFilesCheckbox = new javax.swing.JCheckBox();
         fileTypeLabel = new javax.swing.JLabel();
         searchButton = new javax.swing.JButton();
         sortingPanel = new javax.swing.JPanel();
@@ -734,7 +740,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
         filtersPanel.add(parentCheckbox, gridBagConstraints);
@@ -761,7 +767,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         fullRadioButton.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 13;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
         filtersPanel.add(fullRadioButton, gridBagConstraints);
@@ -771,7 +777,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         substringRadioButton.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 13;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
@@ -780,7 +786,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         parentTextField.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 15;
+        gridBagConstraints.gridy = 16;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -800,7 +806,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 15;
+        gridBagConstraints.gridy = 16;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 6);
         filtersPanel.add(addButton, gridBagConstraints);
@@ -817,7 +823,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 15;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 4, 6);
         filtersPanel.add(deleteButton, gridBagConstraints);
@@ -871,7 +877,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         org.openide.awt.Mnemonics.setLocalizedText(parentLabel, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.parentLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weighty = 0.1;
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 0);
@@ -889,7 +895,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
@@ -1067,7 +1073,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         includeRadioButton.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 15;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
         filtersPanel.add(includeRadioButton, gridBagConstraints);
@@ -1077,11 +1083,21 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         excludeRadioButton.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 15;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 4, 0);
         filtersPanel.add(excludeRadioButton, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(knownFilesCheckbox, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.knownFilesCheckbox.text")); // NOI18N
+        knownFilesCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.knownFilesCheckbox.toolTipText")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 4, 6);
+        filtersPanel.add(knownFilesCheckbox, gridBagConstraints);
 
         filtersScrollPane.setViewportView(filtersPanel);
 
@@ -1288,6 +1304,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         scoreList.setEnabled(enabled && scoreCheckbox.isSelected());
         exifCheckbox.setEnabled(enabled);
         notableCheckbox.setEnabled(enabled);
+        knownFilesCheckbox.setEnabled(enabled);
         parentCheckbox.setEnabled(enabled);
         parentScrollPane.setEnabled(enabled && parentCheckbox.isSelected());
         parentList.setEnabled(enabled && parentCheckbox.isSelected());
@@ -1443,6 +1460,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox keywordCheckbox;
     private javax.swing.JList<String> keywordList;
     private javax.swing.JScrollPane keywordScrollPane;
+    private javax.swing.JCheckBox knownFilesCheckbox;
     private javax.swing.JCheckBox notableCheckbox;
     private javax.swing.JCheckBox objectsCheckbox;
     private javax.swing.JList<String> objectsList;
