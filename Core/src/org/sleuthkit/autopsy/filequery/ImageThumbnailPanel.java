@@ -120,7 +120,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         fileSizeLabel.setText(Bundle.ImageThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.ImageThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         thumbnailLabel.setIcon(new ImageIcon(value.getThumbnail()));
-        isDeletedLabel.setVisible(value.getResultFile().getIsDeleted());
+        isDeletedLabel.setVisible(value.getResultFile().isDeleted());
         switch (value.getResultFile().getScore()) {
             case NOTABLE_SCORE:
                 scoreLabel.setIcon(NOTABLE_ICON_SCORE);
