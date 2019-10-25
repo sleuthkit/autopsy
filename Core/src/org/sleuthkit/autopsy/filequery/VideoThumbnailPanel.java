@@ -165,7 +165,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         countLabel.setText(Bundle.VideoThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
-        deletedLabel.setVisible(value.getResultFile().getIsDeleted());
+        deletedLabel.setVisible(value.getResultFile().isDeleted());
         switch (value.getResultFile().getScore()) {
             case NOTABLE_SCORE:
                 scoreLabel.setIcon(NOTABLE_ICON_SCORE);

@@ -132,7 +132,7 @@ class ResultFile {
      *
      * @return The deleted status of this ResultFile.
      */
-    boolean getIsDeleted() {
+    boolean isDeleted() {
         return isDeleted;
     }
 
