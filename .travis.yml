@@ -1,8 +1,11 @@
 language: java
 sudo: required
-dist: bionic
-os:
- - osx
+
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+    - os: osx
 
 env:
  global:
