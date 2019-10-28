@@ -348,7 +348,6 @@ SolrSearch.openCore.msg=Opening text index
 SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is very large and may take long time to load.
 SolrSearch.openLargeCore.msg=Opening text index. This may take several minutes.
 SolrSearch.readingIndexes.msg=Reading text index metadata file
-SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore=DeleteDataSource did not contain a current Solr core so could not delete the Data Source
 # {0} - index folder path
 SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}
 SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case
