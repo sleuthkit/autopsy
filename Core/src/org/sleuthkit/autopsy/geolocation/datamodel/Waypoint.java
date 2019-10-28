@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -30,17 +29,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  */
 public interface Waypoint {
-
-    // Display names are from the original KML Report
-    @Messages({
-        "Waypoint_Bookmark_Display_String=GPS Bookmark",
-        "Waypoint_Last_Known_Display_String=GPS Last Known Location",
-        "Waypoint_EXIF_Display_String=EXIF Metadata With Location",
-        "Waypoint_Route_Point_Display_String=GPS Individual Route Point",
-        "Waypoint_Search_Display_String=GPS Search",
-        "Waypoint_Trackpoint_Display_String=GPS Trackpoint"
-    })
-
     /**
      * Interface to describe a waypoint.  A waypoint is made up of 
      * a longitude, latitude, label, timestamp, type, image and altitude.
@@ -94,13 +82,6 @@ public interface Waypoint {
      * @return AbstractFile image or null if one was not set
      */
     AbstractFile getImage();
-
-    /**
-     * Get the type of waypoint
-     *
-     * @return WaypointType value
-     */
-    Type getType();
 
     /**
      * Returns a list of Waypoints for the artifacts with geolocation
@@ -245,7 +226,7 @@ public interface Waypoint {
         List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
-                ArtifactWaypoint point = new ArtifactWaypoint(artifact, Waypoint.Type.BOOKMARK);
+                ArtifactWaypoint point = new ArtifactWaypoint(artifact);
                 // Only add to the list if the point has a valid latitude 
                 // and longitude. 
                 if (point.getLatitude() != null && point.getLongitude() != null) {
@@ -254,38 +235,6 @@ public interface Waypoint {
             }
         }
         return points;
-    }
-
-    /**
-     * An enum to keep track of the type of a way point.
-     */
-    enum Type {
-        BOOKMARK(Bundle.Waypoint_Bookmark_Display_String()),
-        LAST_KNOWN_LOCATION(Bundle.Waypoint_Last_Known_Display_String()),
-        METADATA_EXIF(Bundle.Waypoint_EXIF_Display_String()),
-        ROUTE_POINT(Bundle.Waypoint_Route_Point_Display_String()),
-        SEARCH(Bundle.Waypoint_Search_Display_String()),
-        TRACKPOINT(Bundle.Waypoint_Trackpoint_Display_String());
-
-        private final String displayName;
-
-        /**
-         * Constructs a Waypoint.Type enum value
-         *
-         * @param displayName String value title for enum
-         */
-        Type(String displayName) {
-            this.displayName = displayName;
-        }
-
-        /**
-         * Returns the display name for the type
-         *
-         * @return String display name
-         */
-        public String getDisplayName() {
-            return displayName;
-        }
     }
 
     /**

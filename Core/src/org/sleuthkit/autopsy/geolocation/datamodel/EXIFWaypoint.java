@@ -51,8 +51,7 @@ final class EXIFWaypoint extends ArtifactWaypoint {
         super(artifact,
                 image != null ? image.getName() : "",
                 ArtifactUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED),
-                image,
-                Waypoint.Type.METADATA_EXIF);
+                image);
     }
 
     /**

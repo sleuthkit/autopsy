@@ -37,7 +37,7 @@ final class TrackpointWaypoint extends ArtifactWaypoint {
      * @throws GeoLocationDataException
      */
     TrackpointWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        super(artifact, getLabelFromArtifact(artifact), Waypoint.Type.TRACKPOINT);
+        super(artifact, getLabelFromArtifact(artifact));
     }
 
     /**

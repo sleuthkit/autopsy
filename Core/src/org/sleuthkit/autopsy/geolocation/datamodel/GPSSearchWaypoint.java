@@ -37,7 +37,7 @@ final class GPSSearchWaypoint extends ArtifactWaypoint {
      * @throws GeoLocationDataException
      */
     GPSSearchWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        super(artifact, getLabelFromArtifact(artifact), Waypoint.Type.SEARCH);
+        super(artifact, getLabelFromArtifact(artifact));
     }
 
     /**

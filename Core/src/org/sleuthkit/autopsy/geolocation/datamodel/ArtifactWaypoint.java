@@ -37,7 +37,6 @@ class ArtifactWaypoint implements Waypoint {
     final private String label;
     final private AbstractFile image;
     final private BlackboardArtifact artifact;
-    final private Waypoint.Type type;
 
     // This list is not expected to change after construction so the 
     // constructor will take care of creating an unmodifiable List
@@ -56,10 +55,9 @@ class ArtifactWaypoint implements Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, Waypoint.Type type) throws GeoLocationDataException {
+    protected ArtifactWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact,
-                getLabelFromArtifact(artifact),
-                type);
+                getLabelFromArtifact(artifact));
     }
 
     /**
@@ -73,12 +71,11 @@ class ArtifactWaypoint implements Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Waypoint.Type type) throws GeoLocationDataException {
+    protected ArtifactWaypoint(BlackboardArtifact artifact, String label) throws GeoLocationDataException {
         this(artifact,
                 label,
                 getTimestampFromArtifact(artifact),
-                null,
-                type);
+                null);
     }
 
     /**
@@ -96,15 +93,14 @@ class ArtifactWaypoint implements Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, AbstractFile image, Waypoint.Type type) throws GeoLocationDataException {
+    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, AbstractFile image) throws GeoLocationDataException {
         this(artifact,
                 label,
                 timestamp,
                 ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE),
                 ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE),
                 ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE),
-                image,
-                type);
+                image);
     }
 
     /**
@@ -121,10 +117,9 @@ class ArtifactWaypoint implements Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    private ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Waypoint.Type type) throws GeoLocationDataException {
+    private ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image) throws GeoLocationDataException {
         this.artifact = artifact;
         this.label = label;
-        this.type = type;
         this.image = image;
         this.timestamp = timestamp;
         this.longitude = longitude;
@@ -172,12 +167,7 @@ class ArtifactWaypoint implements Waypoint {
     public AbstractFile getImage() {
         return image;
     }
-
-    @Override
-    public Waypoint.Type getType() {
-        return type;
-    }
-
+    
     @Override
     public List<Waypoint.Property> getOtherProperties() {
         return immutablePropertiesList;

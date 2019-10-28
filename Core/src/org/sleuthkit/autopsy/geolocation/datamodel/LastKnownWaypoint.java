@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Last Know Location Waypoint object.
@@ -31,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class LastKnownWaypoint extends ArtifactWaypoint {
 
     protected LastKnownWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        super(artifact, getLabelFromArtifact(artifact), Waypoint.Type.LAST_KNOWN_LOCATION);
+        super(artifact, getLabelFromArtifact(artifact));
     }
 
     /**
