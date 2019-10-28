@@ -224,6 +224,7 @@ public class IngestEventsListener {
      * in the central repository.
      *
      * @param originalArtifact the artifact to create the interesting item for
+     * @param caseDisplayNames the case names the artifact was previously seen in
      */
     @NbBundle.Messages({"IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)",
         "# {0} - typeName",
