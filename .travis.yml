@@ -65,7 +65,7 @@ before_script:
         brew tap adoptopenjdk/openjdk;
         brew cask install adoptopenjdk8;
         wget https://cdn.azul.com/zulu/bin/zulu8.40.0.25-ca-fx-jdk8.0.222-macosx_x64.tar.gz;
-        sudo tar xvf  zulu8.40.0.25-ca-fx-jdk8.0.222-macosx_x64.tar.gz --strip-components=1 -C /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home;
+        sudo tar xf  zulu8.40.0.25-ca-fx-jdk8.0.222-macosx_x64.tar.gz --strip-components=1 -C /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home;
         export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home;
     fi
   - java -version
@@ -74,7 +74,8 @@ script:
  - set -e
  - echo "Building TSK..."
  - ./bootstrap && ./configure --prefix=/usr && make
- - pushd bindings/java/ && ant dist-PostgreSQL && popd
+ - cd bindings/java/
+ - ant dist-PostgreSQL
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
  - ant build
