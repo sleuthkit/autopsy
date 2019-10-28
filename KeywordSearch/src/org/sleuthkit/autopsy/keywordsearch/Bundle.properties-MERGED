@@ -348,6 +348,7 @@ SolrSearch.openCore.msg=Opening text index
 SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is very large and may take long time to load.
 SolrSearch.openLargeCore.msg=Opening text index. This may take several minutes.
 SolrSearch.readingIndexes.msg=Reading text index metadata file
+SolrSearchService.deleteDataSource.exceptionMessage.noCurrentSolrCore=DeleteDataSource did not contain a current Solr core so could not delete the Data Source
 # {0} - index folder path
 SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}
 SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case
@@ -357,6 +358,7 @@ SolrSearchService.indexingError=Unable to index blackboard artifact.
 SolrSearchService.ServiceName=Solr Keyword Search Service
 SolrSearchService.IndexReadOnlyDialog.title=Text Index Is Read-Only
 SolrSearchService.IndexReadOnlyDialog.msg=<html>The text index for this case is read-only. <br />You will be able to see existing keyword search results and perform exact match and substring match keyword searches,<br />but you will not be able to add new text to the index or perform regex searches. You may instead open the case<br /> with your previous version of this application.</html>
+SolrSearchService.DeleteDataSource.msg=Error Deleting Solr data for data source id {0}
 ExtractedContentPanel.jLabel1.text=Text Source:
 ExtractedContentPanel.pagePreviousButton.actionCommand=pagePreviousButton
 ExtractedContentPanel.pagePreviousButton.text=

@@ -21,10 +21,13 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -32,21 +35,30 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class DeleteDataSourceAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private final Long selectedDataSource;
+    private final Long dataSourceId;
     
     @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
-    public DeleteDataSourceAction(Long selectedDataSource) {
+    public DeleteDataSourceAction(Long dataSourceId) {
         super(Bundle.DeleteDataSourceAction_name_text());
-        this.selectedDataSource = selectedDataSource;
+        this.dataSourceId = dataSourceId;
     }
 
     @Override
     public void actionPerformed(ActionEvent event) {
         try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(selectedDataSource);
-        } catch (NoCurrentCaseException | TskCoreException e) {
-            logger.log(Level.WARNING, "Error Deleting Data source " + selectedDataSource, e);
+            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceId);
+            deleteDataSource(dataSourceId);
+        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
+            logger.log(Level.WARNING, "Error Deleting Data source " + dataSourceId, e);
         }
     }
-
+    private static void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
+        try {
+            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+            kwsService.deleteDataSource(dataSourceId);
+        } catch (KeywordSearchServiceException e) {
+            logger.log(Level.WARNING, "KWS Error", e);
+        }
+        
+    }
 }
