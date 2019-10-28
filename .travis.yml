@@ -60,7 +60,7 @@ before_script:
   - if [ $TRAVIS_OS_NAME = osx ]; then
         brew uninstall java --force;
         brew cask uninstall java --force;
-        brew tap apoptopenjdk/openjdk;
+        brew tap adoptopenjdk/openjdk;
         brew cask install adoptopenjdk8;
         wget https://cdn.azul.com/zulu/bin/zulu8.40.0.25-ca-fx-jdk8.0.222-macosx_x64.tar.gz | tar xf --strip-components=1 -C /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home;
         export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home;
