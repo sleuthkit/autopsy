@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +50,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -104,7 +106,7 @@ public final class ImageGalleryController {
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.CONTENT_TAG_ADDED,
             Case.Events.CONTENT_TAG_DELETED,
-            Case.Events.DATA_SOURCE_DELETED            
+            Case.Events.DATA_SOURCE_DELETED
     );
 
     /*
@@ -807,8 +809,14 @@ public final class ImageGalleryController {
                     case DATA_SOURCE_DELETED:
                         if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                             final DataSourceDeletedEvent dataSourceDeletedEvent = (DataSourceDeletedEvent) event;
-                            long dataSoureObjId = dataSourceDeletedEvent.getDataSourceId();
-                            drawableDB.deleteDataSource(dataSoureObjId);
+                            long dataSourceObjId = dataSourceDeletedEvent.getDataSourceId();
+                            try {
+                                drawableDB.deleteDataSource(dataSourceObjId);
+                            } catch (SQLException ex) {
+                                logger.log(Level.SEVERE, String.format("Failed to delete data source (obj_id = %d)", dataSourceObjId), ex); //NON-NLS
+                            } catch (TskCoreException ex) {
+                                Exceptions.printStackTrace(ex);
+                            }
                         }
                         break;
                     case CONTENT_TAG_ADDED:

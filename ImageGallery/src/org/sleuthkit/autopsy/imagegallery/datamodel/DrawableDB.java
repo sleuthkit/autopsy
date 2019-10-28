@@ -106,7 +106,7 @@ public final class DrawableDB {
     private static final String IG_CREATION_SCHEMA_MAJOR_VERSION_KEY = "IG_CREATION_SCHEMA_MAJOR_VERSION";
     private static final String IG_CREATION_SCHEMA_MINOR_VERSION_KEY = "IG_CREATION_SCHEMA_MINOR_VERSION";
     
-    private static final VersionNumber IG_STARTING_SCHEMA_VERSION = new VersionNumber(1, 2, 0);    // IG Schema Starting version
+    private static final VersionNumber IG_STARTING_SCHEMA_VERSION = new VersionNumber(1, 0, 0);    // IG Schema Starting version - DO NOT CHANGE
     private static final VersionNumber IG_SCHEMA_VERSION = new VersionNumber(1, 2, 0);    // IG Schema Current version
         
     private PreparedStatement insertHashSetStmt;
@@ -581,10 +581,6 @@ public final class DrawableDB {
                             + " modified_time integer, " //NON-NLS
                             + " make TEXT DEFAULT NULL, " //NON-NLS
                             + " model TEXT DEFAULT NULL, " //NON-NLS
-                            + " analyzed integer DEFAULT 0, " //NON-NLS
-                            + " FOREIGN KEY (data_source_obj_id) REFERENCES datasources(ds_obj_id) ON DELETE CASCADE)" //NON-NLS
-                            + " make VARCHAR(255) DEFAULT NULL, " //NON-NLS
-                            + " model VARCHAR(255) DEFAULT NULL, " //NON-NLS
                             + " analyzed integer DEFAULT 0, " //NON-NLS
                             + " FOREIGN KEY (data_source_obj_id) REFERENCES datasources(ds_obj_id) ON DELETE CASCADE)"; //NON-NLS
                     stmt.execute(sql);
@@ -2041,7 +2037,7 @@ public final class DrawableDB {
      *
      * @param id the obj_id of the row to be deleted
      */
-    public void deleteDataSource(long dataSourceId) {
+    public void deleteDataSource(long dataSourceId) throws SQLException, TskCoreException {
         dbWriteLock();
         DrawableTransaction trans = null;
         try {
@@ -2050,7 +2046,14 @@ public final class DrawableDB {
             deleteDataSourceStmt.executeUpdate();
             commitTransaction(trans, true);
         } catch (SQLException | TskCoreException ex) {
-            logger.log(Level.WARNING, "failed to deletesource for obj_id = " + dataSourceId, ex); //NON-NLS
+            if (null != trans) {
+                try {
+                    rollbackTransaction(trans);
+                } catch (SQLException ex2) {
+                    logger.log(Level.SEVERE, String.format("Failed to roll back drawables db transaction after error: %s", ex.getMessage()), ex2); //NON-NLS
+                }
+            }
+            throw ex;
         } finally {
             dbWriteUnlock();
         }
