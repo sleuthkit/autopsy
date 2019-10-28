@@ -26,10 +26,7 @@ ImageGalleryTopComponent.chooseDataSourceDialog.all=All
 ImageGalleryTopComponent.chooseDataSourceDialog.contentText=Data source:
 ImageGalleryTopComponent.chooseDataSourceDialog.headerText=Choose a data source to view.
 ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery
-OpenIDE-Module-Long-Description=\
-    New image and video gallery that has been designed to make performing image-intensive investigations more efficient.  \
-    This work has been funded by DHS S&T and this is a beta release. \
-    It is not available on the sleuthkit.org site and has been distributed to limited users.
+OpenIDE-Module-Long-Description=New image and video gallery that has been designed to make performing image-intensive investigations more efficient.  This work has been funded by DHS S&T and this is a beta release. It is not available on the sleuthkit.org site and has been distributed to limited users.
 OpenIDE-Module-Name=ImageGallery
 OpenIDE-Module-Short-Description=Advanced image and video gallery
 ImageGalleryOptionsPanel.enabledForCaseBox.text=Enable Image Gallery updates for the current case.

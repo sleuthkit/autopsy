@@ -811,10 +811,8 @@ public final class ImageGalleryController {
                             long dataSourceObjId = dataSourceDeletedEvent.getDataSourceId();
                             try {
                                 drawableDB.deleteDataSource(dataSourceObjId);
-                            } catch (SQLException ex) {
+                            } catch (SQLException | TskCoreException ex) {
                                 logger.log(Level.SEVERE, String.format("Failed to delete data source (obj_id = %d)", dataSourceObjId), ex); //NON-NLS
-                            } catch (TskCoreException ex) {
-                                Exceptions.printStackTrace(ex);
                             }
                         }
                         break;
