@@ -34,9 +34,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this Action allow users to delete the specified data source.
  */
 public final class DeleteDataSourceAction extends AbstractAction {
+
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
     private final Long dataSourceId;
-    
+
     @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
     public DeleteDataSourceAction(Long dataSourceId) {
         super(Bundle.DeleteDataSourceAction_name_text());
@@ -52,6 +53,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
             logger.log(Level.WARNING, "Error Deleting Data source " + dataSourceId, e);
         }
     }
+
     private static void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
         try {
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
@@ -59,6 +61,6 @@ public final class DeleteDataSourceAction extends AbstractAction {
         } catch (KeywordSearchServiceException e) {
             logger.log(Level.WARNING, "KWS Error", e);
         }
-        
+
     }
 }
