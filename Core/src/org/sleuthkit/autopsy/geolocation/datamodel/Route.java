@@ -58,7 +58,7 @@ public final class Route {
      *
      * @throws GeoLocationDataException
      */
-    static public List<Route> getGPSRoutes(SleuthkitCase skCase) throws GeoLocationDataException {   
+    static public List<Route> getRoutes(SleuthkitCase skCase) throws GeoLocationDataException {   
         List<BlackboardArtifact> artifacts = ArtifactUtils.getArtifactsForType(skCase, BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE);
         
         List<Route> routes = new ArrayList<>();

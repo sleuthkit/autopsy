@@ -379,7 +379,7 @@ class KMLReport implements GeneralReportModule {
      * @throws TskCoreException
      */
     void makeRoutes(SleuthkitCase skCase) throws GeoLocationDataException {
-        List<Route> routes = Route.getGPSRoutes(skCase);
+        List<Route> routes = Route.getRoutes(skCase);
         
         if(routes == null) {
             return;
