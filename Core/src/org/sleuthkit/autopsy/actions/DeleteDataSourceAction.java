@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to delete data sources.
+ * An Action that allows a user to delete a data source.
  */
 public final class DeleteDataSourceAction extends AbstractAction {
 
@@ -60,7 +60,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
             kwsService.deleteDataSource(dataSourceID);
             Case.getCurrentCaseThrows().notifyDataSourceDeleted(dataSourceID);
         } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
-            logger.log(Level.WARNING, String.format("Error Deleting data source (obj_id=%d)", dataSourceID), e);
+            logger.log(Level.SEVERE, String.format("Error Deleting data source (obj_id=%d)", dataSourceID), e);
         }
     }
 

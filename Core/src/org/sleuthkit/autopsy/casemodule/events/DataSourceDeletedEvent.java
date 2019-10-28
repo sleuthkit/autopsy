@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,36 +16,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 
+/**
+ * An application event that is published when a data source has been deleted.
+ */
 public class DataSourceDeletedEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final long dataSourceId;
-    
+    private final long dataSourceID;
+
     /**
-     * Constructs an event published when a data source is added to a case.
+     * Constructs an application event that is published when a data source has
+     * been deleted.
      *
-     * @param dataSourceId   The data source that was deleted.
+     * @param dataSourceId The object ID of the data source that was deleted.
      */
     public DataSourceDeletedEvent(Long dataSourceId) {
-        
         super(Case.Events.DATA_SOURCE_DELETED.toString(), null, dataSourceId);
-        this.dataSourceId = dataSourceId;
-    }    
-    
+        this.dataSourceID = dataSourceId;
+    }
+
     /**
-     * Gets the data source id that is being deleted
+     * Gets the object ID of the data source that was deleted.
      *
      * @return The data source id.
      */
     public long getDataSourceId() {
-        return dataSourceId;
+        return dataSourceID;
     }
-    
+
 }

@@ -399,9 +399,9 @@ public class Case {
          * TimelineEvent that was added.
          */
         TIMELINE_EVENT_ADDED,
-        /* An item in the central repository has had its comment
-         * modified. The old value is null, the new value is string for current
-         * comment.
+        /*
+         * An item in the central repository has had its comment modified. The
+         * old value is null, the new value is string for current comment.
          */
         CR_COMMENT_CHANGED;
 
@@ -536,8 +536,8 @@ public class Case {
      */
     public static boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
-                 || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
-                 || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
+                || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
+                || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
     }
 
     /**
@@ -1484,12 +1484,12 @@ public class Case {
     }
 
     /**
-     * Notifies case event subscribers that a data source has been delete from 
+     * Notifies case event subscribers that a data source has been deleted from
      * the case database.
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param dataSourceId The data source that was deleted.
+     * @param dataSourceId The object ID of the data source that was deleted.
      */
     public void notifyDataSourceDeleted(Long dataSourceId) {
         eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));
