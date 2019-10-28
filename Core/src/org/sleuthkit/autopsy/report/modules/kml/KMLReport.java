@@ -348,7 +348,7 @@ class KMLReport implements GeneralReportModule {
      */
     void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) {
         for(Waypoint point: points) {
-            addContent(folder, point.getLabel(), waypointColor, String.format("<h3>%s</h3>", headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
+            addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
         }
     }
     
