@@ -37,7 +37,7 @@ public class DataSourceDeletedEvent extends AutopsyEvent implements Serializable
      * @param dataSourceId The object ID of the data source that was deleted.
      */
     public DataSourceDeletedEvent(Long dataSourceId) {
-        super(Case.Events.DATA_SOURCE_DELETED.toString(), null, dataSourceId);
+        super(Case.Events.DATA_SOURCE_DELETED.toString(), dataSourceId, null);
         this.dataSourceID = dataSourceId;
     }
 
