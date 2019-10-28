@@ -58,6 +58,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
             Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceID);
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
             kwsService.deleteDataSource(dataSourceID);
+            Case.getCurrentCaseThrows().notifyDataSourceDeleted(dataSourceID);
         } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
             logger.log(Level.WARNING, String.format("Error Deleting data source (obj_id=%d)", dataSourceID), e);
         }
