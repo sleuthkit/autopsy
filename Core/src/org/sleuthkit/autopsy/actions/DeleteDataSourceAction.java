@@ -65,9 +65,9 @@ public final class DeleteDataSourceAction extends AbstractAction {
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
-        Object clonedObject = super.clone();
-        ((DeleteDataSourceAction) clonedObject).setDataSourceID(this.dataSourceID);
+    public DeleteDataSourceAction clone() throws CloneNotSupportedException {
+        DeleteDataSourceAction clonedObject = ((DeleteDataSourceAction) super.clone());
+        clonedObject.setDataSourceID(this.dataSourceID);
         return clonedObject;
     }
 
