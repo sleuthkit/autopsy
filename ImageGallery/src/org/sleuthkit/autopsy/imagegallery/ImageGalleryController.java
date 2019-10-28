@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -102,7 +103,8 @@ public final class ImageGalleryController {
             Case.Events.CURRENT_CASE,
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.CONTENT_TAG_ADDED,
-            Case.Events.CONTENT_TAG_DELETED
+            Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.DATA_SOURCE_DELETED            
     );
 
     /*
@@ -800,6 +802,13 @@ public final class ImageGalleryController {
                             if (isListeningEnabled()) {
                                 drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
                             }
+                        }
+                        break;
+                    case DATA_SOURCE_DELETED:
+                        if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            final DataSourceDeletedEvent dataSourceDeletedEvent = (DataSourceDeletedEvent) event;
+                            long dataSoureObjId = dataSourceDeletedEvent.getDataSourceId();
+                            drawableDB.deleteDataSource(dataSoureObjId);
                         }
                         break;
                     case CONTENT_TAG_ADDED:
