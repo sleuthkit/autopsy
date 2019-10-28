@@ -137,7 +137,7 @@
 
     </target>
 
-    <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">
+    <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist">
         <mkdir dir="${ext.dir}"/>
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
