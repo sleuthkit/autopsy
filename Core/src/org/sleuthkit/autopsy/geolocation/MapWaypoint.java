@@ -8,9 +8,9 @@ package org.sleuthkit.autopsy.geolocation;
 import java.util.ArrayList;
 import java.util.List;
 import org.jxmapviewer.viewer.GeoPosition;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 
 /**
@@ -27,7 +27,7 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
         position = new GeoPosition(dataModelWaypoint.getLatitude(), dataModelWaypoint.getLongitude());
     }
     
-    static List<org.jxmapviewer.viewer.Waypoint> getWaypoints(SleuthkitCase skCase) throws TskCoreException{
+    static List<org.jxmapviewer.viewer.Waypoint> getWaypoints(SleuthkitCase skCase) throws GeoLocationDataException{
         List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
         
         List<Route> routes = Route.getRoutes(skCase);

@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Last Know Location Waypoint object.
@@ -30,8 +29,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     "LastKnownWaypoint_Label=Last Known Location",})
 final class LastKnownWaypoint extends ArtifactWaypoint {
 
-    protected LastKnownWaypoint(BlackboardArtifact artifact) throws TskCoreException {
-        super(artifact, getLabelFromArtifact(artifact), Waypoint.Type.LAST_KNOWN_LOCATION);
+    protected LastKnownWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
+        super(artifact, getLabelFromArtifact(artifact));
     }
 
     /**
@@ -41,10 +40,10 @@ final class LastKnownWaypoint extends ArtifactWaypoint {
      *
      * @return String value from attribute TSK_NAME or LastKnownWaypoint_Label
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws TskCoreException {
-        String label = AttributeUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
+        String label = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
 
         if (label == null || label.isEmpty()) {
             label = Bundle.LastKnownWaypoint_Label();

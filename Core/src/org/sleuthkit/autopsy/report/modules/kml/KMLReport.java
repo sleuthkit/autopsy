@@ -21,11 +21,9 @@ package org.sleuthkit.autopsy.report.modules.kml;
 
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import javax.swing.JPanel;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,12 +42,18 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
@@ -110,7 +114,7 @@ class KMLReport implements GeneralReportModule {
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
-    @NbBundle.Messages({
+    @Messages({
         "KMLReport.unableToExtractPhotos=Could not extract photo information.",
         "KMLReport.exifPhotoError=Could not extract photos with EXIF metadata.",
         "KMLReport.bookmarkError=Could not extract Bookmark information.",
@@ -126,8 +130,16 @@ class KMLReport implements GeneralReportModule {
         "KMLReport.kmlFileWriteError=Could not write the KML file.",
         "# {0} - filePath",
         "KMLReport.errorGeneratingReport=Error adding {0} to case as a report.",
-        "KMLReport.unableToOpenCase=Exception while getting open case."
+        "KMLReport.unableToOpenCase=Exception while getting open case.",
+        "Waypoint_Bookmark_Display_String=GPS Bookmark",
+        "Waypoint_Last_Known_Display_String=GPS Last Known Location",
+        "Waypoint_EXIF_Display_String=EXIF Metadata With Location",
+        "Waypoint_Route_Point_Display_String=GPS Individual Route Point",
+        "Waypoint_Search_Display_String=GPS Search",
+        "Waypoint_Trackpoint_Display_String=GPS Trackpoint",
+        "Route_Details_Header=GPS Route"
     })
+
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         try {
@@ -154,7 +166,7 @@ class KMLReport implements GeneralReportModule {
         try {
             makeRoutes(skCase);
             addLocationsToReport(skCase, baseReportDir);
-        } catch (TskCoreException | IOException ex) {
+        } catch (GeoLocationDataException | IOException ex) {
             errorMessage = "Failed to complete report.";
             logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
             result = ReportProgressPanel.ReportStatus.ERROR;
@@ -284,27 +296,29 @@ class KMLReport implements GeneralReportModule {
      *
      * @throws IOException
      */
-    void addExifMetadataContent(Waypoint point, String baseReportDirectory) throws IOException {
-        Element mapPoint = makePoint(point);
-        if (mapPoint == null) {
-            return;
-        }
+    void addExifMetadataContent(List<Waypoint> points, String baseReportDirectory) throws IOException {
+        for(Waypoint point: points) {
+            Element mapPoint = makePoint(point);
+            if (mapPoint == null) {
+                return;
+            }
 
-        AbstractFile abstractFile = point.getImage();
-        String details = getFormattedDetails(point);
+            AbstractFile abstractFile = point.getImage();
+            String details = getFormattedDetails(point, Bundle.Waypoint_EXIF_Display_String());
 
-        Path path;
-        copyFileUsingStream(abstractFile, Paths.get(baseReportDirectory, abstractFile.getName()).toFile());
-        try {
-            path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
-        } catch (TskCoreException ex) {
-            path = Paths.get(abstractFile.getParentPath(), abstractFile.getName());
-        }
-        if (path == null) {
-            path = Paths.get(abstractFile.getName());
-        }
+            Path path;
+            copyFileUsingStream(abstractFile, Paths.get(baseReportDirectory, abstractFile.getName()).toFile());
+            try {
+                path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
+            } catch (TskCoreException ex) {
+                path = Paths.get(abstractFile.getParentPath(), abstractFile.getName());
+            }
+            if (path == null) {
+                path = Paths.get(abstractFile.getName());
+            }
 
-        gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, formattedCoordinates(point.getLatitude(), point.getLongitude())));
+            gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, details, point.getTimestamp(), mapPoint, path, formattedCoordinates(point.getLatitude(), point.getLongitude())));
+        }
     }
 
     /**
@@ -316,37 +330,44 @@ class KMLReport implements GeneralReportModule {
      * @throws TskCoreException
      * @throws IOException
      */
-    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws TskCoreException, IOException {
-        List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
-
-        for (Waypoint point : points) {
-            Element reportPoint = makePoint(point);
-            if (reportPoint == null) {
-                continue;
-            }
-
-            String formattedCords = formattedCoordinates(point.getLatitude(), point.getLongitude());
-
-            switch (point.getType()) {
-                case METADATA_EXIF:
-                    addExifMetadataContent(point, baseReportDir);
-                    break;
-                case BOOKMARK:
-                    gpsBookmarksFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.BLUE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
-                    break;
-                case LAST_KNOWN_LOCATION:
-                    gpsLastKnownLocationFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.PURPLE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
-                    break;
-                case SEARCH:
-                    gpsSearchesFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
-                    break;
-                case TRACKPOINT:
-                    gpsTrackpointsFolder.addContent(makePlacemark(point.getLabel(), FeatureColor.WHITE, getFormattedDetails(point), point.getTimestamp(), reportPoint, formattedCords));
-                    break;
-                default:
-                    // default is here to make codacy happy.
-                    break;
-            }
+    void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException {
+        addExifMetadataContent(Waypoint.getEXIFWaypoints(skCase), baseReportDir);
+        addWaypoints(Waypoint.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
+        addWaypoints(Waypoint.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
+        addWaypoints(Waypoint.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
+        addWaypoints(Waypoint.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
+    }
+    
+    /**
+     * For each point in the waypoint list an Element to represent the given waypoint
+     * is created and added it to the given Element folder.
+     * 
+     * @param points List of waypoints to add to the report
+     * @param folder The Element folder to add the points to
+     * @param waypointColor The color the waypoint should appear in the report
+     */
+    void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) {
+        for(Waypoint point: points) {
+            addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
+        }
+    }
+    
+    /**
+     * Adds the waypoint Element with details to the report in the given folder.
+     * 
+     * @param folder Element folder to add the waypoint to
+     * @param waypointLabel String waypoint Label
+     * @param waypointColor FeatureColor for the waypoint
+     * @param formattedDetails String HTML formatted waypoint details
+     * @param timestamp Long timestamp (unix\jave epoch seconds)
+     * @param point Element point object
+     * @param latitude Double latitude value
+     * @param longitude Double longitude value
+     */
+    void addContent(Element folder, String waypointLabel, FeatureColor waypointColor, String formattedDetails, Long timestamp, Element point, Double latitude, Double longitude) {
+        if(folder != null && point != null) {
+            String formattedCords = formattedCoordinates(latitude, longitude);
+            folder.addContent(makePlacemark(waypointLabel, waypointColor, formattedDetails, timestamp, point, formattedCords));
         }
     }
 
@@ -357,7 +378,7 @@ class KMLReport implements GeneralReportModule {
      *
      * @throws TskCoreException
      */
-    void makeRoutes(SleuthkitCase skCase) throws TskCoreException {
+    void makeRoutes(SleuthkitCase skCase) throws GeoLocationDataException {
         List<Route> routes = Route.getRoutes(skCase);
         
         if(routes == null) {
@@ -401,11 +422,16 @@ class KMLReport implements GeneralReportModule {
         }
 
         if (startingPoint != null) {
-            gpsRouteFolder.addContent(makePlacemark(start.getLabel(), FeatureColor.GREEN, getFormattedDetails(start), start.getTimestamp(), startingPoint, formattedStart)); //NON-NLS
+            gpsRouteFolder.addContent(makePlacemark(start.getLabel(), 
+                    FeatureColor.GREEN, getFormattedDetails(start, Bundle.Waypoint_Route_Point_Display_String()), 
+                    start.getTimestamp(), startingPoint, formattedStart)); //NON-NLS
         }
 
         if (endingPoint != null) {
-            gpsRouteFolder.addContent(makePlacemark(end.getLabel(), FeatureColor.GREEN, getFormattedDetails(end), end.getTimestamp(), endingPoint, formattedEnd)); //NON-NLS
+            gpsRouteFolder.addContent(makePlacemark(end.getLabel(), 
+                    FeatureColor.GREEN, 
+                   getFormattedDetails(end, Bundle.Waypoint_Route_Point_Display_String()),
+                    end.getTimestamp(), endingPoint, formattedEnd)); //NON-NLS
         }
     }
 
@@ -659,9 +685,17 @@ class KMLReport implements GeneralReportModule {
         return strbuf.toString();
     }
 
-    private String getFormattedDetails(Waypoint point) {
+    /**
+     * Get the nicely formatted details for the given waypoint.
+     * 
+     * @param point Waypoint object
+     * @param header String details header
+     * 
+     * @return HTML formatted String of details for given waypoint 
+     */
+    private String getFormattedDetails(Waypoint point, String header) {
         StringBuilder result = new StringBuilder(); //NON-NLS
-        result.append(getDetailsHeader(point))
+        result.append(String.format("<h3>%s</h3>", header))
                 .append(formatAttribute("Name", point.getLabel()));
 
         Long timestamp = point.getTimestamp();
@@ -691,15 +725,6 @@ class KMLReport implements GeneralReportModule {
         return String.format(HTML_PROP_FORMAT, title, value);
     }
 
-    /*
-     * This current retains the headers from the original report. There is
-     * probably a better way to do this using the display value of the
-     * blackboard artifact.
-     */
-    private String getDetailsHeader(Waypoint point) {
-        return String.format("<h3>%s</h3>", point.getType().getDisplayName());
-    }
-
     /**
      * Returns an HTML formatted string of all the
      *
@@ -711,7 +736,7 @@ class KMLReport implements GeneralReportModule {
         List<Waypoint> points = route.getRoute();
         StringBuilder result = new StringBuilder(); //NON-NLS
 
-        result.append(String.format("<h3>%s</h3>", "GPS Route"))
+        result.append(String.format("<h3>%s</h3>", Bundle.Route_Details_Header()))
                 .append(formatAttribute("Name", route.getLabel()));
 
         Long timestamp = route.getTimestamp();
@@ -744,6 +769,14 @@ class KMLReport implements GeneralReportModule {
         return result.toString();
     }
     
+    /**
+     * Helper functions for consistently formatting longitude and latitude.
+     * 
+     * @param latitude Double latitude value
+     * @param longitude Double longitude value
+     * 
+     * @return String Nicely formatted double values separated by a comma
+     */
     private String formattedCoordinates(Double latitude, Double longitude) {
         if (latitude == null || longitude == null) {
             return "";

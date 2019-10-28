@@ -82,9 +82,4 @@ final class RoutePoint implements Waypoint {
     public AbstractFile getImage() {
         return null;
     }
-
-    @Override
-    public Waypoint.Type getType() {
-        return Waypoint.Type.ROUTE_POINT;
-    }
 }
