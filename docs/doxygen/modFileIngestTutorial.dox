@@ -1,0 +1,154 @@
+/*! \page mod_python_file_ingest_tutorial_page Python Tutorial #1: Writing a File Ingest Module
+
+
+\section python_tutorial1_why Why Write a File Ingest Module?
+<ul>
+<li>Autopsy hides the fact that a file is coming from a file system, was carved, was from inside of a ZIP file, or was part of a local file. So, you don't need to spend time supporting all of the ways that your user may want to get data to you. You just need to worry about analyzing the content.</li>
+<li>Autopsy displays files automatically and can include them in reports if you use standard blackboard artifacts (described later). That means you don't need to worry about UIs and reports.</li>
+<li>Autopsy gives you access to results from other modules. So, you can build on top of their results instead of duplicating them.</li>
+</ul>
+
+\section python_tutorial1_ingest_modules Ingest Modules
+
+For our first example, we're going to write an ingest module. Ingest modules in Autopsy run on the data sources that are added to a case. When you add a disk image (or local drive or logical folder) in Autopsy, you'll be presented with a list of modules to run (such as hash lookup and keyword search).
+
+\image html ingest-modules.PNG
+
+Those are all ingest modules. We're going to write one of those. There are two types of ingest modules that we can build:
+<ul>
+<li>File Ingest Modules are the easiest to write. During their lifetime, they will get passed in each file in the data source. This includes files that are found via carving or inside of ZIP files (if those modules are also enabled).</li>
+<li>Data Source Ingest Modules require slightly more work because you have to query the database for the files of interest. If you only care about a small number of files, know their name, and know they won't be inside of ZIP files, then these are your best bet.</li>
+</ul>
+
+For this first tutorial, we're going to write a file ingest module. The \ref mod_python_ds_ingest_tutorial_page "second tutorial" will focus on data source ingest modules. Regardless of the type of ingest module you are writing, you will need to work with two classes:
+<ul>
+<li>The factory class provides Autopsy with module information such as display name and version. It also creates instances of ingest modules as needed.</li>
+<li>The ingest module class will do the actual analysis. One of these will be created per thread. For file ingest modules, Autopsy will typically create two or more of these at a time so that it can analyze files in parallel. If you keep things simple, and don't use static variables, then you don't have to think about anything multithreaded.</li>
+</ul>
+
+\section python_tutorial1_getting_started Getting Started
+
+To write your first file ingest module, you'll need:
+<ul>
+<li>An installed copy of Autopsy available from <a href="https://www.sleuthkit.org/autopsy/download.php" target="_blank" rel="noopener noreferrer">SleuthKit</a></li>
+<li>A text editor.</li>
+<li>A copy of the sample file ingest module from <a href="https://github.com/sleuthkit/autopsy/blob/autopsy-4.12.0/pythonExamples/fileIngestModule.py" target="_blank" rel="noopener noreferrer">Github</a></li>
+</ul>
+
+Some other general notes are that you will be writing in Jython, which converts Python-looking code into Java. It has some limitations, including:
+<ul>
+<li>You can't use Python 3 (you are limited to Python 2.7)</li>
+<li>You can't use libraries that use native code</li>
+</ul>
+
+But, Jython will give you access to all of the Java classes and services that Autopsy provides. So, if you want to stray from this example, then refer to the Developer docs on what classes and methods you have access to. The comments in the sample file will identify what type of object is being passed in along with a URL to its documentation.
+
+\subsection python_tutorial1_folder Making Your Module Folder
+
+Every Python module in Autopsy gets its own folder. This reduces naming collisions between modules. To find out where you should put your Python module, launch Autopsy and choose the Tools -&gt; Python Plugins menu item. That will open a folder in your AppData folder, such as "C:\Users\JDoe\AppData\Roaming\Autopsy\python_modules".
+
+<p>Make a folder inside of there to store your module. Call it "DemoScript". Copy the fileIngestModule.py sample file listed above into the this new folder and rename it to FindBigRoundFiles.py. Your folder should look like this:
+
+\image html demoScript_folder.png
+
+\subsection python_tutorial1_writing Writing the Script
+
+We are going to write a script that flags any file that is larger than 10MB and whose size is a multiple of 4096. We'll call these big and round files. This kind of technique could be useful for finding encrypted files. An additional check would be for entropy of the file, but we'll keep the example simple.
+
+Open the FindBigRoundFiles.py file in your favorite python text editor. The sample Autopsy Python modules all have TODO entries in them to let you know what you should change. The below steps jump from one TODO to the next.
+<ol>
+<li><b>Factory Class Name</b>: The first thing to do is rename the sample class name from "SampleJythonFileIngestModuleFactory" to "FindBigRoundFilesIngestModuleFactory". In the sample module, there are several uses of this class name, so you should search and replace for these strings.</li>
+<li><b>Name and Description</b>: The next TODO entries are for names and descriptions. These are shown to users. For this example, we'll name it "Big and Round File Finder". The description can be anything you want. Note that Autopsy requires that modules have unique names, so don't make it too generic.</li>
+<li><b>Ingest Module Class Name</b>: The next thing to do is rename the ingest module class from "SampleJythonFileIngestModule" to "FindBigRoundFilesIngestModule". Our usual naming convention is that this class is the same as the factory class with "Factory" removed from the end.</li>
+<li><b>startUp() method</b>: The startUp() method is where each module initializes. For our example, we don't need to do anything special in here. Typically though, this is where you want to do stuff that could fail because throwing an exception here causes the entire ingest to stop.</li>
+<li><b>process() method</b>: This is where we do our analysis. The sample module is well documented with what it does. It ignores non-files, looks at the file name, and makes a blackboard artifact for ".txt" files. There are also a bunch of other things that it does to show examples for easy copy and pasting, but we don't need them in our module. We'll cover what goes into this method in the next section.</li>
+<li><b>shutdown() method</b>: The shutDown() method either frees resources that were allocated or sends summary messages. For our module, it will do nothing.</li>
+</ol>
+
+\subsection python_tutorial1_process The process() Method
+
+The process() method is passed in a reference to an AbstractFile Object. With this, you have access to all of a file's contents and metadata. We want to flag files that are larger than 10MB and that are a multiple of 4096 bytes. The following code does that:
+
+\verbatim    if ((file.getSize() > 10485760) and ((file.getSize() % 4096) == 0)):
+\endverbatim
+
+Now that we have found the files, we want to do something with them. In our situation, we just want to alert the user to them. We do this by making an "Interesting Item" blackboard artifact. The <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/mod_bbpage.html" target="_blank" rel="noopener noreferrer">Blackboard</a> is where ingest modules can communicate with each other and with the Autopsy GUI. The blackboard has a set of artifacts on it and each artifact:</p>
+<ul>
+<li>Has a type</li>
+<li>Is associated with a file</li>
+<li>Has one or more attributes. Attributes are simply name and value pairs.</li>
+</ul>
+
+For our example, we are going to make an artifact of type "TSK_INTERESTING_FILE" whenever we find a big and round file. These are one of the most generic artifact types and are simply a way of alerting the user that a file is interesting for some reason. Once you make the artifact, it will be shown in the UI. The below code makes an artifact for the file and puts it into the set of "Big and Round Files". You can create whatever set names you want. The Autopsy GUI organizes Interesting Files by their set name.
+\verbatim            
+   art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
+   att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
+      FindBigRoundFilesIngestModuleFactory.moduleName, "Big and Round Files")
+   art.addAttribute(att)\endverbatim
+   
+The above code adds the artifact and a single attribute to the blackboard in the embedded database, but it does not notify other modules or the UI. The UI will eventually refresh, but it is faster to fire an event with this:
+\verbatim
+   IngestServices.getInstance().fireModuleDataEvent(
+      ModuleDataEvent(FindBigRoundFilesIngestModuleFactory.moduleName,
+         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))\endverbatim
+	  
+That's it. Your process() method should look something like this:
+\verbatim
+    def process(self, file):
+
+        # Skip non-files
+
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or
+
+            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or
+
+            (file.isFile() == False)):
+
+            return IngestModule.ProcessResult.OK
+
+
+
+        # Look for files bigger than 10MB that are a multiple of 4096
+
+        if ((file.getSize() &gt; 10485760) and ((file.getSize() % 4096) == 0)):
+
+
+
+            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+
+            # artifact.  Refer to the developer docs for other examples.
+
+            art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
+
+            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
+
+                  FindBigRoundFilesIngestModuleFactory.moduleName, "Big and Round Files")
+
+            art.addAttribute(att)
+
+
+
+            # Fire an event to notify the UI and others that there is a new artifact
+
+            IngestServices.getInstance().fireModuleDataEvent(
+
+                ModuleDataEvent(FindBigRoundFilesIngestModuleFactory.moduleName,
+
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
+
+
+
+       return IngestModule.ProcessResult.OK\endverbatim
+	   
+Save this file and run the module on some of your data. If you have any big and round files, you should see an entry under the "Interesting Items" node in the tree.
+
+\image html bigAndRoundFiles.png
+
+\subsection python_tutorial1_debug Debugging and Development Tips
+
+Whenever you have syntax errors or other errors in your script, you will get some form of dialog from Autopsy when you try to run ingest modules. If that happens, fix the problem and run ingest modules again. You don't need to restart Autopsy each time!
+
+The sample module has some log statements in there to help debug what is going on since we don't know of better ways to debug the scripts while running in Autopsy.
+
+
+*/

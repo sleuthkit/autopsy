@@ -1,0 +1,171 @@
+/*! \page mod_python_ds_ingest_tutorial_page Python Tutorial #2: Writing a Data Source Ingest Module
+
+
+In the \ref mod_python_file_ingest_tutorial_page "first tutorial" we built a basic Python Autopsy module that looked for big and round files. In this tutorial we're going to make two data source ingest modules. The first focuses on finding SQLite databases and parsing them, and the second focuses on running a command line tool on a disk image.
+
+The main difference from the first tutorial, which focused on file ingest modules, is that these are data source ingest modules. Data source-ingest modules are given a reference to a data source and the module needs to find the files to analyze, whereas file-level ingest modules are given a reference to each file in the data source.
+
+\section python_tutorial2_assumptions Assumptions
+
+This post assumes you've read the \ref mod_python_file_ingest_tutorial_page "first tutorial". That means that you should know why it is better to write an Autopsy module versus a stand-alone tool, and what you need to set up (Autopsy installed, text editor, etc.). You may also recall the limitations (and benefits) of data source ingest modules. The most notable difference between them is that data source-ingest modules may not have access to carved files or files that are inside of ZIP files. For our example in this post, we are looking for a SQLite database with a specific name, and it will not be inside of a ZIP file, so data source ingest modules are the most efficient and will get us results faster.
+
+The other assumption is that you know something about SQL queries. We have some example queries below and we don't go into detail about how they work.
+
+\section python_tutorial2_getting_started Getting Started
+
+\subsection python_tutorial2_folder Making Your Module Folder
+We'll start by making our module folder. As we learned in the \ref mod_python_file_ingest_tutorial_page "first tutorial", every Python module in Autopsy gets its own folder. To find out where you should put your Python module, launch Autopsy and choose the Tools->Python Plugins menu item. That will open a subfolder in your AppData folder, such as "C:\Users\JDoe\AppData\Roaming\Autopsy\python_modules".
+
+Make a folder inside of there to store your module. Call it "DemoScript2". Copy the <a href="https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/dataSourceIngestModule.py" target="_blank" rel="noopener noreferrer">dataSourcengestModule.py</a> sample file from github into the this new folder and rename it to FindContactsDb.py.
+
+\subsection python_tutorial2_script Writing The Script
+
+We are going to write a script that:
+<ul>
+<li>Queries the backend database for files of a given name</li>
+<li>Opens the database</li>
+<li>Queries data from the database and makes an artifact for each row</li>
+</ul>
+
+Open the FindContactsDb.py script in your favorite text editor. The sample Autopsy Python modules all have TODO entries in them to let you know what you should change. The below steps jump from one TODO to the next.
+<ol>
+<li><strong>Factory Class Name</strong>: The first thing to do is rename the sample class name from "SampleJythonDataSourceIngestModuleFactory" to "ContactsDbIngestModuleFactory".  In the sample module, there are several uses of this class name, so you should search and replace for these strings.</li>
+<li><strong>Name and Description</strong>: The next TODO entries are for names and descriptions. These are shown to users. For this example, we'll name it "Contacts Db Analyzer".  The description can be anything you want.  Note that Autopsy requires that modules have unique names, so don't make it too generic.</li>
+<li><strong>Ingest Module Class Name</strong>:  The next thing to do is rename the ingest module class from "SampleJythonDataSourceIngestModule" to "ContactsDbIngestModule". Our usual naming convention is that this class is the same as the factory class with "Factory" removed from the end. There are a couple of places where this name is used, so do a search and replace in your code.</li>
+<li><strong>startUp() method</strong>: The startUp() method is where each module initializes.  For our example, we don't need to do anything special in here except save a reference to the passed in context object. This is used later on to see if the module has been cancelled.</li>
+<li><strong>process() method</strong>: This is where we do our analysis and we'll focus on this more in the next section.</li>
+</ol>
+
+That's it. In the file-level ingest module, we had a shutdown() method, but we do not need that with data source-level ingest modules. When their process method is finished, it can shut itself down. The process() method will be called only once.
+
+\subsection python_tutorial2_process The process() Method
+
+The process method in a data source-level ingest module is passed in reference to the data source as a <a href="https://www.sleuthkit.org/sleuthkit/docs/jni-docs/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html" target="_blank" rel="noopener noreferrer">Content</a> object and a <a href="https://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html" target="_blank" rel="noopener noreferrer">Progress Bar</a> class to update our progress.</p>
+<p>For this tutorial, you can start by deleting the contents of the existing process() method in the sample module. The full source code is linked to at the end of this blog and shows more detail about a fully fledged module. We'll just cover the analytics in the blog.</p>
+
+\subsubsection python_tutorial2_getting_files Getting Files
+Because data source-level ingest modules are not passed in specific files to analyze, nearly all of these types of modules will need to use the org.sleuthkit.autopsy.casemodule.services.FileManager service to find relevant files. Check out the methods on that class to see the different ways that you can find files.
+
+NOTE: See the \ref python_tutorial2_running_exes section for an example of when you simply want to run a command line tool on a disk image instead of querying for files to analyze.
+
+For our example, we want to find all files named "contacts.db".  The org.sleuthkit.autopsy.casemodule.services.FileManager class contains several findFiles() methods to help. You can search for all files with a given name or files with a given name in a particular folder. You can also use SQL syntax to match file patterns, such as "%.jpg" to find all files with a JPEG extension.
+
+Our example needs these two lines to get the FileManager for the current case and to find the files.
+\verbatim
+fileManager = Case.getCurrentCase().getServices().getFileManager()
+files = fileManager.findFiles(dataSource, "contacts.db")\endverbatim
+
+findFiles() returns a list of <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html">AbstractFile</a> objects. This gives you access to the file's metadata and content.
+
+For our example, we are going to open these SQLite files. That means that we need to save them to disk. This is less than ideal because it wastes time writing the data to disk and then reading it back in, but it is the only option with many libraries. If you are doing some other type analysis on the content, then you do not need to write it to disk. You can read directly from the AbstractFile (see the sample modules for specific code to do this).
+
+The org.sleuthkit.autopsy.datamodel.ContentUtils class provides a utility to save file content to disk. We'll make a path in the temp folder of our case directory. To prevent naming collisions, we'll name the file based on its unique ID. The following two lines save the file to lclDbPath.
+
+\verbatim 
+lclDbPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getId()) + ".db")
+ContentUtils.writeToFile(file, File(lclDbPath))\endverbatim
+
+\subsubsection python_tutorial2_analyzing_sqlite Analyzing SQLite
+Next, we need to open the SQLite database. We are going to use the Java JDBC infrastructure for this. JDBC is Java's generic way of dealing with different types of databases. To open the database, we do this:
+\verbatim
+Class.forName("org.sqlite.JDBC").newInstance()
+dbConn = DriverManager.getConnection("jdbc:sqlite:%s"  % lclDbPath)\endverbatim
+
+With our connection in hand, we can do some queries. In our sample database, we have a single table named "contacts", which has columns for name, email, and phone. We first start by querying for all rows in our simple table:
+\verbatim
+stmt = dbConn.createStatement()
+resultSet = stmt.executeQuery("SELECT * FROM contacts")\endverbatim
+
+For each row, we are going to get the values for the name, e-mail, and phone number and make a TSK_CONTACT artifact. Recall from the first tutorial that posting artifacts to the blackboard allows modules to communicate with each other and also allows you to easily display data to the user. The TSK_CONTACT artifact is for storing contact information.
+
+The basic approach in our example is to make an artifact of a given type (TSK_CONTACT) and have it be associated with the database it came from. We then make attributes for the name, email, and phone. The following code does this for each row in the database:
+\verbatim
+while resultSet.next():
+
+  # Make an artifact on the blackboard and give it attributes
+  art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
+
+  name  = resultSet.getString("name")
+  art.addAttribute(BlackboardAttribute(
+     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(),
+     ContactsDbIngestModuleFactory.moduleName, name))
+
+  email = resultSet.getString("email")
+  art.addAttribute(BlackboardAttribute(
+     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(),
+     ContactsDbIngestModuleFactory.moduleName, email))
+
+  phone = resultSet.getString("phone")
+  art.addAttribute(BlackboardAttribute(
+     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),
+     ContactsDbIngestModuleFactory.moduleName, phone))\endverbatim
+	 
+That's it. We've just found the databases, queried them, and made artifacts for the user to see. There are some final things though. First, we should fire off an event so that the UI updates and refreshes with the new artifacts. We can fire just one event after each database is parsed (or you could fire one for each artifact - it's up to you).
+
+\verbatim
+IngestServices.getInstance().fireModuleDataEvent(
+  ModuleDataEvent(ContactsDbIngestModuleFactory.moduleName,
+  BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, None))\endverbatim
+  
+And the final thing is to clean up. We should close the database connections and delete our temporary file.
+\verbatim
+stmt.close()
+dbConn.close()
+os.remove(lclDbPath)\endverbatim
+
+\subsection python_tutorial2_niceties Niceties
+
+Data source-level ingest modules can run for quite some time. Therefore, data source-level ingest modules should do some additional things that file-level ingest modules do not need to.
+<ul>
+<li>Progress bars: Each data source-level ingest module will have its own progress bar in the lower right. A reference to it is passed into the process() method. You should update it to provide user feedback.</li>
+<li>Cancellation: A user could cancel ingest while your module is running. You should periodically check if that occurred so that you can bail out as soon as possible. You can do that with a check of:
+\verbatim if self.context.isJobCancelled():\endverbatim </li>
+</ul>
+
+\subsection python_tutorial2_tips Debugging and Development Tips
+
+You can find the full file along with a small sample database on <a href="https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples/Aug2015DataSourceTutorial">github</a>. To use the database, add it as a logical file and run your module on it.
+
+Whenever you have syntax errors or other errors in your script, you will get some form of dialog from Autopsy when you try to run ingest modules. If that happens, fix the problem and run ingest modules again. You don't need to restart Autopsy each time!
+
+The sample module has some log statements in there to help debug what is going on since we don't know of better ways to debug the scripts while running in Autopsy.
+
+\section python_tutorial2_running_exes Running Executables
+While the above example outlined using the FileManager to find files to analyze, the other common use of data source-level ingest modules is to wrap a command line tool that takes a disk image as input. A sample program (RunExe.py) that does that can be found on <a href="https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples/Aug2015DataSourceTutorial">github</a>. I'll cover the big topics of that program in this section. There are more details in the script about error checking and such.
+
+\subsection python_tutorial2_finding_exe Finding The Executable
+
+To write this kind of data source-level ingest module, put the executable in your module's folder (the DemoScript2 folder we previously made). Use "__file__" to get the path to where your script is and then use some os.path methods to get to the executable in the same folder.
+\verbatim
+path_to_exe = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img_stat.exe")\endverbatim
+
+In our sample program, we do this and verify we can find it in the startup() method so that if we don't, then ingest never starts.
+
+\subsection python_tutorial2_running_the_exe Running The Executable
+
+Data sources can be disk images, but they can also be a folder of files. We only want to run our executable on a disk image. So, verify that:
+\verbatim
+if not isinstance(dataSource, Image):
+   self.log(Level.INFO, "Ignoring data source.  Not an image")
+   return IngestModule.ProcessResult.OK \endverbatim
+   
+You can get the path to the disk image using dataSource.getPaths().
+
+Once you have the EXE and the disk image, you can use the various <a href="https://pymotw.com/2/subprocess/">subprocess</a> methods to run them.
+
+\subsection python_tutorial2_showing_results Showing the User Results
+
+After the command line tool runs, you have the option of either showing the user the raw output of the tool or parsing it into individual artifacts. Refer to previous sections of this tutorial and the previous tutorial for making artifacts. If you want to simply show the user the output of the tool, then save the output to the Reports folder in the Case directory:
+\verbatim
+reportPath = os.path.join(Case.getCurrentCase().getCaseDirectory(),
+    "Reports", "img_stat-" + str(dataSource.getId()) + ".txt") \endverbatim
+	
+Then you can add the report to the case so that it shows up in the tree in the main UI panel.
+\verbatim Case.getCurrentCase().addReport(reportPath, "Run EXE", "img_stat output")\endverbatim
+
+\section python_tutorial2_conclusion Conclusion
+
+Data source-level ingest modules allow you to query for a subset of files by name or to run on an entire disk image. This tutorial has shown an example of both use cases and shown how to use SQLite in Jython.
+
+
+*/
