@@ -33,6 +33,8 @@ addons:
     update: true
     packages:
     - ant
+    - wget
+    - libpq
     - libewf
     - gettext
     - cppunit
@@ -72,7 +74,7 @@ script:
  - set -e
  - echo "Building TSK..."
  - ./bootstrap && ./configure --prefix=/usr && make
- - pushd bindings/java/ && ant -q dist-PostgreSQL && popd
+ - pushd bindings/java/ && ant dist-PostgreSQL && popd
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
  - ant build
