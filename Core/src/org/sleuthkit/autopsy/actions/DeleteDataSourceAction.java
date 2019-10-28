@@ -31,36 +31,48 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to delete the specified data source.
+ * An Action that allows a user to delete a data source.
  */
 public final class DeleteDataSourceAction extends AbstractAction {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private final Long dataSourceId;
+    private long dataSourceID;
 
-    @NbBundle.Messages({"DeleteDataSourceAction.name.text=Delete Data Source"})
-    public DeleteDataSourceAction(Long dataSourceId) {
+    /**
+     * Constructs an Action that allows a user to delete a data source.
+     *
+     * @param dataSourceID The object ID of the data source to be deleted.
+     */
+    @NbBundle.Messages({
+        "DeleteDataSourceAction.name.text=Delete Data Source"
+    })
+    public DeleteDataSourceAction(Long dataSourceID) {
         super(Bundle.DeleteDataSourceAction_name_text());
-        this.dataSourceId = dataSourceId;
+        this.dataSourceID = dataSourceID;
     }
 
     @Override
     public void actionPerformed(ActionEvent event) {
         try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceId);
-            deleteDataSource(dataSourceId);
-        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
-            logger.log(Level.WARNING, "Error Deleting Data source " + dataSourceId, e);
-        }
-    }
-
-    private static void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
-        try {
+            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceID);
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            kwsService.deleteDataSource(dataSourceId);
-        } catch (KeywordSearchServiceException e) {
-            logger.log(Level.WARNING, "KWS Error", e);
+            kwsService.deleteDataSource(dataSourceID);
+            Case.getCurrentCaseThrows().notifyDataSourceDeleted(dataSourceID);
+        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
+            logger.log(Level.SEVERE, String.format("Error Deleting data source (obj_id=%d)", dataSourceID), e);
         }
-
     }
+
+    @Override
+    public DeleteDataSourceAction clone() throws CloneNotSupportedException {
+        DeleteDataSourceAction clonedObject = ((DeleteDataSourceAction) super.clone());
+        clonedObject.setDataSourceID(this.dataSourceID);
+        return clonedObject;
+    }
+
+    private void setDataSourceID(long dataSourceID) {
+        this.dataSourceID = dataSourceID;
+    }
+
 }

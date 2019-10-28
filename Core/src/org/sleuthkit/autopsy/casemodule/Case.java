@@ -77,6 +77,7 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
@@ -398,9 +399,9 @@ public class Case {
          * TimelineEvent that was added.
          */
         TIMELINE_EVENT_ADDED,
-        /* An item in the central repository has had its comment
-         * modified. The old value is null, the new value is string for current
-         * comment.
+        /*
+         * An item in the central repository has had its comment modified. The
+         * old value is null, the new value is string for current comment.
          */
         CR_COMMENT_CHANGED;
 
@@ -535,8 +536,8 @@ public class Case {
      */
     public static boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
-                 || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
-                 || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
+                || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
+                || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
     }
 
     /**
@@ -1480,6 +1481,18 @@ public class Case {
      */
     public void notifyDataSourceNameChanged(Content dataSource, String newName) {
         eventPublisher.publish(new DataSourceNameChangedEvent(dataSource, newName));
+    }
+
+    /**
+     * Notifies case event subscribers that a data source has been deleted from
+     * the case database.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param dataSourceId The object ID of the data source that was deleted.
+     */
+    public void notifyDataSourceDeleted(Long dataSourceId) {
+        eventPublisher.publish(new DataSourceDeletedEvent(dataSourceId));
     }
 
     /**
