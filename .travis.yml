@@ -15,6 +15,7 @@ addons:
   apt:
     update: true
     packages:
+    - testdisk
     - libafflib-dev
     - libewf-dev
     - libpq-dev
@@ -32,11 +33,11 @@ addons:
     update: true
     packages:
     - ant
-    - ant-optional
     - libewf
     - gettext
     - cppunit
     - afflib
+    - testdisk
 
 python:
   - "2.7"
@@ -46,7 +47,6 @@ before_install:
  - python setupSleuthkitBranch.py
 
 install:
- - sudo apt-get install testdisk
  - cd sleuthkit/sleuthkit
  - ./travis_install_libs.sh
 
@@ -76,10 +76,3 @@ script:
  - cd $TRAVIS_BUILD_DIR/
  - ant build
  - echo -en 'travis_fold:end:script.build\\r'
- - echo "Testing Autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
- - cd Core/
- - ant -q getTestDataFiles
- - echo "Free Space:"
- - echo `df -h .` 
- - xvfb-run ant -q test
- - echo -en 'travis_fold:end:script.tests\\r'
