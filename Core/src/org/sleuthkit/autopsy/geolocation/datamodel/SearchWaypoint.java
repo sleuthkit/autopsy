@@ -24,25 +24,25 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * A wrapper class for TSK_GPS_TRACKPOINT artifacts.
+ * A SearchWaypoint is a subclass of ArtifactWaypoint.
  */
-final class TrackpointWaypoint extends ArtifactWaypoint {
+final class SearchWaypoint extends ArtifactWaypoint {
 
     @Messages({
-        "TrackpointWaypoint_DisplayLabel=GPS Trackpoint"
+        "SearchWaypoint_DisplayLabel=GPS Search"
     })
 
     /**
-     * Construct a waypoint for trackpoints.
-     * 
+     * Construct a waypoint for TSK_GPS_SEARCH artifact.
+     *
      * @throws GeoLocationDataException
      */
-    TrackpointWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
+    SearchWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
     }
-    
-    private TrackpointWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
-         super(artifact,
+
+    private SearchWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        super(artifact,
                 getLabelFromArtifact(attributeMap),
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME).getValueLong() : null,
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
@@ -52,33 +52,26 @@ final class TrackpointWaypoint extends ArtifactWaypoint {
     }
 
     /**
-     * Returns a Label for a GPS_Trackpoint artifact. This function assumes the
-     * calling function has already checked TSK_NAME.
+     * Returns a Label for a GPS_SEARCH artifact.
      *
-     * @param artifact BlackboardArtifact for waypoint
+     * @param attributeMap Map of artifact attributes
      *
      * @return String label for the artifacts way point.
      *
      * @throws GeoLocationDataException
      */
     private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
-
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         if (attribute != null) {
             return attribute.getDisplayString();
         }
 
-        attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
+        attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION);
         if (attribute != null) {
             return attribute.getDisplayString();
         }
 
-        attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
-        if (attribute != null) {
-            return attribute.getDisplayString();
-        }
-
-        return Bundle.TrackpointWaypoint_DisplayLabel();
+        return Bundle.SearchWaypoint_DisplayLabel();
     }
 
 }

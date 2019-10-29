@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
+import java.util.Map;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -36,22 +37,26 @@ final class EXIFWaypoint extends ArtifactWaypoint {
      * @throws GeoLocationDataException
      */
     protected EXIFWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        this(artifact, getImageFromArtifact(artifact));
+        this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact), getImageFromArtifact(artifact));
     }
 
     /**
-     * Private constructor to help with the construction of EXIFWaypoints.
+     * Constructs new waypoint using the given artifact and attribute map.
      *
-     * @param artifact Waypoint BlackboardArtifact
-     * @param image    EXIF AbstractFile image
+     * @param artifact     Waypoint BlackboardArtifact
+     * @param attributeMap Map of artifact attributes
+     * @param image        EXIF AbstractFile image
      *
      * @throws GeoLocationDataException
      */
-    private EXIFWaypoint(BlackboardArtifact artifact, AbstractFile image) throws GeoLocationDataException {
+    private EXIFWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, AbstractFile image) throws GeoLocationDataException {
         super(artifact,
                 image != null ? image.getName() : "",
-                ArtifactUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED),
-                image);
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED).getValueLong() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
+                image, attributeMap);
     }
 
     /**
@@ -68,15 +73,14 @@ final class EXIFWaypoint extends ArtifactWaypoint {
         AbstractFile abstractFile = null;
         BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF) {
-            
-            try{
+
+            try {
                 abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-            } catch(TskCoreException ex) {
+            } catch (TskCoreException ex) {
                 throw new GeoLocationDataException(String.format("Unable to getAbstractFileByID for artifact: %d", artifact.getArtifactID(), artifact.getArtifactID()), ex);
             }
         }
 
         return abstractFile;
     }
-
 }

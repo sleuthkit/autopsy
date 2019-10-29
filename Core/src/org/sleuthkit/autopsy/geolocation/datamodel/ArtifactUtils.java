@@ -18,155 +18,48 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Utilities for simplifying and reducing redundant when getting Artifact
- * attributes.
+ * Utilities for simplifying the use of Waypoint Artifacts.
  */
 final class ArtifactUtils {
-    
+
     /**
      * Private constructor for this Utility class.
      */
     private ArtifactUtils() {
-        
+
     }
 
     /**
-     * Helper function for getting a String attribute from an artifact. This
-     * will work for all attributes
+     * Gets the list of attributes from the artifact and puts them into a map
+     * with the ATRIBUTE_TYPE as the key.
      *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
+     * @param artifact BlackboardArtifact current artifact
      *
-     * @return String value for the given attribute or null if attribute was not
-     *         set for the given artifact
+     * @return A Map of BlackboardAttributes for the given artifact with
+     *         ATTRIBUTE_TYPE as the key.
      *
-     * @throws TskCoreException
+     * @throws GeoLocationDataException
      */
-    static String getString(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
-        if (artifact == null) {
-            return null;
+    static Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> getAttributesFromArtifactAsMap(BlackboardArtifact artifact) throws GeoLocationDataException {
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = new HashMap<>();
+        try {
+            List<BlackboardAttribute> attributeList = artifact.getAttributes();
+            for (BlackboardAttribute attribute : attributeList) {
+                BlackboardAttribute.ATTRIBUTE_TYPE type = BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attribute.getAttributeType().getTypeID());
+                attributeMap.put(type, attribute);
+            }
+        } catch (TskCoreException ex) {
+            throw new GeoLocationDataException("Unable to get attributes from artifact", ex);
         }
 
-        BlackboardAttribute attribute;
-        try{
-            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        } catch(TskCoreException ex) {
-            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
-        }
-        return (attribute != null ? attribute.getDisplayString() : null);
+        return attributeMap;
     }
-
-    /**
-     * Helper function for getting a Double attribute from an artifact.
-     *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
-     *
-     * @return Double value for the given attribute.
-     *
-     * @throws TskCoreException
-     */
-    static Double getDouble(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
-        if (artifact == null) {
-            return null;
-        }
-
-        if (attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE) {
-            return null;
-        }
-
-        BlackboardAttribute attribute;
-        try{
-            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        } catch(TskCoreException ex) {
-            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
-        }
-        return (attribute != null ? attribute.getValueDouble() : null);
-    }
-
-    /**
-     * Helper function for getting a Long attribute from an artifact.
-     *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
-     *
-     * @return Long value for the given attribute.
-     *
-     * @throws TskCoreException
-     */
-    static Long getLong(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
-        if (artifact == null) {
-            return null;
-        }
-
-        if (attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.LONG
-                || attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-            return null;
-        }
-
-        BlackboardAttribute attribute;
-        try{
-            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        } catch(TskCoreException ex) {
-            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
-        }
-        return (attribute != null ? attribute.getValueLong() : null);
-    }
-
-    /**
-     * Helper function for getting a Integer attribute from an artifact.
-     *
-     * @param artifact      The BlackboardArtifact to get the attributeType
-     * @param attributeType BlackboardAttribute attributeType
-     *
-     * @return Integer value for the given attribute.
-     *
-     * @throws TskCoreException
-     */
-    static Integer getInteger(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE attributeType) throws GeoLocationDataException {
-        if (artifact == null) {
-            return null;
-        }
-
-        if (attributeType.getValueType() != BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER) {
-            return null;
-        }
-
-        BlackboardAttribute attribute;
-        try{
-            attribute = artifact.getAttribute(new BlackboardAttribute.Type(attributeType));
-        } catch(TskCoreException ex) {
-            throw new GeoLocationDataException(String.format("Failed to get double attribute for artifact: %d", artifact.getArtifactID()), ex);
-        }
-        return (attribute != null ? attribute.getValueInt() : null);
-    }
-    
-    /**
-     * Get a list of artifacts for the given BlackboardArtifact.Type.
-     * 
-     * @param skCase Currently open case
-     * @param type BlackboardArtifact.Type to retrieve 
-     * 
-     * @return List of BlackboardArtifacts
-     * 
-     * @throws GeoLocationDataException 
-     */
-    static List<BlackboardArtifact> getArtifactsForType(SleuthkitCase skCase, BlackboardArtifact.ARTIFACT_TYPE type) throws GeoLocationDataException {
-        List<BlackboardArtifact> artifacts;
-        try{
-            artifacts = skCase.getBlackboardArtifacts(type);
-        } catch(TskCoreException ex) {
-            throw new GeoLocationDataException(String.format("Unable to get artifacts for type: %s", type.getLabel()), ex);
-        }
-        
-        return artifacts;
-    }
-
 }
