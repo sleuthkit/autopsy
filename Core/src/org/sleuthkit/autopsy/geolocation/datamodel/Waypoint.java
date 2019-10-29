@@ -20,10 +20,13 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -33,6 +36,23 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public interface Waypoint {
     static final Logger logger = Logger.getLogger(Waypoint.class.getName());
+    
+    /**
+     * This is a list of attributes that are already being handled by the
+     * waypoint classes and will have get functions.
+     */
+    BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END,};
+
     /**
      * Interface to describe a waypoint.  A waypoint is made up of 
      * a longitude, latitude, label, timestamp, type, image and altitude.
@@ -265,6 +285,36 @@ public interface Waypoint {
             }
         }
         return points;
+    }
+    
+        
+    /**
+     * Get a list of Waypoint.Property objects for the given artifact. This list
+     * will not include attributes that the Waypoint interfact has get functions
+     * for.
+     *
+     * @param artifact Blackboard artifact to get attributes\properties from
+     *
+     * @return A List of Waypoint.Property objects
+     *
+     * @throws GeoLocationDataException
+     */
+    static List<Waypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        List<Waypoint.Property> list = new ArrayList<>();
+
+        Set<BlackboardAttribute.ATTRIBUTE_TYPE> keys = attributeMap.keySet();
+
+        for (BlackboardAttribute.ATTRIBUTE_TYPE type : ALREADY_HANDLED_ATTRIBUTES) {
+            keys.remove(type);
+        }
+
+        for (BlackboardAttribute.ATTRIBUTE_TYPE type : keys) {
+            String key = type.getDisplayName();
+            String value = attributeMap.get(type).getDisplayString();
+
+            list.add(new Waypoint.Property(key, value));
+        }
+        return list;
     }
 
     /**

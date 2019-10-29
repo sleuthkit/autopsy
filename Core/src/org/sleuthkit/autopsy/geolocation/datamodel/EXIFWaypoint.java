@@ -36,8 +36,8 @@ final class EXIFWaypoint extends ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    protected EXIFWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact), getImageFromArtifact(artifact));
+    EXIFWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
+        this(artifact, getAttributesFromArtifactAsMap(artifact), getImageFromArtifact(artifact));
     }
 
     /**
@@ -73,11 +73,10 @@ final class EXIFWaypoint extends ArtifactWaypoint {
         AbstractFile abstractFile = null;
         BlackboardArtifact.ARTIFACT_TYPE artifactType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF) {
-
             try {
                 abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
             } catch (TskCoreException ex) {
-                throw new GeoLocationDataException(String.format("Unable to getAbstractFileByID for artifact: %d", artifact.getArtifactID(), artifact.getArtifactID()), ex);
+                throw new GeoLocationDataException(String.format("Unable to getAbstractFileByID for artifactID: %d", artifact.getArtifactID()), ex);
             }
         }
 

@@ -27,18 +27,13 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * A wrapper class for TSK_GPS_TRACKPOINT artifacts.
  */
 final class TrackpointWaypoint extends ArtifactWaypoint {
-
-    @Messages({
-        "TrackpointWaypoint_DisplayLabel=GPS Trackpoint"
-    })
-
     /**
      * Construct a waypoint for trackpoints.
      * 
      * @throws GeoLocationDataException
      */
     TrackpointWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
+        this(artifact, getAttributesFromArtifactAsMap(artifact));
     }
     
     private TrackpointWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
@@ -61,6 +56,9 @@ final class TrackpointWaypoint extends ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
+    @Messages({
+        "TrackpointWaypoint_DisplayLabel=GPS Trackpoint"
+    })
     private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
 
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);

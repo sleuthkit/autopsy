@@ -41,7 +41,7 @@ final class RoutePoint implements Waypoint {
      * @param longitude Longitude for point
      * @param label     Way point label.
      */
-    protected RoutePoint(Route parent, double latitude, double longitude, String label) {
+    RoutePoint(Route parent, double latitude, double longitude, String label) {
         this.longitude = longitude;
         this.latitude = latitude;
         this.label = label;
