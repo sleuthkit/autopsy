@@ -76,6 +76,8 @@ script:
  - ./bootstrap && ./configure --prefix=/usr && make
  - ant -version
  - cd bindings/java
+ - pwd
+ - ls
  - ant dist-PostgreSQL
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
