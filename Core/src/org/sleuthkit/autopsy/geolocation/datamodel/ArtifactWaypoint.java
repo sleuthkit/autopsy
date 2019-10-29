@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -43,81 +44,39 @@ class ArtifactWaypoint implements Waypoint {
     final private List<Waypoint.Property> immutablePropertiesList;
 
     /**
-     * Construct a simple waypoint with the given artifact and assign the given
-     * type.
-     *
-     * This constructor is for use with artifacts that use the basic attributes
-     * of: TSK_NAME TSK_GEO_LONGITUDE TSK_GEO_LATITUDE TSK_GEO_ALITUDE
-     * TSK_DATETIME
+     * Construct a waypoint with the given artifact.
      *
      * @param artifact BlackboardArtifact for this waypoint
-     * @param type     Waypoint type
      *
-     * @throws GeoLocationDataException
+     * @throws GeoLocationDataException Exception will be thrown if artifact did
+     *                                  not have a valid longitude and latitude.
      */
     protected ArtifactWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact,
-                getLabelFromArtifact(artifact));
+                ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
     }
 
     /**
-     * For use by subclasses that want to customize the label, but use the basic
-     * attributes of: TSK_GEO_LONGITUDE TSK_GEO_LATITUDE TSK_GEO_ALITUDE
-     * TSK_DATETIME
+     * Constructor that sets all of the member variables.
      *
-     * @param artifact BlackboardArtifact for this waypoint
-     * @param label    String label for this waypoint
-     * @param type     Waypoint type
+     * @param artifact     BlackboardArtifact for this waypoint
+     * @param label        String waypoint label
+     * @param timestamp    Long timestamp, epoch seconds
+     * @param latitude     Double waypoint latitude
+     * @param longitude    Double waypoint longitude
+     * @param altitude     Double waypoint altitude
+     * @param image        AbstractFile image for waypoint, this maybe null
+     * @param type         Waypoint.Type value for waypoint
+     * @param attributeMap A Map of attributes for the given artifact
      *
-     * @throws GeoLocationDataException
+     * @throws GeoLocationDataException Exception will be thrown if artifact did
+     *                                  not have a valid longitude and latitude.
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, String label) throws GeoLocationDataException {
-        this(artifact,
-                label,
-                getTimestampFromArtifact(artifact),
-                null);
-    }
+    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        if (longitude == null || latitude == null) {
+            throw new GeoLocationDataException("Invalid waypoint, null value passed for longitude or latitude");
+        }
 
-    /**
-     * Constructor for use by Waypoint subclasses that want to customize the
-     * label, specify the timestamp or supply and image.
-     *
-     * Uses the following attributes to set longitude, latitude, altitude:
-     * TSK_GEO_LONGITUDE TSK_GEO_LATITUDE TSK_GEO_ALITUDE
-     *
-     * @param artifact  BlackboardArtifact for this waypoint
-     * @param label     String waypoint label
-     * @param timestamp Long timestamp, epoch seconds
-     * @param image     AbstractFile image for waypoint, this maybe null
-     * @param type      Waypoint.Type value for waypoint
-     *
-     * @throws GeoLocationDataException
-     */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, AbstractFile image) throws GeoLocationDataException {
-        this(artifact,
-                label,
-                timestamp,
-                ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE),
-                ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE),
-                ArtifactUtils.getDouble(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE),
-                image);
-    }
-
-    /**
-     * Private constructor that sets all of the member variables.
-     *
-     * @param artifact  BlackboardArtifact for this waypoint
-     * @param label     String waypoint label
-     * @param timestamp Long timestamp, epoch seconds
-     * @param latitude  Double waypoint latitude
-     * @param longitude Double waypoint longitude
-     * @param altitude  Double waypoint altitude
-     * @param image     AbstractFile image for waypoint, this maybe null
-     * @param type      Waypoint.Type value for waypoint
-     *
-     * @throws GeoLocationDataException
-     */
-    private ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image) throws GeoLocationDataException {
         this.artifact = artifact;
         this.label = label;
         this.image = image;
@@ -126,7 +85,26 @@ class ArtifactWaypoint implements Waypoint {
         this.latitude = latitude;
         this.altitude = altitude;
 
-        immutablePropertiesList = Collections.unmodifiableList(GeolocationUtils.getOtherGeolocationProperties(artifact));
+        immutablePropertiesList = Collections.unmodifiableList(GeolocationUtils.createGeolocationProperties(attributeMap));
+    }
+
+    /**
+     * Constructs a new ArtifactWaypoint.
+     *
+     * @param artifact     BlackboardArtifact for this waypoint
+     * @param attributeMap A Map of the BlackboardAttributes for the given
+     *                     artifact.
+     *
+     * @throws GeoLocationDataException
+     */
+    private ArtifactWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        this(artifact,
+                getLabelFromArtifact(attributeMap),
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME).getValueLong() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
+                null, attributeMap);
     }
 
     /**
@@ -167,48 +145,26 @@ class ArtifactWaypoint implements Waypoint {
     public AbstractFile getImage() {
         return image;
     }
-    
+
     @Override
     public List<Waypoint.Property> getOtherProperties() {
         return immutablePropertiesList;
     }
 
     /**
-     * Get the timestamp attribute based on type for the given artifact.
+     * Gets the label for this waypoint.
      *
      * @param artifact BlackboardArtifact for waypoint
      *
-     * @return Long timestamp or null if a value was not found.
-     *
-     * @throws GeoLocationDataException
+     * @return Returns a label for the waypoint, or empty string if no label was
+     *         found.
      */
-    private static Long getTimestampFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
-        if (artifact == null) {
-            return null;
+    private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
+        BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        if (attribute != null) {
+            return attribute.getDisplayString();
         }
 
-        return ArtifactUtils.getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
-    }
-
-    /**
-     * Gets the label for this waypoint based on the artifact type.
-     *
-     * This is the original waypoint naming code from the KML report, we may
-     * what to thinki about better ways to name some of the point.
-     *
-     * @param artifact BlackboardArtifact for waypoint
-     *
-     * @return Returns a label for the waypoint based on artifact type, or empty
-     *         string if no label was found.
-     *
-     * @throws GeoLocationDataException
-     */
-    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
-
-        String typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-        if (typeLabel == null) {
-            typeLabel = "";
-        }
-        return typeLabel;
+        return "";
     }
 }

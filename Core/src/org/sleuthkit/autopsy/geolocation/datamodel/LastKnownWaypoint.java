@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
+import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -29,21 +30,48 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
     "LastKnownWaypoint_Label=Last Known Location",})
 final class LastKnownWaypoint extends ArtifactWaypoint {
 
+    /**
+     * Constructs a new waypoint.
+     *
+     * @param artifact BlackboardArtifact from which to construct the waypoint
+     *
+     * @throws GeoLocationDataException
+     */
     protected LastKnownWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        super(artifact, getLabelFromArtifact(artifact));
+        this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
+    }
+
+    /**
+     * Constructs a new waypoint with the given artifact and attribute map.
+     *
+     * @param artifact     BlackboardArtifact from which to construct the
+     *                     waypoint
+     * @param attributeMap Map of artifact attributes
+     *
+     * @throws GeoLocationDataException
+     */
+    private LastKnownWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        super(artifact,
+                getLabelFromArtifact(attributeMap),
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME).getValueLong() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
+                null, attributeMap);
     }
 
     /**
      * Gets the label for a TSK_LAST_KNOWN_LOCATION.
      *
-     * @param artifact BlackboardArtifact to get label from
+     * @param attributeMap Map of artifact attributes for this waypoint
      *
      * @return String value from attribute TSK_NAME or LastKnownWaypoint_Label
      *
      * @throws GeoLocationDataException
      */
-    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
-        String label = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+    private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        String label = attribute.getDisplayString();
 
         if (label == null || label.isEmpty()) {
             label = Bundle.LastKnownWaypoint_Label();

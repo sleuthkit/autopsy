@@ -20,36 +20,31 @@ package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import java.util.Map;
+import java.util.Set;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * GeolocationUtilis class for common to be share across in the package
+ * GeolocationUtilis class for common shared between Routes and Waypoints.
  *
  */
 final class GeolocationUtils {
 
     /**
-     * This is a list of attributes that are related to a geolocation waypoint
-     * but are for information\artifact properties purpose. They are not needed
-     * for the placement of a point on a map;
+     * This is a list of attributes that are already being handled by the
+     * waypoint classes and will have get functions.
      */
-    private static final BlackboardAttribute.ATTRIBUTE_TYPE[] OTHER_GEO_ATTRIBUTES = {
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END,
+    private static final BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_VELOCITY,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_BEARING,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_HPRECISION,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_VPRECISION,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_MAPDATUM,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_SOURCE,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE,
-        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL
-    };
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END,
+        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END,};
 
     /**
      * This is a Utility class that should not be constructed.
@@ -59,7 +54,9 @@ final class GeolocationUtils {
     }
 
     /**
-     * Get a list of Waypoint.Property objects for the given artifact.
+     * Get a list of Waypoint.Property objects for the given artifact. This list
+     * will not include attributes that the Waypoint interfact has get functions
+     * for.
      *
      * @param artifact Blackboard artifact to get attributes\properties from
      *
@@ -67,20 +64,21 @@ final class GeolocationUtils {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint.Property> getOtherGeolocationProperties(BlackboardArtifact artifact) throws GeoLocationDataException {
+    static List<Waypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         List<Waypoint.Property> list = new ArrayList<>();
 
-        for (BlackboardAttribute.ATTRIBUTE_TYPE type : OTHER_GEO_ATTRIBUTES) {
-            String key = type.getDisplayName();
-            String value = ArtifactUtils.getString(artifact, type);
+        Set<BlackboardAttribute.ATTRIBUTE_TYPE> keys = attributeMap.keySet();
 
-            if (value == null) {
-                value = "";
-            }
+        for (BlackboardAttribute.ATTRIBUTE_TYPE type : ALREADY_HANDLED_ATTRIBUTES) {
+            keys.remove(type);
+        }
+
+        for (BlackboardAttribute.ATTRIBUTE_TYPE type : keys) {
+            String key = type.getDisplayName();
+            String value = attributeMap.get(type).getDisplayString();
 
             list.add(new Waypoint.Property(key, value));
         }
-
         return list;
     }
 }

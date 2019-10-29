@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
+import java.util.Map;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -37,7 +38,17 @@ final class TrackpointWaypoint extends ArtifactWaypoint {
      * @throws GeoLocationDataException
      */
     TrackpointWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        super(artifact, getLabelFromArtifact(artifact));
+        this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
+    }
+    
+    private TrackpointWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+         super(artifact,
+                getLabelFromArtifact(attributeMap),
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME).getValueLong() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
+                null, attributeMap);
     }
 
     /**
@@ -50,23 +61,24 @@ final class TrackpointWaypoint extends ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    private static String getLabelFromArtifact(BlackboardArtifact artifact) throws GeoLocationDataException {
+    private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
 
-        String typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
-
-        if (typeLabel == null || typeLabel.isEmpty()) {
-            typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
+        BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        if (attribute != null) {
+            return attribute.getDisplayString();
         }
 
-        if (typeLabel == null || typeLabel.isEmpty()) {
-            typeLabel = ArtifactUtils.getString(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
+        attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME);
+        if (attribute != null) {
+            return attribute.getDisplayString();
         }
 
-        if (typeLabel == null || typeLabel.isEmpty()) {
-            typeLabel = Bundle.TrackpointWaypoint_DisplayLabel();
+        attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FLAG);
+        if (attribute != null) {
+            return attribute.getDisplayString();
         }
 
-        return typeLabel;
+        return Bundle.TrackpointWaypoint_DisplayLabel();
     }
 
 }
