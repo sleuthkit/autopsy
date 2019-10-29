@@ -3,8 +3,6 @@ sudo: required
 
 jobs:
   include:
-    - os: linux
-      dist: bionic
     - os: osx
 
 env:
@@ -75,9 +73,9 @@ script:
  - echo "Building TSK..."
  - ./bootstrap && ./configure --prefix=/usr && make > /dev/null
  - ant -version
- - cd bindings/java
  - pwd
  - ls
+ - cd bindings/java
  - ant dist-PostgreSQL
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
