@@ -74,8 +74,8 @@ script:
  - set -e
  - echo "Building TSK..."
  - ./bootstrap && ./configure --prefix=/usr && make
- - cd bindings/java
  - ant -version
+ - cd bindings/java
  - ant dist-PostgreSQL
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
