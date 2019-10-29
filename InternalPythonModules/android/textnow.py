@@ -290,53 +290,50 @@ class TextNowMessagesParser(TskMessagesParser):
         """
         super(TextNowMessagesParser, self).__init__(message_db.runQuery(
                  """
-
-                    SELECT CASE
-                             WHEN message_direction == 2 THEN ""
-                             WHEN to_addresses IS NULL THEN M.contact_value
-                             ELSE contact_name
-                           end from_address,
-                           CASE
-                             WHEN message_direction == 1 THEN ""
-                             WHEN to_addresses IS NULL THEN M.contact_value
-                             ELSE to_addresses
-                           end to_address,
-                           message_direction,
-                           message_text,
-                           M.READ,
-                           M.date,
-                           M.attach,
-                           thread_id
-                    FROM   (SELECT group_info.contact_value,
-                                   group_info.to_addresses,
-                                   G.contact_value AS thread_id
-                            FROM   (SELECT GM.contact_value,
-                                           Group_concat(GM.member_contact_value) AS to_addresses
-                                    FROM   group_members AS GM
-                                    GROUP  BY GM.contact_value) AS group_info
-                                   JOIN groups AS G
-                                     ON G.contact_value = group_info.contact_value
-                            UNION
-                            SELECT c.contact_value,
-                                   NULL,
-                                   "-1"
-                            FROM   contacts AS c) AS to_from_map
-                           JOIN messages AS M
-                             ON M.contact_value = to_from_map.contact_value
-                    WHERE  message_type NOT IN ( 102, 100 )
+                    SELECT CASE 
+                             WHEN messages.message_direction == 2 THEN NULL 
+                             WHEN contact_book_w_groups.to_addresses IS NULL THEN 
+                             messages.contact_value 
+                           END from_address, 
+                           CASE 
+                             WHEN messages.message_direction == 1 THEN NULL 
+                             WHEN contact_book_w_groups.to_addresses IS NULL THEN 
+                             messages.contact_value 
+                             ELSE contact_book_w_groups.to_addresses 
+                           END to_address, 
+                           messages.message_direction, 
+                           messages.message_text, 
+                           messages.READ, 
+                           messages.DATE, 
+                           messages.attach, 
+                           thread_id 
+                    FROM   (SELECT GM.contact_value, 
+                                   Group_concat(GM.member_contact_value) AS to_addresses, 
+                                   G.contact_value                       AS thread_id 
+                            FROM   group_members AS GM 
+                                   join GROUPS AS G 
+                                     ON G.contact_value = GM.contact_value 
+                            GROUP  BY GM.contact_value 
+                            UNION 
+                            SELECT contact_value, 
+                                   NULL, 
+                                   NULL 
+                            FROM   contacts) AS contact_book_w_groups 
+                           join messages 
+                             ON messages.contact_value = contact_book_w_groups.contact_value 
+                    WHERE  message_type NOT IN ( 102, 100 ) 
                  """
              )
         )
         self._TEXTNOW_MESSAGE_TYPE = "TextNow Message"
         self._INCOMING_MESSAGE_TYPE = 1
         self._OUTGOING_MESSAGE_TYPE = 2
-        self._UNKNOWN_THREAD_ID = "-1"
 
     def get_message_type(self):
         return self._TEXTNOW_MESSAGE_TYPE 
 
     def get_phone_number_from(self):
-        if self.result_set.getString("from_address") == "":
+        if self.result_set.getString("from_address") is None:
             return super(TextNowMessagesParser, self).get_phone_number_from() 
         return self.result_set.getString("from_address")
 
@@ -347,10 +344,9 @@ class TextNowMessagesParser(TskMessagesParser):
         return self.OUTGOING
     
     def get_phone_number_to(self):
-        if self.result_set.getString("to_address") == "":
+        if self.result_set.getString("to_address") is None:
             return super(TextNowMessagesParser, self).get_phone_number_to() 
-        recipients = self.result_set.getString("to_address").split(",")
-        return recipients            
+        return self.result_set.getString("to_address").split(",")
 
     def get_message_date_time(self):
         #convert ms to s
@@ -359,7 +355,7 @@ class TextNowMessagesParser(TskMessagesParser):
     def get_message_read_status(self):
         read = self.result_set.getBoolean("read")
         if self.get_message_direction() == self.INCOMING:
-            if read == True:
+            if read:
                 return self.READ
             return self.UNREAD
 
@@ -375,6 +371,6 @@ class TextNowMessagesParser(TskMessagesParser):
 
     def get_thread_id(self):
         thread_id = self.result_set.getString("thread_id")
-        if thread_id == self._UNKNOWN_THREAD_ID:
+        if thread_id is None:
             return super(TextNowMessagesParser, self).get_thread_id()
         return thread_id

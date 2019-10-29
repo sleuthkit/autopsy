@@ -71,6 +71,8 @@ final class NewCaseWizardAction extends CallableSystemAction {
         wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.newCase.windowTitle.text"));
         Dialog dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
+        // Workaround to ensure new case dialog is not hidden on macOS
+        dialog.setAlwaysOnTop(true);
         dialog.setVisible(true);
         dialog.toFront();
         if (wizardDescriptor.getValue() == WizardDescriptor.FINISH_OPTION) {
