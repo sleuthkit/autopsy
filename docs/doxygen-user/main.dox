@@ -6,6 +6,8 @@ Overview
 
 This is the User's Guide for the <a href="http://www.sleuthkit.org/autopsy/">open source Autopsy platform</a>.  Autopsy allows you to examine a hard drive or mobile device and recover evidence from it. This guide should help you with using Autopsy. The <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/"> developer's guide</a> will help you develop your own Autopsy modules.
 
+Note: For those users running Autopsy on Mac devices, the functionality available through the "Tools" -> "Options" dialog as described in this documentation can be accessed through the system menu bar under "Preferences" or through the Cmd + , (command-comma) shortcut.
+
 Help Topics
 -------
 The following topics are available here:

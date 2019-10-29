@@ -236,28 +236,23 @@ class LineCallLogsParser(TskCallLogsParser):
     def __init__(self, calllog_db):
         super(LineCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
-                    SELECT Substr(CH.call_type, -1)               AS direction, 
-                           CH.start_time                          AS start_time, 
-                           CH.end_time                            AS end_time, 
-                           contacts_list_with_groups.members      AS group_members, 
-                           contacts_list_with_groups.member_names AS names, 
-                           CH.caller_mid, 
-                           CH.voip_type                           AS call_type, 
-                           CH.voip_gc_media_type                  AS group_call_type 
+                    SELECT Substr(calls.call_type, -1)   AS direction, 
+                           calls.start_time              AS start_time, 
+                           calls.end_time                AS end_time, 
+                           contact_book_w_groups.members AS group_members, 
+                           calls.caller_mid, 
+                           calls.voip_type               AS call_type, 
+                           calls.voip_gc_media_type      AS group_call_type 
                     FROM   (SELECT id, 
-                                   Group_concat(M.m_id)                          AS members, 
-                                   Group_concat(Replace(C.server_name, ",", "")) AS member_names 
+                                   Group_concat(M.m_id) AS members 
                             FROM   membership AS M 
-                                   JOIN naver.contacts AS C 
-                                     ON M.m_id = C.m_id 
                             GROUP  BY id 
                             UNION 
                             SELECT m_id, 
-                                   NULL, 
-                                   server_name 
-                            FROM   naver.contacts) AS contacts_list_with_groups 
-                           JOIN call_history AS CH 
-                             ON CH.caller_mid = contacts_list_with_groups.id
+                                   NULL 
+                            FROM   naver.contacts) AS contact_book_w_groups 
+                           JOIN call_history AS calls 
+                             ON calls.caller_mid = contact_book_w_groups.id
                  """
               )
         )
@@ -355,43 +350,25 @@ class LineMessagesParser(TskMessagesParser):
     def __init__(self, message_db):
         super(LineMessagesParser, self).__init__(message_db.runQuery(
                 """
-                    SELECT contact_list_with_groups.name,
-                           contact_list_with_groups.id,
-                           contact_list_with_groups.members,
-                           contact_list_with_groups.member_names,
-                           CH.from_mid,
-                           C.server_name AS from_name,
-                           CH.content,
-                           CH.created_time,
-                           CH.attachement_type,
-                           CH.attachement_local_uri,
-                           CH.status
-                    FROM   (SELECT G.name,
-                                   group_members.id,
-                                   group_members.members,
-                                   group_members.member_names
-                            FROM   (SELECT id,
-                                           group_concat(M.m_id) AS members,
-                                           group_concat(replace(C.server_name, 
-                                                                ",", 
-                                                                "")) as member_names
-                                    FROM   membership AS M
-                                           JOIN contacts as C
-                                             ON M.m_id = C.m_id
-                                    GROUP  BY id) AS group_members
-                                   JOIN groups AS G
-                                     ON G.id = group_members.id
-                            UNION
-                            SELECT server_name,
-                                   m_id,
-                                   NULL,
-                                   NULL
-                            FROM   contacts) AS contact_list_with_groups
-                           JOIN chat_history AS CH
-                             ON CH.chat_id = contact_list_with_groups.id
-                           LEFT JOIN contacts as C
-                             ON C.m_id = CH.from_mid
-                    WHERE attachement_type != 6
+                    SELECT contact_book_w_groups.id, 
+                           contact_book_w_groups.members, 
+                           messages.from_mid, 
+                           messages.content, 
+                           messages.created_time, 
+                           messages.attachement_type, 
+                           messages.attachement_local_uri, 
+                           messages.status 
+                    FROM   (SELECT id, 
+                                   Group_concat(M.m_id) AS members 
+                            FROM   membership AS M 
+                            GROUP  BY id 
+                            UNION 
+                            SELECT m_id, 
+                                   NULL 
+                            FROM   contacts) AS contact_book_w_groups 
+                           JOIN chat_history AS messages 
+                             ON messages.chat_id = contact_book_w_groups.id 
+                    WHERE  attachement_type != 6
                 """
              )
         )
