@@ -69,12 +69,11 @@ before_script:
   - java -version
 
 script:
- - set -e
  - echo "Building TSK..."
  - ./bootstrap && ./configure --prefix=/usr && make > /dev/null
  - ant -version
  - pwd
- - ls
+ - ls -lR bindings/java
  - cd bindings/java
  - ant dist-PostgreSQL
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
