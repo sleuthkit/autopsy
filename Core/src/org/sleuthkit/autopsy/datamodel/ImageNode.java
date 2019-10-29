@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformation
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -63,6 +66,10 @@ public class ImageNode extends AbstractContentNode<Image> {
 
     private static final Logger logger = Logger.getLogger(ImageNode.class.getName());
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
+    private final static String ADMIN_ACCESS_FILE_NAME = "admin"; // NON-NLS
+    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String ADMIN_EXT_ACCESS_FILE_NAME = "adminext"; // NON-NLS
+    private final static String ADMIN_EXT_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_EXT_ACCESS_FILE_NAME).toString();
 
     /**
      * Helper so that the display name and the name used in building the path
@@ -121,7 +128,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-        if (checkSchemaVersion()) {
+        if (checkSchemaVersion() && checkMuAdmin()) {
             actionsList.add(new DeleteDataSourceAction(content.getId()));
         }
         return actionsList.toArray(new Action[0]);
@@ -222,9 +229,19 @@ public class ImageNode extends AbstractContentNode<Image> {
             logger.log(Level.WARNING, "Failed to get creation schema version: ", ex);
         } 
         
-        return false;
-        
-    }   
+        return false;        
+    }
+    
+    private Boolean checkMuAdmin() {
+       try {
+           if (Case.CaseType.MULTI_USER_CASE == Case.getCurrentCaseThrows().getCaseType()) {
+               return new File(ADMIN_ACCESS_FILE_PATH).exists() || new File(ADMIN_EXT_ACCESS_FILE_PATH).exists();
+           }
+       } catch (NoCurrentCaseException ex) {
+           logger.log(Level.SEVERE, "Failed to get the Create Major and Minor Schema Versions", ex);
+        }
+       return true;
+    }
      
     /*
      * This property change listener refreshes the tree when a new file is

@@ -38,7 +38,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
     private long dataSourceID;
-
+    
     /**
      * Constructs an Action that allows a user to delete a data source.
      *
@@ -54,14 +54,14 @@ public final class DeleteDataSourceAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceID);
-            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            kwsService.deleteDataSource(dataSourceID);
-            Case.getCurrentCaseThrows().notifyDataSourceDeleted(dataSourceID);
-        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
-            logger.log(Level.SEVERE, String.format("Error Deleting data source (obj_id=%d)", dataSourceID), e);
-        }
+//        try {
+//            Case.getCurrentCaseThrows().getSleuthkitCase().deleteDataSource(dataSourceID);
+//            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+//            kwsService.deleteDataSource(dataSourceID);
+//            Case.getCurrentCaseThrows().notifyDataSourceDeleted(dataSourceID);
+//        } catch (NoCurrentCaseException | TskCoreException | KeywordSearchServiceException e) {
+//            logger.log(Level.SEVERE, String.format("Error Deleting data source (obj_id=%d)", dataSourceID), e);
+//        }
     }
 
     @Override
@@ -69,7 +69,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
         DeleteDataSourceAction clonedObject = ((DeleteDataSourceAction) super.clone());
         clonedObject.setDataSourceID(this.dataSourceID);
         return clonedObject;
-    }
+    } 
 
     private void setDataSourceID(long dataSourceID) {
         this.dataSourceID = dataSourceID;
