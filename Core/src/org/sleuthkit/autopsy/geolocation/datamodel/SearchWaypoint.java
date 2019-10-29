@@ -27,18 +27,13 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * A SearchWaypoint is a subclass of ArtifactWaypoint.
  */
 final class SearchWaypoint extends ArtifactWaypoint {
-
-    @Messages({
-        "SearchWaypoint_DisplayLabel=GPS Search"
-    })
-
     /**
      * Construct a waypoint for TSK_GPS_SEARCH artifact.
      *
      * @throws GeoLocationDataException
      */
     SearchWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
+        this(artifact, getAttributesFromArtifactAsMap(artifact));
     }
 
     private SearchWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
@@ -60,6 +55,10 @@ final class SearchWaypoint extends ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
+    @Messages({
+        "SearchWaypoint_DisplayLabel=GPS Search"
+    })
+
     private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         if (attribute != null) {

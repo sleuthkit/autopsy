@@ -24,10 +24,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * A Last Know Location Waypoint object.
+ * A Last Known Location Waypoint object.
  */
-@Messages({
-    "LastKnownWaypoint_Label=Last Known Location",})
 final class LastKnownWaypoint extends ArtifactWaypoint {
 
     /**
@@ -37,8 +35,8 @@ final class LastKnownWaypoint extends ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    protected LastKnownWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
-        this(artifact, ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
+    LastKnownWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
+        this(artifact, getAttributesFromArtifactAsMap(artifact));
     }
 
     /**
@@ -69,6 +67,8 @@ final class LastKnownWaypoint extends ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
+    @Messages({
+    "LastKnownWaypoint_Label=Last Known Location",})
     private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         String label = attribute.getDisplayString();

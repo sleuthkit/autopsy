@@ -35,13 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * more that two points.
  *
  */
-@Messages({
-    "Route_Label=As-the-crow-flies Route",
-    "Route_Start_Label=Start",
-    "Route_End_Label=End"
-})
 public final class Route {
-
     private final List<Waypoint> points;
     private final Long timestamp;
     private final Double altitude;
@@ -56,7 +50,7 @@ public final class Route {
      * @param skCase Currently open SleuthkitCase
      *
      * @return List of Route objects, empty list will be returned if no Routes
-     *         where found
+     *         were found
      *
      * @throws GeoLocationDataException
      */
@@ -84,19 +78,9 @@ public final class Route {
     Route(BlackboardArtifact artifact) throws GeoLocationDataException {
         points = new ArrayList<>();
 
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = ArtifactUtils.getAttributesFromArtifactAsMap(artifact);
-
-        Waypoint point = getRouteStartPoint(attributeMap);
-
-        if (point != null) {
-            points.add(point);
-        }
-
-        point = getRouteEndPoint(attributeMap);
-
-        if (point != null) {
-            points.add(point);
-        }
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = ArtifactWaypoint.getAttributesFromArtifactAsMap(artifact);
+        points.add(getRouteStartPoint(attributeMap));
+        points.add(getRouteEndPoint(attributeMap));
 
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
         altitude = attribute != null ? attribute.getValueDouble() : null;
@@ -104,7 +88,7 @@ public final class Route {
         attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
         timestamp = attribute != null ? attribute.getValueLong() : null;
 
-        immutablePropertiesList = Collections.unmodifiableList(GeolocationUtils.createGeolocationProperties(attributeMap));
+        immutablePropertiesList = Collections.unmodifiableList(Waypoint.createGeolocationProperties(attributeMap));
     }
 
     /**
@@ -119,7 +103,7 @@ public final class Route {
     /**
      * Get the timestamp for this Route
      *
-     * @return The timestamp (epoch seconds) or null if none was set.
+     * @return The timestamp (java/unix epoch seconds) or null if none was set.
      */
     public Long getTimestamp() {
         return timestamp;
@@ -146,10 +130,12 @@ public final class Route {
 
     /**
      * Get the route label.
-     *
-     * This will return the original hard coded label from the KML report:
-     * As-the-crow-flies Route
      */
+    @Messages({
+        // This is the original static hardcoded label from the 
+        // original kml-report code
+        "Route_Label=As-the-crow-flies Route"
+    })
     public String getLabel() {
         return Bundle.Route_Label();
     }
@@ -163,6 +149,9 @@ public final class Route {
      *
      * @throws GeoLocationDataException when longitude or latitude is null
      */
+    @Messages({
+        "Route_Start_Label=Start"
+    })
     private Waypoint getRouteStartPoint(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute latitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
         BlackboardAttribute longitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
@@ -184,6 +173,9 @@ public final class Route {
      *
      * @throws GeoLocationDataException when longitude or latitude is null
      */
+    @Messages({
+        "Route_End_Label=End"
+    })
     private Waypoint getRouteEndPoint(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute latitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
         BlackboardAttribute longitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);

@@ -19,11 +19,13 @@
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Representation of a Waypoint created from a BlackboardArtifact.
@@ -42,7 +44,7 @@ class ArtifactWaypoint implements Waypoint {
     // This list is not expected to change after construction so the 
     // constructor will take care of creating an unmodifiable List
     final private List<Waypoint.Property> immutablePropertiesList;
-
+   
     /**
      * Construct a waypoint with the given artifact.
      *
@@ -51,9 +53,9 @@ class ArtifactWaypoint implements Waypoint {
      * @throws GeoLocationDataException Exception will be thrown if artifact did
      *                                  not have a valid longitude and latitude.
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
+    ArtifactWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact,
-                ArtifactUtils.getAttributesFromArtifactAsMap(artifact));
+                getAttributesFromArtifactAsMap(artifact));
     }
 
     /**
@@ -61,18 +63,17 @@ class ArtifactWaypoint implements Waypoint {
      *
      * @param artifact     BlackboardArtifact for this waypoint
      * @param label        String waypoint label
-     * @param timestamp    Long timestamp, epoch seconds
+     * @param timestamp    Long timestamp, unix/java epoch seconds
      * @param latitude     Double waypoint latitude
      * @param longitude    Double waypoint longitude
      * @param altitude     Double waypoint altitude
      * @param image        AbstractFile image for waypoint, this maybe null
-     * @param type         Waypoint.Type value for waypoint
      * @param attributeMap A Map of attributes for the given artifact
      *
      * @throws GeoLocationDataException Exception will be thrown if artifact did
      *                                  not have a valid longitude and latitude.
      */
-    protected ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+    ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         if (longitude == null || latitude == null) {
             throw new GeoLocationDataException("Invalid waypoint, null value passed for longitude or latitude");
         }
@@ -85,7 +86,7 @@ class ArtifactWaypoint implements Waypoint {
         this.latitude = latitude;
         this.altitude = altitude;
 
-        immutablePropertiesList = Collections.unmodifiableList(GeolocationUtils.createGeolocationProperties(attributeMap));
+        immutablePropertiesList = Collections.unmodifiableList(Waypoint.createGeolocationProperties(attributeMap));
     }
 
     /**
@@ -166,5 +167,31 @@ class ArtifactWaypoint implements Waypoint {
         }
 
         return "";
+    }
+    
+    /**
+     * Gets the list of attributes from the artifact and puts them into a map
+     * with the ATRIBUTE_TYPE as the key.
+     *
+     * @param artifact BlackboardArtifact current artifact
+     *
+     * @return A Map of BlackboardAttributes for the given artifact with
+     *         ATTRIBUTE_TYPE as the key.
+     *
+     * @throws GeoLocationDataException
+     */
+    static Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> getAttributesFromArtifactAsMap(BlackboardArtifact artifact) throws GeoLocationDataException {
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = new HashMap<>();
+        try {
+            List<BlackboardAttribute> attributeList = artifact.getAttributes();
+            for (BlackboardAttribute attribute : attributeList) {
+                BlackboardAttribute.ATTRIBUTE_TYPE type = BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attribute.getAttributeType().getTypeID());
+                attributeMap.put(type, attribute);
+            }
+        } catch (TskCoreException ex) {
+            throw new GeoLocationDataException("Unable to get attributes from artifact", ex);
+        }
+
+        return attributeMap;
     }
 }
