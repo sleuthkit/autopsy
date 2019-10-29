@@ -18,7 +18,7 @@ import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
  * Waypoint interfact for use in the map.
  * 
  */
-final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
+final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint{
 
     private final Waypoint dataModelWaypoint;
     private final GeoPosition position;
@@ -29,8 +29,15 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
      * @param dataModelWaypoint The datamodel waypoint to wrap
      */
     private MapWaypoint(Waypoint dataModelWaypoint) {
+        super(dataModelWaypoint.getLatitude(), dataModelWaypoint.getLongitude());
         this.dataModelWaypoint = dataModelWaypoint;
         position = new GeoPosition(dataModelWaypoint.getLatitude(), dataModelWaypoint.getLongitude());
+    }
+    
+    private MapWaypoint(GeoPosition position) {
+        super(position.getLatitude(), position.getLongitude());
+        dataModelWaypoint = null;
+        this.position = position;
     }
     
     /**
@@ -42,7 +49,7 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
      * 
      * @throws GeoLocationDataException 
      */
-    static List<org.jxmapviewer.viewer.Waypoint> getWaypoints(SleuthkitCase skCase) throws GeoLocationDataException{
+    static List<MapWaypoint> getWaypoints(SleuthkitCase skCase) throws GeoLocationDataException{
         List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
         
         List<Route> routes = Route.getRoutes(skCase);
@@ -50,7 +57,7 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
             points.addAll(route.getRoute());
         }
         
-        List<org.jxmapviewer.viewer.Waypoint> mapPoints = new ArrayList<>();
+        List<MapWaypoint> mapPoints = new ArrayList<>();
         
         for(Waypoint point: points) {
             mapPoints.add(new MapWaypoint(point));
@@ -59,6 +66,10 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
         return mapPoints;
     }
     
+    static MapWaypoint getDummyWaypoint(GeoPosition position) {
+        return new MapWaypoint(position);
+    }
+
     /**
      * {@inheritDoc}
      */

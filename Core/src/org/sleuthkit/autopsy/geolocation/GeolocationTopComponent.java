@@ -156,9 +156,9 @@ public final class GeolocationTopComponent extends TopComponent {
      *
      */
     private void initWaypoints() {
-        SwingWorker<List<Waypoint>, Waypoint> worker = new SwingWorker<List<Waypoint>, Waypoint>() {
+        SwingWorker<List<MapWaypoint>, MapWaypoint> worker = new SwingWorker<List<MapWaypoint>, MapWaypoint>() {
             @Override
-            protected List<Waypoint> doInBackground() throws Exception {
+            protected List<MapWaypoint> doInBackground() throws Exception {
                 Case currentCase = Case.getCurrentCaseThrows();
 
                 return MapWaypoint.getWaypoints(currentCase.getSleuthkitCase());
@@ -168,14 +168,11 @@ public final class GeolocationTopComponent extends TopComponent {
             protected void done() {
                 if (isDone() && !isCancelled()) {
                     try {
-                        List<Waypoint> waypoints = get();
+                        List<MapWaypoint> waypoints = get();
                         if (waypoints == null || waypoints.isEmpty()) {
                             return;
                         }
-
-                        for (Waypoint point : waypoints) {
-                            mapPanel.addWaypoint(point);
-                        }
+                        mapPanel.setWaypoints(waypoints);
 
                         // There might be a better way to decide how to center
                         // but for now just use the first way point.

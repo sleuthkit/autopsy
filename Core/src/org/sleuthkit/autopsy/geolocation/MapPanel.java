@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListDataEvent;
@@ -46,17 +50,15 @@ final class MapPanel extends javax.swing.JPanel {
     private boolean zoomChanging;
     private final boolean sliderReversed;
     
-    // Using a DefaultListModel to store the way points because we get 
-    // a lot of functionality for free, like listeners.
-    private final DefaultListModel<Waypoint> waypointListModel;
+    private KdTree<MapWaypoint> waypointTree;
 
     /**
      * Creates new form MapPanel
      */
     MapPanel() {
-        waypointListModel = new DefaultListModel<>();
          sliderReversed = false;
          zoomChanging = false;
+         waypointTree = null;
          
         initComponents();
         initMap();
@@ -94,32 +96,16 @@ final class MapPanel extends javax.swing.JPanel {
         mapViewer.setZoom(tileFactory.getInfo().getMaximumZoomLevel()- 1);
         mapViewer.setAddressLocation(new GeoPosition(0, 0));
 
-        // Listener for new way points being added to the map.
-        waypointListModel.addListDataListener(new ListDataListener() {
-            @Override
-            public void intervalAdded(ListDataEvent e) {
-                mapViewer.repaint();
-            }
-
-            @Override
-            public void intervalRemoved(ListDataEvent e) {
-                mapViewer.repaint();
-            }
-
-            @Override
-            public void contentsChanged(ListDataEvent e) {
-                mapViewer.repaint();
-            }
-
-        });
-
         // Basic painters for the way points. 
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>() {
             @Override
             public Set<Waypoint> getWaypoints() {
                 Set<Waypoint> set = new HashSet<>();
-                for (int index = 0; index < waypointListModel.getSize(); index++) {
-                    set.add(waypointListModel.get(index));
+                if(waypointTree != null) {
+                    Iterator<MapWaypoint> iterator = waypointTree.iterator();
+                    while(iterator.hasNext()) {
+                        set.add(iterator.next());
+                    }
                 }
                 return set;
             }
@@ -127,14 +113,15 @@ final class MapPanel extends javax.swing.JPanel {
 
         mapViewer.setOverlayPainter(waypointPainter);
     }
-
-    /**
-     * Add a way point to the map.
-     * 
-     * @param waypoint 
-     */
-    void addWaypoint(Waypoint waypoint) {
-        waypointListModel.addElement(waypoint);
+    
+    void setWaypoints(List<MapWaypoint> waypoints) {
+        waypointTree = new KdTree<>();
+        
+        for (MapWaypoint waypoint: waypoints) {
+            waypointTree.add(waypoint);
+        }
+        
+        mapViewer.repaint();
     }
     
     void setCenterLocation(Waypoint waypoint) {
@@ -161,7 +148,23 @@ final class MapPanel extends javax.swing.JPanel {
      * Remove all of the way points from the map.
      */
     void clearWaypoints() {
-        waypointListModel.removeAllElements();
+        waypointTree = null;
+    }
+    
+    private void showPopupMenu(MouseEvent evt) {
+        if (waypointTree == null) {
+            return;
+        }
+        
+        // Convert the mouse click location to latitude & longitude
+        GeoPosition geopos = mapViewer.getTileFactory().pixelToGeo(evt.getPoint(), mapViewer.getZoom());
+        
+        // Get the 5 nearest neightbors to the point
+        Collection<MapWaypoint> waypoints = waypointTree.nearestNeighbourSearch(5, MapWaypoint.getDummyWaypoint(geopos));
+        
+        for(MapWaypoint waypoint: waypoints) {
+            
+        }
     }
 
     /**
@@ -181,6 +184,14 @@ final class MapPanel extends javax.swing.JPanel {
         setFocusable(false);
         setLayout(new java.awt.BorderLayout());
 
+        mapViewer.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                mapViewerMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                mapViewerMouseReleased(evt);
+            }
+        });
         mapViewer.setLayout(new java.awt.GridBagLayout());
 
         zoomPanel.setFocusable(false);
@@ -234,6 +245,18 @@ final class MapPanel extends javax.swing.JPanel {
             setZoom(zoomSlider.getValue());
         }
     }//GEN-LAST:event_zoomSliderStateChanged
+
+    private void mapViewerMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMousePressed
+        if(evt.isPopupTrigger()) {
+            showPopupMenu(evt);
+        }
+    }//GEN-LAST:event_mapViewerMousePressed
+
+    private void mapViewerMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseReleased
+        if(evt.isPopupTrigger()) {
+            showPopupMenu(evt);
+        }
+    }//GEN-LAST:event_mapViewerMouseReleased
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
