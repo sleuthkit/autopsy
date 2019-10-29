@@ -429,7 +429,7 @@ public final class CaseMetadata {
 
             /*
              * Write the DOM to the metadata file.  Add UTF-8 Characterset so it writes to the file
-             * correctly for non-latin charadters
+             * correctly for non-latin characters
              */
             try (BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metadataFilePath.toFile()), StandardCharsets.UTF_8))) {
                 fileWriter.write(stringWriter.toString());
