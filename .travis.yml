@@ -73,7 +73,7 @@ before_script:
 script:
  - set -e
  - echo "Building TSK..."
- - ./bootstrap && ./configure --prefix=/usr && make
+ - ./bootstrap && ./configure --prefix=/usr && make > /dev/null
  - ant -version
  - cd bindings/java
  - pwd
