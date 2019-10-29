@@ -19,8 +19,16 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import com.google.common.io.Files;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -30,6 +38,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
@@ -52,8 +61,12 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
+import javax.swing.JComponent;
+import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import javax.swing.plaf.basic.BasicSliderUI;
+import javax.swing.plaf.basic.BasicSliderUI.TrackListener;
 import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Format;
 import org.freedesktop.gstreamer.GstException;
@@ -189,12 +202,20 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     private ExtractMedia extractMediaWorker;
 
+    //Serialize setting the value of the Video progress slider.
+    //The slider is a shared resource between the VideoPanelUpdater
+    //and the TrackListener of the JSliderUI.
+    private final Semaphore sliderLock;
+
     /**
      * Creates new form MediaViewVideoPanel
      */
     public MediaPlayerPanel() throws GstException, UnsatisfiedLinkError {
         initComponents();
         customizeComponents();
+        //True for fairness. In other words,
+        //acquire() calls are processed in order of invocation.
+        sliderLock = new Semaphore(1, true);
     }
 
     private void customizeComponents() {
@@ -532,6 +553,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         @Override
         public void actionPerformed(ActionEvent e) {
             if (!progressSlider.getValueIsAdjusting()) {
+                sliderLock.acquireUninterruptibly();
                 long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
                 long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
                 /**
@@ -547,6 +569,210 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 SwingUtilities.invokeLater(() -> {
                     updateTimeLabel(position, duration);
                 });
+                sliderLock.release();
+            }
+        }
+    }
+
+    /**
+     * Represents the default configuration for the circular JSliderUI.
+     */
+    private class CircularJSliderConfiguration {
+
+        //Thumb configurations
+        private final Color thumbColor;
+        private final Dimension thumbDimension;
+
+        //Track configurations
+        //Progress bar can be bisected into a seen group 
+        //and an unseen group.
+        private final Color unseen;
+        private final Color seen;
+
+        /**
+         * Default configuration
+         *
+         * JSlider is light blue RGB(0,130,255). Seen track is light blue
+         * RGB(0,130,255). Unseen track is light grey RGB(192, 192, 192).
+         *
+         * @param thumbDimension Size of the oval thumb.
+         */
+        public CircularJSliderConfiguration(Dimension thumbDimension) {
+            Color lightBlue = new Color(0, 130, 255);
+
+            seen = lightBlue;
+            unseen = Color.LIGHT_GRAY;
+
+            thumbColor = lightBlue;
+
+            this.thumbDimension = new Dimension(thumbDimension);
+        }
+
+        public Color getThumbColor() {
+            return thumbColor;
+        }
+
+        public Color getUnseenTrackColor() {
+            return unseen;
+        }
+
+        public Color getSeenTrackColor() {
+            return seen;
+        }
+
+        public Dimension getThumbDimension() {
+            return new Dimension(thumbDimension);
+        }
+    }
+
+    /**
+     * Custom view for the JSlider.
+     */
+    private class CircularJSliderUI extends BasicSliderUI {
+
+        private final CircularJSliderConfiguration config;
+
+        /**
+         * Creates a custom view for the JSlider. This view draws a blue oval
+         * thumb at the given width and height. It also paints the track blue as
+         * the thumb progresses.
+         *
+         * @param slider JSlider component
+         * @param config Configuration object. Contains info about thumb
+         * dimensions and colors.
+         */
+        public CircularJSliderUI(JSlider slider, CircularJSliderConfiguration config) {
+            super(slider);
+            this.config = config;
+        }
+
+        @Override
+        protected Dimension getThumbSize() {
+            return config.getThumbDimension();
+        }
+
+        /**
+         * Modifies the View to be an oval rather than the rectangle Controller.
+         */
+        @Override
+        public void paintThumb(Graphics graphic) {
+            Rectangle thumb = this.thumbRect;
+
+            Color original = graphic.getColor();
+
+            //Change the thumb view from the rectangle
+            //controller to an oval.
+            graphic.setColor(config.getThumbColor());
+            Dimension thumbDimension = config.getThumbDimension();
+            graphic.fillOval(thumb.x, thumb.y, thumbDimension.width, thumbDimension.height);
+
+            //Preserve the graphics original color
+            graphic.setColor(original);
+        }
+
+        @Override
+        public void paintTrack(Graphics graphic) {
+            //This rectangle is the bounding box for the progress bar
+            //portion of the slider. The track is painted in the middle
+            //of this rectangle and the thumb laid overtop.
+            Rectangle track = this.trackRect;
+
+            //Get the location of the thumb, this point splits the
+            //progress bar into 2 line segments, seen and unseen.
+            Rectangle thumb = this.thumbRect;
+            int thumbX = thumb.x;
+            int thumbY = thumb.y;
+
+            Color original = graphic.getColor();
+
+            //Paint the seen side
+            graphic.setColor(config.getSeenTrackColor());
+            graphic.drawLine(track.x, track.y + track.height / 2,
+                    thumbX, thumbY + track.height / 2);
+
+            //Paint the unseen side
+            graphic.setColor(config.getUnseenTrackColor());
+            graphic.drawLine(thumbX, thumbY + track.height / 2,
+                    track.x + track.width, track.y + track.height / 2);
+
+            //Preserve the graphics color.
+            graphic.setColor(original);
+        }
+
+        @Override
+        protected TrackListener createTrackListener(JSlider slider) {
+            return new CustomTrackListener();
+        }
+
+        @Override
+        protected void scrollDueToClickInTrack(int direction) {
+            //Set the thumb position to the mouse press location, as opposed
+            //to the closest "block" which is the default behavior.
+            Point mousePosition = slider.getMousePosition();
+            if (mousePosition == null) {
+                return;
+            }
+            int value = this.valueForXPosition(mousePosition.x);
+
+            //Lock the slider down, which is a shared resource.
+            //The VideoPanelUpdater (dedicated thread) keeps the
+            //slider in sync with the video position, so without 
+            //proper locking our change could be overwritten.
+            sliderLock.acquireUninterruptibly();
+            slider.setValueIsAdjusting(true);
+            slider.setValue(value);
+            slider.setValueIsAdjusting(false);
+            sliderLock.release();
+        }
+
+        /**
+         * Applies anti-aliasing if available.
+         */
+        @Override
+        public void update(Graphics graphic, JComponent component) {
+            if (graphic instanceof Graphics2D) {
+                Graphics2D graphic2 = (Graphics2D) graphic;
+                graphic2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+            }
+
+            super.update(graphic, component);
+        }
+
+        /**
+         * This track listener will force the thumb to be snapped to the mouse
+         * location. This makes grabbing and dragging the JSlider much easier.
+         * Using the default track listener, the user would have to click
+         * exactly on the slider thumb to drag it. Now the thumb positions
+         * itself under the mouse so that it can always be dragged.
+         */
+        private class CustomTrackListener extends CircularJSliderUI.TrackListener {
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (!slider.isEnabled()) {
+                    return;
+                }
+                //Snap the thumb to position of the mouse
+                scrollDueToClickInTrack(0);
+
+                //Pause the video for convenience
+                gstPlayBin.pause();
+
+                //Handle the event as normal.
+                super.mousePressed(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (!slider.isEnabled()) {
+                    return;
+                }
+
+                super.mouseReleased(e);
+
+                //Unpause once the mouse has been released.
+                gstPlayBin.play();
             }
         }
     }
@@ -592,6 +818,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setDoubleBuffered(true);
         progressSlider.setMinimumSize(new java.awt.Dimension(36, 21));
         progressSlider.setPreferredSize(new java.awt.Dimension(200, 21));
+        progressSlider.setUI(new CircularJSliderUI(progressSlider, new CircularJSliderConfiguration(new Dimension(18,18))));
 
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.progressLabel.text")); // NOI18N
 
@@ -645,7 +872,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         gridBagConstraints.ipadx = 8;
         gridBagConstraints.ipady = 7;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(6, 14, 0, 0);
         buttonPanel.add(VolumeIcon, gridBagConstraints);
 
         audioSlider.setMajorTickSpacing(10);
@@ -655,6 +882,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         audioSlider.setValue(25);
         audioSlider.setMinimumSize(new java.awt.Dimension(200, 21));
         audioSlider.setPreferredSize(new java.awt.Dimension(200, 21));
+        audioSlider.setUI(new CircularJSliderUI(audioSlider, new CircularJSliderConfiguration(new Dimension(15,15))));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 0;
@@ -739,8 +967,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
