@@ -14,7 +14,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 
 /**
- *
+ * A Wrapper for the datamodel Waypoint class that implements the jxmapviewer
+ * Waypoint interfact for use in the map.
  * 
  */
 final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
@@ -22,11 +23,25 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
     private final Waypoint dataModelWaypoint;
     private final GeoPosition position;
     
+    /**
+     * Private constructor for MapWaypoint
+     * 
+     * @param dataModelWaypoint The datamodel waypoint to wrap
+     */
     private MapWaypoint(Waypoint dataModelWaypoint) {
         this.dataModelWaypoint = dataModelWaypoint;
         position = new GeoPosition(dataModelWaypoint.getLatitude(), dataModelWaypoint.getLongitude());
     }
     
+    /**
+     * Gets a list of jxmapviewer waypoints from the current case.
+     * 
+     * @param skCase Current case
+     * 
+     * @return List of jxmapviewer waypoints
+     * 
+     * @throws GeoLocationDataException 
+     */
     static List<org.jxmapviewer.viewer.Waypoint> getWaypoints(SleuthkitCase skCase) throws GeoLocationDataException{
         List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
         
@@ -44,13 +59,11 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
         return mapPoints;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GeoPosition getPosition() {
         return position;
     }
-    
-    String getDisplayName() {
-        return dataModelWaypoint.getLabel();
-    }
-    
 }
