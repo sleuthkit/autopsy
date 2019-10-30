@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -62,39 +62,28 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
      * @return The text content of the file.
      */
     @NbBundle.Messages({
-        "HtmlViewer_file_error=This file is missing or unreadable.",})
+        "HtmlViewer_file_error=This file is missing or unreadable.",
+        "HtmlViewer_encoding_error=This file has unsupported encoding"})
     private String getHtmlText(AbstractFile abstractFile) {
         try {
             int fileSize = (int) abstractFile.getSize();
             byte[] buffer = new byte[fileSize];
             abstractFile.read(buffer, 0, fileSize);
-            String encoding = determineEncoding(buffer);
-            if (encoding != null) {
-                return new String(buffer, encoding);
+            CharsetMatch match = new CharsetDetector().setText(buffer).detect();
+            if (match != null) {
+                return new String(buffer, match.getName());
             } else {
                 return new String(buffer);
             }
-        } catch (TskCoreException | IOException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to read from file '%s' (id=%d).",
                     abstractFile.getName(), abstractFile.getId()), ex);
             return String.format("<p>%s</p>", Bundle.HtmlViewer_file_error());
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, String.format("Unsupported encoding for file '%s' (id=%d).",
+                    abstractFile.getName(), abstractFile.getId()), ex);
+            return String.format("<p>%s</p>", Bundle.HtmlViewer_encoding_error());
         }
-    }
-
-    /**
-     * This method will try and determine the encoding of the html file based on its contents
-     * 
-     * @param buffer byte array of the html file to check
-     * 
-     * @return encoding type, null if encoding could not be determined
-     */
-    private String determineEncoding(byte[] buffer) throws IOException {
-  
-        CharsetDetector detector = new CharsetDetector();
-        detector.setText(buffer);
-        CharsetMatch match = detector.detect();
-        return match.getName();
-        
     }
 
     /**
