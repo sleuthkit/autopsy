@@ -76,6 +76,7 @@ script:
  - pwd
  - ls -lR bindings/java
  - cd bindings/java
+ - sleep 10
  - ant dist-PostgreSQL
  - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
