@@ -49,8 +49,7 @@ before_install:
  - python setupSleuthkitBranch.py
 
 install:
- - cd sleuthkit/sleuthkit
- - ./travis_install_libs.sh
+ - pushd sleuthkit/sleuthkit && ./travis_install_libs.sh && popd
 
 before_script:
   - if [ $TRAVIS_OS_NAME = linux ]; then 
@@ -70,12 +69,4 @@ before_script:
     fi
   - java -version
 
-script:
- - set -e
- - echo "Building TSK..."
- - ./bootstrap && ./configure --prefix=/usr && make
- - pushd bindings/java && ant dist-PostgreSQL && popd
- - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
- - cd $TRAVIS_BUILD_DIR/
- - ant build
- - echo -en 'travis_fold:end:script.build\\r'
+script: ./travis_build.sh
