@@ -53,7 +53,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -745,7 +744,7 @@ public class Case {
     }
 
     /**
-     * Deletes a data source from the current cases.
+     * Deletes a data source from the current case.
      *
      * @param dataSourceObjectID The object ID of the data source to delete.
      *
@@ -764,7 +763,10 @@ public class Case {
             }
             Case theCase = currentCase;
             closeCurrentCase();
-            theCase.doCaseAction(Bundle.Case_progressIndicatorTitle_deletingDataSource(), null, CaseLockType.EXCLUSIVE, false, dataSourceObjectID);
+            /*
+             * Note that this case action does not support cancellation.
+             */
+            theCase.doCaseAction(Bundle.Case_progressIndicatorTitle_deletingDataSource(), theCase::deleteDataSource, CaseLockType.EXCLUSIVE, false, dataSourceObjectID);
             openAsCurrentCase(theCase, false);
         }
     }
@@ -1754,12 +1756,7 @@ public class Case {
     }
 
     /**
-     * Performs a case action by creating a task running in the same non-UI
-     * thread that will be used to close the case. For both single-user and
-     * mulit-user cases, this supports cancelling the case action by cancelling
-     * the task. If the case is a multi-user case, this also ensures that the
-     * case lock is released in the same thread in which it was acquired, which
-     * is required by the coordination service.
+     * Performs a case action.
      *
      * @param progressIndicatorTitle A title for the progress indicator for the
      *                               case action.
@@ -1769,8 +1766,7 @@ public class Case {
      * @param allowCancellation      Whether or not to allow the action to be
      *                               cancelled.
      * @param additionalParams       An Object that holds any additional
-     *                               parameters for a case action. For this
-     *                               action, this is null.
+     *                               parameters for a case action.
      *
      * @throws CaseActionException If there is a problem completing the action.
      *                             The exception will have a user-friendly
@@ -1815,15 +1811,11 @@ public class Case {
          * A case action is always done by creating a task running in the same
          * non-UI thread that will be used to close the case, so a
          * single-threaded executor service is created here and saved as case
-         * state (must be volatile for cancellation to work).
-         *
-         * --- If the case is a single-user case, this supports cancelling the
-         * case action by cancelling the task.
-         *
-         * --- If the case is a multi-user case, this still supports
-         * cancellation, but it also makes it possible for the case lock held as
-         * long as the case is open to be released in the same thread in which
-         * it was acquired, as is required by the coordination service.
+         * state (must be volatile for cancellation to work). For both
+         * single-user and mulit-user cases, this supports cancelling the case
+         * action by cancelling the task. If the case is a multi-user case, this
+         * also ensures that the case lock is released in the same thread in
+         * which it was acquired, which is required by the coordination service.
          */
         TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_ACTION_THREAD_NAME, metadata.getCaseName()));
         caseLockingExecutor = Executors.newSingleThreadExecutor(threadFactory);
@@ -1954,7 +1946,7 @@ public class Case {
 
     /**
      * A case action (interface CaseAction<T, V, R>) that opens the case
-     * database and services for this case.
+     * database and application services for this case.
      *
      * @param progressIndicator A progress indicator.
      * @param additionalParams  An Object that holds any additional parameters
@@ -2006,8 +1998,6 @@ public class Case {
      * opens the case database and application services for this case, deletes a
      * data source from the case, and publishes an application event indicasting
      * the data source has been deleted.
-     *
-     * Note that this case action does not support cancellation.
      *
      * @param progressIndicator A progress indicator.
      * @param additionalParams  An Object that holds any additional parameters
@@ -2643,17 +2633,15 @@ public class Case {
     }
 
     /**
-     * Acquires a shared case directory lock for the current case.
+     * Acquires a case (case directory) lock for the current case.
      *
      * @param caseDir The full path of the case directory.
      *
-     * @throws CaseActionException with a user-friendly message if the lock
-     *                             cannot be acquired.
+     * @throws CaseActionException If the lock cannot be acquired.
      */
     @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory"})
     private void acquireCaseLock(CaseLockType lockType, String caseDir) throws CaseActionException {
         try {
-            boolean flag = true;
             CoordinationService coordinationService = CoordinationService.getInstance();
             caseDirLock = lockType == CaseLockType.SHARED
                     ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS)
@@ -3054,11 +3042,33 @@ public class Case {
         }
     }
 
+    /**
+     * Defines the signature for case action methods that can be passed as
+     * arguments to the doCaseAction method.
+     *
+     * @param <T> A ProgressIndicator
+     * @param <V> The optional parameters stored in an Object.
+     * @param <R> The return type of Void.
+     */
     private interface CaseAction<T, V, R> {
 
-        R execute(T t, V v) throws CaseActionException;
+        /**
+         * The signature for a case action method.
+         *
+         * @param progressIndicator A ProgressIndicator.
+         * @param additionalParams  The optional parameters stored in an Object.
+         *
+         * @return A Void object (null).
+         *
+         * @throws CaseActionException
+         */
+        R execute(T progressIndicator, V additionalParams) throws CaseActionException;
     }
 
+    /**
+     * The choices for the case (case directory) coordination service lock used
+     * for multi-user cases.
+     */
     private enum CaseLockType {
         SHARED, EXCLUSIVE;
     }

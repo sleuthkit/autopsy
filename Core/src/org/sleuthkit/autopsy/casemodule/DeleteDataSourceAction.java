@@ -56,7 +56,8 @@ public final class DeleteDataSourceAction extends AbstractAction {
     @NbBundle.Messages({
         "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?",
         "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source.\nPlease see the application log for details.",
-        "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to reopen the case.",})
+        "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to reopen the case."
+    })
     @Override
     public void actionPerformed(ActionEvent event) {
         if (MessageNotifyUtil.Message.confirm(Bundle.DeleteDataSourceAction_confirmationDialog_message())) {
@@ -102,8 +103,14 @@ public final class DeleteDataSourceAction extends AbstractAction {
         return clonedObject;
     }
 
-    private void setDataSourceID(long dataSourceID) {
-        this.dataSourceObjectID = dataSourceID;
+    /**
+     * Allows the setting of the data source object ID field of a clone of this
+     * action.
+     *
+     * @param dataSourceObjectID The data source object ID.
+     */
+    private void setDataSourceID(long dataSourceObjectID) {
+        this.dataSourceObjectID = dataSourceObjectID;
     }
 
 }

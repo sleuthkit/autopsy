@@ -123,7 +123,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
         if (canAddDeleteDataSourceAction()) {
-            actionsList.add(new DeleteDataSourceAction(content.getId()));            
+            actionsList.add(new DeleteDataSourceAction(content.getId()));
         }
         return actionsList.toArray(new Action[0]);
     }
@@ -213,14 +213,15 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     /**
-     * Determines whether or not the delete data source action can be added. 
+     * Determines whether or not the delete data source action can be added.
+     *
      * @return True or false.
      */
     private Boolean canAddDeleteDataSourceAction() {
         boolean canAddAction = false;
         CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
         if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 3) || (creationVersion.getMajor() > 8)) {
-            canAddAction = Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE || !AccessLimiterUtils.limitMultiUserAccess();        
+            canAddAction = Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE || !AccessLimiterUtils.limitMultiUserAccess();
         }
         return canAddAction;
     }
