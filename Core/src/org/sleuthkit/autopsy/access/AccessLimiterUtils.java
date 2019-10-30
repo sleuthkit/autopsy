@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.access;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * Class for methods to check if access should be limited to a feature
  *
  */
-final class AccessLimiterUtils {
+final public class AccessLimiterUtils {
 
     private final static String MULTI_USER_ACCESS_FILE_NAME = "mualimit"; // NON-NLS
     private final static String MULTI_USER_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), MULTI_USER_ACCESS_FILE_NAME).toString();
@@ -36,7 +36,7 @@ final class AccessLimiterUtils {
      *
      * @return True if privileges should be restricted, false otherwise.
      */
-    static boolean limitMultiUserAccess() {
+    public static boolean limitMultiUserAccess() {
         return new File(MULTI_USER_ACCESS_FILE_PATH).exists();
     }
 

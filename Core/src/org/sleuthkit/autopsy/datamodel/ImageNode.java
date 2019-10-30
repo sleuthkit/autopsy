@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,14 +33,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.actions.DeleteDataSourceAction;
+import org.sleuthkit.autopsy.access.AccessLimiterUtils;
+import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -66,10 +64,6 @@ public class ImageNode extends AbstractContentNode<Image> {
 
     private static final Logger logger = Logger.getLogger(ImageNode.class.getName());
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
-    private final static String ADMIN_ACCESS_FILE_NAME = "admin"; // NON-NLS
-    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
-    private final static String ADMIN_EXT_ACCESS_FILE_NAME = "adminext"; // NON-NLS
-    private final static String ADMIN_EXT_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_EXT_ACCESS_FILE_NAME).toString();
 
     /**
      * Helper so that the display name and the name used in building the path
@@ -128,7 +122,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-        if (checkSchemaVersion() && checkMuAdmin()) {
+        if (canAddDeleteDataSourceAction()) {
             actionsList.add(new DeleteDataSourceAction(content.getId()));
         }
         return actionsList.toArray(new Action[0]);
@@ -218,31 +212,19 @@ public class ImageNode extends AbstractContentNode<Image> {
         return getClass().getName();
     }
 
-    private Boolean checkSchemaVersion() {
-        try {
-            CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion();
-
-            if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 3) || creationVersion.getMajor() > 8) {
-                        return true;
-            }
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Failed to get creation schema version: ", ex);
-        } 
-        
-        return false;        
-    }
-    
-    private Boolean checkMuAdmin() {
-       try {
-           if (Case.CaseType.MULTI_USER_CASE == Case.getCurrentCaseThrows().getCaseType()) {
-               return new File(ADMIN_ACCESS_FILE_PATH).exists() || new File(ADMIN_EXT_ACCESS_FILE_PATH).exists();
-           }
-       } catch (NoCurrentCaseException ex) {
-           logger.log(Level.SEVERE, "Failed to get the Create Major and Minor Schema Versions", ex);
+    /**
+     * Determines whether or not the delete data source action can be added. 
+     * @return True or false.
+     */
+    private Boolean canAddDeleteDataSourceAction() {
+        boolean canAddAction = false;
+        CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
+        if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 3) || (creationVersion.getMajor() > 8)) {
+            canAddAction = Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE || !AccessLimiterUtils.limitMultiUserAccess();        
         }
-       return true;
+        return canAddAction;
     }
-     
+
     /*
      * This property change listener refreshes the tree when a new file is
      * carved out of this image (i.e, the image is being treated as raw bytes
