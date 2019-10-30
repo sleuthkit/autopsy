@@ -23,32 +23,42 @@ import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Utility classes for content viewers. In theory, this would live in the
- * contentviewer package, but the initial method was needed only be viewers in
- * corecomponents and therefore can stay out of public API.
+ * Utility methods for content viewers.
  */
 public class DataContentViewerUtility {
 
     /**
-     * Returns the first non-Blackboard Artifact from a Node. Needed for (at
-     * least) Hex and Strings that want to view all types of content (not just
-     * AbstractFile), but don't want to display an artifact unless that's the
-     * only thing there. Scenario is hash hit or interesting item hit.
+     * Gets a Content object from the Lookup of a display Node object,
+     * preferring to return any Content object other than a BlackboardArtifact
+     * object.
      *
-     * @param node Node passed into content viewer
+     * This method was written with the needs of the hex and strings content
+     * viewers in mind - the algorithm is exactly what those viewers require.
      *
-     * @return highest priority content or null if there is no content
+     * @param node A display Node object.
+     *
+     * @return If there are multiple Content objects associated with the Node,
+     *         the first Content object that is not a BlackboardArtifact object
+     *         is returned. If no Content objects other than artifacts are found,
+     *         the first BlackboardArtifact object found is returned. If no
+     *         Content objects are found, null is returned.
      */
     public static Content getDefaultContent(Node node) {
-        Content bbContentSeen = null;
-        for (Content content : (node).getLookup().lookupAll(Content.class)) {
-            if (content instanceof BlackboardArtifact) {
-                bbContentSeen = content;
+        Content artifact = null;
+        for (Content content : node.getLookup().lookupAll(Content.class)) {
+            if (content instanceof BlackboardArtifact && artifact == null) {
+                artifact = content;
             } else {
                 return content;
             }
         }
-        return bbContentSeen;
+        return artifact;
+    }
+
+    /*
+     * Private constructor to prevent instantiation of utility class.
+     */
+    private DataContentViewerUtility() {
     }
 
 }
