@@ -21,20 +21,32 @@ package org.sleuthkit.autopsy.filequery;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
+import org.sleuthkit.autopsy.modules.hashdatabase.AddContentToHashDbAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -64,6 +76,8 @@ public class ResultsPanel extends javax.swing.JPanel {
     /**
      * Creates new form ResultsPanel.
      */
+    @Messages({"ResultsPanel.viewFileInDir.name=View File in Directory",
+        "ResultsPanel.openInExternalViewer.name=Open in External Viewer"})
     public ResultsPanel(EamDb centralRepo) {
         initComponents();
         this.centralRepo = centralRepo;
@@ -79,6 +93,29 @@ public class ResultsPanel extends javax.swing.JPanel {
                 populateInstancesList();
             }
         });
+        //Add the context menu when right clicking
+        instancesList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    SwingUtilities.invokeLater(() -> {
+                        instancesList.setSelectedIndex(instancesList.locationToIndex(e.getPoint()));
+                        Set<AbstractFile> files = new HashSet<>();
+                        files.add(instancesList.getSelectedValue());
+                        JPopupMenu menu = new JPopupMenu();
+                        menu.add(new ViewContextAction(Bundle.ResultsPanel_viewFileInDir_name(), instancesList.getSelectedValue()));
+                        menu.add(new ExternalViewerAction(Bundle.ResultsPanel_openInExternalViewer_name(), new FileNode(instancesList.getSelectedValue())));
+                        menu.add(ViewFileInTimelineAction.createViewFileAction(instancesList.getSelectedValue()));
+                        menu.add(new DiscoveryExtractAction(files));
+                        menu.add(AddContentTagAction.getInstance().getMenuForContent(files));
+                        menu.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(files));
+                        menu.add(AddContentToHashDbAction.getInstance().getMenuForFiles(files));
+                        menu.show(instancesList, e.getPoint().x, e.getPoint().y);
+                    });
+                }
+            }
+        });
+
         // Disable manual editing of page size spinner
         ((JSpinner.DefaultEditor) pageSizeSpinner.getEditor()).getTextField().setEditable(false);
     }
@@ -155,7 +192,7 @@ public class ResultsPanel extends javax.swing.JPanel {
             } else if (pageRetrievedEvent.getType() == FileSearchData.FileType.VIDEO) {
                 populateVideoViewer(pageRetrievedEvent.getSearchResults());
                 resultsViewerPanel.add(videoThumbnailViewer);
-            } 
+            }
             resultsViewerPanel.revalidate();
             resultsViewerPanel.repaint();
         }

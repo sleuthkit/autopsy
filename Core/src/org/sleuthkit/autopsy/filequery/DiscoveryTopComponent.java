@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
-import java.awt.Cursor;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -116,14 +115,8 @@ final class DiscoveryTopComponent extends TopComponent {
         }
     }
 
-    /**
-     * Sets the cursor for the instance of the DiscoveryTopComponent which
-     * exists.
-     *
-     * @param cursor The Cursor which you want to have displayed.
-     */
-    static void changeCursor(Cursor cursor) {
-        WindowManager.getDefault().findTopComponent(PREFERRED_ID).setCursor(cursor);
+    static DiscoveryTopComponent getTopComponent() {
+        return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
     }
 
     @Override
@@ -182,4 +175,5 @@ final class DiscoveryTopComponent extends TopComponent {
     private javax.swing.JSplitPane leftSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
     // End of variables declaration//GEN-END:variables
+
 }

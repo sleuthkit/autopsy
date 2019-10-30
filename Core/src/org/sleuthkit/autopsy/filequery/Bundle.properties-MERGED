@@ -167,10 +167,13 @@ ResultsPanel.currentPageLabel.text=Page: -
 # {1} - maxPage
 ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.
 ResultsPanel.invalidPageNumber.title=Invalid Page Number
+ResultsPanel.openInExternalViewer.name=Open in External Viewer
 ResultsPanel.pageControlsLabel.text=Pages:
 ResultsPanel.gotoPageLabel.text=Go to Page:
 ResultsPanel.pageSizeLabel.text=Page size:
 ResultsPanel.instancesList.border.title=Instances
+DiscoveryExtractAction.title.extractFiles.text=Extract File
+ResultsPanel.viewFileInDir.name=View File in Directory
 SearchNode.getName.text=Search Result
 # {0} - numberOfInstances
 VideoThumbnailPanel.countLabel.text=Number of Instances: {0}
