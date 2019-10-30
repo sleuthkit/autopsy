@@ -131,7 +131,6 @@ ResultsDialog.exitButton.text=Exit
 ResultsDialog.searchButton.text=Run another search
 FileSearchPanel.sortingPanel.border.title=Sorting
 FileSearchPanel.searchButton.text=Show
-FileSearchPanel.fileTypeLabel.text=File Type:
 FileSearchPanel.addButton.text=Add
 FileSearchPanel.substringRadioButton.text=Substring
 FileSearchPanel.fullRadioButton.text=Full
@@ -182,6 +181,8 @@ FileSearchPanel.includeRadioButton.text=Include
 FileSearchPanel.excludeRadioButton.text=Exclude
 FileSearchPanel.knownFilesCheckbox.toolTipText=
 FileSearchPanel.knownFilesCheckbox.text=Hide known files
+FileSearchPanel.imagesButton.text=Images
+FileSearchPanel.videosButton.text=Videos
 ResultsPanel.viewFileInDir.name=View File in Directory
 SearchNode.getName.text=Search Result
 # {0} - numberOfInstances
