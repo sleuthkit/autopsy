@@ -28,18 +28,18 @@ import org.openide.util.NbBundle;
  * Class used to sort ResultFiles using the supplied method.
  */
 class FileSorter implements Comparator<ResultFile> {
-    
+
     private final List<Comparator<ResultFile>> comparators = new ArrayList<>();
-    
+
     /**
-     * Set up the sorter using the supplied sorting method.
-     * The sorting is defined by a list of ResultFile comparators. These
-     * comparators will be run in order until one returns a non-zero result.
-     * 
+     * Set up the sorter using the supplied sorting method. The sorting is
+     * defined by a list of ResultFile comparators. These comparators will be
+     * run in order until one returns a non-zero result.
+     *
      * @param method The method that should be used to sort the files
      */
     FileSorter(SortingMethod method) {
-        
+
         // Set up the primary comparators that should applied to the files
         switch (method) {
             case BY_DATA_SOURCE:
@@ -68,15 +68,15 @@ class FileSorter implements Comparator<ResultFile> {
                 // The default comparator will be added afterward
                 break;
         }
-        
+
         // Add the default comparator to the end. This will ensure a consistent sort
         // order regardless of the order the files were added to the list.
         comparators.add(getDefaultComparator());
     }
-    
+
     @Override
     public int compare(ResultFile file1, ResultFile file2) {
-        
+
         int result = 0;
         for (Comparator<ResultFile> comp : comparators) {
             result = comp.compare(file1, file2);
@@ -84,35 +84,37 @@ class FileSorter implements Comparator<ResultFile> {
                 return result;
             }
         }
-        
+
         // The files are the same
         return result;
     }
-    
+
     /**
      * Compare files using data source ID. Will order smallest to largest.
-     * 
+     *
      * @return -1 if file1 has the lower data source ID, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getDataSourceComparator() {
         return (ResultFile file1, ResultFile file2) -> Long.compare(file1.getFirstInstance().getDataSourceObjectId(), file2.getFirstInstance().getDataSourceObjectId());
-    }    
-    
+    }
+
     /**
-     * Compare files using their FileType enum. Orders based on the ranking
-     * in the FileType enum.
-     * 
+     * Compare files using their FileType enum. Orders based on the ranking in
+     * the FileType enum.
+     *
      * @return -1 if file1 has the lower FileType value, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getFileTypeComparator() {
         return (ResultFile file1, ResultFile file2) -> Integer.compare(file1.getFileType().getRanking(), file2.getFileType().getRanking());
-    }   
-    
+    }
+
     /**
-     * Compare files using a concatenated version of keyword list names. Alphabetical by
-     * the list names with files with no keyword list hits going last.
-     * 
-     * @return -1 if file1 has the earliest combined keyword list name, 0 if equal, 1 otherwise
+     * Compare files using a concatenated version of keyword list names.
+     * Alphabetical by the list names with files with no keyword list hits going
+     * last.
+     *
+     * @return -1 if file1 has the earliest combined keyword list name, 0 if
+     *         equal, 1 otherwise
      */
     private static Comparator<ResultFile> getKeywordListNameComparator() {
         return (ResultFile file1, ResultFile file2) -> {
@@ -125,66 +127,68 @@ class FileSorter implements Comparator<ResultFile> {
             } else if (file2.getKeywordListNames().isEmpty()) {
                 return -1;
             }
-            
+
             String list1 = String.join(",", file1.getKeywordListNames());
             String list2 = String.join(",", file2.getKeywordListNames());
             return compareStrings(list1, list2);
         };
-    }      
-    
+    }
+
     /**
      * Compare files based on parent path. Order alphabetically.
-     * 
-     * @return -1 if file1's path comes first alphabetically, 0 if equal, 1 otherwise
+     *
+     * @return -1 if file1's path comes first alphabetically, 0 if equal, 1
+     *         otherwise
      */
     private static Comparator<ResultFile> getParentPathComparator() {
         return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getParentPath(), file2.getFirstInstance().getParentPath());
-    }   
-    
+    }
+
     /**
      * Compare files based on number of occurrences in the central repository.
      * Order from most rare to least rare Frequency enum.
-     * 
+     *
      * @return -1 if file1's rarity is lower than file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getFrequencyComparator() {
         return (ResultFile file1, ResultFile file2) -> Integer.compare(file1.getFrequency().getRanking(), file2.getFrequency().getRanking());
-    }  
-    
+    }
+
     /**
      * Compare files based on MIME type. Order is alphabetical.
-     * 
-     * @return -1 if file1's MIME type comes before file2's, 0 if equal, 1 otherwise
+     *
+     * @return -1 if file1's MIME type comes before file2's, 0 if equal, 1
+     *         otherwise
      */
     private static Comparator<ResultFile> getMIMETypeComparator() {
         return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getMIMEType(), file2.getFirstInstance().getMIMEType());
-    }  
-    
+    }
+
     /**
      * Compare files based on size. Order large to small.
-     * 
+     *
      * @return -1 if file1 is larger than file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getFileSizeComparator() {
         return (ResultFile file1, ResultFile file2) -> -1 * Long.compare(file1.getFirstInstance().getSize(), file2.getFirstInstance().getSize()) // Sort large to small
-        ;
+                ;
     }
-    
+
     /**
      * Compare files based on file name. Order alphabetically.
-     * 
+     *
      * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getFileNameComparator() {
         return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getName(), file2.getFirstInstance().getName());
     }
-    
+
     /**
-     * A final default comparison between two ResultFile objects.
-     * Currently this is on file name and then object ID. It can be changed but
-     * should always include something like the object ID to ensure a 
-     * consistent sorting when the rest of the compared fields are the same.
-     * 
+     * A final default comparison between two ResultFile objects. Currently this
+     * is on file name and then object ID. It can be changed but should always
+     * include something like the object ID to ensure a consistent sorting when
+     * the rest of the compared fields are the same.
+     *
      * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getDefaultComparator() {
@@ -197,14 +201,14 @@ class FileSorter implements Comparator<ResultFile> {
             return result;
         };
     }
-    
+
     /**
      * Compare two strings alphabetically. Nulls are allowed.
-     * 
+     *
      * @param s1
      * @param s2
-     * 
-     * @return  -1 if s1 comes before s2, 0 if equal, 1 otherwise
+     *
+     * @return -1 if s1 comes before s2, 0 if equal, 1 otherwise
      */
     private static int compareStrings(String s1, String s2) {
         if (s1 == null) {
@@ -228,36 +232,45 @@ class FileSorter implements Comparator<ResultFile> {
         "FileSorter.SortingMethod.keywordlist.displayName=By keyword list names",
         "FileSorter.SortingMethod.parent.displayName=By parent path"})
     enum SortingMethod {
-        BY_FILE_NAME(new ArrayList<>(), 
-            Bundle.FileSorter_SortingMethod_filename_displayName()),     // Sort alphabetically by file name
-        BY_DATA_SOURCE(new ArrayList<>(), 
-            Bundle.FileSorter_SortingMethod_datasource_displayName()),   // Sort in increasing order of data source ID
-        BY_FILE_SIZE(new ArrayList<>(), 
-            Bundle.FileSorter_SortingMethod_filesize_displayName()),     // Sort in decreasing order of size
-        BY_FILE_TYPE(Arrays.asList(new FileSearch.FileTypeAttribute()), 
-            Bundle.FileSorter_SortingMethod_filetype_displayName()),     // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
-        BY_FREQUENCY(Arrays.asList(new FileSearch.FrequencyAttribute()), 
-            Bundle.FileSorter_SortingMethod_frequency_displayName()),    // Sort by decreasing rarity in the central repository
-        BY_KEYWORD_LIST_NAMES(Arrays.asList(new FileSearch.KeywordListAttribute()), 
-            Bundle.FileSorter_SortingMethod_keywordlist_displayName()),  // Sort alphabetically by list of keyword list names found
-        BY_PARENT_PATH(new ArrayList<>(), 
-            Bundle.FileSorter_SortingMethod_parent_displayName());       // Sort alphabetically by path
-        
+        BY_FILE_NAME(new ArrayList<>(),
+                Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
+        BY_DATA_SOURCE(new ArrayList<>(),
+                Bundle.FileSorter_SortingMethod_datasource_displayName()), // Sort in increasing order of data source ID
+        BY_FILE_SIZE(new ArrayList<>(),
+                Bundle.FileSorter_SortingMethod_filesize_displayName()), // Sort in decreasing order of size
+        BY_FILE_TYPE(Arrays.asList(new FileSearch.FileTypeAttribute()),
+                Bundle.FileSorter_SortingMethod_filetype_displayName()), // Sort in order of file type (defined in FileType enum), with secondary sort on MIME type
+        BY_FREQUENCY(Arrays.asList(new FileSearch.FrequencyAttribute()),
+                Bundle.FileSorter_SortingMethod_frequency_displayName()), // Sort by decreasing rarity in the central repository
+        BY_KEYWORD_LIST_NAMES(Arrays.asList(new FileSearch.KeywordListAttribute()),
+                Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
+        BY_PARENT_PATH(new ArrayList<>(),
+                Bundle.FileSorter_SortingMethod_parent_displayName());       // Sort alphabetically by path
+
         private final String displayName;
         private final List<FileSearch.AttributeType> requiredAttributes;
-        
+
         SortingMethod(List<FileSearch.AttributeType> attributes, String displayName) {
             this.requiredAttributes = attributes;
             this.displayName = displayName;
         }
-        
+
         @Override
         public String toString() {
             return displayName;
         }
-        
+
         List<FileSearch.AttributeType> getRequiredAttributes() {
             return requiredAttributes;
+        }
+
+        /**
+         * Get the list of enums that are valid for ordering images.
+         *
+         * @return enums that can be used to ordering images.
+         */
+        static List<SortingMethod> getOptionsForOrderingImages() {
+            return Arrays.asList(BY_FILE_SIZE, BY_PARENT_PATH, BY_FILE_NAME, BY_DATA_SOURCE);
         }
     }
 }

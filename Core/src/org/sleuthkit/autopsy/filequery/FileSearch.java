@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1814,6 +1815,15 @@ class FileSearch {
 
         AttributeType getAttributeType() {
             return attributeType;
+        }
+        
+        /**
+         * Get the list of enums that are valid for grouping images.
+         *
+         * @return enums that can be used to group images
+         */
+        static List<GroupingAttributeType> getOptionsForGroupingImages() {
+            return Arrays.asList(FILE_SIZE, FREQUENCY, PARENT_PATH, OBJECT_DETECTED, HASH_LIST_NAME, INTERESTING_ITEM_SET);
         }
     }
 }
