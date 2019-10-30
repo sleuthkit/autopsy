@@ -83,7 +83,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
     private void configureListeners() {
         try {
             //Add a new subfilterstate whenever the underlying subfilters change.
-            getFilter().getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
+            FXCollections.observableArrayList(getFilter().getSubFilters()).addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
                 while (change.next()) {
                     change.getAddedSubList().forEach((SubFilterType newSubFilter) -> {
                         //if there is not already a state for this filter

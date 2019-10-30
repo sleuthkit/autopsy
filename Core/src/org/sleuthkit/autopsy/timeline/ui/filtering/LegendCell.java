@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TextField;
@@ -92,7 +93,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                 TextFilter filter = (TextFilter) item.getFilter();
                 TextField textField = new TextField();
                 textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
-                textField.textProperty().bindBidirectional(filter.substringProperty());
+                textField.textProperty().bindBidirectional(new SimpleStringProperty(filter.getSubstring()));
                 Platform.runLater(() -> setGraphic(textField));
 
             } else {
