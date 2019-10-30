@@ -522,10 +522,6 @@
                 <binary-origin>release/modules/ext/sleuthkit-postgresql-4.7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jchardet-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jchardet-1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/bcpkix-jdk15on-1.60.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\bcpkix-jdk15on-1.60.jar</binary-origin>
             </class-path-extension>

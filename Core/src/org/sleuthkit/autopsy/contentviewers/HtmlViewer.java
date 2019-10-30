@@ -20,11 +20,12 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.mozilla.universalchardet.UniversalDetector;
+import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -73,7 +74,7 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
             } else {
                 return new String(buffer);
             }
-        } catch (TskCoreException | UnsupportedEncodingException ex) {
+        } catch (TskCoreException | IOException ex) {
             logger.log(Level.SEVERE, String.format("Unable to read from file '%s' (id=%d).",
                     abstractFile.getName(), abstractFile.getId()), ex);
             return String.format("<p>%s</p>", Bundle.HtmlViewer_file_error());
@@ -87,15 +88,13 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
      * 
      * @return encoding type, null if encoding could not be determined
      */
-    private String determineEncoding(byte[] buffer) {
-        UniversalDetector detector = new UniversalDetector(null);
-
-        detector.handleData(buffer, 0, buffer.length - 1);
-        detector.dataEnd();
-
-        String encoding = detector.getDetectedCharset();
-        detector.reset();
-        return encoding;
+    private String determineEncoding(byte[] buffer) throws IOException {
+  
+        CharsetDetector detector = new CharsetDetector();
+        detector.setText(buffer);
+        CharsetMatch match = detector.detect();
+        return match.getName();
+        
     }
 
     /**
