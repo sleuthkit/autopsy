@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import org.mozilla.universalchardet.UniversalDetector;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -65,12 +67,35 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
             int fileSize = (int) abstractFile.getSize();
             byte[] buffer = new byte[fileSize];
             abstractFile.read(buffer, 0, fileSize);
-            return new String(buffer);
-        } catch (TskCoreException ex) {
+            String encoding = determineEncoding(buffer);
+            if (encoding != null) {
+                return new String(buffer, encoding);
+            } else {
+                return new String(buffer);
+            }
+        } catch (TskCoreException | UnsupportedEncodingException ex) {
             logger.log(Level.SEVERE, String.format("Unable to read from file '%s' (id=%d).",
                     abstractFile.getName(), abstractFile.getId()), ex);
             return String.format("<p>%s</p>", Bundle.HtmlViewer_file_error());
         }
+    }
+
+    /**
+     * This method will try and determine the encoding of the html file based on its contents
+     * 
+     * @param buffer byte array of the html file to check
+     * 
+     * @return encoding type, null if encoding could not be determined
+     */
+    private String determineEncoding(byte[] buffer) {
+        UniversalDetector detector = new UniversalDetector(null);
+
+        detector.handleData(buffer, 0, buffer.length - 1);
+        detector.dataEnd();
+
+        String encoding = detector.getDetectedCharset();
+        detector.reset();
+        return encoding;
     }
 
     /**
