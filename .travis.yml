@@ -69,6 +69,7 @@ before_script:
   - java -version
 
 script:
+ - set -e
  - echo "Building TSK..."
  - ./bootstrap && ./configure --prefix=/usr && make > /dev/null
  - ant -version
