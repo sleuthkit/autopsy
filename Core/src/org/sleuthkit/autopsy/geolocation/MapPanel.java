@@ -44,7 +44,6 @@ final class MapPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
 
     private boolean zoomChanging;
-    private final boolean sliderReversed;
     
     // Using a DefaultListModel to store the way points because we get 
     // a lot of functionality for free, like listeners.
@@ -55,8 +54,7 @@ final class MapPanel extends javax.swing.JPanel {
      */
     MapPanel() {
         waypointListModel = new DefaultListModel<>();
-         sliderReversed = false;
-         zoomChanging = false;
+        zoomChanging = false;
          
         initComponents();
         initMap();
@@ -91,7 +89,7 @@ final class MapPanel extends javax.swing.JPanel {
         zoomSlider.setMaximum(tileFactory.getInfo().getMaximumZoomLevel());
 
        
-        mapViewer.setZoom(tileFactory.getInfo().getMaximumZoomLevel()- 1);
+        setZoom(tileFactory.getInfo().getMaximumZoomLevel()- 1);
         mapViewer.setAddressLocation(new GeoPosition(0, 0));
 
         // Listener for new way points being added to the map.
@@ -149,11 +147,7 @@ final class MapPanel extends javax.swing.JPanel {
     void setZoom(int zoom) {
         zoomChanging = true;
         mapViewer.setZoom(zoom);
-        if (sliderReversed) {
-            zoomSlider.setValue(zoomSlider.getMaximum() - zoom);
-        } else {
-            zoomSlider.setValue(zoom);
-        }
+        zoomSlider.setValue((zoomSlider.getMaximum() + zoomSlider.getMinimum())- zoom);
         zoomChanging = false;
     }
     

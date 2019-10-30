@@ -80,7 +80,7 @@ public final class GeolocationTopComponent extends TopComponent {
         this.ingestListener = pce -> {
             String eventType = pce.getPropertyName();
             if (eventType.equals(DATA_ADDED.toString())) {
-                // Indicate that a refresh may be needed, unless the data added is Keyword or Hashset hits
+                // Indicate that a refresh may be needed for GPS data.
                 ModuleDataEvent eventData = (ModuleDataEvent) pce.getOldValue();
                 if (null != eventData
                         && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID()
@@ -182,10 +182,10 @@ public final class GeolocationTopComponent extends TopComponent {
                         mapPanel.setCenterLocation(waypoints.get(0));
 
                     } catch (ExecutionException ex) {
-                        logger.log(Level.WARNING, "An exception occured while initalizing waypoints for geolocation window.", ex);
+                        logger.log(Level.WARNING, "An exception occured while initializing waypoints for geolocation window.", ex);
                         MessageNotifyUtil.Message.error(Bundle.GLTopComponent_initilzation_error());
                     } catch (InterruptedException ex) {
-                        logger.log(Level.WARNING, "The initilization thread for geolocation window was interrupted.", ex);
+                        logger.log(Level.WARNING, "The initializing thread for geolocation window was interrupted.", ex);
                     }
                 }
             }
