@@ -124,12 +124,14 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.SleuthkitCaseAdmin;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
 /**
@@ -2018,7 +2020,8 @@ public class Case {
      *                             lower-level exception.
      */
     @Messages({
-        "Case.DeletingDataSourceFromCase=Deleting the Data Source from the case.",
+        "Case.progressMessage.deletingDataSource=Deleting the data source from the case...",
+        "Case.exceptionMessage.dataSourceNotFound=The data source was not found.",
         "# {0} - exception message", "Case.exceptionMessage.errorDeletingDataSource=An error occurred while deleting the data source:\n{0}."
     })
     Void deleteDataSource(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
@@ -2027,8 +2030,12 @@ public class Case {
         openAppServiceCaseResources(progressIndicator);
         Long dataSourceObjectID = (Long) additionalParams;
         try {
+            DataSource dataSource = this.caseDb.getDataSource(dataSourceObjectID);
+            if (dataSource == null) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_dataSourceNotFound());
+            }
             SleuthkitCaseAdmin.deleteDataSource(this.caseDb, dataSourceObjectID);
-        } catch (TskCoreException ex) {
+        } catch (TskDataException | TskCoreException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
         }
         try {
