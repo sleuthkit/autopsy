@@ -27,6 +27,7 @@ import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An Action that allows a user to delete a data source from the current case.
@@ -49,6 +50,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     public DeleteDataSourceAction(Long dataSourceObjectID) {
         super(Bundle.DeleteDataSourceAction_name_text());
         this.dataSourceObjectID = dataSourceObjectID;
+        this.setEnabled(!IngestManager.getInstance().isIngestRunning());
     }
 
     @NbBundle.Messages({

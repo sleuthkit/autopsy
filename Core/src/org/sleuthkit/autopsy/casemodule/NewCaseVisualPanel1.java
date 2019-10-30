@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.access.AccessLimiterUtils;
+import org.sleuthkit.autopsy.featureaccess.AccessLimiterUtils;
 import java.awt.Component;
 import org.openide.util.NbBundle;
 

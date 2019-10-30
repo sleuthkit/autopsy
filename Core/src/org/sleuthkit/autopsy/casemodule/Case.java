@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.access.AccessLimiterUtils;
+import org.sleuthkit.autopsy.featureaccess.AccessLimiterUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;

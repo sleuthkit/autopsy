@@ -33,7 +33,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.access.AccessLimiterUtils;
+import org.sleuthkit.autopsy.featureaccess.AccessLimiterUtils;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -123,7 +123,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
         if (canAddDeleteDataSourceAction()) {
-            actionsList.add(new DeleteDataSourceAction(content.getId()));
+            actionsList.add(new DeleteDataSourceAction(content.getId()));            
         }
         return actionsList.toArray(new Action[0]);
     }
