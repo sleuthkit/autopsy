@@ -51,7 +51,7 @@ class ResultFile {
     private final List<AbstractFile> instances = new ArrayList<>();
     private DataResultViewerTable.Score currentScore = DataResultViewerTable.Score.NO_SCORE;
     private String scoreDescription = null;
-    private boolean isDeleted = false;
+    private boolean deleted = false;
     private FileType fileType;
 
     /**
@@ -63,7 +63,7 @@ class ResultFile {
         //store the file the ResultFile was created for as the first value in the instances list
         instances.add(abstractFile);
         if (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            isDeleted = true;
+            deleted = true;
         }
         updateScoreAndDescription(abstractFile);
         this.frequency = FileSearchData.Frequency.UNKNOWN;
@@ -100,8 +100,8 @@ class ResultFile {
      * @param duplicate The abstract file to add as a duplicate.
      */
     void addDuplicate(AbstractFile duplicate) {
-        if (isDeleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            isDeleted = false;
+        if (deleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+            deleted = false;
         }
         updateScoreAndDescription(duplicate);
         instances.add(duplicate);
@@ -133,7 +133,7 @@ class ResultFile {
      * @return The deleted status of this ResultFile.
      */
     boolean isDeleted() {
-        return isDeleted;
+        return deleted;
     }
 
     /**
