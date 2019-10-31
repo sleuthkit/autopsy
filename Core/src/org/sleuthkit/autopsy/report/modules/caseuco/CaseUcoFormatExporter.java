@@ -238,7 +238,7 @@ public final class CaseUcoFormatExporter {
 
         //Create our report file
         Path reportFile = Paths.get(caseReportFolder.toString(),
-                CaseUcoReport.getReportFileName());
+                CaseUcoReportModule.getReportFileName());
 
         //Timezone for formatting file creation, modification, and accessed times
         SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
