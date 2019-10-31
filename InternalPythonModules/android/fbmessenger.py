@@ -182,11 +182,13 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                 contactsDb.close()
 
 
-    ## Extracts recipeint id from 'user_key' column and adds recipient to given list.
-    def addRecipientToList(self, user_key, recipientList):
+    ## Extracts recipeint id from 'user_key' column and adds recipient to given list,
+    ## if the recipeint id is not the same as sender id
+    def addRecipientToList(self, user_key, senderId, recipientList):
         if user_key is not None: 
-            recipientId = user_key.replace('FACEBOOK:', '')                    
-            recipientList.append(recipientId)
+            recipientId = user_key.replace('FACEBOOK:', '')
+            if recipientId != senderId:
+                recipientList.append(recipientId)
 
 
     ## Extracts sender id from the json in 'sender' column.
@@ -268,7 +270,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         direction = self.deduceDirectionFromSenderId(fromId)    
 
                         # Get recipient and add to list
-                        self.addRecipientToList(messagesResultSet.getString("user_key"),
+                        self.addRecipientToList(messagesResultSet.getString("user_key"), fromId,
                                                 recipientIdsList)
 
                         timeStamp = messagesResultSet.getLong("timestamp_ms") / 1000
@@ -285,7 +287,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         threadId = messagesResultSet.getString("thread_key")
 
                     else:   # same msgId as last, just collect recipient from current row
-                         self.addRecipientToList(messagesResultSet.getString("user_key"),
+                         self.addRecipientToList(messagesResultSet.getString("user_key"), fromId,
                                                 recipientIdsList)
 
 
@@ -373,7 +375,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         direction = self.deduceDirectionFromSenderId(callerId)
                         
                         # Get recipient and add to list
-                        self.addRecipientToList(messagesResultSet.getString("user_key"),
+                        self.addRecipientToList(messagesResultSet.getString("user_key"), callerId,
                                                 calleeIdsList)
 
                         # the timestamp from call ended msg is used as end timestamp
@@ -391,7 +393,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         startTimeStamp = endTimeStamp - duration
                         
                     else:   # same msgId as last, just collect callee from current row
-                         self.addRecipientToList(messagesResultSet.getString("user_key"),
+                         self.addRecipientToList(messagesResultSet.getString("user_key"), callerId,
                                                 calleeIdsList)
 
                 # at the end of the loop, add last message 
