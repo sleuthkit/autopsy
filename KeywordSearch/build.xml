@@ -31,8 +31,6 @@
          <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="autopsy"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr-war"  pattern="${basedir}/release/solr/webapps/solr.war" />
-        <ivy:retrieve conf="start-solr"  pattern="${basedir}/release/solr/start.jar" />
         <ivy:retrieve conf="jetty-libs"  pattern="${basedir}/release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr-libs"  pattern="${basedir}/release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="slf4j-libs"  pattern="${basedir}/release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />

@@ -7,18 +7,16 @@
         
         <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
-        <conf name="solr-war"/>
-        <conf name="start-solr"/>
         <conf name="jetty-libs"/>
         <conf name="slf4j-libs"/>
         <conf name="servlet"/>
     </configurations>
     <dependencies>
         <!-- Solr -->
-        <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
+        <dependency name="solr-cell" rev="8.2.0" org="org.apache.solr" conf="solr-libs->default"/>
         
         <!-- Autopsy -->
-        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="8.2.0"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
         <dependency conf="autopsy->*" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>
@@ -36,7 +34,6 @@
         <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
         <!-- Jetty -->
-        <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="8.1.16.v20140903"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="8.1.16.v20140903"/>
         <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/>

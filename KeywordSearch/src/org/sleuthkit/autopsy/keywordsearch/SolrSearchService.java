@@ -34,7 +34,7 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -155,12 +155,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
-        HttpSolrServer solrServer = null;
+        HttpSolrClient solrServer = null;
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
         try {
-            solrServer = new HttpSolrServer("http://" + host + ":" + Integer.toString(port) + "/solr"); //NON-NLS
+            solrServer = new HttpSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS
             KeywordSearch.getServer().connectToSolrServer(solrServer);
         } catch (SolrServerException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS
@@ -189,7 +189,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             throw new KeywordSearchServiceException(ex.getMessage());
         } finally {
             if (null != solrServer) {
-                solrServer.shutdown();
+                try {
+                    solrServer.close();
+                } catch (IOException ex) {
+                    throw new KeywordSearchServiceException(ex.getMessage());
+                }
             }
         }
     }
