@@ -20,11 +20,13 @@
 package org.sleuthkit.autopsy.report.modules.caseuco;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -36,6 +38,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * CaseUcoReport generates a report in the CASE-UCO format. It saves basic file
@@ -45,6 +48,12 @@ public final class CaseUcoReportModule implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(CaseUcoReportModule.class.getName());
     private static CaseUcoReportModule instance = null;
+    
+    private static final Set<Short> SUPPORTED_TYPES = new HashSet<Short>() {{
+        add(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue());
+        add(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue());
+        add(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue());
+    }};
 
     private static final String REPORT_FILE_NAME = "CASE_UCO_output";
 
@@ -62,7 +71,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
 
     @Override
     public String getName() {
-        String name = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getName.text");
+        String name = NbBundle.getMessage(this.getClass(), "CaseUcoReportModule.getName.text");
         return name;
     }
     
@@ -78,7 +87,7 @@ public final class CaseUcoReportModule implements GeneralReportModule {
 
     @Override
     public String getDescription() {
-        String desc = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getDesc.text");
+        String desc = NbBundle.getMessage(this.getClass(), "CaseUcoReportModule.getDesc.text");
         return desc;
     }
 
@@ -104,12 +113,16 @@ public final class CaseUcoReportModule implements GeneralReportModule {
     @Override
     @SuppressWarnings("deprecation")
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
-        Path reportDirectory = Paths.get(baseReportDir);
         try {
+            Path reportDirectory = Paths.get(baseReportDir);
+            Files.createDirectories(reportDirectory);
+            progressPanel.setIndeterminate(false);
+            progressPanel.start();
             CaseUcoReportGenerator caseUco = new CaseUcoReportGenerator(reportDirectory, REPORT_FILE_NAME);
             Case caseObj = Case.getCurrentCaseThrows();
             caseUco.addCase(caseObj);
             for(DataSource dataSource : caseObj.getSleuthkitCase().getDataSources()) {
+                progressPanel.updateStatusLabel("Processing datasoure: " + dataSource.getName());
                 caseUco.addDataSource(dataSource, caseObj);
                 
                 Queue<Content> contentQueue = new LinkedList<>();
@@ -118,8 +131,11 @@ public final class CaseUcoReportModule implements GeneralReportModule {
                 //Breadth First Search the DataSource tree.
                 while(!contentQueue.isEmpty()) {
                     Content current = contentQueue.poll();
-                    if(current instanceof AbstractFile && !(current instanceof DataSource)) {
-                        caseUco.addFile((AbstractFile) current, dataSource);
+                    if(current instanceof AbstractFile) {
+                        AbstractFile f = (AbstractFile) (current);
+                        if(SUPPORTED_TYPES.contains(f.getMetaType().getValue())) {
+                            caseUco.addFile(f, dataSource);   
+                        }
                     }
                     
                     if(current.hasChildren()) {
@@ -130,16 +146,19 @@ public final class CaseUcoReportModule implements GeneralReportModule {
             
             //Report is now done.
             caseUco.generateReport();
-            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+            //progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         } catch (IOException ex) {
             //Log
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "");
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "IO");
         } catch (NoCurrentCaseException ex) {
             //Log
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "");
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "NoCase");
         } catch (TskCoreException ex) {
             //Log
-            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "");
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "TskCore");
         }
+        
+        CaseUcoFormatExporter.generateReport(baseReportDir + "Case-previous-output.json-ld", progressPanel);
+        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 }

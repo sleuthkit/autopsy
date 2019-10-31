@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,6 +46,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoFormatExporter;
+import org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoReportGenerator;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -72,6 +74,7 @@ public class PortableCaseReportModule implements ReportModule {
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";  // NON-NLS
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";  // NON-NLS
     private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";  // NON-NLS
+    private static final String CASE_UCO_FILE_NAME = "portable_CASE_UCO_output";
     private PortableCaseReportModuleSettings settings;
     
     // These are the types for the exported file subfolders
@@ -310,6 +313,14 @@ public class PortableCaseReportModule implements ReportModule {
             }
         }        
         
+        Path reportsDirectory = Paths.get(caseFolder.toString(), "Reports");
+        if(!reportsDirectory.toFile().mkdir()) {
+            handleError("Could not make report folder", Bundle.PortableCaseReportModule_generateReport_errorCreatingReportFolder(), null, progressPanel); // NON-NLS
+            return;
+        }
+        
+        CaseUcoReportGenerator caseUco = new CaseUcoReportGenerator(reportsDirectory, CASE_UCO_FILE_NAME);
+        
         // Copy the tagged files
         try {
             for(TagName tagName:tagNames) {
@@ -319,7 +330,7 @@ public class PortableCaseReportModule implements ReportModule {
                     return;
                 }
                 progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_copyingFiles(tagName.getDisplayName()));
-                addFilesToPortableCase(tagName, progressPanel);
+                addFilesToPortableCase(tagName, progressPanel, caseUco);
                 
                 // Check for cancellation 
                 if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
@@ -397,12 +408,6 @@ public class PortableCaseReportModule implements ReportModule {
         // Check for cancellation 
         if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
             handleCancellation(progressPanel);
-            return;
-        }
-        
-        File reportsFolder = Paths.get(caseFolder.toString(), "Reports").toFile();
-        if(!reportsFolder.mkdir()) {
-            handleError("Could not make report folder", Bundle.PortableCaseReportModule_generateReport_errorCreatingReportFolder(), null, progressPanel); // NON-NLS
             return;
         }
         
@@ -576,7 +581,7 @@ public class PortableCaseReportModule implements ReportModule {
      * 
      * @throws TskCoreException 
      */
-    private void addFilesToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel) throws TskCoreException {
+    private void addFilesToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel, CaseUcoReportGenerator caseUco) throws TskCoreException {
         
         // Get all the tags in the current case
         List<ContentTag> tags = currentCase.getServices().getTagsManager().getContentTagsByTagName(oldTagName);
@@ -593,6 +598,7 @@ public class PortableCaseReportModule implements ReportModule {
             if (content instanceof AbstractFile) {
                 
                 long newFileId = copyContentToPortableCase(content, progressPanel);
+                caseUco.addFile((AbstractFile) content, content.getD);
                 
                 // Tag the file
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {

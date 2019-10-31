@@ -520,11 +520,11 @@ public final class CaseUcoFormatExporter {
         catalog.writeStringField("createdTime", ctime);
         catalog.writeStringField("accessedTime", atime);
         catalog.writeStringField("modifiedTime", mtime);
-        if (extension != null) {
+        if (extension != null && !extension.isEmpty()) {
             catalog.writeStringField("extension", extension);
         }
         catalog.writeStringField("fileName", fileName);
-        if (parent_path != null) {
+        if (parent_path != null && !parent_path.isEmpty() && !parent_path.equals("/")) {
             catalog.writeStringField("filePath", parent_path + fileName);
         }
         catalog.writeBooleanField("isDirectory", false);
@@ -566,7 +566,7 @@ public final class CaseUcoFormatExporter {
         catalog.writeStartArray();
         catalog.writeStartObject();
         catalog.writeStringField("@type", "PathRelation");
-        if (parent_path != null) {
+        if (parent_path != null && !parent_path.equals("/")) {
             catalog.writeStringField("path", parent_path + fileName);
         } else {
             catalog.writeStringField("path", fileName);

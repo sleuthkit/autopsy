@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.report.modules.caseuco;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
@@ -34,16 +33,17 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.google.common.base.Strings;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Writes AbstractFiles, DataSources, and Cases to Case UCO format.
+ * Writes DataModel objects to Case UCO format.
  *
- * Clients are expected to add Case and then DataSource and then all files of
- * that DataSource.
+ * Clients are expected to add Case and DataSource before adding any files
+ * from that DataSource.
  * 
- * Example:
+ * Here is an example, where we choose to add everything:
  * 
  * Path directory = Paths.get("C:", "Reports");
  * CaseUcoReportGenerator caseUco = new CaseUcoReportGenerator(directory, "my-report");
@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *      }
  * }
  * 
- * //Done. C:\Reports\my-report.json-ld
+ * //Done. Report at - "C:\Reports\my-report.json-ld"
  * Path reportOutput = caseUco.generateReport();
  * 
  */
@@ -72,21 +72,19 @@ public final class CaseUcoReportGenerator {
     private final JsonGenerator reportGenerator;
 
     /**
-     * Creates a CaseUCO Report file at the specified directory under the name
-     * 'reportName'.
+     * Creates a CaseUCO Report file at the specified directory with the given
+     * name.
      *
      * TimeZone defaults to GMT for formatting file creation time, accessed time
      * and modified time. You may change this in the setter.
      *
      * @param directory Directory to write the CaseUCO report file. Assumes the
-     * calling thread has write access to the directory.
+     * calling thread has write access to the directory and that the directory exists.
      * @param name Name of the CaseUCO report file.
      * @throws IOException
      */
     public CaseUcoReportGenerator(Path directory, String reportName) throws IOException {
         this.reportPath = directory.resolve(reportName + "." + EXTENSION);
-
-        Files.createDirectories(reportPath);
 
         JsonFactory jsonGeneratorFactory = new JsonFactory();
         reportGenerator = jsonGeneratorFactory.createGenerator(reportPath.toFile(), JsonEncoding.UTF8);
@@ -101,7 +99,7 @@ public final class CaseUcoReportGenerator {
 
     /**
      * Opens the initial JSON structures that will contain the Case UCO entities
-     * to be added in addFile, addDataSource, addCase.
+     * to be added.
      *
      * @param reportGenerator
      * @throws IOException
@@ -154,11 +152,11 @@ public final class CaseUcoReportGenerator {
         reportGenerator.writeStringField("accessedTime", accessedTime);
         reportGenerator.writeStringField("modifiedTime", modifiedTime);
 
-        if (file.getNameExtension() != null) {
+        if (!Strings.isNullOrEmpty(file.getNameExtension())) {
             reportGenerator.writeStringField("extension", file.getNameExtension());
         }
         reportGenerator.writeStringField("fileName", file.getName());
-        if (file.getParentPath() != null) {
+        if (!Strings.isNullOrEmpty(file.getParentPath()) && !file.getParentPath().equals("/")) {
             reportGenerator.writeStringField("filePath", file.getParentPath() + file.getName());
         }
         reportGenerator.writeBooleanField("isDirectory", file.isDir());
@@ -167,10 +165,10 @@ public final class CaseUcoReportGenerator {
 
         reportGenerator.writeStartObject();
         reportGenerator.writeStringField("@type", "ContentData");
-        if (file.getMIMEType() != null) {
+        if (!Strings.isNullOrEmpty(file.getMIMEType())) {
             reportGenerator.writeStringField("mimeType", file.getMIMEType());
         }
-        if (file.getMd5Hash() != null) {
+        if (!Strings.isNullOrEmpty(file.getMd5Hash())) {
             reportGenerator.writeFieldName("hash");
             reportGenerator.writeStartArray();
             reportGenerator.writeStartObject();
@@ -200,7 +198,7 @@ public final class CaseUcoReportGenerator {
         reportGenerator.writeStartArray();
         reportGenerator.writeStartObject();
         reportGenerator.writeStringField("@type", "PathRelation");
-        if (file.getParentPath() != null) {
+        if (!Strings.isNullOrEmpty(file.getParentPath()) && !file.getParentPath().equals("/")) {
             reportGenerator.writeStringField("path", file.getParentPath() + file.getName());
         } else {
             reportGenerator.writeStringField("path", file.getName());
@@ -242,9 +240,12 @@ public final class CaseUcoReportGenerator {
         reportGenerator.writeStartObject();
         reportGenerator.writeStringField("@type", "File");
 
-        String dataSourcePath;
+        String dataSourcePath = "";
         if(dataSource instanceof Image) {
-            dataSourcePath = dataSource.getUniquePath();
+            String[] paths = ((Image) dataSource).getPaths();
+            if(paths.length > 0) {
+                dataSourcePath = paths[paths.length - 1];
+            }
         } else {
             dataSourcePath = dataSource.getName();
         }
@@ -345,14 +346,7 @@ public final class CaseUcoReportGenerator {
      * @return
      */
     private String getCaseTraceId(Case caseObj) {
-        SleuthkitCase skCase = caseObj.getSleuthkitCase();
-        Case.CaseType caseType = caseObj.getCaseType();
-
-        if (caseType.equals(CaseType.SINGLE_USER_CASE)) {
-            return "case-" + caseObj.getName();
-        } else {
-            return "case-" + skCase.getDatabaseName();
-        }
+        return "case-" + caseObj.getName();
     }
 
     /**
