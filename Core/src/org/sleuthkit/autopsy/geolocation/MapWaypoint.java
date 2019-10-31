@@ -79,4 +79,8 @@ final class MapWaypoint implements org.jxmapviewer.viewer.Waypoint{
     public GeoPosition getPosition() {
         return position;
     }
+    
+    String getLabel() {
+        return dataModelWaypoint.getLabel();
+    }
 }
