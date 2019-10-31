@@ -69,13 +69,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileSearch {
 
     private final static Logger logger = Logger.getLogger(FileSearch.class.getName());
-    private static final Cache<GroupKey, List<ResultFile>> groupCache = CacheBuilder.newBuilder().build();
+    private static final int MAXIMUM_CACHE_SIZE = 10;
+    private static final Cache<SearchKey, Map<GroupKey, List<ResultFile>>> searchCache = CacheBuilder.newBuilder()
+            .maximumSize(MAXIMUM_CACHE_SIZE)
+            .build();
 
     /**
      * Run the file search and returns the SearchResults object for debugging.
-     * Clears cache of search results, caching new results for access at later
-     * time.
+     * Caching new results for access at later time.
      *
+     * @param userName           The name of the user performing the search.
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
@@ -89,13 +92,12 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static synchronized SearchResults runFileSearchDebug(
+    static SearchResults runFileSearchDebug(String userName,
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        clearCache();
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -117,8 +119,9 @@ class FileSearch {
         // Sort and group the results
         searchResults.sortGroupsAndFiles();
         Map<GroupKey, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
-        for (GroupKey groupKey : resultHashMap.keySet()) {
-            groupCache.put(groupKey, resultHashMap.get(groupKey));
+        SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
+        synchronized (searchCache) {
+            searchCache.put(searchKey, resultHashMap);
         }
         return searchResults;
     }
@@ -127,6 +130,7 @@ class FileSearch {
      * Run the file search to get the group keys and sizes. Clears cache of
      * search results, caching new results for access at later time.
      *
+     * @param userName           The name of the user performing the search.
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
@@ -140,13 +144,13 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static LinkedHashMap<GroupKey, Integer> getGroupSizes(
+    static LinkedHashMap<GroupKey, Integer> getGroupSizes(String userName,
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
-        Map<GroupKey, List<ResultFile>> searchResults = runFileSearch(filters,
+        Map<GroupKey, List<ResultFile>> searchResults = runFileSearch(userName, filters,
                 groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
         LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
         for (GroupKey groupKey : searchResults.keySet()) {
@@ -159,6 +163,7 @@ class FileSearch {
      * Get the files from the specified group from the cache, if the the group
      * was not cached perform a search caching the groups.
      *
+     * @param userName           The name of the user performing the search.
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
@@ -176,7 +181,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static synchronized List<ResultFile> getFilesInGroup(
+    static List<ResultFile> getFilesInGroup(String userName,
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
@@ -186,12 +191,25 @@ class FileSearch {
             int numberOfEntries,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
         //the group should be in the cache at this point
-        List<ResultFile> filesInGroup = groupCache.getIfPresent(groupKey);
+        List<ResultFile> filesInGroup = null;
+        SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
+        Map<GroupKey, List<ResultFile>> resultsMap;
+        synchronized (searchCache) {
+            resultsMap = searchCache.getIfPresent(searchKey);
+        }
+        if (resultsMap != null) {
+            filesInGroup = resultsMap.get(groupKey);
+        }
         List<ResultFile> page = new ArrayList<>();
         if (filesInGroup == null) {
             logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupKey);
-            runFileSearch(filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
-            filesInGroup = groupCache.getIfPresent(groupKey);
+            runFileSearch(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+            synchronized (searchCache) {
+                resultsMap = searchCache.getIfPresent(searchKey.getKeyString());
+            }
+            if (resultsMap != null) {
+                filesInGroup = resultsMap.get(groupKey);
+            }
             if (filesInGroup == null) {
                 logger.log(Level.WARNING, "Group {0} did not exist in cache or new search results", groupKey);
                 return page; //group does not exist
@@ -211,9 +229,9 @@ class FileSearch {
     }
 
     /**
-     * Run the file search. Clears cache of search results, caching new results
-     * for access at later time.
+     * Run the file search. Caching new results for access at later time.
      *
+     * @param userName           The name of the user performing the search.
      * @param filters            The filters to apply
      * @param groupAttributeType The attribute to use for grouping
      * @param groupSortingType   The method to use to sort the groups
@@ -227,14 +245,13 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    private synchronized static Map<GroupKey, List<ResultFile>> runFileSearch(
+    private static Map<GroupKey, List<ResultFile>> runFileSearch(String userName,
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,
             FileSorter.SortingMethod fileSortingMethod,
             SleuthkitCase caseDb, EamDb centralRepoDb) throws FileSearchException {
 
-        clearCache();
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -253,8 +270,9 @@ class FileSearch {
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
         searchResults.add(resultFiles);
         Map<GroupKey, List<ResultFile>> resultHashMap = searchResults.toLinkedHashMap();
-        for (GroupKey groupKey : resultHashMap.keySet()) {
-            groupCache.put(groupKey, resultHashMap.get(groupKey));
+        SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
+        synchronized (searchCache) {
+            searchCache.put(searchKey, resultHashMap);
         }
         // Return a version of the results in general Java objects
         return resultHashMap;
@@ -496,13 +514,6 @@ class FileSearch {
         videoThumbnails.add(ImageUtils.getDefaultThumbnail());
         videoThumbnails.add(ImageUtils.getDefaultThumbnail());
         return videoThumbnails;
-    }
-
-    /**
-     * Clear the cache used to store search results by group.
-     */
-    synchronized static void clearCache() {
-        groupCache.invalidateAll();
     }
 
     private FileSearch() {
@@ -1570,6 +1581,69 @@ class FileSearch {
             } catch (TskCoreException ex) {
                 throw new FileSearchException("Error looking up file tag attributes", ex); // NON-NLS
             }
+        }
+    }
+
+    /**
+     * Represents a key for a specific search for a specific user.
+     */
+    private static class SearchKey implements Comparable<SearchKey> {
+
+        private final String keyString;
+
+        /**
+         * Construct a new SearchKey with all information that defines a search.
+         *
+         * @param userName           The name of the user performing the search.
+         * @param filters            The FileFilters being used for the search.
+         * @param groupAttributeType The AttributeType to group by.
+         * @param groupSortingType   The algorithm to sort the groups by.
+         * @param fileSortingMethod  The method to sort the files by.
+         */
+        SearchKey(String userName, List<FileSearchFiltering.FileFilter> filters,
+                AttributeType groupAttributeType,
+                FileGroup.GroupSortingAlgorithm groupSortingType,
+                FileSorter.SortingMethod fileSortingMethod) {
+            StringBuilder searchStringBuilder = new StringBuilder();
+            searchStringBuilder.append(userName);
+            for (FileSearchFiltering.FileFilter filter : filters) {
+                searchStringBuilder.append(filter.toString());
+            }
+            searchStringBuilder.append(groupAttributeType).append(groupSortingType).append(fileSortingMethod);
+            keyString = searchStringBuilder.toString();
+        }
+
+        @Override
+        public int compareTo(SearchKey otherSearchKey) {
+            return getKeyString().compareTo(otherSearchKey.getKeyString());
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey == this) {
+                return true;
+            }
+
+            if (!(otherKey instanceof SearchKey)) {
+                return false;
+            }
+
+            SearchKey otherSearchKey = (SearchKey) otherKey;
+            return getKeyString().equals(otherSearchKey.getKeyString());
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 79 * hash + Objects.hashCode(getKeyString());
+            return hash;
+        }
+
+        /**
+         * @return the keyString
+         */
+        String getKeyString() {
+            return keyString;
         }
     }
 

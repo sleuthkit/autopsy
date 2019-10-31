@@ -104,6 +104,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
+import org.sleuthkit.autopsy.filequery.DiscoveryTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -398,9 +399,9 @@ public class Case {
          * TimelineEvent that was added.
          */
         TIMELINE_EVENT_ADDED,
-        /* An item in the central repository has had its comment
-         * modified. The old value is null, the new value is string for current
-         * comment.
+        /*
+         * An item in the central repository has had its comment modified. The
+         * old value is null, the new value is string for current comment.
          */
         CR_COMMENT_CHANGED;
 
@@ -535,8 +536,8 @@ public class Case {
      */
     public static boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
-                 || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
-                 || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
+                || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
+                || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
     }
 
     /**
@@ -1112,7 +1113,7 @@ public class Case {
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
                 CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(false);
-
+                DiscoveryTopComponent.getTopComponent().resetTopComponent();
                 /*
                  * Clear the notifications in the notfier component in the lower
                  * right hand corner of the main application window.

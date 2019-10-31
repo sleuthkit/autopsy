@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.filequery.FileSearch.GroupKey;
 final class PageWorker extends SwingWorker<Void, Void> {
 
     private final static Logger logger = Logger.getLogger(PageWorker.class.getName());
+    private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
     private final List<FileSearchFiltering.FileFilter> searchfilters;
     private final FileSearch.AttributeType groupingAttribute;
     private final FileGroup.GroupSortingAlgorithm groupSort;
@@ -79,7 +80,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
         try {
             // Run the search
-            results.addAll(FileSearch.getFilesInGroup(searchfilters,
+            results.addAll(FileSearch.getFilesInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
                     groupingAttribute,
                     groupSort,
                     fileSortMethod, groupKey, startingEntry, pageSize,

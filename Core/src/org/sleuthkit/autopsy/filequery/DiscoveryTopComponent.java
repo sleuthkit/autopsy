@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 @TopComponent.Registration(mode = "discovery", openAtStartup = false)
 @RetainLocation("discovery")
 @NbBundle.Messages("DiscoveryTopComponent.name= File Discovery")
-final class DiscoveryTopComponent extends TopComponent {
+public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
@@ -115,8 +115,16 @@ final class DiscoveryTopComponent extends TopComponent {
         }
     }
 
-    static DiscoveryTopComponent getTopComponent() {
+    public static DiscoveryTopComponent getTopComponent() {
         return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+    }
+
+    /**
+     * Reset the top component so it isn't displaying any results. 
+     */
+    public void resetTopComponent() {
+        resultsPanel.resetResultViewer();
+        groupListPanel.resetGroupList();
     }
 
     @Override
