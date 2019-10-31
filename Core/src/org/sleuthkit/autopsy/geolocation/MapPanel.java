@@ -45,7 +45,6 @@ final class MapPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
 
     private boolean zoomChanging;
-    private final boolean sliderReversed;
     
     private KdTree<MapWaypoint> waypointTree;
 
@@ -53,9 +52,7 @@ final class MapPanel extends javax.swing.JPanel {
      * Creates new form MapPanel
      */
     MapPanel() {
-         sliderReversed = false;
-         zoomChanging = false;
-         waypointTree = null;
+        zoomChanging = false;
          
         initComponents();
         initMap();
@@ -90,7 +87,7 @@ final class MapPanel extends javax.swing.JPanel {
         zoomSlider.setMaximum(tileFactory.getInfo().getMaximumZoomLevel());
 
        
-        mapViewer.setZoom(tileFactory.getInfo().getMaximumZoomLevel()- 1);
+        setZoom(tileFactory.getInfo().getMaximumZoomLevel()- 1);
         mapViewer.setAddressLocation(new GeoPosition(0, 0));
 
         // Basic painters for the way points. 
@@ -133,11 +130,7 @@ final class MapPanel extends javax.swing.JPanel {
     void setZoom(int zoom) {
         zoomChanging = true;
         mapViewer.setZoom(zoom);
-        if (sliderReversed) {
-            zoomSlider.setValue(zoomSlider.getMaximum() - zoom);
-        } else {
-            zoomSlider.setValue(zoom);
-        }
+        zoomSlider.setValue((zoomSlider.getMaximum() + zoomSlider.getMinimum())- zoom);
         zoomChanging = false;
     }
     
