@@ -97,6 +97,7 @@ final class CustomArtifactType {
         attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, 60L));
         attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
+        attributes.add(new BlackboardAttribute(jsonAttrType, MODULE_NAME, "{\"fruit\": \"Apple\",\"size\": \"Large\",\"color\": \"Red\"}"));
         artifact.addAttributes(attributes);
 
         /*
