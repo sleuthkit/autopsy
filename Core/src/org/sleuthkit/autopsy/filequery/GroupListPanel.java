@@ -90,6 +90,7 @@ class GroupListPanel extends javax.swing.JPanel {
         groupListScrollPane = new javax.swing.JScrollPane();
         groupKeyList = new javax.swing.JList<>();
 
+        groupKeyList.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(GroupListPanel.class, "GroupListPanel.groupKeyList.border.title"))); // NOI18N
         groupKeyList.setModel(new DefaultListModel<GroupKey>());
         groupKeyList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         groupKeyList.setCellRenderer(new GroupListRenderer());

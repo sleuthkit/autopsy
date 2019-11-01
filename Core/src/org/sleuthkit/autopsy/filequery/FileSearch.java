@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Main class to perform the file search.
@@ -1029,30 +1030,37 @@ class FileSearch {
         @Override
         void addAttributeToResultFiles(List<ResultFile> files, SleuthkitCase caseDb,
                 EamDb centralRepoDb) throws FileSearchException {
-
             if (centralRepoDb == null) {
-                throw new FileSearchException("Central Repository is not enabled - can not add frequency data"); // NON-NLS
-            }
-
-            // Set frequency in batches
-            Set<String> hashesToLookUp = new HashSet<>();
-            List<ResultFile> currentFiles = new ArrayList<>();
-            for (ResultFile file : files) {
-                if (file.getFrequency() == Frequency.UNKNOWN
-                        && file.getFirstInstance().getMd5Hash() != null
-                        && !file.getFirstInstance().getMd5Hash().isEmpty()) {
-                    hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
-                    currentFiles.add(file);
+                for (ResultFile file : files) {
+                    if (file.getFrequency() == Frequency.UNKNOWN) {
+                        if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
+                            file.setFrequency(Frequency.KNOWN);
+                        }
+                    }
                 }
+            } else {
+                // Set frequency in batches
+                List<ResultFile> currentFiles = new ArrayList<>();
+                Set<String> hashesToLookUp = new HashSet<>();
+                for (ResultFile file : files) {
+                    if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
+                        file.setFrequency(Frequency.KNOWN);
+                    }
+                    if (file.getFrequency() == Frequency.UNKNOWN
+                            && file.getFirstInstance().getMd5Hash() != null
+                            && !file.getFirstInstance().getMd5Hash().isEmpty()) {
+                        hashesToLookUp.add(file.getFirstInstance().getMd5Hash());
+                        currentFiles.add(file);
+                    }
+                    if (hashesToLookUp.size() >= BATCH_SIZE) {
+                        computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
 
-                if (hashesToLookUp.size() >= BATCH_SIZE) {
-                    computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
-
-                    hashesToLookUp.clear();
-                    currentFiles.clear();
+                        hashesToLookUp.clear();
+                        currentFiles.clear();
+                    }
                 }
+                computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
             }
-            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
         }
     }
 
@@ -1816,7 +1824,7 @@ class FileSearch {
         AttributeType getAttributeType() {
             return attributeType;
         }
-        
+
         /**
          * Get the list of enums that are valid for grouping images.
          *

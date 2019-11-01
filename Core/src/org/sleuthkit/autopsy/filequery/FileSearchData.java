@@ -53,7 +53,8 @@ class FileSearchData {
         COUNT_50(4, 50, Bundle.FileSearchData_Frequency_count_50_displayName()),
         COUNT_100(5, 100, Bundle.FileSearchData_Frequency_count_100_displayName()),
         COMMON(6, 0, Bundle.FileSearchData_Frequency_common_displayName()),
-        UNKNOWN(7, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
+        KNOWN(7, 0, "Known (NSRL)"),
+        UNKNOWN(8, 0, Bundle.FileSearchData_Frequency_unknown_displayName());
 
         private final int ranking;
         private final String displayName;
@@ -99,12 +100,23 @@ class FileSearchData {
         }
 
         /**
-         * Get the list of enums that are valid for filtering.
+         * Get the list of enums that are valid for filtering when a CR is
+         * enabled.
          *
-         * @return enums that can be used to filter
+         * @return enums that can be used to filter with a CR.
          */
-        static List<Frequency> getOptionsForFiltering() {
-            return Arrays.asList(UNIQUE, RARE, COUNT_10, COUNT_20, COUNT_50, COUNT_100, COMMON);
+        static List<Frequency> getOptionsForFilteringWithCr() {
+            return Arrays.asList(UNIQUE, RARE, COUNT_10, COUNT_20, COUNT_50, COUNT_100, COMMON, KNOWN);
+        }
+
+        /**
+         * Get the list of enums that are valid for filtering when no CR is
+         * enabled.
+         *
+         * @return enums that can be used to filter without a CR.
+         */
+        static List<Frequency> getOptionsForFilteringWithoutCr() {
+            return Arrays.asList(KNOWN, UNKNOWN);
         }
 
         @Override

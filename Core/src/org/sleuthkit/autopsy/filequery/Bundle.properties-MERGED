@@ -181,8 +181,9 @@ FileSearchPanel.includeRadioButton.text=Include
 FileSearchPanel.excludeRadioButton.text=Exclude
 FileSearchPanel.knownFilesCheckbox.toolTipText=
 FileSearchPanel.knownFilesCheckbox.text=Hide known files
-FileSearchPanel.imagesButton.text=Images
-FileSearchPanel.videosButton.text=Videos
+GroupListPanel.groupKeyList.border.title=Groups
+DiscoveryTopComponent.imagesButton.text=Images
+DiscoveryTopComponent.videosButton.text=Videos
 ResultsPanel.viewFileInDir.name=View File in Directory
 SearchNode.getName.text=Search Result
 # {0} - numberOfInstances

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -40,7 +41,9 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -57,6 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ResultsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private final static Logger logger = Logger.getLogger(ResultsPanel.class.getName());
     private final VideoThumbnailViewer videoThumbnailViewer;
     private final ImageThumbnailViewer imageThumbnailViewer;
     private List<FileSearchFiltering.FileFilter> searchFilters;
@@ -67,7 +71,6 @@ public class ResultsPanel extends javax.swing.JPanel {
     private int currentPage = 0;
     private int previousPageSize = 10;
     private FileSearchData.FileType resultType;
-    private final EamDb centralRepo;
     private int groupSize = 0;
     private PageWorker pageWorker;
     private final List<SwingWorker<Void, Void>> thumbnailWorkers = new ArrayList<>();
@@ -78,9 +81,8 @@ public class ResultsPanel extends javax.swing.JPanel {
      */
     @Messages({"ResultsPanel.viewFileInDir.name=View File in Directory",
         "ResultsPanel.openInExternalViewer.name=Open in External Viewer"})
-    public ResultsPanel(EamDb centralRepo) {
+    public ResultsPanel() {
         initComponents();
-        this.centralRepo = centralRepo;
         imageThumbnailViewer = new ImageThumbnailViewer();
         videoThumbnailViewer = new VideoThumbnailViewer();
         videoThumbnailViewer.addListSelectionListener((e) -> {
@@ -298,6 +300,15 @@ public class ResultsPanel extends javax.swing.JPanel {
         synchronized (this) {
             if (pageWorker != null && !pageWorker.isDone()) {
                 pageWorker.cancel(true);
+            }
+            EamDb centralRepo = null;
+            if (EamDb.isEnabled()) {
+                try {
+                    centralRepo = EamDb.getInstance();
+                } catch (EamDbException ex) {
+                    centralRepo = null;
+                    logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
+                }
             }
             pageWorker = new PageWorker(searchFilters, groupingAttribute, groupSort, fileSortMethod, selectedGroupKey, startingEntry, pageSize, resultType, centralRepo);
             pageWorker.execute();

@@ -279,7 +279,8 @@ class FileSearchFiltering {
             "FileSearchFiltering.ParentSearchTerm.fullString= (exact)",
             "FileSearchFiltering.ParentSearchTerm.subString= (substring)",
             "FileSearchFiltering.ParentSearchTerm.includeString= (include)",
-            "FileSearchFiltering.ParentSearchTerm.excludeString= (exclude)",})
+            "FileSearchFiltering.ParentSearchTerm.excludeString= (exclude)",}
+        )
         @Override
         public String toString() {
             String returnString = searchStr;
@@ -308,6 +309,7 @@ class FileSearchFiltering {
          */
         boolean isIncluded() {
             return isIncluded;
+
         }
     }
 
@@ -558,10 +560,6 @@ class FileSearchFiltering {
         @Override
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
                 EamDb centralRepoDb) throws FileSearchException {
-
-            if (centralRepoDb == null) {
-                throw new FileSearchException("Can not run Frequency filter with null Central Repository DB"); // NON-NLS
-            }
 
             // We have to have run some kind of SQL filter before getting to this point,
             // and should have checked afterward to see if the results were empty.

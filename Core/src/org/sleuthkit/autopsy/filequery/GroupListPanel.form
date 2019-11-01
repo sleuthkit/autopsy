@@ -41,6 +41,13 @@
       <SubComponents>
         <Component class="javax.swing.JList" name="groupKeyList">
           <Properties>
+            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+              <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                <TitledBorder title="Groups">
+                  <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/filequery/Bundle.properties" key="GroupListPanel.groupKeyList.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </TitledBorder>
+              </Border>
+            </Property>
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
               <Connection code="new DefaultListModel&lt;GroupKey&gt;()" type="code"/>
             </Property>

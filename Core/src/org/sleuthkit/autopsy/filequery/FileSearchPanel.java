@@ -36,7 +36,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.filequery.FileSearch.GroupingAttributeType;
 import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
@@ -61,30 +63,23 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private final static Logger logger = Logger.getLogger(FileSearchPanel.class.getName());
 
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
-    private final SleuthkitCase caseDb;
-    private final EamDb centralRepoDb;
     private SearchWorker searchWorker = null;
 
     /**
      * Creates new form FileSearchDialog
      */
     @NbBundle.Messages({"FileSearchPanel.dialogTitle.text=Test file search"})
-    FileSearchPanel(SleuthkitCase caseDb, EamDb centralRepoDb) {
-        this.caseDb = caseDb;
-        this.centralRepoDb = centralRepoDb;
+    FileSearchPanel() {
         initComponents();
-        customizeComponents();
-        imagesSelected();
-
     }
 
     private void imagesSelected() {
-        imagesButton.setSelected(true);
-        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
-        imagesButton.setBackground(Color.blue);
-        videosButton.setIcon(null);
-        videosButton.setSelected(false);
-        videosButton.setBackground(new Color(240, 240, 240));
+//        imagesButton.setSelected(true);
+//        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
+//        imagesButton.setBackground(Color.blue);
+//        videosButton.setIcon(null);
+//        videosButton.setSelected(false);
+//        videosButton.setBackground(new Color(240, 240, 240));
         dataSourceCheckbox.setVisible(true);
         dataSourceScrollPane.setVisible(true);
         dataSourceList.setVisible(true);
@@ -127,12 +122,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     private void videosSelected() {
-        imagesButton.setSelected(false);
-        imagesButton.setIcon(null);
-        imagesButton.setBackground(new Color(240, 240, 240));
-        videosButton.setSelected(true);
-        videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
-        videosButton.setBackground(Color.blue);
+//        imagesButton.setSelected(false);
+//        imagesButton.setIcon(null);
+//        imagesButton.setBackground(new Color(240, 240, 240));
+//        videosButton.setSelected(true);
+//        videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
+//        videosButton.setBackground(Color.blue);
         dataSourceCheckbox.setVisible(true);
         dataSourceScrollPane.setVisible(true);
         dataSourceList.setVisible(true);
@@ -177,6 +172,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableCheckbox.setVisible(false);
     }
 
+    void resetPanel(){
+        customizeComponents();
+    }
+    
     /**
      * Set up all the UI components
      */
@@ -196,19 +195,21 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         setUpObjectFilter();
         setUpScoreFilter();
 
+        groupByCombobox.removeAllItems();
         // Set up the grouping attributes
         for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGroupingImages()) {
             if (type != GroupingAttributeType.FREQUENCY || EamDb.isEnabled()) {
                 groupByCombobox.addItem(type);
             }
         }
-
+        orderByCombobox.removeAllItems();
         // Set up the file order list
         for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrderingImages()) {
             if (method != SortingMethod.BY_FREQUENCY || EamDb.isEnabled()) {
                 orderByCombobox.addItem(method);
             }
         }
+        imagesSelected();
         validateFields();
     }
 
@@ -226,7 +227,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             list.addListSelectionListener(new ListSelectionListener() {
                 @Override
                 public void valueChanged(ListSelectionEvent evt) {
-                    validateFields();
+                    if (!evt.getValueIsAdjusting()) {
+                        validateFields();
+                    }
                 }
             });
         }
@@ -239,7 +242,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         try {
             DefaultListModel<DataSourceItem> dsListModel = (DefaultListModel<DataSourceItem>) dataSourceList.getModel();
-            for (DataSource ds : caseDb.getDataSources()) {
+            dsListModel.removeAllElements();
+            for (DataSource ds : Case.getCurrentCase().getSleuthkitCase().getDataSources()) {
                 dsListModel.add(count, new DataSourceItem(ds));
             }
         } catch (TskCoreException ex) {
@@ -254,13 +258,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * Initialize the frequency filter
      */
     private void setUpFrequencyFilter() {
-        if (centralRepoDb == null) {
-            crFrequencyList.setEnabled(false);
-            crFrequencyCheckbox.setEnabled(false);
+        int count = 0;
+        DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
+        frequencyListModel.removeAllElements();
+        if (!EamDb.isEnabled()) {
+            for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
+                frequencyListModel.add(count, freq);
+            }
         } else {
-            int count = 0;
-            DefaultListModel<FileSearchData.Frequency> frequencyListModel = (DefaultListModel<FileSearchData.Frequency>) crFrequencyList.getModel();
-            for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFiltering()) {
+            for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithCr()) {
                 frequencyListModel.add(count, freq);
             }
         }
@@ -273,6 +279,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private void setUpSizeFilter() {
         int count = 0;
         DefaultListModel<FileSearchData.FileSize> sizeListModel = (DefaultListModel<FileSearchData.FileSize>) sizeList.getModel();
+        sizeListModel.removeAllElements();
         for (FileSearchData.FileSize size : FileSearchData.FileSize.values()) {
             sizeListModel.add(count, size);
         }
@@ -286,7 +293,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         try {
             DefaultListModel<String> kwListModel = (DefaultListModel<String>) keywordList.getModel();
-
+            kwListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for (String name : setNames) {
@@ -307,7 +314,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         try {
             DefaultListModel<String> hashListModel = (DefaultListModel<String>) hashSetList.getModel();
-
+            hashListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for (String name : setNames) {
@@ -329,7 +336,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         try {
             DefaultListModel<String> intListModel = (DefaultListModel<String>) interestingItemsList.getModel();
-
+            intListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for (String name : setNames) {
@@ -351,8 +358,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         try {
             DefaultListModel<TagName> tagsListModel = (DefaultListModel<TagName>) tagsList.getModel();
-
-            List<TagName> tagNames = caseDb.getTagNamesInUse();
+            tagsListModel.removeAllElements();
+            List<TagName> tagNames = Case.getCurrentCase().getSleuthkitCase().getTagNamesInUse();
             for (TagName name : tagNames) {
                 tagsListModel.add(count, name);
                 count++;
@@ -396,7 +403,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         try {
             DefaultListModel<String> objListModel = (DefaultListModel<String>) objectsList.getModel();
-
+            objListModel.removeAllElements();
             List<String> setNames = getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
             for (String name : setNames) {
                 objListModel.add(count, name);
@@ -417,6 +424,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         int count = 0;
         DefaultListModel<Score> scoreListModel = (DefaultListModel<Score>) scoreList.getModel();
+        scoreListModel.removeAllElements();
         for (Score score : Score.getOptionsForFiltering()) {
             scoreListModel.add(count, score);
         }
@@ -436,7 +444,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @throws TskCoreException
      */
     private List<String> getSetNames(BlackboardArtifact.ARTIFACT_TYPE artifactType, BlackboardAttribute.ATTRIBUTE_TYPE setNameAttribute) throws TskCoreException {
-        List<BlackboardArtifact> arts = caseDb.getBlackboardArtifacts(artifactType);
+        List<BlackboardArtifact> arts = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifacts(artifactType);
         List<String> setNames = new ArrayList<>();
         for (BlackboardArtifact art : arts) {
             for (BlackboardAttribute attr : art.getAttributes()) {
@@ -456,8 +464,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * Initialize the parent path filter
      */
     private void setUpParentPathFilter() {
-        parentPathButtonGroup.add(fullRadioButton);
-        parentPathButtonGroup.add(substringRadioButton);
         fullRadioButton.setSelected(true);
         includeRadioButton.setSelected(true);
         parentListModel = (DefaultListModel<FileSearchFiltering.ParentSearchTerm>) parentList.getModel();
@@ -472,12 +478,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     List<FileSearchFiltering.FileFilter> getFilters() {
         List<FileSearchFiltering.FileFilter> filters = new ArrayList<>();
 
-        // There will always be a file type selected
-        if (imagesButton.isSelected()) {
-            filters.add(new FileSearchFiltering.FileTypeFilter(FileType.IMAGE));
-        } else if (videosButton.isSelected()) {
-            filters.add(new FileSearchFiltering.FileTypeFilter(FileType.VIDEO));
-        }
+//        // There will always be a file type selected
+//        if (imagesButton.isSelected()) {
+        filters.add(new FileSearchFiltering.FileTypeFilter(FileType.IMAGE));
+//        } else if (videosButton.isSelected()) {
+//            filters.add(new FileSearchFiltering.FileTypeFilter(FileType.VIDEO));
+//        }
 
         if (parentCheckbox.isSelected()) {
             // For the parent paths, everything in the box is used (not just the selected entries)
@@ -612,11 +618,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * use bundle messages.
      */
     private void validateFields() {
-        // There must be at least one file type selected
-        if (imagesButton.isSelected() || videosButton.isSelected()) {
-            setInvalid("At least one file type must be selected");
-            return;
-        }
+//        // There must be at least one file type selected
+//        if (imagesButton.isSelected() || videosButton.isSelected()) {
+//            setInvalid("At least one file type must be selected");
+//            return;
+//        }
         // For most enabled filters, there should be something selected
         if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
             setInvalid("At least one data source must be selected");
@@ -755,8 +761,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupByLabel = new javax.swing.JLabel();
         errorLabel = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
-        imagesButton = new javax.swing.JButton();
-        videosButton = new javax.swing.JButton();
 
         setMinimumSize(new java.awt.Dimension(424, 0));
         setPreferredSize(new java.awt.Dimension(424, 533));
@@ -1271,42 +1275,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(imagesButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.imagesButton.text")); // NOI18N
-        typeButtonGroup.add(imagesButton);
-        imagesButton.setMargin(new java.awt.Insets(2, 8, 2, 8));
-        imagesButton.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png"))); // NOI18N
-        imagesButton.setVerifyInputWhenFocusTarget(false);
-        imagesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                imagesButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(videosButton, org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.videosButton.text")); // NOI18N
-        typeButtonGroup.add(videosButton);
-        videosButton.setMargin(new java.awt.Insets(2, 8, 2, 8));
-        videosButton.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png"))); // NOI18N
-        videosButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                videosButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(imagesButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(videosButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(4, 4, 4)
-                        .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap()
+                        .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1325,19 +1302,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(imagesButton)
-                    .addComponent(videosButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
+                .addGap(6, 6, 6)
+                .addComponent(filtersScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cancelButton)
-                        .addComponent(searchButton))
-                    .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelButton)
+                    .addComponent(searchButton)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(6, 6, 6))))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1346,9 +1321,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         FileType searchType = FileType.IMAGE; //default to images
         // There will always be a file type selected
-        if (videosButton.isSelected()) {
-            searchType = FileType.VIDEO;
-        }
+//        if (videosButton.isSelected()) {
+//            searchType = FileType.VIDEO;
+//        }
         DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(searchType));
         // For testing, allow the user to run different searches in loop
 
@@ -1361,6 +1336,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         // Get the file sorting method
         FileSorter.SortingMethod fileSort = getFileSortingMethod();
+        EamDb centralRepoDb = null;
+        if (EamDb.isEnabled()) {
+            try {
+                centralRepoDb = EamDb.getInstance();
+            } catch (EamDbException ex) {
+                centralRepoDb = null;
+                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
+            }
+        }
         searchWorker = new SearchWorker(centralRepoDb, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
@@ -1380,8 +1364,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         }
         searchButton.setEnabled(enabled);
         cancelButton.setEnabled(!enabled);
-        imagesButton.setEnabled(enabled);
-        videosButton.setEnabled(enabled);
         orderByCombobox.setEnabled(enabled);
         groupByCombobox.setEnabled(enabled);
         attributeRadioButton.setEnabled(enabled);
@@ -1538,16 +1520,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         scoreList.setEnabled(scoreCheckbox.isSelected());
     }//GEN-LAST:event_scoreCheckboxActionPerformed
 
-    private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
-        imagesSelected();
-        validateFields();
-    }//GEN-LAST:event_imagesButtonActionPerformed
-
-    private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
-        videosSelected();
-        validateFields();
-    }//GEN-LAST:event_videosButtonActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
@@ -1572,7 +1544,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox hashSetCheckbox;
     private javax.swing.JList<String> hashSetList;
     private javax.swing.JScrollPane hashSetScrollPane;
-    private javax.swing.JButton imagesButton;
     private javax.swing.JRadioButton includeRadioButton;
     private javax.swing.JCheckBox interestingItemsCheckbox;
     private javax.swing.JList<String> interestingItemsList;
@@ -1609,7 +1580,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JList<TagName> tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
     private javax.swing.ButtonGroup typeButtonGroup;
-    private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 
 }

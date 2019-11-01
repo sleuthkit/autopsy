@@ -61,18 +61,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     DiscoveryTopComponent() {
         initComponents();
         // Load the central repository database.
-        EamDb centralRepoDb = null;
-        if (EamDb.isEnabled()) {
-            try {
-                centralRepoDb = EamDb.getInstance();
-            } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error loading central repository database, no central repository options will be available for File Discovery", ex);
-            }
-        }
+
         setName(Bundle.DiscoveryTopComponent_name());
-        fileSearchPanel = new FileSearchPanel(Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
+        fileSearchPanel = new FileSearchPanel();
         dataContentPanel = DataContentPanel.createInstance();
-        resultsPanel = new ResultsPanel(centralRepoDb);
+        resultsPanel = new ResultsPanel();
         groupListPanel = new GroupListPanel();
         leftSplitPane.setLeftComponent(fileSearchPanel);
         leftSplitPane.setRightComponent(groupListPanel);
@@ -110,8 +103,10 @@ public final class DiscoveryTopComponent extends TopComponent {
                     mode.dockInto(tc);
                 }
                 tc.open();
+                tc.updateSearchSettings();
             }
             tc.toFront();
+
         }
     }
 
@@ -120,11 +115,15 @@ public final class DiscoveryTopComponent extends TopComponent {
     }
 
     /**
-     * Reset the top component so it isn't displaying any results. 
+     * Reset the top component so it isn't displaying any results.
      */
     public void resetTopComponent() {
         resultsPanel.resetResultViewer();
         groupListPanel.resetGroupList();
+    }
+
+    void updateSearchSettings() {
+        fileSearchPanel.resetPanel();
     }
 
     @Override
@@ -157,6 +156,9 @@ public final class DiscoveryTopComponent extends TopComponent {
         javax.swing.JSplitPane mainSplitPane = new javax.swing.JSplitPane();
         leftSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new javax.swing.JSplitPane();
+        toolBarPanel = new javax.swing.JPanel();
+        imagesButton = new javax.swing.JButton();
+        videosButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(1100, 700));
         setLayout(new java.awt.BorderLayout());
@@ -176,12 +178,60 @@ public final class DiscoveryTopComponent extends TopComponent {
         mainSplitPane.setRightComponent(rightSplitPane);
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
+
+        org.openide.awt.Mnemonics.setLocalizedText(imagesButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.imagesButton.text")); // NOI18N
+        imagesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                imagesButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(videosButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.videosButton.text")); // NOI18N
+        videosButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                videosButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout toolBarPanelLayout = new javax.swing.GroupLayout(toolBarPanel);
+        toolBarPanel.setLayout(toolBarPanelLayout);
+        toolBarPanelLayout.setHorizontalGroup(
+            toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolBarPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(imagesButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(videosButton)
+                .addContainerGap(954, Short.MAX_VALUE))
+        );
+        toolBarPanelLayout.setVerticalGroup(
+            toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolBarPanelLayout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(imagesButton)
+                    .addComponent(videosButton))
+                .addGap(6, 6, 6))
+        );
+
+        add(toolBarPanel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_imagesButtonActionPerformed
+
+    private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_videosButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton imagesButton;
     private javax.swing.JSplitPane leftSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
+    private javax.swing.JPanel toolBarPanel;
+    private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 
 }
