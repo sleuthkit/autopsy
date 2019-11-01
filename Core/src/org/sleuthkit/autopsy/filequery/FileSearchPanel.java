@@ -93,7 +93,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         sizeScrollPane.setEnabled(true);
         sizeScrollPane.setVisible(true);
         crFrequencyCheckbox.setVisible(true);
+        crFrequencyCheckbox.setSelected(true);
+        int[] selectedFrequencyIndices;
+        if (!EamDb.isEnabled()) {
+            selectedFrequencyIndices = new int[]{0};
+        } else {
+            selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
+        }
+        crFrequencyList.setEnabled(true);
         crFrequencyList.setVisible(true);
+        crFrequencyList.setSelectedIndices(selectedFrequencyIndices);
+        crFrequencyScrollPane.setEnabled(true);
         crFrequencyScrollPane.setVisible(true);
         exifCheckbox.setVisible(true);
         objectsCheckbox.setVisible(true);
@@ -141,7 +151,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         sizeScrollPane.setEnabled(true);
         sizeScrollPane.setVisible(true);
         crFrequencyCheckbox.setVisible(true);
+        crFrequencyCheckbox.setSelected(true);
+        int[] selectedFrequencyIndices;
+        if (!EamDb.isEnabled()) {
+            selectedFrequencyIndices = new int[]{0};
+        } else {
+            selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
+        }
+        crFrequencyList.setEnabled(true);
         crFrequencyList.setVisible(true);
+        crFrequencyList.setSelectedIndices(selectedFrequencyIndices);
+        crFrequencyScrollPane.setEnabled(true);
         crFrequencyScrollPane.setVisible(true);
         exifCheckbox.setVisible(true);
         objectsCheckbox.setSelected(false);
@@ -172,10 +192,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableCheckbox.setVisible(false);
     }
 
-    void resetPanel(){
+    void resetPanel() {
         customizeComponents();
     }
-    
+
     /**
      * Set up all the UI components
      */
@@ -265,6 +285,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithoutCr()) {
                 frequencyListModel.add(count, freq);
             }
+
         } else {
             for (FileSearchData.Frequency freq : FileSearchData.Frequency.getOptionsForFilteringWithCr()) {
                 frequencyListModel.add(count, freq);
