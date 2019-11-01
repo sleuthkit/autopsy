@@ -164,7 +164,7 @@ public class Case {
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     private boolean hasDataSources;
-    private final TSKCaseRepublisher tskEventForwarder = new TSKCaseRepublisher();
+    private final TSKCaseRepublisher tskEventForwarder;
 
     /*
      * Get a reference to the main window of the desktop application to use to
@@ -172,11 +172,8 @@ public class Case {
      * changing the main window title.
      */
     static {
-        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-            @Override
-            public void run() {
+        WindowManager.getDefault().invokeWhenUIReady(() -> {
                 mainFrame = WindowManager.getDefault().getMainWindow();
-            }
         });
     }
 
@@ -673,14 +670,15 @@ public class Case {
      * method should put all operations in an exception firewall with a try and
      * catch-all block to handle the possibility of bad timing.
      *
-     * TODO (JIRA-3825): Introduce a reference counting scheme for this get case
-     * method.
-     *
      * @return The current case.
      *
      * @throws NoCurrentCaseException if there is no current case.
      */
     public static Case getCurrentCaseThrows() throws NoCurrentCaseException {
+        /*
+         * TODO (JIRA-3825): Introduce a reference counting scheme for this get
+         * case method.
+         */
         Case openCase = currentCase;
         if (openCase == null) {
             throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
@@ -761,13 +759,11 @@ public class Case {
             if (null == currentCase) {
                 return;
             }
-            Case theCase = currentCase;
+            CaseMetadata caseMetadata = currentCase.getMetadata();
             closeCurrentCase();
-            /*
-             * Note that this case action does not support cancellation.
-             */
+            Case theCase = new Case(caseMetadata);
             theCase.doCaseAction(Bundle.Case_progressIndicatorTitle_deletingDataSource(), theCase::deleteDataSource, CaseLockType.EXCLUSIVE, false, dataSourceObjectID);
-            openAsCurrentCase(theCase, false);
+            openAsCurrentCase(new Case(caseMetadata), false);
         }
     }
 
@@ -1743,7 +1739,7 @@ public class Case {
      *
      */
     private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
-        metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
+        this(new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails));
     }
 
     /**
@@ -1753,6 +1749,9 @@ public class Case {
      */
     private Case(CaseMetadata caseMetaData) {
         metadata = caseMetaData;
+        TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_ACTION_THREAD_NAME, metadata.getCaseName()));
+        caseLockingExecutor = Executors.newSingleThreadExecutor(threadFactory);
+        tskEventForwarder = new TSKCaseRepublisher();
     }
 
     /**
@@ -1817,8 +1816,6 @@ public class Case {
          * also ensures that the case lock is released in the same thread in
          * which it was acquired, which is required by the coordination service.
          */
-        TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_ACTION_THREAD_NAME, metadata.getCaseName()));
-        caseLockingExecutor = Executors.newSingleThreadExecutor(threadFactory);
         Future<Void> future = caseLockingExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 caseAction.execute(progressIndicator, additionalParams);
@@ -1866,7 +1863,7 @@ public class Case {
             } else {
                 future.cancel(true);
             }
-            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor); // RJCTODO
         } catch (CancellationException discarded) {
             /*
              * The case action task has been cancelled. Wait for it to finish,
@@ -1874,7 +1871,7 @@ public class Case {
              * the task is completed with a cancellation condition, the case
              * will have been closed and the case lock will have been released.
              */
-            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);  // RJCTODO
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         } catch (ExecutionException ex) {
             /*
@@ -1884,7 +1881,7 @@ public class Case {
              * case will have been closed and the case lock will have been
              * released.
              */
-            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);  // RJCTODO
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getLocalizedMessage()), ex);
         } finally {
             progressIndicator.finish();
@@ -2016,8 +2013,8 @@ public class Case {
     })
     Void deleteDataSource(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams instanceof Long);
-        openCaseDataBase(progressIndicator);
-        openAppServiceCaseResources(progressIndicator);
+        openCase(progressIndicator, null);
+        progressIndicator.progress(Bundle.Case_progressMessage_deletingDataSource());
         Long dataSourceObjectID = (Long) additionalParams;
         try {
             DataSource dataSource = this.caseDb.getDataSource(dataSourceObjectID);
@@ -2034,6 +2031,7 @@ public class Case {
             throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
         }
         eventPublisher.publish(new DataSourceDeletedEvent(dataSourceObjectID));
+        close(progressIndicator);
         return null;
     }
 
@@ -2092,9 +2090,6 @@ public class Case {
     /**
      * Creates the case directory, if it does not already exist.
      *
-     * TODO (JIRA-2180): Always create the case directory as part of the case
-     * creation process.
-     *
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
@@ -2106,6 +2101,10 @@ public class Case {
         "Case.progressMessage.creatingCaseDirectory=Creating case directory..."
     })
     private void createCaseDirectoryIfDoesNotExist(ProgressIndicator progressIndicator) throws CaseActionException {
+        /*
+         * TODO (JIRA-2180): Always create the case directory as part of the
+         * case creation process.
+         */
         progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseDirectory());
         if (new File(metadata.getCaseDirectory()).exists() == false) {
             progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseDirectory());
@@ -2315,7 +2314,6 @@ public class Case {
     private void openCaseLevelServices(ProgressIndicator progressIndicator) {
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseLevelServices());
         this.caseServices = new Services(caseDb);
-
         caseDb.registerForEvents(tskEventForwarder);
     }
 
@@ -2527,7 +2525,6 @@ public class Case {
         } catch (ExecutionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getMessage()), ex);
         } finally {
-            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             progressIndicator.finish();
         }
     }
@@ -2572,6 +2569,11 @@ public class Case {
             caseDb.unregisterForEvents(tskEventForwarder);
             caseDb.close();
         }
+
+        /*
+         * Release the case (case directory) lock.
+         */
+        releaseSharedCaseDirLock(getMetadata().getCaseDirectory());
 
         /*
          * Switch the log directory.
