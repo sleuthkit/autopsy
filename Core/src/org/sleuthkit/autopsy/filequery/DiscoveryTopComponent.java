@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import java.awt.Color;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -218,11 +219,23 @@ public final class DiscoveryTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
-        // TODO add your handling code here:
+        imagesButton.setSelected(true);
+        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
+        imagesButton.setBackground(Color.blue);
+        videosButton.setIcon(null);
+        videosButton.setSelected(false);
+        videosButton.setBackground(new Color(240, 240, 240));
+        fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }//GEN-LAST:event_imagesButtonActionPerformed
 
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
-        // TODO add your handling code here:
+        imagesButton.setSelected(false);
+        imagesButton.setIcon(null);
+        imagesButton.setBackground(new Color(240, 240, 240));
+        videosButton.setSelected(true);
+        videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
+        videosButton.setBackground(Color.blue);
+        fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
 
 

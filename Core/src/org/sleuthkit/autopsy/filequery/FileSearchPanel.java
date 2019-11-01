@@ -61,7 +61,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(FileSearchPanel.class.getName());
-
+    private FileType fileType;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
     private SearchWorker searchWorker = null;
 
@@ -74,12 +74,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     private void imagesSelected() {
-//        imagesButton.setSelected(true);
-//        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
-//        imagesButton.setBackground(Color.blue);
-//        videosButton.setIcon(null);
-//        videosButton.setSelected(false);
-//        videosButton.setBackground(new Color(240, 240, 240));
         dataSourceCheckbox.setVisible(true);
         dataSourceScrollPane.setVisible(true);
         dataSourceList.setVisible(true);
@@ -132,12 +126,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     private void videosSelected() {
-//        imagesButton.setSelected(false);
-//        imagesButton.setIcon(null);
-//        imagesButton.setBackground(new Color(240, 240, 240));
-//        videosButton.setSelected(true);
-//        videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
-//        videosButton.setBackground(Color.blue);
         dataSourceCheckbox.setVisible(true);
         dataSourceScrollPane.setVisible(true);
         dataSourceList.setVisible(true);
@@ -192,6 +180,15 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableCheckbox.setVisible(false);
     }
 
+    void setSelectedType(FileType type) {
+        fileType = type;
+        if (fileType == FileType.IMAGE) {
+            imagesSelected();
+        } else if (fileType == FileType.VIDEO) {
+            videosSelected();
+        }
+    }
+
     void resetPanel() {
         customizeComponents();
     }
@@ -229,7 +226,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 orderByCombobox.addItem(method);
             }
         }
-        imagesSelected();
+        setSelectedType(FileType.IMAGE);
         validateFields();
     }
 
@@ -498,14 +495,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      */
     List<FileSearchFiltering.FileFilter> getFilters() {
         List<FileSearchFiltering.FileFilter> filters = new ArrayList<>();
-
-//        // There will always be a file type selected
-//        if (imagesButton.isSelected()) {
-        filters.add(new FileSearchFiltering.FileTypeFilter(FileType.IMAGE));
-//        } else if (videosButton.isSelected()) {
-//            filters.add(new FileSearchFiltering.FileTypeFilter(FileType.VIDEO));
-//        }
-
+        filters.add(new FileSearchFiltering.FileTypeFilter(fileType));
         if (parentCheckbox.isSelected()) {
             // For the parent paths, everything in the box is used (not just the selected entries)
             filters.add(new FileSearchFiltering.ParentFilter(getParentPaths()));
@@ -640,10 +630,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      */
     private void validateFields() {
 //        // There must be at least one file type selected
-//        if (imagesButton.isSelected() || videosButton.isSelected()) {
-//            setInvalid("At least one file type must be selected");
-//            return;
-//        }
+        if (fileType == null) {
+            setInvalid("At least one file type must be selected");
+            return;
+        }
         // For most enabled filters, there should be something selected
         if (dataSourceCheckbox.isSelected() && dataSourceList.getSelectedValuesList().isEmpty()) {
             setInvalid("At least one data source must be selected");
@@ -1328,12 +1318,12 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
-                    .addComponent(searchButton)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6))))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cancelButton)
+                        .addComponent(searchButton)))
+                .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
 
