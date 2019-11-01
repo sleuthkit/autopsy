@@ -119,7 +119,7 @@ public interface AutopsyService {
          * Gets the progress indicator for the creation/opening/upgrading of
          * case-level resources by a service. IMPORTANT: The service should only
          * call progress() on the progress indicator. Calling start() and
-         * finsih() are the responsibility opf the case.
+         * finish() are the responsibility of the case providing the context.
          *
          * @return The progress indicator.
          */
