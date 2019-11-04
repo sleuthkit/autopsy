@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="Autopsy Keyword Search" version="2.2">
+<schema name="Autopsy Keyword Search" version="2.0">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.4" is Solr's version number for the schema syntax and semantics.  It should
@@ -59,10 +59,8 @@
        1.6: added num_chunks for chunking support
        1.7 added _version_ field for Solr Cloud
        1.8 added new content_str string field and stopped copying content and file_name into content_ws
+       1.9: upgrade to Solr 6 
        2.0 added chunk_size field
-       2.1 to facilitate case insensitive regex search,no longer copying content into content_str.
-           content_str will be populated with lowercase content by Autopsy.
-       2.2 added text_ja type, content_ja and language fields to support Japanese text search
      -->
 
   <types>
@@ -229,7 +227,7 @@
       <analyzer type="index">
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="200000"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords_en.txt" enablePositionIncrements="true" />
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords_en.txt" />
         <!-- in this example, we will only use synonyms at query time
         <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
         -->
@@ -238,20 +236,8 @@
       <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="200000"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords_en.txt" enablePositionIncrements="true" />
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords_en.txt" />
         <!--<filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>-->
-        <filter class="solr.LowerCaseFilterFactory"/>
-      </analyzer>
-    </fieldType>
-
-    <fieldType name="text_ja" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="false">
-      <analyzer>
-        <tokenizer class="solr.JapaneseTokenizerFactory" mode="search"/>
-        <filter class="solr.JapaneseBaseFormFilterFactory"/>
-        <filter class="solr.JapanesePartOfSpeechStopFilterFactory" tags="lang/stoptags_ja.txt" />
-        <filter class="solr.CJKWidthFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_ja.txt" />
-        <filter class="solr.JapaneseKatakanaStemFilterFactory" minimumLength="4"/>
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
@@ -274,7 +260,6 @@
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
                 words="stopwords_en.txt"
-                enablePositionIncrements="true"
                 />
         <filter class="solr.LowerCaseFilterFactory"/>
 		<filter class="solr.EnglishPossessiveFilterFactory"/>
@@ -290,7 +275,6 @@
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
                 words="stopwords_en.txt"
-                enablePositionIncrements="true"
                 />
         <filter class="solr.LowerCaseFilterFactory"/>
 		<filter class="solr.EnglishPossessiveFilterFactory"/>
@@ -327,7 +311,6 @@
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
                 words="stopwords_en.txt"
-                enablePositionIncrements="true"
                 />
         <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0" splitOnCaseChange="1"/>
         <filter class="solr.LowerCaseFilterFactory"/>
@@ -340,7 +323,6 @@
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
                 words="stopwords_en.txt"
-                enablePositionIncrements="true"
                 />
         <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
         <filter class="solr.LowerCaseFilterFactory"/>
@@ -371,7 +353,7 @@
     <fieldType name="text_general_rev" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
         <tokenizer class="solr.StandardTokenizerFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.ReversedWildcardFilterFactory" withOriginal="true"
            maxPosAsterisk="3" maxPosQuestion="2" maxFractionAsterisk="0.33"/>
@@ -379,7 +361,7 @@
       <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
@@ -570,24 +552,16 @@
         via copyField further on in this schema  -->
    <field name="text" type="text_general" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
 
-   <!-- Store language detection result. Only parents of text documents have this -->
-   <field name="language" type="string" indexed="false" stored="true" required="false"/>
-
-   <field name="content_ja" type="text_ja" indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true" multiValued="true"/>
-
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
    <!--<field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>-->
    
-   <!-- field with white-space tokenized words for TermsComponent regex search.
-        No longer being populated by Autopsy, but remains for backward compatability.
-        content_str is used instead to better deal with regex that have white space. -->
+   <!-- field with white-space tokenized words for TermsComponent regex search (useful for fast search of IP addresses, URLs, certain phone numbers)
+		also be useful for Lucene based queries containing special characters-->
+   <!-- populated via copyField -->
    <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true" /> 
-   
-   <!-- field that contains the raw string form of the chunk. Used for regular expression
-        matching.  Populated by Autopsy using lower-case text and a copyField for file name. -->
-   <field name="content_str" type="string" indexed="true" stored="true" multiValued="true" />
-   
+   <field name="content_str" type="string" indexed="true" stored="true" multiValued="true" /> 
+	
    <!-- Uncommenting the following will create a "timestamp" field using
         a default value of "NOW" to indicate when each document was indexed.
      -->
@@ -665,16 +639,11 @@
    <copyField source="content" dest="content_ws"/>
    <copyField source="file_name" dest="content_ws"/>
  -->
-
-   <!-- Copying of content into content_str field has been removed
-        so that we can perform case insensitive regex searches.
-        The content_str field will be populated directly by Autopsy
-
-        copyField source="content" dest="content_str"/ -->
-
-   <!-- Copy file_name into content_str field for regex searches -->
+ 
+    <!-- Copy content into content_str field for regex searches -->
+   <copyField source="content" dest="content_str"/>
    <copyField source="file_name" dest="content_str"/>
-
+	
    <!-- Above, multiple source fields are copied to the [text] field. 
 	  Another way to map multiple source fields to the same 
 	  destination field is to use the dynamic field syntax. 

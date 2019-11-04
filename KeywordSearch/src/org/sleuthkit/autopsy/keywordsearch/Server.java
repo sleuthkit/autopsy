@@ -1444,7 +1444,8 @@ public class Server {
         if (collectionData == null) {
             return "";
         }
-        /* 
+        /* ELTODO it might be worth keeping these for debugging, at least until 
+        we are sure that we can always get core name this way.
         NamedList shards = (NamedList) collectionData.get("shards");
         NamedList shard1 = (NamedList) shards.get("shard1");
         NamedList leader = (NamedList) shard1.get("leader");
