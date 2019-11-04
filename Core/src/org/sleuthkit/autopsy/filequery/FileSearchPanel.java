@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.filequery;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,7 +49,6 @@ import org.sleuthkit.autopsy.filequery.FileSorter.SortingMethod;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TagName;
 

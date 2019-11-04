@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.filequery;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
-import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -28,12 +28,8 @@ import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -49,7 +45,6 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
-    private final static Logger logger = Logger.getLogger(DiscoveryTopComponent.class.getName());
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
@@ -131,6 +126,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
+        DiscoveryEvents.getDiscoveryEventBus().register(this);
         DiscoveryEvents.getDiscoveryEventBus().register(resultsPanel);
         DiscoveryEvents.getDiscoveryEventBus().register(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().register(fileSearchPanel);
@@ -139,6 +135,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Override
     protected void componentClosed() {
         fileSearchPanel.cancelSearch();
+        DiscoveryEvents.getDiscoveryEventBus().unregister(this);
         DiscoveryEvents.getDiscoveryEventBus().unregister(fileSearchPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(groupListPanel);
         DiscoveryEvents.getDiscoveryEventBus().unregister(resultsPanel);
@@ -238,6 +235,29 @@ public final class DiscoveryTopComponent extends TopComponent {
         fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
 
+    @Subscribe
+    void handleSearchCancelledEvent(DiscoveryEvents.SearchCancelledEvent searchCancelledEvent) {
+        SwingUtilities.invokeLater(() -> {
+            imagesButton.setEnabled(true);
+            videosButton.setEnabled(true);
+        });
+    }
+
+    @Subscribe
+    void handleSearchCompletedEvent(DiscoveryEvents.SearchCompleteEvent searchCompletedEvent) {
+        SwingUtilities.invokeLater(() -> {
+            imagesButton.setEnabled(true);
+            videosButton.setEnabled(true);
+        });
+    }
+
+    @Subscribe
+    void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
+        SwingUtilities.invokeLater(() -> {
+            imagesButton.setEnabled(false);
+            videosButton.setEnabled(false);
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton imagesButton;
