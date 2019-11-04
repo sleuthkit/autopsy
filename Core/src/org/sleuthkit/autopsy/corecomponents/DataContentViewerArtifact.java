@@ -602,6 +602,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             return artifactDisplayName;
         }
         
+        private static final String INDENT_RIGHT = "    ";
+        private static final String NEW_LINE = "\n";
+            
         /**
          * Recursively converts a JSON element into an indented multi-line
          * display string.
@@ -612,31 +615,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
          * @return A multi-line display string.
          */
         private String toJsonDisplayString(JsonElement element, String startIndent) {
-            final String INDENT_RIGHT = "    ";
-            final String NEW_LINE = "\n";
+           
             StringBuilder sb = new StringBuilder("");
             JsonObject obj = element.getAsJsonObject();
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-
-                if (entry.getValue().isJsonArray()) {
-                    JsonArray jsonArray = entry.getValue().getAsJsonArray();
-                    if (jsonArray.size() > 0) {
-                        int count = 1;
-                        sb.append(NEW_LINE).append(String.format("%s%s", startIndent, entry.getKey()));
-                        for (JsonElement arrayMember : jsonArray) {
-                            sb.append(NEW_LINE).append(String.format("%s%d", startIndent.concat(INDENT_RIGHT), count));
-                            sb.append(toJsonDisplayString(arrayMember, startIndent.concat(INDENT_RIGHT).concat(INDENT_RIGHT)));
-                            count++;
-                        }
-                    }
-                } else if (entry.getValue().isJsonObject()) {
-                    sb.append(NEW_LINE).append(String.format("%s%s %s", startIndent, entry.getKey(), toJsonDisplayString(entry.getValue().getAsJsonObject(), startIndent + INDENT_RIGHT)));
-                } else if (entry.getValue().isJsonPrimitive()) {
-                    sb.append(NEW_LINE).append(String.format("%s%s = %s", startIndent, entry.getKey(), entry.getValue().getAsString()));
-                } else if (entry.getValue().isJsonNull()) {
-                    sb.append(NEW_LINE).append(String.format("%s%s = null", startIndent, entry.getKey()));
-                }
+                appendJsonElementToString(entry.getKey(), entry.getValue(), startIndent, sb );
             }
 
             String returnString = sb.toString();
@@ -645,7 +629,35 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             }
             return returnString;
         }
-
+        
+       
+        /**
+         * Converts the given JSON element into string and appends to the given string builder.
+         * 
+         * @param entry JSON entry to parse
+         * @param startIndent Starting indentation for the element.
+         * @param sb String builder to append to.
+         */
+        private void appendJsonElementToString(String jsonKey, JsonElement jsonElement, String startIndent, StringBuilder sb) {
+            if (jsonElement.isJsonArray()) {
+                JsonArray jsonArray = jsonElement.getAsJsonArray();
+                if (jsonArray.size() > 0) {
+                    int count = 1;
+                    sb.append(NEW_LINE).append(String.format("%s%s", startIndent, jsonKey));
+                    for (JsonElement arrayMember : jsonArray) {
+                        sb.append(NEW_LINE).append(String.format("%s%d", startIndent.concat(INDENT_RIGHT), count));
+                        sb.append(toJsonDisplayString(arrayMember, startIndent.concat(INDENT_RIGHT).concat(INDENT_RIGHT)));
+                        count++;
+                    }
+                }
+            } else if (jsonElement.isJsonObject()) {
+                sb.append(NEW_LINE).append(String.format("%s%s %s", startIndent, jsonKey, toJsonDisplayString(jsonElement.getAsJsonObject(), startIndent + INDENT_RIGHT)));
+            } else if (jsonElement.isJsonPrimitive()) {
+                sb.append(NEW_LINE).append(String.format("%s%s = %s", startIndent, jsonKey, jsonElement.getAsString()));
+            } else if (jsonElement.isJsonNull()) {
+                sb.append(NEW_LINE).append(String.format("%s%s = null", startIndent, jsonKey));
+            }
+        }
     }
 
     /**
