@@ -56,10 +56,11 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.netbeans.swing.etable.ETable;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonArray;
+import java.util.Map;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
@@ -557,14 +558,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                             }
                             break;
                         case JSON: 
-                            // @TODO: 5726 - return a multilevel bulleted list instead of prettyprint JSON 
+                            // Get the attribute's JSON value and convert to indented multiline display string
                             String jsonVal = attr.getValueString();
-                            
                             JsonParser parser = new JsonParser();
                             JsonObject json = parser.parse(jsonVal).getAsJsonObject();
-                            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                            
-                            value = gson.toJson(json);
+                           
+                            value = toJsonDisplayString(json, "");
                             break;
                     }
                     /*
@@ -602,6 +601,51 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         String getArtifactDisplayName() {
             return artifactDisplayName;
         }
+        
+        /**
+         * Recursively converts a JSON element into an indented multi-line
+         * display string.
+         *
+         * @param element JSON element to convert
+         * @param indentStr Starting indentation for the element.
+         *
+         * @return A multi-line display string.
+         */
+        private String toJsonDisplayString(JsonElement element, String startIndent) {
+            final String INDENT_RIGHT = "    ";
+            final String NEW_LINE = "\n";
+            StringBuilder sb = new StringBuilder("");
+            JsonObject obj = element.getAsJsonObject();
+
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+
+                if (entry.getValue().isJsonArray()) {
+                    JsonArray jsonArray = entry.getValue().getAsJsonArray();
+                    if (jsonArray.size() > 0) {
+                        int count = 1;
+                        sb.append(NEW_LINE).append(String.format("%s%s", startIndent, entry.getKey()));
+                        for (JsonElement arrayMember : jsonArray) {
+                            sb.append(NEW_LINE).append(String.format("%s%d", startIndent.concat(INDENT_RIGHT), count));
+                            sb.append(toJsonDisplayString(arrayMember, startIndent.concat(INDENT_RIGHT).concat(INDENT_RIGHT)));
+                            count++;
+                        }
+                    }
+                } else if (entry.getValue().isJsonObject()) {
+                    sb.append(NEW_LINE).append(String.format("%s%s %s", startIndent, entry.getKey(), toJsonDisplayString(entry.getValue().getAsJsonObject(), startIndent + INDENT_RIGHT)));
+                } else if (entry.getValue().isJsonPrimitive()) {
+                    sb.append(NEW_LINE).append(String.format("%s%s = %s", startIndent, entry.getKey(), entry.getValue().getAsString()));
+                } else if (entry.getValue().isJsonNull()) {
+                    sb.append(NEW_LINE).append(String.format("%s%s = null", startIndent, entry.getKey()));
+                }
+            }
+
+            String returnString = sb.toString();
+            if (startIndent.length() == 0 &&  returnString.startsWith(NEW_LINE)) {
+                returnString = returnString.substring(NEW_LINE.length());
+            }
+            return returnString;
+        }
+
     }
 
     /**
