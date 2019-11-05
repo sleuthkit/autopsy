@@ -22,8 +22,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.awt.GridBagConstraints;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
@@ -158,14 +161,21 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     @Messages({"# {0} - fileSize",
         "VideoThumbnailPanel.sizeLabel.text=Size: {0} bytes",
         "# {0} - numberOfInstances",
-        "VideoThumbnailPanel.countLabel.text=Number of Instances: {0}"})
+        "VideoThumbnailPanel.countLabel.text=Number of Instances: {0}",
+        "VideoThumbnailPanel.deleted.text=All instances of file are deleted."})
     @Override
     public Component getListCellRendererComponent(JList<? extends VideoThumbnailsWrapper> list, VideoThumbnailsWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(Bundle.VideoThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.VideoThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
-        deletedLabel.setVisible(value.getResultFile().isDeleted());
+        if (value.getResultFile().isDeleted()) {
+            deletedLabel.setVisible(true);
+            deletedLabel.setToolTipText(Bundle.VideoThumbnailPanel_deleted_text());
+        } else {
+            deletedLabel.setVisible(false);
+            deletedLabel.setToolTipText("");
+        }
         switch (value.getResultFile().getScore()) {
             case NOTABLE_SCORE:
                 scoreLabel.setIcon(NOTABLE_ICON_SCORE);
@@ -178,8 +188,22 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
                 scoreLabel.setIcon(null);
                 break;
         }
-        setToolTipText(value.getResultFile().getScoreDescription());
+        scoreLabel.setToolTipText(value.getResultFile().getScoreDescription());
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         return this;
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        if (event != null) {
+            //gets tooltip of internal panel item mouse is over
+            Point p = event.getPoint();
+            for (Component comp : getComponents()) {
+                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + comp.getWidth() && p.y >= comp.getY() && p.y <= comp.getY() + comp.getHeight()) {
+                    return ((JComponent) comp).getToolTipText();
+                }
+            }
+        }
+        return super.getToolTipText();
     }
 }

@@ -339,10 +339,10 @@ class ResultFile {
     }
 
     @NbBundle.Messages({
-        "ResultFile.score.notableFile.description=File recognized as notable.",
-        "ResultFile.score.interestingResult.description=File has interesting result associated with it.",
-        "ResultFile.score.taggedFile.description=File has been tagged.",
-        "ResultFile.score.notableTaggedFile.description=File tagged with notable tag."})
+        "ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.",
+        "ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.",
+        "ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.",
+        "ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag."})
     private void updateScoreAndDescription(AbstractFile file) {
         if (currentScore == DataResultViewerTable.Score.NOTABLE_SCORE) {
             //already notable can return
