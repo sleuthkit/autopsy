@@ -59,6 +59,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         "ContactsViewer_columnHeader_Name=Name",
         "ContactsViewer_columnHeader_Phone=Phone",
         "ContactsViewer_columnHeader_Email=Email",
+        "ContactsViewer_columnHeader_Country=Country",
         "ContactsViewer_noContacts_message=<No contacts found for selected account>"
     })
 
@@ -96,7 +97,8 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         outline = outlineViewPanel.getOutlineView().getOutline();
         outlineViewPanel.getOutlineView().setPropertyColumns(
                 "TSK_EMAIL", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getDisplayName(),
-                "TSK_PHONE_NUMBER", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName()
+                "TSK_PHONE_NUMBER", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName(),
+                "Country", "Country"
         );
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.ContactsViewer_columnHeader_Name());

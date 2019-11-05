@@ -11,6 +11,7 @@ ContactNode_Name=Name
 ContactNode_Office_Number=Office Number
 ContactNode_Phone=Phone Number
 ContactNode_URL=URL
+ContactsViewer_columnHeader_Country=Country
 ContactsViewer_columnHeader_Email=Email
 ContactsViewer_columnHeader_Name=Name
 ContactsViewer_columnHeader_Phone=Phone

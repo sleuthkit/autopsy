@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -70,7 +73,7 @@ final class ContactNode extends BlackboardArtifactNode {
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
-        
+
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (fromID != TSK_CONTACT) {
@@ -103,26 +106,26 @@ final class ContactNode extends BlackboardArtifactNode {
                     otherList.add(bba);
                 }
             }
-            
-            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel(), 
-                 sheetSet, nameList);
-            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel(), 
-                 sheetSet, phoneNumList);
-            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel(), 
-                 sheetSet, emailList);
+
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel(),
+                    sheetSet, nameList);
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel(),
+                    sheetSet, phoneNumList);
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel(),
+                    sheetSet, emailList);
 
             for (BlackboardAttribute bba : otherList) {
                 sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
             }
-            
+
             List<Content> children = artifact.getChildren();
-            if(children != null) {
+            if (children != null) {
                 int count = 0;
                 String imageLabelPrefix = "Image";
-                for(Content child: children) {
-                    if(child instanceof AbstractFile) {
+                for (Content child : children) {
+                    if (child instanceof AbstractFile) {
                         String imageLabel = imageLabelPrefix;
-                        if(count > 0) {
+                        if (count > 0) {
                             imageLabel = imageLabelPrefix + "-" + count;
                         }
                         sheetSet.put(new NodeProperty<>(imageLabel, imageLabel, imageLabel, child.getName()));
@@ -136,14 +139,20 @@ final class ContactNode extends BlackboardArtifactNode {
 
         return sheet;
     }
-    
+
     private void addPropertiesToSheet(String propertyID, Sheet.Set sheetSet, List<BlackboardAttribute> attributeList) {
         int count = 0;
         for (BlackboardAttribute bba : attributeList) {
             if (count++ > 0) {
                 sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
+                  sheetSet.put(new NodeProperty<>("Country" + "_" + count, bba.getAttributeType().getDisplayName() + " Country", "", getCountryCode(bba.getValueString())));  
+                }
             } else {
                 sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
+                  sheetSet.put(new NodeProperty<>("Country", bba.getAttributeType().getDisplayName() + " Country", "", getCountryCode(bba.getValueString())));  
+                }
             }
         }
     }
@@ -175,4 +184,23 @@ final class ContactNode extends BlackboardArtifactNode {
     public String getSourceName() {
         return getDisplayName();
     }
+
+    private String getCountryCode(String phoneNumber) {
+        String regionCode = "";
+        try {
+            PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
+            Phonenumber.PhoneNumber phoneNum = phoneNumberUtil.parse(phoneNumber, "US");
+            regionCode = phoneNumberUtil.getRegionCodeForNumber(phoneNum);
+
+            if (regionCode == null) {
+                return "";
+            } else {
+                return regionCode;
+            }
+        } catch (NumberParseException ex) {
+            logger.log(Level.WARNING, "Error getting country code, for phone number: {0}", phoneNumber);
+            return regionCode;
+        }
+    }
+
 }

@@ -406,6 +406,10 @@
                 <binary-origin>release/modules/ext/okhttp-2.7.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/libphonenumber-3.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/libphonenumber-3.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.20.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\tika-core-1.20.jar</binary-origin>
             </class-path-extension>
@@ -518,6 +522,10 @@
                 <binary-origin>release/modules/ext/google-http-client-1.29.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.7.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/bcpkix-jdk15on-1.60.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\bcpkix-jdk15on-1.60.jar</binary-origin>
             </class-path-extension>
@@ -604,10 +612,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jbig2-imageio-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jbig2-imageio-3.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.7.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-dom-0.8.2.jar</runtime-relative-path>
