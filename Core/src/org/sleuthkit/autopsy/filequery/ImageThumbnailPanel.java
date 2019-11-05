@@ -138,7 +138,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             isDeletedLabel.setToolTipText(Bundle.ImageThumbnailPanel_isDeleted_text());
         } else {
             isDeletedLabel.setVisible(false);
-            isDeletedLabel.setToolTipText("");
+            isDeletedLabel.setToolTipText(null);
         }
         switch (value.getResultFile().getScore()) {
             case NOTABLE_SCORE:
@@ -165,11 +165,16 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             Point p = event.getPoint();
             for (Component comp : getComponents()) {
                 if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + comp.getWidth() && p.y >= comp.getY() && p.y <= comp.getY() + comp.getHeight()) {
-                    return ((JComponent) comp).getToolTipText();
+                    String toolTip = ((JComponent) comp).getToolTipText();
+                    if (toolTip.isEmpty()) {
+                        return null;
+                    } else {
+                        return toolTip;
+                    }
                 }
             }
         }
-        return super.getToolTipText();
+        return null;
     }
 
 }
