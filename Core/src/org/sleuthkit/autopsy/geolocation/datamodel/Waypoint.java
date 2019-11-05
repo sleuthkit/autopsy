@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.geolocation.datamodel;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,17 +34,29 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * The basic details of a waypoint.
+ * Representation of a Waypoint created from a BlackboardArtifact.
  *
  */
-public interface Waypoint {
-    static final Logger logger = Logger.getLogger(Waypoint.class.getName());
-    
+public class Waypoint {
+
+    final private Long timestamp;
+    final private Double longitude;
+    final private Double latitude;
+    final private Double altitude;
+    final private String label;
+    final private AbstractFile image;
+    final private BlackboardArtifact artifact;
+    final private Route route;
+
+    // This list is not expected to change after construction. The 
+    // constructor will take care of making an unmodifiable List
+    final private List<Waypoint.Property> immutablePropertiesList;
+
     /**
      * This is a list of attributes that are already being handled by the
-     * waypoint classes and will have get functions.
+     * by getter functions.
      */
-    BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
+    static BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE,
@@ -53,61 +68,202 @@ public interface Waypoint {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END,};
 
+    private static final Logger logger = Logger.getLogger(Waypoint.class.getName());
+
     /**
-     * Interface to describe a waypoint.  A waypoint is made up of 
-     * a longitude, latitude, label, timestamp, type, image and altitude.
-     * 
+     * Construct a waypoint with the given artifact.
+     *
+     * @param artifact BlackboardArtifact for this waypoint
+     *
+     * @throws GeoLocationDataException Exception will be thrown if artifact did
+     *                                  not have a valid longitude and latitude.
+     */
+    Waypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
+        this(artifact,
+                getAttributesFromArtifactAsMap(artifact));
+    }
+
+    /**
+     * Constructor that initializes all of the member variables.
+     *
+     * @param artifact     BlackboardArtifact for this waypoint
+     * @param label        String waypoint label
+     * @param timestamp    Long timestamp, unix/java epoch seconds
+     * @param latitude     Double waypoint latitude
+     * @param longitude    Double waypoint longitude
+     * @param altitude     Double waypoint altitude
+     * @param image        AbstractFile image for waypoint, this maybe null
+     * @param attributeMap A Map of attributes for the given artifact
+     *
+     * @throws GeoLocationDataException Exception will be thrown if artifact did
+     *                                  not have a valid longitude and latitude.
+     */
+    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, Route route) throws GeoLocationDataException {
+        if (longitude == null || latitude == null) {
+            throw new GeoLocationDataException("Invalid waypoint, null value passed for longitude or latitude");
+        }
+
+        this.artifact = artifact;
+        this.label = label;
+        this.image = image;
+        this.timestamp = timestamp;
+        this.longitude = longitude;
+        this.latitude = latitude;
+        this.altitude = altitude;
+        this.route = null;
+
+        immutablePropertiesList = Collections.unmodifiableList(createGeolocationProperties(attributeMap));
+    }
+
+    /**
+     * Constructs a new ArtifactWaypoint.
+     *
+     * @param artifact     BlackboardArtifact for this waypoint
+     * @param attributeMap A Map of the BlackboardAttributes for the given
+     *                     artifact.
+     *
+     * @throws GeoLocationDataException
+     */
+    private Waypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        this(artifact,
+                getLabelFromArtifact(attributeMap),
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME).getValueLong() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
+                attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
+                null, attributeMap, null);
+    }
+
+    /**
+     * Get the BlackboardArtifact that this waypoint represents.
+     *
+     * @return BlackboardArtifact for this waypoint.
+     */
+    public BlackboardArtifact getArtifact() {
+        return artifact;
+    }
+
+    /**
+     * Interface to describe a waypoint. A waypoint is made up of a longitude,
+     * latitude, label, timestamp, type, image and altitude.
+     *
      * A good way point should have at minimum a longitude and latutude.
      *
      * @return Timestamp in java/unix epoch seconds or null if none was set.
      */
-    Long getTimestamp();
+    public Long getTimestamp() {
+        return timestamp;
+    }
 
     /**
      * Get the label for this point object.
      *
      * @return String label for the point or null if none was set
      */
-    String getLabel();
+    public String getLabel() {
+        return label;
+    }
 
     /**
      * Get the latitude for this point.
      *
-     * @return Returns the latitude for the point or null if none was set
+     * @return Returns the latitude for the point
      */
-    Double getLatitude();
+    public Double getLatitude() {
+        return latitude;
+    }
 
     /**
      * Get the longitude for this point.
      *
-     * @return Returns the longitude for the point or null if none was set
+     * @return Returns the longitude for the point
      */
-    Double getLongitude();
+    public Double getLongitude() {
+        return longitude;
+    }
 
     /**
      * Get the altitude for this point.
      *
      * @return Returns the altitude for the point or null if none was set
      */
-    Double getAltitude();
-
-    /**
-     * Gets an unmodifiable List of other properties that may be interesting to this way point.
-     * The List will not include properties for which getter functions
-     * exist.
-     *
-     * @return A List of waypoint properties
-     */
-    List<Property> getOtherProperties();
+    public Double getAltitude() {
+        return altitude;
+    }
 
     /**
      * Get the image for this waypoint.
      *
      * @return AbstractFile image or null if one was not set
      */
-    AbstractFile getImage();
+    public AbstractFile getImage() {
+        return image;
+    }
 
     /**
+     * Gets an unmodifiable List of other properties that may be interesting to
+     * this way point. The List will not include properties for which getter
+     * functions exist.
+     *
+     * @return A List of waypoint properties
+     */
+    public List<Waypoint.Property> getOtherProperties() {
+        return immutablePropertiesList;
+    }
+    
+    /**
+     * Returns the route that this waypoint is apart of .
+     * 
+     * @return The waypoint route or null if the waypoint is not apart of a route. 
+     */
+    public Route getRoute() {
+        return route;
+    }
+
+    /**
+     * Gets the label for this waypoint.
+     *
+     * @param artifact BlackboardArtifact for waypoint
+     *
+     * @return Returns a label for the waypoint, or empty string if no label was
+     *         found.
+     */
+    private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) {
+        BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
+        if (attribute != null) {
+            return attribute.getDisplayString();
+        }
+
+        return "";
+    }
+
+    /**
+     * Gets the list of attributes from the artifact and puts them into a map
+     * with the ATRIBUTE_TYPE as the key.
+     *
+     * @param artifact BlackboardArtifact current artifact
+     *
+     * @return A Map of BlackboardAttributes for the given artifact with
+     *         ATTRIBUTE_TYPE as the key.
+     *
+     * @throws GeoLocationDataException
+     */
+    static Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> getAttributesFromArtifactAsMap(BlackboardArtifact artifact) throws GeoLocationDataException {
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = new HashMap<>();
+        try {
+            List<BlackboardAttribute> attributeList = artifact.getAttributes();
+            for (BlackboardAttribute attribute : attributeList) {
+                BlackboardAttribute.ATTRIBUTE_TYPE type = BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attribute.getAttributeType().getTypeID());
+                attributeMap.put(type, attribute);
+            }
+        } catch (TskCoreException ex) {
+            throw new GeoLocationDataException("Unable to get attributes from artifact", ex);
+        }
+
+        return attributeMap;
+    }
+    
+      /**
      * Returns a list of Waypoints for the artifacts with geolocation
      * information.
      *
@@ -120,7 +276,7 @@ public interface Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint> getAllWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getAllWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<Waypoint> points = new ArrayList<>();
 
         points.addAll(getTrackpointWaypoints(skCase));
@@ -141,22 +297,22 @@ public interface Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint> getTrackpointWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getTrackpointWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-        try{
+        try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
-        } catch(TskCoreException ex) {
+        } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_TRACKPOINT", ex);
         }
-        
+
         List<Waypoint> points = new ArrayList<>();
         for (BlackboardArtifact artifact : artifacts) {
-            try{
-                ArtifactWaypoint point = new TrackpointWaypoint(artifact);
+            try {
+                Waypoint point = new TrackpointWaypoint(artifact);
                 points.add(point);
-            } catch(GeoLocationDataException ex) {
+            } catch (GeoLocationDataException ex) {
                 logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_TRACKPOINT artifactID: %d", artifact.getArtifactID()));
-            }       
+            }
         }
         return points;
     }
@@ -170,25 +326,25 @@ public interface Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint> getEXIFWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    static public List<Waypoint> getEXIFWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-        try{
+        try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
-        } catch(TskCoreException ex) {
+        } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_LAST_KNOWN_LOCATION", ex);
         }
-        
+
         List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
-                try{
-                    ArtifactWaypoint point = new EXIFWaypoint(artifact);
+                try {
+                    Waypoint point = new EXIFWaypoint(artifact);
                     points.add(point);
-                } catch(GeoLocationDataException ex) {
+                } catch (GeoLocationDataException ex) {
                     // I am a little relucant to log this error because I suspect
                     // this will happen more often than not. It is valid for
                     // METADAT_EXIF to not have longitude and latitude
-                }  
+                }
             }
         }
         return points;
@@ -203,23 +359,23 @@ public interface Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint> getSearchWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getSearchWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-        try{
+        try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH);
-        } catch(TskCoreException ex) {
+        } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_SEARCH", ex);
         }
-        
+
         List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
-                 try{
-                    ArtifactWaypoint point = new SearchWaypoint(artifact);
+                try {
+                    Waypoint point = new SearchWaypoint(artifact);
                     points.add(point);
-                } catch(GeoLocationDataException ex) {
+                } catch (GeoLocationDataException ex) {
                     logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_SEARCH artifactID: %d", artifact.getArtifactID()));
-                }       
+                }
             }
         }
         return points;
@@ -234,23 +390,23 @@ public interface Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint> getLastKnownWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getLastKnownWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-        try{
+        try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION);
-        } catch(TskCoreException ex) {
+        } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_LAST_KNOWN_LOCATION", ex);
         }
-        
+
         List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
-            for (BlackboardArtifact artifact : artifacts) {                
-                try{
-                    ArtifactWaypoint point = new LastKnownWaypoint(artifact);
+            for (BlackboardArtifact artifact : artifacts) {
+                try {
+                    Waypoint point = new LastKnownWaypoint(artifact);
                     points.add(point);
-                } catch(GeoLocationDataException ex) {
+                } catch (GeoLocationDataException ex) {
                     logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_LAST_KNOWN_LOCATION artifactID: %d", artifact.getArtifactID()));
-                }       
+                }
             }
         }
         return points;
@@ -265,29 +421,28 @@ public interface Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint> getBookmarkWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getBookmarkWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
-        try{
+        try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK);
-        } catch(TskCoreException ex) {
+        } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
         }
-        
+
         List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
-                try{
-                    ArtifactWaypoint point = new ArtifactWaypoint(artifact);
+                try {
+                    Waypoint point = new Waypoint(artifact);
                     points.add(point);
-                } catch(GeoLocationDataException ex) {
+                } catch (GeoLocationDataException ex) {
                     logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_BOOKMARK artifactID: %d", artifact.getArtifactID()));
-                }               
+                }
             }
         }
         return points;
     }
-    
-        
+
     /**
      * Get a list of Waypoint.Property objects for the given artifact. This list
      * will not include attributes that the Waypoint interfact has get functions
@@ -299,10 +454,10 @@ public interface Waypoint {
      *
      * @throws GeoLocationDataException
      */
-    static List<Waypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+    static public List<Waypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         List<Waypoint.Property> list = new ArrayList<>();
 
-        Set<BlackboardAttribute.ATTRIBUTE_TYPE> keys = attributeMap.keySet();
+        Set<BlackboardAttribute.ATTRIBUTE_TYPE> keys = new HashSet<>(attributeMap.keySet());
 
         for (BlackboardAttribute.ATTRIBUTE_TYPE type : ALREADY_HANDLED_ATTRIBUTES) {
             keys.remove(type);
@@ -321,7 +476,7 @@ public interface Waypoint {
      * Simple property class for waypoint properties that a purely
      * informational.
      */
-    class Property {
+    public static final class Property {
 
         private final String displayName;
         private final String value;
@@ -333,7 +488,7 @@ public interface Waypoint {
          *                    or empty string.
          * @param value       String value for property. Can be null.
          */
-        Property(String displayName, String value) {
+        private Property(String displayName, String value) {
             this.displayName = displayName;
             this.value = value;
         }
