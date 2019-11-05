@@ -45,7 +45,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
-import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
+import org.sleuthkit.autopsy.geolocation.datamodel.ArtifactWaypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.report.ReportBranding;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -296,8 +296,8 @@ class KMLReport implements GeneralReportModule {
      *
      * @throws IOException
      */
-    void addExifMetadataContent(List<Waypoint> points, String baseReportDirectory) throws IOException {
-        for(Waypoint point: points) {
+    void addExifMetadataContent(List<ArtifactWaypoint> points, String baseReportDirectory) throws IOException {
+        for(ArtifactWaypoint point: points) {
             Element mapPoint = makePoint(point);
             if (mapPoint == null) {
                 return;
@@ -331,11 +331,11 @@ class KMLReport implements GeneralReportModule {
      * @throws IOException
      */
     void addLocationsToReport(SleuthkitCase skCase, String baseReportDir) throws GeoLocationDataException, IOException {
-        addExifMetadataContent(Waypoint.getEXIFWaypoints(skCase), baseReportDir);
-        addWaypoints(Waypoint.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
-        addWaypoints(Waypoint.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
-        addWaypoints(Waypoint.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
-        addWaypoints(Waypoint.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
+        addExifMetadataContent(ArtifactWaypoint.getEXIFWaypoints(skCase), baseReportDir);
+        addWaypoints(ArtifactWaypoint.getBookmarkWaypoints(skCase), gpsBookmarksFolder, FeatureColor.BLUE, Bundle.Waypoint_Bookmark_Display_String());
+        addWaypoints(ArtifactWaypoint.getLastKnownWaypoints(skCase), gpsLastKnownLocationFolder, FeatureColor.PURPLE, Bundle.Waypoint_Last_Known_Display_String());
+        addWaypoints(ArtifactWaypoint.getSearchWaypoints(skCase), gpsSearchesFolder, FeatureColor.WHITE, Bundle.Waypoint_Search_Display_String());
+        addWaypoints(ArtifactWaypoint.getTrackpointWaypoints(skCase), gpsTrackpointsFolder, FeatureColor.WHITE, Bundle.Waypoint_Trackpoint_Display_String());
     }
     
     /**
@@ -346,8 +346,8 @@ class KMLReport implements GeneralReportModule {
      * @param folder The Element folder to add the points to
      * @param waypointColor The color the waypoint should appear in the report
      */
-    void addWaypoints(List<Waypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) {
-        for(Waypoint point: points) {
+    void addWaypoints(List<ArtifactWaypoint> points, Element folder, FeatureColor waypointColor, String headerLabel) {
+        for(ArtifactWaypoint point: points) {
             addContent(folder, point.getLabel(), waypointColor, getFormattedDetails(point, headerLabel), point.getTimestamp(), makePoint(point), point.getLatitude(), point.getLongitude());
         }
     }
@@ -391,9 +391,9 @@ class KMLReport implements GeneralReportModule {
     }
     
     void addRouteToReport(Route route) {
-        List<Waypoint> routePoints = route.getRoute();
-        Waypoint start = null;
-        Waypoint end = null;
+        List<ArtifactWaypoint> routePoints = route.getRoute();
+        ArtifactWaypoint start = null;
+        ArtifactWaypoint end = null;
         // This is hardcoded knowledge that there is only two points
         // a start and end.  In the long run it would be nice to 
         // support the idea of a route with multiple points.  The Route
@@ -453,7 +453,7 @@ class KMLReport implements GeneralReportModule {
      *
      * @return point element.
      */
-    private Element makePoint(Waypoint point) {
+    private Element makePoint(ArtifactWaypoint point) {
         return makePoint(point.getLatitude(), point.getLongitude(), point.getAltitude());
     }
 
@@ -693,7 +693,7 @@ class KMLReport implements GeneralReportModule {
      * 
      * @return HTML formatted String of details for given waypoint 
      */
-    private String getFormattedDetails(Waypoint point, String header) {
+    private String getFormattedDetails(ArtifactWaypoint point, String header) {
         StringBuilder result = new StringBuilder(); //NON-NLS
         result.append(String.format("<h3>%s</h3>", header))
                 .append(formatAttribute("Name", point.getLabel()));
@@ -710,8 +710,8 @@ class KMLReport implements GeneralReportModule {
             result.append(formatAttribute("Altitude", point.getAltitude().toString()));
         }
 
-        List<Waypoint.Property> list = point.getOtherProperties();
-        for(Waypoint.Property prop: list) {
+        List<ArtifactWaypoint.Property> list = point.getOtherProperties();
+        for(ArtifactWaypoint.Property prop: list) {
             String value = prop.getValue();
             if(value != null && !value.isEmpty()) {
                 result.append(formatAttribute(prop.getDisplayName(), value));
@@ -733,7 +733,7 @@ class KMLReport implements GeneralReportModule {
      * @return
      */
     private String getFormattedDetails(Route route) {
-        List<Waypoint> points = route.getRoute();
+        List<ArtifactWaypoint> points = route.getRoute();
         StringBuilder result = new StringBuilder(); //NON-NLS
 
         result.append(String.format("<h3>%s</h3>", Bundle.Route_Details_Header()))
@@ -745,21 +745,28 @@ class KMLReport implements GeneralReportModule {
         }
 
         if (points.size() > 1) {
-            Waypoint start = points.get(0);
-            Waypoint end = points.get(1);
+            ArtifactWaypoint start = points.get(0);
+            ArtifactWaypoint end = points.get(1);
 
             result.append(formatAttribute("Start Latitude", start.getLatitude().toString()))
-                    .append(formatAttribute("Start Longitude", start.getLongitude().toString()))
-                    .append(formatAttribute("End Latitude", end.getLatitude().toString()))
+                    .append(formatAttribute("Start Longitude", start.getLongitude().toString()));
+            
+            Double altitude = start.getAltitude();
+            if(altitude != null) {
+                result.append(formatAttribute("Start Altitude", altitude.toString()));
+            }
+            
+            result.append(formatAttribute("End Latitude", end.getLatitude().toString()))
                     .append(formatAttribute("End Longitude", end.getLongitude().toString()));
+            
+            altitude = end.getAltitude();
+            if(altitude != null) {
+                result.append(formatAttribute("End Altitude", altitude.toString()));
+            }
         }
 
-        if (route.getAltitude() != null) {
-            result.append(formatAttribute("Altitude", route.getAltitude().toString()));
-        }
-
-        List<Waypoint.Property> list = route.getOtherProperties();
-        for(Waypoint.Property prop: list) {
+        List<ArtifactWaypoint.Property> list = route.getOtherProperties();
+        for(ArtifactWaypoint.Property prop: list) {
             String value = prop.getValue();
             if(value != null && !value.isEmpty()) {
                 result.append(formatAttribute(prop.getDisplayName(), value));

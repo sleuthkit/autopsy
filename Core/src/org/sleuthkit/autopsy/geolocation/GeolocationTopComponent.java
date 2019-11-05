@@ -28,7 +28,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
-import org.jxmapviewer.viewer.Waypoint;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
