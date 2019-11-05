@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 /**
  * A Last Known Location Waypoint object.
  */
-final class LastKnownWaypoint extends ArtifactWaypoint {
+final class LastKnownWaypoint extends Waypoint {
 
     /**
      * Constructs a new waypoint.

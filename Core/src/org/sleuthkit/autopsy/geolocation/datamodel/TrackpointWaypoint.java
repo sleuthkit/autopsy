@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 /**
  * A wrapper class for TSK_GPS_TRACKPOINT artifacts.
  */
-final class TrackpointWaypoint extends ArtifactWaypoint {
+final class TrackpointWaypoint extends Waypoint {
     /**
      * Construct a waypoint for trackpoints.
      * 

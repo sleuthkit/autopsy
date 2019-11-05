@@ -730,10 +730,15 @@ class KMLReport implements GeneralReportModule {
      *
      * @param route
      *
-     * @return
+     * @return A HTML formatted list of the Route attributes
      */
+<<<<<<< HEAD
     private String getFormattedDetails(Route route) {
         List<ArtifactWaypoint> points = route.getRoute();
+=======
+     private String getFormattedDetails(Route route) {
+        List<Waypoint> points = route.getRoute();
+>>>>>>> geolocation-datamodel-refactoring
         StringBuilder result = new StringBuilder(); //NON-NLS
 
         result.append(String.format("<h3>%s</h3>", Bundle.Route_Details_Header()))
@@ -765,8 +770,13 @@ class KMLReport implements GeneralReportModule {
             }
         }
 
+<<<<<<< HEAD
         List<ArtifactWaypoint.Property> list = route.getOtherProperties();
         for(ArtifactWaypoint.Property prop: list) {
+=======
+        List<Waypoint.Property> list = route.getOtherProperties();
+        for(Waypoint.Property prop: list) {
+>>>>>>> geolocation-datamodel-refactoring
             String value = prop.getValue();
             if(value != null && !value.isEmpty()) {
                 result.append(formatAttribute(prop.getDisplayName(), value));

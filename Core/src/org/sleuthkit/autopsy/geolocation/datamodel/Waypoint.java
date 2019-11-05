@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Representation of a Waypoint created from a BlackboardArtifact.
  *
  */
-public class ArtifactWaypoint {
+public class Waypoint {
 
     final private Long timestamp;
     final private Double longitude;
@@ -50,13 +50,13 @@ public class ArtifactWaypoint {
 
     // This list is not expected to change after construction. The 
     // constructor will take care of making an unmodifiable List
-    final private List<ArtifactWaypoint.Property> immutablePropertiesList;
+    final private List<Waypoint.Property> immutablePropertiesList;
 
     /**
      * This is a list of attributes that are already being handled by the
      * by getter functions.
      */
-    static BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
+    static private BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE,
@@ -68,7 +68,7 @@ public class ArtifactWaypoint {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END,};
 
-    private static final Logger logger = Logger.getLogger(ArtifactWaypoint.class.getName());
+    private static final Logger logger = Logger.getLogger(Waypoint.class.getName());
 
     /**
      * Construct a waypoint with the given artifact.
@@ -78,7 +78,7 @@ public class ArtifactWaypoint {
      * @throws GeoLocationDataException Exception will be thrown if artifact did
      *                                  not have a valid longitude and latitude.
      */
-    ArtifactWaypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
+    Waypoint(BlackboardArtifact artifact) throws GeoLocationDataException {
         this(artifact,
                 getAttributesFromArtifactAsMap(artifact));
     }
@@ -98,7 +98,7 @@ public class ArtifactWaypoint {
      * @throws GeoLocationDataException Exception will be thrown if artifact did
      *                                  not have a valid longitude and latitude.
      */
-    ArtifactWaypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, Route route) throws GeoLocationDataException {
+    Waypoint(BlackboardArtifact artifact, String label, Long timestamp, Double latitude, Double longitude, Double altitude, AbstractFile image, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap, Route route) throws GeoLocationDataException {
         if (longitude == null || latitude == null) {
             throw new GeoLocationDataException("Invalid waypoint, null value passed for longitude or latitude");
         }
@@ -124,7 +124,7 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    private ArtifactWaypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+    private Waypoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         this(artifact,
                 getLabelFromArtifact(attributeMap),
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME).getValueLong() : null,
@@ -207,7 +207,7 @@ public class ArtifactWaypoint {
      *
      * @return A List of waypoint properties
      */
-    public List<ArtifactWaypoint.Property> getOtherProperties() {
+    public List<Waypoint.Property> getOtherProperties() {
         return immutablePropertiesList;
     }
     
@@ -276,8 +276,8 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    public static List<ArtifactWaypoint> getAllWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
-        List<ArtifactWaypoint> points = new ArrayList<>();
+    public static List<Waypoint> getAllWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+        List<Waypoint> points = new ArrayList<>();
 
         points.addAll(getTrackpointWaypoints(skCase));
         points.addAll(getEXIFWaypoints(skCase));
@@ -297,7 +297,7 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    public static List<ArtifactWaypoint> getTrackpointWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getTrackpointWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT);
@@ -305,10 +305,10 @@ public class ArtifactWaypoint {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_TRACKPOINT", ex);
         }
 
-        List<ArtifactWaypoint> points = new ArrayList<>();
+        List<Waypoint> points = new ArrayList<>();
         for (BlackboardArtifact artifact : artifacts) {
             try {
-                ArtifactWaypoint point = new TrackpointWaypoint(artifact);
+                Waypoint point = new TrackpointWaypoint(artifact);
                 points.add(point);
             } catch (GeoLocationDataException ex) {
                 logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_TRACKPOINT artifactID: %d", artifact.getArtifactID()));
@@ -326,7 +326,7 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    static public List<ArtifactWaypoint> getEXIFWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    static public List<Waypoint> getEXIFWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
@@ -334,11 +334,11 @@ public class ArtifactWaypoint {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_LAST_KNOWN_LOCATION", ex);
         }
 
-        List<ArtifactWaypoint> points = new ArrayList<>();
+        List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
                 try {
-                    ArtifactWaypoint point = new EXIFWaypoint(artifact);
+                    Waypoint point = new EXIFWaypoint(artifact);
                     points.add(point);
                 } catch (GeoLocationDataException ex) {
                     // I am a little relucant to log this error because I suspect
@@ -359,7 +359,7 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    public static List<ArtifactWaypoint> getSearchWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getSearchWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH);
@@ -367,11 +367,11 @@ public class ArtifactWaypoint {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_SEARCH", ex);
         }
 
-        List<ArtifactWaypoint> points = new ArrayList<>();
+        List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
                 try {
-                    ArtifactWaypoint point = new SearchWaypoint(artifact);
+                    Waypoint point = new SearchWaypoint(artifact);
                     points.add(point);
                 } catch (GeoLocationDataException ex) {
                     logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_SEARCH artifactID: %d", artifact.getArtifactID()));
@@ -390,7 +390,7 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    public static List<ArtifactWaypoint> getLastKnownWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getLastKnownWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION);
@@ -398,11 +398,11 @@ public class ArtifactWaypoint {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_LAST_KNOWN_LOCATION", ex);
         }
 
-        List<ArtifactWaypoint> points = new ArrayList<>();
+        List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
                 try {
-                    ArtifactWaypoint point = new LastKnownWaypoint(artifact);
+                    Waypoint point = new LastKnownWaypoint(artifact);
                     points.add(point);
                 } catch (GeoLocationDataException ex) {
                     logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_LAST_KNOWN_LOCATION artifactID: %d", artifact.getArtifactID()));
@@ -421,7 +421,7 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    public static List<ArtifactWaypoint> getBookmarkWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
+    public static List<Waypoint> getBookmarkWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
         List<BlackboardArtifact> artifacts = null;
         try {
             artifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK);
@@ -429,11 +429,11 @@ public class ArtifactWaypoint {
             throw new GeoLocationDataException("Unable to get artifacts for type: TSK_GPS_BOOKMARK", ex);
         }
 
-        List<ArtifactWaypoint> points = new ArrayList<>();
+        List<Waypoint> points = new ArrayList<>();
         if (artifacts != null) {
             for (BlackboardArtifact artifact : artifacts) {
                 try {
-                    ArtifactWaypoint point = new ArtifactWaypoint(artifact);
+                    Waypoint point = new Waypoint(artifact);
                     points.add(point);
                 } catch (GeoLocationDataException ex) {
                     logger.log(Level.WARNING, String.format("No longitude or latitude available for TSK_GPS_BOOKMARK artifactID: %d", artifact.getArtifactID()));
@@ -454,8 +454,8 @@ public class ArtifactWaypoint {
      *
      * @throws GeoLocationDataException
      */
-    static public List<ArtifactWaypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
-        List<ArtifactWaypoint.Property> list = new ArrayList<>();
+    static public List<Waypoint.Property> createGeolocationProperties(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+        List<Waypoint.Property> list = new ArrayList<>();
 
         Set<BlackboardAttribute.ATTRIBUTE_TYPE> keys = new HashSet<>(attributeMap.keySet());
 
@@ -467,7 +467,7 @@ public class ArtifactWaypoint {
             String key = type.getDisplayName();
             String value = attributeMap.get(type).getDisplayString();
 
-            list.add(new ArtifactWaypoint.Property(key, value));
+            list.add(new Waypoint.Property(key, value));
         }
         return list;
     }

@@ -38,12 +38,10 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.autopsy.geolocation.datamodel.ArtifactWaypoint;
+import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
-import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -56,7 +54,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
 
-    private final ArtifactWaypoint dataModelWaypoint;
+    private final Waypoint dataModelWaypoint;
     private final GeoPosition position;
 
     /**
@@ -64,7 +62,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      *
      * @param dataModelWaypoint The datamodel waypoint to wrap
      */
-    private MapWaypoint(ArtifactWaypoint dataModelWaypoint) {
+    private MapWaypoint(Waypoint dataModelWaypoint) {
         super(dataModelWaypoint.getLatitude(), dataModelWaypoint.getLongitude());
         this.dataModelWaypoint = dataModelWaypoint;
         position = new GeoPosition(dataModelWaypoint.getLatitude(), dataModelWaypoint.getLongitude());
@@ -86,7 +84,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * @throws GeoLocationDataException
      */
     static List<MapWaypoint> getWaypoints(SleuthkitCase skCase) throws GeoLocationDataException {
-        List<ArtifactWaypoint> points = ArtifactWaypoint.getAllWaypoints(skCase);
+        List<Waypoint> points = Waypoint.getAllWaypoints(skCase);
 
         List<Route> routes = Route.getRoutes(skCase);
         for (Route route : routes) {
@@ -95,7 +93,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
 
         List<MapWaypoint> mapPoints = new ArrayList<>();
 
-        for (ArtifactWaypoint point : points) {
+        for (Waypoint point : points) {
             mapPoints.add(new MapWaypoint(point));
         }
 

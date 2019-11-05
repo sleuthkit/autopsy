@@ -36,12 +36,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public final class Route {
-    private final List<ArtifactWaypoint> points;
+    private final List<Waypoint> points;
     private final Long timestamp;
 
     // This list is not expected to change after construction so the 
     // constructor will take care of creating an unmodifiable List
-    private final List<ArtifactWaypoint.Property> immutablePropertiesList;
+    private final List<Waypoint.Property> immutablePropertiesList;
 
     /**
      * Gets the list of Routes from the TSK_GPS_ROUTE artifacts.
@@ -77,14 +77,14 @@ public final class Route {
     Route(BlackboardArtifact artifact) throws GeoLocationDataException {
         points = new ArrayList<>();
 
-        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = ArtifactWaypoint.getAttributesFromArtifactAsMap(artifact);        
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = Waypoint.getAttributesFromArtifactAsMap(artifact);        
         points.add(getRouteStartPoint(artifact, attributeMap));
         points.add(getRouteEndPoint(artifact, attributeMap));
              
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
         timestamp = attribute != null ? attribute.getValueLong() : null;
 
-        immutablePropertiesList = Collections.unmodifiableList(ArtifactWaypoint.createGeolocationProperties(attributeMap));
+        immutablePropertiesList = Collections.unmodifiableList(Waypoint.createGeolocationProperties(attributeMap));
     }
 
     /**
@@ -92,7 +92,7 @@ public final class Route {
      *
      * @return List an unmodifiableList of ArtifactWaypoints for this route
      */
-    public List<ArtifactWaypoint> getRoute() {
+    public List<Waypoint> getRoute() {
         return Collections.unmodifiableList(points);
     }
 
@@ -102,7 +102,7 @@ public final class Route {
      *
      * @return Map of key, value pairs.
      */
-    public List<ArtifactWaypoint.Property> getOtherProperties() {
+    public List<Waypoint.Property> getOtherProperties() {
         return immutablePropertiesList;
     }
 
@@ -136,14 +136,15 @@ public final class Route {
     @Messages({
         "Route_Start_Label=Start"
     })
-    private ArtifactWaypoint getRouteStartPoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+
+    private Waypoint getRouteStartPoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute latitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_START);
         BlackboardAttribute longitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START);
         BlackboardAttribute altitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
         BlackboardAttribute pointTimestamp = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
 
         if (latitude != null && longitude != null) {
-            return new ArtifactWaypoint(artifact,  
+            return new Waypoint(artifact,  
                     Bundle.Route_Start_Label(), 
                     pointTimestamp != null ? pointTimestamp.getValueLong() : null, 
                     latitude.getValueDouble(), 
@@ -169,14 +170,15 @@ public final class Route {
     @Messages({
         "Route_End_Label=End"
     })
-    private ArtifactWaypoint getRouteEndPoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
+    Waypoint getRouteEndPoint(BlackboardArtifact artifact, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute latitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END);
         BlackboardAttribute longitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END);
         BlackboardAttribute altitude = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE);
         BlackboardAttribute pointTimestamp = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME);
 
         if (latitude != null && longitude != null) {
-            return new ArtifactWaypoint(artifact,  
+
+            return new Waypoint(artifact,  
                     Bundle.Route_End_Label(), 
                     pointTimestamp != null ? pointTimestamp.getValueLong() : null, 
                     latitude.getValueDouble(), 

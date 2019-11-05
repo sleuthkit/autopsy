@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Waypoint wrapper class for TSK_METADATA_EXIF artifacts.
  */
-final class EXIFWaypoint extends ArtifactWaypoint {
+final class EXIFWaypoint extends Waypoint {
 
     /**
      * Construct a way point with the given artifact.
