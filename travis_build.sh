@@ -3,7 +3,7 @@
 set -e
 echo "Building TSK..."
 cd sleuthkit/sleuthkit
-./bootstrap && configure --prefix=/usr && make
+./bootstrap && ./configure --prefix=/usr && make
 pushd bindings/java && ant -q dist-PostgreSQL && popd
 
 echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
