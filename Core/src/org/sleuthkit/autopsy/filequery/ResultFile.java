@@ -51,7 +51,7 @@ class ResultFile {
     private final List<AbstractFile> instances = new ArrayList<>();
     private DataResultViewerTable.Score currentScore = DataResultViewerTable.Score.NO_SCORE;
     private String scoreDescription = null;
-    private boolean isDeleted = false;
+    private boolean deleted = false;
     private FileType fileType;
 
     /**
@@ -63,7 +63,7 @@ class ResultFile {
         //store the file the ResultFile was created for as the first value in the instances list
         instances.add(abstractFile);
         if (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            isDeleted = true;
+            deleted = true;
         }
         updateScoreAndDescription(abstractFile);
         this.frequency = FileSearchData.Frequency.UNKNOWN;
@@ -100,8 +100,8 @@ class ResultFile {
      * @param duplicate The abstract file to add as a duplicate.
      */
     void addDuplicate(AbstractFile duplicate) {
-        if (isDeleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            isDeleted = false;
+        if (deleted && !duplicate.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+            deleted = false;
         }
         updateScoreAndDescription(duplicate);
         instances.add(duplicate);
@@ -133,7 +133,7 @@ class ResultFile {
      * @return The deleted status of this ResultFile.
      */
     boolean isDeleted() {
-        return isDeleted;
+        return deleted;
     }
 
     /**
@@ -339,10 +339,10 @@ class ResultFile {
     }
 
     @NbBundle.Messages({
-        "ResultFile.score.notableFile.description=File recognized as notable.",
-        "ResultFile.score.interestingResult.description=File has interesting result associated with it.",
-        "ResultFile.score.taggedFile.description=File has been tagged.",
-        "ResultFile.score.notableTaggedFile.description=File tagged with notable tag."})
+        "ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.",
+        "ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.",
+        "ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.",
+        "ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag."})
     private void updateScoreAndDescription(AbstractFile file) {
         if (currentScore == DataResultViewerTable.Score.NOTABLE_SCORE) {
             //already notable can return
