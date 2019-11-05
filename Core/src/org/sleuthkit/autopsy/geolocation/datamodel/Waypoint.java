@@ -56,7 +56,7 @@ public class Waypoint {
      * This is a list of attributes that are already being handled by the
      * by getter functions.
      */
-    static BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
+    static private BlackboardAttribute.ATTRIBUTE_TYPE[] ALREADY_HANDLED_ATTRIBUTES = {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE,
