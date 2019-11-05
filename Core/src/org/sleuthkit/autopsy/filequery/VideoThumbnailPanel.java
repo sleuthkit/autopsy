@@ -201,7 +201,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
             for (Component comp : getComponents()) {
                 if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + comp.getWidth() && p.y >= comp.getY() && p.y <= comp.getY() + comp.getHeight()) {
                     String toolTip = ((JComponent) comp).getToolTipText();
-                    if (toolTip.isEmpty()) {
+                    if (toolTip == null || toolTip.isEmpty()) {
                         return null;
                     } else {
                         return toolTip;
