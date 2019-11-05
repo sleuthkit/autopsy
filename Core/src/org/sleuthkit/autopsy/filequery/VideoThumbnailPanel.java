@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
@@ -40,10 +41,13 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
 
     private static final int GAP_SIZE = 4;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
+    private static final int ICON_SIZE =16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
+    private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
     private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
-    private static final ImageIcon NOTABLE_ICON_SCORE = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon NOTABLE_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon DELETED_ICON = new ImageIcon(ImageUtilities.loadImage(DELETE_ICON_PATH, false));
     private static final long serialVersionUID = 1L;
 
     /**
@@ -112,8 +116,14 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         imagePanel.setLayout(new java.awt.GridBagLayout());
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
+        scoreLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
 
         deletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
+        deletedLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        deletedLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        deletedLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -128,9 +138,9 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(deletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -142,8 +152,8 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(fileSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(deletedLabel)
-                        .addComponent(scoreLabel)
+                        .addComponent(deletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -170,15 +180,15 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
         addThumbnails(value);
         imagePanel.setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
         if (value.getResultFile().isDeleted()) {
-            deletedLabel.setVisible(true);
+            deletedLabel.setIcon(DELETED_ICON);
             deletedLabel.setToolTipText(Bundle.VideoThumbnailPanel_deleted_text());
         } else {
-            deletedLabel.setVisible(false);
+            deletedLabel.setIcon(null);
             deletedLabel.setToolTipText("");
         }
         switch (value.getResultFile().getScore()) {
             case NOTABLE_SCORE:
-                scoreLabel.setIcon(NOTABLE_ICON_SCORE);
+                scoreLabel.setIcon(NOTABLE_SCORE_ICON);
                 break;
             case INTERESTING_SCORE:
                 scoreLabel.setIcon(INTERESTING_SCORE_ICON);
@@ -199,7 +209,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
             //gets tooltip of internal panel item mouse is over
             Point p = event.getPoint();
             for (Component comp : getComponents()) {
-                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + comp.getWidth() && p.y >= comp.getY() && p.y <= comp.getY() + comp.getHeight()) {
+                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + ICON_SIZE && p.y >= comp.getY() && p.y <= comp.getY() + ICON_SIZE) {
                     String toolTip = ((JComponent) comp).getToolTipText();
                     if (toolTip == null || toolTip.isEmpty()) {
                         return null;
