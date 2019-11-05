@@ -20,7 +20,10 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
@@ -61,12 +64,21 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         isDeletedLabel = new javax.swing.JLabel();
         scoreLabel = new javax.swing.JLabel();
 
+        setToolTipText("");
+
+        thumbnailPanel.setToolTipText("");
         thumbnailPanel.setLayout(new java.awt.GridBagLayout());
         thumbnailPanel.add(thumbnailLabel, new java.awt.GridBagConstraints());
 
+        fileSizeLabel.setToolTipText("");
+
+        countLabel.setToolTipText("");
+
         isDeletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
+        isDeletedLabel.setToolTipText("");
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
+        scoreLabel.setToolTipText("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -114,13 +126,20 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     @NbBundle.Messages({"# {0} - fileSize",
         "ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes",
         "# {0} - numberOfInstances",
-        "ImageThumbnailPanel.countLabel.text=Number of Instances: {0}"})
+        "ImageThumbnailPanel.countLabel.text=Number of Instances: {0}",
+        "ImageThumbnailPanel.isDeleted.text=All instances of file are deleted."})
     @Override
     public Component getListCellRendererComponent(JList<? extends ImageThumbnailWrapper> list, ImageThumbnailWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         fileSizeLabel.setText(Bundle.ImageThumbnailPanel_sizeLabel_text(value.getResultFile().getFirstInstance().getSize()));
         countLabel.setText(Bundle.ImageThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         thumbnailLabel.setIcon(new ImageIcon(value.getThumbnail()));
-        isDeletedLabel.setVisible(value.getResultFile().isDeleted());
+        if (value.getResultFile().isDeleted()) {
+            isDeletedLabel.setVisible(true);
+            isDeletedLabel.setToolTipText(Bundle.ImageThumbnailPanel_isDeleted_text());
+        } else {
+            isDeletedLabel.setVisible(false);
+            isDeletedLabel.setToolTipText(null);
+        }
         switch (value.getResultFile().getScore()) {
             case NOTABLE_SCORE:
                 scoreLabel.setIcon(NOTABLE_ICON_SCORE);
@@ -133,10 +152,29 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
                 scoreLabel.setIcon(null);
                 break;
         }
-        setToolTipText(value.getResultFile().getScoreDescription());
+        scoreLabel.setToolTipText(value.getResultFile().getScoreDescription());
         setBackground(isSelected ? SELECTION_COLOR : list.getBackground());
 
         return this;
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        if (event != null) {
+            //gets tooltip of internal panel item mouse is over
+            Point p = event.getPoint();
+            for (Component comp : getComponents()) {
+                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + comp.getWidth() && p.y >= comp.getY() && p.y <= comp.getY() + comp.getHeight()) {
+                    String toolTip = ((JComponent) comp).getToolTipText();
+                    if (toolTip.isEmpty()) {
+                        return null;
+                    } else {
+                        return toolTip;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
 }
