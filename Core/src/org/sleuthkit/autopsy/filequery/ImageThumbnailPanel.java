@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import javax.swing.ImageIcon;
@@ -36,16 +37,21 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
+    private static final int ICON_SIZE =16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
+    private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
     private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
-    private static final ImageIcon NOTABLE_ICON_SCORE = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon NOTABLE_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon DELETED_ICON = new ImageIcon(ImageUtilities.loadImage(DELETE_ICON_PATH, false));
 
     /**
      * Creates new form ImageThumbnailPanel
      */
     public ImageThumbnailPanel() {
         initComponents();
+        scoreLabel.setSize(16, 16);
+        isDeletedLabel.setSize(16, 16);
     }
 
     /**
@@ -73,12 +79,21 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         fileSizeLabel.setToolTipText("");
 
         countLabel.setToolTipText("");
+        countLabel.setMaximumSize(new java.awt.Dimension(159, 12));
+        countLabel.setMinimumSize(new java.awt.Dimension(159, 12));
+        countLabel.setPreferredSize(new java.awt.Dimension(159, 12));
 
         isDeletedLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/file-icon-deleted.png"))); // NOI18N
         isDeletedLabel.setToolTipText("");
+        isDeletedLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        isDeletedLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        isDeletedLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
 
         scoreLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"))); // NOI18N
         scoreLabel.setToolTipText("");
+        scoreLabel.setMaximumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setMinimumSize(new Dimension(ICON_SIZE,ICON_SIZE));
+        scoreLabel.setPreferredSize(new Dimension(ICON_SIZE,ICON_SIZE));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -91,12 +106,12 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
                         .addComponent(thumbnailPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)
                         .addComponent(fileSizeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(countLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(countLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(isDeletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(isDeletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(scoreLabel)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -107,9 +122,9 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
                 .addComponent(fileSizeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scoreLabel)
-                    .addComponent(isDeletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(countLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 12, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(scoreLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(isDeletedLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(countLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -134,15 +149,15 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         countLabel.setText(Bundle.ImageThumbnailPanel_countLabel_text(value.getResultFile().getAllInstances().size()));
         thumbnailLabel.setIcon(new ImageIcon(value.getThumbnail()));
         if (value.getResultFile().isDeleted()) {
-            isDeletedLabel.setVisible(true);
+            isDeletedLabel.setIcon(DELETED_ICON);
             isDeletedLabel.setToolTipText(Bundle.ImageThumbnailPanel_isDeleted_text());
         } else {
-            isDeletedLabel.setVisible(false);
+            isDeletedLabel.setIcon(null);
             isDeletedLabel.setToolTipText(null);
         }
         switch (value.getResultFile().getScore()) {
             case NOTABLE_SCORE:
-                scoreLabel.setIcon(NOTABLE_ICON_SCORE);
+                scoreLabel.setIcon(NOTABLE_SCORE_ICON);
                 break;
             case INTERESTING_SCORE:
                 scoreLabel.setIcon(INTERESTING_SCORE_ICON);
@@ -164,10 +179,10 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             //gets tooltip of internal panel item mouse is over
             Point p = event.getPoint();
             for (Component comp : getComponents()) {
-                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + comp.getWidth() && p.y >= comp.getY() && p.y <= comp.getY() + comp.getHeight()) {
+                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + ICON_SIZE && p.y >= comp.getY() && p.y <= comp.getY() + ICON_SIZE) {
                     String toolTip = ((JComponent) comp).getToolTipText();
-                    if (toolTip.isEmpty()) {
-                        return null;
+                    if (toolTip == null || toolTip.isEmpty()) {
+                        return null;                        
                     } else {
                         return toolTip;
                     }
