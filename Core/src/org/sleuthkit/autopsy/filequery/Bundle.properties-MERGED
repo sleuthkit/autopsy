@@ -178,8 +178,6 @@ ResultsPanel.gotoPageLabel.text=Go to Page:
 ResultsPanel.pageSizeLabel.text=Page size:
 ResultsPanel.instancesList.border.title=Instances
 DiscoveryExtractAction.title.extractFiles.text=Extract File
-ImageThumbnailPanel.toolTipText=BACKGROUND
-ImageThumbnailPanel.isDeletedLabel.toolTipText=
 ResultsPanel.viewFileInDir.name=View File in Directory
 SearchNode.getName.text=Search Result
 # {0} - numberOfInstances
