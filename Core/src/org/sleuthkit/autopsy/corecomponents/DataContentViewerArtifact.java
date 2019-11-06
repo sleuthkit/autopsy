@@ -56,6 +56,10 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.netbeans.swing.etable.ETable;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
@@ -551,6 +555,16 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                                 dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
                                 value = dateFormatter.format(new java.util.Date(epoch * 1000));
                             }
+                            break;
+                        case JSON: 
+                            // @TODO: 5726 - return a multilevel bulleted list instead of prettyprint JSON 
+                            String jsonVal = attr.getValueString();
+                            
+                            JsonParser parser = new JsonParser();
+                            JsonObject json = parser.parse(jsonVal).getAsJsonObject();
+                            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                            
+                            value = gson.toJson(json);
                             break;
                     }
                     /*

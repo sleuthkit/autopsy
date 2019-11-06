@@ -122,6 +122,7 @@ public class ArtifactStringContent implements StringContent {
                         case LONG:
                         case DOUBLE:
                         case BYTE:
+                        case JSON:
                         default:
                             value = attr.getDisplayString();
                             break;

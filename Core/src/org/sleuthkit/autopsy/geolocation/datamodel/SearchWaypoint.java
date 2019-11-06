@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * A SearchWaypoint is a subclass of ArtifactWaypoint.
  */
 final class SearchWaypoint extends ArtifactWaypoint {
+
     /**
      * Construct a waypoint for TSK_GPS_SEARCH artifact.
      *
