@@ -7,6 +7,10 @@
     <Component class="javax.swing.ButtonGroup" name="orderGroupsByButtonGroup">
     </Component>
     <Component class="javax.swing.ButtonGroup" name="parentIncludeButtonGroup">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
+      </AuxValues>
     </Component>
   </NonVisualComponents>
   <Properties>

@@ -235,8 +235,8 @@ class FileSearchFiltering {
     static class ParentSearchTerm {
 
         private final String searchStr;
-        private final boolean isFullPath;
-        private final boolean isIncluded;
+        private final boolean fullPath;
+        private final boolean included;
 
         /**
          * Create the ParentSearchTerm object
@@ -249,8 +249,8 @@ class FileSearchFiltering {
          */
         ParentSearchTerm(String searchStr, boolean isFullPath, boolean isIncluded) {
             this.searchStr = searchStr;
-            this.isFullPath = isFullPath;
-            this.isIncluded = isIncluded;
+            this.fullPath = isFullPath;
+            this.included = isIncluded;
         }
 
         /**
@@ -297,17 +297,17 @@ class FileSearchFiltering {
         }
 
         /**
-         * @return the isFullPath
+         * @return the fullPath
          */
         boolean isFullPath() {
-            return isFullPath;
+            return fullPath;
         }
 
         /**
-         * @return the isIncluded
+         * @return the included
          */
         boolean isIncluded() {
-            return isIncluded;
+            return included;
         }
     }
 

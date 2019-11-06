@@ -614,7 +614,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         parentPathButtonGroup = new javax.swing.ButtonGroup();
         orderGroupsByButtonGroup = new javax.swing.ButtonGroup();
-        parentIncludeButtonGroup = new javax.swing.ButtonGroup();
+        javax.swing.ButtonGroup parentIncludeButtonGroup = new javax.swing.ButtonGroup();
         filtersScrollPane = new javax.swing.JScrollPane();
         filtersPanel = new javax.swing.JPanel();
         sizeCheckbox = new javax.swing.JCheckBox();
@@ -1470,7 +1470,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.ButtonGroup orderGroupsByButtonGroup;
     private javax.swing.JLabel orderGroupsByLabel;
     private javax.swing.JCheckBox parentCheckbox;
-    private javax.swing.ButtonGroup parentIncludeButtonGroup;
     private javax.swing.JLabel parentLabel;
     private javax.swing.JList<ParentSearchTerm> parentList;
     private javax.swing.ButtonGroup parentPathButtonGroup;
