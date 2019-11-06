@@ -679,17 +679,35 @@ class FileSearch {
         private Long parentID;
 
         ParentPathGroupKey(ResultFile file) {
-            if (file.getFirstInstance().getParentPath() != null) {
-
+            Content parent;
+            try {
+                parent = file.getFirstInstance().getParent();
+            } catch (TskCoreException ignored) {
+                parent = null;
+            }
+            //Find the directory this file is in if it is an embedded file
+            while (parent != null && parent instanceof AbstractFile && ((AbstractFile) parent).isFile()) {
                 try {
-                    parentPath = file.getFirstInstance().getParent().getUniquePath();
-                    parentID = file.getFirstInstance().getParent().getId();
-                } catch (TskCoreException ingored) {
-                    parentPath = file.getFirstInstance().getParentPath();
-                    parentID = -1L;
+                    parent = parent.getParent();
+                } catch (TskCoreException ignored) {
+                    parent = null;
                 }
-            } else {
-                parentPath = ""; // NON-NLS
+            }
+            if (parent != null) {
+                try {
+                    parentPath = parent.getUniquePath();
+                    parentID = parent.getId();
+                } catch (TskCoreException ignored) {
+                    //catch block left blank purposefully next if statement will handle case when exception takes place as well as when parent is null
+                }
+
+            }
+            if (parentPath == null) {
+                if (file.getFirstInstance().getParentPath() != null) {
+                    parentPath = file.getFirstInstance().getParentPath();
+                } else {
+                    parentPath = ""; // NON-NLS
+                }
                 parentID = -1L;
             }
         }
