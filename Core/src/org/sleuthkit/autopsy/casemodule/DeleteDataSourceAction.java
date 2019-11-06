@@ -102,15 +102,15 @@ public final class DeleteDataSourceAction extends AbstractAction {
     }
 
     /**
-     * Determines whether or not the delete data source action should be enabled
+     * Determines whether or not the delete data source action can be enabled.
      *
      * @return True or false.
      */
     private static boolean canBeEnabled() {
         boolean canBeEnabled = false;
         if (Case.isCaseOpen()) {
-            CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
-            canBeEnabled = ((creationVersion.getMajor() > MIN_CASE_DB_SCHEMA_MAJOR_VERSION) || (creationVersion.getMajor() == MIN_CASE_DB_SCHEMA_MAJOR_VERSION && creationVersion.getMinor() >= MIN_CASE_DB_SCHEMA_MINOR_VERSION))
+            CaseDbSchemaVersionNumber version = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
+            canBeEnabled = ((version.getMajor() > MIN_CASE_DB_SCHEMA_MAJOR_VERSION) || (version.getMajor() == MIN_CASE_DB_SCHEMA_MAJOR_VERSION && version.getMinor() >= MIN_CASE_DB_SCHEMA_MINOR_VERSION))
                     && !IngestManager.getInstance().isIngestRunning()
                     && (Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE
                     || UserFeatureAccessUtils.canCreateOrModifyMultiUserCases());
