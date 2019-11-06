@@ -50,8 +50,6 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
      */
     public ImageThumbnailPanel() {
         initComponents();
-        scoreLabel.setSize(16, 16);
-        isDeletedLabel.setSize(16, 16);
     }
 
     /**
