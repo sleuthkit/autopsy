@@ -159,7 +159,7 @@ class FileSorter implements Comparator<ResultFile> {
                 } catch (TskCoreException ingored) {
                     file2ParentPath = file2.getFirstInstance().getParentPath();
                 }
-                return compareStrings(file1ParentPath, file2ParentPath);
+                return compareStrings(file1ParentPath.toLowerCase(), file2ParentPath.toLowerCase());
             }
         };
     }
