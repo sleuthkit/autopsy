@@ -41,7 +41,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
 
     private static final int GAP_SIZE = 4;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
-    private static final int ICON_SIZE =16;
+    private static final int ICON_SIZE = 16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
     private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
@@ -207,9 +207,9 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     public String getToolTipText(MouseEvent event) {
         if (event != null) {
             //gets tooltip of internal panel item mouse is over
-            Point p = event.getPoint();
+            Point point = event.getPoint();
             for (Component comp : getComponents()) {
-                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + ICON_SIZE && p.y >= comp.getY() && p.y <= comp.getY() + ICON_SIZE) {
+                if (isPointOnIcon(comp, point)) {
                     String toolTip = ((JComponent) comp).getToolTipText();
                     if (toolTip == null || toolTip.isEmpty()) {
                         return null;
@@ -220,5 +220,17 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
             }
         }
         return null;
+    }
+
+    /**
+     * Helper method to see if point is on the icon.
+     *
+     * @param comp  The component to check if the cursor is over the icon of
+     * @param point The point the cursor is at.
+     *
+     * @return True if the point is over the icon, false otherwise.
+     */
+    private boolean isPointOnIcon(Component comp, Point point) {
+        return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
     }
 }
