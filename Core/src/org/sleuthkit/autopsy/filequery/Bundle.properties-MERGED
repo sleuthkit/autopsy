@@ -116,8 +116,8 @@ FileSorter.SortingMethod.filename.displayName=By file name
 FileSorter.SortingMethod.filesize.displayName=By file size
 FileSorter.SortingMethod.filetype.displayName=By file type
 FileSorter.SortingMethod.frequency.displayName=By central repo frequency
+FileSorter.SortingMethod.fullPath.displayName=By full path
 FileSorter.SortingMethod.keywordlist.displayName=By keyword list names
-FileSorter.SortingMethod.parent.displayName=By parent path
 # {0} - numberOfInstances
 ImageThumbnailPanel.countLabel.text=Number of Instances: {0}
 ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.

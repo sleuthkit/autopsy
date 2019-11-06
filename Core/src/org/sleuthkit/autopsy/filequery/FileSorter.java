@@ -59,7 +59,7 @@ class FileSorter implements Comparator<ResultFile> {
             case BY_KEYWORD_LIST_NAMES:
                 comparators.add(getKeywordListNameComparator());
                 break;
-            case BY_PARENT_PATH:
+            case BY_FULL_PATH:
                 comparators.add(getParentPathComparator());
                 break;
             case BY_FILE_NAME:
@@ -227,7 +227,7 @@ class FileSorter implements Comparator<ResultFile> {
         "FileSorter.SortingMethod.filetype.displayName=By file type",
         "FileSorter.SortingMethod.frequency.displayName=By central repo frequency",
         "FileSorter.SortingMethod.keywordlist.displayName=By keyword list names",
-        "FileSorter.SortingMethod.parent.displayName=By parent path"})
+        "FileSorter.SortingMethod.fullPath.displayName=By full path"})
     enum SortingMethod {
         BY_FILE_NAME(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_filename_displayName()), // Sort alphabetically by file name
@@ -241,8 +241,8 @@ class FileSorter implements Comparator<ResultFile> {
                 Bundle.FileSorter_SortingMethod_frequency_displayName()), // Sort by decreasing rarity in the central repository
         BY_KEYWORD_LIST_NAMES(Arrays.asList(new FileSearch.KeywordListAttribute()),
                 Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
-        BY_PARENT_PATH(new ArrayList<>(),
-                Bundle.FileSorter_SortingMethod_parent_displayName());       // Sort alphabetically by path
+        BY_FULL_PATH(new ArrayList<>(),
+                Bundle.FileSorter_SortingMethod_fullPath_displayName());       // Sort alphabetically by path
 
         private final String displayName;
         private final List<FileSearch.AttributeType> requiredAttributes;
@@ -267,7 +267,7 @@ class FileSorter implements Comparator<ResultFile> {
          * @return enums that can be used to ordering images.
          */
         static List<SortingMethod> getOptionsForOrderingImages() {
-            return Arrays.asList(BY_FILE_SIZE, BY_PARENT_PATH, BY_FILE_NAME, BY_DATA_SOURCE);
+            return Arrays.asList(BY_FILE_SIZE, BY_FULL_PATH, BY_FILE_NAME, BY_DATA_SOURCE);
         }
     }
 }
