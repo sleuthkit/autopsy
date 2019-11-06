@@ -173,7 +173,7 @@ public class Case {
      */
     static {
         WindowManager.getDefault().invokeWhenUIReady(() -> {
-                mainFrame = WindowManager.getDefault().getMainWindow();
+            mainFrame = WindowManager.getDefault().getMainWindow();
         });
     }
 
@@ -848,15 +848,15 @@ public class Case {
             try {
                 logger.log(Level.INFO, "Opening {0} ({1}) in {2} as the current case", new Object[]{newCurrentCase.getDisplayName(), newCurrentCase.getName(), newCurrentCase.getCaseDirectory()}); //NON-NLS
                 String progressIndicatorTitle;
-                CaseAction<ProgressIndicator, Object, Void> caseAction;
+                CaseAction<ProgressIndicator, Object, Void> openCaseAction;
                 if (isNewCase) {
                     progressIndicatorTitle = Bundle.Case_progressIndicatorTitle_creatingCase();
-                    caseAction = newCurrentCase::createCase;
+                    openCaseAction = newCurrentCase::createCase;
                 } else {
                     progressIndicatorTitle = Bundle.Case_progressIndicatorTitle_openingCase();
-                    caseAction = newCurrentCase::openCase;
+                    openCaseAction = newCurrentCase::openCase;
                 }
-                newCurrentCase.doCaseAction(progressIndicatorTitle, caseAction, CaseLockType.SHARED, true, null);
+                newCurrentCase.doCaseAction(progressIndicatorTitle, openCaseAction, CaseLockType.SHARED, true, null);
                 currentCase = newCurrentCase;
                 logger.log(Level.INFO, "Opened {0} ({1}) in {2} as the current case", new Object[]{newCurrentCase.getDisplayName(), newCurrentCase.getName(), newCurrentCase.getCaseDirectory()}); //NON-NLS
                 if (RuntimeProperties.runningWithGUI()) {
@@ -2014,23 +2014,28 @@ public class Case {
     Void deleteDataSource(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams instanceof Long);
         openCase(progressIndicator, null);
-        progressIndicator.progress(Bundle.Case_progressMessage_deletingDataSource());
-        Long dataSourceObjectID = (Long) additionalParams;
         try {
-            DataSource dataSource = this.caseDb.getDataSource(dataSourceObjectID);
-            if (dataSource == null) {
-                throw new CaseActionException(Bundle.Case_exceptionMessage_dataSourceNotFound());
+            progressIndicator.progress(Bundle.Case_progressMessage_deletingDataSource());
+            Long dataSourceObjectID = (Long) additionalParams;
+            try {
+                DataSource dataSource = this.caseDb.getDataSource(dataSourceObjectID);
+                if (dataSource == null) {
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_dataSourceNotFound());
+                }
+                SleuthkitCaseAdmin.deleteDataSource(this.caseDb, dataSourceObjectID);
+            } catch (TskDataException | TskCoreException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
             }
-            SleuthkitCaseAdmin.deleteDataSource(this.caseDb, dataSourceObjectID);
-        } catch (TskDataException | TskCoreException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
+            try {
+                this.caseServices.getKeywordSearchService().deleteDataSource(dataSourceObjectID);
+            } catch (KeywordSearchServiceException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
+            }
+            eventPublisher.publish(new DataSourceDeletedEvent(dataSourceObjectID));
+        } catch (CaseActionException ex) {
+            close(progressIndicator);
+            throw ex;
         }
-        try {
-            this.caseServices.getKeywordSearchService().deleteDataSource(dataSourceObjectID);
-        } catch (KeywordSearchServiceException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
-        }
-        eventPublisher.publish(new DataSourceDeletedEvent(dataSourceObjectID));
         close(progressIndicator);
         return null;
     }
@@ -2507,7 +2512,7 @@ public class Case {
                      * Always release the case directory lock that was acquired
                      * when the case was opened.
                      */
-                    releaseSharedCaseDirLock(metadata.getCaseName());
+                    releaseSharedCaseDirLock(metadata.getCaseDirectory()); // RJCTODO: Rename
                 }
             }
             return null;
@@ -2569,11 +2574,6 @@ public class Case {
             caseDb.unregisterForEvents(tskEventForwarder);
             caseDb.close();
         }
-
-        /*
-         * Release the case (case directory) lock.
-         */
-        releaseSharedCaseDirLock(getMetadata().getCaseDirectory());
 
         /*
          * Switch the log directory.
