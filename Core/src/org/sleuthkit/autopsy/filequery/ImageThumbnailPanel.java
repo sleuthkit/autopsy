@@ -37,7 +37,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
 
     private static final long serialVersionUID = 1L;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
-    private static final int ICON_SIZE =16;
+    private static final int ICON_SIZE = 16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
     private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
@@ -175,12 +175,12 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
     public String getToolTipText(MouseEvent event) {
         if (event != null) {
             //gets tooltip of internal panel item mouse is over
-            Point p = event.getPoint();
+            Point point = event.getPoint();
             for (Component comp : getComponents()) {
-                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + ICON_SIZE && p.y >= comp.getY() && p.y <= comp.getY() + ICON_SIZE) {
+                if (isPointInComponent(comp, point)) {
                     String toolTip = ((JComponent) comp).getToolTipText();
                     if (toolTip == null || toolTip.isEmpty()) {
-                        return null;                        
+                        return null;
                     } else {
                         return toolTip;
                     }
@@ -188,6 +188,10 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             }
         }
         return null;
+    }
+
+    private boolean isPointInComponent(Component comp, Point point) {
+        return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
     }
 
 }

@@ -41,7 +41,7 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
 
     private static final int GAP_SIZE = 4;
     private static final Color SELECTION_COLOR = new Color(0, 120, 215);
-    private static final int ICON_SIZE =16;
+    private static final int ICON_SIZE = 16;
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
     private static final String DELETE_ICON_PATH = "/org/sleuthkit/autopsy/images/file-icon-deleted.png";
@@ -209,13 +209,8 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
             //gets tooltip of internal panel item mouse is over
             Point p = event.getPoint();
             for (Component comp : getComponents()) {
-                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + ICON_SIZE && p.y >= comp.getY() && p.y <= comp.getY() + ICON_SIZE) {
-                    String toolTip = ((JComponent) comp).getToolTipText();
-                    if (toolTip == null || toolTip.isEmpty()) {
-                        return null;
-                    } else {
-                        return toolTip;
-                    }
+                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + ICON_SIZE && p.y >= comp.getY() && p.y <= comp.getY() + ICON_SIZE && ((JComponent) comp).getToolTipText() != null && !((JComponent) comp).getToolTipText().isEmpty()) {
+                    return ((JComponent) comp).getToolTipText();
                 }
             }
         }
