@@ -200,7 +200,7 @@ class FileSorter implements Comparator<ResultFile> {
      * @return -1 if file1 comes before file2, 0 if equal, 1 otherwise
      */
     private static Comparator<ResultFile> getFileNameComparator() {
-        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getName(), file2.getFirstInstance().getName());
+        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getName().toLowerCase(), file2.getFirstInstance().getName().toLowerCase());
     }
 
     /**
