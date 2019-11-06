@@ -727,9 +727,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
-        parentPathButtonGroup = new javax.swing.ButtonGroup();
+
+        javax.swing.ButtonGroup parentPathButtonGroup = new javax.swing.ButtonGroup();
         orderGroupsByButtonGroup = new javax.swing.ButtonGroup();
-        typeButtonGroup = new javax.swing.ButtonGroup();
         javax.swing.ButtonGroup parentIncludeButtonGroup = new javax.swing.ButtonGroup();
         filtersScrollPane = new javax.swing.JScrollPane();
         filtersPanel = new javax.swing.JPanel();
@@ -1582,7 +1582,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox parentCheckbox;
     private javax.swing.JLabel parentLabel;
     private javax.swing.JList<ParentSearchTerm> parentList;
-    private javax.swing.ButtonGroup parentPathButtonGroup;
     private javax.swing.JScrollPane parentScrollPane;
     private javax.swing.JTextField parentTextField;
     private javax.swing.JCheckBox scoreCheckbox;
@@ -1597,7 +1596,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private javax.swing.JCheckBox tagsCheckbox;
     private javax.swing.JList<TagName> tagsList;
     private javax.swing.JScrollPane tagsScrollPane;
-    private javax.swing.ButtonGroup typeButtonGroup;
     // End of variables declaration//GEN-END:variables
 
 }

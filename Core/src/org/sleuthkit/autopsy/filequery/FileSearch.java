@@ -1032,10 +1032,8 @@ class FileSearch {
                 EamDb centralRepoDb) throws FileSearchException {
             if (centralRepoDb == null) {
                 for (ResultFile file : files) {
-                    if (file.getFrequency() == Frequency.UNKNOWN) {
-                        if (file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
-                            file.setFrequency(Frequency.KNOWN);
-                        }
+                    if (file.getFrequency() == Frequency.UNKNOWN && file.getFirstInstance().getKnown() == TskData.FileKnown.KNOWN) {
+                        file.setFrequency(Frequency.KNOWN);
                     }
                 }
             } else {
