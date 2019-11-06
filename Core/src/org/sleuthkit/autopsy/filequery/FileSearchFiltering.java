@@ -262,15 +262,15 @@ class FileSearchFiltering {
             // TODO - these should really be prepared statements
             if (isIncluded()) {
                 if (isFullPath()) {
-                    return "parent_path=\'" + searchStr + "\'"; // NON-NLS
+                    return "parent_path=\'" + getSearchStr() + "\'"; // NON-NLS
                 } else {
-                    return "parent_path LIKE \'%" + searchStr + "%\'"; // NON-NLS
+                    return "parent_path LIKE \'%" + getSearchStr() + "%\'"; // NON-NLS
                 }
             } else {
                 if (isFullPath()) {
-                    return "parent_path!=\'" + searchStr + "\'"; // NON-NLS
+                    return "parent_path!=\'" + getSearchStr() + "\'"; // NON-NLS
                 } else {
-                    return "parent_path NOT LIKE \'%" + searchStr + "%\'"; // NON-NLS
+                    return "parent_path NOT LIKE \'%" + getSearchStr() + "%\'"; // NON-NLS
                 }
             }
         }
@@ -279,11 +279,10 @@ class FileSearchFiltering {
             "FileSearchFiltering.ParentSearchTerm.fullString= (exact)",
             "FileSearchFiltering.ParentSearchTerm.subString= (substring)",
             "FileSearchFiltering.ParentSearchTerm.includeString= (include)",
-            "FileSearchFiltering.ParentSearchTerm.excludeString= (exclude)",}
-        )
+            "FileSearchFiltering.ParentSearchTerm.excludeString= (exclude)",})
         @Override
         public String toString() {
-            String returnString = searchStr;
+            String returnString = getSearchStr();
             if (isFullPath()) {
                 returnString += Bundle.FileSearchFiltering_ParentSearchTerm_fullString();
             } else {
@@ -309,7 +308,13 @@ class FileSearchFiltering {
          */
         boolean isIncluded() {
             return isIncluded;
+        }
 
+        /**
+         * @return the searchStr
+         */
+        String getSearchStr() {
+            return searchStr;
         }
     }
 
@@ -373,9 +378,9 @@ class FileSearchFiltering {
                     desc += Bundle.FileSearchFiltering_ParentFilter_or();
                 }
                 if (searchTerm.isFullPath()) {
-                    desc += searchTerm.searchStr + Bundle.FileSearchFiltering_ParentFilter_exact();
+                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_exact();
                 } else {
-                    desc += searchTerm.searchStr + Bundle.FileSearchFiltering_ParentFilter_substring();
+                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_substring();
                 }
             }
             desc = Bundle.FileSearchFiltering_ParentFilter_desc(desc);

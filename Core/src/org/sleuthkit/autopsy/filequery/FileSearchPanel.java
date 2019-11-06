@@ -59,7 +59,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(FileSearchPanel.class.getName());
-    private FileType fileType;
+    private FileType fileType = FileType.IMAGE;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
     private SearchWorker searchWorker = null;
 
@@ -71,6 +71,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         initComponents();
     }
 
+    /**
+     * Set the UI elements available to be the set of UI elements available when
+     * an Image search is being performed.
+     */
     private void imagesSelected() {
         dataSourceCheckbox.setVisible(true);
         dataSourceScrollPane.setVisible(true);
@@ -123,6 +127,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableCheckbox.setVisible(false);
     }
 
+    /**
+     * Set the UI elements available to be the set of UI elements available when
+     * a Video search is being performed.
+     */
     private void videosSelected() {
         dataSourceCheckbox.setVisible(true);
         dataSourceScrollPane.setVisible(true);
@@ -178,6 +186,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         notableCheckbox.setVisible(false);
     }
 
+    /**
+     * Set the type of search to perform.
+     *
+     * @param type The type of File to be found by the search.
+     */
     void setSelectedType(FileType type) {
         fileType = type;
         if (fileType == FileType.IMAGE) {
@@ -187,6 +200,9 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         }
     }
 
+    /**
+     * Reset the panel to its initial configuration.
+     */
     void resetPanel() {
         customizeComponents();
     }
@@ -627,7 +643,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * use bundle messages.
      */
     private void validateFields() {
-//        // There must be at least one file type selected
+        // There will be a file type selected.
         if (fileType == null) {
             setInvalid("At least one file type must be selected");
             return;
@@ -1328,12 +1344,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         enableSearch(false);
 
-        FileType searchType = FileType.IMAGE; //default to images
-        // There will always be a file type selected
-//        if (videosButton.isSelected()) {
-//            searchType = FileType.VIDEO;
-//        }
-        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(searchType));
+        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(fileType));
         // For testing, allow the user to run different searches in loop
 
         // Get the selected filters

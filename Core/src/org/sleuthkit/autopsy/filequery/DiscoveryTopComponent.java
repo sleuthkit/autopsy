@@ -56,8 +56,6 @@ public final class DiscoveryTopComponent extends TopComponent {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     DiscoveryTopComponent() {
         initComponents();
-        // Load the central repository database.
-
         setName(Bundle.DiscoveryTopComponent_name());
         fileSearchPanel = new FileSearchPanel();
         dataContentPanel = DataContentPanel.createInstance();
@@ -106,6 +104,11 @@ public final class DiscoveryTopComponent extends TopComponent {
         }
     }
 
+    /**
+     * Get the current DiscoveryTopComponent if it is open.
+     *
+     * @return The open DiscoveryTopComponent or null if it has not been opened.
+     */
     public static DiscoveryTopComponent getTopComponent() {
         return (DiscoveryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
     }
@@ -118,7 +121,10 @@ public final class DiscoveryTopComponent extends TopComponent {
         groupListPanel.resetGroupList();
     }
 
-    void updateSearchSettings() {
+    /**
+     * Update the search settings to a default state.
+     */
+    private void updateSearchSettings() {
         fileSearchPanel.resetPanel();
         imagesButton.setSelected(true);
         imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
@@ -242,6 +248,11 @@ public final class DiscoveryTopComponent extends TopComponent {
         fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
 
+    /**
+     * Update the user interface in response to a search being cancelled.
+     *
+     * @param searchCancelledEvent The SearchCancelledEvent received.
+     */
     @Subscribe
     void handleSearchCancelledEvent(DiscoveryEvents.SearchCancelledEvent searchCancelledEvent) {
         SwingUtilities.invokeLater(() -> {
@@ -250,6 +261,11 @@ public final class DiscoveryTopComponent extends TopComponent {
         });
     }
 
+    /**
+     * Update the user interface in response to a search being completed.
+     *
+     * @param searchCompletedEvent The SearchCompletedEvent received.
+     */
     @Subscribe
     void handleSearchCompletedEvent(DiscoveryEvents.SearchCompleteEvent searchCompletedEvent) {
         SwingUtilities.invokeLater(() -> {
@@ -258,6 +274,11 @@ public final class DiscoveryTopComponent extends TopComponent {
         });
     }
 
+    /**
+     * Update the user interface in response to a search being started.
+     *
+     * @param searchStartedEvent The SearchStartedEvent received.
+     */
     @Subscribe
     void handleSearchStartedEvent(DiscoveryEvents.SearchStartedEvent searchStartedEvent) {
         SwingUtilities.invokeLater(() -> {

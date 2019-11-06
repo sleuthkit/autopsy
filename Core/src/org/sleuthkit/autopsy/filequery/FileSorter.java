@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filequery;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import org.openide.util.NbBundle;
@@ -211,13 +212,9 @@ class FileSorter implements Comparator<ResultFile> {
      * @return -1 if s1 comes before s2, 0 if equal, 1 otherwise
      */
     private static int compareStrings(String s1, String s2) {
-        if (s1 == null) {
-            s1 = "";
-        }
-        if (s2 == null) {
-            s2 = "";
-        }
-        return s1.compareTo(s2);
+        String string1 = s1 == null ? "" : s1;
+        String string2 = s2 == null ? "" : s2;
+        return string1.compareTo(string2);
     }
 
     /**
@@ -261,7 +258,7 @@ class FileSorter implements Comparator<ResultFile> {
         }
 
         List<FileSearch.AttributeType> getRequiredAttributes() {
-            return requiredAttributes;
+            return Collections.unmodifiableList(requiredAttributes);
         }
 
         /**
