@@ -20,9 +20,12 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -59,17 +62,27 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
      * @return The text content of the file.
      */
     @NbBundle.Messages({
-        "HtmlViewer_file_error=This file is missing or unreadable.",})
+        "HtmlViewer_file_error=This file is missing or unreadable.",
+        "HtmlViewer_encoding_error=This file has unsupported encoding"})
     private String getHtmlText(AbstractFile abstractFile) {
         try {
             int fileSize = (int) abstractFile.getSize();
             byte[] buffer = new byte[fileSize];
             abstractFile.read(buffer, 0, fileSize);
-            return new String(buffer);
+            CharsetMatch match = new CharsetDetector().setText(buffer).detect();
+            if (match != null) {
+                return new String(buffer, match.getName());
+            } else {
+                return new String(buffer);
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to read from file '%s' (id=%d).",
                     abstractFile.getName(), abstractFile.getId()), ex);
             return String.format("<p>%s</p>", Bundle.HtmlViewer_file_error());
+        } catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, String.format("Unsupported encoding for file '%s' (id=%d).",
+                    abstractFile.getName(), abstractFile.getId()), ex);
+            return String.format("<p>%s</p>", Bundle.HtmlViewer_encoding_error());
         }
     }
 

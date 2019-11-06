@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -427,9 +428,10 @@ public final class CaseMetadata {
             transformer.transform(source, streamResult);
 
             /*
-             * Write the DOM to the metadata file.
+             * Write the DOM to the metadata file.  Add UTF-8 Characterset so it writes to the file
+             * correctly for non-latin characters
              */
-            try (BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metadataFilePath.toFile())))) {
+            try (BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metadataFilePath.toFile()), StandardCharsets.UTF_8))) {
                 fileWriter.write(stringWriter.toString());
                 fileWriter.flush();
             }

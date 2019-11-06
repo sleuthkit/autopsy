@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -33,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -45,6 +49,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
     private static final long serialVersionUID = 1L;
     private static final String NO_COMMENT = "";
+    private final Collection<Content> content = new HashSet<>();
 
     AddTagAction(String menuText) {
         super(menuText);
@@ -52,6 +57,32 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
     @Override
     public JMenuItem getPopupPresenter() {
+        content.clear();
+        return new TagMenu();
+    }
+
+    /**
+     * Get the collection of content which may have been specified for this
+     * action. Empty collection returned when no content was specified.
+     *
+     * @return The specified content for this action.
+     */
+    Collection<Content> getContentToTag() {
+        return Collections.unmodifiableCollection(content);
+    }
+
+    /**
+     * Get the menu for adding tags to the specified collection of Content.
+     *
+     * @param contentToTag The collection of Content the menu actions will be
+     *                     applied to.
+     *
+     * @return The menu which will allow users to choose the tag they want to
+     *         apply to the Content specified.
+     */
+    public JMenuItem getMenuForContent(Collection<? extends Content> contentToTag) {
+        content.clear();
+        content.addAll(contentToTag);
         return new TagMenu();
     }
 
@@ -118,26 +149,26 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                     tagNameItem.addActionListener((ActionEvent e) -> {
                         getAndAddTag(entry.getKey(), entry.getValue(), NO_COMMENT);
                     });
-                    
-                     // Show custom tags before predefined tags in the menu
+
+                    // Show custom tags before predefined tags in the menu
                     if (standardTagNames.contains(tagDisplayName)) {
                         standardTagMenuitems.add(tagNameItem);
                     } else {
                         add(tagNameItem);
                     }
                 }
-            } 
-            
+            }
+
             if (getItemCount() > 0) {
                 addSeparator();
             }
-            
+
             standardTagMenuitems.forEach((menuItem) -> {
                 add(menuItem);
             });
-            
+
             addSeparator();
-             
+
             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
             // a dialog that can be used to create or select a tag name with an
             // optional comment and adds a tag with the resulting name.
@@ -150,7 +181,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 }
             });
             add(tagAndCommentItem);
-            
+
             // Create a  "New Tag..." menu item.
             // Selecting this item initiates a dialog that can be used to create
             // or select a tag name and adds a tag with the resulting name.
@@ -162,7 +193,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 }
             });
             add(newTagMenuItem);
-             
+
         }
 
         /**
@@ -194,10 +225,10 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                         tagName = openCase.getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
                     } catch (TskCoreException ex1) {
                         Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
-                    } 
+                    }
                 } catch (TskCoreException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
-                } 
+                }
             }
             addTag(tagName, comment);
         }

@@ -23,6 +23,7 @@ GstVideoPanel.noOpenCase.errMsg=No open case available.
 Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.
 HtmlPanel_showImagesToggleButton_hide=Hide Images
 HtmlPanel_showImagesToggleButton_show=Download Images
+HtmlViewer_encoding_error=This file has unsupported encoding
 HtmlViewer_file_error=This file is missing or unreadable.
 MediaFileViewer.initGst.gstException.msg=Error initializing gstreamer for audio/video viewing and frame extraction capabilities.  Video and audio viewing will be disabled.
 GstVideoPanel.setupVideo.infoLabel.text=Playback of deleted videos is not supported, use an external player.

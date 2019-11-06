@@ -768,6 +768,7 @@ public class PortableCaseReportModule implements ReportModule {
                             oldAttr.getValueLong()));
                     break;
                 case STRING:
+                case JSON:
                     newAttrs.add(new BlackboardAttribute(newAttributeType, String.join(",", oldAttr.getSources()),
                             oldAttr.getValueString()));
                     break;
