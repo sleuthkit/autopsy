@@ -159,7 +159,7 @@ public class Case {
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
     private volatile ExecutorService caseLockingExecutor;
-    private CoordinationService.Lock caseDirLock;
+    private CoordinationService.Lock caseLock;
     private SleuthkitCase caseDb;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
@@ -1755,7 +1755,8 @@ public class Case {
     }
 
     /**
-     * Performs a case action.
+     * Performs a case action after acquiring a coordination service case lock.
+     * The close() method must eventually be called to release the lock.
      *
      * @param progressIndicatorTitle A title for the progress indicator for the
      *                               case action.
@@ -1808,9 +1809,7 @@ public class Case {
 
         /*
          * A case action is always done by creating a task running in the same
-         * non-UI thread that will be used to close the case, so a
-         * single-threaded executor service is created here and saved as case
-         * state (must be volatile for cancellation to work). For both
+         * non-UI thread that will be used to close the case. For both
          * single-user and mulit-user cases, this supports cancelling the case
          * action by cancelling the task. If the case is a multi-user case, this
          * also ensures that the case lock is released in the same thread in
@@ -1828,14 +1827,14 @@ public class Case {
                  * create/open/upgrade/close the case resources.
                  */
                 progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources());
-                acquireCaseLock(caseLockType, metadata.getCaseDirectory());
+                acquireCaseLock(caseLockType);
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
                     if (null == resourcesLock) {
                         throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
                     }
                     caseAction.execute(progressIndicator, additionalParams);
                 } catch (CaseActionException ex) {
-                    releaseSharedCaseDirLock(getMetadata().getCaseDirectory());
+                    releaseCaseLock();
                     throw ex;
                 }
             }
@@ -1991,10 +1990,8 @@ public class Case {
     }
 
     /**
-     * A case action (interface CaseAction<T, V, R>) for a closed case that
-     * opens the case database and application services for this case, deletes a
-     * data source from the case, and publishes an application event indicasting
-     * the data source has been deleted.
+     * A case action (interface CaseAction<T, V, R>) that opens a case, deletes a
+     * data source from the case, and closes the case.
      *
      * @param progressIndicator A progress indicator.
      * @param additionalParams  An Object that holds any additional parameters
@@ -2488,9 +2485,9 @@ public class Case {
         /*
          * Closing a case is always done in the same non-UI thread that
          * opened/created the case. If the case is a multi-user case, this
-         * ensures that case directory lock that is held as long as the case is
-         * open is released in the same thread in which it was acquired, as is
-         * required by the coordination service.
+         * ensures that case lock that is held as long as the case is open is
+         * released in the same thread in which it was acquired, as is required
+         * by the coordination service.
          */
         Future<Void> future = caseLockingExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
@@ -2512,7 +2509,7 @@ public class Case {
                      * Always release the case directory lock that was acquired
                      * when the case was opened.
                      */
-                    releaseSharedCaseDirLock(metadata.getCaseDirectory()); // RJCTODO: Rename
+                    releaseCaseLock();
                 }
             }
             return null;
@@ -2637,18 +2634,17 @@ public class Case {
     /**
      * Acquires a case (case directory) lock for the current case.
      *
-     * @param caseDir The full path of the case directory.
-     *
      * @throws CaseActionException If the lock cannot be acquired.
      */
     @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory"})
-    private void acquireCaseLock(CaseLockType lockType, String caseDir) throws CaseActionException {
+    private void acquireCaseLock(CaseLockType lockType) throws CaseActionException {
+        String caseDir = metadata.getCaseDirectory();
         try {
             CoordinationService coordinationService = CoordinationService.getInstance();
-            caseDirLock = lockType == CaseLockType.SHARED
+            caseLock = lockType == CaseLockType.SHARED
                     ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS)
                     : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
-            if (null == caseDirLock) {
+            if (caseLock == null) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
             }
         } catch (InterruptedException | CoordinationServiceException ex) {
@@ -2657,17 +2653,15 @@ public class Case {
     }
 
     /**
-     * Releases a shared case directory lock for the current case.
-     *
-     * @param caseDir The full path of the case directory.
+     * Releases a case (case directory) lock for the current case.
      */
-    private void releaseSharedCaseDirLock(String caseDir) {
-        if (caseDirLock != null) {
+    private void releaseCaseLock() {
+        if (caseLock != null) {
             try {
-                caseDirLock.release();
-                caseDirLock = null;
+                caseLock.release();
+                caseLock = null;
             } catch (CoordinationService.CoordinationServiceException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to release shared case directory lock for %s", caseDir), ex);
+                logger.log(Level.SEVERE, String.format("Failed to release shared case directory lock for %s", getMetadata().getCaseDirectory()), ex);
             }
         }
     }
