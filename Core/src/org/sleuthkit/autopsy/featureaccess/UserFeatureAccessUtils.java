@@ -23,27 +23,28 @@ import java.nio.file.Paths;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * Class for methods to check if access should be limited to a feature
- *
+ * Check if access to various features is permitted for the current user.
  */
-final public class AccessLimiterUtils {
+final public class UserFeatureAccessUtils {
 
     private final static String MULTI_USER_ACCESS_FILE_NAME = "mualimit"; // NON-NLS
     private final static String MULTI_USER_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), MULTI_USER_ACCESS_FILE_NAME).toString();
 
     /**
-     * Check if privileges regarding multi-user cases should be restricted.
+     * Indicates whether or not the current user is allowed to create or modify
+     * (add or delete data sourcess) multi-user cases.
      *
      * @return True if privileges should be restricted, false otherwise.
      */
-    public static boolean limitMultiUserAccess() {
-        return new File(MULTI_USER_ACCESS_FILE_PATH).exists();
+    public static boolean canCreateOrModifyMultiUserCases() {
+        File accessLimitingFile = new File(MULTI_USER_ACCESS_FILE_PATH);
+        return !accessLimitingFile.exists();
     }
 
     /**
-     * Private constructor for a utility class
+     * Private constructor to prevent instatiation of this utility class.
      */
-    private AccessLimiterUtils() {
-        //private constructer left empty intentionally
+    private UserFeatureAccessUtils() {
     }
+
 }

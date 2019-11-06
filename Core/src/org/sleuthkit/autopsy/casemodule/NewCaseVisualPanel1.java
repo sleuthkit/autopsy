@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.featureaccess.AccessLimiterUtils;
+import org.sleuthkit.autopsy.featureaccess.UserFeatureAccessUtils;
 import java.awt.Component;
 import org.openide.util.NbBundle;
 
@@ -62,7 +62,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      */
     void readSettings() {
         caseNameTextField.setText("");
-        if (UserPreferences.getIsMultiUserModeEnabled() && !AccessLimiterUtils.limitMultiUserAccess()) {
+        if (UserPreferences.getIsMultiUserModeEnabled() && UserFeatureAccessUtils.canCreateOrModifyMultiUserCases()) {
             multiUserCaseRadioButton.setEnabled(true);
             multiUserCaseRadioButton.setSelected(true);
         } else {

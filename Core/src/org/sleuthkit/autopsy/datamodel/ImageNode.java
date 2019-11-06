@@ -33,7 +33,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.featureaccess.AccessLimiterUtils;
+import org.sleuthkit.autopsy.featureaccess.UserFeatureAccessUtils;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -220,8 +220,8 @@ public class ImageNode extends AbstractContentNode<Image> {
     private Boolean canAddDeleteDataSourceAction() {
         boolean canAddAction = false;
         CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
-        if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 3) || (creationVersion.getMajor() > 8)) {
-            canAddAction = Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE || !AccessLimiterUtils.limitMultiUserAccess();
+        if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 4) || (creationVersion.getMajor() > 8)) {
+            canAddAction = Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE || UserFeatureAccessUtils.canCreateOrModifyMultiUserCases();
         }
         return canAddAction;
     }
