@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Class used to sort ResultFiles using the supplied method.
@@ -142,7 +143,25 @@ class FileSorter implements Comparator<ResultFile> {
      *         otherwise
      */
     private static Comparator<ResultFile> getParentPathComparator() {
-        return (ResultFile file1, ResultFile file2) -> compareStrings(file1.getFirstInstance().getParentPath(), file2.getFirstInstance().getParentPath());
+
+        return new Comparator<ResultFile>() {
+            @Override
+            public int compare(ResultFile file1, ResultFile file2) {
+                String file1ParentPath;
+                try {
+                    file1ParentPath = file1.getFirstInstance().getParent().getUniquePath();
+                } catch (TskCoreException ingored) {
+                    file1ParentPath = file1.getFirstInstance().getParentPath();
+                }
+                String file2ParentPath;
+                try {
+                    file2ParentPath = file2.getFirstInstance().getParent().getUniquePath();
+                } catch (TskCoreException ingored) {
+                    file2ParentPath = file2.getFirstInstance().getParentPath();
+                }
+                return compareStrings(file1ParentPath, file2ParentPath);
+            }
+        };
     }
 
     /**
