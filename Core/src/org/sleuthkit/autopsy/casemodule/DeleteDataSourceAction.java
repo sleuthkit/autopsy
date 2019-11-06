@@ -27,15 +27,20 @@ import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.featureaccess.UserFeatureAccessUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
  * An Action that allows a user to delete a data source from the current case.
+ * This action should not always be enabled
  */
 public final class DeleteDataSourceAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
+    private static final int MIN_CASE_DB_SCHEMA_MAJOR_VERSION = 8;
+    private static final int MIN_CASE_DB_SCHEMA_MINOR_VERSION = 4;
     private long dataSourceObjectID;
     private Path caseMetadataFilePath;
 
@@ -50,7 +55,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     public DeleteDataSourceAction(Long dataSourceObjectID) {
         super(Bundle.DeleteDataSourceAction_name_text());
         this.dataSourceObjectID = dataSourceObjectID;
-        this.setEnabled(!IngestManager.getInstance().isIngestRunning());
+        this.setEnabled(canBeEnabled());
     }
 
     @NbBundle.Messages({
@@ -94,6 +99,23 @@ public final class DeleteDataSourceAction extends AbstractAction {
                 }
             }.execute();
         }
+    }
+
+    /**
+     * Determines whether or not the delete data source action should be enabled
+     *
+     * @return True or false.
+     */
+    private static boolean canBeEnabled() {
+        boolean canBeEnabled = false;
+        if (Case.isCaseOpen()) {
+            CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
+            canBeEnabled = ((creationVersion.getMajor() > MIN_CASE_DB_SCHEMA_MAJOR_VERSION) || (creationVersion.getMajor() == MIN_CASE_DB_SCHEMA_MAJOR_VERSION && creationVersion.getMinor() >= MIN_CASE_DB_SCHEMA_MINOR_VERSION))
+                    && !IngestManager.getInstance().isIngestRunning()
+                    && (Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE
+                    || UserFeatureAccessUtils.canCreateOrModifyMultiUserCases());
+        }
+        return canBeEnabled;
     }
 
     @Override

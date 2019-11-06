@@ -33,8 +33,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.featureaccess.UserFeatureAccessUtils;
-import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
@@ -53,7 +51,6 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
-import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.Tag;
 
 /**
@@ -122,9 +119,6 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-        if (canAddDeleteDataSourceAction()) {
-            actionsList.add(new DeleteDataSourceAction(content.getId()));
-        }
         return actionsList.toArray(new Action[0]);
     }
 
@@ -210,20 +204,6 @@ public class ImageNode extends AbstractContentNode<Image> {
     @Override
     public String getItemType() {
         return getClass().getName();
-    }
-
-    /**
-     * Determines whether or not the delete data source action can be added.
-     *
-     * @return True or false.
-     */
-    private Boolean canAddDeleteDataSourceAction() {
-        boolean canAddAction = false;
-        CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
-        if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 4) || (creationVersion.getMajor() > 8)) {
-            canAddAction = Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE || UserFeatureAccessUtils.canCreateOrModifyMultiUserCases();
-        }
-        return canAddAction;
     }
 
     /*

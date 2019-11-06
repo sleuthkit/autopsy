@@ -32,9 +32,9 @@ final public class UserFeatureAccessUtils {
 
     /**
      * Indicates whether or not the current user is allowed to create or modify
-     * (add or delete data sourcess) multi-user cases.
+     * (add or delete data sources) multi-user cases.
      *
-     * @return True if privileges should be restricted, false otherwise.
+     * @return True or false.
      */
     public static boolean canCreateOrModifyMultiUserCases() {
         File accessLimitingFile = new File(MULTI_USER_ACCESS_FILE_PATH);
