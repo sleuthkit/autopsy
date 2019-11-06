@@ -120,6 +120,13 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     void updateSearchSettings() {
         fileSearchPanel.resetPanel();
+        imagesButton.setSelected(true);
+        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
+        imagesButton.setBackground(Color.blue);
+        videosButton.setIcon(null);
+        videosButton.setSelected(false);
+        videosButton.setBackground(new Color(240, 240, 240));
+        fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }
 
     @Override
