@@ -207,13 +207,30 @@ final class VideoThumbnailPanel extends javax.swing.JPanel implements ListCellRe
     public String getToolTipText(MouseEvent event) {
         if (event != null) {
             //gets tooltip of internal panel item mouse is over
-            Point p = event.getPoint();
+            Point point = event.getPoint();
             for (Component comp : getComponents()) {
-                if (comp instanceof JComponent && p.x >= comp.getX() && p.x <= comp.getX() + ICON_SIZE && p.y >= comp.getY() && p.y <= comp.getY() + ICON_SIZE && ((JComponent) comp).getToolTipText() != null && !((JComponent) comp).getToolTipText().isEmpty()) {
-                    return ((JComponent) comp).getToolTipText();
+                if (isPointOnIcon(comp, point)) {
+                    String toolTip = ((JComponent) comp).getToolTipText();
+                    if (toolTip == null || toolTip.isEmpty()) {
+                        return null;
+                    } else {
+                        return toolTip;
+                    }
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * Helper method to see if point is on the icon.
+     *
+     * @param comp  The component to check if the cursor is over the icon of
+     * @param point The point the cursor is at.
+     *
+     * @return True if the point is over the icon, false otherwise.
+     */
+    private boolean isPointOnIcon(Component comp, Point point) {
+        return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
     }
 }

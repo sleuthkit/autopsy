@@ -177,7 +177,7 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
             //gets tooltip of internal panel item mouse is over
             Point point = event.getPoint();
             for (Component comp : getComponents()) {
-                if (isPointInComponent(comp, point)) {
+                if (isPointOnIcon(comp, point)) {
                     String toolTip = ((JComponent) comp).getToolTipText();
                     if (toolTip == null || toolTip.isEmpty()) {
                         return null;
@@ -190,7 +190,15 @@ public class ImageThumbnailPanel extends javax.swing.JPanel implements ListCellR
         return null;
     }
 
-    private boolean isPointInComponent(Component comp, Point point) {
+    /**
+     * Helper method to see if point is on the icon.
+     *
+     * @param comp  The component to check if the cursor is over the icon of
+     * @param point The point the cursor is at.
+     *
+     * @return True if the point is over the icon, false otherwise.
+     */
+    private boolean isPointOnIcon(Component comp, Point point) {
         return comp instanceof JComponent && point.x >= comp.getX() && point.x <= comp.getX() + ICON_SIZE && point.y >= comp.getY() && point.y <= comp.getY() + ICON_SIZE;
     }
 
