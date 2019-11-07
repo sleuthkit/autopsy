@@ -121,7 +121,7 @@ public class XRYFileReader {
      * @return Indication if the leading bytes match.
      * @throws IOException if an I/O error occurs.
      */
-    static boolean isXRYBOM(Path file) throws IOException {
+    private static boolean isXRYBOM(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file, StandardOpenOption.READ)) {
             for (int bomByte : BOM) {
                 if (in.read() != bomByte) {
@@ -142,7 +142,7 @@ public class XRYFileReader {
      * @return
      * @throws IOException
      */
-    static Optional<String> getType(Path file) throws IOException {
+    private static Optional<String> getType(Path file) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(file, CHARSET)) {
             //Advance the reader to the line before the report type.
             for(int i = 0; i < LINE_WITH_REPORT_TYPE - 1; i++) {
