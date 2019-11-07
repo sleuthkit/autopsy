@@ -95,8 +95,7 @@ public class XRYFileReader {
         BasicFileAttributes attr = Files.readAttributes(file,
                 BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
-        //Do not follow symbolic links. XRY files most definitely cannot be a
-        //directory.
+        //Do not follow symbolic links. XRY files cannot be a directory.
         if (attr.isSymbolicLink() || attr.isDirectory()) {
             return false;
         }
