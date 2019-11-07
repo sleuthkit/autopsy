@@ -50,7 +50,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_FileRef_Message=<Select a single account to see File References>",
         "SummaryViewer_Device_Account_Description=This account was referenced by a device in the case.",
         "SummaryViewer_Account_Description=This account represents a device in the case.",
-        "SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected."
+        "SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected.",
+        "SummaryViewer_Country_Code=Country: "
     })
 
     /**
@@ -114,7 +115,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             if (account.getAccountType().getTypeName().contains("PHONE")) {
                 String countryCode = PhoneNumUtil.getCountryCode(account.getTypeSpecificID());
                 accountLabel.setText(PhoneNumUtil.convertToInternational(account.getTypeSpecificID()));
-                accountCountry.setText("Country: " + countryCode); //NON-NLS
+                accountCountry.setText(Bundle.SummaryViewer_Country_Code() + countryCode); //NON-NLS
                 accountCountry.setEnabled(true);
             } else {
                 accountLabel.setText(account.getTypeSpecificID());
