@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -35,6 +37,8 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.actionhelpers.ExtractActionHelper;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -112,6 +116,11 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         return position;
     }
 
+    /**
+     * Get the label for this waypoint
+     * 
+     * @return Waypoint label
+     */
     String getLabel() {
         return dataModelWaypoint.getLabel();
     }
@@ -129,26 +138,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
 
         menuItems.addAll(getTimelineMenuItems(dataModelWaypoint.getArtifact()));
-        
-        List<Action> actions = DataModelActionsFactory.getActions(content, true);
-        for (Action action : actions) {
-            if (action == null) {
-                menuItems.add(null);
-            } else if (action instanceof ExportCSVAction) {
-                // Do nothing we don't need this menu item.
-            } else if(action instanceof AddContentTagAction) {//|| action instanceof AddBlackboardArtifactTagAction) {
-                menuItems.add(((AddContentTagAction)action).getMenuForContent(Arrays.asList((AbstractFile)content)));
-               
-            } else if(action instanceof AddBlackboardArtifactTagAction) {
-                menuItems.add(((AddBlackboardArtifactTagAction)action).getMenuForContent(Arrays.asList(artifact)));
-            } else if(action instanceof ExternalViewerShortcutAction) {
-                // Replace with an ExternalViewerAction
-                ExternalViewerAction newAction = new ExternalViewerAction("title", new FileNode((AbstractFile)content));
-                menuItems.add(new JMenuItem(newAction));
-            } else {
-               menuItems.add(new JMenuItem(action));
-            }
-        }
+        menuItems.addAll(getDataModelActionFactoryMenuItems(artifact, content));
         menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile)content)));
         menuItems.add(DeleteFileBlackboardArtifactTagAction.getInstance().getMenuForArtifacts(Arrays.asList(artifact)));
         
@@ -156,6 +146,13 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         return menuItems.toArray(new JMenuItem[menuItems.size()]);
     }
 
+    /**
+     * Get the Timeline Menu Items for this artifact.
+     * 
+     * @param artifact
+     * 
+     * @return 
+     */
     private List<JMenuItem> getTimelineMenuItems(BlackboardArtifact artifact) {
         List<JMenuItem> menuItems = new ArrayList<>();
         //if this artifact has a time stamp add the action to view it in the timeline
@@ -168,5 +165,59 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         }
 
         return menuItems;
+    }
+    
+    /**
+     * Use the DateModelActionsFactory to get some of the basic actions for
+     * the waypoint.
+     * 
+     * @param artifact Artifact for the selected waypoint
+     * @param content Artifact content
+     * 
+     * @return List of JMenuItems for the DataModelActionFactory actions
+     */
+    private List<JMenuItem> getDataModelActionFactoryMenuItems(BlackboardArtifact artifact, Content content) {
+        List<JMenuItem> menuItems = new ArrayList<>();
+
+        menuItems.addAll(getTimelineMenuItems(dataModelWaypoint.getArtifact()));
+        
+        List<Action> actions = DataModelActionsFactory.getActions(content, true);
+        for (Action action : actions) {
+            if (action == null) {
+                menuItems.add(null);
+            } else if (action instanceof ExportCSVAction) {
+                // Do nothing we don't need this menu item.
+            } else if(action instanceof AddContentTagAction) {
+                menuItems.add(((AddContentTagAction)action).getMenuForContent(Arrays.asList((AbstractFile)content)));
+            } else if(action instanceof AddBlackboardArtifactTagAction) {
+                menuItems.add(((AddBlackboardArtifactTagAction)action).getMenuForContent(Arrays.asList(artifact)));
+            } else if(action instanceof ExternalViewerShortcutAction) {
+                // Replace with an ExternalViewerAction
+                ExternalViewerAction newAction = new ExternalViewerAction("Open in ExternalViewer", new FileNode((AbstractFile)content));
+                menuItems.add(new JMenuItem(newAction));
+            } else if(action instanceof ExtractAction) {
+                menuItems.add(new JMenuItem(new WaypointExtractAction((AbstractFile)content)));
+            }else {
+               menuItems.add(new JMenuItem(action));
+            }
+        }
+        return menuItems;
+    }
+    
+    final class WaypointExtractAction extends AbstractAction{
+
+        private static final long serialVersionUID = 1L;
+        final private AbstractFile file;
+        WaypointExtractAction(AbstractFile file) {
+            super("Extract Files(s)");
+            this.file = file;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ExtractActionHelper helper = new ExtractActionHelper();
+            helper.extract(e, Arrays.asList(file));
+            
+        }
     }
 }
