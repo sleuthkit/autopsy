@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * Check if access to various features is permitted for the current user.
  */
-final public class UserFeatureAccessUtils {
+final public class FeatureAccessUtils {
 
     private final static String MULTI_USER_ACCESS_FILE_NAME = "mualimit"; // NON-NLS
     private final static String MULTI_USER_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), MULTI_USER_ACCESS_FILE_NAME).toString();
@@ -42,9 +42,9 @@ final public class UserFeatureAccessUtils {
     }
 
     /**
-     * Private constructor to prevent instatiation of this utility class.
+     * Private constructor to prevent instantiation of this utility class.
      */
-    private UserFeatureAccessUtils() {
+    private FeatureAccessUtils() {
     }
 
 }

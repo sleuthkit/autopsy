@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.featureaccess.UserFeatureAccessUtils;
+import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
@@ -1102,7 +1102,7 @@ public class Case {
                 /*
                  * Enable the case-specific actions.
                  */
-                CallableSystemAction.get(AddImageAction.class).setEnabled(Case.getCurrentCase().getMetadata().getCaseType() == CaseType.SINGLE_USER_CASE || UserFeatureAccessUtils.canCreateOrModifyMultiUserCases());
+                CallableSystemAction.get(AddImageAction.class).setEnabled(Case.getCurrentCase().getMetadata().getCaseType() == CaseType.SINGLE_USER_CASE || FeatureAccessUtils.canCreateOrModifyMultiUserCases());
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);

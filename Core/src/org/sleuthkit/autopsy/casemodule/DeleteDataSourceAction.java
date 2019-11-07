@@ -27,7 +27,7 @@ import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.featureaccess.UserFeatureAccessUtils;
+import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
@@ -59,7 +59,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     }
 
     @NbBundle.Messages({
-        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?\n Note that the case will be closed and re-opened during the deletion.",
+        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?\nNote that the case will be closed and re-opened during the deletion.",
         "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source.\nPlease see the application log for details.",
         "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case."
     })
@@ -113,7 +113,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
             canBeEnabled = ((version.getMajor() > MIN_CASE_DB_SCHEMA_MAJOR_VERSION) || (version.getMajor() == MIN_CASE_DB_SCHEMA_MAJOR_VERSION && version.getMinor() >= MIN_CASE_DB_SCHEMA_MINOR_VERSION))
                     && !IngestManager.getInstance().isIngestRunning()
                     && (Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE
-                    || UserFeatureAccessUtils.canCreateOrModifyMultiUserCases());
+                    || FeatureAccessUtils.canCreateOrModifyMultiUserCases());
         }
         return canBeEnabled;
     }
