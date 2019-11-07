@@ -59,7 +59,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     }
 
     @NbBundle.Messages({
-        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?\n Note that the case will be closed and re-opened several times to complete the deletion.",
+        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?\n Note that the case will be closed and re-opened during the deletion.",
         "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source.\nPlease see the application log for details.",
         "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case."
     })
