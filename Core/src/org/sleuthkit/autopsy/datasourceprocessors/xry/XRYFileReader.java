@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.commons.io.FilenameUtils;
 
 /**
- * Extracts XRY entities from an XRY file and determines the report type. An
+ * Extracts XRY entities and determines the report type. An
  * example of an XRY entity would be:
  *
  * Calls #	1 
@@ -126,7 +126,7 @@ public class XRYFileReader {
      * @return Indication if the leading bytes match.
      * @throws IOException if an I/O error occurs.
      */
-    static boolean isXRYBOM(Path file) throws IOException {
+    private static boolean isXRYBOM(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file, StandardOpenOption.READ)) {
             for (int bomByte : BOM) {
                 if (in.read() != bomByte) {
@@ -147,7 +147,7 @@ public class XRYFileReader {
      * @return
      * @throws IOException
      */
-    static Optional<String> getType(Path file) throws IOException {
+    private static Optional<String> getType(Path file) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(file, CHARSET);
                 //Limit this stream to only the length of the header
                 //and skip to the line just before the type information.

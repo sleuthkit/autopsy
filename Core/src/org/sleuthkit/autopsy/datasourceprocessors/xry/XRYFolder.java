@@ -28,7 +28,7 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 
 /**
- * Extracts XRY files and (optionally) non-XRY files from a XRY Report folder.
+ * Extracts XRY files and (optionally) non-XRY files from a XRY (Report) folder.
  */
 public class XRYFolder {
 
