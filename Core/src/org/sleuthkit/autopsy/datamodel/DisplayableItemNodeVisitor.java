@@ -59,6 +59,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VolumeNode vn);
+    
+    T visit(PoolNode pn);
 
     T visit(SlackFileNode sfn);
 
@@ -256,6 +258,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(ImageNode in) {
             return defaultVisit(in);
+        }
+        
+        @Override
+        public T visit(PoolNode pn) {
+            return defaultVisit(pn);
         }
 
         @Override
