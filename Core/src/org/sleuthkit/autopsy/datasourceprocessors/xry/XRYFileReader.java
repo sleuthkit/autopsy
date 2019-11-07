@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +31,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Optional;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.commons.io.FilenameUtils;
 
@@ -56,9 +54,6 @@ public class XRYFileReader {
 
     //Assume TXT extension
     private static final String EXTENSION = "txt";
-
-    //Assume all headers are 5 lines in length.
-    private static final int HEADER_LENGTH_IN_LINES = 5;
 
     //Assume all XRY reports have the type on the 3rd line.
     private static final int LINE_WITH_REPORT_TYPE = 3;
@@ -108,7 +103,7 @@ public class XRYFileReader {
         try {
             Optional<String> reportType = getType(file);
             //All valid XRY reports should have a type.
-            return reportType.isPresent() && !reportType.get().isEmpty();
+            return reportType.isPresent();
         } catch (MalformedInputException ex) {
             logger.log(Level.WARNING, String.format("File at path [%s] had "
                     + "0xFFFE BOM but was not encoded in UTF-16LE.", file.toString()), ex);
@@ -126,7 +121,7 @@ public class XRYFileReader {
      * @return Indication if the leading bytes match.
      * @throws IOException if an I/O error occurs.
      */
-    private static boolean isXRYBOM(Path file) throws IOException {
+    static boolean isXRYBOM(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file, StandardOpenOption.READ)) {
             for (int bomByte : BOM) {
                 if (in.read() != bomByte) {
@@ -147,16 +142,18 @@ public class XRYFileReader {
      * @return
      * @throws IOException
      */
-    private static Optional<String> getType(Path file) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(file, CHARSET);
-                //Limit this stream to only the length of the header
-                //and skip to the line just before the type information.
-                Stream<String> xryReportHeader = reader.lines()
-                        .limit(HEADER_LENGTH_IN_LINES)
-                        .skip(LINE_WITH_REPORT_TYPE - 1)) {
-            return xryReportHeader.findFirst();
-        } catch (UncheckedIOException ex) {
-            throw ex.getCause();
+    static Optional<String> getType(Path file) throws IOException {
+        try (BufferedReader reader = Files.newBufferedReader(file, CHARSET)) {
+            //Advance the reader to the line before the report type.
+            for(int i = 0; i < LINE_WITH_REPORT_TYPE - 1; i++) {
+                reader.readLine();
+            }
+            
+            String reportTypeLine = reader.readLine();
+            if(reportTypeLine != null && !reportTypeLine.isEmpty()) {
+                return Optional.of(reportTypeLine);
+            }
+            return Optional.empty();
         }
     }
 }
