@@ -27,17 +27,16 @@ import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
 /**
- * Extracts XRY entities and determines the report type. An
- * example of an XRY entity would be:
+ * Extracts XRY entities and determines the report type. An example of an XRY
+ * entity would be:
  *
  * Calls #	1 
  * Call Type:	Missed 
  * Time:	1/2/2019 1:23:45 PM (Device) 
  * From 
  * Tel:         12345678
- *
  */
-public final class XRYFileReader {
+public final class XRYFileReader implements AutoCloseable {
 
     ///Assume UTF_16LE
     private static final Charset CHARSET = StandardCharsets.UTF_16LE;
@@ -45,25 +44,26 @@ public final class XRYFileReader {
     //Assume all headers are 5 lines in length.
     private static final int HEADER_LENGTH_IN_LINES = 5;
 
+    //Underlying reader for the xry file.
     private final BufferedReader reader;
 
     private final StringBuilder xryEntity;
 
     /**
-     * Creates an XRYFileReader. As part of construction, the file handles are 
+     * Creates an XRYFileReader. As part of construction, the file handles are
      * opened and reader is advanced passed all header lines of the XRY file.
-     * 
+     *
      * The file is assumed to be encoded in UTF-16LE.
-     * 
+     *
      * @param xryFile XRY file to read. It is assumed that the caller has read
      * access to the path.
      * @throws IOException if an I/O error occurs.
      */
     public XRYFileReader(Path xryFile) throws IOException {
         reader = Files.newBufferedReader(xryFile, CHARSET);
-        
-        //Advance reader to start of the first XRY entity.
-        for(int i = 0; i < HEADER_LENGTH_IN_LINES; i++) {
+
+        //Advance the reader to the start of the first XRY entity.
+        for (int i = 0; i < HEADER_LENGTH_IN_LINES; i++) {
             reader.readLine();
         }
 
@@ -71,16 +71,18 @@ public final class XRYFileReader {
     }
 
     /**
+     * Advances the reader until the next valid XRY entity is detected.
      *
-     * @return 
-     * @throws IOException
+     * @return Indication that there is another XRY entity to consume or that
+     * the file has been exhausted.
+     * @throws IOException if an I/O error occurs.
      */
     public boolean hasNextEntity() throws IOException {
         //Entity has yet to be consumed.
         if (xryEntity.length() > 0) {
             return true;
         }
-        
+
         String line;
         while ((line = reader.readLine()) != null) {
             if (marksEndOfEntity(line)) {
@@ -98,9 +100,12 @@ public final class XRYFileReader {
     }
 
     /**
+     * Returns an XRY entity if there is one, otherwise an exception is thrown.
      *
-     * @return 
-     * @throws IOException
+     * @return A non-empty XRY entity.
+     * @throws IOException if an I/O error occurs.
+     * @throws NoSuchElementException if there are no more XRY entities to
+     * consume.
      */
     public String nextEntity() throws IOException {
         if (hasNextEntity()) {
@@ -113,9 +118,11 @@ public final class XRYFileReader {
     }
 
     /**
+     * Closes any file handles this reader may have open.
      *
      * @throws IOException
      */
+    @Override
     public void close() throws IOException {
         reader.close();
     }
