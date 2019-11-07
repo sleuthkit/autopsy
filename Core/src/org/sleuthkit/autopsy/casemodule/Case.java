@@ -158,7 +158,7 @@ public class Case {
     private static volatile Frame mainFrame;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
-    private volatile ExecutorService caseLockingExecutor;
+    private volatile ExecutorService caseActionExecutor;
     private CoordinationService.Lock caseLock;
     private SleuthkitCase caseDb;
     private CollaborationMonitor collaborationMonitor;
@@ -756,13 +756,26 @@ public class Case {
     })
     public static void deleteDataSourceFromCurrentCase(Long dataSourceObjectID) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
+            /*
+             * Close the current case to release the shared case lock.
+             */
             if (null == currentCase) {
                 return;
             }
             CaseMetadata caseMetadata = currentCase.getMetadata();
             closeCurrentCase();
+
+            /*
+             * Re-open the case with an exclusive case lock, delete the data
+             * source, and close the case again, releasing the exclusive case
+             * lock.
+             */
             Case theCase = new Case(caseMetadata);
-            theCase.doCaseAction(Bundle.Case_progressIndicatorTitle_deletingDataSource(), theCase::deleteDataSource, CaseLockType.EXCLUSIVE, false, dataSourceObjectID);
+            theCase.doOpenCaseAction(Bundle.Case_progressIndicatorTitle_deletingDataSource(), theCase::deleteDataSource, CaseLockType.EXCLUSIVE, false, dataSourceObjectID);
+
+            /*
+             * Re-open the case with a shared case lock.
+             */
             openAsCurrentCase(new Case(caseMetadata), false);
         }
     }
@@ -851,12 +864,12 @@ public class Case {
                 CaseAction<ProgressIndicator, Object, Void> openCaseAction;
                 if (isNewCase) {
                     progressIndicatorTitle = Bundle.Case_progressIndicatorTitle_creatingCase();
-                    openCaseAction = newCurrentCase::createCase;
+                    openCaseAction = newCurrentCase::create;
                 } else {
                     progressIndicatorTitle = Bundle.Case_progressIndicatorTitle_openingCase();
-                    openCaseAction = newCurrentCase::openCase;
+                    openCaseAction = newCurrentCase::open;
                 }
-                newCurrentCase.doCaseAction(progressIndicatorTitle, openCaseAction, CaseLockType.SHARED, true, null);
+                newCurrentCase.doOpenCaseAction(progressIndicatorTitle, openCaseAction, CaseLockType.SHARED, true, null);
                 currentCase = newCurrentCase;
                 logger.log(Level.INFO, "Opened {0} ({1}) in {2} as the current case", new Object[]{newCurrentCase.getDisplayName(), newCurrentCase.getName(), newCurrentCase.getCaseDirectory()}); //NON-NLS
                 if (RuntimeProperties.runningWithGUI()) {
@@ -1750,13 +1763,24 @@ public class Case {
     private Case(CaseMetadata caseMetaData) {
         metadata = caseMetaData;
         TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_ACTION_THREAD_NAME, metadata.getCaseName()));
-        caseLockingExecutor = Executors.newSingleThreadExecutor(threadFactory);
+        caseActionExecutor = Executors.newSingleThreadExecutor(threadFactory);
         tskEventForwarder = new TSKCaseRepublisher();
     }
 
     /**
-     * Performs a case action after acquiring a coordination service case lock.
-     * The close() method must eventually be called to release the lock.
+     * Performs an open case action. If the case is a multi-user case, the
+     * action is done after acquiring a coordination service case lock. The case
+     * lock must eventually be released in the same thread in which it was
+     * acquired, as required by the coordination service. The open case action
+     * is therefore done in a task running in the single thread in the case
+     * action executor.
+     *
+     * IMPORTANT: If an open case action for a multi-user case is terminated
+     * because an exception is thrown or the action is cancelled, the action is
+     * responsible for releasing the case lock while still running in the case
+     * action executor thread. This is required because this method handles
+     * interrupts, cancellation exceptions, and execution exceptions by assuming
+     * the case will be closed and shutting down the case action executor.
      *
      * @param progressIndicatorTitle A title for the progress indicator for the
      *                               case action.
@@ -1778,13 +1802,13 @@ public class Case {
         "Case.progressMessage.preparing=Preparing...",
         "Case.progressMessage.preparingToOpenCaseResources=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>",
         "Case.progressMessage.cancelling=Cancelling...",
-        "Case.exceptionMessage.cancelledByUser=Cancelled by user.",
+        "Case.exceptionMessage.cancelled=Cancelled.",
         "# {0} - exception message", "Case.exceptionMessage.execExceptionWrapperMessage={0}"
     })
-    private void doCaseAction(String progressIndicatorTitle, CaseAction<ProgressIndicator, Object, Void> caseAction, CaseLockType caseLockType, boolean allowCancellation, Object additionalParams) throws CaseActionException {
+    private void doOpenCaseAction(String progressIndicatorTitle, CaseAction<ProgressIndicator, Object, Void> caseAction, CaseLockType caseLockType, boolean allowCancellation, Object additionalParams) throws CaseActionException {
         /*
-         * Create and start either a GUI progress indicator or a logging
-         * progress indicator.
+         * Create and start either a GUI progress indicator (with or without a
+         * cancel button) or a logging progress indicator.
          */
         CancelButtonListener cancelButtonListener = null;
         ProgressIndicator progressIndicator;
@@ -1808,24 +1832,15 @@ public class Case {
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
 
         /*
-         * A case action is always done by creating a task running in the same
-         * non-UI thread that will be used to close the case. For both
-         * single-user and mulit-user cases, this supports cancelling the case
-         * action by cancelling the task. If the case is a multi-user case, this
-         * also ensures that the case lock is released in the same thread in
-         * which it was acquired, which is required by the coordination service.
+         * Do the case action in the single thread in the case action executor.
+         * If the case is a multi-user case, a case lock is acquired and held
+         * until explictly released and an exclusive case resources lock is
+         * aquired and held for the duration of the action.
          */
-        Future<Void> future = caseLockingExecutor.submit(() -> {
+        Future<Void> future = caseActionExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 caseAction.execute(progressIndicator, additionalParams);
             } else {
-                /*
-                 * First, acquire a case lock that will be held as long as this
-                 * node has this case open. This will prevent deletion of the
-                 * case by another node. Next, acquire an exclusive case
-                 * resources lock to ensure only one node at a time can
-                 * create/open/upgrade/close the case resources.
-                 */
                 progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources());
                 acquireCaseLock(caseLockType);
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
@@ -1851,36 +1866,25 @@ public class Case {
             future.get();
         } catch (InterruptedException discarded) {
             /*
-             * The thread this method is running in has been interrupted. Cancel
-             * the case action task, wait for it to finish, and shut down the
-             * executor. This can be done safely because if the task is
-             * completed with a cancellation condition, the case will have been
-             * closed and the case lock will have been released.
+             * The thread this method is running in has been interrupted.
              */
             if (null != cancelButtonListener) {
                 cancelButtonListener.actionPerformed(null);
             } else {
                 future.cancel(true);
             }
-            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor); // RJCTODO
+            ThreadUtils.shutDownTaskExecutor(caseActionExecutor);
         } catch (CancellationException discarded) {
             /*
-             * The case action task has been cancelled. Wait for it to finish,
-             * and shut down the executor. This can be done safely because if
-             * the task is completed with a cancellation condition, the case
-             * will have been closed and the case lock will have been released.
+             * The case action has been cancelled.
              */
-            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);  // RJCTODO
-            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
+            ThreadUtils.shutDownTaskExecutor(caseActionExecutor);
+            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelled());
         } catch (ExecutionException ex) {
             /*
-             * The case action task has thrown an exception. Wait for it to
-             * finish, and shut down the executor. This can be done safely
-             * because if the task is completed with an execution condition, the
-             * case will have been closed and the case lock will have been
-             * released.
+             * The case action has thrown an exception.
              */
-            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);  // RJCTODO
+            ThreadUtils.shutDownTaskExecutor(caseActionExecutor); // RJCTODO: Log error ion the thread where a stack trace can be recorded
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getLocalizedMessage()), ex);
         } finally {
             progressIndicator.finish();
@@ -1902,35 +1906,38 @@ public class Case {
      *                             message and may be a wrapper for a
      *                             lower-level exception.
      */
-    private Void createCase(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
+    private Void create(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams == null);
         try {
-            checkForUserCancellation();
+            checkForCancellation();
             createCaseDirectoryIfDoesNotExist(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             switchLoggingToCaseLogsDirectory(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             saveCaseMetadataToFile(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             createCaseNodeData(progressIndicator);
-            checkForUserCancellation();
-            checkForUserCancellation();
+            checkForCancellation();
+            checkForCancellation();
             createCaseDatabase(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             openCaseLevelServices(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             openAppServiceCaseResources(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             openCommunicationChannels(progressIndicator);
             return null;
 
         } catch (CaseActionException ex) {
             /*
-             * Cancellation or failure. Clean up by calling the close method.
-             * The sleep is a little hack to clear the interrupted flag for this
-             * thread if this is a cancellation scenario, so that the clean up
-             * can run to completion in the current thread.
+             * Cancellation or failure. Log the exception now, while running in
+             * the case action executor with the stack trace available, then
+             * clean up by calling the close method. The sleep is a little hack
+             * to clear the interrupted flag for this thread if this is a
+             * cancellation scenario, so that the clean up can run to completion
+             * in the current thread.
              */
+            logger.log(Level.WARNING, "Failed to open the case", ex); // RJCTODO
             try {
                 Thread.sleep(1);
             } catch (InterruptedException discarded) {
@@ -1954,32 +1961,35 @@ public class Case {
      *                             message and may be a wrapper for a
      *                             lower-level exception.
      */
-    private Void openCase(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
+    private Void open(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams == null);
         try {
-            checkForUserCancellation();
+            checkForCancellation();
             switchLoggingToCaseLogsDirectory(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             updateCaseNodeData(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             deleteTempfilesFromCaseDirectory(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             openCaseDataBase(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             openCaseLevelServices(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             openAppServiceCaseResources(progressIndicator);
-            checkForUserCancellation();
+            checkForCancellation();
             openCommunicationChannels(progressIndicator);
             return null;
 
         } catch (CaseActionException ex) {
             /*
-             * Cancellation or failure. Clean up by calling the close method.
-             * The sleep is a little hack to clear the interrupted flag for this
-             * thread if this is a cancellation scenario, so that the clean up
-             * can run to completion in the current thread.
+             * Cancellation or failure. Log the exception now, while running in
+             * the case action executor with the stack trace available, then
+             * clean up by calling the close method. The sleep is a little hack
+             * to clear the interrupted flag for this thread if this is a
+             * cancellation scenario, so that the clean up can run to completion
+             * in the current thread.
              */
+            logger.log(Level.WARNING, "Failed to open the case", ex); // RJCTODO
             try {
                 Thread.sleep(1);
             } catch (InterruptedException discarded) {
@@ -1990,8 +2000,8 @@ public class Case {
     }
 
     /**
-     * A case action (interface CaseAction<T, V, R>) that opens a case, deletes a
-     * data source from the case, and closes the case.
+     * A case action (interface CaseAction<T, V, R>) that opens a case, deletes
+     * a data source from the case, and closes the case.
      *
      * @param progressIndicator A progress indicator.
      * @param additionalParams  An Object that holds any additional parameters
@@ -2010,7 +2020,7 @@ public class Case {
     })
     Void deleteDataSource(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams instanceof Long);
-        openCase(progressIndicator, null);
+        open(progressIndicator, null);
         try {
             progressIndicator.progress(Bundle.Case_progressMessage_deletingDataSource());
             Long dataSourceObjectID = (Long) additionalParams;
@@ -2083,7 +2093,7 @@ public class Case {
      *                                      interrupted, assumes interrupt was
      *                                      due to a user action.
      */
-    private static void checkForUserCancellation() throws CaseActionCancelledException {
+    private static void checkForCancellation() throws CaseActionCancelledException {
         if (Thread.currentThread().isInterrupted()) {
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         }
@@ -2424,7 +2434,7 @@ public class Case {
                 ThreadUtils.shutDownTaskExecutor(executor);
                 appServiceProgressIndicator.finish();
             }
-            checkForUserCancellation();
+            checkForCancellation();
         }
     }
 
@@ -2449,7 +2459,7 @@ public class Case {
             progressIndicator.progress(Bundle.Case_progressMessage_settingUpNetworkCommunications());
             try {
                 eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, metadata.getCaseName()));
-                checkForUserCancellation();
+                checkForCancellation();
                 collaborationMonitor = new CollaborationMonitor(metadata.getCaseName());
             } catch (AutopsyEventException ex) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotOpenRemoteEventChannel(ex.getLocalizedMessage()), ex);
@@ -2489,7 +2499,7 @@ public class Case {
          * released in the same thread in which it was acquired, as is required
          * by the coordination service.
          */
-        Future<Void> future = caseLockingExecutor.submit(() -> {
+        Future<Void> future = caseActionExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 close(progressIndicator);
             } else {
@@ -2527,6 +2537,7 @@ public class Case {
         } catch (ExecutionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getMessage()), ex);
         } finally {
+            ThreadUtils.shutDownTaskExecutor(caseActionExecutor);
             progressIndicator.finish();
         }
     }

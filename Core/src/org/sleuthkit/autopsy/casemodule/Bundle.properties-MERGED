@@ -9,7 +9,7 @@ Case.deleteCaseConfirmationDialog.title=Delete Current Case?
 # {0} - exception message
 Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}
 Case.deleteCaseFailureMessageBox.title=Failed to Delete Case
-Case.exceptionMessage.cancelledByUser=Cancelled by user.
+Case.exceptionMessage.cancelled=Cancelled.
 Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.
 Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.
 Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window
