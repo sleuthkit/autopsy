@@ -50,8 +50,9 @@ public final class XRYFileReader implements AutoCloseable {
     private final StringBuilder xryEntity;
 
     /**
-     * Creates an XRYFileReader. As part of construction, the file handles are
-     * opened and reader is advanced passed all header lines of the XRY file.
+     * Creates an XRYFileReader. As part of construction, the XRY file is opened
+     * and the reader is advanced past the header. This leaves the reader
+     * positioned at the start of the first XRY entity.
      *
      * The file is assumed to be encoded in UTF-16LE.
      *
@@ -71,7 +72,8 @@ public final class XRYFileReader implements AutoCloseable {
     }
 
     /**
-     * Advances the reader until the next valid XRY entity is detected.
+     * Advances the reader until a valid XRY entity is detected or EOF is
+     * reached.
      *
      * @return Indication that there is another XRY entity to consume or that
      * the file has been exhausted.
