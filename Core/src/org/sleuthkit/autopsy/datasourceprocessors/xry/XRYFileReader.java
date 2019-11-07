@@ -45,7 +45,7 @@ import org.apache.commons.io.FilenameUtils;
  * Tel:         12345678
  *
  */
-public class XRYFileReader {
+public final class XRYFileReader {
     
     private static final Logger logger = Logger.getLogger(XRYFileReader.class.getName());
 
