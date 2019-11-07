@@ -115,7 +115,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             if (account.getAccountType().getTypeName().contains("PHONE")) {
                 String countryCode = PhoneNumUtil.getCountryCode(account.getTypeSpecificID());
                 accountLabel.setText(PhoneNumUtil.convertToInternational(account.getTypeSpecificID()));
-                accountCountry.setText(Bundle.SummaryViewer_Country_Code() + countryCode); //NON-NLS
+                accountCountry.setText(Bundle.SummaryViewer_Country_Code() + countryCode);
                 accountCountry.setEnabled(true);
             } else {
                 accountLabel.setText(account.getTypeSpecificID());
