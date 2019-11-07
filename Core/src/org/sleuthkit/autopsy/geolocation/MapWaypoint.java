@@ -27,6 +27,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
 import org.jxmapviewer.viewer.GeoPosition;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
@@ -72,6 +73,11 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         position = new GeoPosition(dataModelWaypoint.getLatitude(), dataModelWaypoint.getLongitude());
     }
 
+    /**
+     * Construct a Mapwaypoint from a GeoPosition
+     * 
+     * @param position GeoPosition for the waypoint
+     */
     private MapWaypoint(GeoPosition position) {
         super(position.getLatitude(), position.getLongitude());
         dataModelWaypoint = null;
@@ -104,6 +110,13 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         return mapPoints;
     }
 
+    /**
+     * Returns a MapWaypoint without a reference to the datamodel waypoint.
+     * 
+     * @param position Location for new waypoint
+     * 
+     * @return New MapWaypoint with dataModelWaypoint set to null
+     */
     static MapWaypoint getDummyWaypoint(GeoPosition position) {
         return new MapWaypoint(position);
     }
@@ -129,7 +142,8 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * Returns a list of JMenuItems for this Waypoint. When creating a menu the 
      * list may contain nulls which should be removed or replaced with JSeparators
      * 
-     * @return
+     * @return List of menu items
+     * 
      * @throws TskCoreException 
      */
     JMenuItem[] getMenuItems() throws TskCoreException{
@@ -142,12 +156,11 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile)content)));
         menuItems.add(DeleteFileBlackboardArtifactTagAction.getInstance().getMenuForArtifacts(Arrays.asList(artifact)));
         
-
-        return menuItems.toArray(new JMenuItem[menuItems.size()]);
+        return menuItems.toArray(new JMenuItem[0]);
     }
 
     /**
-     * Get the Timeline Menu Items for this artifact.
+     * Gets the Timeline Menu Items for this artifact.
      * 
      * @param artifact
      * 
@@ -169,13 +182,17 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     
     /**
      * Use the DateModelActionsFactory to get some of the basic actions for
-     * the waypoint.
+     * the waypoint.  The advantage to using the DataModelActionsFactory is that
+     * the menu items can be put in a consistent order with other parts of the UI.
      * 
      * @param artifact Artifact for the selected waypoint
      * @param content Artifact content
      * 
      * @return List of JMenuItems for the DataModelActionFactory actions
      */
+    @Messages({
+        "MayWaypoint_ExternalViewer_label=Open in ExternalViewer"
+    })
     private List<JMenuItem> getDataModelActionFactoryMenuItems(BlackboardArtifact artifact, Content content) {
         List<JMenuItem> menuItems = new ArrayList<>();
 
@@ -193,7 +210,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
                 menuItems.add(((AddBlackboardArtifactTagAction)action).getMenuForContent(Arrays.asList(artifact)));
             } else if(action instanceof ExternalViewerShortcutAction) {
                 // Replace with an ExternalViewerAction
-                ExternalViewerAction newAction = new ExternalViewerAction("Open in ExternalViewer", new FileNode((AbstractFile)content));
+                ExternalViewerAction newAction = new ExternalViewerAction(Bundle.MayWaypoint_ExternalViewer_label(), new FileNode((AbstractFile)content));
                 menuItems.add(new JMenuItem(newAction));
             } else if(action instanceof ExtractAction) {
                 menuItems.add(new JMenuItem(new WaypointExtractAction((AbstractFile)content)));
@@ -204,12 +221,18 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         return menuItems;
     }
     
+    /**
+     * An action class for Extracting files
+     */
+    @Messages({
+        "WaypointExtractAction_label=Extract Files(s)"
+    })
     final class WaypointExtractAction extends AbstractAction{
 
         private static final long serialVersionUID = 1L;
         final private AbstractFile file;
         WaypointExtractAction(AbstractFile file) {
-            super("Extract Files(s)");
+            super(Bundle.WaypointExtractAction_label());
             this.file = file;
         }
 

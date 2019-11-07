@@ -119,6 +119,11 @@ final class MapPanel extends javax.swing.JPanel {
         mapViewer.setOverlayPainter(waypointPainter);
     }
     
+    /**
+     * Stores the given List of MapWaypoint in a KdTree object.
+     * 
+     * @param waypoints List of waypoints
+     */
     void setWaypoints(List<MapWaypoint> waypoints) {
         waypointTree = new KdTree<>();
         
@@ -129,6 +134,12 @@ final class MapPanel extends javax.swing.JPanel {
         mapViewer.repaint();
     }
     
+    
+    /**
+     * Centers the view of the map on the given location.
+     * 
+     * @param waypoint Location to center the map
+     */
     void setCenterLocation(Waypoint waypoint) {
         mapViewer.setCenterPosition(waypoint.getPosition());
     }
