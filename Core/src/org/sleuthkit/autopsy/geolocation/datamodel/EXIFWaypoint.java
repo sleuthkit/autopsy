@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Waypoint wrapper class for TSK_METADATA_EXIF artifacts.
  */
-final class EXIFWaypoint extends ArtifactWaypoint {
+final class EXIFWaypoint extends Waypoint {
 
     /**
      * Construct a way point with the given artifact.
@@ -56,7 +56,7 @@ final class EXIFWaypoint extends ArtifactWaypoint {
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
-                image, attributeMap);
+                image, attributeMap, null);
     }
 
     /**

@@ -730,9 +730,9 @@ class KMLReport implements GeneralReportModule {
      *
      * @param route
      *
-     * @return
+     * @return A HTML formatted list of the Route attributes
      */
-    private String getFormattedDetails(Route route) {
+     private String getFormattedDetails(Route route) {
         List<Waypoint> points = route.getRoute();
         StringBuilder result = new StringBuilder(); //NON-NLS
 
@@ -749,13 +749,20 @@ class KMLReport implements GeneralReportModule {
             Waypoint end = points.get(1);
 
             result.append(formatAttribute("Start Latitude", start.getLatitude().toString()))
-                    .append(formatAttribute("Start Longitude", start.getLongitude().toString()))
-                    .append(formatAttribute("End Latitude", end.getLatitude().toString()))
+                    .append(formatAttribute("Start Longitude", start.getLongitude().toString()));
+            
+            Double altitude = start.getAltitude();
+            if(altitude != null) {
+                result.append(formatAttribute("Start Altitude", altitude.toString()));
+            }
+            
+            result.append(formatAttribute("End Latitude", end.getLatitude().toString()))
                     .append(formatAttribute("End Longitude", end.getLongitude().toString()));
-        }
-
-        if (route.getAltitude() != null) {
-            result.append(formatAttribute("Altitude", route.getAltitude().toString()));
+            
+            altitude = end.getAltitude();
+            if(altitude != null) {
+                result.append(formatAttribute("End Altitude", altitude.toString()));
+            }
         }
 
         List<Waypoint.Property> list = route.getOtherProperties();
