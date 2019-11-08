@@ -113,12 +113,11 @@ public class ImageNode extends AbstractContentNode<Image> {
             actionsList.add(a);
         }
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-        actionsList.add(new FileSearchAction(
-                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
         actionsList.add(new ViewSummaryInformationAction(content.getId()));
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
-        actionsList.add(new NewWindowViewAction(
-                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
+        actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
+        actionsList.add(new DeleteDataSourceAction(content.getId()));
         return actionsList.toArray(new Action[0]);
     }
 
