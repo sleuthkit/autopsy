@@ -27,7 +27,7 @@ import java.util.logging.Level;
  *
  * Class to format and get information from a phone number
  */
-public class PhoneNumUtil {
+public final class PhoneNumUtil {
 
     private static final Logger logger = Logger.getLogger(PhoneNumUtil.class.getName());
  
