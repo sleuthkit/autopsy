@@ -1103,7 +1103,7 @@ public class Case {
                 /*
                  * Enable the case-specific actions.
                  */
-                CallableSystemAction.get(AddImageAction.class).setEnabled(Case.getCurrentCase().getMetadata().getCaseType() == CaseType.SINGLE_USER_CASE || FeatureAccessUtils.canCreateOrModifyMultiUserCases());
+                CallableSystemAction.get(AddImageAction.class).setEnabled(FeatureAccessUtils.canAddDataSources());
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);

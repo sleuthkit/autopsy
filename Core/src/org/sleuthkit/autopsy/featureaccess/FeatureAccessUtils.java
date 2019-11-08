@@ -20,15 +20,64 @@ package org.sleuthkit.autopsy.featureaccess;
 
 import java.io.File;
 import java.nio.file.Paths;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
- * Check if access to various features is permitted for the current user.
+ * Check if access to various features is permitted for the current user and the
+ * current case, if any.
  */
 final public class FeatureAccessUtils {
 
-    private final static String MULTI_USER_ACCESS_FILE_NAME = "mualimit"; // NON-NLS
-    private final static String MULTI_USER_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), MULTI_USER_ACCESS_FILE_NAME).toString();
+    private final static String MULTIUSER_CASE_RESTRICTED_FILE_NAME = "mualimit"; // NON-NLS
+    private final static String MULTIUSER_CASE_RESTRICTED_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), MULTIUSER_CASE_RESTRICTED_FILE_NAME).toString();
+    private static final int DATA_SRC_DEL_MIN_DB_MAJOR_VER = 8;
+    private static final int DATA_SRC_DEL_MIN_DB_MINOR_VER = 4;
+
+    /**
+     * Indicates whether or not a user can create multi-user cases.
+     *
+     * @return True or false.
+     */
+    public static boolean canCreateMultiUserCases() {
+        return UserPreferences.getIsMultiUserModeEnabled() && multiUserCaseRestrictionsFileAbsent();
+    }
+
+    /**
+     * Indicates whether or not a user can add data sources to a case.
+     *
+     * @return True or false.
+     */
+    public static boolean canAddDataSources() {
+        return currentCaseIsSingleUserCase() || multiUserCaseRestrictionsFileAbsent();
+    }
+
+    /**
+     * Indicates whether or not a user can delete data sources from a case.
+     *
+     * @return True or false.
+     */
+    public static boolean canDeleteDataSources() {
+        boolean dataSourceDeletionAllowed = false;
+        if (Case.isCaseOpen()) {
+            CaseDbSchemaVersionNumber version = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
+            dataSourceDeletionAllowed
+                    = ((version.getMajor() > DATA_SRC_DEL_MIN_DB_MAJOR_VER) || (version.getMajor() == DATA_SRC_DEL_MIN_DB_MAJOR_VER && version.getMinor() >= DATA_SRC_DEL_MIN_DB_MINOR_VER))
+                    && (currentCaseIsSingleUserCase() || multiUserCaseRestrictionsFileAbsent());
+        }
+        return dataSourceDeletionAllowed;
+    }
+
+    /**
+     * Indicates whether or not the current case is a single-user case.
+     *
+     * @return True or false.
+     */
+    private static boolean currentCaseIsSingleUserCase() {
+        return Case.isCaseOpen() && Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE;
+    }
 
     /**
      * Indicates whether or not the current user is allowed to create or modify
@@ -36,8 +85,8 @@ final public class FeatureAccessUtils {
      *
      * @return True or false.
      */
-    public static boolean canCreateOrModifyMultiUserCases() {
-        File accessLimitingFile = new File(MULTI_USER_ACCESS_FILE_PATH);
+    public static boolean multiUserCaseRestrictionsFileAbsent() {
+        File accessLimitingFile = new File(MULTIUSER_CASE_RESTRICTED_FILE_PATH);
         return !accessLimitingFile.exists();
     }
 

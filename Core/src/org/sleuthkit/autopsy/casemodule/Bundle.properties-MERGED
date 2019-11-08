@@ -127,6 +127,7 @@ DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delet
 DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case.
 DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source.\nPlease see the application log for details.
 DeleteDataSourceAction.name.text=Delete Data Source
+DeleteDataSourceAction.warningDialog.message=Data sources cannot be deleted when ingest is running.
 EditOptionalCasePropertiesPanel.cancelButton.text=Cancel
 EditOptionalCasePropertiesPanel.saveButton.text=Save
 GeneralFilter.encaseImageDesc.text=Encase Images (*.e01)

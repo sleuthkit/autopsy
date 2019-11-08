@@ -39,8 +39,6 @@ public final class DeleteDataSourceAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DeleteDataSourceAction.class.getName());
-    private static final int MIN_CASE_DB_SCHEMA_MAJOR_VERSION = 8;
-    private static final int MIN_CASE_DB_SCHEMA_MINOR_VERSION = 4;
     private long dataSourceObjectID;
     private Path caseMetadataFilePath;
 
@@ -55,16 +53,22 @@ public final class DeleteDataSourceAction extends AbstractAction {
     public DeleteDataSourceAction(Long dataSourceObjectID) {
         super(Bundle.DeleteDataSourceAction_name_text());
         this.dataSourceObjectID = dataSourceObjectID;
-        this.setEnabled(canBeEnabled());
+        this.setEnabled(FeatureAccessUtils.canDeleteDataSources());
     }
 
     @NbBundle.Messages({
+        "DeleteDataSourceAction.warningDialog.message=Data sources cannot be deleted when ingest is running.",
         "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?\nNote that the case will be closed and re-opened during the deletion.",
         "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source.\nPlease see the application log for details.",
         "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case."
     })
     @Override
     public void actionPerformed(ActionEvent event) {
+        if (IngestManager.getInstance().isIngestRunning()) {
+            MessageNotifyUtil.Message.warn(Bundle.DeleteDataSourceAction_warningDialog_message());
+            return;
+        }
+        
         if (MessageNotifyUtil.Message.confirm(Bundle.DeleteDataSourceAction_confirmationDialog_message())) {
             new SwingWorker<Void, Void>() {
 
@@ -99,23 +103,6 @@ public final class DeleteDataSourceAction extends AbstractAction {
                 }
             }.execute();
         }
-    }
-
-    /**
-     * Determines whether or not the delete data source action can be enabled.
-     *
-     * @return True or false.
-     */
-    private static boolean canBeEnabled() {
-        boolean canBeEnabled = false;
-        if (Case.isCaseOpen()) {
-            CaseDbSchemaVersionNumber version = Case.getCurrentCase().getSleuthkitCase().getDBSchemaCreationVersion();
-            canBeEnabled = ((version.getMajor() > MIN_CASE_DB_SCHEMA_MAJOR_VERSION) || (version.getMajor() == MIN_CASE_DB_SCHEMA_MAJOR_VERSION && version.getMinor() >= MIN_CASE_DB_SCHEMA_MINOR_VERSION))
-                    && !IngestManager.getInstance().isIngestRunning()
-                    && (Case.getCurrentCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE
-                    || FeatureAccessUtils.canCreateOrModifyMultiUserCases());
-        }
-        return canBeEnabled;
     }
 
     @Override
