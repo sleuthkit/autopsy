@@ -31,6 +31,9 @@ public class PhoneNumUtil {
 
     private static final Logger logger = Logger.getLogger(PhoneNumUtil.class.getName());
  
+    private PhoneNumUtil() {
+    }
+    
     /**
      * Get the country code from a phone number
      * 
