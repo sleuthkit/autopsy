@@ -31,22 +31,22 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.NoSuchElementException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.commons.io.FilenameUtils;
 
 /**
- * Extracts XRY entities and determines the report type. An
- * example of an XRY entity would be:
+ * Extracts XRY entities and determines the report type. An example of an XRY
+ * entity would be:
  *
  * Calls #	1 
  * Call Type:	Missed 
  * Time:	1/2/2019 1:23:45 PM (Device) 
  * From 
  * Tel:         12345678
- *
  */
-public final class XRYFileReader {
-    
+public final class XRYFileReader implements AutoCloseable {
+
     private static final Logger logger = Logger.getLogger(XRYFileReader.class.getName());
 
     //Assume UTF_16LE
@@ -54,12 +54,111 @@ public final class XRYFileReader {
 
     //Assume TXT extension
     private static final String EXTENSION = "txt";
+    
+   //Assume 0xFFFE is the BOM
+    private static final int[] BOM = {0xFF, 0xFE};
 
     //Assume all XRY reports have the type on the 3rd line.
     private static final int LINE_WITH_REPORT_TYPE = 3;
 
-    //Assume 0xFFFE is the BOM
-    private static final int[] BOM = {0xFF, 0xFE};
+    //Assume all headers are 5 lines in length.
+    private static final int HEADER_LENGTH_IN_LINES = 5;
+
+    //Underlying reader for the xry file.
+    private final BufferedReader reader;
+
+    private final StringBuilder xryEntity;
+
+    /**
+     * Creates an XRYFileReader. As part of construction, the XRY file is opened
+     * and the reader is advanced past the header. This leaves the reader
+     * positioned at the start of the first XRY entity.
+     *
+     * The file is assumed to be encoded in UTF-16LE.
+     *
+     * @param xryFile XRY file to read. It is assumed that the caller has read
+     * access to the path.
+     * @throws IOException if an I/O error occurs.
+     */
+    public XRYFileReader(Path xryFile) throws IOException {
+        reader = Files.newBufferedReader(xryFile, CHARSET);
+
+        //Advance the reader to the start of the first XRY entity.
+        for (int i = 0; i < HEADER_LENGTH_IN_LINES; i++) {
+            reader.readLine();
+        }
+
+        xryEntity = new StringBuilder();
+    }
+
+    /**
+     * Advances the reader until a valid XRY entity is detected or EOF is
+     * reached.
+     *
+     * @return Indication that there is another XRY entity to consume or that
+     * the file has been exhausted.
+     * @throws IOException if an I/O error occurs.
+     */
+    public boolean hasNextEntity() throws IOException {
+        //Entity has yet to be consumed.
+        if (xryEntity.length() > 0) {
+            return true;
+        }
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (marksEndOfEntity(line)) {
+                if (xryEntity.length() > 0) {
+                    //Found a non empty XRY entity.
+                    return true;
+                }
+            } else {
+                xryEntity.append(line).append("\n");
+            }
+        }
+
+        //Check if EOF was hit before an entity delimiter was found.
+        return xryEntity.length() > 0;
+    }
+
+    /**
+     * Returns an XRY entity if there is one, otherwise an exception is thrown.
+     *
+     * @return A non-empty XRY entity.
+     * @throws IOException if an I/O error occurs.
+     * @throws NoSuchElementException if there are no more XRY entities to
+     * consume.
+     */
+    public String nextEntity() throws IOException {
+        if (hasNextEntity()) {
+            String returnVal = xryEntity.toString();
+            xryEntity.setLength(0);
+            return returnVal;
+        } else {
+            throw new NoSuchElementException();
+        }
+    }
+
+    /**
+     * Closes any file handles this reader may have open.
+     *
+     * @throws IOException
+     */
+    @Override
+    public void close() throws IOException {
+        reader.close();
+    }
+
+    /**
+     * Determines if the line encountered during file reading signifies the end
+     * of an XRY entity.
+     *
+     * @param line
+     * @return
+     */
+    private boolean marksEndOfEntity(String line) {
+        return line.isEmpty();
+    }
 
     /**
      * Checks if the Path is an XRY file. In order to be an XRY file, it must
@@ -145,12 +244,12 @@ public final class XRYFileReader {
     private static Optional<String> getType(Path file) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(file, CHARSET)) {
             //Advance the reader to the line before the report type.
-            for(int i = 0; i < LINE_WITH_REPORT_TYPE - 1; i++) {
+            for (int i = 0; i < LINE_WITH_REPORT_TYPE - 1; i++) {
                 reader.readLine();
             }
-            
+
             String reportTypeLine = reader.readLine();
-            if(reportTypeLine != null && !reportTypeLine.isEmpty()) {
+            if (reportTypeLine != null && !reportTypeLine.isEmpty()) {
                 return Optional.of(reportTypeLine);
             }
             return Optional.empty();

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2017-2018 Basis Technology Corp.
+ *
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
     "DeleteFileContentTagAction.deleteTag=Remove File Tag"
 })
 public class DeleteFileContentTagAction extends AbstractAction implements Presenter.Popup {
-    
+
     private static final Logger logger = Logger.getLogger(DeleteFileContentTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
@@ -81,6 +81,19 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
         return new TagMenu();
     }
 
+    /**
+     * Get the menu for removing tags from the specified collection of Files.
+     *
+     * @param selectedFiles The collection of AbstractFiles the menu actions
+     *                      will be applied to.
+     *
+     * @return The menu which will allow users to remove tags from the specified
+     *         collection of Files.
+     */
+    public JMenuItem getMenuForFiles(Collection<AbstractFile> selectedFiles) {
+        return new TagMenu(selectedFiles);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
     }
@@ -102,19 +115,19 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                     tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Error untagging file. No open case found.", ex); //NON-NLS
-                    Platform.runLater(() ->
-                            new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileContentTagAction_deleteTag_alert(fileId)).show()
+                    Platform.runLater(()
+                            -> new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileContentTagAction_deleteTag_alert(fileId)).show()
                     );
                     return null;
                 }
-                
+
                 try {
                     logger.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), contentTag.getContent().getName()}); //NON-NLS
                     tagsManager.deleteContentTag(contentTag);
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Error untagging file", tskCoreException); //NON-NLS
-                    Platform.runLater(() ->
-                            new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileContentTagAction_deleteTag_alert(fileId)).show()
+                    Platform.runLater(()
+                            -> new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileContentTagAction_deleteTag_alert(fileId)).show()
                     );
                 }
                 return null;
@@ -141,15 +154,24 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Construct an TagMenu object using the specified collection of files
+         * as the files to remove a tag from.
+         */
         TagMenu() {
+            this(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class)));
+        }
+
+        /**
+         * Construct an TagMenu object using the specified collection of files
+         * as the files to remove a tag from.
+         */
+        TagMenu(Collection<AbstractFile> selectedFiles) {
             super(getActionDisplayName());
-            
-            final Collection<AbstractFile> selectedAbstractFilesList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-            
-            if(!selectedAbstractFilesList.isEmpty()) {
-                AbstractFile file = selectedAbstractFilesList.iterator().next();
-                
+
+            if (!selectedFiles.isEmpty()) {
+                AbstractFile file = selectedFiles.iterator().next();
+
                 Map<String, TagName> tagNamesMap = null;
                 List<String> standardTagNames = TagsManager.getStandardTagNames();
                 List<JMenuItem> standardTagMenuitems = new ArrayList<>();
@@ -167,22 +189,22 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                 // a tag with the associated tag name.
                 if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                     try {
-                        List<ContentTag> existingTagsList =
-                                Case.getCurrentCaseThrows().getServices().getTagsManager()
+                        List<ContentTag> existingTagsList
+                                = Case.getCurrentCaseThrows().getServices().getTagsManager()
                                         .getContentTagsByContent(file);
 
                         for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                             String tagDisplayName = entry.getKey();
 
                             TagName tagName = entry.getValue();
-                            for(ContentTag contentTag : existingTagsList) {
-                                if(tagDisplayName.equals(contentTag.getName().getDisplayName())) {
+                            for (ContentTag contentTag : existingTagsList) {
+                                if (tagDisplayName.equals(contentTag.getName().getDisplayName())) {
                                     String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
                                     JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, contentTag, file.getId());
                                     });
-                                    
+
                                     // Show custom tags before predefined tags in the menu
                                     if (standardTagNames.contains(tagDisplayName)) {
                                         standardTagMenuitems.add(tagNameItem);
@@ -198,14 +220,14 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                     }
                 }
 
-                if ((getItemCount() > 0) &&  !standardTagMenuitems.isEmpty() ){
+                if ((getItemCount() > 0) && !standardTagMenuitems.isEmpty()) {
                     addSeparator();
                 }
                 standardTagMenuitems.forEach((menuItem) -> {
                     add(menuItem);
                 });
-            
-                if(getItemCount() == 0) {
+
+                if (getItemCount() == 0) {
                     setEnabled(false);
                 }
             }

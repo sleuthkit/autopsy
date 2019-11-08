@@ -29,6 +29,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.autopsy.coreutils.PhoneNumUtil;
 
 /**
  * Account Summary View Panel. This panel shows a list of various counts related
@@ -49,7 +50,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_FileRef_Message=<Select a single account to see File References>",
         "SummaryViewer_Device_Account_Description=This account was referenced by a device in the case.",
         "SummaryViewer_Account_Description=This account represents a device in the case.",
-        "SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected."
+        "SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected.",
+        "SummaryViewer_Country_Code=Country: "
     })
 
     /**
@@ -110,7 +112,16 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             Account[] accountArray = info.getAccounts().toArray(new Account[1]);
             Account account = accountArray[0];
             
-            accountLabel.setText(account.getTypeSpecificID());
+            if (account.getAccountType().getTypeName().contains("PHONE")) {
+                String countryCode = PhoneNumUtil.getCountryCode(account.getTypeSpecificID());
+                accountLabel.setText(PhoneNumUtil.convertToInternational(account.getTypeSpecificID()));
+                accountCountry.setText(Bundle.SummaryViewer_Country_Code() + countryCode);
+                accountCountry.setEnabled(true);
+            } else {
+                accountLabel.setText(account.getTypeSpecificID());
+                accountCountry.setText("");
+                accountCountry.setEnabled(false);
+            }
             
             if (account.getAccountType().equals(Account.Type.DEVICE)) {
                 accoutDescriptionLabel.setText(Bundle.SummaryViewer_Account_Description());
@@ -173,6 +184,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         accountLabel.setText("");
         accoutDescriptionLabel.setText("");
         referencesDataLabel.setText("");
+        accountCountry.setText("");
         
         fileReferencesPanel.setNode(new AbstractNode(Children.LEAF));
         caseReferencesPanel.setNode(new AbstractNode(Children.LEAF));
@@ -210,6 +222,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
         summaryPanel = new javax.swing.JPanel();
         accountLabel = new javax.swing.JLabel();
+        accountCountry = new javax.swing.JLabel();
         accoutDescriptionLabel = new javax.swing.JLabel();
         countsPanel = new javax.swing.JPanel();
         messagesLabel = new javax.swing.JLabel();
@@ -220,13 +233,15 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         callLogsDataLabel = new javax.swing.JLabel();
         attachmentsLabel = new javax.swing.JLabel();
         attachmentDataLabel = new javax.swing.JLabel();
-        fileReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
-        caseReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
         contanctsPanel = new javax.swing.JPanel();
         contactsLabel = new javax.swing.JLabel();
         contactsDataLabel = new javax.swing.JLabel();
         referencesLabel = new javax.swing.JLabel();
         referencesDataLabel = new javax.swing.JLabel();
+        fileReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
+        caseReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
+
+        setLayout(new java.awt.GridBagLayout());
 
         summaryPanel.setLayout(new java.awt.GridBagLayout());
 
@@ -238,14 +253,26 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.insets = new java.awt.Insets(15, 9, 0, 9);
         summaryPanel.add(accountLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(accoutDescriptionLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.accoutDescriptionLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(accountCountry, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.accountCountry.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 9, 0, 9);
+        summaryPanel.add(accountCountry, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(accoutDescriptionLabel, org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.accoutDescriptionLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(15, 9, 15, 9);
         summaryPanel.add(accoutDescriptionLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        add(summaryPanel, gridBagConstraints);
 
         countsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.countsPanel.border.title"))); // NOI18N
         countsPanel.setLayout(new java.awt.GridBagLayout());
@@ -315,31 +342,12 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 9, 15);
         countsPanel.add(attachmentDataLabel, gridBagConstraints);
 
-        summaryPanel.add(countsPanel, new java.awt.GridBagConstraints());
-
-        setLayout(new java.awt.GridBagLayout());
-
-        fileReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.fileReferencesPanel.border.title"))); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
-        add(fileReferencesPanel, gridBagConstraints);
-
-        caseReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.caseReferencesPanel.border.title"))); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
-        add(caseReferencesPanel, gridBagConstraints);
+        add(countsPanel, gridBagConstraints);
 
         contanctsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.contanctsPanel.border.title"))); // NOI18N
         contanctsPanel.setLayout(new java.awt.GridBagLayout());
@@ -381,14 +389,37 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         add(contanctsPanel, gridBagConstraints);
+
+        fileReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.fileReferencesPanel.border.title"))); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        add(fileReferencesPanel, gridBagConstraints);
+
+        caseReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.caseReferencesPanel.border.title"))); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(9, 0, 0, 0);
+        add(caseReferencesPanel, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel accountCountry;
     private javax.swing.JLabel accountLabel;
     private javax.swing.JLabel accoutDescriptionLabel;
     private javax.swing.JLabel attachmentDataLabel;
