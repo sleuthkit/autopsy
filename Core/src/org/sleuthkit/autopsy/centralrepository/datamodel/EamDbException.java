@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-/*
+import org.sleuthkit.autopsy.exceptions.AutopsyException;
+
+/**
  * An exception to be thrown by an artifact manager.
  */
-public class EamDbException extends Exception {
+public class EamDbException extends AutopsyException {
 
     private static final long serialVersionUID = 1L;
 
@@ -32,6 +34,28 @@ public class EamDbException extends Exception {
      */
     public EamDbException(String message) {
         super(message);
+    }
+
+    /**
+     * Constructs an exception to be thrown by an artifact manager with a user exception.
+     *
+     * @param message     Exception message.
+     * @param userMessage the user friendly message to include in this exception
+     */
+    public EamDbException(String message, String userMessage) {
+        super(message, userMessage);
+    }
+
+    /**
+     * Constructs an exception to be thrown by an artifact manager with a user
+     * exception.
+     *
+     * @param message     Exception message.
+     * @param userMessage the user friendly message to include in this exception
+     * @param cause       Exception cause.
+     */
+    public  EamDbException(String message, String userMessage, Throwable cause) {
+        super(message, userMessage, cause);
     }
 
     /**

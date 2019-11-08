@@ -190,7 +190,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
     protected Connection connect() throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
-                throw new EamDbException(Bundle.PostgresEamDb_centralRepoDisabled_message()); // NON-NLS
+                throw new EamDbException("Central Repository module is not enabled", Bundle.PostgresEamDb_centralRepoDisabled_message()); // NON-NLS
             }
 
             if (connectionPool == null) {
@@ -200,7 +200,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
         try {
             return connectionPool.getConnection();
         } catch (SQLException ex) {
-            throw new EamDbException(Bundle.PostgresEamDb_connectionFailed_message(), ex); // NON-NLS
+            throw new EamDbException("Error getting connection from connection pool.", Bundle.PostgresEamDb_connectionFailed_message(), ex); // NON-NLS
         }
     }
 
@@ -221,6 +221,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
      *                        to get the lock
      */
     @Override
+    @Messages({"PostgresEamDb.multiUserLockError.message=Error acquiring database lock"})
     public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException {
         try {
             // First check if multi user mode is enabled - if not there's no point trying to get a lock
@@ -234,9 +235,9 @@ final class PostgresEamDb extends AbstractSqlEamDb {
             if (lock != null) {
                 return lock;
             }
-            throw new EamDbException("Error acquiring database lock");
+            throw new EamDbException("Error acquiring database lock", Bundle.PostgresEamDb_multiUserLockError_message());
         } catch (InterruptedException ex) {
-            throw new EamDbException("Error acquiring database lock");
+            throw new EamDbException("Error acquiring database lock", Bundle.PostgresEamDb_multiUserLockError_message(), ex);
         } catch (CoordinationService.CoordinationServiceException ex) {
             // This likely just means the coordination service isn't running, which is ok
             return null;
