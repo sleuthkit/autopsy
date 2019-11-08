@@ -756,12 +756,13 @@ public class Case {
     })
     public static void deleteDataSourceFromCurrentCase(Long dataSourceObjectID) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
-            /*
-             * Close the current case to release the shared case lock.
-             */
             if (null == currentCase) {
                 return;
             }
+            
+            /*
+             * Close the current case to release the shared case lock.
+             */            
             CaseMetadata caseMetadata = currentCase.getMetadata();
             closeCurrentCase();
 
