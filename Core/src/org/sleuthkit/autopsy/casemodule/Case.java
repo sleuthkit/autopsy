@@ -162,10 +162,9 @@ public class Case {
     private volatile ExecutorService caseActionExecutor;
     private CoordinationService.Lock caseLock;
     private SleuthkitCase caseDb;
+    private final SleuthkitEventListener sleuthkitEventListener;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
-    private boolean hasDataSources;
-    private final TSKCaseRepublisher tskEventForwarder;
 
     /*
      * Get a reference to the main window of the desktop application to use to
@@ -409,10 +408,15 @@ public class Case {
 
     };
 
-    private final class TSKCaseRepublisher {
+    /**
+     * An instance of this class is registered as a listener on the event bus
+     * associated with the case database so that selected SleuthKit layer
+     * application events can be published as Autopsy application events.
+     */
+    private final class SleuthkitEventListener {
 
         @Subscribe
-        public void rebroadcastTimelineEventCreated(TimelineManager.TimelineEventAddedEvent event) {
+        public void publishTimelineEventAdded(TimelineManager.TimelineEventAddedEvent event) {
             eventPublisher.publish(new TimelineEventAddedEvent(event));
         }
 
@@ -421,10 +425,12 @@ public class Case {
         public void rebroadcastArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
             for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
                 /*
-                 * fireModuleDataEvent is deprecated so module writers don't use
-                 * it (they should use Blackboard.postArtifact(s) instead), but
-                 * we still need a way to rebroadcast the ArtifactsPostedEvent
-                 * as a ModuleDataEvent.
+                 * IngestServices.fireModuleDataEvent is deprecated to
+                 * discourage ingest module writers from using it (they should
+                 * use org.sleuthkit.datamodel.Blackboard.postArtifact(s)
+                 * instead), but a way to publish
+                 * Blackboard.ArtifactsPostedEvents from the SleuthKit layer as
+                 * Autopsy ModuleDataEvents is still needed.
                  */
                 IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
                         event.getModuleName(),
@@ -710,7 +716,7 @@ public class Case {
                 eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), closedCase, null));
                 logger.log(Level.INFO, "Closing current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
                 currentCase = null;
-                closedCase.close();
+                closedCase.doCloseCaseAction();
                 logger.log(Level.INFO, "Closed current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
             } catch (CaseActionException ex) {
                 logger.log(Level.SEVERE, String.format("Error closing current case %s (%s) in %s", closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()), ex); //NON-NLS                
@@ -760,10 +766,10 @@ public class Case {
             if (null == currentCase) {
                 return;
             }
-            
+
             /*
              * Close the current case to release the shared case lock.
-             */            
+             */
             CaseMetadata caseMetadata = currentCase.getMetadata();
             closeCurrentCase();
 
@@ -1421,16 +1427,14 @@ public class Case {
     /**
      * Gets the data sources for the case.
      *
-     * @return A list of data sources.
+     * @return A list of data sources, possibly empty.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException if there is a problem
      *                                                  querying the case
      *                                                  database.
      */
     public List<Content> getDataSources() throws TskCoreException {
-        List<Content> list = caseDb.getRootObjects();
-        hasDataSources = (list.size() > 0);
-        return list;
+        return caseDb.getRootObjects();
     }
 
     /**
@@ -1471,12 +1475,11 @@ public class Case {
      * @return True or false.
      */
     public boolean hasData() {
-        if (!hasDataSources) {
-            try {
-                hasDataSources = (getDataSources().size() > 0);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
-            }
+        boolean hasDataSources = false;
+        try {
+            hasDataSources = (getDataSources().size() > 0);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
         }
         return hasDataSources;
     }
@@ -1764,25 +1767,22 @@ public class Case {
      */
     private Case(CaseMetadata caseMetaData) {
         metadata = caseMetaData;
-        TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_ACTION_THREAD_NAME, metadata.getCaseName()));
-        caseActionExecutor = Executors.newSingleThreadExecutor(threadFactory);
-        tskEventForwarder = new TSKCaseRepublisher();
+        sleuthkitEventListener = new SleuthkitEventListener();
     }
 
     /**
-     * Performs an open case action. If the case is a multi-user case, the
-     * action is done after acquiring a coordination service case lock. The case
-     * lock must eventually be released in the same thread in which it was
-     * acquired, as required by the coordination service. The open case action
-     * is therefore done in a task running in the single thread in the case
-     * action executor.
+     * Performs a case action that involves creating or opening a case. If the
+     * case is a multi-user case, the action is done after acquiring a
+     * coordination service case lock. This case lock must be released in the
+     * same thread in which it was acquired, as required by the coordination
+     * service. A single-threaded executor is therefore created to do the case
+     * opening action, and is saved for an eventual case closing action.
      *
      * IMPORTANT: If an open case action for a multi-user case is terminated
      * because an exception is thrown or the action is cancelled, the action is
      * responsible for releasing the case lock while still running in the case
-     * action executor thread. This is required because this method handles
-     * interrupts, cancellation exceptions, and execution exceptions by assuming
-     * the case will be closed and shutting down the case action executor.
+     * action executor's thread. This method assumes this has been done and
+     * performs an orderly shut down of the case action executor.
      *
      * @param progressIndicatorTitle A title for the progress indicator for the
      *                               case action.
@@ -1839,11 +1839,13 @@ public class Case {
          * until explictly released and an exclusive case resources lock is
          * aquired and held for the duration of the action.
          */
+        TaskThreadFactory threadFactory = new TaskThreadFactory(String.format(CASE_ACTION_THREAD_NAME, metadata.getCaseName()));
+        caseActionExecutor = Executors.newSingleThreadExecutor(threadFactory);
         Future<Void> future = caseActionExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 caseAction.execute(progressIndicator, additionalParams);
             } else {
-                progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources());
+                progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources()); // RJCTODO: Make locking message
                 acquireCaseLock(caseLockType);
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
                     if (null == resourcesLock) {
@@ -2308,6 +2310,7 @@ public class Case {
             } else {
                 throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
+            caseDb.registerForEvents(sleuthkitEventListener);
         } catch (TskUnsupportedSchemaVersionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_unsupportedSchemaVersionMessage(ex.getLocalizedMessage()), ex);
         } catch (UserPreferencesException ex) {
@@ -2328,7 +2331,6 @@ public class Case {
     private void openCaseLevelServices(ProgressIndicator progressIndicator) {
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseLevelServices());
         this.caseServices = new Services(caseDb);
-        caseDb.registerForEvents(tskEventForwarder);
     }
 
     /**
@@ -2358,7 +2360,9 @@ public class Case {
          * one starts by awaiting termination of the executor service.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_openingApplicationServiceResources());
-        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
+
+        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class
+        )) {
             /*
              * Create a progress indicator for the task and start the task. If
              * running with a GUI, the progress indicator will be a dialog box
@@ -2472,14 +2476,20 @@ public class Case {
     }
 
     /**
-     * Closes the case.
+     * Performs a case action that involves closing a case opened by calling
+     * doOpenCaseAction. If the case is a multi-user case, the coordination
+     * service case lock acquired by the call to doOpenCaseAction is released.
+     * This case lock must be released in the same thread in which it was
+     * acquired, as required by the coordination service. The single-threaded
+     * executor saved during the case opening action is therefore used to do the
+     * case closing action.
      *
-     * @throws CaseActionException If there is a problem completing the
-     *                             operation. The exception will have a
-     *                             user-friendly message and may be a wrapper
-     *                             for a lower-level exception.
+     * @throws CaseActionException If there is a problem completing the action.
+     *                             The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
-    private void close() throws CaseActionException {
+    private void doCloseCaseAction() throws CaseActionException {
         /*
          * Set up either a GUI progress indicator without a Cancel button or a
          * logging progress indicator.
@@ -2581,7 +2591,7 @@ public class Case {
          */
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());
-            caseDb.unregisterForEvents(tskEventForwarder);
+            caseDb.unregisterForEvents(sleuthkitEventListener);
             caseDb.close();
         }
 
@@ -2605,7 +2615,8 @@ public class Case {
          * Each service gets its own independently cancellable task, and thus
          * its own task progress indicator.
          */
-        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
+        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class
+        )) {
             ProgressIndicator progressIndicator;
             if (RuntimeProperties.runningWithGUI()) {
                 progressIndicator = new ModalDialogProgressIndicator(
@@ -2947,7 +2958,9 @@ public class Case {
     })
     private static void deleteTextIndex(CaseMetadata metadata, ProgressIndicator progressIndicator) throws KeywordSearchServiceException {
         progressIndicator.progress(Bundle.Case_progressMessage_deletingTextIndex());
-        for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
+
+        for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class
+        )) {
             searchService.deleteTextIndex(metadata);
         }
     }
@@ -3048,6 +3061,7 @@ public class Case {
             CaseNodeData.writeCaseNodeData(caseNodeData);
         } catch (CaseNodeDataException ex) {
             logger.log(Level.SEVERE, String.format("Error updating deleted item flag %s for %s (%s) in %s", flag.name(), caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex);
+
         }
     }
 
