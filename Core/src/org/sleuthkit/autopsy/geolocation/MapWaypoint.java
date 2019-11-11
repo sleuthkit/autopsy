@@ -196,8 +196,6 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     private List<JMenuItem> getDataModelActionFactoryMenuItems(BlackboardArtifact artifact, Content content) {
         List<JMenuItem> menuItems = new ArrayList<>();
 
-        menuItems.addAll(getTimelineMenuItems(dataModelWaypoint.getArtifact()));
-        
         List<Action> actions = DataModelActionsFactory.getActions(content, true);
         for (Action action : actions) {
             if (action == null) {
