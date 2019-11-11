@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.geolocation;
 
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -47,7 +49,6 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
-import org.sleuthkit.autopsy.geolocation.datamodel.WaypointDetailsFormatter;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -62,6 +63,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
 
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
+    private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
+    static private final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US);
 
     private final Waypoint dataModelWaypoint;
     private final GeoPosition position;
@@ -131,11 +134,9 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * @return the image for this waypoint
      */
     ImageIcon getImage() {
-        if (dataModelWaypoint.getImage() != null) {
-            if (ImageUtils.isImageThumbnailSupported(dataModelWaypoint.getImage())) {
-                BufferedImage buffImage = ImageUtils.getThumbnail(dataModelWaypoint.getImage(), 150);
-                return new ImageIcon(buffImage);
-            }
+        if (dataModelWaypoint.getImage() != null && ImageUtils.isImageThumbnailSupported(dataModelWaypoint.getImage())) {
+            BufferedImage buffImage = ImageUtils.getThumbnail(dataModelWaypoint.getImage(), 150);
+            return new ImageIcon(buffImage);
         }
 
         return null;
@@ -164,7 +165,7 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * @return HTML formatted string
      */
     String getHTMLFormattedWaypointDetails() {
-        return WaypointDetailsFormatter.getFormattedDetails(dataModelWaypoint, null);
+        return getFormattedDetails(dataModelWaypoint);
     }
 
     /**
@@ -247,6 +248,68 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         }
         return menuItems;
     }
+    
+     /**
+     * Get the nicely formatted details for the given waypoint.
+     * 
+     * @param point Waypoint object
+     * @param header String details header
+     * 
+     * @return HTML formatted String of details for given waypoint 
+     */
+    private String getFormattedDetails(Waypoint point) {
+        StringBuilder result = new StringBuilder(); //NON-NLS
+        
+        result.append("<html>").append(formatAttribute("Name", point.getLabel()));
+       
+        Long timestamp = point.getTimestamp();
+        if (timestamp != null) {
+            result.append(formatAttribute("Timestamp", getTimeStamp(timestamp)));
+        }
+
+        result.append(formatAttribute("Latitude", point.getLatitude().toString()))
+                .append(formatAttribute("Longitude", point.getLongitude().toString()));
+       
+        if (point.getAltitude() != null) {
+            result.append(formatAttribute("Altitude", point.getAltitude().toString()));
+        }
+
+        List<Waypoint.Property> list = point.getOtherProperties();
+        for(Waypoint.Property prop: list) {
+            String value = prop.getValue();
+            if(value != null && !value.isEmpty()) {
+                result.append(formatAttribute(prop.getDisplayName(), value));
+            }
+        }
+        
+        result.append("</html>");
+
+        return result.toString();
+    }
+
+    /**
+     * Format a title value pair.
+     * 
+     * @param title Title of the property
+     * @param value Value of the property
+     * 
+     * @return Formatted string with the title and value 
+     */
+    private String formatAttribute(String title, String value) {
+        return String.format(HTML_PROP_FORMAT, title, value);
+    }
+    
+    /**
+     * Format a point time stamp (in seconds) to the report format.
+     *
+     * @param timeStamp The timestamp in epoch seconds.
+     *
+     * @return The formatted timestamp
+     */
+    private String getTimeStamp(long timeStamp) {
+        return DATE_FORMAT.format(new java.util.Date(timeStamp * 1000));
+    }
+
 
     /**
      * An action class for Extracting artifact files.

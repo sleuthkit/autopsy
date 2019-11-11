@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
@@ -66,9 +67,9 @@ final class MapPanel extends javax.swing.JPanel {
     private Popup currentPopup;
     private final PopupFactory popupFactory;
 
-    private final int POPUP_WIDTH = 300;
-    private final int POPUP_HEIGHT = 200;
-    private final int POPUP_MARGIN = 10;
+    private static final int POPUP_WIDTH = 300;
+    private static final int POPUP_HEIGHT = 200;
+    private static final int POPUP_MARGIN = 10;
 
     private MapWaypoint currentlySelectedWaypoint;
 
@@ -199,12 +200,12 @@ final class MapPanel extends javax.swing.JPanel {
             showPopupMenu(waypoint, point);
             // Change the details popup to the currently selected point only if 
             // it the popup is currently visible
-            if (waypoint != null && waypoint != currentlySelectedWaypoint) {
+            if (waypoint != null && !waypoint.equals(currentlySelectedWaypoint)) {
                 currentlySelectedWaypoint = waypoint;
                 showDetailsPopup();
             }
-        } catch (TskCoreException e) {
-
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to show popup for waypoint", ex);
         }
     }
 

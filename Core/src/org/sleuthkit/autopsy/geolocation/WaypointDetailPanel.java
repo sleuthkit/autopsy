@@ -113,7 +113,7 @@ final class WaypointDetailPanel extends JPanel {
         }
         popupMenu.show(this, point.x, point.y);
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
