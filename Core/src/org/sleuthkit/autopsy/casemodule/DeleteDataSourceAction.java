@@ -29,11 +29,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
  * An Action that allows a user to delete a data source from the current case.
- * This action should not always be enabled
  */
 public final class DeleteDataSourceAction extends AbstractAction {
 
@@ -59,7 +57,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     @NbBundle.Messages({
         "DeleteDataSourceAction.warningDialog.message=Data sources cannot be deleted when ingest is running.",
         "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?\nNote that the case will be closed and re-opened during the deletion.",
-        "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source.\nPlease see the application log for details.",
+        "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source:\n{0}\nPlease see the application log for details.",
         "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case."
     })
     @Override
@@ -68,17 +66,18 @@ public final class DeleteDataSourceAction extends AbstractAction {
             MessageNotifyUtil.Message.warn(Bundle.DeleteDataSourceAction_warningDialog_message());
             return;
         }
-        
+
         if (MessageNotifyUtil.Message.confirm(Bundle.DeleteDataSourceAction_confirmationDialog_message())) {
             new SwingWorker<Void, Void>() {
 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    caseMetadataFilePath = Case.getCurrentCase().getMetadata().getFilePath();
                     /*
-                     * Note that the case is closed and re-opened by this case
-                     * action.
+                     * Save the case metadata file path so the case can be
+                     * reopened if something goes wrong and the case ends up
+                     * closed.
                      */
+                    caseMetadataFilePath = Case.getCurrentCase().getMetadata().getFilePath();
                     Case.deleteDataSourceFromCurrentCase(dataSourceObjectID);
                     return null;
                 }
@@ -89,7 +88,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
                         get();
                     } catch (InterruptedException | ExecutionException ex) {
                         logger.log(Level.SEVERE, String.format("Error deleting data source (obj_id=%d)", dataSourceObjectID), ex);
-                        MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_dataSourceDeletionError(), MessageNotifyUtil.MessageType.ERROR);
+                        MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_dataSourceDeletionError(ex.getLocalizedMessage()), MessageNotifyUtil.MessageType.ERROR);
                         if (!Case.isCaseOpen()) {
                             try {
                                 Case.openAsCurrentCase(caseMetadataFilePath.toString());

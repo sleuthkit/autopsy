@@ -28,6 +28,9 @@ import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 /**
  * Check if access to various features is permitted for the current user and the
  * current case, if any.
+ *
+ * IMPORTANT: These utilities are not concerned with transitory restrictions on
+ * access to a feature, e.g., whether or not ingest is running.
  */
 final public class FeatureAccessUtils {
 

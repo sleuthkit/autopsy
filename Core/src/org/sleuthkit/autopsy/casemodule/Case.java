@@ -138,8 +138,9 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  */
 public class Case {
 
-    private static final int DIR_LOCK_TIMOUT_HOURS = 12;
-    private static final int RESOURCES_LOCK_TIMOUT_HOURS = 12;
+    private static final int SHARED_CASE_LOCK_TIMEOUT_SECONDS = 30;
+    private static final int EXCLUSIVE_CASE_LOCK_TIMEOUT_MINS = 1;
+    private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -1036,10 +1037,10 @@ public class Case {
         try {
             Path caseDirPath = Paths.get(caseDir);
             String resourcesNodeName = CoordinationServiceUtils.getCaseResourcesNodePath(caseDirPath);
-            Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCES_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
+            Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, CASE_RESOURCES_LOCK_TIMEOUT_HOURS, TimeUnit.HOURS);
             return lock;
         } catch (InterruptedException ex) {
-            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
+            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelled());
         } catch (CoordinationServiceException ex) {
             throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock(), ex);
         }
@@ -2096,7 +2097,7 @@ public class Case {
      */
     private static void checkForCancellation() throws CaseActionCancelledException {
         if (Thread.currentThread().isInterrupted()) {
-            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
+            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelled());
         }
     }
 
@@ -2654,8 +2655,8 @@ public class Case {
         try {
             CoordinationService coordinationService = CoordinationService.getInstance();
             caseLock = lockType == CaseLockType.SHARED
-                    ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS)
-                    : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
+                    ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, SHARED_CASE_LOCK_TIMEOUT_SECONDS, TimeUnit.MINUTES)
+                    : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, EXCLUSIVE_CASE_LOCK_TIMEOUT_MINS, TimeUnit.SECONDS);
             if (caseLock == null) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
             }

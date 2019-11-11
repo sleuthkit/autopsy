@@ -34,6 +34,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
