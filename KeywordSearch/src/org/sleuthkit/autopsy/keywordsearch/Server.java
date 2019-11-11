@@ -248,6 +248,7 @@ public class Server {
     private final ReentrantReadWriteLock currentCoreLock;
 
     private final File solrFolder;
+	private Path solrCmdPath;
     private Path solrHome;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
@@ -263,6 +264,8 @@ public class Server {
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
+        // This is our customized version of the Solr batch script to start/stop Solr.
+        solrCmdPath = Paths.get(solrFolder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
 
         solrHome = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
         if (!solrHome.toFile().exists()) {
@@ -401,13 +404,16 @@ public class Server {
         final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + UserPreferences.getMaxSolrVMSize() + "m"; //NON-NLS
 
         List<String> commandLine = new ArrayList<>();
+		commandLine.add(solrCmdPath.toString());
+
+		/* ELTODO
         commandLine.add(javaPath);
         commandLine.add(MAX_SOLR_MEM_MB_PAR);
         commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
         commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
         commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
         commandLine.add("-jar"); //NON-NLS
-        commandLine.add("start.jar"); //NON-NLS
+        commandLine.add("start.jar"); //NON-NLS */
 
         commandLine.addAll(solrArguments);
 
@@ -421,6 +427,9 @@ public class Server {
         Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
         solrProcessBuilder.redirectError(solrStderrPath.toFile());
 
+        solrProcessBuilder.environment().put("SOLR_JAVA_HOME", javaPath); // NON-NLS
+        solrProcessBuilder.environment().put("SOLR_HOME", solrHome.toString()); // NON-NLS
+        solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS
         logger.log(Level.INFO, "Running Solr command: {0}", solrProcessBuilder.command()); //NON-NLS
         Process process = solrProcessBuilder.start();
         logger.log(Level.INFO, "Finished running Solr command"); //NON-NLS
@@ -504,8 +513,9 @@ public class Server {
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
-                curSolrProcess = runSolrCommand(new ArrayList<>(
-                        Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
+                curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", //NON-NLS
+								Integer.toString(currentSolrServerPort),
+                        		"-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                 "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
 
                 // Wait for the Solr server to start and respond to a status request.
@@ -617,6 +627,7 @@ public class Server {
             logger.log(Level.INFO, "Stopping Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
 
             //try graceful shutdown
+// ELTODO Process process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
             Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
 
             logger.log(Level.INFO, "Waiting for Solr server to stop"); //NON-NLS
@@ -658,6 +669,7 @@ public class Server {
 
             if (isPortAvailable(currentSolrServerPort)) {
                 // ELTODO WHY FALSE?? return false;
+                //return false;
                 return true;
             }
 
@@ -1435,7 +1447,7 @@ public class Server {
     
     private String collectionExists(String collectionName) throws SolrServerException, IOException {
 
-        CollectionAdminRequest.ColStatus status = CollectionAdminRequest.CollectionProp .collectionStatus(collectionName);
+        CollectionAdminRequest.ColStatus status = CollectionAdminRequest.CollectionProp.collectionStatus(collectionName);
         SolrParams params = status.getParams();
         CollectionAdminResponse statusResponse = status.process(currentSolrServer);
         
@@ -1445,13 +1457,13 @@ public class Server {
             return "";
         }
         /* ELTODO it might be worth keeping these for debugging, at least until 
-        we are sure that we can always get core name this way.
+        we are sure that we can always get core name this way.*/
         NamedList shards = (NamedList) collectionData.get("shards");
         NamedList shard1 = (NamedList) shards.get("shard1");
         NamedList leader = (NamedList) shard1.get("leader");
-        String coreName = (String) leader.get("core");*/
+        String coreName = (String) leader.get("core");
         
-        String coreName = (String)((NamedList)((NamedList)((NamedList) collectionData.get("shards")).get("shard1")).get("leader")).get("core");
+        String coreName2 = (String)((NamedList)((NamedList)((NamedList) collectionData.get("shards")).get("shard1")).get("leader")).get("core");
         return coreName;
     }
 
