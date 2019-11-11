@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.Phonenumber;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -39,6 +36,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBU
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.communications.Utils;
+import org.sleuthkit.autopsy.coreutils.PhoneNumUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -57,7 +55,8 @@ final class ContactNode extends BlackboardArtifactNode {
         "ContactNode_Mobile_Number=Mobile Number",
         "ContactNode_Office_Number=Office Number",
         "ContactNode_URL=URL",
-        "ContactNode_Home_Number=Home Number",})
+        "ContactNode_Home_Number=Home Number",
+        "ContactNode_Country=Country",})
 
     ContactNode(BlackboardArtifact artifact) {
         super(artifact);
@@ -146,12 +145,12 @@ final class ContactNode extends BlackboardArtifactNode {
             if (count++ > 0) {
                 sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
                 if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
-                  sheetSet.put(new NodeProperty<>("Country" + "_" + count, bba.getAttributeType().getDisplayName() + " Country", "", getCountryCode(bba.getValueString())));  
+                  sheetSet.put(new NodeProperty<>(Bundle.ContactNode_Country() + "_" + count, bba.getAttributeType().getDisplayName() + " " + Bundle.ContactNode_Country(), "", PhoneNumUtil.getCountryCode(bba.getValueString())));  
                 }
             } else {
                 sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
                 if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
-                  sheetSet.put(new NodeProperty<>("Country", bba.getAttributeType().getDisplayName() + " Country", "", getCountryCode(bba.getValueString())));  
+                  sheetSet.put(new NodeProperty<>(Bundle.ContactNode_Country(), bba.getAttributeType().getDisplayName() + " " + Bundle.ContactNode_Country(), "", PhoneNumUtil.getCountryCode(bba.getValueString())));  
                 }
             }
         }
@@ -183,24 +182,6 @@ final class ContactNode extends BlackboardArtifactNode {
     @Override
     public String getSourceName() {
         return getDisplayName();
-    }
-
-    private String getCountryCode(String phoneNumber) {
-        String regionCode = "";
-        try {
-            PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
-            Phonenumber.PhoneNumber phoneNum = phoneNumberUtil.parse(phoneNumber, "US");
-            regionCode = phoneNumberUtil.getRegionCodeForNumber(phoneNum);
-
-            if (regionCode == null) {
-                return "";
-            } else {
-                return regionCode;
-            }
-        } catch (NumberParseException ex) {
-            logger.log(Level.WARNING, "Error getting country code, for phone number: {0}", phoneNumber);
-            return regionCode;
-        }
     }
 
 }

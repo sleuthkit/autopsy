@@ -4,6 +4,7 @@ CallLogViewer_noCallLogs=<No call logs found for selected account>
 CallLogViewer_recipient_label=To/From
 CallLogViewer_title=Call Logs
 ContactDetailsPane.nameLabel.text=Placeholder
+ContactNode_Country=Country
 ContactNode_Email=Email Address
 ContactNode_Home_Number=Home Number
 ContactNode_Mobile_Number=Mobile Number
