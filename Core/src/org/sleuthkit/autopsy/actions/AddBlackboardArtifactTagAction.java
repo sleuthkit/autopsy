@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -72,15 +73,24 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
 
     @Override
     protected void addTag(TagName tagName, String comment) {
-        /*
-         * The documentation for Lookup.lookupAll() explicitly says that the
-         * collection it returns may contain duplicates. Within this invocation
-         * of addTag(), we don't want to tag the same BlackboardArtifact more
-         * than once, so we dedupe the BlackboardArtifacts by stuffing them into
-         * a HashSet.
-         */
-        final Collection<BlackboardArtifact> selectedArtifacts = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-
+        final Collection<BlackboardArtifact> selectedArtifacts = new HashSet<>();
+        //If the contentToTag is empty look up the selected content
+        if (getContentToTag().isEmpty()) {
+            /*
+             * The documentation for Lookup.lookupAll() explicitly says that the
+             * collection it returns may contain duplicates. Within this
+             * invocation of addTag(), we don't want to tag the same
+             * BlackboardArtifact more than once, so we dedupe the
+             * BlackboardArtifacts by stuffing them into a HashSet.
+             */
+            selectedArtifacts.addAll(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+        } else {
+            for (Content content : getContentToTag()) {
+                if (content instanceof BlackboardArtifact) {
+                    selectedArtifacts.add((BlackboardArtifact) content);
+                }
+            }
+        }
         new Thread(() -> {
             for (BlackboardArtifact artifact : selectedArtifacts) {
                 try {

@@ -448,6 +448,7 @@
             <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
             <file name="timeline.wsmode" url="timelineWsmode.xml"/>
             <file name="cvt.wsmode" url="cvtWsmode.xml"/>
+            <file name="geolocation.wsmode" url="geolocationWsmode.xml"/>
         </folder>
     </folder>
     

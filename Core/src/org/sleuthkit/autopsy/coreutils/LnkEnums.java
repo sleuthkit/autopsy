@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,10 @@ class LnkEnums {
     private static final byte[] IEFRAME = new byte[]{(byte) 0x80, 0x53, 0x1c, (byte) 0x87, (byte) 0xa0,
         0x42, 0x69, 0x10, (byte) 0xa2, (byte) 0xea, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte) 0x9d};
 
+    private LnkEnums() {
+        //private constructor for utility class
+    }
+
     public enum CommonCLSIDS {
 
         CDrivesFolder(CDRIVES),
@@ -38,19 +42,23 @@ class LnkEnums {
         IEFrameDLL(IEFRAME),
         Unknown(new byte[16]);
 
-        private byte[] flag;
+        private final byte[] flag;
 
         private CommonCLSIDS(byte[] flag) {
-            this.flag = flag;
+            this.flag = flag.clone();
         }
 
         static CommonCLSIDS valueOf(byte[] type) {
             for (CommonCLSIDS value : CommonCLSIDS.values()) {
-                if (java.util.Arrays.equals(value.flag, type)) {
+                if (java.util.Arrays.equals(value.getFlag(), type)) {
                     return value;
                 }
             }
             return Unknown;
+        }
+
+        byte[] getFlag() {
+            return flag.clone();
         }
     }
 
@@ -84,7 +92,7 @@ class LnkEnums {
         PreferEnvironmentPath(0x02000000),
         KeepLocalIDListForUNCTarget(0x04000000);
 
-        private int flag;
+        private final int flag;
 
         private LinkFlags(int flag) {
             this.flag = flag;
@@ -105,7 +113,7 @@ class LnkEnums {
         DRIVE_CDROM(0x00000005),
         DRIVE_RAMDISK(0x00000006);
 
-        private int flag;
+        private final int flag;
 
         private DriveType(int flag) {
             this.flag = flag;
@@ -117,7 +125,7 @@ class LnkEnums {
 
         static DriveType valueOf(int type) {
             for (DriveType value : DriveType.values()) {
-                if (value.flag == type) {
+                if (value.getFlag() == type) {
                     return value;
                 }
             }
@@ -143,7 +151,7 @@ class LnkEnums {
         NOT_CONTENT_INDEXED(0x00002000),
         ENCRYPTED(0x00004000);
 
-        private int flag;
+        private final int flag;
 
         private FileAttributesFlags(int flag) {
             this.flag = flag;
@@ -159,7 +167,7 @@ class LnkEnums {
         VolumeIDAndLocalBasePath(0x00000001),
         CommonNetworkRelativeLinkAndPathSuffix(0x00000002);
 
-        private int flag;
+        private final int flag;
 
         private LinkInfoFlags(int flag) {
             this.flag = flag;
@@ -175,7 +183,7 @@ class LnkEnums {
         ValidDevice(0x00000001),
         ValidNetType(0x00000002);
 
-        private int flag;
+        private final int flag;
 
         private CommonNetworkRelativeLinkFlags(int flag) {
             this.flag = flag;
@@ -231,7 +239,7 @@ class LnkEnums {
         WNNC_NET_GOOGLE(0x00430000),
         WNNC_NET_UNKNOWN(0x00000000);
 
-        private int flag;
+        private final int flag;
 
         private NetworkProviderType(int flag) {
             this.flag = flag;
@@ -239,7 +247,7 @@ class LnkEnums {
 
         static NetworkProviderType valueOf(int type) {
             for (NetworkProviderType value : NetworkProviderType.values()) {
-                if (value.flag == type) {
+                if (value.getFlag() == type) {
                     return value;
                 }
             }
@@ -250,4 +258,5 @@ class LnkEnums {
             return flag;
         }
     }
+
 }

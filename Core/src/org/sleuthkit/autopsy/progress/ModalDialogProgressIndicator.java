@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.SerializationUtils;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.util.HelpCtx;
@@ -65,7 +66,7 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
         this.title = title;
         progressPanel = new ProgressPanel();
         progressPanel.setIndeterminate(true);
-        this.buttonLabels = buttonLabels;
+        this.buttonLabels = SerializationUtils.clone(buttonLabels);
         this.focusedButtonLabel = focusedButtonLabel;
         this.buttonListener = buttonListener;
     }

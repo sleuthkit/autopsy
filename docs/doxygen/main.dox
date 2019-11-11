@@ -9,9 +9,9 @@ If these pages don't answer your question, then send the question to the <a href
 
 <h3>Writing Python or Java Modules</h3>
 If you want to write Java or Python modules, then there are some tutorials and detailed pages in this document. The Python tutorials include:
-- File Ingest Modules: http://www.basistech.com/python-autopsy-module-tutorial-1-the-file-ingest-module/
-- Data Source Ingest Modules: http://www.basistech.com/python-autopsy-module-tutorial-2-the-data-source-ingest-module/
-- Report Modules: http://www.basistech.com/python-autopsy-module-tutorial-3-the-report-module/
+- File Ingest Modules: \subpage mod_python_file_ingest_tutorial_page
+- Data Source Ingest Modules: \subpage mod_python_ds_ingest_tutorial_page
+- Report Modules: \subpage mod_python_report_tutorial_page
 
 This document contains the following pages: 
 - \subpage platform_page

@@ -76,11 +76,8 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
               as they would be excluded in the join. Since the chatItem table stores both the
               group id or skype_id in one column, an implementation decision was made to union 
               the person and particiapnt table together so that all rows are matched in one join 
-              with chatItem. This result is consistently labeled contact_list_with_groups in the 
+              with chatItem. This result is consistently labeled contact_book_w_groups in the 
               following queries.
-            - In order to keep the formatting of the name consistent throughout each query,
-              a _format_user_name() function was created to encapsulate the CASE statement 
-              that was being shared across them. Refer to the method for more details.
     """
    
     def __init__(self):
@@ -93,7 +90,12 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
         account_query_result = skype_db.runQuery(
             """
                SELECT entry_id,
-                      """+_format_user_name()+""" AS name
+                      CASE
+                        WHEN Ifnull(first_name, "") == "" AND Ifnull(last_name, "") == "" THEN entry_id
+                        WHEN first_name is NULL THEN replace(last_name, ",", "")
+                        WHEN last_name is NULL THEN replace(first_name, ",", "")
+                        ELSE replace(first_name, ",", "") || " " || replace(last_name, ",", "")
+                      END AS name
                FROM user
             """
         )
@@ -251,14 +253,6 @@ class SkypeCallLogsParser(TskCallLogsParser):
 
     def __init__(self, calllog_db):
         """
-            Big picture:
-                The query below creates a contacts_list_with_groups table, which
-                represents the recipient info. A chatItem record holds ids for
-                both the recipient and sender. The first join onto chatItem fills 
-                in the blanks for the recipients. The second join back onto person
-                handles the sender info. The result is a table with all of the
-                communication details.
-            
             Implementation details:
                 - message_type w/ value 3 appeared to be the call type, regardless
                   of if it was audio or video.
@@ -266,37 +260,23 @@ class SkypeCallLogsParser(TskCallLogsParser):
         """
         super(SkypeCallLogsParser, self).__init__(calllog_db.runQuery(
                  """
-                    SELECT contacts_list_with_groups.conversation_id,                         
-                           contacts_list_with_groups.participant_ids,
-                           contacts_list_with_groups.participants, 
-                           time, 
-                           duration, 
-                           is_sender_me, 
-                           person_id as sender_id,
-                           sender_name.name as sender_name
+                    SELECT contact_book_w_groups.conversation_id, 
+                           contact_book_w_groups.participant_ids, 
+                           messages.time, 
+                           messages.duration, 
+                           messages.is_sender_me, 
+                           messages.person_id AS sender_id 
                     FROM   (SELECT conversation_id, 
-                                   Group_concat(person_id) AS participant_ids, 
-                                   Group_concat("""+_format_user_name()+""") AS participants 
-                            FROM   particiapnt AS PART 
-                                   JOIN person AS P 
-                                     ON PART.person_id = P.entry_id 
+                                   Group_concat(person_id) AS participant_ids 
+                            FROM   particiapnt 
                             GROUP  BY conversation_id 
                             UNION 
-                            SELECT entry_id, 
-                                   NULL,
-                                   """+_format_user_name()+""" AS participant 
-                            FROM   person) AS contacts_list_with_groups 
-                           JOIN chatitem AS C 
-                             ON C.conversation_link = contacts_list_with_groups.conversation_id
-                           JOIN (SELECT entry_id as id,
-                                        """+_format_user_name()+""" AS name
-                                 FROM person
-                                 UNION
-                                 SELECT entry_id as id,
-                                        """+_format_user_name()+""" AS name
-                                 FROM user) AS sender_name
-                             ON sender_name.id = C.person_id
-                    WHERE message_type == 3
+                            SELECT entry_id AS conversation_id, 
+                                   NULL 
+                            FROM   person) AS contact_book_w_groups 
+                           join chatitem AS messages 
+                             ON messages.conversation_link = contact_book_w_groups.conversation_id 
+                    WHERE  message_type == 3
                  """
              )    
         )
@@ -347,7 +327,12 @@ class SkypeContactsParser(TskContactsParser):
         super(SkypeContactsParser, self).__init__(contact_db.runQuery(
                  """
                     SELECT entry_id, 
-                           """+_format_user_name()+""" AS name
+                           CASE
+                             WHEN Ifnull(first_name, "") == "" AND Ifnull(last_name, "") == "" THEN entry_id
+                             WHEN first_name is NULL THEN replace(last_name, ",", "")
+                             WHEN last_name is NULL THEN replace(first_name, ",", "")
+                             ELSE replace(first_name, ",", "") || " " || replace(last_name, ",", "")
+                           END AS name
                     FROM   person 
                  """                                                         
               )
@@ -379,39 +364,25 @@ class SkypeMessagesParser(TskMessagesParser):
         """
         super(SkypeMessagesParser, self).__init__(message_db.runQuery(
                  """
-                    SELECT contacts_list_with_groups.conversation_id, 
-                           contacts_list_with_groups.participant_ids,
-                           contacts_list_with_groups.participants, 
-                           time, 
-                           content, 
-                           device_gallery_path, 
-                           is_sender_me,
-                           person_id as sender_id,
-                           sender_name.name AS sender_name
-                    FROM   (SELECT conversation_id, 
-                                   Group_concat(person_id) AS participant_ids, 
-                                   Group_concat("""+_format_user_name()+""") AS participants 
-                            FROM   particiapnt AS PART 
-                                   JOIN person AS P 
-                                     ON PART.person_id = P.entry_id 
-                            GROUP  BY conversation_id 
-                            UNION 
-                            SELECT entry_id as conversation_id, 
-                                   NULL, 
-                                   """+_format_user_name()+""" AS participant 
-                            FROM   person) AS contacts_list_with_groups 
-                           JOIN chatitem AS C 
-                             ON C.conversation_link = contacts_list_with_groups.conversation_id
-                           JOIN (SELECT entry_id as id,
-                                        """+_format_user_name()+""" AS name
-                                 FROM person
-                                 UNION
-                                 SELECT entry_id as id,
-                                        """+_format_user_name()+""" AS name
-                                 FROM user) AS sender_name
-                             ON sender_name.id = C.person_id
+		    SELECT contact_book_w_groups.conversation_id,
+                           contact_book_w_groups.participant_ids,
+                           messages.time,
+                           messages.content,
+                           messages.device_gallery_path,
+                           messages.is_sender_me,
+                           messages.person_id as sender_id
+                    FROM   (SELECT conversation_id,
+                                   Group_concat(person_id) AS participant_ids
+                            FROM   particiapnt
+                            GROUP  BY conversation_id
+                            UNION
+                            SELECT entry_id as conversation_id,
+                                   NULL
+                            FROM   person) AS contact_book_w_groups
+                           JOIN chatitem AS messages
+                             ON messages.conversation_link = contact_book_w_groups.conversation_id
                     WHERE message_type != 3
-             """
+                 """
              )
         )
         self._SKYPE_MESSAGE_TYPE = "Skype Message"
@@ -469,25 +440,3 @@ class SkypeMessagesParser(TskMessagesParser):
         if group_ids is not None:
             return self.result_set.getString("conversation_id")
         return super(SkypeMessagesParser, self).get_thread_id()
-
-def _format_user_name():
-    """
-        This CASE SQL statement is used in many queries to 
-        format the names of users. For a user, there is a first_name
-        column and a last_name column. Some of these columns can be null 
-        and our goal is to produce the cleanest data possible. In the event
-        that both the first and last name columns are null, we return the skype_id
-        which is stored in the database as 'entry_id'.  Commas are removed from the name
-        so that we can concatenate names into a comma seperate list for group chats.
-    """
-
-    return """
-               CASE
-                 WHEN Ifnull(first_name, "") == "" AND Ifnull(last_name, "") == "" THEN entry_id
-                 WHEN first_name is NULL THEN replace(last_name, ",", "")
-                 WHEN last_name is NULL THEN replace(first_name, ",", "")
-                 ELSE replace(first_name, ",", "") || " " || replace(last_name, ",", "")
-               END
-           """
-
-

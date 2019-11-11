@@ -3298,10 +3298,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 try {
                     minorVersion = Integer.parseInt(minorVersionStr);
                 } catch (NumberFormatException ex) {
-                    throw new EamDbException(Bundle.AbstractSqlEamDb_badMinorSchema_message(minorVersionStr), ex);
+                    throw new EamDbException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt", Bundle.AbstractSqlEamDb_badMinorSchema_message(minorVersionStr), ex);
                 }
             } else {
-                throw new EamDbException(Bundle.AbstractSqlEamDb_failedToReadMinorVersion_message());
+                throw new EamDbException("Failed to read schema minor version from db_info table", Bundle.AbstractSqlEamDb_failedToReadMinorVersion_message());
             }
 
             int majorVersion = 0;
@@ -3312,10 +3312,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 try {
                     majorVersion = Integer.parseInt(majorVersionStr);
                 } catch (NumberFormatException ex) {
-                    throw new EamDbException(Bundle.AbstractSqlEamDb_badMajorSchema_message(majorVersionStr), ex);
+                    throw new EamDbException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt", Bundle.AbstractSqlEamDb_badMajorSchema_message(majorVersionStr), ex);
                 }
             } else {
-                throw new EamDbException(Bundle.AbstractSqlEamDb_failedToReadMajorVersion_message());
+                throw new EamDbException("Failed to read schema major version from db_info table", Bundle.AbstractSqlEamDb_failedToReadMajorVersion_message());
             }
 
             /*
@@ -3393,7 +3393,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         addObjectIdIndexTemplate = SqliteEamDbSettings.getAddObjectIdIndexTemplate();
                         break;
                     default:
-                        throw new EamDbException(Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
+                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
                 final String dataSourcesTableName = "data_sources";
                 final String dataSourceObjectIdColumnName = "datasource_obj_id";
@@ -3553,7 +3553,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         statement.execute("DROP TABLE old_data_sources");
                         break;
                     default:
-                        throw new EamDbException(Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
+                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.", Bundle.AbstractSqlEamDb_cannotUpgrage_message(selectedPlatform.name()));
                 }
             }
             updateSchemaVersion(conn);
