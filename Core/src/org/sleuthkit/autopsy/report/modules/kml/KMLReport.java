@@ -732,6 +732,7 @@ class KMLReport implements GeneralReportModule {
      *
      * @return A HTML formatted list of the Route attributes
      */
+
      private String getFormattedDetails(Route route) {
         List<Waypoint> points = route.getRoute();
         StringBuilder result = new StringBuilder(); //NON-NLS
