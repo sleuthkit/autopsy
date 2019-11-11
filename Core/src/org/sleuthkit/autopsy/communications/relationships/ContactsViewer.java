@@ -98,7 +98,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer{
         outlineViewPanel.getOutlineView().setPropertyColumns(
                 "TSK_EMAIL", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getDisplayName(),
                 "TSK_PHONE_NUMBER", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName(),
-                "Country", "Country"
+                Bundle.ContactsViewer_columnHeader_Country(), Bundle.ContactsViewer_columnHeader_Country()
         );
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.ContactsViewer_columnHeader_Name());
