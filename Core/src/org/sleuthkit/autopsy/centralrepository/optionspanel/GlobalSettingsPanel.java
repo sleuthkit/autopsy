@@ -77,7 +77,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ingestStateUpdated(Case.isCaseOpen());
     }
 
-    @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository upgrade failed"})
+    @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository disabled"})
     private void updateDatabase() {
 
         if (EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED)) {
@@ -91,7 +91,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         } catch (EamDbException ex) {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
+                    ex.getUserMessage(),
                     NbBundle.getMessage(this.getClass(),
                             "GlobalSettingsPanel.updateFailed.title"),
                     JOptionPane.WARNING_MESSAGE);
