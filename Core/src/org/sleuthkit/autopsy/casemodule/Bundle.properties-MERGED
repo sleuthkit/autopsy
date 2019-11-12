@@ -37,8 +37,8 @@ Case.exceptionMessage.dataSourceNotFound=The data source was not found.
 Case.exceptionMessage.deletionInterrupted=Deletion of the case {0} was cancelled.
 Case.exceptionMessage.emptyCaseDir=Must specify a case directory path.
 Case.exceptionMessage.emptyCaseName=Must specify a case name.
-# {0} - exception message
-Case.exceptionMessage.errorDeletingDataSource=An error occurred while deleting the data source:\n{0}.
+Case.exceptionMessage.errorDeletingDataSourceFromCaseDb=An error occurred while deleting the data source from the case database.
+Case.exceptionMessage.errorDeletingDataSourceFromTextIndex=An error occurred while deleting the data source from the text index.
 Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details.
 # {0} - exception message
 Case.exceptionMessage.execExceptionWrapperMessage={0}
@@ -58,7 +58,7 @@ Case.progressIndicatorCancelButton.label=Cancel
 Case.progressIndicatorTitle.closingCase=Closing Case
 Case.progressIndicatorTitle.creatingCase=Creating Case
 Case.progressIndicatorTitle.deletingCase=Deleting Case
-Case.progressIndicatorTitle.deletingDataSource=Deleting Data Source
+Case.progressIndicatorTitle.deletingDataSource=Removing Data Source
 Case.progressIndicatorTitle.openingCase=Opening Case
 Case.progressMessage.cancelling=Cancelling...
 Case.progressMessage.clearingTempDirectory=Clearing case temp directory...
@@ -71,7 +71,7 @@ Case.progressMessage.creatingCaseNodeData=Creating coordination service node dat
 Case.progressMessage.deletingCaseDatabase=Deleting case database...
 Case.progressMessage.deletingCaseDirCoordSvcNode=Deleting case directory coordination service node...
 Case.progressMessage.deletingCaseDirectory=Deleting case directory...
-Case.progressMessage.deletingDataSource=Deleting the data source from the case...
+Case.progressMessage.deletingDataSource=Removing the data source from the case...
 Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...
 Case.progressMessage.deletingTextIndex=Deleting text index...
 Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...
@@ -122,12 +122,12 @@ CTL_CaseDetailsAction=Case Details
 CTL_CaseDeleteAction=Delete Case
 CTL_CaseOpenAction=Open Case
 CTL_UnpackagePortableCaseAction=Unpack and Open Portable Case
-DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the deletion.
+DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the removal.
 DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case.
 # {0} - exception message
-DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source:\n{0}\nPlease see the application log for details.
-DeleteDataSourceAction.name.text=Delete Data Source
-DeleteDataSourceAction.warningDialog.message=Data sources cannot be deleted when ingest is running.
+DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while removing the data source:\n{0}\nPlease see the application log for details.
+DeleteDataSourceAction.name.text=Remove Data Source
+DeleteDataSourceAction.warningDialog.message=Data sources cannot be removed from a case when ingest is running.
 EditOptionalCasePropertiesPanel.cancelButton.text=Cancel
 EditOptionalCasePropertiesPanel.saveButton.text=Save
 GeneralFilter.encaseImageDesc.text=Encase Images (*.e01)
@@ -240,15 +240,10 @@ AddImageWizardIngestConfigPanel.dsProcDone.errs.text=*Errors encountered in addi
 AddImageWizardIngestConfigVisual.getName.text=Configure Ingest Modules
 AddImageWizardIterator.stepXofN=Step {0} of {1}
 AddLocalFilesTask.localFileAdd.progress.text=Adding: {0}/{1}
-Case.getCurCase.exception.noneOpen=Cannot get the current case; there is no case open\!
+Case.getCurCase.exception.noneOpen=Cannot get the current case; there is no case open!
 Case.open.msgDlg.updated.msg=Updated case database schema.\nA backup copy of the database with the following path has been made:\n {0}
 Case.open.msgDlg.updated.title=Case Database Schema Update
-Case.checkImgExist.confDlg.doesntExist.msg=One of the images associated with \n\
-this case are missing. Would you like to search for them now?\n\
-Previously, the image was located at:\n\
-{0}\n\
-Please note that you will still be able to browse directories and generate reports\n\
-if you choose No, but you will not be able to view file content or run the ingest process.
+Case.checkImgExist.confDlg.doesntExist.msg=One of the images associated with \nthis case are missing. Would you like to search for them now?\nPreviously, the image was located at:\n{0}\nPlease note that you will still be able to browse directories and generate reports\nif you choose No, but you will not be able to view file content or run the ingest process.
 Case.checkImgExist.confDlg.doesntExist.title=Missing Image
 Case.addImg.exception.msg=Error adding image to the case
 Case.updateCaseName.exception.msg=Error while trying to update the case name.
@@ -267,12 +262,9 @@ Case.GetCaseTypeGivenPath.Failure=Unable to get case type
 Case.metaDataFileCorrupt.exception.msg=The case metadata file (.aut) is corrupted.
 Case.deleteReports.deleteFromDiskException.log.msg=Unable to delete the report from the disk.
 Case.deleteReports.deleteFromDiskException.msg=Unable to delete the report {0} from the disk.\nYou may manually delete it from {1}
-CaseDeleteAction.closeConfMsg.text=Are you sure want to close and delete this case? \n\
-     Case Name: {0}\n\
-     Case Directory: {1}
+CaseDeleteAction.closeConfMsg.text=Are you sure want to close and delete this case? \nCase Name: {0}\nCase Directory: {1}
 CaseDeleteAction.closeConfMsg.title=Warning: Closing the Current Case
-CaseDeleteAction.msgDlg.fileInUse.msg=The delete action cannot be fully completed because the folder or file in it is open by another program.\n\n\
-Close the folder and file and try again or you can delete the case manually.
+CaseDeleteAction.msgDlg.fileInUse.msg=The delete action cannot be fully completed because the folder or file in it is open by another program.\n\nClose the folder and file and try again or you can delete the case manually.
 CaseDeleteAction.msgDlg.fileInUse.title=Error: Folder In Use
 CaseDeleteAction.msgDlg.caseDelete.msg=Case {0} has been deleted.
 CaseOpenAction.autFilter.title={0} Case File ( {1})
@@ -304,8 +296,7 @@ NewCaseWizardAction.databaseProblem1.text=Cannot open database. Cancelling case 
 NewCaseWizardAction.databaseProblem2.text=Error
 NewCaseWizardPanel1.validate.errMsg.invalidSymbols=The Case Name cannot contain any of the following symbols: \\ / : * ? " &lt; > |
 NewCaseWizardPanel1.validate.errMsg.dirExists=Case directory ''{0}'' already exists.
-NewCaseWizardPanel1.validate.confMsg.createDir.msg=The base directory "{0}" does not exist. \n\n\
- Do you want to create that directory?
+NewCaseWizardPanel1.validate.confMsg.createDir.msg=The base directory "{0}" does not exist. \n\nDo you want to create that directory?
 NewCaseWizardPanel1.validate.confMsg.createDir.title=Create directory
 NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg=Error: Could not create case parent directory {0}
 NewCaseWizardPanel1.validate.errMsg.prevCreateBaseDir.msg=Prevented from creating base directory {0}
@@ -355,15 +346,15 @@ UnpackageWorker.doInBackground.errorFinding7zip=Could not locate 7-Zip executabl
 UpdateRecentCases.menuItem.clearRecentCases.text=Clear Recent Cases
 UpdateRecentCases.menuItem.empty=-Empty-
 AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text=Cancel
-NewCaseVisualPanel1.CaseFolderOnCDriveError.text=Warning: Path to multi-user case folder is on \"C:\" drive
-NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text=Warning: Path to case folder is on \"C:\" drive. Case folder is created on the target system
+NewCaseVisualPanel1.CaseFolderOnCDriveError.text=Warning: Path to multi-user case folder is on "C:" drive
+NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text=Warning: Path to case folder is on "C:" drive. Case folder is created on the target system
 NewCaseVisualPanel1.CaseFolderOnInternalDriveLinuxError.text=Warning: Path to case folder is on the target system. Create case folder in mounted drive.
 CollaborationMonitor.addingDataSourceStatus.msg={0} adding data source
 CollaborationMonitor.analyzingDataSourceStatus.msg={0} analyzing {1}
 MissingImageDialog.lbWarning.text=
 MissingImageDialog.lbWarning.toolTipText=
 NewCaseVisualPanel1.caseParentDirWarningLabel.text=
-NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user		
+NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user\t\t
 NewCaseVisualPanel1.singleUserCaseRadioButton.text=Single-user
 NewCaseVisualPanel1.caseTypeLabel.text=Case Type: 
 SingleUserCaseConverter.BadDatabaseFileName=Database file does not exist!
