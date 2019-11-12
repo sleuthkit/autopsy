@@ -69,40 +69,67 @@ public final class DeleteDataSourceAction extends AbstractAction {
         }
 
         if (MessageNotifyUtil.Message.confirm(Bundle.DeleteDataSourceAction_confirmationDialog_message())) {
-            new SwingWorker<Void, Void>() {
-
-                @Override
-                protected Void doInBackground() throws Exception {
-                    /*
-                     * Save the case metadata file path so the case can be
-                     * reopened if something goes wrong and the case ends up
-                     * closed.
-                     */
-                    caseMetadataFilePath = Case.getCurrentCase().getMetadata().getFilePath();
-                    Case.deleteDataSourceFromCurrentCase(dataSourceObjectID);
-                    return null;
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        logger.log(Level.SEVERE, String.format("Error deleting data source (obj_id=%d)", dataSourceObjectID), ex);
-                        MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_dataSourceDeletionError(ex.getLocalizedMessage()), MessageNotifyUtil.MessageType.ERROR);
-                        if (!Case.isCaseOpen()) {
-                            try {
-                                Case.openAsCurrentCase(caseMetadataFilePath.toString());
-                            } catch (CaseActionException ex2) {
-                                logger.log(Level.SEVERE, "Failed to reopen the case after data source deletion error", ex2);
-                                MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_couldNotReopenCase(ex.getLocalizedMessage()), MessageNotifyUtil.MessageType.ERROR);
-                                StartupWindowProvider.getInstance().open();
-                            }
-                        }
-                    }
-                }
-            }.execute();
+            new DataSourceDeletionWorker().execute();
         }
+    }
+
+    /**
+     * A SwingWorker to do the data source deletion.
+     */
+    private class DataSourceDeletionWorker extends SwingWorker<Void, Void> {
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            /*
+             * Save the case metadata file path so the case can be reopened if
+             * something goes wrong and the case ends up closed.
+             */
+            caseMetadataFilePath = Case.getCurrentCase().getMetadata().getFilePath();
+            Case.deleteDataSourceFromCurrentCase(dataSourceObjectID);
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, String.format("Error deleting data source (obj_id=%d)", dataSourceObjectID), ex);
+                MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_dataSourceDeletionError(ex.getLocalizedMessage()), MessageNotifyUtil.MessageType.ERROR);
+                if (!Case.isCaseOpen()) {
+                    new CaseReopeningWorker().execute();
+                }
+            }
+        }
+
+    }
+
+    /**
+     * A SwingWorker to attempt to re-open the case after a data source deletion
+     * exception.
+     */
+    private class CaseReopeningWorker extends SwingWorker<Void, Void> {
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            Case.openAsCurrentCase(caseMetadataFilePath.toString());
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException ex) {
+                logger.log(Level.WARNING, String.format("Interrupted reopening case after error deleting data source (obj_id=%d)", dataSourceObjectID), ex);
+
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, String.format("Error reopening case after error deleting data source (obj_id=%d)", dataSourceObjectID), ex);
+                MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_dataSourceDeletionError(ex.getCause().getLocalizedMessage()), MessageNotifyUtil.MessageType.ERROR);
+                StartupWindowProvider.getInstance().open();
+            }
+        }
+        
     }
 
     @Override

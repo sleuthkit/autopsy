@@ -2,7 +2,6 @@ AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
-Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory
 Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources
 Case.deleteCaseConfirmationDialog.message=Are you sure you want to close and delete the current case?
 Case.deleteCaseConfirmationDialog.title=Delete Current Case?
@@ -53,6 +52,8 @@ Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.
 Case.exceptionMessage.metadataUpdateError=Failed to update case metadata
 # {0} - exception message
 Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database schema version:\n{0}.
+Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a shared lock on the case
+Case.lockingException.couldNotAcquireSharedLock=Failed to get an exclusive lock on the case
 Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User.
 Case.progressIndicatorCancelButton.label=Cancel
 Case.progressIndicatorTitle.closingCase=Closing Case
@@ -127,8 +128,8 @@ DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remov
 DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case:\n{0}\nPlease see the application log for details.
 # {0} - exception message
 DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while removing the data source:\n{0}\nPlease see the application log for details.
+DeleteDataSourceAction.ingestRunningWarningDialog.message=Data sources cannot be removed from a case when ingest is running.
 DeleteDataSourceAction.name.text=Remove Data Source
-DeleteDataSourceAction.warningDialog.message=Data sources cannot be removed from a case when ingest is running.
 EditOptionalCasePropertiesPanel.cancelButton.text=Cancel
 EditOptionalCasePropertiesPanel.saveButton.text=Save
 GeneralFilter.encaseImageDesc.text=Encase Images (*.e01)

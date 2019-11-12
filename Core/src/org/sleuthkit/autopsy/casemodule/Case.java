@@ -1932,10 +1932,10 @@ public class Case {
 
         } catch (CaseActionException ex) {
             /*
-             * Cancellation or failure. The sleep is a little hack
-             * to clear the interrupted flag for this thread if this is a
-             * cancellation scenario, so that the clean up can run to completion
-             * in the current thread.
+             * Cancellation or failure. The sleep is a little hack to clear the
+             * interrupted flag for this thread if this is a cancellation
+             * scenario, so that the clean up can run to completion in the
+             * current thread.
              */
             try {
                 Thread.sleep(1);
@@ -1981,10 +1981,10 @@ public class Case {
 
         } catch (CaseActionException ex) {
             /*
-             * Cancellation or failure. The sleep is a little hack
-             * to clear the interrupted flag for this thread if this is a
-             * cancellation scenario, so that the clean up can run to completion
-             * in the current thread.
+             * Cancellation or failure. The sleep is a little hack to clear the
+             * interrupted flag for this thread if this is a cancellation
+             * scenario, so that the clean up can run to completion in the
+             * current thread.
              */
             try {
                 Thread.sleep(1);
@@ -2013,8 +2013,7 @@ public class Case {
         "Case.progressMessage.deletingDataSource=Removing the data source from the case...",
         "Case.exceptionMessage.dataSourceNotFound=The data source was not found.",
         "Case.exceptionMessage.errorDeletingDataSourceFromCaseDb=An error occurred while removing the data source from the case database.",
-        "Case.exceptionMessage.errorDeletingDataSourceFromTextIndex=An error occurred while removing the data source from the text index.",
-    })
+        "Case.exceptionMessage.errorDeletingDataSourceFromTextIndex=An error occurred while removing the data source from the text index.",})
     Void deleteDataSource(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams instanceof Long);
         open(progressIndicator, null);
@@ -2652,7 +2651,10 @@ public class Case {
      *
      * @throws CaseActionException If the lock cannot be acquired.
      */
-    @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory"})
+    @Messages({
+        "Case.lockingException.couldNotAcquireSharedLock=Failed to get an exclusive lock on the case",
+        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a shared lock on the case"
+    })
     private void acquireCaseLock(CaseLockType lockType) throws CaseActionException {
         String caseDir = metadata.getCaseDirectory();
         try {
@@ -2661,10 +2663,18 @@ public class Case {
                     ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, SHARED_CASE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, EXCLUSIVE_CASE_LOCK_TIMEOUT_MINS, TimeUnit.MINUTES);
             if (caseLock == null) {
-                throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
+                if (lockType == CaseLockType.SHARED) {
+                    throw new CaseActionException(Bundle.Case_lockingException_couldNotAcquireSharedLock());
+                } else {
+                    throw new CaseActionException(Bundle.Case_lockingException_couldNotAcquireExclusiveLock());
+                }
             }
         } catch (InterruptedException | CoordinationServiceException ex) {
-            throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
+            if (lockType == CaseLockType.SHARED) {
+                throw new CaseActionException(Bundle.Case_lockingException_couldNotAcquireSharedLock(), ex);
+            } else {
+                throw new CaseActionException(Bundle.Case_lockingException_couldNotAcquireExclusiveLock(), ex);
+            }
         }
     }
 
