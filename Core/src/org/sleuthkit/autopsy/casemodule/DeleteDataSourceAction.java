@@ -58,7 +58,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
         "DeleteDataSourceAction.warningDialog.message=Data sources cannot be removed from a case when ingest is running.",
         "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the removal.",
         "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while removing the data source:\n{0}\nPlease see the application log for details.",
-        "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case."
+        "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case:\n{0}\nPlease see the application log for details."
     })
     @Override
     public void actionPerformed(ActionEvent event) {
@@ -94,7 +94,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
                                 Case.openAsCurrentCase(caseMetadataFilePath.toString());
                             } catch (CaseActionException ex2) {
                                 logger.log(Level.SEVERE, "Failed to reopen the case after data source deletion error", ex2);
-                                MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_couldNotReopenCase(), MessageNotifyUtil.MessageType.ERROR);
+                                MessageNotifyUtil.Message.show(Bundle.DeleteDataSourceAction_exceptionMessage_couldNotReopenCase(ex.getLocalizedMessage()), MessageNotifyUtil.MessageType.ERROR);
                                 StartupWindowProvider.getInstance().open();
                             }
                         }

@@ -2012,8 +2012,8 @@ public class Case {
     @Messages({
         "Case.progressMessage.deletingDataSource=Removing the data source from the case...",
         "Case.exceptionMessage.dataSourceNotFound=The data source was not found.",
-        "Case.exceptionMessage.errorDeletingDataSourceFromCaseDb=An error occurred while deleting the data source from the case database.",
-        "Case.exceptionMessage.errorDeletingDataSourceFromTextIndex=An error occurred while deleting the data source from the text index.",
+        "Case.exceptionMessage.errorDeletingDataSourceFromCaseDb=An error occurred while removing the data source from the case database.",
+        "Case.exceptionMessage.errorDeletingDataSourceFromTextIndex=An error occurred while removing the data source from the text index.",
     })
     Void deleteDataSource(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams instanceof Long);
