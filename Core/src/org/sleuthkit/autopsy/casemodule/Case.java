@@ -1039,7 +1039,7 @@ public class Case {
     @Messages({
         "Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources"
     })
-    private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
+    private static CoordinationService.Lock acquireCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
             Path caseDirPath = Paths.get(caseDir);
             String resourcesNodeName = CoordinationServiceUtils.getCaseResourcesNodePath(caseDirPath);
