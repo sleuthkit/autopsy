@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Top component which displays the Geolocation Tool.
+ * Top component for the Geolocation Tool.
  *
  */
 @TopComponent.Description(preferredID = "GeolocationTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 @RetainLocation("geolocation")
 @SuppressWarnings("PMD.SingularField")
 public final class GeolocationTopComponent extends TopComponent {
-    
+
     private static final long serialVersionUID = 1L;
 
     private static final Logger logger = Logger.getLogger(GeolocationTopComponent.class.getName());
@@ -68,7 +68,7 @@ public final class GeolocationTopComponent extends TopComponent {
     })
 
     /**
-     * Creates new form GeoLocationTopComponent
+     * Constructs new GeoLocationTopComponent
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public GeolocationTopComponent() {
@@ -128,7 +128,7 @@ public final class GeolocationTopComponent extends TopComponent {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
     }
-    
+
     @Override
     public void componentOpened() {
         super.componentOpened();
@@ -150,8 +150,7 @@ public final class GeolocationTopComponent extends TopComponent {
     }
 
     /**
-     * Use a SwingWorker thread to find all of the artifacts that have GPS
-     * coordinates.
+     * Use a SwingWorker thread to get a list of waypoints.
      *
      */
     private void initWaypoints() {
@@ -178,10 +177,10 @@ public final class GeolocationTopComponent extends TopComponent {
                         mapPanel.setCenterLocation(waypoints.get(0));
 
                     } catch (ExecutionException ex) {
-                        logger.log(Level.WARNING, "An exception occured while initializing waypoints for geolocation window.", ex);
+                        logger.log(Level.WARNING, "An exception occured while initializing waypoints for geolocation window.", ex); //NON-NLS
                         MessageNotifyUtil.Message.error(Bundle.GLTopComponent_initilzation_error());
                     } catch (InterruptedException ex) {
-                        logger.log(Level.WARNING, "The initializing thread for geolocation window was interrupted.", ex);
+                        logger.log(Level.WARNING, "The initializing thread for geolocation window was interrupted.", ex); //NON-NLS
                     }
                 }
             }
@@ -189,7 +188,6 @@ public final class GeolocationTopComponent extends TopComponent {
 
         worker.execute();
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.

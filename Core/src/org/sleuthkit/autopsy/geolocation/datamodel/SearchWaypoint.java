@@ -59,7 +59,6 @@ final class SearchWaypoint extends Waypoint {
     @Messages({
         "SearchWaypoint_DisplayLabel=GPS Search"
     })
-
     private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         if (attribute != null) {
