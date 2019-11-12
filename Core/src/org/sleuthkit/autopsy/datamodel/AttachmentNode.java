@@ -127,7 +127,7 @@ public class AttachmentNode extends DisplayableItemNode {
             actionsList.addAll(ContextMenuExtensionPoint.getActions());
             
         }
-        return actionsList.toArray(new Action[actionsList.size()]);
+        return actionsList.toArray(new Action[0]);
     }
     
     @Override
