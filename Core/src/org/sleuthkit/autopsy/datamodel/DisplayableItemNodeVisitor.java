@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.allcasessearch.CorrelationAttributeInstanceNode;
+import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
@@ -186,6 +187,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(InterestingHits.InterestingItemTypeNode aThis);
 
+    /*
+     * Attachments
+     */
+    T visit(AttachmentNode node);
+    
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -522,5 +528,11 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(Accounts.DefaultAccountTypeNode node) {
             return defaultVisit(node);
         }
+        
+        @Override
+        public T visit(AttachmentNode node) {
+            return defaultVisit(node);
+        }
+        
     }
 }

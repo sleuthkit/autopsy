@@ -43,6 +43,10 @@ ArtifactStringContent.attrsTableHeader.type=Type
 ArtifactStringContent.attrsTableHeader.value=Value
 ArtifactStringContent.failedToGetAttributes.message=Failed to get some or all attributes from case database
 ArtifactStringContent.failedToGetSourcePath.message=Failed to get source file path from case database
+AttachmentNode.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E
+AttachmentNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash
+AttachmentNode.getActions.viewFileInDir.text=View File in Directory
+AttachmentNode.getActions.viewInNewWin.text=View in New Window
 # {0} - node name
 BaseChildFactory.NoSuchEventBusException.message=No event bus for node: {0}
 BlackboardArtifactNode.createSheet.artifactDetails.displayName=Result Details
