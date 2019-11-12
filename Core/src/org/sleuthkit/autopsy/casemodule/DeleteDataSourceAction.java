@@ -56,7 +56,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     }
 
     @NbBundle.Messages({
-        "DeleteDataSourceAction.warningDialog.message=Data sources cannot be removed from a case when ingest is running.",
+        "DeleteDataSourceAction.ingestRunningWarningDialog.message=Data sources cannot be removed from a case when ingest is running.",
         "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the removal.",
         "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while removing the data source:\n{0}\nPlease see the application log for details.",
         "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case:\n{0}\nPlease see the application log for details."
@@ -64,7 +64,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent event) {
         if (IngestManager.getInstance().isIngestRunning()) {
-            MessageNotifyUtil.Message.warn(Bundle.DeleteDataSourceAction_warningDialog_message());
+            MessageNotifyUtil.Message.warn(Bundle.DeleteDataSourceAction_ingestRunningWarningDialog_message());
             return;
         }
 
