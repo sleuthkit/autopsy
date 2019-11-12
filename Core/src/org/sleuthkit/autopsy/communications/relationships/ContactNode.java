@@ -143,15 +143,25 @@ final class ContactNode extends BlackboardArtifactNode {
         for (BlackboardAttribute bba : attributeList) {
             if (count++ > 0) {
                 if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
-                  sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString() + "  " + PhoneNumUtil.getCountryCode(bba.getValueString())));
+                    String phoneNumCountry = PhoneNumUtil.getCountryCode(bba.getValueString());
+                    if (phoneNumCountry != "") {
+                        sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString() + "  [" + phoneNumCountry + "]"));
+                    } else {
+                        sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                    }
                 } else {
-                  sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));                  
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
                 }
             } else {
                 if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
-                  sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString() + "  " + PhoneNumUtil.getCountryCode(bba.getValueString())));
+                    String phoneNumCountry = PhoneNumUtil.getCountryCode(bba.getValueString());
+                    if (phoneNumCountry != "") {
+                        sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString() + "  [" + phoneNumCountry + "]"));
+                    } else {
+                        sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                    }
                 } else {
-                  sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));  
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
                 }
             }
         }
