@@ -1802,7 +1802,6 @@ public class Case {
     @Messages({
         "Case.progressIndicatorCancelButton.label=Cancel",
         "Case.progressMessage.preparing=Preparing...",
-        "Case.progressMessage.preparingToOpenCaseResources=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>",
         "Case.progressMessage.cancelling=Cancelling...",
         "Case.exceptionMessage.cancelled=Cancelled.",
         "# {0} - exception message", "Case.exceptionMessage.execExceptionWrapperMessage={0}"
@@ -1845,7 +1844,6 @@ public class Case {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 caseAction.execute(progressIndicator, additionalParams);
             } else {
-                progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources()); // RJCTODO: Make locking message
                 acquireCaseLock(caseLockType);
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
                     if (null == resourcesLock) {
@@ -1888,7 +1886,7 @@ public class Case {
             /*
              * The case action has thrown an exception.
              */
-            ThreadUtils.shutDownTaskExecutor(caseActionExecutor); // RJCTODO: Log error ion the thread where a stack trace can be recorded
+            ThreadUtils.shutDownTaskExecutor(caseActionExecutor);
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getLocalizedMessage()), ex);
         } finally {
             progressIndicator.finish();
@@ -1934,14 +1932,11 @@ public class Case {
 
         } catch (CaseActionException ex) {
             /*
-             * Cancellation or failure. Log the exception now, while running in
-             * the case action executor with the stack trace available, then
-             * clean up by calling the close method. The sleep is a little hack
+             * Cancellation or failure. The sleep is a little hack
              * to clear the interrupted flag for this thread if this is a
              * cancellation scenario, so that the clean up can run to completion
              * in the current thread.
              */
-            logger.log(Level.WARNING, "Failed to open the case", ex); // RJCTODO
             try {
                 Thread.sleep(1);
             } catch (InterruptedException discarded) {
@@ -1986,14 +1981,11 @@ public class Case {
 
         } catch (CaseActionException ex) {
             /*
-             * Cancellation or failure. Log the exception now, while running in
-             * the case action executor with the stack trace available, then
-             * clean up by calling the close method. The sleep is a little hack
+             * Cancellation or failure. The sleep is a little hack
              * to clear the interrupted flag for this thread if this is a
              * cancellation scenario, so that the clean up can run to completion
              * in the current thread.
              */
-            logger.log(Level.WARNING, "Failed to open the case", ex); // RJCTODO
             try {
                 Thread.sleep(1);
             } catch (InterruptedException discarded) {
@@ -2043,12 +2035,11 @@ public class Case {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
             }
             eventPublisher.publish(new DataSourceDeletedEvent(dataSourceObjectID));
-        } catch (CaseActionException ex) {
+            return null;
+        } finally {
             close(progressIndicator);
-            throw ex;
+            releaseCaseLock();
         }
-        close(progressIndicator);
-        return null;
     }
 
     /**

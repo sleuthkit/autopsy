@@ -56,7 +56,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
 
     @NbBundle.Messages({
         "DeleteDataSourceAction.warningDialog.message=Data sources cannot be deleted when ingest is running.",
-        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to delete the selected data source from the case?\nNote that the case will be closed and re-opened during the deletion.",
+        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the deletion.",
         "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source:\n{0}\nPlease see the application log for details.",
         "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case."
     })
