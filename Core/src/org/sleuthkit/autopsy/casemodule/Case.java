@@ -2666,8 +2666,8 @@ public class Case {
         try {
             CoordinationService coordinationService = CoordinationService.getInstance();
             caseLock = lockType == CaseLockType.SHARED
-                    ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, SHARED_CASE_LOCK_TIMEOUT_SECONDS, TimeUnit.MINUTES)
-                    : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, EXCLUSIVE_CASE_LOCK_TIMEOUT_MINS, TimeUnit.SECONDS);
+                    ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, SHARED_CASE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, EXCLUSIVE_CASE_LOCK_TIMEOUT_MINS, TimeUnit.MINUTES);
             if (caseLock == null) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
             }
