@@ -138,8 +138,7 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  */
 public class Case {
 
-    private static final int SHARED_CASE_LOCK_TIMEOUT_SECONDS = 30;
-    private static final int EXCLUSIVE_CASE_LOCK_TIMEOUT_MINS = 1;
+    private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
@@ -1845,7 +1844,7 @@ public class Case {
                 caseAction.execute(progressIndicator, additionalParams);
             } else {
                 acquireCaseLock(caseLockType);
-                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
+                try (CoordinationService.Lock resourcesLock = acquireCaseResourcesLock(metadata.getCaseDirectory())) {
                     if (null == resourcesLock) {
                         throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
                     }
@@ -2512,7 +2511,7 @@ public class Case {
                  * resources.
                  */
                 progressIndicator.progress(Bundle.Case_progressMessage_preparing());
-                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
+                try (CoordinationService.Lock resourcesLock = acquireCaseResourcesLock(metadata.getCaseDirectory())) {
                     if (null == resourcesLock) {
                         throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
                     }
@@ -2652,16 +2651,16 @@ public class Case {
      * @throws CaseActionException If the lock cannot be acquired.
      */
     @Messages({
-        "Case.lockingException.couldNotAcquireSharedLock=Failed to get an exclusive lock on the case",
-        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a shared lock on the case"
+        "Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.",
+        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case."
     })
     private void acquireCaseLock(CaseLockType lockType) throws CaseActionException {
         String caseDir = metadata.getCaseDirectory();
         try {
             CoordinationService coordinationService = CoordinationService.getInstance();
             caseLock = lockType == CaseLockType.SHARED
-                    ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, SHARED_CASE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, EXCLUSIVE_CASE_LOCK_TIMEOUT_MINS, TimeUnit.MINUTES);
+                    ? coordinationService.tryGetSharedLock(CategoryNode.CASES, caseDir, CASE_LOCK_TIMEOUT_MINS, TimeUnit.MINUTES)
+                    : coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseDir, CASE_LOCK_TIMEOUT_MINS, TimeUnit.MINUTES);
             if (caseLock == null) {
                 if (lockType == CaseLockType.SHARED) {
                     throw new CaseActionException(Bundle.Case_lockingException_couldNotAcquireSharedLock());
