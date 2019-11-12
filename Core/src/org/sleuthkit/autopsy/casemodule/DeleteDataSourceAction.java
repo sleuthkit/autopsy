@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * An Action that allows a user to delete a data source from the current case.
+ * An Action that allows a user to remove a data source from the current case.
  */
 public final class DeleteDataSourceAction extends AbstractAction {
 
@@ -46,7 +46,7 @@ public final class DeleteDataSourceAction extends AbstractAction {
      * @param dataSourceObjectID The object ID of the data source to be deleted.
      */
     @NbBundle.Messages({
-        "DeleteDataSourceAction.name.text=Delete Data Source"
+        "DeleteDataSourceAction.name.text=Remove Data Source"
     })
     public DeleteDataSourceAction(Long dataSourceObjectID) {
         super(Bundle.DeleteDataSourceAction_name_text());
@@ -55,9 +55,9 @@ public final class DeleteDataSourceAction extends AbstractAction {
     }
 
     @NbBundle.Messages({
-        "DeleteDataSourceAction.warningDialog.message=Data sources cannot be deleted when ingest is running.",
-        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the deletion.",
-        "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while deleting the data source:\n{0}\nPlease see the application log for details.",
+        "DeleteDataSourceAction.warningDialog.message=Data sources cannot be removed from a case when ingest is running.",
+        "DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the removal.",
+        "# {0} - exception message", "DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while removing the data source:\n{0}\nPlease see the application log for details.",
         "DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case."
     })
     @Override

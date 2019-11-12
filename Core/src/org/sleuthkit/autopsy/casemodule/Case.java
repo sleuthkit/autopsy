@@ -416,13 +416,13 @@ public class Case {
     private final class SleuthkitEventListener {
 
         @Subscribe
-        public void publishTimelineEventAdded(TimelineManager.TimelineEventAddedEvent event) {
+        public void publishTimelineEventAddedEvent(TimelineManager.TimelineEventAddedEvent event) {
             eventPublisher.publish(new TimelineEventAddedEvent(event));
         }
 
         @SuppressWarnings("deprecation")
         @Subscribe
-        public void rebroadcastArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
+        public void publishArtifactsPostedEvent(Blackboard.ArtifactsPostedEvent event) {
             for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
                 /*
                  * IngestServices.fireModuleDataEvent is deprecated to
@@ -759,7 +759,7 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "Case.progressIndicatorTitle.deletingDataSource=Deleting Data Source"
+        "Case.progressIndicatorTitle.deletingDataSource=Removing Data Source"
     })
     public static void deleteDataSourceFromCurrentCase(Long dataSourceObjectID) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
@@ -2010,9 +2010,10 @@ public class Case {
      *                             lower-level exception.
      */
     @Messages({
-        "Case.progressMessage.deletingDataSource=Deleting the data source from the case...",
+        "Case.progressMessage.deletingDataSource=Removing the data source from the case...",
         "Case.exceptionMessage.dataSourceNotFound=The data source was not found.",
-        "# {0} - exception message", "Case.exceptionMessage.errorDeletingDataSource=An error occurred while deleting the data source:\n{0}."
+        "Case.exceptionMessage.errorDeletingDataSourceFromCaseDb=An error occurred while deleting the data source from the case database.",
+        "Case.exceptionMessage.errorDeletingDataSourceFromTextIndex=An error occurred while deleting the data source from the text index.",
     })
     Void deleteDataSource(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams instanceof Long);
@@ -2027,12 +2028,12 @@ public class Case {
                 }
                 SleuthkitCaseAdmin.deleteDataSource(this.caseDb, dataSourceObjectID);
             } catch (TskDataException | TskCoreException ex) {
-                throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
+                throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSourceFromCaseDb(), ex);
             }
             try {
                 this.caseServices.getKeywordSearchService().deleteDataSource(dataSourceObjectID);
             } catch (KeywordSearchServiceException ex) {
-                throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSource(ex.getMessage()), ex);
+                throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSourceFromTextIndex(), ex);
             }
             eventPublisher.publish(new DataSourceDeletedEvent(dataSourceObjectID));
             return null;
