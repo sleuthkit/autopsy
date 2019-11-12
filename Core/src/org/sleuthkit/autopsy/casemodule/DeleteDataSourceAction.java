@@ -41,9 +41,10 @@ public final class DeleteDataSourceAction extends AbstractAction {
     private Path caseMetadataFilePath;
 
     /**
-     * Constructs an Action that allows a user to delete a data source.
+     * Constructs an Action that allows a user to remove a data source from a
+     * case.
      *
-     * @param dataSourceObjectID The object ID of the data source to be deleted.
+     * @param dataSourceObjectID The object ID of the data source to be removed.
      */
     @NbBundle.Messages({
         "DeleteDataSourceAction.name.text=Remove Data Source"
