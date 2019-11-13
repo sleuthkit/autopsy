@@ -294,7 +294,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         String caseDirPath = context.getCase().getCaseDirectory();
         Case theCase = context.getCase();
         List<Index> indexes = new ArrayList<>();
-        progress.start(Bundle.SolrSearch_lookingForMetadata_msg(), totalNumProgressUnits);
+        progress.progress(Bundle.SolrSearch_lookingForMetadata_msg(), totalNumProgressUnits);
         if (IndexMetadata.isMetadataFilePresent(caseDirPath)) {
             try {
                 // metadata file exists, get list of existing Solr cores for this case

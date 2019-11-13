@@ -50,7 +50,9 @@ public interface AutopsyService {
      * @param context The case context which includes things such as the case, a
      *                progress indicator for the operation, a cancellation
      *                request flag, etc.
-     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     default void openCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
@@ -64,7 +66,9 @@ public interface AutopsyService {
      * @param context The case context which includes things such as the case, a
      *                progress indicator for the operation, a cancellation
      *                request flag, etc.
-     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     default void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
@@ -113,7 +117,9 @@ public interface AutopsyService {
 
         /**
          * Gets the progress indicator for the creation/opening/upgrading of
-         * case-level resources by a service.
+         * case-level resources by a service. IMPORTANT: The service should only
+         * call progress() on the progress indicator. Calling start() and
+         * finish() are the responsibility of the case providing the context.
          *
          * @return The progress indicator.
          */

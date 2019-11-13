@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,8 +33,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.actions.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -52,7 +52,6 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
-import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.Tag;
 
 /**
@@ -115,15 +114,11 @@ public class ImageNode extends AbstractContentNode<Image> {
             actionsList.add(a);
         }
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-        actionsList.add(new FileSearchAction(
-                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
         actionsList.add(new ViewSummaryInformationAction(content.getId()));
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
-        actionsList.add(new NewWindowViewAction(
-                NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
-        if (checkSchemaVersion()) {
-            actionsList.add(new DeleteDataSourceAction(content.getId()));
-        }
+        actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
+        actionsList.add(new DeleteDataSourceAction(content.getId()));
         return actionsList.toArray(new Action[0]);
     }
 
@@ -211,21 +206,6 @@ public class ImageNode extends AbstractContentNode<Image> {
         return getClass().getName();
     }
 
-    private Boolean checkSchemaVersion() {
-        try {
-            CaseDbSchemaVersionNumber creationVersion = Case.getCurrentCaseThrows().getSleuthkitCase().getDBSchemaCreationVersion();
-
-            if ((creationVersion.getMajor() == 8 && creationVersion.getMinor() >= 3) || creationVersion.getMajor() > 8) {
-                        return true;
-            }
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Failed to get creation schema version: ", ex);
-        } 
-        
-        return false;
-        
-    }   
-     
     /*
      * This property change listener refreshes the tree when a new file is
      * carved out of this image (i.e, the image is being treated as raw bytes

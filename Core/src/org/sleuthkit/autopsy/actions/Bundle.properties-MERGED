@@ -23,7 +23,6 @@ DeleteContentTagAction.deleteTag=Remove Selected Tag(s)
 DeleteContentTagAction.tagDelErr=Tag Deletion Error
 # {0} - tagName
 DeleteContentTagAction.unableToDelTag.msg=Unable to delete tag {0}.
-DeleteDataSourceAction.name.text=Delete Data Source
 DeleteFileBlackboardArtifactTagAction.deleteTag=Remove Result Tag
 # {0} - artifactID
 DeleteFileBlackboardArtifactTagAction.deleteTag.alert=Unable to untag artifact {0}.
