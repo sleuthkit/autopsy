@@ -45,6 +45,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     private static final String PREFERRED_ID = "DiscoveryTopComponent"; // NON-NLS
+    private static final Color SELECTED_COLOR = new Color(216, 230, 242);
+    private static final Color UNSELECTED_COLOR = new Color(240, 240, 240);
     private final FileSearchPanel fileSearchPanel;
     private final GroupListPanel groupListPanel;
     private final DataContentPanel dataContentPanel;
@@ -127,11 +129,9 @@ public final class DiscoveryTopComponent extends TopComponent {
     private void updateSearchSettings() {
         fileSearchPanel.resetPanel();
         imagesButton.setSelected(true);
-        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
-        imagesButton.setBackground(Color.blue);
-        videosButton.setIcon(null);
+        imagesButton.setBackground(SELECTED_COLOR);
         videosButton.setSelected(false);
-        videosButton.setBackground(new Color(240, 240, 240));
+        videosButton.setBackground(UNSELECTED_COLOR);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }
 
@@ -168,6 +168,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         leftSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new javax.swing.JSplitPane();
         javax.swing.JPanel toolBarPanel = new javax.swing.JPanel();
+        toolBar = new javax.swing.JToolBar();
         imagesButton = new javax.swing.JButton();
         videosButton = new javax.swing.JButton();
 
@@ -190,61 +191,72 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         add(mainSplitPane, java.awt.BorderLayout.CENTER);
 
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
+
+        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(imagesButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.imagesButton.text")); // NOI18N
+        imagesButton.setFocusable(false);
+        imagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        imagesButton.setMaximumSize(new java.awt.Dimension(90, 43));
+        imagesButton.setMinimumSize(new java.awt.Dimension(90, 43));
+        imagesButton.setOpaque(true);
+        imagesButton.setPreferredSize(new java.awt.Dimension(90, 43));
         imagesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 imagesButtonActionPerformed(evt);
             }
         });
+        toolBar.add(imagesButton);
 
+        videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(videosButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.videosButton.text")); // NOI18N
+        videosButton.setFocusable(false);
+        videosButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        videosButton.setMaximumSize(new java.awt.Dimension(90, 43));
+        videosButton.setMinimumSize(new java.awt.Dimension(90, 43));
+        videosButton.setPreferredSize(new java.awt.Dimension(90, 43));
         videosButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 videosButtonActionPerformed(evt);
             }
         });
+        toolBar.add(videosButton);
 
         javax.swing.GroupLayout toolBarPanelLayout = new javax.swing.GroupLayout(toolBarPanel);
         toolBarPanel.setLayout(toolBarPanelLayout);
         toolBarPanelLayout.setHorizontalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(imagesButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(videosButton)
-                .addContainerGap(954, Short.MAX_VALUE))
+                .addContainerGap(459, Short.MAX_VALUE)
+                .addComponent(toolBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(459, Short.MAX_VALUE))
         );
         toolBarPanelLayout.setVerticalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(imagesButton)
-                    .addComponent(videosButton))
-                .addGap(6, 6, 6))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, toolBarPanelLayout.createSequentialGroup()
+                .addComponent(toolBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
 
         add(toolBarPanel, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
     private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
+        resetTopComponent();
         imagesButton.setSelected(true);
-        imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
-        imagesButton.setBackground(Color.blue);
-        videosButton.setIcon(null);
+        imagesButton.setBackground(SELECTED_COLOR);
         videosButton.setSelected(false);
-        videosButton.setBackground(new Color(240, 240, 240));
+        videosButton.setBackground(UNSELECTED_COLOR);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }//GEN-LAST:event_imagesButtonActionPerformed
 
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
+        resetTopComponent();
         imagesButton.setSelected(false);
-        imagesButton.setIcon(null);
-        imagesButton.setBackground(new Color(240, 240, 240));
+        imagesButton.setBackground(UNSELECTED_COLOR);
         videosButton.setSelected(true);
-        videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png")));
-        videosButton.setBackground(Color.blue);
+        videosButton.setBackground(SELECTED_COLOR);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
 
@@ -291,6 +303,7 @@ public final class DiscoveryTopComponent extends TopComponent {
     private javax.swing.JButton imagesButton;
     private javax.swing.JSplitPane leftSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
+    private javax.swing.JToolBar toolBar;
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 

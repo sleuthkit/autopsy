@@ -285,7 +285,7 @@ class FileSorter implements Comparator<ResultFile> {
          *
          * @return enums that can be used to ordering images.
          */
-        static List<SortingMethod> getOptionsForOrderingImages() {
+        static List<SortingMethod> getOptionsForOrdering() {
             return Arrays.asList(BY_FILE_SIZE, BY_FULL_PATH, BY_FILE_NAME, BY_DATA_SOURCE);
         }
     }
