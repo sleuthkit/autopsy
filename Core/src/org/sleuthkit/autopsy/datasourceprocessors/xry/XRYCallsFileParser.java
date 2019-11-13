@@ -103,11 +103,10 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
                 return null;
             case "tel":
                 //Apply the namespace
-                switch (normalizedNamespace) {
-                    case "from":
-                        return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, PARSER_NAME, value);
-                    default:
-                        return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, PARSER_NAME, value);
+                if(normalizedNamespace.equals("from")) {
+                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, PARSER_NAME, value);
+                } else {
+                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, PARSER_NAME, value);
                 }
             case "call type":
                 String normalizedValue = value.toLowerCase();

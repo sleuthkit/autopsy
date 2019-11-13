@@ -105,7 +105,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
             }
 
             //Only create artifacts with non-empty attributes.
-            if (attributes.size() > 0) {
+            if (!attributes.isEmpty()) {
                 makeArtifact(attributes, parent);
             }
         }
