@@ -62,7 +62,7 @@ final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
     
     @Override
     void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
-        //BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.WEB_BOOKMARK);
-        //artifact.addAttributes(attributes);
+        BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.WEB_BOOKMARK);
+        artifact.addAttributes(attributes);
     }
 }
