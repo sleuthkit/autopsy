@@ -45,18 +45,12 @@ import org.apache.commons.io.FilenameUtils;
  * From 
  * Tel:         12345678
  */
-public final class XRYFileReader implements AutoCloseable {
+final class XRYFileReader implements AutoCloseable {
 
     private static final Logger logger = Logger.getLogger(XRYFileReader.class.getName());
 
     //Assume UTF_16LE
     private static final Charset CHARSET = StandardCharsets.UTF_16LE;
-
-    //Assume TXT extension
-    private static final String EXTENSION = "txt";
-    
-   //Assume 0xFFFE is the BOM
-    private static final int[] BOM = {0xFF, 0xFE};
 
     //Assume all XRY reports have the type on the 3rd line.
     private static final int LINE_WITH_REPORT_TYPE = 3;
@@ -64,17 +58,30 @@ public final class XRYFileReader implements AutoCloseable {
     //Assume all headers are 5 lines in length.
     private static final int HEADER_LENGTH_IN_LINES = 5;
 
+    //Assume TXT extension
+    private static final String EXTENSION = "txt";
+
+    //Assume 0xFFFE is the BOM
+    private static final int[] BOM = {0xFF, 0xFE};
+
+    //Entity to be consumed during file iteration.
+    private final StringBuilder xryEntity;
+
     //Underlying reader for the xry file.
     private final BufferedReader reader;
 
-    private final StringBuilder xryEntity;
+    //Reference to the original xry file.
+    private final Path xryFilePath;
 
     /**
      * Creates an XRYFileReader. As part of construction, the XRY file is opened
      * and the reader is advanced past the header. This leaves the reader
      * positioned at the start of the first XRY entity.
      *
-     * The file is assumed to be encoded in UTF-16LE.
+     * The file is assumed to be encoded in UTF-16LE and is NOT verified to be
+     * an XRY file before reading. It is expected that the isXRYFile function
+     * has been called on the path beforehand. Otherwise, the behavior is
+     * undefined.
      *
      * @param xryFile XRY file to read. It is assumed that the caller has read
      * access to the path.
@@ -82,6 +89,7 @@ public final class XRYFileReader implements AutoCloseable {
      */
     public XRYFileReader(Path xryFile) throws IOException {
         reader = Files.newBufferedReader(xryFile, CHARSET);
+        xryFilePath = xryFile;
 
         //Advance the reader to the start of the first XRY entity.
         for (int i = 0; i < HEADER_LENGTH_IN_LINES; i++) {
@@ -89,6 +97,35 @@ public final class XRYFileReader implements AutoCloseable {
         }
 
         xryEntity = new StringBuilder();
+    }
+
+    /**
+     * Extracts the report type from the XRY file.
+     * 
+     * @return The XRY report type
+     * @throws IOException if an I/O error occurs.
+     * @throws IllegalArgumentExcepton If the XRY file does not have a report
+     * type. This is a misuse of the API. The validity of the Path should have
+     * been checked with isXRYFile before creating an XRYFileReader.
+     */
+    public String getReportType() throws IOException {
+        Optional<String> reportType = getType(xryFilePath);
+        if (reportType.isPresent()) {
+            return reportType.get();
+        }
+
+        throw new IllegalArgumentException(xryFilePath.toString() + " does not "
+                + "have a report type.");
+    }
+    
+    /**
+     * Returns the raw path of the XRY report file.
+     * 
+     * @return
+     * @throws IOException 
+     */
+    public Path getReportPath() throws IOException {
+        return xryFilePath;
     }
 
     /**
@@ -113,7 +150,7 @@ public final class XRYFileReader implements AutoCloseable {
                     return true;
                 }
             } else {
-                xryEntity.append(line).append("\n");
+                xryEntity.append(line).append('\n');
             }
         }
 
@@ -134,6 +171,23 @@ public final class XRYFileReader implements AutoCloseable {
             String returnVal = xryEntity.toString();
             xryEntity.setLength(0);
             return returnVal;
+        } else {
+            throw new NoSuchElementException();
+        }
+    }
+    
+    /**
+     * Peek at the next XRY entity without consuming it.
+     * If there are not more XRY entities left, an exception is thrown.
+     * 
+     * @return A non-empty XRY entity.
+     * @throws IOException 
+     * @throws NoSuchElementException if there are no more XRY entities to
+     * read.
+     */
+    public String peek() throws IOException {
+        if(hasNextEntity()) {
+            return xryEntity.toString();
         } else {
             throw new NoSuchElementException();
         }
