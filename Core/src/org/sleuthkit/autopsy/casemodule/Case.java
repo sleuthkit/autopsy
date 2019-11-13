@@ -128,7 +128,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
-import org.sleuthkit.datamodel.SleuthkitCaseAdmin;
+import org.sleuthkit.datamodel.SleuthkitCaseAdminUtil;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
@@ -2024,7 +2024,7 @@ public class Case {
                 if (dataSource == null) {
                     throw new CaseActionException(Bundle.Case_exceptionMessage_dataSourceNotFound());
                 }
-                SleuthkitCaseAdmin.deleteDataSource(this.caseDb, dataSourceObjectID);
+                SleuthkitCaseAdminUtil.deleteDataSource(this.caseDb, dataSourceObjectID);
             } catch (TskDataException | TskCoreException ex) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_errorDeletingDataSourceFromCaseDb(), ex);
             }
