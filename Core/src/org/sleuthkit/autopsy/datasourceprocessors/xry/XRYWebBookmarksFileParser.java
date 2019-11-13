@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 

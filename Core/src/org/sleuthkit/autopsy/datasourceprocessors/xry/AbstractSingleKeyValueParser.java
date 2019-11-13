@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Template parse method for reports that make blackboard attributes from a
- * single key value pairs.
+ * single key value pair.
  *
  * This parse implementation will create 1 artifact per XRY entity.
  */
@@ -59,6 +59,8 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
             for (int i = 1; i < xryLines.length; i++) {
                 String xryLine = xryLines[i];
 
+                //Check if the line is a namespace, which gives context to the keys
+                //that follow.
                 if (isNamespace(xryLine)) {
                     logger.log(Level.INFO, String.format("INFO: Detected XRY "
                             + "namespace keyword [ %s ]. Applying to all key value pairs following it.", xryLine));
@@ -81,7 +83,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 if (!isKey(key)) {
                     logger.log(Level.SEVERE, String.format("The following key, "
                             + "value pair (in brackets, respectively) [ %s ], [ %s ] was not recognized. Discarding..."
-                            + " Here is the previous line [ %s ] for context. What is it?", key, value, xryLines[i - 1]));
+                            + " Here is the previous line [ %s ] for context. What does this key mean?", key, value, xryLines[i - 1]));
                     continue;
                 }
 
@@ -93,13 +95,14 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 }
 
                 BlackboardAttribute attribute = makeAttribute(namespace, key, value);
-                //Returning null is temporary solution until we map out how we will deal with
-                //attributes we are currently ignoring.
+                //Temporarily allowing null to be valid return type until a decision
+                //is made about how to handle keys we are choosing to ignore.
                 if (attribute != null) {
                     attributes.add(makeAttribute(namespace, key, value));
                 }
             }
 
+            //Only create artifacts with non-empty attributes.
             if (attributes.size() > 0) {
                 makeArtifact(attributes, parent);
             }
@@ -127,7 +130,8 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
      *
      * Ex:
      *
-     * To Tel : +1245325
+     * To 
+     * Tel : +1245325
      *
      * "To" would be the candidate namespace that was extracted.
      *

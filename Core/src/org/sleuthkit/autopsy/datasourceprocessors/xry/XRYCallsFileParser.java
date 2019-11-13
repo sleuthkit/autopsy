@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -34,7 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Parses XRY Calls files and creates artifacts.
  */
 final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
-    
+
     private static final Logger logger = Logger.getLogger(XRYCallsFileParser.class.getName());
 
     //Human readable name of this parser.
@@ -42,7 +43,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     private static final DateTimeFormatter DATE_TIME_PARSER
             = DateTimeFormatter.ofPattern("M/d/y h:m:s [a][ z]");
-    
+
     private static final String INCOMING = "Incoming";
 
     //All known XRY keys for call reports.
@@ -113,7 +114,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
                 switch (normalizedValue) {
                     case "missed":
                     case "received":
-                        return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, PARSER_NAME, INCOMING); 
+                        return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, PARSER_NAME, INCOMING);
                     case "dialed":
                         return null;
                     case "last dialed":
@@ -130,7 +131,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
                 throw new IllegalArgumentException(String.format("key [ %s ] was not recognized.", key));
         }
     }
-    
+
     @Override
     void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException {
         BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
@@ -139,9 +140,11 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     /**
      * Removes the locale from the date time value.
+     * 
+     * Locale in this case being (Device) or (Network).
      *
-     * @param dateTime
-     * @return
+     * @param dateTime XRY datetime value to be sanitized.
+     * @return A purer date time value.
      */
     private String removeDateTimeLocale(String dateTime) {
         int index = dateTime.indexOf('(');
@@ -153,7 +156,9 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
     }
 
     /**
-     *
+     * Parses the datatime value and calculates ms since epoch. It time zone is
+     * assumed to be UTC.
+     * 
      * @param dateTime
      * @return
      */
