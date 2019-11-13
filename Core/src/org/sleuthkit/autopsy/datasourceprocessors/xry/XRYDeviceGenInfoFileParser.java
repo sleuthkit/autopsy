@@ -46,7 +46,9 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
     private static final String ATTRIBUTE_KEY = "attribute";
     private static final String DATA_KEY = "data";
 
-    //All of the known XRY keys for device gen info.
+    //All of the known XRY Attribute values for device gen info. The value of the
+    //attribute keys are actionable for this parser. See parse header for more
+    //details.
     private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> KEY_TO_TYPE
             = new HashMap<String, BlackboardAttribute.ATTRIBUTE_TYPE>() {
         {
@@ -75,8 +77,8 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
      * @param reader The XRYFileReader that reads XRY entities from the
      * Device-General Information report.
      * @param parent The parent Content to create artifacts from.
-     * @throws IOException
-     * @throws TskCoreException
+     * @throws IOException If an I/O error is encountered during report reading
+     * @throws TskCoreException If an error during artifact creation is encountered.
      */
     @Override
     public void parse(XRYFileReader reader, Content parent) throws IOException, TskCoreException {
