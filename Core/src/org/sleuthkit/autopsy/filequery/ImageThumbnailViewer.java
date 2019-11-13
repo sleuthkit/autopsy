@@ -39,6 +39,7 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
      */
     public ImageThumbnailViewer() {
         initComponents();
+
     }
 
     /**
@@ -78,13 +79,13 @@ public class ImageThumbnailViewer extends javax.swing.JPanel {
     void addListSelectionListener(ListSelectionListener listener) {
         thumbnailList.getSelectionModel().addListSelectionListener(listener);
     }
-    
+
     /**
      * Get the list of AbstractFiles which are represented by the selected image
      * thumbnail.
      *
-     * @return The list of AbstractFiles which are represented by the selected image
-     * thumbnail.
+     * @return The list of AbstractFiles which are represented by the selected
+     *         image thumbnail.
      */
     List<AbstractFile> getInstancesForSelected() {
         synchronized (this) {

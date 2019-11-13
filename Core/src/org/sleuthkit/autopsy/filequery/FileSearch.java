@@ -144,7 +144,7 @@ class FileSearch {
      *
      * @throws FileSearchException
      */
-    static LinkedHashMap<GroupKey, Integer> getGroupSizes(String userName,
+    static Map<GroupKey, Integer> getGroupSizes(String userName,
             List<FileSearchFiltering.FileFilter> filters,
             AttributeType groupAttributeType,
             FileGroup.GroupSortingAlgorithm groupSortingType,

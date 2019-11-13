@@ -119,8 +119,13 @@ FileSorter.SortingMethod.keywordlist.displayName=By keyword list names
 FileSorter.SortingMethod.parent.displayName=By parent path
 # {0} - numberOfInstances
 ImageThumbnailPanel.countLabel.text=Number of Instances: {0}
+ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
 # {0} - fileSize
 ImageThumbnailPanel.sizeLabel.text=Size: {0} bytes
+ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
+ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
+ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
+ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.
 ResultsDialog.dialogTitle.text=File search results
 ResultsDialog.exitButton.text=Exit
 ResultsDialog.searchButton.text=Run another search
@@ -177,5 +182,6 @@ ResultsPanel.viewFileInDir.name=View File in Directory
 SearchNode.getName.text=Search Result
 # {0} - numberOfInstances
 VideoThumbnailPanel.countLabel.text=Number of Instances: {0}
+VideoThumbnailPanel.deleted.text=All instances of file are deleted.
 # {0} - fileSize
 VideoThumbnailPanel.sizeLabel.text=Size: {0} bytes

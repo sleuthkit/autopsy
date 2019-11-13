@@ -1113,7 +1113,10 @@ public class Case {
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
                 CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(false);
-                DiscoveryTopComponent.getTopComponent().resetTopComponent();
+                DiscoveryTopComponent discoveryTopComp = DiscoveryTopComponent.getTopComponent();
+                if (discoveryTopComp != null){
+                    discoveryTopComp.resetTopComponent();
+                }
                 /*
                  * Clear the notifications in the notfier component in the lower
                  * right hand corner of the main application window.
