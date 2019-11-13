@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.blackboardutils.URLAttachment;
  * Node for a message attachment.
  *
  */
-public class AttachmentNode extends DisplayableItemNode {
+public final class AttachmentNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
      

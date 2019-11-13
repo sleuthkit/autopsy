@@ -664,7 +664,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     /**
      * Creates child nodes for message attachments. 
      */
-    final class AttachmentsChildren extends Children.Keys<Attachment> {
+    private static class AttachmentsChildren extends Children.Keys<Attachment> {
 
         private final Set<Attachment> attachments;
 
