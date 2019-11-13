@@ -51,6 +51,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
 
             List<BlackboardAttribute> attributes = new ArrayList<>();
 
+            //First line of the entity is the title.
             if (xryLines.length > 0) {
                 logger.log(Level.INFO, String.format("INFO: Processing [ %s ]", xryLines[0]));
             }
