@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datasourceprocessors.xry;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
@@ -37,9 +38,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     private static final Logger logger = Logger.getLogger(XRYCallsFileParser.class.getName());
-
-    //Human readable name of this parser.
-    private static final String PARSER_NAME = "XRY Calls";
 
     private static final DateTimeFormatter DATE_TIME_PARSER
             = DateTimeFormatter.ofPattern("M/d/y h:m:s [a][ z]");
@@ -88,10 +86,16 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
         switch (normalizedKey) {
             case "time":
                 //Tranform value to epoch ms
-                String dateTime = removeDateTimeLocale(value);
-                String normalizedDateTime = dateTime.trim();
-                long dateTimeInEpoch = calculateMsSinceEpoch(normalizedDateTime);
-                return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, PARSER_NAME, dateTimeInEpoch);
+                try {
+                    String dateTime = removeDateTimeLocale(value);
+                    String normalizedDateTime = dateTime.trim();
+                    long dateTimeInEpoch = calculateMsSinceEpoch(normalizedDateTime);
+                    return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, PARSER_NAME, dateTimeInEpoch);
+                } catch (DateTimeParseException ex) {
+                    logger.log(Level.SEVERE, String.format("XRY DSP: Assumption about the date time "
+                            + "formatting of call logs is not right. Here is the value [ %s ]", value), ex);
+                    return null;
+                }
             case "duration":
                 //Ignore for now.
                 return null;

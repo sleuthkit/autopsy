@@ -31,9 +31,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class XRYContactsFileParser extends AbstractSingleKeyValueParser {
 
-    //Human readable name of this parser.
-    private static final String PARSER_NAME = "XRY Contacts";
-
     //All of the known XRY keys for contacts.
     private static final Set<String> XRY_KEYS = new HashSet<String>() {{
         add("name");

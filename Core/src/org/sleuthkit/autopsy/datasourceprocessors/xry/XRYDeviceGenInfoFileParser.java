@@ -39,7 +39,7 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
     private static final Logger logger = Logger.getLogger(XRYDeviceGenInfoFileParser.class.getName());
 
     //Human readable name of this parser.
-    private static final String PARSER_NAME = "XRY Device General Info";
+    private static final String PARSER_NAME = "XRY DSP";
     private static final char KEY_VALUE_DELIMITER = ':';
     
     //All known XRY keys for Device Gen Info reports.
@@ -83,7 +83,7 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
     @Override
     public void parse(XRYFileReader reader, Content parent) throws IOException, TskCoreException {
         Path reportPath = reader.getReportPath();
-        logger.log(Level.INFO, String.format("Processing report at [ %s ]", reportPath.toString()));
+        logger.log(Level.INFO, String.format("XRY DSP: Processing report at [ %s ]", reportPath.toString()));
 
         while (reader.hasNextEntity()) {
             String xryEntity = reader.nextEntity();
@@ -93,7 +93,7 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
 
             //First line of the entity is the title.
             if (xryLines.length > 0) {
-                logger.log(Level.INFO, String.format("Processing [ %s ]", xryLines[0]));
+                logger.log(Level.INFO, String.format("XRY DSP: Processing [ %s ]", xryLines[0]));
             }
 
             for (int i = 1; i < xryLines.length; i++) {
@@ -101,7 +101,7 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
 
                 //Expecting to see a "Data" key.
                 if (!hasDataKey(xryLine)) {
-                    logger.log(Level.SEVERE, String.format("Expected a 'Data' key "
+                    logger.log(Level.SEVERE, String.format("XRY DSP: Expected a 'Data' key "
                             + "on this line (in brackets) [ %s ], but none was found. "
                             + "Discarding... Here is the previous line for context [ %s ]. "
                             + "What does this mean?", xryLine, xryLines[i - 1]));
@@ -109,7 +109,7 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
                 }
 
                 if (i + 1 == xryLines.length) {
-                    logger.log(Level.SEVERE, String.format("Found a 'Data' key "
+                    logger.log(Level.SEVERE, String.format("XRY DSP: Found a 'Data' key "
                             + "but no corresponding 'Attribute' key. Discarding... Here "
                             + "is the 'Data' line (in brackets) [ %s ]. Here is the previous "
                             + "line for context [ %s ]. What does this mean?", xryLine, xryLines[i - 1]));
@@ -123,7 +123,7 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
 
                 //Expecting to see an "Attribute" key
                 if (!hasAttributeKey(nextXryLine)) {
-                    logger.log(Level.SEVERE, String.format("SEVERE: Expected an 'Attribute' "
+                    logger.log(Level.SEVERE, String.format("XRY DSP: Expected an 'Attribute' "
                             + "key on this line (in brackets) [ %s ], but none was found. "
                             + "Discarding... Here is the previous line for context [ %s ]. "
                             + "What does this mean?", nextXryLine, xryLine));
@@ -139,7 +139,7 @@ final class XRYDeviceGenInfoFileParser implements XRYFileParser {
                     //All of the attribute types in the map expect a string.
                     attributes.add(new BlackboardAttribute(KEY_TO_TYPE.get(normalizedAttributeValue), PARSER_NAME, dataValue));
                 } else {
-                    logger.log(Level.SEVERE, String.format("Attribute type (in brackets) "
+                    logger.log(Level.SEVERE, String.format("XRY DSP: Attribute type (in brackets) "
                             + "[ %s ] was not recognized. Discarding... Here is the "
                             + "previous line for context [ %s ]. What does this mean?", nextXryLine, xryLine));
                 }

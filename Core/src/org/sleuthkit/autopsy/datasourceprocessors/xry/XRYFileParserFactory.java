@@ -37,7 +37,7 @@ final class XRYFileParserFactory {
      * is null. This is a misuse of the API. It is assumed that the report type
      * has been tested with the supports method.
      */
-    public static XRYFileParser get(String reportType) {
+    static XRYFileParser get(String reportType) {
         if (reportType == null) {
             throw new IllegalArgumentException("Report type cannot be null");
         }
@@ -64,7 +64,7 @@ final class XRYFileParserFactory {
      * @param reportType Report type to test.
      * @return Indication if the report type can be parsed.
      */
-    public static boolean supports(String reportType) {
+    static boolean supports(String reportType) {
         try {
             //Attempt a get.
             get(reportType);

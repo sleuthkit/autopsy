@@ -101,7 +101,7 @@ final class XRYFileReader implements AutoCloseable {
 
     /**
      * Extracts the report type from the XRY file.
-     * 
+     *
      * @return The XRY report type
      * @throws IOException if an I/O error occurs.
      * @throws IllegalArgumentExcepton If the XRY file does not have a report
@@ -117,12 +117,12 @@ final class XRYFileReader implements AutoCloseable {
         throw new IllegalArgumentException(xryFilePath.toString() + " does not "
                 + "have a report type.");
     }
-    
+
     /**
      * Returns the raw path of the XRY report file.
-     * 
+     *
      * @return
-     * @throws IOException 
+     * @throws IOException
      */
     public Path getReportPath() throws IOException {
         return xryFilePath;
@@ -160,6 +160,7 @@ final class XRYFileReader implements AutoCloseable {
 
     /**
      * Returns an XRY entity if there is one, otherwise an exception is thrown.
+     * Clients should test for another entity by calling hasNextEntity().
      *
      * @return A non-empty XRY entity.
      * @throws IOException if an I/O error occurs.
@@ -175,18 +176,18 @@ final class XRYFileReader implements AutoCloseable {
             throw new NoSuchElementException();
         }
     }
-    
+
     /**
-     * Peek at the next XRY entity without consuming it.
-     * If there are not more XRY entities left, an exception is thrown.
-     * 
+     * Peek at the next XRY entity without consuming it. If there are not more
+     * XRY entities left, an exception is thrown. Clients should test for
+     * another entity by calling hasNextEntity().
+     *
      * @return A non-empty XRY entity.
-     * @throws IOException 
-     * @throws NoSuchElementException if there are no more XRY entities to
-     * read.
+     * @throws IOException if an I/O error occurs.
+     * @throws NoSuchElementException if there are no more XRY entities to peek.
      */
     public String peek() throws IOException {
-        if(hasNextEntity()) {
+        if (hasNextEntity()) {
             return xryEntity.toString();
         } else {
             throw new NoSuchElementException();

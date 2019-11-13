@@ -31,9 +31,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class XRYWebBookmarksFileParser extends AbstractSingleKeyValueParser {
 
-    //Human readable name of this parser.
-    private static final String PARSER_NAME = "XRY Web Bookmarks";
-
     //All known XRY keys for web bookmarks.
     private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> KEY_TO_TYPE
             = new HashMap<String, BlackboardAttribute.ATTRIBUTE_TYPE>() {
