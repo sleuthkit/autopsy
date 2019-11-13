@@ -74,6 +74,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
             add("folder");
             add("service center");
             add("type");
+            add("name");
         }
     };
 
@@ -100,12 +101,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
      * attributes can span multiple lines. The "Text" key is the only known key
      * value pair that can span multiple lines. Messages can be segmented,
      * meaning that their "Text" content can appear in multiple XRY entities.
-     * Our goal for a segmented message is aggregate all of the text pieces and
+     * Our goal for a segmented message is to aggregate all of the text pieces and
      * create 1 artifact.
      *
      * This parse implementation assumes that segments are contiguous and that
      * they ascend incrementally. There are checks in place to verify this
-     * assumption are correct, otherwise an error will appear in the logs.
+     * assumption is correct, otherwise an error will appear in the logs.
      *
      * @param reader The XRYFileReader that reads XRY entities from the
      * Message-SMS report.
@@ -235,9 +236,11 @@ final class XRYMessagesFileParser implements XRYFileParser {
     }
 
     /**
-     *
-     * @param referenceNumber
-     * @param segmentNumber
+     * Builds up segmented message entities so that the text is unified in the 
+     * artifact.
+     * 
+     * @param referenceNumber Reference number that messages are group by
+     * @param segmentNumber Segment number of the starting segment.
      * @param reader
      * @return
      * @throws IOException
@@ -245,6 +248,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
     private String getSegmentedText(int referenceNumber, int segmentNumber, XRYFileReader reader) throws IOException {
         StringBuilder segmentedText = new StringBuilder();
 
+        int currentSegmentNumber = segmentNumber;
         while (reader.hasNextEntity()) {
             //Peek at the next to see if it has the same reference number.
             String nextEntity = reader.peek();
@@ -269,11 +273,11 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         + "segment with reference number [ %d ]", nextEntityLines[0], referenceNumber));
             }
 
-            if (nextSegmentNumber != segmentNumber + 1) {
+            if (nextSegmentNumber != currentSegmentNumber + 1) {
                 logger.log(Level.SEVERE, String.format("XRY DSP: Contiguous "
                         + "segments are not ascending incrementally. Encountered "
                         + "segment [ %d ] after segment [ %d ]. This means the reconstructed "
-                        + "text will be out of order.", nextSegmentNumber, segmentNumber));
+                        + "text will be out of order.", nextSegmentNumber, currentSegmentNumber));
             }
 
             for (int i = 1; i < nextEntityLines.length; i++) {
@@ -301,7 +305,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 }
             }
 
-            segmentNumber = nextSegmentNumber;
+            currentSegmentNumber = nextSegmentNumber;
         }
 
         //Remove the trailing space.
@@ -383,6 +387,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
     private BlackboardAttribute makeAttribute(String namespace, String key, String value) {
         String normalizedKey = key.toLowerCase();
         String normalizedNamespace = namespace.toLowerCase();
+        String normalizedValue = value.toLowerCase();
 
         switch (normalizedKey) {
             case "time":
@@ -403,7 +408,6 @@ final class XRYMessagesFileParser implements XRYFileParser {
             case "text":
                 return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, PARSER_NAME, value);
             case "status":
-                String normalizedValue = value.toLowerCase();
                 switch (normalizedValue) {
                     case "read":
                         return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_READ_STATUS, PARSER_NAME, READ);
@@ -424,8 +428,21 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         return null;
                 }
             case "type":
-                //Ignore for now.
-                return null;
+                switch (normalizedValue) {
+                    case "deliver":
+                        //Ignore for now.
+                        return null;
+                    case "submit":
+                        //Ignore for now.
+                        return null;
+                    case "status report":
+                        //Ignore for now.
+                        return null;
+                    default:
+                        logger.log(Level.SEVERE, String.format("XRY DSP: Unrecognized "
+                                + "type value [ %s ]", value));
+                        return null;
+                }
             case "storage":
                 //Ignore for now.
                 return null;
@@ -433,6 +450,9 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 //Ignore for now.
                 return null;
             case "folder":
+                //Ignore for now.
+                return null;
+            case "name":
                 //Ignore for now.
                 return null;
             case "service center":

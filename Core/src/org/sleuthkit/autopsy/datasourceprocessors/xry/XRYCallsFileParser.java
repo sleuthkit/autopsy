@@ -119,8 +119,10 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
                     case "received":
                         return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, PARSER_NAME, INCOMING);
                     case "dialed":
+                        //Ignore for now.
                         return null;
                     case "last dialed":
+                        //Ignore for now.
                         return null;
                     default:
                         logger.log(Level.SEVERE, String.format("Call type (in brackets) [ %s ] not recognized.", value));
