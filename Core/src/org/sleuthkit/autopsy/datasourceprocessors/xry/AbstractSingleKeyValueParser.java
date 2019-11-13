@@ -56,6 +56,8 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
             }
 
             String namespace = "";
+            //Process each line, searching for a key value pair or a namespace.
+            //If neither are found, an error message is logged.
             for (int i = 1; i < xryLines.length; i++) {
                 String xryLine = xryLines[i];
 
@@ -74,7 +76,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 if (keyDelimiter == -1) {
                     logger.log(Level.SEVERE, String.format("Expected a key value "
                             + "pair on this line (in brackets) [ %s ], but one was not detected."
-                            + " Here is the previous line (in brackets) [ %s ]. What does this key mean?", xryLine, xryLines[i - 1]));
+                            + " Here is the previous line (in brackets) [ %s ]. What does this mean?", xryLine, xryLines[i - 1]));
                     continue;
                 }
                 String key = xryLine.substring(0, keyDelimiter).trim();

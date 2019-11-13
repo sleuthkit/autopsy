@@ -140,7 +140,7 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
 
     /**
      * Removes the locale from the date time value.
-     * 
+     *
      * Locale in this case being (Device) or (Network).
      *
      * @param dateTime XRY datetime value to be sanitized.
@@ -156,9 +156,9 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
     }
 
     /**
-     * Parses the datatime value and calculates ms since epoch. It time zone is
+     * Parses the datatime value and calculates ms since epoch. The time zone is
      * assumed to be UTC.
-     * 
+     *
      * @param dateTime
      * @return
      */
