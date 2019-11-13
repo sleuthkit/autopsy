@@ -10,4 +10,6 @@ RefreshPanel.refreshLabel.text=The geolocation data has been updated, the visual
 RefreshPanel.refreshButton.text=Refresh View
 RefreshPanel.closeButton.text=
 MapPanel.cordLabel.text=
+WaypointDetailPanel.closeButton.text=
+WaypointDetailPanel.imageLabel.text=
 WaypointExtractAction_label=Extract Files(s)

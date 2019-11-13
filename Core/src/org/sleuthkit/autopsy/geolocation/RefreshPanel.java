@@ -22,7 +22,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JPanel;
 
 /**
- * Message panel to info user that the MapPanel may need to be refreshed 
+ * Message panel to inform the user that the MapPanel may need to be refreshed 
  * due to new artifacts.
  * 
  */
