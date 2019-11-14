@@ -168,7 +168,7 @@ public final class DiscoveryTopComponent extends TopComponent {
         leftSplitPane = new javax.swing.JSplitPane();
         rightSplitPane = new javax.swing.JSplitPane();
         javax.swing.JPanel toolBarPanel = new javax.swing.JPanel();
-        toolBar = new javax.swing.JToolBar();
+        javax.swing.JToolBar toolBar = new javax.swing.JToolBar();
         imagesButton = new javax.swing.JButton();
         videosButton = new javax.swing.JButton();
 
@@ -200,7 +200,6 @@ public final class DiscoveryTopComponent extends TopComponent {
         imagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         imagesButton.setMaximumSize(new java.awt.Dimension(90, 43));
         imagesButton.setMinimumSize(new java.awt.Dimension(90, 43));
-        imagesButton.setOpaque(true);
         imagesButton.setPreferredSize(new java.awt.Dimension(90, 43));
         imagesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -303,7 +302,6 @@ public final class DiscoveryTopComponent extends TopComponent {
     private javax.swing.JButton imagesButton;
     private javax.swing.JSplitPane leftSplitPane;
     private javax.swing.JSplitPane rightSplitPane;
-    private javax.swing.JToolBar toolBar;
     private javax.swing.JButton videosButton;
     // End of variables declaration//GEN-END:variables
 
