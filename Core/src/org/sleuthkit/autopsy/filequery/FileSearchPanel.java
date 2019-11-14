@@ -463,7 +463,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
-        parentFilterSettings(true, false, false, null);
+        parentFilterSettings(true, true, false, null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
         keywordFilterSettings(false, false, false, null);
@@ -495,7 +495,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
-        parentFilterSettings(true, false, false, null);
+        parentFilterSettings(true, true, false, null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
         keywordFilterSettings(false, false, false, null);
