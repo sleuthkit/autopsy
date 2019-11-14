@@ -83,17 +83,17 @@ class FileSearchData {
          * @return the corresponding enum
          */
         static Frequency fromCount(long count) {
-            if (count <= UNIQUE.maxOccur) {
+            if (count <= UNIQUE.getMaxOccur()) {
                 return UNIQUE;
-            } else if (count <= RARE.maxOccur) {
+            } else if (count <= RARE.getMaxOccur()) {
                 return RARE;
-            } else if (count <= COUNT_10.maxOccur) {
+            } else if (count <= COUNT_10.getMaxOccur()) {
                 return COUNT_10;
-            } else if (count <= COUNT_20.maxOccur) {
+            } else if (count <= COUNT_20.getMaxOccur()) {
                 return COUNT_20;
-            } else if (count <= COUNT_50.maxOccur) {
+            } else if (count <= COUNT_50.getMaxOccur()) {
                 return COUNT_50;
-            } else if (count <= COUNT_100.maxOccur) {
+            } else if (count <= COUNT_100.getMaxOccur()) {
                 return COUNT_100;
             }
             return COMMON;
@@ -122,6 +122,13 @@ class FileSearchData {
         @Override
         public String toString() {
             return displayName;
+        }
+
+        /**
+         * @return the maxOccur
+         */
+        int getMaxOccur() {
+            return maxOccur;
         }
     }
 
@@ -179,17 +186,17 @@ class FileSearchData {
          * @return the enum whose range contains the file size
          */
         static FileSize fromImageSize(long size) {
-            if (size > OVER_1GB_IMAGE.minBytes) {
+            if (size > OVER_1GB_IMAGE.getMinBytes()) {
                 return OVER_1GB_IMAGE;
-            } else if (size > OVER_200MB.minBytes) {
+            } else if (size > OVER_200MB.getMinBytes()) {
                 return OVER_200MB;
-            } else if (size > OVER_50MB.minBytes) {
+            } else if (size > OVER_50MB.getMinBytes()) {
                 return OVER_50MB;
-            } else if (size > OVER_1MB.minBytes) {
+            } else if (size > OVER_1MB.getMinBytes()) {
                 return OVER_1MB;
-            } else if (size > OVER_100KB.minBytes) {
+            } else if (size > OVER_100KB.getMinBytes()) {
                 return OVER_100KB;
-            } else if (size > OVER_16KB.minBytes) {
+            } else if (size > OVER_16KB.getMinBytes()) {
                 return OVER_16KB;
             } else {
                 return UNDER_16KB;
@@ -205,19 +212,19 @@ class FileSearchData {
          * @return the enum whose range contains the file size
          */
         static FileSize fromVideoSize(long size) {
-            if (size > OVER_10GB.minBytes) {
+            if (size > OVER_10GB.getMinBytes()) {
                 return OVER_10GB;
-            } else if (size > OVER_5GB.minBytes) {
+            } else if (size > OVER_5GB.getMinBytes()) {
                 return OVER_5GB;
-            } else if (size > OVER_1GB_VIDEO.minBytes) {
+            } else if (size > OVER_1GB_VIDEO.getMinBytes()) {
                 return OVER_1GB_VIDEO;
-            } else if (size > OVER_200MB.minBytes) {
+            } else if (size > OVER_200MB.getMinBytes()) {
                 return OVER_200MB;
-            } else if (size > OVER_50MB.minBytes) {
+            } else if (size > OVER_50MB.getMinBytes()) {
                 return OVER_50MB;
-            } else if (size > OVER_1MB.minBytes) {
+            } else if (size > OVER_1MB.getMinBytes()) {
                 return OVER_1MB;
-            } else if (size > OVER_100KB.minBytes) {
+            } else if (size > OVER_100KB.getMinBytes()) {
                 return OVER_100KB;
             } else {
                 return UNDER_100KB;
@@ -259,16 +266,16 @@ class FileSearchData {
         /**
          * Get the list of enums that are valid for image sizes.
          *
-         * @return enums that can be used to filter images images by size.
+         * @return enums that can be used to filter images by size.
          */
         static List<FileSize> getOptionsForImages() {
             return Arrays.asList(OVER_1GB_IMAGE, OVER_200MB, OVER_50MB, OVER_1MB, OVER_100KB, OVER_16KB, UNDER_16KB);
         }
 
         /**
-         * Get the list of enums that are valid for image sizes.
+         * Get the list of enums that are valid for video sizes.
          *
-         * @return enums that can be used to filter images images by size.
+         * @return enums that can be used to filter videos by size.
          */
         static List<FileSize> getOptionsForVideos() {
             return Arrays.asList(OVER_10GB, OVER_5GB, OVER_1GB_VIDEO, OVER_200MB, OVER_50MB, OVER_1MB, OVER_100KB, UNDER_100KB);
@@ -339,7 +346,7 @@ class FileSearchData {
          */
         static FileType fromMIMEtype(String mimeType) {
             for (FileType type : FileType.values()) {
-                if (type.mediaTypes.contains(mimeType)) {
+                if (type.getMediaTypes().contains(mimeType)) {
                     return type;
                 }
             }
