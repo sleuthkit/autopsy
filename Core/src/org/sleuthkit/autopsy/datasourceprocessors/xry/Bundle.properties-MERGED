@@ -1,0 +1,12 @@
+XRYDataSourceProcessor.dataSourceType=Import Tool Report
+XRYDataSourceProcessor.fileAdded=Added %s to the case database
+XRYDataSourceProcessor.ioError=I/O error occured trying to test the XRY report folder
+XRYDataSourceProcessor.notReadable=Could not read from the selected folder
+XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY files
+XRYDataSourceProcessor.preppingFiles=Preparing to add files to the case database
+XRYDataSourceProcessor.processingFiles=Processing all XRY files...
+XRYDataSourceProcessor.testingFolder=Testing input folder...
+XRYDataSourceProcessor.unexpectedError=Internal error occurred while processing XRY report
+XRYDataSourceProcessorConfigPanel.fileBrowserButton.text=Browse
+XRYDataSourceProcessorConfigPanel.filePathTextField.text=
+XRYDataSourceProcessorConfigPanel.xrySelectFolderLabel.text=Select an XRY Folder

@@ -24,7 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -35,6 +37,62 @@ final class XRYFolder {
     //Depth that will contain XRY files. All XRY files will be immediate
     //children of their parent folder.
     private static final int XRY_FILES_DEPTH = 1;
+
+    //Raw path to the XRY folder.
+    private final Path xryFolder;
+
+    public XRYFolder(Path folder) {
+        xryFolder = folder;
+    }
+
+    /**
+     * Finds all paths in the XRY report folder which are not XRY files. Only
+     * the first directory level is searched. As a result, some paths may point
+     * to directories.
+     *
+     * @return A non-null collection of paths
+     * @throws IOException If an I/O error occurs.
+     */
+    public List<Path> getNonXRYFiles() throws IOException {
+        try (Stream<Path> allFiles = Files.walk(xryFolder, XRY_FILES_DEPTH)) {
+            List<Path> otherFiles = new ArrayList<>();
+            Iterator<Path> allFilesIterator = allFiles.iterator();
+            while (allFilesIterator.hasNext()) {
+                Path currentPath = allFilesIterator.next();
+                if (!currentPath.equals(xryFolder)
+                        && !XRYFileReader.isXRYFile(currentPath)) {
+                    otherFiles.add(currentPath);
+                }
+            }
+            return otherFiles;
+        } catch (UncheckedIOException ex) {
+            throw ex.getCause();
+        }
+    }
+
+    /**
+     * Creates XRYFileReader instances for all XRY files found in the top level
+     * of the folder.
+     *
+     * @return A non-null collection of file readers.
+     * @throws IOException If an I/O error occurs.
+     */
+    public List<XRYFileReader> getXRYFileReaders() throws IOException {
+        try (Stream<Path> allFiles = Files.walk(xryFolder, XRY_FILES_DEPTH)) {
+            List<XRYFileReader> fileReaders = new ArrayList<>();
+
+            Iterator<Path> allFilesIterator = allFiles.iterator();
+            while (allFilesIterator.hasNext()) {
+                Path currentFile = allFilesIterator.next();
+                if (XRYFileReader.isXRYFile(currentFile)) {
+                    fileReaders.add(new XRYFileReader(currentFile));
+                }
+            }
+            return fileReaders;
+        } catch (UncheckedIOException ex) {
+            throw ex.getCause();
+        }
+    }
 
     /**
      * Searches for XRY files at the top level of a given folder. If at least
@@ -48,7 +106,7 @@ final class XRYFolder {
      * @return Indicates whether the Path is an XRY report.
      *
      * @throws IOException Error occurred during File I/O.
-     * @throws SecurityException If the security manager denies access any of
+     * @throws SecurityException If the security manager denies access to any of
      * the files.
      */
     public static boolean isXRYFolder(Path folder) throws IOException {
