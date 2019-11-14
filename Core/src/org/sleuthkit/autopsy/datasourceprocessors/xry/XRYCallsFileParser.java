@@ -89,10 +89,10 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
                 try {
                     String dateTime = removeDateTimeLocale(value);
                     String normalizedDateTime = dateTime.trim();
-                    long dateTimeInEpoch = calculateMsSinceEpoch(normalizedDateTime);
+                    long dateTimeInEpoch = calculateSecondsSinceEpoch(normalizedDateTime);
                     return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START, PARSER_NAME, dateTimeInEpoch);
                 } catch (DateTimeParseException ex) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: Assumption about the date time "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] Assumption about the date time "
                             + "formatting of call logs is not right. Here is the value [ %s ]", value), ex);
                     return null;
                 }
@@ -167,9 +167,9 @@ final class XRYCallsFileParser extends AbstractSingleKeyValueParser {
      * @param dateTime
      * @return
      */
-    private long calculateMsSinceEpoch(String dateTime) {
+    private long calculateSecondsSinceEpoch(String dateTime) {
         LocalDateTime localDateTime = LocalDateTime.parse(dateTime, DATE_TIME_PARSER);
         //Assume dates have no offset.
-        return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return localDateTime.toInstant(ZoneOffset.UTC).getEpochSecond();
     }
 }

@@ -45,7 +45,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
     @Override
     public void parse(XRYFileReader reader, Content parent) throws IOException, TskCoreException {
         Path reportPath = reader.getReportPath();
-        logger.log(Level.INFO, String.format("XRY DSP: Processing report at [ %s ]", reportPath.toString()));
+        logger.log(Level.INFO, String.format("[XRY DSP] Processing report at [ %s ]", reportPath.toString()));
 
         while (reader.hasNextEntity()) {
             String xryEntity = reader.nextEntity();
@@ -55,7 +55,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
 
             //First line of the entity is the title.
             if (xryLines.length > 0) {
-                logger.log(Level.INFO, String.format("XRY DSP: Processing [ %s ]", xryLines[0]));
+                logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
             }
 
             String namespace = "";
@@ -75,7 +75,7 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 //the start of the line and the first delimiter.
                 int keyDelimiter = xryLine.indexOf(KEY_VALUE_DELIMITER);
                 if (keyDelimiter == -1) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: Expected a key value "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] Expected a key value "
                             + "pair on this line (in brackets) [ %s ], but one was not detected."
                             + " Here is the previous line [ %s ]. What does this mean?", xryLine, xryLines[i - 1]));
                     continue;
@@ -84,14 +84,14 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
                 String value = xryLine.substring(keyDelimiter + 1).trim();
 
                 if (!isKey(key)) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: The following key, "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] The following key, "
                             + "value pair (in brackets, respectively) [ %s ], [ %s ] was not recognized. Discarding..."
                             + " Here is the previous line [ %s ] for context. What does this key mean?", key, value, xryLines[i - 1]));
                     continue;
                 }
 
                 if (value.isEmpty()) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: The following key "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] The following key "
                             + "(in brackets) [ %s ] was recognized, but the value was empty. Discarding..."
                             + " Here is the previous line for context [ %s ]. What does this mean?", key, xryLines[i - 1]));
                     continue;
