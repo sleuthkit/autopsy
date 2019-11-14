@@ -42,7 +42,7 @@ final class XRYFileParserFactory {
             throw new IllegalArgumentException("Report type cannot be null");
         }
 
-        switch (reportType.toLowerCase()) {
+        switch (reportType.trim().toLowerCase()) {
             case "calls":
                 return new XRYCallsFileParser();
             case "contacts/contacts":

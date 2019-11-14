@@ -118,7 +118,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
     @Override
     public void parse(XRYFileReader reader, Content parent) throws IOException, TskCoreException {
         Path reportPath = reader.getReportPath();
-        logger.log(Level.INFO, String.format("XRY DSP: Processing report at [ %s ]", reportPath.toString()));
+        logger.log(Level.INFO, String.format("[XRY DSP] Processing report at [ %s ]", reportPath.toString()));
 
         //Keep track of the reference numbers that have been parsed.
         Set<Integer> referenceNumbersSeen = new HashSet<>();
@@ -129,7 +129,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
 
             //First line of the entity is the title.
             if (xryLines.length > 0) {
-                logger.log(Level.INFO, String.format("XRY DSP: Processing [ %s ]", xryLines[0]));
+                logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ]", xryLines[0]));
             }
 
             List<BlackboardAttribute> attributes = new ArrayList<>();
@@ -147,7 +147,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 //Find the XRY key on this line.
                 int keyDelimiter = xryLine.indexOf(KEY_VALUE_DELIMITER);
                 if (keyDelimiter == -1) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: Expected a key value "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] Expected a key value "
                             + "pair on this line (in brackets) [ %s ], but one was not detected."
                             + " Is this the continuation of a previous line?"
                             + " Here is the previous line (in brackets) [ %s ]. "
@@ -167,7 +167,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 }
 
                 if (!XRY_KEYS.contains(normalizedKey)) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: The following key, "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] The following key, "
                             + "value pair (in brackets, respectively) [ %s ], [ %s ] "
                             + "was not recognized. Discarding... Here is the previous line "
                             + "[ %s ] for context. What does this key mean?", key, value, xryLines[i - 1]));
@@ -175,7 +175,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 }
 
                 if (value.isEmpty()) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: The following key "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] The following key "
                             + "(in brackets) [ %s ] was recognized, but the value "
                             + "was empty. Discarding... Here is the previous line "
                             + "for context [ %s ]. Is this a continuation of this line? "
@@ -186,7 +186,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 //Assume text is the only field that can span multiple lines.
                 if (normalizedKey.equals(TEXT_KEY)) {
                     //Build up multiple lines.
-                    for (; i + 1 < xryLines.length
+                    for (; (i + 1) < xryLines.length
                             && !hasKey(xryLines[i + 1])
                             && !hasNamespace(xryLines[i + 1]); i++) {
                         String continuedValue = xryLines[i + 1].trim();
@@ -198,15 +198,15 @@ final class XRYMessagesFileParser implements XRYFileParser {
                     //Check if there is any segmented text. Min val is used to 
                     //signify that no reference number was found.
                     if (referenceNumber != Integer.MIN_VALUE) {
-                        logger.log(Level.INFO, String.format("XRY DSP: Message entity "
+                        logger.log(Level.INFO, String.format("[XRY DSP] Message entity "
                                 + "appears to be segmented with reference number [ %d ]", referenceNumber));
 
                         if (referenceNumbersSeen.contains(referenceNumber)) {
-                            logger.log(Level.SEVERE, "XRY DSP: This reference has already "
+                            logger.log(Level.SEVERE, String.format("[XRY DSP] This reference [ %d ] has already "
                                     + "been seen. This means that the segments are not "
                                     + "contiguous. Any segments contiguous with this "
                                     + "one will be aggregated and another "
-                                    + "(otherwise duplicate) artifact will be created.");
+                                    + "(otherwise duplicate) artifact will be created.", referenceNumber));
                         }
 
                         referenceNumbersSeen.add(referenceNumber);
@@ -269,12 +269,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
             //Extract the text key from the entity, which is potentially
             //multi-lined.
             if (nextEntityLines.length > 0) {
-                logger.log(Level.INFO, String.format("XRY DSP: Processing [ %s ] "
+                logger.log(Level.INFO, String.format("[XRY DSP] Processing [ %s ] "
                         + "segment with reference number [ %d ]", nextEntityLines[0], referenceNumber));
             }
 
             if (nextSegmentNumber != currentSegmentNumber + 1) {
-                logger.log(Level.SEVERE, String.format("XRY DSP: Contiguous "
+                logger.log(Level.SEVERE, String.format("[XRY DSP] Contiguous "
                         + "segments are not ascending incrementally. Encountered "
                         + "segment [ %d ] after segment [ %d ]. This means the reconstructed "
                         + "text will be out of order.", nextSegmentNumber, currentSegmentNumber));
@@ -365,7 +365,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                     try {
                         return Integer.parseInt(value);
                     } catch (NumberFormatException ex) {
-                        logger.log(Level.SEVERE, String.format("XRY DSP: Value [ %s ] for "
+                        logger.log(Level.SEVERE, String.format("[XRY DSP] Value [ %s ] for "
                                 + "meta key [ %s ] was not an integer.", value, metaKey), ex);
                     }
                 }
@@ -395,10 +395,10 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 try {
                     String dateTime = removeDateTimeLocale(value);
                     String normalizedDateTime = dateTime.trim();
-                    long dateTimeInEpoch = calculateMsSinceEpoch(normalizedDateTime);
+                    long dateTimeInEpoch = calculateSecondsSinceEpoch(normalizedDateTime);
                     return new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, PARSER_NAME, dateTimeInEpoch);
                 } catch (DateTimeParseException ex) {
-                    logger.log(Level.SEVERE, String.format("XRY DSP: Assumption "
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] Assumption "
                             + "about the date time formatting of messages is not "
                             + "right. Here is the value [ %s ].", value), ex);
                     return null;
@@ -423,7 +423,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         //Ignore for now.
                         return null;
                     default:
-                        logger.log(Level.SEVERE, String.format("XRY DSP: Unrecognized "
+                        logger.log(Level.SEVERE, String.format("[XRY DSP] Unrecognized "
                                 + "status value [ %s ].", value));
                         return null;
                 }
@@ -439,7 +439,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         //Ignore for now.
                         return null;
                     default:
-                        logger.log(Level.SEVERE, String.format("XRY DSP: Unrecognized "
+                        logger.log(Level.SEVERE, String.format("[XRY DSP] Unrecognized "
                                 + "type value [ %s ]", value));
                         return null;
                 }
@@ -495,9 +495,9 @@ final class XRYMessagesFileParser implements XRYFileParser {
      * @param dateTime
      * @return
      */
-    private long calculateMsSinceEpoch(String dateTime) {
+    private long calculateSecondsSinceEpoch(String dateTime) {
         LocalDateTime localDateTime = LocalDateTime.parse(dateTime, DATE_TIME_PARSER);
         //Assume dates have no offset.
-        return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return localDateTime.toInstant(ZoneOffset.UTC).getEpochSecond();
     }
 }
