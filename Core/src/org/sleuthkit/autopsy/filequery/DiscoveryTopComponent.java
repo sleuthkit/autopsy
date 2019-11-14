@@ -129,8 +129,10 @@ public final class DiscoveryTopComponent extends TopComponent {
     private void updateSearchSettings() {
         fileSearchPanel.resetPanel();
         imagesButton.setSelected(true);
+        imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
         videosButton.setSelected(false);
+        videosButton.setEnabled(true);
         videosButton.setBackground(UNSELECTED_COLOR);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }
@@ -196,6 +198,7 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(imagesButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.imagesButton.text")); // NOI18N
+        imagesButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
         imagesButton.setFocusable(false);
         imagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         imagesButton.setMaximumSize(new java.awt.Dimension(90, 43));
@@ -210,6 +213,8 @@ public final class DiscoveryTopComponent extends TopComponent {
 
         videosButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(videosButton, org.openide.util.NbBundle.getMessage(DiscoveryTopComponent.class, "DiscoveryTopComponent.videosButton.text")); // NOI18N
+        videosButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
+        videosButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/video-icon.png"))); // NOI18N
         videosButton.setFocusable(false);
         videosButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         videosButton.setMaximumSize(new java.awt.Dimension(90, 43));
@@ -244,8 +249,10 @@ public final class DiscoveryTopComponent extends TopComponent {
     private void imagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imagesButtonActionPerformed
         resetTopComponent();
         imagesButton.setSelected(true);
+        imagesButton.setEnabled(false);
         imagesButton.setBackground(SELECTED_COLOR);
         videosButton.setSelected(false);
+        videosButton.setEnabled(true);
         videosButton.setBackground(UNSELECTED_COLOR);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.IMAGE);
     }//GEN-LAST:event_imagesButtonActionPerformed
@@ -253,8 +260,10 @@ public final class DiscoveryTopComponent extends TopComponent {
     private void videosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_videosButtonActionPerformed
         resetTopComponent();
         imagesButton.setSelected(false);
+        imagesButton.setEnabled(true);
         imagesButton.setBackground(UNSELECTED_COLOR);
         videosButton.setSelected(true);
+        videosButton.setEnabled(false);
         videosButton.setBackground(SELECTED_COLOR);
         fileSearchPanel.setSelectedType(FileSearchData.FileType.VIDEO);
     }//GEN-LAST:event_videosButtonActionPerformed
