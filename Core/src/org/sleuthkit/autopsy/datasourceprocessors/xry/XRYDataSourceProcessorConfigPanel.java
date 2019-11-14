@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class XRYDataSourceProcessorConfigPanel extends JPanel {
 
+    private static final long serialVersionUID = 1L;
     private static final XRYDataSourceProcessorConfigPanel INSTANCE = 
             new XRYDataSourceProcessorConfigPanel();
     
