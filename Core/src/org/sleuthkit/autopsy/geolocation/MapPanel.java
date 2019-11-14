@@ -18,13 +18,28 @@
  */
 package org.sleuthkit.autopsy.geolocation;
 
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
-import javax.swing.DefaultListModel;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
+import java.util.logging.Level;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
+import javax.swing.Timer;
 import javax.swing.event.MouseInputListener;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.input.CenterMapListener;
@@ -35,29 +50,50 @@ import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Main panel with the JJXMapViewer object and its basic controls.
+ * The map panel. This panel contains the jxmapviewer MapViewer
  */
 final class MapPanel extends javax.swing.JPanel {
-    
-    private static final long serialVersionUID = 1L;
 
+    private static final Logger logger = Logger.getLogger(MapPanel.class.getName());
+
+    private static final long serialVersionUID = 1L;
     private boolean zoomChanging;
-    
-    // Using a DefaultListModel to store the way points because we get 
-    // a lot of functionality for free, like listeners.
-    private final DefaultListModel<Waypoint> waypointListModel;
+    private KdTree<MapWaypoint> waypointTree;
+
+    private Popup currentPopup;
+    private final PopupFactory popupFactory;
+
+    private static final int POPUP_WIDTH = 300;
+    private static final int POPUP_HEIGHT = 200;
+    private static final int POPUP_MARGIN = 10;
+
+    private MapWaypoint currentlySelectedWaypoint;
 
     /**
      * Creates new form MapPanel
      */
     MapPanel() {
-        waypointListModel = new DefaultListModel<>();
-        zoomChanging = false;
-         
         initComponents();
         initMap();
+
+        zoomChanging = false;
+        currentPopup = null;
+        popupFactory = new PopupFactory();
+
+        // ComponentListeners do not have a concept of resize event "complete"
+        // therefore if we move the popup as the window resizes there will be 
+        // a weird blinking behavior.  Using the CompnentResizeEndListener the
+        // popup will move to its corner one the resize is completed.
+        this.addComponentListener(new ComponentResizeEndListener() {
+            @Override
+            public void resizeTimedOut() {
+                showDetailsPopup();
+            }
+        });
     }
 
     /**
@@ -88,36 +124,19 @@ final class MapPanel extends javax.swing.JPanel {
         zoomSlider.setMinimum(tileFactory.getInfo().getMinimumZoomLevel());
         zoomSlider.setMaximum(tileFactory.getInfo().getMaximumZoomLevel());
 
-       
-        setZoom(tileFactory.getInfo().getMaximumZoomLevel()- 1);
+        setZoom(tileFactory.getInfo().getMaximumZoomLevel() - 1);
         mapViewer.setAddressLocation(new GeoPosition(0, 0));
-
-        // Listener for new way points being added to the map.
-        waypointListModel.addListDataListener(new ListDataListener() {
-            @Override
-            public void intervalAdded(ListDataEvent e) {
-                mapViewer.repaint();
-            }
-
-            @Override
-            public void intervalRemoved(ListDataEvent e) {
-                mapViewer.repaint();
-            }
-
-            @Override
-            public void contentsChanged(ListDataEvent e) {
-                mapViewer.repaint();
-            }
-
-        });
 
         // Basic painters for the way points. 
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>() {
             @Override
             public Set<Waypoint> getWaypoints() {
                 Set<Waypoint> set = new HashSet<>();
-                for (int index = 0; index < waypointListModel.getSize(); index++) {
-                    set.add(waypointListModel.get(index));
+                if (waypointTree != null) {
+                    Iterator<MapWaypoint> iterator = waypointTree.iterator();
+                    while (iterator.hasNext()) {
+                        set.add(iterator.next());
+                    }
                 }
                 return set;
             }
@@ -127,35 +146,231 @@ final class MapPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Add a way point to the map.
-     * 
-     * @param waypoint 
+     * Stores the given List of MapWaypoint in a KdTree object.
+     *
+     * @param waypoints List of waypoints
      */
-    void addWaypoint(Waypoint waypoint) {
-        waypointListModel.addElement(waypoint);
+    void setWaypoints(List<MapWaypoint> waypoints) {
+        waypointTree = new KdTree<>();
+
+        for (MapWaypoint waypoint : waypoints) {
+            waypointTree.add(waypoint);
+        }
+
+        mapViewer.repaint();
     }
-    
+
+    /**
+     * Centers the view of the map on the given location.
+     *
+     * @param waypoint Location to center the map
+     */
     void setCenterLocation(Waypoint waypoint) {
         mapViewer.setCenterPosition(waypoint.getPosition());
     }
 
     /**
      * Set the current zoom level.
-     * 
-     * @param zoom 
+     *
+     * @param zoom
      */
     void setZoom(int zoom) {
         zoomChanging = true;
         mapViewer.setZoom(zoom);
-        zoomSlider.setValue((zoomSlider.getMaximum() + zoomSlider.getMinimum())- zoom);
+        zoomSlider.setValue((zoomSlider.getMaximum() + zoomSlider.getMinimum()) - zoom);
         zoomChanging = false;
     }
-    
+
     /**
      * Remove all of the way points from the map.
      */
     void clearWaypoints() {
-        waypointListModel.removeAllElements();
+        waypointTree = null;
+    }
+
+    /**
+     * Finds the waypoint nearest to the given and point and shows the popup
+     * menu for that waypoint.
+     *
+     * @param point Current mouse click location
+     */
+    private void showPopupMenu(Point point) {
+        try {
+            MapWaypoint waypoint = findClosestWaypoint(point);
+            showPopupMenu(waypoint, point);
+            // Change the details popup to the currently selected point only if 
+            // it the popup is currently visible
+            if (waypoint != null && !waypoint.equals(currentlySelectedWaypoint)) {
+                currentlySelectedWaypoint = waypoint;
+                showDetailsPopup();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to show popup for waypoint", ex);
+        }
+    }
+
+    /**
+     * Show the popup menu for the given waypoint and location.
+     *
+     * @param waypoint Selected waypoint
+     * @param point    Current mouse click location
+     */
+    private void showPopupMenu(MapWaypoint waypoint, Point point) throws TskCoreException {
+        if (waypoint == null) {
+            return;
+        }
+
+        JMenuItem[] items = waypoint.getMenuItems();
+        JPopupMenu popupMenu = new JPopupMenu();
+        for (JMenuItem menu : items) {
+
+            if (menu != null) {
+                popupMenu.add(menu);
+            } else {
+                popupMenu.add(new JSeparator());
+            }
+        }
+        popupMenu.show(this, point.x, point.y);
+    }
+
+    /**
+     * Show the detailsPopup for the currently selected waypoint.
+     */
+    private void showDetailsPopup() {
+        if (currentlySelectedWaypoint != null) {
+            if (currentPopup != null) {
+                currentPopup.hide();
+            }
+
+            WaypointDetailPanel detailPane = new WaypointDetailPanel();
+            detailPane.setWaypoint(currentlySelectedWaypoint);
+            detailPane.setPreferredSize(new Dimension(POPUP_WIDTH, POPUP_HEIGHT));
+            detailPane.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (currentPopup != null) {
+                        currentPopup.hide();
+                        currentPopup = null;
+                    }
+                }
+
+            });
+
+            Point popupLocation = getLocationForDetailsPopup();
+
+            currentPopup = popupFactory.getPopup(this, detailPane, popupLocation.x, popupLocation.y);
+            currentPopup.show();
+        }
+    }
+
+    /**
+     * Calculate the upper left corner on the screen for the details popup.
+     *
+     * @return Upper left corner location for the details popup.
+     */
+    private Point getLocationForDetailsPopup() {
+        Point panelCorner = this.getLocationOnScreen();
+        int width = this.getWidth();
+
+        int popupX = panelCorner.x + width - POPUP_WIDTH - POPUP_MARGIN;
+        int popupY = panelCorner.y + POPUP_MARGIN;
+
+        return new Point(popupX, popupY);
+    }
+
+    /**
+     * Find the waypoint that is closest to the given mouse click point.
+     *
+     * @param mouseClickPoint The mouse click point
+     *
+     * @return A waypoint that is within 10 pixels of the given point, or null
+     *         if none was found.
+     */
+    private MapWaypoint findClosestWaypoint(Point mouseClickPoint) {
+        if (waypointTree == null) {
+            return null;
+        }
+
+        // Convert the mouse click location to latitude & longitude
+        GeoPosition geopos = mapViewer.getTileFactory().pixelToGeo(mouseClickPoint, mapViewer.getZoom());
+
+        // Get the 5 nearest neightbors to the point
+        Collection<MapWaypoint> waypoints = waypointTree.nearestNeighbourSearch(20, MapWaypoint.getDummyWaypoint(geopos));
+
+        if (waypoints == null || waypoints.isEmpty()) {
+            return null;
+        }
+
+        Iterator<MapWaypoint> iterator = waypoints.iterator();
+
+        // These maybe the points closest to lat/log was clicked but 
+        // that doesn't mean they are close in terms of pixles.
+        while (iterator.hasNext()) {
+            MapWaypoint nextWaypoint = iterator.next();
+
+            Point2D point = mapViewer.getTileFactory().geoToPixel(nextWaypoint.getPosition(), mapViewer.getZoom());
+
+            Rectangle rect = mapViewer.getViewportBounds();
+            Point converted_gp_pt = new Point((int) point.getX() - rect.x,
+                    (int) point.getY() - rect.y);
+
+            if (converted_gp_pt.distance(mouseClickPoint) < 10) {
+                return nextWaypoint;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Abstract listener class to listen for the completion of a resize event.
+     *
+     * ComponentListener does not provide support for listening for the
+     * completion of a resize event. In order to provide this functionality
+     * ComponentResizeEndListener as a time that is restarted every time
+     * componentResize is called. When the timer finally runs out the assumption
+     * is that the resize has completed.
+     */
+    public abstract class ComponentResizeEndListener
+            extends ComponentAdapter
+            implements ActionListener {
+
+        private final Timer timer;
+        private static final int DEFAULT_TIMEOUT = 200;
+
+        /**
+         * Constructs a new Listener with a default timeout of DEFAULT_TIMEOUT
+         * milliseconds.
+         */
+        public ComponentResizeEndListener() {
+            this(DEFAULT_TIMEOUT);
+        }
+
+        /**
+         * Constructs a new listener with the given timeout value.
+         *
+         * @param delayMS timeout value in milliseconds
+         */
+        public ComponentResizeEndListener(int delayMS) {
+            timer = new Timer(delayMS, this);
+            timer.setRepeats(false);
+            timer.setCoalesce(false);
+        }
+
+        @Override
+        public void componentResized(ComponentEvent e) {
+            timer.restart();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            resizeTimedOut();
+        }
+
+        /**
+         * Called when the resize event has completed\timed out
+         */
+        public abstract void resizeTimedOut();
     }
 
     /**
@@ -171,10 +386,28 @@ final class MapPanel extends javax.swing.JPanel {
         mapViewer = new org.jxmapviewer.JXMapViewer();
         zoomPanel = new javax.swing.JPanel();
         zoomSlider = new javax.swing.JSlider();
+        infoPanel = new javax.swing.JPanel();
+        cordLabel = new javax.swing.JLabel();
 
         setFocusable(false);
         setLayout(new java.awt.BorderLayout());
 
+        mapViewer.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent evt) {
+                mapViewerMouseMoved(evt);
+            }
+        });
+        mapViewer.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mapViewerMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                mapViewerMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                mapViewerMouseReleased(evt);
+            }
+        });
         mapViewer.setLayout(new java.awt.GridBagLayout());
 
         zoomPanel.setFocusable(false);
@@ -221,6 +454,13 @@ final class MapPanel extends javax.swing.JPanel {
         mapViewer.add(zoomPanel, gridBagConstraints);
 
         add(mapViewer, java.awt.BorderLayout.CENTER);
+
+        infoPanel.setLayout(new java.awt.BorderLayout());
+
+        org.openide.awt.Mnemonics.setLocalizedText(cordLabel, org.openide.util.NbBundle.getMessage(MapPanel.class, "MapPanel.cordLabel.text")); // NOI18N
+        infoPanel.add(cordLabel, java.awt.BorderLayout.EAST);
+
+        add(infoPanel, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
 
     private void zoomSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zoomSliderStateChanged
@@ -229,8 +469,32 @@ final class MapPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_zoomSliderStateChanged
 
+    private void mapViewerMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMousePressed
+        if (evt.isPopupTrigger()) {
+            showPopupMenu(evt.getPoint());
+        }
+    }//GEN-LAST:event_mapViewerMousePressed
+
+    private void mapViewerMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseReleased
+        if (evt.isPopupTrigger()) {
+            showPopupMenu(evt.getPoint());
+        }
+    }//GEN-LAST:event_mapViewerMouseReleased
+
+    private void mapViewerMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseMoved
+        GeoPosition geopos = mapViewer.getTileFactory().pixelToGeo(evt.getPoint(), mapViewer.getZoom());
+        cordLabel.setText(geopos.toString());
+    }//GEN-LAST:event_mapViewerMouseMoved
+
+    private void mapViewerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mapViewerMouseClicked
+        currentlySelectedWaypoint = findClosestWaypoint(evt.getPoint());
+        showDetailsPopup();
+    }//GEN-LAST:event_mapViewerMouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel cordLabel;
+    private javax.swing.JPanel infoPanel;
     private org.jxmapviewer.JXMapViewer mapViewer;
     private javax.swing.JPanel zoomPanel;
     private javax.swing.JSlider zoomSlider;
