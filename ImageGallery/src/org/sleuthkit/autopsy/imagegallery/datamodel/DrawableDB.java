@@ -420,7 +420,7 @@ public final class DrawableDB {
                 drawablesDbStmt.execute(deleteCommand);
             }
             return true;
-            
+
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to remove deleted data sources from drawables database", ex); //NON-NLS
             return false;
