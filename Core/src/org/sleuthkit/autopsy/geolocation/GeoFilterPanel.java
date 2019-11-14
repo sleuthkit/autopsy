@@ -72,8 +72,10 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(0, 15, 0, 15);
         add(checkboxPanel, gridBagConstraints);
-
-        try {
+    }
+    
+    void updateDataSourceList() {
+         try {
             initCheckboxList();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to initialize the CheckboxListPane", ex); //NON-NLS
@@ -119,6 +121,8 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private void initCheckboxList() throws TskCoreException {
         final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
 
+        checkboxPanel.clearList();
+        
         for (DataSource dataSource : sleuthkitCase.getDataSources()) {
             String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
             checkboxPanel.addElement(dsName, dataSource);

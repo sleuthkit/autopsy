@@ -54,6 +54,13 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
     void addElement(String displayName, T obj) {
         model.addElement(new ObjectCheckBox<>(displayName, true, obj));
     }
+    
+    /**
+     * Remove all objects from the checkbox list.
+     */
+    void clearList() {
+        model.removeAllElements();
+    }
 
     /**
      * Returns a list of all of the selected elements.

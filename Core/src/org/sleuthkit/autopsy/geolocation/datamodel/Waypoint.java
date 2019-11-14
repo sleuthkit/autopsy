@@ -25,12 +25,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -67,8 +64,6 @@ public class Waypoint {
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_START,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE_END,
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE_END,};
-
-    private static final Logger logger = Logger.getLogger(Waypoint.class.getName());
 
     /**
      * Construct a waypoint with the given artifact.

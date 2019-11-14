@@ -353,15 +353,11 @@ public final class WaypointBuilder {
      * @return SQL SELECT statement
      */
     static private String buildQueryForWaypointsWOTimeStamps(List<DataSource> dataSources) {
-        String query = "";
-
-        query = String.format(SELECT_WO_TIMESTAMP,
+        return String.format(SELECT_WO_TIMESTAMP,
                 String.format(GEO_ARTIFACT_QUERY_ID_ONLY,
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()),
                 getWaypointListQuery(dataSources));
-
-        return query;
     }
 
     /**
@@ -408,7 +404,7 @@ public final class WaypointBuilder {
         query += String.format("AND artifact_id IN(%s)", getWaypointListQuery(dataSources)); //NON-NLS
         query += mostRecentQuery;
 
-        if (noTimeStamp) {
+        if (showAll || noTimeStamp) {
             query = String.format("%s UNION %s", buildQueryForWaypointsWOTimeStamps(dataSources), query); //NON-NLS
         }
 
