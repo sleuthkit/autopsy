@@ -137,9 +137,9 @@ final class XRYMessagesFileParser implements XRYFileParser {
             String namespace = "";
             for (int i = 1; i < xryLines.length; i++) {
                 String xryLine = xryLines[i];
-                String normalizedXryLine = xryLine.trim().toLowerCase();
+                String candidateNamespace = xryLine.trim().toLowerCase();
 
-                if (XRY_NAMESPACES.contains(normalizedXryLine)) {
+                if (XRY_NAMESPACES.contains(candidateNamespace)) {
                     namespace = xryLine.trim();
                     continue;
                 }
@@ -273,7 +273,11 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         + "segment with reference number [ %d ]", nextEntityLines[0], referenceNumber));
             }
 
-            if (nextSegmentNumber != currentSegmentNumber + 1) {
+            if(nextSegmentNumber == Integer.MIN_VALUE) {
+                logger.log(Level.SEVERE, String.format("[XRY DSP] Segment with reference"
+                        + " number [ %d ] did not have a segment number associated with it."
+                        + " It cannot be determined if the reconstructed text will be in order.", referenceNumber));
+            } else if (nextSegmentNumber != currentSegmentNumber + 1) {
                 logger.log(Level.SEVERE, String.format("[XRY DSP] Contiguous "
                         + "segments are not ascending incrementally. Encountered "
                         + "segment [ %d ] after segment [ %d ]. This means the reconstructed "
