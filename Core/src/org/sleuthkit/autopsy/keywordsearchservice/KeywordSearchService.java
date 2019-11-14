@@ -28,11 +28,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * An interface for implementations of a keyword search service. You can find
  * the implementations by using Lookup, such as:
- * 
+ *
  * Lookup.getDefault().lookup(KeywordSearchService.class)
- * 
+ *
  * although most clients should obtain a keyword search service by calling:
- * 
+ *
  * Case.getCurrentCase().getServices().getKeywordSearchService()
  *
  * TODO (AUT-2158): This interface should not extend Closeable.
@@ -82,7 +82,7 @@ public interface KeywordSearchService extends Closeable {
      * @throws KeywordSearchServiceException if unable to delete.
      */
     public void deleteTextIndex(CaseMetadata metadata) throws KeywordSearchServiceException;
-    
+
     /**
      * Closes the keyword search service.
      *
@@ -95,6 +95,15 @@ public interface KeywordSearchService extends Closeable {
          * No-op maintained for backwards compatibility. Clients should not
          * attempt to close case services.
          */
-    }    
+    }
+
+    /**
+     * Deletes the keyword search text for a specific data source.
+     *
+     * @param dataSourceId The data source id to be deleted.
+     *
+     * @throws KeywordSearchServiceException if unable to delete.
+     */
+    void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException;
 
 }

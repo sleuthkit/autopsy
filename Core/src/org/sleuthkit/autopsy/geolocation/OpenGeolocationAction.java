@@ -33,7 +33,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 
 /**
- * Action that opens the Geolocation window. Available through the Tools menu.
+ * Action for opening the Geolocation window. This action is 
+ * currently available through the Tools menu.
  *
  */
 @ActionID(category = "Tools",
