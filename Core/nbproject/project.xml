@@ -327,6 +327,7 @@
                 <package>org.sleuthkit.autopsy.datasourceprocessors</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
                 <package>org.sleuthkit.autopsy.events</package>
+                <package>org.sleuthkit.autopsy.exceptions</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
                 <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.healthmonitor</package>
