@@ -224,7 +224,7 @@ public final class GeolocationTopComponent extends TopComponent {
         try {
             filters = geoFilterPanel.getFilterState();
         } catch (GeoLocationUIException ex) {
-            JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
+            JOptionPane.showMessageDialog(this, 
                                         Bundle.GeoTopComponent_filer_data_invalid_msg(),
                                         Bundle.GeoTopComponent_filer_data_invalid_Title(),
                                         JOptionPane.INFORMATION_MESSAGE);
