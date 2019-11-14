@@ -621,7 +621,12 @@ class FileSearch {
         private final FileSize fileSize;
 
         FileSizeGroupKey(ResultFile file) {
-            fileSize = FileSize.fromSize(file.getFirstInstance().getSize());
+            if (file.getFileType() == FileType.VIDEO) {
+                fileSize = FileSize.fromVideoSize(file.getFirstInstance().getSize());
+            }
+            else {
+                fileSize = FileSize.fromImageSize(file.getFirstInstance().getSize());
+            }
         }
 
         @Override
@@ -1846,7 +1851,7 @@ class FileSearch {
          *
          * @return enums that can be used to group images
          */
-        static List<GroupingAttributeType> getOptionsForGroupingImages() {
+        static List<GroupingAttributeType> getOptionsForGrouping() {
             return Arrays.asList(FILE_SIZE, FREQUENCY, PARENT_PATH, OBJECT_DETECTED, HASH_LIST_NAME, INTERESTING_ITEM_SET);
         }
     }

@@ -58,6 +58,7 @@ import org.sleuthkit.datamodel.TagName;
 final class FileSearchPanel extends javax.swing.JPanel implements ActionListener {
 
     private static final long serialVersionUID = 1L;
+    private static final String[] DEFAULT_IGNORED_PATHS = {"Windows", "Program Files"};
     private final static Logger logger = Logger.getLogger(FileSearchPanel.class.getName());
     private FileType fileType = FileType.IMAGE;
     private DefaultListModel<FileSearchFiltering.ParentSearchTerm> parentListModel;
@@ -69,121 +70,437 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     @NbBundle.Messages({"FileSearchPanel.dialogTitle.text=Test file search"})
     FileSearchPanel() {
         initComponents();
+        parentListModel = (DefaultListModel<FileSearchFiltering.ParentSearchTerm>) parentList.getModel();
+        for (String ignorePath : DEFAULT_IGNORED_PATHS) {
+            parentListModel.add(parentListModel.size(), new ParentSearchTerm(ignorePath, false, false));
+        }
+    }
+
+    /**
+     * Setup the data source filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        dataSourceCheckbox.setVisible(visible);
+        dataSourceScrollPane.setVisible(visible);
+        dataSourceList.setVisible(visible);
+        dataSourceCheckbox.setEnabled(enabled);
+        dataSourceCheckbox.setSelected(selected);
+        if (dataSourceCheckbox.isEnabled() && dataSourceCheckbox.isSelected()) {
+            dataSourceScrollPane.setEnabled(true);
+            dataSourceList.setEnabled(true);
+            if (indiciesSelected != null) {
+                dataSourceList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            dataSourceScrollPane.setEnabled(false);
+            dataSourceList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the file size filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void sizeFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        sizeCheckbox.setVisible(visible);
+        sizeScrollPane.setVisible(visible);
+        sizeList.setVisible(visible);
+        sizeCheckbox.setEnabled(enabled);
+        sizeCheckbox.setSelected(selected);
+        if (sizeCheckbox.isEnabled() && sizeCheckbox.isSelected()) {
+            sizeScrollPane.setEnabled(true);
+            sizeList.setEnabled(true);
+            if (indiciesSelected != null) {
+                sizeList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            sizeScrollPane.setEnabled(false);
+            sizeList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the central repository frequency filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void crFrequencyFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        crFrequencyCheckbox.setVisible(visible);
+        crFrequencyScrollPane.setVisible(visible);
+        crFrequencyList.setVisible(visible);
+        crFrequencyCheckbox.setEnabled(enabled);
+        crFrequencyCheckbox.setSelected(selected);
+        if (crFrequencyCheckbox.isEnabled() && crFrequencyCheckbox.isSelected()) {
+            crFrequencyScrollPane.setEnabled(true);
+            crFrequencyList.setEnabled(true);
+            if (indiciesSelected != null) {
+                crFrequencyList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            crFrequencyScrollPane.setEnabled(false);
+            crFrequencyList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the objects filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void objectsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        objectsCheckbox.setVisible(visible);
+        objectsScrollPane.setVisible(visible);
+        objectsList.setVisible(visible);
+        objectsCheckbox.setEnabled(enabled);
+        objectsCheckbox.setSelected(selected);
+        if (objectsCheckbox.isEnabled() && objectsCheckbox.isSelected()) {
+            objectsScrollPane.setEnabled(true);
+            objectsList.setEnabled(true);
+            if (indiciesSelected != null) {
+                objectsList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            objectsScrollPane.setEnabled(false);
+            objectsList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the hash set filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void hashSetFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        hashSetCheckbox.setVisible(visible);
+        hashSetScrollPane.setVisible(visible);
+        hashSetList.setVisible(visible);
+        hashSetCheckbox.setEnabled(enabled);
+        hashSetCheckbox.setSelected(selected);
+        if (hashSetCheckbox.isEnabled() && hashSetCheckbox.isSelected()) {
+            hashSetScrollPane.setEnabled(true);
+            hashSetList.setEnabled(true);
+            if (indiciesSelected != null) {
+                hashSetList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            hashSetScrollPane.setEnabled(false);
+            hashSetList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the interesting items filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void interestingItemsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        interestingItemsCheckbox.setVisible(visible);
+        interestingItemsScrollPane.setVisible(visible);
+        interestingItemsList.setVisible(visible);
+        interestingItemsCheckbox.setEnabled(enabled);
+        interestingItemsCheckbox.setSelected(selected);
+        if (interestingItemsCheckbox.isEnabled() && interestingItemsCheckbox.isSelected()) {
+            interestingItemsScrollPane.setEnabled(true);
+            interestingItemsList.setEnabled(true);
+            if (indiciesSelected != null) {
+                interestingItemsList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            interestingItemsScrollPane.setEnabled(false);
+            interestingItemsList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the score filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void scoreFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        scoreCheckbox.setVisible(visible);
+        scoreScrollPane.setVisible(visible);
+        scoreList.setVisible(visible);
+        scoreCheckbox.setEnabled(enabled);
+        scoreCheckbox.setSelected(selected);
+        if (scoreCheckbox.isEnabled() && scoreCheckbox.isSelected()) {
+            scoreScrollPane.setEnabled(true);
+            scoreList.setEnabled(true);
+            if (indiciesSelected != null) {
+                scoreList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            scoreScrollPane.setEnabled(false);
+            scoreList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the parent path filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void parentFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        parentCheckbox.setVisible(visible);
+        parentScrollPane.setVisible(visible);
+        parentList.setVisible(visible);
+        parentCheckbox.setEnabled(enabled);
+        parentCheckbox.setSelected(selected);
+        if (parentCheckbox.isEnabled() && parentCheckbox.isSelected()) {
+            parentScrollPane.setEnabled(true);
+            includeRadioButton.setEnabled(true);
+            excludeRadioButton.setEnabled(true);
+            fullRadioButton.setEnabled(true);
+            substringRadioButton.setEnabled(true);
+            addButton.setEnabled(true);
+            deleteButton.setEnabled(!parentListModel.isEmpty());
+            parentList.setEnabled(true);
+            if (indiciesSelected != null) {
+                parentList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            parentScrollPane.setEnabled(false);
+            parentList.setEnabled(false);
+            includeRadioButton.setEnabled(false);
+            excludeRadioButton.setEnabled(false);
+            fullRadioButton.setEnabled(false);
+            substringRadioButton.setEnabled(false);
+            addButton.setEnabled(false);
+            deleteButton.setEnabled(false);
+
+        }
+    }
+
+    /**
+     * Setup the tags filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void tagsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        tagsCheckbox.setVisible(visible);
+        tagsScrollPane.setVisible(visible);
+        tagsList.setVisible(visible);
+        tagsCheckbox.setEnabled(enabled);
+        tagsCheckbox.setSelected(selected);
+        if (tagsCheckbox.isEnabled() && tagsCheckbox.isSelected()) {
+            tagsScrollPane.setEnabled(true);
+            tagsList.setEnabled(true);
+            if (indiciesSelected != null) {
+                tagsList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            tagsScrollPane.setEnabled(false);
+            tagsList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the keyword filter settings.
+     *
+     * @param visible          Boolean indicating if the filter should be
+     *                         visible.
+     * @param enabled          Boolean indicating if the filter should be
+     *                         enabled.
+     * @param selected         Boolean indicating if the filter should be
+     *                         selected.
+     * @param indiciesSelected Array of integers indicating which list items are
+     *                         selected, null to indicate leaving selected items
+     *                         unchanged.
+     */
+    private void keywordFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+        keywordCheckbox.setVisible(visible);
+        keywordScrollPane.setVisible(visible);
+        keywordList.setVisible(visible);
+        keywordCheckbox.setEnabled(enabled);
+        keywordCheckbox.setSelected(selected);
+        if (keywordCheckbox.isEnabled() && keywordCheckbox.isSelected()) {
+            keywordScrollPane.setEnabled(true);
+            keywordList.setEnabled(true);
+            if (indiciesSelected != null) {
+                keywordList.setSelectedIndices(indiciesSelected);
+            }
+        } else {
+            keywordScrollPane.setEnabled(false);
+            keywordList.setEnabled(false);
+        }
+    }
+
+    /**
+     * Setup the exif filter settings.
+     *
+     * @param visible  Boolean indicating if the filter should be visible.
+     * @param enabled  Boolean indicating if the filter should be enabled.
+     * @param selected Boolean indicating if the filter should be selected.
+     */
+    private void exifFilterSettings(boolean visible, boolean enabled, boolean selected) {
+        exifCheckbox.setVisible(visible);
+        exifCheckbox.setEnabled(enabled);
+        exifCheckbox.setSelected(selected);
+    }
+
+    /**
+     * Setup the known status filter settings.
+     *
+     * @param visible  Boolean indicating if the filter should be visible.
+     * @param enabled  Boolean indicating if the filter should be enabled.
+     * @param selected Boolean indicating if the filter should be selected.
+     */
+    private void knownFilesFilterSettings(boolean visible, boolean enabled, boolean selected) {
+        knownFilesCheckbox.setVisible(visible);
+        knownFilesCheckbox.setEnabled(enabled);
+        knownFilesCheckbox.setSelected(selected);
+    }
+
+    /**
+     * Setup the notable filter settings.
+     *
+     * @param visible  Boolean indicating if the filter should be visible.
+     * @param enabled  Boolean indicating if the filter should be enabled.
+     * @param selected Boolean indicating if the filter should be selected.
+     */
+    private void notableFilterSettings(boolean visible, boolean enabled, boolean selected) {
+        notableCheckbox.setVisible(visible);
+        notableCheckbox.setEnabled(enabled);
+        notableCheckbox.setSelected(selected);
     }
 
     /**
      * Set the UI elements available to be the set of UI elements available when
      * an Image search is being performed.
+     *
+     * @param enabled       Boolean indicating if the filters present for images
+     *                      should be enabled.
+     * @param resetSelected Boolean indicating if selection of the filters
+     *                      present for images should be reset to their default
+     *                      status.
      */
-    private void imagesSelected() {
-        dataSourceCheckbox.setVisible(true);
-        dataSourceScrollPane.setVisible(true);
-        dataSourceList.setVisible(true);
-        sizeCheckbox.setVisible(true);
-        sizeCheckbox.setSelected(true);
-        sizeScrollPane.setVisible(true);
-        sizeList.setVisible(true);
+    private void imagesSelected(boolean enabled, boolean resetSelected) {
+        dataSourceFilterSettings(true, enabled, resetSelected == true ? false : dataSourceCheckbox.isSelected(), null);
         int[] selectedSizeIndices = {1, 2, 3, 4, 5, 6};
-        sizeList.setEnabled(true);
-        sizeList.setSelectedIndices(selectedSizeIndices);
-        sizeScrollPane.setEnabled(true);
-        sizeScrollPane.setVisible(true);
-        crFrequencyCheckbox.setVisible(true);
-        crFrequencyCheckbox.setSelected(true);
+        sizeFilterSettings(true, enabled, resetSelected == true ? true : sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
         int[] selectedFrequencyIndices;
         if (!EamDb.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        crFrequencyList.setEnabled(true);
-        crFrequencyList.setVisible(true);
-        crFrequencyList.setSelectedIndices(selectedFrequencyIndices);
-        crFrequencyScrollPane.setEnabled(true);
-        crFrequencyScrollPane.setVisible(true);
-        exifCheckbox.setVisible(true);
-        objectsCheckbox.setVisible(true);
-        objectsList.setVisible(true);
-        objectsScrollPane.setVisible(true);
-        hashSetCheckbox.setVisible(true);
-        hashSetList.setVisible(true);
-        hashSetScrollPane.setVisible(true);
-        interestingItemsCheckbox.setVisible(true);
-        interestingItemsList.setVisible(true);
-        interestingItemsScrollPane.setVisible(true);
-        scoreCheckbox.setSelected(false);
-        scoreCheckbox.setVisible(false);
-        scoreList.setVisible(false);
-        scoreScrollPane.setVisible(false);
-        tagsCheckbox.setSelected(false);
-        tagsCheckbox.setVisible(false);
-        tagsList.setVisible(false);
-        tagsScrollPane.setVisible(false);
-        keywordCheckbox.setSelected(false);
-        keywordCheckbox.setVisible(false);
-        keywordList.setVisible(false);
-        keywordScrollPane.setVisible(false);
-        knownFilesCheckbox.setVisible(false);
-        notableCheckbox.setVisible(false);
+        crFrequencyFilterSettings(true, enabled, resetSelected == true ? true : crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        exifFilterSettings(true, enabled, resetSelected == true ? false : exifCheckbox.isSelected());
+        objectsFilterSettings(true, enabled, resetSelected == true ? false : objectsCheckbox.isSelected(), null);
+        hashSetFilterSettings(true, enabled, resetSelected == true ? false : hashSetCheckbox.isSelected(), null);
+        interestingItemsFilterSettings(true, enabled, resetSelected == true ? false : interestingItemsCheckbox.isSelected(), null);
+        parentFilterSettings(true, false, false, null);
+        scoreFilterSettings(false, false, false, null);
+        tagsFilterSettings(false, false, false, null);
+        keywordFilterSettings(false, false, false, null);
+        knownFilesFilterSettings(false, false, false);
+        notableFilterSettings(false, false, false);
     }
 
     /**
      * Set the UI elements available to be the set of UI elements available when
      * a Video search is being performed.
+     *
+     * @param enabled       Boolean indicating if the filters present for videos
+     *                      should be enabled.
+     * @param resetSelected Boolean indicating if selection of the filters
+     *                      present for videos should be reset to their default
+     *                      status.
      */
-    private void videosSelected() {
-        dataSourceCheckbox.setVisible(true);
-        dataSourceScrollPane.setVisible(true);
-        dataSourceList.setVisible(true);
-        sizeCheckbox.setVisible(true);
-        sizeCheckbox.setSelected(true);
-        sizeScrollPane.setVisible(true);
-        sizeList.setVisible(true);
-        int[] selectedSizeIndices = {1, 2, 3, 4, 5, 6};
-        sizeList.setEnabled(true);
-        sizeList.setSelectedIndices(selectedSizeIndices);
-        sizeScrollPane.setEnabled(true);
-        sizeScrollPane.setVisible(true);
-        crFrequencyCheckbox.setVisible(true);
-        crFrequencyCheckbox.setSelected(true);
+    private void videosSelected(boolean enabled, boolean resetSelected) {
+        dataSourceFilterSettings(true, enabled, resetSelected == true ? false : dataSourceCheckbox.isSelected(), null);
+        sizeFilterSettings(true, enabled, resetSelected == true ? false : sizeCheckbox.isSelected(), null);
         int[] selectedFrequencyIndices;
         if (!EamDb.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        crFrequencyList.setEnabled(true);
-        crFrequencyList.setVisible(true);
-        crFrequencyList.setSelectedIndices(selectedFrequencyIndices);
-        crFrequencyScrollPane.setEnabled(true);
-        crFrequencyScrollPane.setVisible(true);
-        exifCheckbox.setVisible(true);
-        objectsCheckbox.setSelected(false);
-        objectsCheckbox.setVisible(false);
-        objectsList.setVisible(false);
-        objectsScrollPane.setVisible(false);
-        hashSetCheckbox.setVisible(true);
-        hashSetList.setVisible(true);
-        hashSetScrollPane.setVisible(true);
-        interestingItemsCheckbox.setVisible(true);
-        interestingItemsList.setVisible(true);
-        interestingItemsScrollPane.setVisible(true);
-        scoreCheckbox.setSelected(false);
-        scoreCheckbox.setVisible(false);
-        scoreList.setVisible(false);
-        scoreScrollPane.setVisible(false);
-        tagsCheckbox.setSelected(false);
-        tagsCheckbox.setVisible(false);
-        tagsList.setVisible(false);
-        tagsScrollPane.setVisible(false);
-        keywordCheckbox.setSelected(false);
-        keywordCheckbox.setVisible(false);
-        keywordList.setVisible(false);
-        keywordScrollPane.setVisible(false);
-        knownFilesCheckbox.setSelected(false);
-        knownFilesCheckbox.setVisible(false);
-        notableCheckbox.setSelected(false);
-        notableCheckbox.setVisible(false);
+        crFrequencyFilterSettings(true, enabled, resetSelected == true ? true : crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        exifFilterSettings(true, enabled, resetSelected == true ? false : exifCheckbox.isSelected());
+        objectsFilterSettings(true, enabled, resetSelected == true ? false : objectsCheckbox.isSelected(), null);
+        hashSetFilterSettings(true, enabled, resetSelected == true ? false : hashSetCheckbox.isSelected(), null);
+        interestingItemsFilterSettings(true, enabled, resetSelected == true ? false : interestingItemsCheckbox.isSelected(), null);
+        parentFilterSettings(true, false, false, null);
+        scoreFilterSettings(false, false, false, null);
+        tagsFilterSettings(false, false, false, null);
+        keywordFilterSettings(false, false, false, null);
+        knownFilesFilterSettings(false, false, false);
+        notableFilterSettings(false, false, false);
     }
 
     /**
@@ -192,25 +509,23 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param type The type of File to be found by the search.
      */
     void setSelectedType(FileType type) {
+        if (type != fileType) {
+            //change the size filter if the type changed
+            setUpSizeFilter();
+        }
         fileType = type;
         if (fileType == FileType.IMAGE) {
-            imagesSelected();
+            imagesSelected(true, true);
         } else if (fileType == FileType.VIDEO) {
-            videosSelected();
+            videosSelected(true, true);
         }
+        validateFields();
     }
 
     /**
      * Reset the panel to its initial configuration.
      */
     void resetPanel() {
-        customizeComponents();
-    }
-
-    /**
-     * Set up all the UI components
-     */
-    private void customizeComponents() {
 
         searchButton.setEnabled(false);
 
@@ -228,14 +543,14 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
 
         groupByCombobox.removeAllItems();
         // Set up the grouping attributes
-        for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGroupingImages()) {
+        for (FileSearch.GroupingAttributeType type : FileSearch.GroupingAttributeType.getOptionsForGrouping()) {
             if (type != GroupingAttributeType.FREQUENCY || EamDb.isEnabled()) {
                 groupByCombobox.addItem(type);
             }
         }
         orderByCombobox.removeAllItems();
         // Set up the file order list
-        for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrderingImages()) {
+        for (FileSorter.SortingMethod method : FileSorter.SortingMethod.getOptionsForOrdering()) {
             if (method != SortingMethod.BY_FREQUENCY || EamDb.isEnabled()) {
                 orderByCombobox.addItem(method);
             }
@@ -245,16 +560,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     /**
-     * Add listeners to the checkbox/list set. Either can be null.
+     * Add listeners to the checkbox/list set if listeners have not already been
+     * added. Either can be null.
      *
      * @param checkBox
      * @param list
      */
     private void addListeners(JCheckBox checkBox, JList<?> list) {
-        if (checkBox != null) {
+        if (checkBox != null && checkBox.getActionListeners().length == 0) {
             checkBox.addActionListener(this);
         }
-        if (list != null) {
+        if (list != null && list.getListSelectionListeners().length == 0) {
             list.addListSelectionListener(new ListSelectionListener() {
                 @Override
                 public void valueChanged(ListSelectionEvent evt) {
@@ -312,8 +628,26 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         int count = 0;
         DefaultListModel<FileSearchData.FileSize> sizeListModel = (DefaultListModel<FileSearchData.FileSize>) sizeList.getModel();
         sizeListModel.removeAllElements();
-        for (FileSearchData.FileSize size : FileSearchData.FileSize.values()) {
-            sizeListModel.add(count, size);
+        if (null == fileType) {
+            for (FileSearchData.FileSize size : FileSearchData.FileSize.values()) {
+                sizeListModel.add(count, size);
+            }
+        } else {
+            List<FileSearchData.FileSize> sizes;
+            switch (fileType) {
+                case VIDEO:
+                    sizes = FileSearchData.FileSize.getOptionsForVideos();
+                    break;
+                case IMAGE:
+                    sizes = FileSearchData.FileSize.getOptionsForImages();
+                    break;
+                default:
+                    sizes = new ArrayList<>();
+                    break;
+            }
+            for (FileSearchData.FileSize size : sizes) {
+                sizeListModel.add(count, size);
+            }
         }
         addListeners(sizeCheckbox, sizeList);
     }
@@ -1341,13 +1675,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        enableSearch(false);
-
-        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(fileType));
-        // For testing, allow the user to run different searches in loop
-
         // Get the selected filters
         List<FileSearchFiltering.FileFilter> filters = getFilters();
+        enableSearch(false);
+        DiscoveryEvents.getDiscoveryEventBus().post(new DiscoveryEvents.SearchStartedEvent(fileType));
 
         // Get the grouping attribute and group sorting method
         FileSearch.AttributeType groupingAttr = getGroupingAttribute();
@@ -1381,52 +1712,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         } else {
             DiscoveryTopComponent.getTopComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
+        if (fileType == FileType.IMAGE) {
+            imagesSelected(enabled, false);
+        } else if (fileType == FileType.VIDEO) {
+            videosSelected(enabled, false);
+        }
         searchButton.setEnabled(enabled);
         cancelButton.setEnabled(!enabled);
         orderByCombobox.setEnabled(enabled);
         groupByCombobox.setEnabled(enabled);
         attributeRadioButton.setEnabled(enabled);
         groupSizeRadioButton.setEnabled(enabled);
-        sizeCheckbox.setEnabled(enabled);
-        sizeScrollPane.setEnabled(enabled && sizeCheckbox.isSelected());
-        sizeList.setEnabled(enabled && sizeCheckbox.isSelected());
-        dataSourceCheckbox.setEnabled(enabled);
-        dataSourceList.setEnabled(enabled && dataSourceCheckbox.isSelected());
-        dataSourceScrollPane.setEnabled(enabled && dataSourceCheckbox.isSelected());
-        crFrequencyCheckbox.setEnabled(enabled);
-        crFrequencyScrollPane.setEnabled(enabled && crFrequencyCheckbox.isSelected());
-        crFrequencyList.setEnabled(enabled && crFrequencyCheckbox.isSelected());
-        keywordCheckbox.setEnabled(enabled);
-        keywordList.setEnabled(enabled && keywordCheckbox.isSelected());
-        keywordScrollPane.setEnabled(enabled && keywordCheckbox.isSelected());
-        hashSetCheckbox.setEnabled(enabled);
-        hashSetScrollPane.setEnabled(enabled && hashSetCheckbox.isSelected());
-        hashSetList.setEnabled(enabled && hashSetCheckbox.isSelected());
-        objectsCheckbox.setEnabled(enabled);
-        objectsScrollPane.setEnabled(enabled && objectsCheckbox.isSelected());
-        objectsList.setEnabled(enabled && objectsCheckbox.isSelected());
-        tagsCheckbox.setEnabled(enabled);
-        tagsScrollPane.setEnabled(enabled && tagsCheckbox.isSelected());
-        tagsList.setEnabled(enabled && tagsCheckbox.isSelected());
-        interestingItemsCheckbox.setEnabled(enabled);
-        interestingItemsScrollPane.setEnabled(enabled && interestingItemsCheckbox.isSelected());
-        interestingItemsList.setEnabled(enabled && interestingItemsCheckbox.isSelected());
-        scoreCheckbox.setEnabled(enabled);
-        scoreScrollPane.setEnabled(enabled && scoreCheckbox.isSelected());
-        scoreList.setEnabled(enabled && scoreCheckbox.isSelected());
-        exifCheckbox.setEnabled(enabled);
-        notableCheckbox.setEnabled(enabled);
-        knownFilesCheckbox.setEnabled(enabled);
-        parentCheckbox.setEnabled(enabled);
-        parentScrollPane.setEnabled(enabled && parentCheckbox.isSelected());
-        parentList.setEnabled(enabled && parentCheckbox.isSelected());
-        parentTextField.setEnabled(enabled && parentCheckbox.isSelected());
-        addButton.setEnabled(enabled && parentCheckbox.isSelected());
-        deleteButton.setEnabled(enabled && parentCheckbox.isSelected() && !parentListModel.isEmpty());
-        fullRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
-        substringRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
-        includeRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
-        excludeRadioButton.setEnabled(enabled && parentCheckbox.isSelected());
+        validateFields();
     }
 
     /**
@@ -1454,14 +1751,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     }
 
     private void parentCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parentCheckboxActionPerformed
-        parentList.setEnabled(parentCheckbox.isSelected());
-        fullRadioButton.setEnabled(parentCheckbox.isSelected());
-        substringRadioButton.setEnabled(parentCheckbox.isSelected());
-        includeRadioButton.setEnabled(parentCheckbox.isSelected());
-        excludeRadioButton.setEnabled(parentCheckbox.isSelected());
-        parentTextField.setEnabled(parentCheckbox.isSelected());
-        addButton.setEnabled(parentCheckbox.isSelected());
-        deleteButton.setEnabled(parentCheckbox.isSelected() && !parentListModel.isEmpty());
+        parentFilterSettings(true, true, parentCheckbox.isSelected(), null);
     }//GEN-LAST:event_parentCheckboxActionPerformed
 
     private void keywordCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordCheckboxActionPerformed

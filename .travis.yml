@@ -1,8 +1,11 @@
 language: java
 sudo: required
-dist: bionic
-os:
- - linux
+
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+    - os: osx
 
 env:
  global:
@@ -12,6 +15,7 @@ addons:
   apt:
     update: true
     packages:
+    - testdisk
     - libafflib-dev
     - libewf-dev
     - libpq-dev
@@ -29,11 +33,13 @@ addons:
     update: true
     packages:
     - ant
-    - ant-optional
+    - wget
+    - libpq
     - libewf
     - gettext
     - cppunit
     - afflib
+    - testdisk
 
 python:
   - "2.7"
@@ -43,9 +49,7 @@ before_install:
  - python setupSleuthkitBranch.py
 
 install:
- - sudo apt-get install testdisk
- - cd sleuthkit/sleuthkit
- - ./travis_install_libs.sh
+ - pushd sleuthkit/sleuthkit && ./travis_install_libs.sh && popd
 
 before_script:
   - if [ $TRAVIS_OS_NAME = linux ]; then 
@@ -54,13 +58,13 @@ before_script:
         export PATH=/usr/bin:$PATH; 
         unset JAVA_HOME;
     fi
+  - if [ $TRAVIS_OS_NAME = osx ]; then
+        brew uninstall java --force;
+        brew cask uninstall java --force;
+        brew tap homebrew/cask-versions;
+        brew cask install corretto8;
+        export JAVA_HOME=/Library/Java/JavaVirtualMachines/amazon-corretto-8.jdk/Contents/Home;
+    fi
+  - java -version
 
-script:
- - set -e
- - echo "Building TSK..."
- - ./bootstrap && ./configure --prefix=/usr && make
- - pushd bindings/java/ && ant -q dist-PostgreSQL && popd
- - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
- - cd $TRAVIS_BUILD_DIR/
- - ant build
- - echo -en 'travis_fold:end:script.build\\r'
+script: ./travis_build.sh
