@@ -463,7 +463,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
-        parentFilterSettings(true, false, false, null);
+        parentFilterSettings(true, true, false, null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
         keywordFilterSettings(false, false, false, null);
@@ -495,7 +495,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
         hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
         interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
-        parentFilterSettings(true, false, false, null);
+        parentFilterSettings(true, true, false, null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
         keywordFilterSettings(false, false, false, null);
@@ -509,11 +509,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param type The type of File to be found by the search.
      */
     void setSelectedType(FileType type) {
-        if (type.equals(fileType)) {
-            //change the size filter if the type changed
-            setUpSizeFilter();
-        }
         fileType = type;
+        setUpSizeFilter();
         if (fileType == FileType.IMAGE) {
             imagesSelected(true, true);
         } else if (fileType == FileType.VIDEO) {
@@ -567,10 +564,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param list
      */
     private void addListeners(JCheckBox checkBox, JList<?> list) {
-        if (checkBox != null && checkBox.getActionListeners().length == 0) {
+        if (checkBox != null) {
             checkBox.addActionListener(this);
         }
-        if (list != null && list.getListSelectionListeners().length == 0) {
+        if (list != null) {
             list.addListSelectionListener(new ListSelectionListener() {
                 @Override
                 public void valueChanged(ListSelectionEvent evt) {
