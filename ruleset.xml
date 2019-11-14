@@ -140,7 +140,6 @@
   <rule ref="rulesets/java/design.xml/ReturnEmptyArrayRatherThanNull"/>
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAnyMethod"/>
   <rule ref="rulesets/java/design.xml/TooFewBranchesForASwitchStatement"/>
-  <rule ref="rulesets/java/design.xml/UseVarargs"/>
   <!-- Commented out because it flagged many of the NetBeans created UI classes that place
     fields at various places in the class
     <rule ref="rulesets/java/design.xml/FieldDeclarationsShouldBeAtStartOfClass"/> -->
