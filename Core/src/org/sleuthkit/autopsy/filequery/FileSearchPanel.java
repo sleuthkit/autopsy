@@ -519,6 +519,10 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         validateFields();
     }
 
+    FileType getSelectedType(){
+        return fileType;
+    }
+    
     /**
      * Reset the panel to its initial configuration.
      */
