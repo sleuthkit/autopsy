@@ -204,7 +204,6 @@ public class ExtractActionHelper {
             FileExtractionTask task = it.next();
 
             if (ContentUtils.isDotDirectory(task.source)) {
-                //JOptionPane.showMessageDialog((Component) e.getSource(), "Cannot extract virtual " + task.source.getName() + " directory.", "File is Virtual Directory", JOptionPane.WARNING_MESSAGE);
                 it.remove();
                 continue;
             }
