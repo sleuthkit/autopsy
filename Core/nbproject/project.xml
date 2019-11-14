@@ -327,6 +327,7 @@
                 <package>org.sleuthkit.autopsy.datasourceprocessors</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
                 <package>org.sleuthkit.autopsy.events</package>
+                <package>org.sleuthkit.autopsy.exceptions</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
                 <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.healthmonitor</package>
@@ -404,6 +405,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/okhttp-2.7.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/okhttp-2.7.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/libphonenumber-3.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/libphonenumber-3.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.20.jar</runtime-relative-path>
