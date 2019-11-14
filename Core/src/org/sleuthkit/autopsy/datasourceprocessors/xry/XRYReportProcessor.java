@@ -28,14 +28,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Processes all XRY files in an XRY folder.
  */
-class XRYReportProcessor {
+final class XRYReportProcessor {
 
     private static final Logger logger = Logger.getLogger(XRYReportProcessor.class.getName());
 
     /**
      * Processes all XRY Files and creates artifacts on the given Content
      * instance.
-     * 
+     *
      * All resources will be closed if an exception is encountered.
      *
      * @param folder XRY folder to process
@@ -66,8 +66,14 @@ class XRYReportProcessor {
                     xryFileReader.close();
                 }
             } catch (IOException ex) {
-                //Best effort closing all resources.
+                logger.log(Level.WARNING, "[XRY DSP] Encountered I/O exception trying "
+                        + "to close all xry file readers.", ex);
             }
         }
+    }
+
+    //Prevent direct instantiation.
+    private XRYReportProcessor() {
+
     }
 }

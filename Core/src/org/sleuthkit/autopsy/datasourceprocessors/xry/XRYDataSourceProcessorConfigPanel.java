@@ -26,7 +26,7 @@ import javax.swing.JPanel;
  * Allows an examiner to configure the XRY Data source processor.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class XRYDataSourceProcessorConfigPanel extends JPanel {
+final class XRYDataSourceProcessorConfigPanel extends JPanel {
 
     private static final XRYDataSourceProcessorConfigPanel INSTANCE = 
             new XRYDataSourceProcessorConfigPanel();

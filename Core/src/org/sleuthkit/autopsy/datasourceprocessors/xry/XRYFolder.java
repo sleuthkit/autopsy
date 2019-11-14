@@ -39,10 +39,10 @@ final class XRYFolder {
     private static final int XRY_FILES_DEPTH = 1;
 
     //Raw path to the XRY folder.
-    private final Path xryFolder;
+    private final Path xryFolderPath;
 
     public XRYFolder(Path folder) {
-        xryFolder = folder;
+        xryFolderPath = folder;
     }
 
     /**
@@ -54,12 +54,12 @@ final class XRYFolder {
      * @throws IOException If an I/O error occurs.
      */
     public List<Path> getNonXRYFiles() throws IOException {
-        try (Stream<Path> allFiles = Files.walk(xryFolder, XRY_FILES_DEPTH)) {
+        try (Stream<Path> allFiles = Files.walk(xryFolderPath, XRY_FILES_DEPTH)) {
             List<Path> otherFiles = new ArrayList<>();
             Iterator<Path> allFilesIterator = allFiles.iterator();
             while (allFilesIterator.hasNext()) {
                 Path currentPath = allFilesIterator.next();
-                if (!currentPath.equals(xryFolder)
+                if (!currentPath.equals(xryFolderPath)
                         && !XRYFileReader.isXRYFile(currentPath)) {
                     otherFiles.add(currentPath);
                 }
@@ -78,7 +78,7 @@ final class XRYFolder {
      * @throws IOException If an I/O error occurs.
      */
     public List<XRYFileReader> getXRYFileReaders() throws IOException {
-        try (Stream<Path> allFiles = Files.walk(xryFolder, XRY_FILES_DEPTH)) {
+        try (Stream<Path> allFiles = Files.walk(xryFolderPath, XRY_FILES_DEPTH)) {
             List<XRYFileReader> fileReaders = new ArrayList<>();
 
             Iterator<Path> allFilesIterator = allFiles.iterator();
