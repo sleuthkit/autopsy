@@ -451,18 +451,18 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     private void imagesSelected(boolean enabled, boolean resetSelected) {
         dataSourceFilterSettings(true, enabled, resetSelected == true ? false : dataSourceCheckbox.isSelected(), null);
         int[] selectedSizeIndices = {1, 2, 3, 4, 5, 6};
-        sizeFilterSettings(true, enabled, resetSelected == true ? true : sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
+        sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
         int[] selectedFrequencyIndices;
         if (!EamDb.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        crFrequencyFilterSettings(true, enabled, resetSelected == true ? true : crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
-        exifFilterSettings(true, enabled, resetSelected == true ? false : exifCheckbox.isSelected());
-        objectsFilterSettings(true, enabled, resetSelected == true ? false : objectsCheckbox.isSelected(), null);
-        hashSetFilterSettings(true, enabled, resetSelected == true ? false : hashSetCheckbox.isSelected(), null);
-        interestingItemsFilterSettings(true, enabled, resetSelected == true ? false : interestingItemsCheckbox.isSelected(), null);
+        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
+        hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
+        interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
         parentFilterSettings(true, false, false, null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
@@ -482,19 +482,19 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                      status.
      */
     private void videosSelected(boolean enabled, boolean resetSelected) {
-        dataSourceFilterSettings(true, enabled, resetSelected == true ? false : dataSourceCheckbox.isSelected(), null);
-        sizeFilterSettings(true, enabled, resetSelected == true ? false : sizeCheckbox.isSelected(), null);
+        dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
+        sizeFilterSettings(true, enabled, !resetSelected && sizeCheckbox.isSelected(), null);
         int[] selectedFrequencyIndices;
         if (!EamDb.isEnabled()) {
             selectedFrequencyIndices = new int[]{0};
         } else {
             selectedFrequencyIndices = new int[]{1, 2, 3, 4, 5, 6, 7};
         }
-        crFrequencyFilterSettings(true, enabled, resetSelected == true ? true : crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
-        exifFilterSettings(true, enabled, resetSelected == true ? false : exifCheckbox.isSelected());
-        objectsFilterSettings(true, enabled, resetSelected == true ? false : objectsCheckbox.isSelected(), null);
-        hashSetFilterSettings(true, enabled, resetSelected == true ? false : hashSetCheckbox.isSelected(), null);
-        interestingItemsFilterSettings(true, enabled, resetSelected == true ? false : interestingItemsCheckbox.isSelected(), null);
+        crFrequencyFilterSettings(true, enabled, resetSelected || crFrequencyCheckbox.isSelected(), resetSelected == true ? selectedFrequencyIndices : null);
+        exifFilterSettings(true, enabled, !resetSelected && exifCheckbox.isSelected());
+        objectsFilterSettings(true, enabled, !resetSelected && objectsCheckbox.isSelected(), null);
+        hashSetFilterSettings(true, enabled, !resetSelected && hashSetCheckbox.isSelected(), null);
+        interestingItemsFilterSettings(true, enabled, !resetSelected && interestingItemsCheckbox.isSelected(), null);
         parentFilterSettings(true, false, false, null);
         scoreFilterSettings(false, false, false, null);
         tagsFilterSettings(false, false, false, null);
@@ -509,7 +509,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      * @param type The type of File to be found by the search.
      */
     void setSelectedType(FileType type) {
-        if (type != fileType) {
+        if (type.equals(fileType)) {
             //change the size filter if the type changed
             setUpSizeFilter();
         }
