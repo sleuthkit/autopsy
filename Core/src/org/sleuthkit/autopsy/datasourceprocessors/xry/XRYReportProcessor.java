@@ -35,6 +35,8 @@ class XRYReportProcessor {
     /**
      * Processes all XRY Files and creates artifacts on the given Content
      * instance.
+     * 
+     * All resources will be closed if an exception is encountered.
      *
      * @param folder XRY folder to process
      * @param parent Content instance to hold newly created artifacts.
@@ -45,17 +47,27 @@ class XRYReportProcessor {
         //Get all XRY file readers from this folder.
         List<XRYFileReader> xryFileReaders = folder.getXRYFileReaders();
 
-        for (XRYFileReader xryFileReader : xryFileReaders) {
-            String reportType = xryFileReader.getReportType();
-            if (XRYFileParserFactory.supports(reportType)) {
-                XRYFileParser parser = XRYFileParserFactory.get(reportType);
-                parser.parse(xryFileReader, parent);
-            } else {
-                logger.log(Level.SEVERE, String.format("[XRY DSP] XRY File (in brackets) "
-                        + "[ %s ] was found, but no parser to support its report type exists. "
-                        + "Report type is [ %s ]", xryFileReader.getReportPath().toString(), reportType));
+        try {
+            for (XRYFileReader xryFileReader : xryFileReaders) {
+                String reportType = xryFileReader.getReportType();
+                if (XRYFileParserFactory.supports(reportType)) {
+                    XRYFileParser parser = XRYFileParserFactory.get(reportType);
+                    parser.parse(xryFileReader, parent);
+                } else {
+                    logger.log(Level.SEVERE, String.format("[XRY DSP] XRY File (in brackets) "
+                            + "[ %s ] was found, but no parser to support its report type exists. "
+                            + "Report type is [ %s ]", xryFileReader.getReportPath().toString(), reportType));
+                }
             }
-            xryFileReader.close();
+        } finally {
+            try {
+                //Try to close all resources
+                for (XRYFileReader xryFileReader : xryFileReaders) {
+                    xryFileReader.close();
+                }
+            } catch (IOException ex) {
+                //Best effort closing all resources.
+            }
         }
     }
 }
