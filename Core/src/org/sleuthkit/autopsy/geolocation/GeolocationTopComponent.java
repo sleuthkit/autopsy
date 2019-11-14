@@ -28,7 +28,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
-import org.jxmapviewer.viewer.Waypoint;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -44,7 +43,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Top component which displays the Geolocation Tool.
+ * Top component for the Geolocation Tool.
  *
  */
 @TopComponent.Description(preferredID = "GeolocationTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
@@ -52,7 +51,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 @RetainLocation("geolocation")
 @SuppressWarnings("PMD.SingularField")
 public final class GeolocationTopComponent extends TopComponent {
-    
+
     private static final long serialVersionUID = 1L;
 
     private static final Logger logger = Logger.getLogger(GeolocationTopComponent.class.getName());
@@ -69,7 +68,7 @@ public final class GeolocationTopComponent extends TopComponent {
     })
 
     /**
-     * Creates new form GeoLocationTopComponent
+     * Constructs new GeoLocationTopComponent
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public GeolocationTopComponent() {
@@ -129,7 +128,7 @@ public final class GeolocationTopComponent extends TopComponent {
         super.removeNotify();
         IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
     }
-    
+
     @Override
     public void componentOpened() {
         super.componentOpened();
@@ -151,14 +150,13 @@ public final class GeolocationTopComponent extends TopComponent {
     }
 
     /**
-     * Use a SwingWorker thread to find all of the artifacts that have GPS
-     * coordinates.
+     * Use a SwingWorker thread to get a list of waypoints.
      *
      */
     private void initWaypoints() {
-        SwingWorker<List<Waypoint>, Waypoint> worker = new SwingWorker<List<Waypoint>, Waypoint>() {
+        SwingWorker<List<MapWaypoint>, MapWaypoint> worker = new SwingWorker<List<MapWaypoint>, MapWaypoint>() {
             @Override
-            protected List<Waypoint> doInBackground() throws Exception {
+            protected List<MapWaypoint> doInBackground() throws Exception {
                 Case currentCase = Case.getCurrentCaseThrows();
 
                 return MapWaypoint.getWaypoints(currentCase.getSleuthkitCase());
@@ -168,24 +166,21 @@ public final class GeolocationTopComponent extends TopComponent {
             protected void done() {
                 if (isDone() && !isCancelled()) {
                     try {
-                        List<Waypoint> waypoints = get();
+                        List<MapWaypoint> waypoints = get();
                         if (waypoints == null || waypoints.isEmpty()) {
                             return;
                         }
-
-                        for (Waypoint point : waypoints) {
-                            mapPanel.addWaypoint(point);
-                        }
+                        mapPanel.setWaypoints(waypoints);
 
                         // There might be a better way to decide how to center
                         // but for now just use the first way point.
                         mapPanel.setCenterLocation(waypoints.get(0));
 
                     } catch (ExecutionException ex) {
-                        logger.log(Level.WARNING, "An exception occured while initializing waypoints for geolocation window.", ex);
+                        logger.log(Level.WARNING, "An exception occured while initializing waypoints for geolocation window.", ex); //NON-NLS
                         MessageNotifyUtil.Message.error(Bundle.GLTopComponent_initilzation_error());
                     } catch (InterruptedException ex) {
-                        logger.log(Level.WARNING, "The initializing thread for geolocation window was interrupted.", ex);
+                        logger.log(Level.WARNING, "The initializing thread for geolocation window was interrupted.", ex); //NON-NLS
                     }
                 }
             }
@@ -193,7 +188,6 @@ public final class GeolocationTopComponent extends TopComponent {
 
         worker.execute();
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.

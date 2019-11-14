@@ -2,14 +2,13 @@ AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules
 AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode
 # {0} - exception message
 Case.closeException.couldNotCloseCase=Error closing case: {0}
-Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory
 Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources
 Case.deleteCaseConfirmationDialog.message=Are you sure you want to close and delete the current case?
 Case.deleteCaseConfirmationDialog.title=Delete Current Case?
 # {0} - exception message
 Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}
 Case.deleteCaseFailureMessageBox.title=Failed to Delete Case
-Case.exceptionMessage.cancelledByUser=Cancelled by user.
+Case.exceptionMessage.cancelled=Cancelled.
 Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.
 Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.
 Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window
@@ -32,10 +31,13 @@ Case.exceptionMessage.couldNotSaveCaseMetadata=Failed to save case metadata:\n{0
 Case.exceptionMessage.couldNotSaveDbNameToMetadataFile=Failed to save case database name to case metadata file:\n{0}.
 # {0} - exception message
 Case.exceptionMessage.couldNotUpdateCaseNodeData=Failed to update coordination service node data:\n{0}.
+Case.exceptionMessage.dataSourceNotFound=The data source was not found.
 # {0} - case display name
 Case.exceptionMessage.deletionInterrupted=Deletion of the case {0} was cancelled.
 Case.exceptionMessage.emptyCaseDir=Must specify a case directory path.
 Case.exceptionMessage.emptyCaseName=Must specify a case name.
+Case.exceptionMessage.errorDeletingDataSourceFromCaseDb=An error occurred while removing the data source from the case database.
+Case.exceptionMessage.errorDeletingDataSourceFromTextIndex=An error occurred while removing the data source from the text index.
 Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details.
 # {0} - exception message
 Case.exceptionMessage.execExceptionWrapperMessage={0}
@@ -50,11 +52,14 @@ Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.
 Case.exceptionMessage.metadataUpdateError=Failed to update case metadata
 # {0} - exception message
 Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database schema version:\n{0}.
+Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case.
+Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.
 Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User.
 Case.progressIndicatorCancelButton.label=Cancel
 Case.progressIndicatorTitle.closingCase=Closing Case
 Case.progressIndicatorTitle.creatingCase=Creating Case
 Case.progressIndicatorTitle.deletingCase=Deleting Case
+Case.progressIndicatorTitle.deletingDataSource=Removing Data Source
 Case.progressIndicatorTitle.openingCase=Opening Case
 Case.progressMessage.cancelling=Cancelling...
 Case.progressMessage.clearingTempDirectory=Clearing case temp directory...
@@ -67,6 +72,7 @@ Case.progressMessage.creatingCaseNodeData=Creating coordination service node dat
 Case.progressMessage.deletingCaseDatabase=Deleting case database...
 Case.progressMessage.deletingCaseDirCoordSvcNode=Deleting case directory coordination service node...
 Case.progressMessage.deletingCaseDirectory=Deleting case directory...
+Case.progressMessage.deletingDataSource=Removing the data source from the case...
 Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...
 Case.progressMessage.deletingTextIndex=Deleting text index...
 Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...
@@ -74,7 +80,6 @@ Case.progressMessage.openingApplicationServiceResources=Opening application serv
 Case.progressMessage.openingCaseDatabase=Opening case database...
 Case.progressMessage.openingCaseLevelServices=Opening case-level services...
 Case.progressMessage.preparing=Preparing...
-Case.progressMessage.preparingToOpenCaseResources=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>
 Case.progressMessage.removingCaseFromRecentCases=Removing case from Recent Cases menu...
 Case.progressMessage.savingCaseMetadata=Saving case metadata to file...
 Case.progressMessage.settingUpNetworkCommunications=Setting up network communications...
@@ -118,6 +123,13 @@ CTL_CaseDetailsAction=Case Details
 CTL_CaseDeleteAction=Delete Case
 CTL_CaseOpenAction=Open Case
 CTL_UnpackagePortableCaseAction=Unpack and Open Portable Case
+DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the removal.
+# {0} - exception message
+DeleteDataSourceAction.exceptionMessage.couldNotReopenCase=Failed to re-open the case:\n{0}\nPlease see the application log for details.
+# {0} - exception message
+DeleteDataSourceAction.exceptionMessage.dataSourceDeletionError=An error occurred while removing the data source:\n{0}\nPlease see the application log for details.
+DeleteDataSourceAction.ingestRunningWarningDialog.message=Data sources cannot be removed from a case when ingest is running.
+DeleteDataSourceAction.name.text=Remove Data Source
 EditOptionalCasePropertiesPanel.cancelButton.text=Cancel
 EditOptionalCasePropertiesPanel.saveButton.text=Save
 GeneralFilter.encaseImageDesc.text=Encase Images (*.e01)
