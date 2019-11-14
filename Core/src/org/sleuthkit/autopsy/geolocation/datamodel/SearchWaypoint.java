@@ -24,9 +24,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * A SearchWaypoint is a subclass of ArtifactWaypoint.
+ * A SearchWaypoint is a subclass of Waypoint.
  */
-final class SearchWaypoint extends ArtifactWaypoint {
+final class SearchWaypoint extends Waypoint {
 
     /**
      * Construct a waypoint for TSK_GPS_SEARCH artifact.
@@ -44,7 +44,7 @@ final class SearchWaypoint extends ArtifactWaypoint {
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE).getValueDouble() : null,
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE).getValueDouble() : null,
                 attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE) != null ? attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE).getValueDouble() : null,
-                null, attributeMap);
+                null, attributeMap, null);
     }
 
     /**
@@ -59,7 +59,6 @@ final class SearchWaypoint extends ArtifactWaypoint {
     @Messages({
         "SearchWaypoint_DisplayLabel=GPS Search"
     })
-
     private static String getLabelFromArtifact(Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap) throws GeoLocationDataException {
         BlackboardAttribute attribute = attributeMap.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME);
         if (attribute != null) {

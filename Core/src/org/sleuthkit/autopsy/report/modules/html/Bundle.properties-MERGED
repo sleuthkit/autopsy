@@ -5,8 +5,8 @@ ReportHTML.getName.text=HTML Report
 ReportHTML.getDesc.text=A report about results and tagged items in HTML format.
 ReportHTML.writeIndex.title=for case {0}
 ReportHTML.writeIndex.noFrames.msg=Your browser is not compatible with our frame setup.
-ReportHTML.writeIndex.noFrames.seeNav=Please see <a href\="content\nav.html">the navigation page</a> for artifact links,
-ReportHTML.writeIndex.seeSum=and <a href\="content\summary.html">the summary page</a> for a case summary.
+ReportHTML.writeIndex.noFrames.seeNav=Please see <a href="content\nav.html">the navigation page</a> for artifact links,
+ReportHTML.writeIndex.seeSum=and <a href="contentsummary.html">the summary page</a> for a case summary.
 ReportHTML.writeNav.title=Report Navigation
 ReportHTML.writeNav.h1=Report Navigation
 ReportHTML.writeNav.summary=Case Summary
@@ -16,7 +16,7 @@ ReportHTML.writeSum.caseNumber=Case Number:
 ReportHTML.writeSum.caseNumImages=Number of Images:
 ReportHTML.writeSum.examiner=Examiner:
 ReportHTML.writeSum.title=Case Summary
-ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed\!</span>
+ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed!</span>
 #
 # autopsy/test/scripts/regression.py._html_report_diff() uses reportGenOn.text, caseName, caseNum, 
 # examiner as a regex signature to skip report.html and summary.html
