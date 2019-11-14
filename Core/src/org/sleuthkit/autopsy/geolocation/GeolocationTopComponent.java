@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
@@ -37,6 +38,11 @@ import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
+import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
+import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
+import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
+import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder.WaypointFilterQueryCallBack;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -59,6 +65,7 @@ public final class GeolocationTopComponent extends TopComponent {
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
 
     private final PropertyChangeListener ingestListener;
+    private final GeoFilterPanel geoFilterPanel;
 
     final RefreshPanel refreshPanel = new RefreshPanel();
 
@@ -109,6 +116,16 @@ public final class GeolocationTopComponent extends TopComponent {
                 showRefreshPanel(false);
             }
         });
+
+        geoFilterPanel = new GeoFilterPanel();
+        filterPane.setPanel(geoFilterPanel);
+        geoFilterPanel.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                filterWaypoints();
+            }
+        });
+
     }
 
     @Override
@@ -151,14 +168,12 @@ public final class GeolocationTopComponent extends TopComponent {
 
     /**
      * Use a SwingWorker thread to get a list of waypoints.
-     *
      */
     private void initWaypoints() {
         SwingWorker<List<MapWaypoint>, MapWaypoint> worker = new SwingWorker<List<MapWaypoint>, MapWaypoint>() {
             @Override
             protected List<MapWaypoint> doInBackground() throws Exception {
                 Case currentCase = Case.getCurrentCaseThrows();
-
                 return MapWaypoint.getWaypoints(currentCase.getSleuthkitCase());
             }
 
@@ -190,6 +205,59 @@ public final class GeolocationTopComponent extends TopComponent {
     }
 
     /**
+     * Filters the list of waypoints based on the user selections in the filter
+     * pane.
+     */
+    @Messages({
+        "GeoTopComponent_no_waypoints_returned_mgs=Applied filter failed to find waypoints that matched criteria.\nRevise filter options and try again.",
+        "GeoTopComponent_no_waypoints_returned_Title=No Waypoints Found",
+        "GeoTopComponent_filter_exception_msg=Exception occured during waypoint filtering.",
+        "GeoTopComponent_filter_exception_Title=Filter Failure",
+        "GeoTopComponent_filer_data_invalid_msg=Unable to run waypoint filter.\nPlease select one or more data sources.",
+        "GeoTopComponent_filer_data_invalid_Title=Filter Failure"
+    })
+    private void filterWaypoints() {
+        GeoFilter filters;
+
+        // Show a warning message if the user has not selected a data source
+        try {
+            filters = geoFilterPanel.getFilterState();
+        } catch (GeoLocationUIException ex) {
+            MessageNotifyUtil.Notify.info(
+                    Bundle.GeoTopComponent_filer_data_invalid_Title(),
+                    Bundle.GeoTopComponent_filer_data_invalid_msg());
+            return;
+        }
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                Case currentCase = Case.getCurrentCase();
+                try {
+                    WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(), filters.getDataSources(), filters.showAll(), filters.getMostRecentNumDays(), filters.showWithoutTimeStamp(), new WaypointFilterQueryCallBack() {
+                        @Override
+                        public void process(List<Waypoint> waypoints) {
+                            // If the list is empty, tell the user and do not change 
+                            // the visible waypoints.
+                            if (waypoints == null || waypoints.isEmpty()) {
+                                MessageNotifyUtil.Notify.info(
+                                        Bundle.GeoTopComponent_no_waypoints_returned_Title(),
+                                        Bundle.GeoTopComponent_no_waypoints_returned());
+                                return;
+                            }
+                            mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
+                        }
+                    });
+                } catch (GeoLocationDataException ex) {
+                    logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
+                    MessageNotifyUtil.Notify.error(
+                            Bundle.GeoTopComponent_filter_exception_Title(),
+                            Bundle.GeoTopComponent_filter_exception_msg());
+                }
+            }
+        });
+    }
+
+    /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
@@ -199,13 +267,18 @@ public final class GeolocationTopComponent extends TopComponent {
     private void initComponents() {
 
         mapPanel = new org.sleuthkit.autopsy.geolocation.MapPanel();
+        filterPane = new org.sleuthkit.autopsy.geolocation.HidingPane();
 
         setLayout(new java.awt.BorderLayout());
+
+        mapPanel.add(filterPane, java.awt.BorderLayout.LINE_START);
+
         add(mapPanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private org.sleuthkit.autopsy.geolocation.HidingPane filterPane;
     private org.sleuthkit.autopsy.geolocation.MapPanel mapPanel;
     // End of variables declaration//GEN-END:variables
 }
