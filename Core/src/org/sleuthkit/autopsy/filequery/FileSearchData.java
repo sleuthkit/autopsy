@@ -138,7 +138,7 @@ class FileSearchData {
     @NbBundle.Messages({
         "FileSearchData.FileSize.OVER_10GB.displayName=10 GB+",
         "FileSearchData.FileSize.OVER_5GB.displayName=5 - 10 GB",
-        "FileSearchData.FileSize.OVER_1GB_VIDEO.displayName= 1 - 5 GB",
+        "FileSearchData.FileSize.OVER_1GB_VIDEO.displayName=1 - 5 GB",
         "FileSearchData.FileSize.OVER_1GB_IMAGE.displayName=1 GB+",
         "FileSearchData.FileSize.OVER_200MB.displayName=200 MB - 1 GB",
         "FileSearchData.FileSize.OVER_50MB.displayName=50 - 200 MB",
