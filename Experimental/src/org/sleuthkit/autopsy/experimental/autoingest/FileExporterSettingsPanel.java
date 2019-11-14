@@ -244,6 +244,8 @@ public final class FileExporterSettingsPanel extends JPanel {
         comboBoxValueType.addItem(BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING.getLabel());
         comboBoxValueType.addItem(BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME.getLabel());
         comboBoxValueType.addItem(BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE.getLabel());
+        comboBoxValueType.addItem(BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.getLabel());
+        
         comboBoxValueType.addItem(UNSET);
 
         load();
