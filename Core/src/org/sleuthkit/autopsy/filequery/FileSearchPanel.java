@@ -449,7 +449,7 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                      status.
      */
     private void imagesSelected(boolean enabled, boolean resetSelected) {
-        dataSourceFilterSettings(true, enabled, resetSelected == true ? false : dataSourceCheckbox.isSelected(), null);
+        dataSourceFilterSettings(true, enabled, !resetSelected && dataSourceCheckbox.isSelected(), null);
         int[] selectedSizeIndices = {1, 2, 3, 4, 5, 6};
         sizeFilterSettings(true, enabled, resetSelected || sizeCheckbox.isSelected(), resetSelected == true ? selectedSizeIndices : null);
         int[] selectedFrequencyIndices;
@@ -1723,7 +1723,6 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         groupByCombobox.setEnabled(enabled);
         attributeRadioButton.setEnabled(enabled);
         groupSizeRadioButton.setEnabled(enabled);
-        validateFields();
     }
 
     /**
