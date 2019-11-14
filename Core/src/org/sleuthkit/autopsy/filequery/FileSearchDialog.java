@@ -1092,9 +1092,9 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         if ( ! parentTextField.getText().isEmpty()) {
             ParentSearchTerm searchTerm;
             if (parentFullRadioButton.isSelected()) {
-                searchTerm = new ParentSearchTerm(parentTextField.getText(), true);
+                searchTerm = new ParentSearchTerm(parentTextField.getText(), true, true);
             } else {
-                searchTerm = new ParentSearchTerm(parentTextField.getText(), false);
+                searchTerm = new ParentSearchTerm(parentTextField.getText(), false, true);
             }
             parentListModel.add(parentListModel.size(), searchTerm);
         }
