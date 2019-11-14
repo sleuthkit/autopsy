@@ -386,14 +386,14 @@ public final class DrawableDB {
     private boolean removeDeletedDataSources() {
         dbWriteLock();
         try (SleuthkitCase.CaseDbQuery caseDbQuery = tskCase.executeQuery("SELECT obj_id FROM data_source_info"); //NON-NLS
-                Statement statement = con.createStatement()) {
+                Statement drawablesDbStmt = con.createStatement()) {
             /*
              * Get the data source object IDs from the case database.
              */
             ResultSet caseDbResults = caseDbQuery.getResultSet();
-            Set<Long> validDataSourceObjIDs = new HashSet<>();
+            Set<Long> currentDataSourceObjIDs = new HashSet<>();
             while (caseDbResults.next()) {
-                validDataSourceObjIDs.add(caseDbResults.getLong(1));
+                currentDataSourceObjIDs.add(caseDbResults.getLong(1));
             }
 
             /*
@@ -402,10 +402,10 @@ public final class DrawableDB {
              * database.
              */
             List<Long> staleDataSourceObjIDs = new ArrayList<>();
-            try (ResultSet drawablesDbResults = statement.executeQuery("SELECT ds_obj_id FROM datasources")) { //NON-NLS
+            try (ResultSet drawablesDbResults = drawablesDbStmt.executeQuery("SELECT ds_obj_id FROM datasources")) { //NON-NLS
                 while (drawablesDbResults.next()) {
                     long dataSourceObjID = drawablesDbResults.getLong(1);
-                    if (!validDataSourceObjIDs.contains(dataSourceObjID)) {
+                    if (!currentDataSourceObjIDs.contains(dataSourceObjID)) {
                         staleDataSourceObjIDs.add(dataSourceObjID);
                     }
                 }
@@ -416,11 +416,11 @@ public final class DrawableDB {
              * database. The delete cascades.
              */
             if (!staleDataSourceObjIDs.isEmpty()) {
-                String inClause = StringUtils.join(staleDataSourceObjIDs, ',');
-                String delete = "DELETE FROM datasources where ds_obj_id IN (" + inClause + ")"; //NON-NLS
-                statement.execute(delete);
+                String deleteCommand = "DELETE FROM datasources where ds_obj_id IN (" + StringUtils.join(staleDataSourceObjIDs, ',') + ")"; //NON-NLS
+                drawablesDbStmt.execute(deleteCommand);
             }
             return true;
+            
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to remove deleted data sources from drawables database", ex); //NON-NLS
             return false;
