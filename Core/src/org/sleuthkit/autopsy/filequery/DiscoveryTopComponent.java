@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.filequery.FileSearchData.FileType;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -276,8 +277,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     void handleSearchCancelledEvent(DiscoveryEvents.SearchCancelledEvent searchCancelledEvent) {
         SwingUtilities.invokeLater(() -> {
-            imagesButton.setEnabled(true);
-            videosButton.setEnabled(true);
+            if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
+                imagesButton.setEnabled(true);
+            } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
+                videosButton.setEnabled(true);
+            }
         });
     }
 
@@ -289,8 +293,11 @@ public final class DiscoveryTopComponent extends TopComponent {
     @Subscribe
     void handleSearchCompletedEvent(DiscoveryEvents.SearchCompleteEvent searchCompletedEvent) {
         SwingUtilities.invokeLater(() -> {
-            imagesButton.setEnabled(true);
-            videosButton.setEnabled(true);
+            if (fileSearchPanel.getSelectedType() == FileType.VIDEO) {
+                imagesButton.setEnabled(true);
+            } else if (fileSearchPanel.getSelectedType() == FileType.IMAGE) {
+                videosButton.setEnabled(true);
+            }
         });
     }
 
