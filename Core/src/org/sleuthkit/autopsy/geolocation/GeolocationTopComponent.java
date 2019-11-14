@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
@@ -223,9 +224,10 @@ public final class GeolocationTopComponent extends TopComponent {
         try {
             filters = geoFilterPanel.getFilterState();
         } catch (GeoLocationUIException ex) {
-            MessageNotifyUtil.Notify.info(
-                    Bundle.GeoTopComponent_filer_data_invalid_Title(),
-                    Bundle.GeoTopComponent_filer_data_invalid_msg());
+            JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
+                                        Bundle.GeoTopComponent_filer_data_invalid_msg(),
+                                        Bundle.GeoTopComponent_filer_data_invalid_Title(),
+                                        JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -233,15 +235,17 @@ public final class GeolocationTopComponent extends TopComponent {
             public void run() {
                 Case currentCase = Case.getCurrentCase();
                 try {
-                    WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(), filters.getDataSources(), filters.showAll(), filters.getMostRecentNumDays(), filters.showWithoutTimeStamp(), new WaypointFilterQueryCallBack() {
+                    WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(), filters.getDataSources(), filters.showAllWaypoints(), filters.getMostRecentNumDays(), filters.showWaypointsWithoutTimeStamp(), new WaypointFilterQueryCallBack() {
                         @Override
                         public void process(List<Waypoint> waypoints) {
                             // If the list is empty, tell the user and do not change 
                             // the visible waypoints.
                             if (waypoints == null || waypoints.isEmpty()) {
-                                MessageNotifyUtil.Notify.info(
+                                JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
                                         Bundle.GeoTopComponent_no_waypoints_returned_Title(),
-                                        Bundle.GeoTopComponent_no_waypoints_returned());
+                                        Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
+                                        JOptionPane.INFORMATION_MESSAGE);
+                                        
                                 return;
                             }
                             mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
@@ -249,9 +253,10 @@ public final class GeolocationTopComponent extends TopComponent {
                     });
                 } catch (GeoLocationDataException ex) {
                     logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
-                    MessageNotifyUtil.Notify.error(
-                            Bundle.GeoTopComponent_filter_exception_Title(),
-                            Bundle.GeoTopComponent_filter_exception_msg());
+                    JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
+                                        Bundle.GeoTopComponent_filter_exception_Title(),
+                                        Bundle.GeoTopComponent_filter_exception_msg(),
+                                        JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

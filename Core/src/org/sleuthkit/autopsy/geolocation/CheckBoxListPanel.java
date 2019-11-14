@@ -119,8 +119,8 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         java.awt.GridBagConstraints gridBagConstraints;
 
         titleLabel = new javax.swing.JLabel();
-        uncheckButton = new javax.swing.JButton();
-        checkButton = new javax.swing.JButton();
+        javax.swing.JButton uncheckButton = new javax.swing.JButton();
+        javax.swing.JButton checkButton = new javax.swing.JButton();
         scrollPane = new javax.swing.JScrollPane();
 
         setLayout(new java.awt.GridBagLayout());
@@ -179,10 +179,8 @@ final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton checkButton;
     private javax.swing.JScrollPane scrollPane;
     private javax.swing.JLabel titleLabel;
-    private javax.swing.JButton uncheckButton;
     // End of variables declaration//GEN-END:variables
 
     /**

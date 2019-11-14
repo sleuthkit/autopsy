@@ -40,21 +40,26 @@ public final class WaypointBuilder {
 
     private static final Logger logger = Logger.getLogger(WaypointBuilder.class.getName());
 
-    // SELECT statement for getting a list of waypoints.  Replace the %s after 
-    // after the SELECT with the list of parameters to return
+    // SELECT statement for getting a list of waypoints.  
     final static String GEO_ARTIFACT_QUERY
             = "SELECT artifact_id, artifact_type_id "
+            + "FROM blackboard_attributes "
+            + "WHERE attribute_type_id IN (%d, %d) ";  //NON-NLS
+    
+    // SELECT statement to get only artifact_ids
+    final static String GEO_ARTIFACT_QUERY_ID_ONLY
+            = "SELECT artifact_id "
             + "FROM blackboard_attributes "
             + "WHERE attribute_type_id IN (%d, %d) ";  //NON-NLS
 
     // This Query will return a list of waypoint artifacts
     final static String GEO_ARTIFACT_WITH_DATA_SOURCES_QUERY
             = "SELECT blackboard_attributes.artifact_id "
-            + "FROM blackboard_attributes "
-            + "JOIN blackboard_artifacts ON blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id "
+            + "FROM blackboard_attributes, blackboard_artifacts "
             + "WHERE blackboard_attributes.attribute_type_id IN(%d, %d) "
             + "AND data_source_obj_id IN (%s)"; //NON-NLS
 
+    // Select will return the "most recent" timestamp from all waypoings
     final static String MOST_RECENT_TIME
             = "SELECT MAX(value_int64) - (%d * 86400)" //86400 is the number of seconds in a day.
             + "FROM blackboard_attributes "
@@ -64,6 +69,7 @@ public final class WaypointBuilder {
             + "%s" //GEO_ARTIFACT with or without data source
             + " )";
 
+    // Returns a list of artifacts with no time stamp
     final static String SELECT_WO_TIMESTAMP = 
             "SELECT DISTINCT artifact_id, artifact_type_id "
             + "FROM blackboard_attributes "
@@ -350,7 +356,7 @@ public final class WaypointBuilder {
         String query = "";
 
         query = String.format(SELECT_WO_TIMESTAMP,
-                String.format(GEO_ARTIFACT_QUERY,
+                String.format(GEO_ARTIFACT_QUERY_ID_ONLY,
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()),
                 getWaypointListQuery(dataSources));

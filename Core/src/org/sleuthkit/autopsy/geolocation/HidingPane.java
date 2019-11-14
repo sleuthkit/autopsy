@@ -48,7 +48,7 @@ public final class HidingPane extends JTabbedPane {
         panel.setLayout(new BorderLayout());
         panel.add(scrollPane, BorderLayout.CENTER);
         tabLabel = new JLabel(Bundle.HidingPane_default_title());
-        tabLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/geolocation/images/funnel.png")));
+        tabLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/funnel.png")));
         tabLabel.setUI(new VerticalLabelUI(true));
         tabLabel.setOpaque(false);
         Font font = tabLabel.getFont().deriveFont(18).deriveFont(Font.BOLD);

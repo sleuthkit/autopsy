@@ -100,17 +100,15 @@ class GeoFilterPanel extends javax.swing.JPanel {
         "GeoFilterPanel_empty_dataSource=Data Source list is empty."
     })
     GeoFilter getFilterState() throws GeoLocationUIException {
-        boolean showAll = allButton.isSelected();
-        boolean withTimeStamp = showWaypointsWOTSCheckBox.isSelected();
-        int dayCnt = numberModel.getNumber().intValue();
-
         List<DataSource> dataSources = checkboxPanel.getSelectedElements();
 
         if (dataSources.isEmpty()) {
             throw new GeoLocationUIException(Bundle.GeoFilterPanel_empty_dataSource());
         }
-
-        return new GeoFilter(showAll, withTimeStamp, dayCnt, dataSources);
+        return new GeoFilter(allButton.isSelected(), 
+                showWaypointsWOTSCheckBox.isSelected(), 
+                numberModel.getNumber().intValue(), 
+                dataSources);
     }
 
     /**
@@ -147,14 +145,14 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        buttonGroup = new javax.swing.ButtonGroup();
-        waypointSettings = new javax.swing.JPanel();
+        javax.swing.ButtonGroup buttonGroup = new javax.swing.ButtonGroup();
+        javax.swing.JPanel waypointSettings = new javax.swing.JPanel();
         allButton = new javax.swing.JRadioButton();
         mostRecentButton = new javax.swing.JRadioButton();
         showWaypointsWOTSCheckBox = new javax.swing.JCheckBox();
         daysSpinner = new javax.swing.JSpinner(numberModel);
         javax.swing.JLabel daysLabel = new javax.swing.JLabel();
-        buttonPanel = new javax.swing.JPanel();
+        javax.swing.JPanel buttonPanel = new javax.swing.JPanel();
         applyButton = new javax.swing.JButton();
         javax.swing.JLabel optionsLabel = new javax.swing.JLabel();
 
@@ -232,7 +230,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
 
         buttonPanel.setLayout(new java.awt.GridBagLayout());
 
-        applyButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/geolocation/images/tick.png"))); // NOI18N
+        applyButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/tick.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(applyButton, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.applyButton.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
@@ -248,7 +246,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(9, 15, 0, 15);
         add(buttonPanel, gridBagConstraints);
 
-        optionsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/geolocation/images/blueGeo16.png"))); // NOI18N
+        optionsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/blueGeo16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(GeoFilterPanel.class, "GeoFilterPanel.optionsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -270,12 +268,9 @@ class GeoFilterPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allButton;
     private javax.swing.JButton applyButton;
-    private javax.swing.ButtonGroup buttonGroup;
-    private javax.swing.JPanel buttonPanel;
     private javax.swing.JSpinner daysSpinner;
     private javax.swing.JRadioButton mostRecentButton;
     private javax.swing.JCheckBox showWaypointsWOTSCheckBox;
-    private javax.swing.JPanel waypointSettings;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -320,7 +315,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
          *
          * @return True if all waypoints should be shown.
          */
-        boolean showAll() {
+        boolean showAllWaypoints() {
             return showAll;
         }
 
@@ -331,7 +326,7 @@ class GeoFilterPanel extends javax.swing.JPanel {
          *
          * @return True if waypoints with time stamps should be shown.
          */
-        boolean showWithoutTimeStamp() {
+        boolean showWaypointsWithoutTimeStamp() {
             return showWithoutTimeStamp;
         }
 
