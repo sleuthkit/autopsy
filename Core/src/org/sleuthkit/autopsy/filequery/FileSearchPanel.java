@@ -85,11 +85,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void dataSourceFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         dataSourceCheckbox.setVisible(visible);
         dataSourceScrollPane.setVisible(visible);
         dataSourceList.setVisible(visible);
@@ -98,8 +98,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (dataSourceCheckbox.isEnabled() && dataSourceCheckbox.isSelected()) {
             dataSourceScrollPane.setEnabled(true);
             dataSourceList.setEnabled(true);
-            if (indiciesSelected != null) {
-                dataSourceList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                dataSourceList.setSelectedIndices(indicesSelected);
             }
         } else {
             dataSourceScrollPane.setEnabled(false);
@@ -116,11 +116,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void sizeFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void sizeFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         sizeCheckbox.setVisible(visible);
         sizeScrollPane.setVisible(visible);
         sizeList.setVisible(visible);
@@ -129,8 +129,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (sizeCheckbox.isEnabled() && sizeCheckbox.isSelected()) {
             sizeScrollPane.setEnabled(true);
             sizeList.setEnabled(true);
-            if (indiciesSelected != null) {
-                sizeList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                sizeList.setSelectedIndices(indicesSelected);
             }
         } else {
             sizeScrollPane.setEnabled(false);
@@ -147,11 +147,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void crFrequencyFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void crFrequencyFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         crFrequencyCheckbox.setVisible(visible);
         crFrequencyScrollPane.setVisible(visible);
         crFrequencyList.setVisible(visible);
@@ -160,8 +160,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (crFrequencyCheckbox.isEnabled() && crFrequencyCheckbox.isSelected()) {
             crFrequencyScrollPane.setEnabled(true);
             crFrequencyList.setEnabled(true);
-            if (indiciesSelected != null) {
-                crFrequencyList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                crFrequencyList.setSelectedIndices(indicesSelected);
             }
         } else {
             crFrequencyScrollPane.setEnabled(false);
@@ -178,11 +178,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void objectsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void objectsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         objectsCheckbox.setVisible(visible);
         objectsScrollPane.setVisible(visible);
         objectsList.setVisible(visible);
@@ -191,8 +191,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (objectsCheckbox.isEnabled() && objectsCheckbox.isSelected()) {
             objectsScrollPane.setEnabled(true);
             objectsList.setEnabled(true);
-            if (indiciesSelected != null) {
-                objectsList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                objectsList.setSelectedIndices(indicesSelected);
             }
         } else {
             objectsScrollPane.setEnabled(false);
@@ -209,11 +209,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void hashSetFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void hashSetFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         hashSetCheckbox.setVisible(visible);
         hashSetScrollPane.setVisible(visible);
         hashSetList.setVisible(visible);
@@ -222,8 +222,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (hashSetCheckbox.isEnabled() && hashSetCheckbox.isSelected()) {
             hashSetScrollPane.setEnabled(true);
             hashSetList.setEnabled(true);
-            if (indiciesSelected != null) {
-                hashSetList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                hashSetList.setSelectedIndices(indicesSelected);
             }
         } else {
             hashSetScrollPane.setEnabled(false);
@@ -240,11 +240,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void interestingItemsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void interestingItemsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         interestingItemsCheckbox.setVisible(visible);
         interestingItemsScrollPane.setVisible(visible);
         interestingItemsList.setVisible(visible);
@@ -253,8 +253,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (interestingItemsCheckbox.isEnabled() && interestingItemsCheckbox.isSelected()) {
             interestingItemsScrollPane.setEnabled(true);
             interestingItemsList.setEnabled(true);
-            if (indiciesSelected != null) {
-                interestingItemsList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                interestingItemsList.setSelectedIndices(indicesSelected);
             }
         } else {
             interestingItemsScrollPane.setEnabled(false);
@@ -271,11 +271,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void scoreFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void scoreFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         scoreCheckbox.setVisible(visible);
         scoreScrollPane.setVisible(visible);
         scoreList.setVisible(visible);
@@ -284,8 +284,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (scoreCheckbox.isEnabled() && scoreCheckbox.isSelected()) {
             scoreScrollPane.setEnabled(true);
             scoreList.setEnabled(true);
-            if (indiciesSelected != null) {
-                scoreList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                scoreList.setSelectedIndices(indicesSelected);
             }
         } else {
             scoreScrollPane.setEnabled(false);
@@ -302,11 +302,11 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
      *                         enabled.
      * @param selected         Boolean indicating if the filter should be
      *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
+     * @param indicesSelected Array of integers indicating which list items are
      *                         selected, null to indicate leaving selected items
      *                         unchanged.
      */
-    private void parentFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void parentFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         parentCheckbox.setVisible(visible);
         parentScrollPane.setVisible(visible);
         parentList.setVisible(visible);
@@ -321,8 +321,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
             addButton.setEnabled(true);
             deleteButton.setEnabled(!parentListModel.isEmpty());
             parentList.setEnabled(true);
-            if (indiciesSelected != null) {
-                parentList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                parentList.setSelectedIndices(indicesSelected);
             }
         } else {
             parentScrollPane.setEnabled(false);
@@ -340,17 +340,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the tags filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
+     * @param indicesSelected Array of integers indicating which list items are
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
-    private void tagsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void tagsFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         tagsCheckbox.setVisible(visible);
         tagsScrollPane.setVisible(visible);
         tagsList.setVisible(visible);
@@ -359,8 +359,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (tagsCheckbox.isEnabled() && tagsCheckbox.isSelected()) {
             tagsScrollPane.setEnabled(true);
             tagsList.setEnabled(true);
-            if (indiciesSelected != null) {
-                tagsList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                tagsList.setSelectedIndices(indicesSelected);
             }
         } else {
             tagsScrollPane.setEnabled(false);
@@ -371,17 +371,17 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
     /**
      * Setup the keyword filter settings.
      *
-     * @param visible          Boolean indicating if the filter should be
-     *                         visible.
-     * @param enabled          Boolean indicating if the filter should be
-     *                         enabled.
-     * @param selected         Boolean indicating if the filter should be
-     *                         selected.
-     * @param indiciesSelected Array of integers indicating which list items are
-     *                         selected, null to indicate leaving selected items
-     *                         unchanged.
+     * @param visible         Boolean indicating if the filter should be
+     *                        visible.
+     * @param enabled         Boolean indicating if the filter should be
+     *                        enabled.
+     * @param selected        Boolean indicating if the filter should be
+     *                        selected.
+     * @param indicesSelected Array of integers indicating which list items are
+     *                        selected, null to indicate leaving selected items
+     *                        unchanged.
      */
-    private void keywordFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indiciesSelected) {
+    private void keywordFilterSettings(boolean visible, boolean enabled, boolean selected, int[] indicesSelected) {
         keywordCheckbox.setVisible(visible);
         keywordScrollPane.setVisible(visible);
         keywordList.setVisible(visible);
@@ -390,8 +390,8 @@ final class FileSearchPanel extends javax.swing.JPanel implements ActionListener
         if (keywordCheckbox.isEnabled() && keywordCheckbox.isSelected()) {
             keywordScrollPane.setEnabled(true);
             keywordList.setEnabled(true);
-            if (indiciesSelected != null) {
-                keywordList.setSelectedIndices(indiciesSelected);
+            if (indicesSelected != null) {
+                keywordList.setSelectedIndices(indicesSelected);
             }
         } else {
             keywordScrollPane.setEnabled(false);
