@@ -53,7 +53,7 @@ class XRYReportProcessor {
             } else {
                 logger.log(Level.SEVERE, String.format("[XRY DSP] XRY File (in brackets) "
                         + "[ %s ] was found, but no parser to support its report type exists. "
-                        + "Report type is (in brackets) [ %s ]", xryFileReader.getReportPath().toString(), reportType));
+                        + "Report type is [ %s ]", xryFileReader.getReportPath().toString(), reportType));
             }
             xryFileReader.close();
         }
