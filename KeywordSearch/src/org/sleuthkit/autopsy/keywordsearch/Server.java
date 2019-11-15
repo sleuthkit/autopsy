@@ -59,6 +59,7 @@ import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.common.SolrDocument;
@@ -518,7 +519,7 @@ public class Server {
                         		"-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
                                 "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
 
-                // Wait for the Solr server to start and respond to a status request.
+                // Wait for the Solr server to start and respond to a statusRequest request.
                 for (int numRetries = 0; numRetries < 6; numRetries++) {
                     if (isRunning()) {
                         final List<Long> pids = this.getSolrPIDs();
@@ -658,8 +659,8 @@ public class Server {
     }
 
     /**
-     * Tests if there's a local Solr server running by sending it a core-status
-     * request.
+     * Tests if there's a local Solr server running by sending it a core-statusRequest
+ request.
      *
      * @return false if the request failed with a connection error, otherwise
      * true
@@ -669,11 +670,11 @@ public class Server {
 
             if (isPortAvailable(currentSolrServerPort)) {
                 // ELTODO WHY FALSE?? return false;
-                //return false;
-                return true;
+                return false;
+                //return true;
             }
 
-            // making a status request here instead of just doing solrServer.ping(), because
+            // making a statusRequest request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
             //TODO handle timeout in cases when some other type of server on that port
             connectToSolrServer(localSolrServer);
@@ -847,6 +848,12 @@ public class Server {
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
+
+                // check if the embedded Solr server is running
+                if (!this.isRunning()) {
+                    logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
+                    throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
+                }
             } else {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrClient.Builder("http://" + properties.getHost() + ":" + properties.getPort() + "/solr").build(); //NON-NLS
@@ -863,11 +870,6 @@ public class Server {
             File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
-            }
-
-            if (!this.isRunning()) {
-                logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
-                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
             String collectionNameName = index.getIndexName();
@@ -1447,24 +1449,53 @@ public class Server {
     
     private String collectionExists(String collectionName) throws SolrServerException, IOException {
 
-        CollectionAdminRequest.ColStatus status = CollectionAdminRequest.CollectionProp.collectionStatus(collectionName);
-        SolrParams params = status.getParams();
-        CollectionAdminResponse statusResponse = status.process(currentSolrServer);
+        CollectionAdminRequest.ClusterStatus statusRequest = CollectionAdminRequest.getClusterStatus().setCollectionName(collectionName);
+        CollectionAdminResponse statusResponse;
+        try {
+            statusResponse = statusRequest.process(currentSolrServer);
+        } catch (RemoteSolrException ex) {
+            // collection doesn't exist
+            return "";
+        }
+        
+        if (statusResponse == null) {
+            return "";
+        }
+        
+        NamedList error = (NamedList) statusResponse.getResponse().get("error");
+        if (error != null) {
+            return "";
+        }
+        
         
         // For some reason this returns info about all collections even though it's supposed to only return about the one we are requesting
-        NamedList collectionData = (NamedList) statusResponse.getResponse().get(collectionName);
+        NamedList cluster = (NamedList) statusResponse.getResponse().get("cluster");
+        NamedList collections = (NamedList) cluster.get("collections");
+        if (collections != null) {
+            return collectionName + "_shard1_replica_n1";
+        } else {
+            return "";
+        }
+        /*NamedList currectCollection = (NamedList) collections.get(collectionName);
+        NamedList shards = (NamedList) currectCollection.get("shards");
+        NamedList replicas = (NamedList) shards.get("replicas");
+        String coreName = (String) replicas.get("core");*/
+        
+        /* ELTODO for some reason using collectionStatus(collectionName) returns info about all collections
+        CollectionAdminRequest.ColStatus statusRequest = CollectionAdminRequest.collectionStatus(collectionName).setWithSegments(false).setWithSizeInfo(false).setWithRawSizeSummary(false)
+                .setWithRawSizeInfo(false).setWithRawSizeDetails(false).setWithFieldInfo(false).setWithCoreInfo(true);
+        SolrParams params = statusRequest.getParams();
+        NamedList collectionData = (NamedList) statusResponse.get(collectionName);
         if (collectionData == null) {
             return "";
         }
-        /* ELTODO it might be worth keeping these for debugging, at least until 
-        we are sure that we can always get core name this way.*/
+        NamedList collectionData = (NamedList) statusResponse.getResponse().get(collectionName);
         NamedList shards = (NamedList) collectionData.get("shards");
         NamedList shard1 = (NamedList) shards.get("shard1");
         NamedList leader = (NamedList) shard1.get("leader");
-        String coreName = (String) leader.get("core");
-        
+        String coreName = (String) leader.get("core");        
         String coreName2 = (String)((NamedList)((NamedList)((NamedList) collectionData.get("shards")).get("shard1")).get("leader")).get("core");
-        return coreName;
+        return coreName;*/
     }
 
     /**
