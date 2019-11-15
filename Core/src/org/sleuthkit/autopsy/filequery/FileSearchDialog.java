@@ -185,7 +185,7 @@ public class FileSearchDialog extends javax.swing.JDialog implements ActionListe
         } else {
             int count = 0;
             DefaultListModel<Frequency> frequencyListModel = (DefaultListModel<Frequency>)freqList.getModel();
-            for (Frequency freq : Frequency.getOptionsForFiltering()) {
+            for (Frequency freq : Frequency.getOptionsForFilteringWithCr()) {
                 frequencyListModel.add(count, freq);
             }
         }

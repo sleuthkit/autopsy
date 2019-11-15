@@ -262,15 +262,15 @@ class FileSearchFiltering {
             // TODO - these should really be prepared statements
             if (isIncluded()) {
                 if (isFullPath()) {
-                    return "parent_path=\'" + searchStr + "\'"; // NON-NLS
+                    return "parent_path=\'" + getSearchStr() + "\'"; // NON-NLS
                 } else {
-                    return "parent_path LIKE \'%" + searchStr + "%\'"; // NON-NLS
+                    return "parent_path LIKE \'%" + getSearchStr() + "%\'"; // NON-NLS
                 }
             } else {
                 if (isFullPath()) {
-                    return "parent_path!=\'" + searchStr + "\'"; // NON-NLS
+                    return "parent_path!=\'" + getSearchStr() + "\'"; // NON-NLS
                 } else {
-                    return "parent_path NOT LIKE \'%" + searchStr + "%\'"; // NON-NLS
+                    return "parent_path NOT LIKE \'%" + getSearchStr() + "%\'"; // NON-NLS
                 }
             }
         }
@@ -282,7 +282,7 @@ class FileSearchFiltering {
             "FileSearchFiltering.ParentSearchTerm.excludeString= (exclude)",})
         @Override
         public String toString() {
-            String returnString = searchStr;
+            String returnString = getSearchStr();
             if (isFullPath()) {
                 returnString += Bundle.FileSearchFiltering_ParentSearchTerm_fullString();
             } else {
@@ -308,6 +308,13 @@ class FileSearchFiltering {
          */
         boolean isIncluded() {
             return included;
+        }
+
+        /**
+         * @return the searchStr
+         */
+        String getSearchStr() {
+            return searchStr;
         }
     }
 
@@ -371,9 +378,9 @@ class FileSearchFiltering {
                     desc += Bundle.FileSearchFiltering_ParentFilter_or();
                 }
                 if (searchTerm.isFullPath()) {
-                    desc += searchTerm.searchStr + Bundle.FileSearchFiltering_ParentFilter_exact();
+                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_exact();
                 } else {
-                    desc += searchTerm.searchStr + Bundle.FileSearchFiltering_ParentFilter_substring();
+                    desc += searchTerm.getSearchStr() + Bundle.FileSearchFiltering_ParentFilter_substring();
                 }
             }
             desc = Bundle.FileSearchFiltering_ParentFilter_desc(desc);
@@ -558,10 +565,6 @@ class FileSearchFiltering {
         @Override
         List<ResultFile> applyAlternateFilter(List<ResultFile> currentResults, SleuthkitCase caseDb,
                 EamDb centralRepoDb) throws FileSearchException {
-
-            if (centralRepoDb == null) {
-                throw new FileSearchException("Can not run Frequency filter with null Central Repository DB"); // NON-NLS
-            }
 
             // We have to have run some kind of SQL filter before getting to this point,
             // and should have checked afterward to see if the results were empty.
