@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 /**
  * Extracts XRY files and (optionally) non-XRY files from a XRY (Report) folder.
  */
-public final class XRYFolder {
+final class XRYFolder {
 
     //Depth that will contain XRY files. All XRY files will be immediate
     //children of their parent folder.
