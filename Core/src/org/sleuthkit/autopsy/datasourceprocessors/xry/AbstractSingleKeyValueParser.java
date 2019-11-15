@@ -64,10 +64,11 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
             for (int i = 1; i < xryLines.length; i++) {
                 String xryLine = xryLines[i];
 
+                String candidateNamespace = xryLine.trim();
                 //Check if the line is a namespace, which gives context to the keys
                 //that follow.
-                if (isNamespace(xryLine)) {
-                    namespace = xryLine.trim();
+                if (isNamespace(candidateNamespace)) {
+                    namespace = candidateNamespace;
                     continue;
                 }
 
@@ -157,8 +158,6 @@ abstract class AbstractSingleKeyValueParser implements XRYFileParser {
 
     /**
      * Makes an artifact from the parsed attributes.
-     *
-     * @return
      */
     abstract void makeArtifact(List<BlackboardAttribute> attributes, Content parent) throws TskCoreException;
 
