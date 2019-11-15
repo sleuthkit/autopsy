@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.TskDataException;
 public class XRYDataSourceProcessor implements DataSourceProcessor {
 
     private final XRYDataSourceProcessorConfigPanel configPanel;
-    
+
     //Background processor to relieve the EDT from adding files to the case
     //database and parsing the report files.
     private XRYReportProcessorSwingWorker swingWorker;
@@ -67,7 +67,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
 
     @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.dataSourceType=Import Tool Report"
+        "XRYDataSourceProcessor.dataSourceType=XRY Logical Report"
     })
     public String getDataSourceType() {
         return Bundle.XRYDataSourceProcessor_dataSourceType();
@@ -79,59 +79,62 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
     }
 
     @Override
-    public boolean isPanelValid() {
-        return true;
-    }
-
-    /**
-     * Processes the XRY folder the examiner selected. The heavy lifting 
-     * is handed off to a dedicated thread. This function will
-     * test the minimum requirements needed to successfully process the input.
-     */
-    @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.testingFolder=Testing input folder...",
+        "XRYDataSourceProcessor.noPathSelected=Please select a XRY folder",
         "XRYDataSourceProcessor.notReadable=Could not read from the selected folder",
         "XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY files",
         "XRYDataSourceProcessor.ioError=I/O error occured trying to test the XRY report folder"
     })
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        progressMonitor.setIndeterminate(true);
-        progressMonitor.setProgressText(Bundle.XRYDataSourceProcessor_testingFolder());
-        
+    public boolean isPanelValid() {
+        configPanel.clearErrorText();
         String selectedFilePath = configPanel.getSelectedFilePath();
+        if(selectedFilePath.isEmpty()) {
+            configPanel.setErrorText(Bundle.XRYDataSourceProcessor_noPathSelected());
+            return false;
+        }
+        
         File selectedFile = new File(selectedFilePath);
         Path selectedPath = selectedFile.toPath();
 
         //Test permissions
         if (!Files.isReadable(selectedPath)) {
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, 
-                    Lists.newArrayList(Bundle.XRYDataSourceProcessor_notReadable()), 
-                    Lists.newArrayList());
-            return;
+            configPanel.setErrorText(Bundle.XRYDataSourceProcessor_notReadable());
+            return false;
         }
 
         try {
             //Validate the folder.
             if (!XRYFolder.isXRYFolder(selectedPath)) {
-                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, 
-                        Lists.newArrayList(Bundle.XRYDataSourceProcessor_notXRYFolder()), 
-                        Lists.newArrayList());
-                return;
+                configPanel.setErrorText(Bundle.XRYDataSourceProcessor_notXRYFolder());
+                return false;
             }
         } catch (IOException ex) {
+            configPanel.setErrorText(Bundle.XRYDataSourceProcessor_ioError());
             logger.log(Level.WARNING, "[XRY DSP] I/O exception encountered trying to test the XRY folder.", ex);
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, 
-                    Lists.newArrayList(Bundle.XRYDataSourceProcessor_ioError(), ex.toString()), Lists.newArrayList());
-            return;
+            return false;
         }
+
+        return true;
+    }
+
+    /**
+     * Processes the XRY folder that the examiner selected. The heavy lifting is
+     * done off of the EDT.
+     */
+    @Override
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        progressMonitor.setIndeterminate(true);
+
+        String selectedFilePath = configPanel.getSelectedFilePath();
+        File selectedFile = new File(selectedFilePath);
+        Path selectedPath = selectedFile.toPath();
 
         try {
             XRYFolder xryFolder = new XRYFolder(selectedPath);
             FileManager fileManager = Case.getCurrentCaseThrows()
                     .getServices().getFileManager();
-            
-            //Move heavy lifting to a dedicated thread.
+
+            //Move heavy lifting to a backround task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
                     callback, fileManager);
             swingWorker.execute();
@@ -154,8 +157,8 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
     }
 
     /**
-     * Relieves the EDT from add images to the case database and processing the
-     * XRY report files.
+     * Relieves the EDT from having to process the XRY report and write to the
+     * case database.
      */
     private class XRYReportProcessorSwingWorker extends SwingWorker<LocalFilesDataSource, Void> {
 
@@ -177,10 +180,10 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
             "XRYDataSourceProcessor.preppingFiles=Preparing to add files to the case database",
             "XRYDataSourceProcessor.processingFiles=Processing all XRY files..."
         })
-        protected LocalFilesDataSource doInBackground() throws TskCoreException, 
+        protected LocalFilesDataSource doInBackground() throws TskCoreException,
                 TskDataException, IOException {
             progressMonitor.setProgressText(Bundle.XRYDataSourceProcessor_preppingFiles());
-            
+
             List<Path> nonXRYFiles = xryFolder.getNonXRYFiles();
             List<String> filePaths = nonXRYFiles.stream()
                     //Map paths to string representations.
@@ -188,10 +191,10 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
                     .collect(Collectors.toList());
             String uniqueUUID = UUID.randomUUID().toString();
             LocalFilesDataSource dataSource = fileManager.addLocalFilesDataSource(
-                    uniqueUUID, 
+                    uniqueUUID,
                     "XRY Report", //Name
                     "", //Timezone
-                    filePaths, 
+                    filePaths,
                     new ProgressMonitorAdapter(progressMonitor));
 
             //Process the report files.
@@ -199,7 +202,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
             XRYReportProcessor.process(xryFolder, dataSource);
             return dataSource;
         }
-   
+
         @Override
         @NbBundle.Messages({
             "XRYDataSourceProcessor.unexpectedError=Internal error occurred while processing XRY report"
@@ -207,14 +210,15 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
         public void done() {
             try {
                 LocalFilesDataSource newDataSource = get();
-                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS, 
+                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS,
                         Lists.newArrayList(), Lists.newArrayList(newDataSource));
             } catch (InterruptedException ex) {
-                //DSP was cancelled. Not an error.
+                logger.log(Level.WARNING, "[XRY DSP] Thread was interrupted while processing the XRY report."
+                        + " The case may or may not have the complete XRY report.", ex);
             } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, "[XRY DSP] Unexpected internal error while processing XRY report.", ex);
-                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, 
-                        Lists.newArrayList(Bundle.XRYDataSourceProcessor_unexpectedError(), 
+                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS,
+                        Lists.newArrayList(Bundle.XRYDataSourceProcessor_unexpectedError(),
                                 ex.toString()), Lists.newArrayList());
             }
         }

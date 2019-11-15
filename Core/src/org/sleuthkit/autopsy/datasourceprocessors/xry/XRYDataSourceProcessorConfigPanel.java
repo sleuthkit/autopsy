@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
  * Allows an examiner to configure the XRY Data source processor.
@@ -32,12 +35,16 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
     private static final XRYDataSourceProcessorConfigPanel INSTANCE = 
             new XRYDataSourceProcessorConfigPanel();
     
+    //Communicates 
+    private final PropertyChangeSupport pcs;
+    
     /**
      * Creates new form XRYDataSourceConfigPanel. 
      * Prevent direct instantiation.
      */
     private XRYDataSourceProcessorConfigPanel() {
         initComponents();
+        pcs = new PropertyChangeSupport(this);
     }
     
     /**
@@ -45,6 +52,20 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
      */
     static XRYDataSourceProcessorConfigPanel getInstance() {
         return INSTANCE;
+    }
+    
+    /**
+     * Clears the error label.
+     */
+    void clearErrorText() {
+        errorLabel.setText(null);
+    }
+    
+    /**
+     * Sets the error label to show the supplied text.
+     */
+    void setErrorText(String text) {
+        errorLabel.setText(text);
     }
     
     /**
@@ -60,6 +81,15 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
     String getSelectedFilePath() {
         return filePathTextField.getText();
     }
+    
+    /**
+     * Adds a property change listener to this config panel.
+     */
+    @Override
+    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
+        super.addPropertyChangeListener(pcl);
+        pcs.addPropertyChangeListener(pcl);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -73,6 +103,7 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
         filePathTextField = new javax.swing.JTextField();
         fileBrowserButton = new javax.swing.JButton();
         xrySelectFolderLabel = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
 
         filePathTextField.setEditable(false);
         filePathTextField.setText(org.openide.util.NbBundle.getMessage(XRYDataSourceProcessorConfigPanel.class, "XRYDataSourceProcessorConfigPanel.filePathTextField.text")); // NOI18N
@@ -86,6 +117,9 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(xrySelectFolderLabel, org.openide.util.NbBundle.getMessage(XRYDataSourceProcessorConfigPanel.class, "XRYDataSourceProcessorConfigPanel.xrySelectFolderLabel.text")); // NOI18N
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(XRYDataSourceProcessorConfigPanel.class, "XRYDataSourceProcessorConfigPanel.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -93,6 +127,7 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(xrySelectFolderLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filePathTextField)
@@ -109,7 +144,9 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filePathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(fileBrowserButton))
-                .addContainerGap(246, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(errorLabel)
+                .addContainerGap(235, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -125,11 +162,15 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selection = fileChooser.getSelectedFile();
             filePathTextField.setText(selection.getAbsolutePath());
+            
+            //This will notify the wizard to revalidate the data source processor.
+            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         }
     }//GEN-LAST:event_fileBrowserButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JButton fileBrowserButton;
     private javax.swing.JTextField filePathTextField;
     private javax.swing.JLabel xrySelectFolderLabel;
