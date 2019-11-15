@@ -96,6 +96,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
         "XRYDataSourceProcessor.ioError=I/O error occured trying to test the XRY report folder"
     })
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        progressMonitor.setIndeterminate(true);
         progressMonitor.setProgressText(Bundle.XRYDataSourceProcessor_testingFolder());
         
         String selectedFilePath = configPanel.getSelectedFilePath();
