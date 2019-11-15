@@ -18,15 +18,17 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import org.sleuthkit.autopsy.datamodel.AttachmentNode;
+import com.google.gson.Gson;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -35,15 +37,12 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
-import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -67,7 +66,12 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.FileAttachment;
+import org.sleuthkit.datamodel.blackboardutils.MessageAttachments;
+import org.sleuthkit.datamodel.blackboardutils.Attachment;
+import org.sleuthkit.datamodel.blackboardutils.URLAttachment;
 
 /**
  * Shows SMS/MMS/EMail messages
@@ -541,11 +545,34 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     private void configureAttachments() throws TskCoreException {
-        //TODO: Replace this with code to get the actual attachements!
-        final Set<AbstractFile> attachments = artifact.getChildren().stream()
-                .filter(AbstractFile.class::isInstance)
-                .map(AbstractFile.class::cast)
-                .collect(Collectors.toSet());
+        
+        final Set<Attachment> attachments;
+        
+        //  Attachments are specified in an attribute TSK_ATTACHMENTS as JSON attribute
+        BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
+        if(attachmentsAttr != null) {
+           
+            attachments = new HashSet<>();
+            String jsonVal = attachmentsAttr.getValueString();	                            
+            MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
+            
+            Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+            for (FileAttachment fileAttachment: fileAttachments) {
+                attachments.add(fileAttachment);
+            }
+            Collection<URLAttachment> urlAttachments = msgAttachments.getUrlAttachments();
+            for (URLAttachment urlAttachment: urlAttachments) {
+                attachments.add(urlAttachment);
+            }
+        } else {    // For backward compatibility - email attachements are derived files and children of the email message artifact
+                attachments = new HashSet<>();
+                for (Content child: artifact.getChildren()) {
+                    if (child instanceof AbstractFile) {
+                        attachments.add(new FileAttachment((AbstractFile)child));
+                    }
+                }
+        }
+                
         final int numberOfAttachments = attachments.size();
 
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
@@ -633,16 +660,20 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         return doc.html();
     }
 
-    private static class AttachmentsChildren extends Children.Keys<AbstractFile> {
+    
+    /**
+     * Creates child nodes for message attachments. 
+     */
+    private static class AttachmentsChildren extends Children.Keys<Attachment> {
 
-        private final Set<AbstractFile> attachments;
+        private final Set<Attachment> attachments;
 
-        AttachmentsChildren(Set<AbstractFile> attachments) {
+        AttachmentsChildren(Set<Attachment> attachments) {
             this.attachments = attachments;
         }
 
         @Override
-        protected Node[] createNodes(AbstractFile t) {
+        protected Node[] createNodes(Attachment t) {
             return new Node[]{new AttachmentNode(t)};
         }
 
@@ -650,42 +681,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         protected void addNotify() {
             super.addNotify();
             setKeys(attachments);
-        }
-    }
-
-    /**
-     * Extension of FileNode customized for viewing attachments in the
-     * MessageContentViewer. It overrides createSheet() to customize what
-     * properties are shown in the table, and could also override getActions(),
-     * getPreferedAction(), etc.
-     */
-    private static class AttachmentNode extends FileNode {
-
-        AttachmentNode(AbstractFile file) {
-            super(file, false);
-        }
-
-        @Override
-        protected Sheet createSheet() {
-            Sheet sheet = super.createSheet();
-            Set<String> keepProps = new HashSet<>(Arrays.asList(
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"),
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"),
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"),
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"),
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.sizeColLbl"),
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.mimeType"),
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.knownColLbl")));
-
-            //Remove all other props except for the  ones above
-            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            for (Property<?> p : sheetSet.getProperties()) {
-                if (!keepProps.contains(p.getName())) {
-                    sheetSet.remove(p.getName());
-                }
-            }
-
-            return sheet;
         }
     }
 }

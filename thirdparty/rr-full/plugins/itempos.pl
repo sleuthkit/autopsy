@@ -1,10 +1,8 @@
 #-----------------------------------------------------------
-# shellbags.pl
-# RR plugin to parse (Vista, Win7/Win2008R2) shell bags
-#
+# itempos.pl
+# 
 # History:
-#   20130514 - added checking of ShellNoRoam\Bags subkeys for WinXP
-#   20120814 - created
+#   20191111 - Added default value to $jmp if $item{extver} cannot be determined.
 #
 # References
 #    http://c0nn3ct0r.blogspot.com/2011/11/windows-shellbag-forensics.html
@@ -21,8 +19,7 @@
 # provided, Andrew Case for posting the Registry Decoder code, and Kevin 
 # Moore for writing the shell bag parser for Registry Decoder, as well as 
 # assistance with some parsing.
-#
-# License: GPL v3 
+# 
 # copyright 2013 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
@@ -228,7 +225,6 @@ sub parseFolderItem {
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs_shortname + $cnt,1);
-                return %item unless (defined $s); 
 		if ($s =~ m/\x00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
@@ -244,9 +240,7 @@ sub parseFolderItem {
 	$tag = 1;
 	$cnt = 0;
 	while ($tag) {
-                my $s = substr($data,$ofs + $cnt,2);
-                return %item unless (defined $s); 
-		if (unpack("v",$s) == 0xbeef) {
+		if (unpack("v",substr($data,$ofs + $cnt,2)) == 0xbeef) {
 			$tag = 0;
 		}
 		else {
@@ -272,7 +266,9 @@ sub parseFolderItem {
 	elsif ($item{extver} == 0x08) {
 		$jmp = 30;
 	}
-	else {}
+	else {
+        $jmp = 34;
+    }
 	
 	$ofs += $jmp;
 	

@@ -58,7 +58,6 @@ import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import java.util.Properties;
-import java.util.Set;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
@@ -67,7 +66,6 @@ import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CoreAdminParams;
-import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
@@ -1311,6 +1309,26 @@ public class Server {
     }
 
     /**
+     * Delete a data source from SOLR.
+     *
+     * @param dataSourceId to delete
+     *
+     * @throws NoOpenCoreException
+     */
+    void deleteDataSource(Long dataSourceId) throws IOException, KeywordSearchModuleException, NoOpenCoreException, SolrServerException {
+        try {
+            currentCoreLock.writeLock().lock();
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
+            currentCore.deleteDataSource(dataSourceId);
+            currentCore.commit();
+        } finally {
+            currentCoreLock.writeLock().unlock();
+        }
+    }
+
+    /**
      * Get the text contents of the given file as stored in SOLR.
      *
      * @param content to get the text for
@@ -1601,6 +1619,13 @@ public class Server {
             }
         }
 
+        private void deleteDataSource(Long dsObjId) throws IOException, SolrServerException {
+            String dataSourceId = Long.toString(dsObjId);
+            String deleteQuery = "image_id:" + dataSourceId;
+
+            solrCore.deleteByQuery(deleteQuery);
+        }
+
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
             try {
                 solrCore.add(doc);
@@ -1622,7 +1647,8 @@ public class Server {
          * @param chunkID Chunk ID of the Solr document
          *
          * @return Text from matching Solr document (as String). Null if no
-         * matching Solr document found or error while getting content from Solr
+         *         matching Solr document found or error while getting content
+         *         from Solr
          */
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();

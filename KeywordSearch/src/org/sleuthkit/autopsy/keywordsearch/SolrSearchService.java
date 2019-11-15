@@ -60,8 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * text indexing and search.
  */
 @ServiceProviders(value = {
-    @ServiceProvider(service = KeywordSearchService.class)
-    ,
+    @ServiceProvider(service = KeywordSearchService.class),
     @ServiceProvider(service = AutopsyService.class)
 })
 public class SolrSearchService implements KeywordSearchService, AutopsyService {
@@ -199,6 +198,26 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
+     * Deletes a data source from Solr for a case.
+     *
+     * @param dataSourceId the id of the data source to delete.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException
+     */
+    @Override
+    public void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException {
+
+        try {
+            Server ddsServer = KeywordSearch.getServer();
+            ddsServer.deleteDataSource(dataSourceId);
+        } catch (IOException | KeywordSearchModuleException | NoOpenCoreException | SolrServerException ex) {
+            logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.DeleteDataSource.msg", dataSourceId), ex);
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.DeleteDataSource.msg", dataSourceId), ex);
+        }
+    }
+
+    /**
      * Deletes Solr core for a case.
      *
      * @param metadata The CaseMetadata which will have its core deleted.
@@ -279,7 +298,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         String caseDirPath = context.getCase().getCaseDirectory();
         Case theCase = context.getCase();
         List<Index> indexes = new ArrayList<>();
-        progress.start(Bundle.SolrSearch_lookingForMetadata_msg(), totalNumProgressUnits);
+        progress.progress(Bundle.SolrSearch_lookingForMetadata_msg(), totalNumProgressUnits);
         if (IndexMetadata.isMetadataFilePresent(caseDirPath)) {
             try {
                 // metadata file exists, get list of existing Solr cores for this case
