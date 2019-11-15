@@ -18,53 +18,36 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
-import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
-import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
-import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Pool;
-import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.datamodel.Tag;
 
 /**
- * This class is used to represent the "Node" for the volume. Its child is the
- * root directory of a file system
+ * This class is used to represent the "Node" for the pool.
  */
 public class PoolNode extends AbstractContentNode<Pool> {
 
     private static final Logger logger = Logger.getLogger(PoolNode.class.getName());
-    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
 
     /**
      * Helper so that the display name and the name used in building the path
      * are determined the same way.
      *
-     * @param vol Volume to get the name of
+     * @param pool Pool to get the name of
      *
-     * @return short name for the Volume
+     * @return short name for the pool
      */
     static String nameForPool(Pool pool) {
-        return "pool!!!"; // TODO + Long.toString(pool.getAddr()); //NON-NLS
+        return pool.getType().getName();
     }
 
     /**
@@ -76,35 +59,10 @@ public class PoolNode extends AbstractContentNode<Pool> {
 
         // set name, display name, and icon
         String poolName = nameForPool(pool);
-
         this.setDisplayName(poolName);
 
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/pool-icon.png"); //NON-NLS
-        // Listen for ingest events so that we can detect new added files (e.g. carved)
-        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-        // Listen for case events so that we can detect when case is closed
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
     }
-
-    private void removeListeners() {
-        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-    }
-
-    /*
-     * This property change listener refreshes the tree when a new file is
-     * carved out of the unallocated space of this volume.
-     */
-    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-        String eventType = evt.getPropertyName();
-
-        if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-            if (evt.getNewValue() == null) {
-                // case was closed. Remove listeners so that we don't get called with a stale case handle
-                removeListeners();
-            }
-        }
-    };
 
     /**
      * Right click action for volume node
@@ -120,16 +78,22 @@ public class PoolNode extends AbstractContentNode<Pool> {
         for (Action a : super.getActions(true)) {
             actionsList.add(a);
         }
-        /*
-        actionsList.add(new FileSystemDetailsAction(content));
-        actionsList.add(new NewWindowViewAction(
-                NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
-        actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-*/ // TODO!
+
         return actionsList.toArray(new Action[actionsList.size()]);
         
     }
 
+    @NbBundle.Messages({
+        "PoolNode.createSheet.name.name=Name",
+        "PoolNode.createSheet.name.displayName=Name",
+        "PoolNode.createSheet.name.desc=no description",
+        "PoolNode.createSheet.offset.name=Starting offset",
+        "PoolNode.createSheet.offset.displayName=Starting offset",
+        "PoolNode.createSheet.offset.desc=no description",
+        "PoolNode.createSheet.type.name=Type",
+        "PoolNode.createSheet.type.displayName=Type",
+        "PoolNode.createSheet.type.desc=no description",
+    })
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
@@ -138,31 +102,20 @@ public class PoolNode extends AbstractContentNode<Pool> {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-// TODO
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.name"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.displayName"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.name.desc"),
+
+        Pool pool = this.getContent();
+        sheetSet.put(new NodeProperty<>(Bundle.PoolNode_createSheet_name_name(),
+                Bundle.PoolNode_createSheet_name_displayName(),
+                Bundle.PoolNode_createSheet_name_desc(),
                 this.getDisplayName()));
-        /*sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.name"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.displayName"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.id.desc"),
-                content.getAddr()));
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.name"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.displayName"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.startSector.desc"),
-                content.getStart()));
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.name"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.displayName"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.lenSectors.desc"),
-                content.getLength()));
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.name"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.displayName"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.description.desc"),
-                content.getDescription()));
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.name"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.displayName"),
-                NbBundle.getMessage(this.getClass(), "VolumeNode.createSheet.flags.desc"),
-                content.getFlagsAsString()));*/
+        sheetSet.put(new NodeProperty<>(Bundle.PoolNode_createSheet_offset_name(),
+                Bundle.PoolNode_createSheet_offset_displayName(),
+                Bundle.PoolNode_createSheet_offset_desc(),
+                pool.getOffset()));
+        sheetSet.put(new NodeProperty<>(Bundle.PoolNode_createSheet_type_name(),
+                Bundle.PoolNode_createSheet_type_displayName(),
+                Bundle.PoolNode_createSheet_type_desc(),
+                pool.getType().getName()));
 
         return sheet;
     }
