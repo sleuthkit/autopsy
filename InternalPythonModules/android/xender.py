@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 import traceback
@@ -107,6 +109,8 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                         fromId = None
                         toId = None
                     
+                        fileAttachments = ArrayList()
+                    
                         if (messagesResultSet.getInt("c_direction") == 1):
                             direction = CommunicationDirection.OUTGOING
                             toId = messagesResultSet.getString("r_device_id")
@@ -130,7 +134,10 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                                                             msgBody,
                                                             messagesResultSet.getString("c_session_id") )
                                                                                                 
-                        # TBD: add the file as attachment ??
+                        # add the file as attachment 
+                        fileAttachments.add(FileAttachment(current_case.getSleuthkitCase(), transactionDb.getDBFile().getDataSource(), messagesResultSet.getString("f_path")))
+                        messageAttachments = MessageAttachments(fileAttachments, [])
+                        transactionDbHelper.addAttachments(messageArtifact, messageAttachments)
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for profiles.", ex)
