@@ -17,6 +17,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import json
+import traceback
+import general
+import ast
+
 from java.io import File
 from java.lang import Class
 from java.lang import ClassNotFoundException
@@ -43,13 +48,12 @@ from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
+from org.sleuthkit.datamodel.blackboardutils import URLAttachment
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CallMediaType
-
-import json
-import traceback
-import general
 
 
 class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
@@ -95,6 +99,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                 * have no text,
                                 * admin_text_thread_rtc_event has the specific event
                                   "group-call-started", "group-call_ended"
+                    --- A pending_send_media_attachment - a JSON structure that has details of attachments that may or may not have been sent.
                     --- A admin_text_thread_rtc_event column - has specific text events such as- "one-on-one-call-ended"      
                     --- A thread_key column - identifies the message thread
                     --- A timestamp_ms column - date/time message was sent
@@ -210,9 +215,20 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
             else:
                 direction = CommunicationDirection.INCOMING
         return direction  
+    
+    ## Get the arrayList from the json passed in    
+    def getJPGListFromJson(self, jpgJson):
+        jpgArray = ArrayList()
+        # The urls attachment will come across as unicode unless we use ast.literal_eval to change it to a dictionary 
+        jpgDict = ast.literal_eval(jpgJson)
+        for jpgPreview in jpgDict.iterkeys():
+            # Need to use ast.literal_eval so that the string can be converted to a dictionary
+            jpgUrlDict = ast.literal_eval(jpgDict[jpgPreview])
+            jpgArray.add(URLAttachment(jpgUrlDict["src"]))
+        return jpgArray
         
     ## Analyzes messages
-    def analyzeMessages(self, threadsDb, threadsDBHelper):
+    def analyzeMessages(self, threadsDb, threadsDBHelper, dataSource):
         try:
 
             ## Messages are found in the messages table.
@@ -223,7 +239,8 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
             ## The result set is processed to collect the multiple recipients for a given message.    
             sqlString = """
                         SELECT msg_id, text, sender, timestamp_ms, msg_type, messages.thread_key as thread_key, 
-                             snippet, thread_participants.user_key as user_key, thread_users.name as name
+                             snippet, thread_participants.user_key as user_key, thread_users.name as name,
+                             attachments, pending_send_media_attachment
                         FROM messages
                         JOIN thread_participants ON messages.thread_key = thread_participants.thread_key
                         JOIN thread_users ON thread_participants.user_key = thread_users.user_key
@@ -241,6 +258,8 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                 timeStamp = -1
                 msgText = ""
                 threadId = ""
+                messageAttachments = None
+                currentCase = Case.getCurrentCaseThrows()
                 
                 while messagesResultSet.next():
                     msgId = messagesResultSet.getString("msg_id")
@@ -259,6 +278,10 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                                         "",     # subject
                                                         msgText,
                                                         threadId)
+
+                            if (messageAttachments is not None):
+                                threadsDBHelper.addAttachments(messageArtifact, messageAttachments)
+                                messageAttachments = None
 
                         oldMsgId = msgId
 
@@ -282,8 +305,42 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                         if not msgText:
                             msgText = messagesResultSet.getString("snippet")
 
-                        # TBD: get attachment
+                        # Get attachments and pending attachments if they exist
+                        attachment = messagesResultSet.getString("attachments")
+                        pendingAttachment = messagesResultSet.getString("pending_send_media_attachment")
+                        
+                        urlAttachments = ArrayList()
+                        fileAttachments = ArrayList()
+                        
+                        if ((attachment is not None) or (pendingAttachment is not None)):
+                           if (attachment is not None):
+                               attachmentDict = json.loads(attachment)[0]
+                               if (attachmentDict["mime_type"] == "image/jpeg"):
+                                   urlAttachments = self.getJPGListFromJson(attachmentDict["urls"])
 
+                               elif (attachmentDict["mime_type"] == "video/mp4"):
+                                   # filename does not have an associated path with it so it will be ignored
+                                   urlAttachments = self.getJPGListFromJson(attachmentDict["urls"])
+                                   urlAttachments.add(URLAttachment(attachmentDict["video_data_url"]))
+                                   urlAttachments.add(URLAttachment(attachmentDict["video_data_thumbnail_url"]))
+
+                               elif (attachmentDict["mime_type"] == "audio/mpeg"):
+                                   if (attachmentDict["audio_uri"] == ""):
+                                       continue
+                                   else:
+                                       audioUri = attachmentDict["audio_uri"]
+                                       fileAttachments.add(FileAttachment(currentCase.getSleuthkitCase(), threadsDb.getDBFile().getDataSource(), audioUri.replace("file://","")))
+
+                               else:
+                                   self._logger.log(Level.INFO, "Attachment type not handled: " + attachmentDict["mime_type"])
+
+                           if (pendingAttachment is not None):
+                               pendingAttachmentDict = json.loads(pendingAttachment)[0]
+                               pendingAttachmentUri = pendingAttachmentDict["uri"]
+                               fileAttachments.add(FileAttachment(currentCase.getSleuthkitCase(), threadsDb.getDBFile().getDataSource(), pendingAttachmentUri.replace("file://","")))
+                           
+                           messageAttachments = MessageAttachments(fileAttachments, urlAttachments)
+                                   
                         threadId = messagesResultSet.getString("thread_key")
 
                     else:   # same msgId as last, just collect recipient from current row
@@ -430,7 +487,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                         self._MODULE_NAME, threadsDb.getDBFile(),
                                         Account.Type.FACEBOOK)
                 
-                self.analyzeMessages(threadsDb, threadsDBHelper)
+                self.analyzeMessages(threadsDb, threadsDBHelper, dataSource)
                 self.analyzeCallLogs(threadsDb, threadsDBHelper)
                         
             except TskCoreException as ex:
