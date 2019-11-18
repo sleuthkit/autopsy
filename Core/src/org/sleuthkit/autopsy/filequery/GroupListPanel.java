@@ -169,7 +169,13 @@ class GroupListPanel extends javax.swing.JPanel {
                 boolean cellHasFocus) {
             Object newValue = value;
             if (newValue instanceof GroupKey) {
-                newValue = newValue.toString() + " (" + groupMap.get(newValue) + ")";
+                String valueString = newValue.toString();
+                setToolTipText(valueString);
+                //if paths would be longer than 37 characters shorten them to be 37 characters 
+                if (groupingAttribute instanceof FileSearch.ParentPathAttribute && valueString.length() > 37) {
+                    valueString = valueString.substring(0, 16) + " ... " + valueString.substring(valueString.length() - 16);
+                }
+                newValue = valueString + " (" + groupMap.get(newValue) + ")";
             }
             super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
             return this;
