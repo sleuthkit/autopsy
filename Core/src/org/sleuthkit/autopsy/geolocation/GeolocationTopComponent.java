@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -35,6 +36,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.geolocation.GeoFilterPanel.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
@@ -149,10 +151,27 @@ public final class GeolocationTopComponent extends TopComponent {
         WindowManager.getDefault().setTopComponentFloating(this, true);
     }
     
+    @Messages({
+        "GeolocationTC_connection_failure_message=Failed to connect to map title source.\nPlease review map source in Options dialog.",
+        "GeolocationTC_connection_failure_message_title=Connection Failure"
+    })
     @Override
     public void open() {
         super.open();
         geoFilterPanel.updateDataSourceList();
+        try {
+            mapPanel.initMap();
+        } catch (GeoLocationDataException ex) {
+           JOptionPane.showMessageDialog(this, 
+                   Bundle.GeolocationTC_connection_failure_message(), 
+                   Bundle.GeolocationTC_connection_failure_message_title(), 
+                   JOptionPane.ERROR_MESSAGE);
+           MessageNotifyUtil.Notify.error(
+                   Bundle.GeolocationTC_connection_failure_message_title(), 
+                   Bundle.GeolocationTC_connection_failure_message());
+           logger.log(Level.SEVERE, ex.getMessage(), ex);
+           return; // Doen't set the waypoints.
+        }
         updateWaypoints();
     }
 
