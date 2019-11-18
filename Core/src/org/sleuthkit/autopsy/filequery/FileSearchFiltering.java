@@ -859,7 +859,7 @@ class FileSearchFiltering {
         String getWhereClause() {
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
                     + "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = "
-                    + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID() + ")))";
+                    + BlackboardArtifact.ARTIFACT_TYPE.TSK_USER_CREATED_SUSPECTED.getTypeID() + ")))";
 
             return queryStr;
         }
