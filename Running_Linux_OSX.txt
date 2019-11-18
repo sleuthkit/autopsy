@@ -67,7 +67,7 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 
 - If you see something like "Cannot create case: javafx/scene/paint/Color" it is an indication that Java FX
   is not being found.
-  Confirm that the file $JAVA_HOME/jre/lib/ext/jfxrt.jar exists. If it does not exist, return the the Java
+  Confirm that the file $JAVA_HOME/jre/lib/ext/jfxrt.jar exists. If it does not exist, return to the Java
   setup steps above.
 - If you see something like "An illegal reflective access operation has occurred" it is an indication that
   the wrong version of Java is being used to run Autopsy.
