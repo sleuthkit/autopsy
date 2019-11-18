@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 
@@ -88,6 +90,7 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                         direction = CommunicationDirection.UNKNOWN
                         fromId = None
                         toId = None
+                        fileAttachments = ArrayList()
                     
                         if (transfersResultSet.getInt("direction") == 1):
                             direction = CommunicationDirection.OUTGOING
@@ -112,7 +115,10 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                                                             msgBody,
                                                             None )    # thread id
                                                                                                 
-                        # TBD: add the file as attachment ??
+                        # add the file as attachment 
+                        fileAttachments.add(FileAttachment(current_case.getSleuthkitCase(), transferDb.getDBFile().getDataSource(), transfersResultSet.getString("path")))
+                        messageAttachments = MessageAttachments(fileAttachments, [])
+                        transferDbHelper.addAttachments(messageArtifact, messageAttachments)
 
             except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for transfer.", ex)
