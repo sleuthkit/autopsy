@@ -61,7 +61,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
     public void load() {
         tileServerFiled.setText(UserPreferences.getGeolocationOsmServerAddress());
         osmZipFileField.setText(UserPreferences.getGeolocationOsmZipPath());
-        switch (GEOLOCATION_TILE_OPTION.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
+        switch (GeolocationTileOption.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
             case ONLINE_USER_DEFINED_OSM_SERVER:
                 tileServerButton.setSelected(true);
                 break;
@@ -93,13 +93,13 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
      *
      * @return Current GEOLOCATION_TILE_OPTION
      */
-    private GEOLOCATION_TILE_OPTION getServerOption() {
+    private GeolocationTileOption getServerOption() {
         if (tileServerButton.isSelected()) {
-            return GEOLOCATION_TILE_OPTION.ONLINE_USER_DEFINED_OSM_SERVER;
+            return GeolocationTileOption.ONLINE_USER_DEFINED_OSM_SERVER;
         } else if (osmZipButton.isSelected()) {
-            return GEOLOCATION_TILE_OPTION.OFFLINE_OSM_ZIP;
+            return GeolocationTileOption.OFFLINE_OSM_ZIP;
         }
-        return GEOLOCATION_TILE_OPTION.ONLINE_DEFAULT_SERVER;
+        return GeolocationTileOption.ONLINE_DEFAULT_SERVER;
     }
 
     /**
@@ -118,6 +118,10 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         TileFactoryInfo info = new OSMTileFactoryInfo("User Defined Server", url); //NON-NLS
         return GeoUtil.isValidTile(1, 1, 1, info);
     }
+    
+    void cancelChanges() {
+        load();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -130,7 +134,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
         java.awt.GridBagConstraints gridBagConstraints;
 
         javax.swing.ButtonGroup buttonGroup = new javax.swing.ButtonGroup();
-        tilePane = new javax.swing.JPanel();
+        javax.swing.JPanel tilePane = new javax.swing.JPanel();
         defaultButton = new javax.swing.JRadioButton();
         tileServerButton = new javax.swing.JRadioButton();
         tileServerFiled = new javax.swing.JTextField();
@@ -302,7 +306,6 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
     private javax.swing.JButton osmZipFileBrowseButton;
     private javax.swing.JTextField osmZipFileField;
     private javax.swing.JButton serverTestButton;
-    private javax.swing.JPanel tilePane;
     private javax.swing.JRadioButton tileServerButton;
     private javax.swing.JTextField tileServerFiled;
     // End of variables declaration//GEN-END:variables
@@ -311,14 +314,14 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
      * Tile server option enum. The enum was given values to simplify the
      * storing of the user preference for a particular option.
      */
-    enum GEOLOCATION_TILE_OPTION {
+    enum GeolocationTileOption{
         ONLINE_DEFAULT_SERVER(0),
         ONLINE_USER_DEFINED_OSM_SERVER(1),
         OFFLINE_OSM_ZIP(2);
 
         private final int value;
 
-        GEOLOCATION_TILE_OPTION(int value) {
+        GeolocationTileOption(int value) {
             this.value = value;
         }
 
@@ -326,8 +329,8 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
             return value;
         }
 
-        static GEOLOCATION_TILE_OPTION getOptionForValue(int value) {
-            for (GEOLOCATION_TILE_OPTION option : GEOLOCATION_TILE_OPTION.values()) {
+        static GeolocationTileOption getOptionForValue(int value) {
+            for (GeolocationTileOption option : GeolocationTileOption.values()) {
                 if (option.getValue() == value) {
                     return option;
                 }

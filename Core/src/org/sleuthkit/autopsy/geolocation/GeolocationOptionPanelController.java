@@ -33,6 +33,9 @@ import org.openide.util.Lookup;
         keywordsCategory = "Geolcoation",
         position = 18
 )
+/**
+ * Controller for the Geolocation options pane in the Options dialog.
+ */
 public final class GeolocationOptionPanelController extends OptionsPanelController {
 
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -51,7 +54,7 @@ public final class GeolocationOptionPanelController extends OptionsPanelControll
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
-                        changed();
+                        updateChanged();
                     }
                 }
 
@@ -70,11 +73,6 @@ public final class GeolocationOptionPanelController extends OptionsPanelControll
     public void applyChanges() {
         getPanel().store();
         changed = false;
-    }
-
-    @Override
-    public void cancel() {
-
     }
 
     @Override
@@ -110,12 +108,17 @@ public final class GeolocationOptionPanelController extends OptionsPanelControll
     /**
      * Helper function for updating the change state.
      */
-    void changed() {
+    void updateChanged() {
         if (!changed) {
             changed = true;
             pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
         }
         pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+    }
+
+    @Override
+    public void cancel() {
+        getPanel().cancelChanges();
     }
 
 }

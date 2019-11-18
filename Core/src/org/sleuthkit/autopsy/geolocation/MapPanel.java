@@ -158,6 +158,8 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomSlider.setMaximum(tileFactory.getInfo().getMaximumZoomLevel());
 
         setZoom(tileFactory.getInfo().getMaximumZoomLevel() - 1);
+        
+        mapViewer.setCenterPosition(new GeoPosition(0,0));
 
         // Basic painters for the way points. 
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>() {
@@ -195,36 +197,58 @@ final public class MapPanel extends javax.swing.JPanel {
      * @return
      */
     TileFactoryInfo getTileFactoryInfo() throws GeoLocationDataException {
-
-        switch (GeolocationSettingsPanel.GEOLOCATION_TILE_OPTION.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
-
+        switch (GeolocationSettingsPanel.GeolocationTileOption.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
             case ONLINE_USER_DEFINED_OSM_SERVER:
-                String osmServer = UserPreferences.getGeolocationOsmServerAddress();
-                if (osmServer.isEmpty()) {
-                    throw new GeoLocationDataException("Invalid user preference for OSM user define tile server. Address is an empty string.");
-                } else {
-                    TileFactoryInfo info = new OSMTileFactoryInfo("User Defined Server", osmServer);
-                    if (!GeoUtil.isValidTile(1, 1, 1, info)) {
-                        throw new GeoLocationDataException(String.format("Invalid OSM user define tile server: %s", osmServer));
-                    }
-                    return info;
-                }
+                return createOnlineOSMFactory(UserPreferences.getGeolocationOsmServerAddress());
             case OFFLINE_OSM_ZIP:
-                String zipFile = UserPreferences.getGeolocationOsmZipPath();
-                if (zipFile.isEmpty()) {
-                    throw new GeoLocationDataException("Invalid OSM tile Zip file. User preference value is empty string.");
-                } else {
-                    File file = new File(zipFile);
-                    if (!file.exists() || !file.canRead()) {
-                        throw new GeoLocationDataException("Invalid OSM tile zip file.  Unable to read file: " + zipFile);
-                    }
-                    
-                    zipFile = zipFile.replaceAll("\\\\", "/");
-
-                    return new OSMTileFactoryInfo("ZIP archive", "jar:file:/" + zipFile + "!");  //NON-NLS
-                }
+                return createOSMZipFactory(UserPreferences.getGeolocationOsmZipPath());
             default:
                 return new VirtualEarthTileFactoryInfo(VirtualEarthTileFactoryInfo.MAP);
+        }
+    }
+    
+    /**
+     * Create the TileFactoryInfo for an online OSM tile server.
+     * 
+     * @param address Tile server address 
+     * 
+     * @return TileFactoryInfo object for server address.
+     * 
+     * @throws GeoLocationDataException 
+     */
+    private TileFactoryInfo createOnlineOSMFactory(String address) throws GeoLocationDataException {
+        if (address.isEmpty()) {
+            throw new GeoLocationDataException("Invalid user preference for OSM user define tile server. Address is an empty string.");
+        } else {
+            TileFactoryInfo info = new OSMTileFactoryInfo("User Defined Server", address);
+            if (!GeoUtil.isValidTile(1, 1, 1, info)) {
+                throw new GeoLocationDataException(String.format("Invalid OSM user define tile server: %s", address));
+            }
+            return info;
+        }
+    }
+    
+    /**
+     * Create the TileFactoryInfo for OSM zip File
+     * 
+     * @param zipPath Path to zip file.
+     * 
+     * @return TileFactoryInfo for zip file.
+     * 
+     * @throws GeoLocationDataException 
+     */
+    private TileFactoryInfo createOSMZipFactory(String path) throws GeoLocationDataException {
+        if (path.isEmpty()) {
+            throw new GeoLocationDataException("Invalid OSM tile Zip file. User preference value is empty string.");
+        } else {
+            File file = new File(path);
+            if (!file.exists() || !file.canRead()) {
+                throw new GeoLocationDataException("Invalid OSM tile zip file.  Unable to read file: " + path);
+            }
+
+            String zipPath = path.replaceAll("\\\\", "/");
+
+            return new OSMTileFactoryInfo("ZIP archive", "jar:file:/" + zipPath + "!");  //NON-NLS
         }
     }
 
