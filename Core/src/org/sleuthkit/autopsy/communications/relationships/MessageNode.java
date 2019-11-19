@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import com.google.gson.Gson;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,8 @@ import static org.sleuthkit.autopsy.communications.relationships.RelationshipsNo
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.blackboardutils.MessageAttachments;
 
 /**
  * Wraps a BlackboardArtifact as an AbstractNode for use in an OutlookView
@@ -97,7 +100,7 @@ class MessageNode extends BlackboardArtifactNode {
         sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "",
             getAttributeDisplayString(artifact, TSK_SUBJECT))); //NON-NLS
         try {
-            sheetSet.put(new NodeProperty<>("Attms", Bundle.MessageNode_Node_Property_Attms(), "", artifact.getChildrenCount())); //NON-NLS
+            sheetSet.put(new NodeProperty<>("Attms", Bundle.MessageNode_Node_Property_Attms(), "", getAttachmentsCount())); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex); //NON-NLS
         }
@@ -143,5 +146,22 @@ class MessageNode extends BlackboardArtifactNode {
     @Override
     public Action getPreferredAction() {
         return preferredAction;
+    }
+    
+    private int getAttachmentsCount() throws TskCoreException {
+        final BlackboardArtifact artifact = getArtifact();
+        int attachmentsCount;
+
+        //  Attachments are specified in an attribute TSK_ATTACHMENTS as JSON attribute
+        BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
+        if (attachmentsAttr != null) {
+            String jsonVal = attachmentsAttr.getValueString();
+            MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
+            attachmentsCount = msgAttachments.getAttachmentsCount();
+        } else {    // legacy attachments may be children of message artifact.
+            attachmentsCount = artifact.getChildrenCount();
+        }
+
+        return attachmentsCount;
     }
 }
