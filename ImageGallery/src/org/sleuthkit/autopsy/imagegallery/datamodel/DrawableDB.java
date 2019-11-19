@@ -49,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
@@ -80,6 +79,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
 import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.VersionNumber;
 import org.sqlite.SQLiteJDBCLoader;
+import java.util.stream.Collectors;
 
 /**
  * Provides access to the drawables database and selected tables in the case
@@ -230,7 +230,7 @@ public final class DrawableDB {
         dbWriteLock();
         try {
             con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
-            if (!initializeDBSchema() || !upgradeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !initializeImageList()) {
+            if (!initializeDBSchema() || !upgradeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !removeDeletedDataSources() || !initializeImageList()) {
                 close();
                 throw new TskCoreException("Failed to initialize drawables database for Image Gallery use"); //NON-NLS
             }
@@ -371,6 +371,62 @@ public final class DrawableDB {
         if (groupKey.getDataSource().isPresent()
                 && (groupKey.getAttribute() == DrawableAttribute.PATH)) {
             statement.setObject(2, groupKey.getDataSourceObjId());
+        }
+    }
+
+    /**
+     * Removes any data sources from the local drawables database that have been
+     * deleted from the case database. This is necessary for multi-user cases
+     * where the case database is shared, but each user has his or her own local
+     * drawables database and may not have had the case open when a data source
+     * was deleted.
+     *
+     * @return True on success, false on failure.
+     */
+    private boolean removeDeletedDataSources() {
+        dbWriteLock();
+        try (SleuthkitCase.CaseDbQuery caseDbQuery = tskCase.executeQuery("SELECT obj_id FROM data_source_info"); //NON-NLS
+                Statement drawablesDbStmt = con.createStatement()) {
+            /*
+             * Get the data source object IDs from the case database.
+             */
+            ResultSet caseDbResults = caseDbQuery.getResultSet();
+            Set<Long> currentDataSourceObjIDs = new HashSet<>();
+            while (caseDbResults.next()) {
+                currentDataSourceObjIDs.add(caseDbResults.getLong(1));
+            }
+
+            /*
+             * Get the data source object IDs from the drawables database and
+             * determine which ones, if any, have been deleted from the case
+             * database.
+             */
+            List<Long> staleDataSourceObjIDs = new ArrayList<>();
+            try (ResultSet drawablesDbResults = drawablesDbStmt.executeQuery("SELECT ds_obj_id FROM datasources")) { //NON-NLS
+                while (drawablesDbResults.next()) {
+                    long dataSourceObjID = drawablesDbResults.getLong(1);
+                    if (!currentDataSourceObjIDs.contains(dataSourceObjID)) {
+                        staleDataSourceObjIDs.add(dataSourceObjID);
+                    }
+                }
+            }
+
+            /*
+             * Delete the surplus data sources from this local drawables
+             * database. The delete cascades.
+             */
+            if (!staleDataSourceObjIDs.isEmpty()) {
+                String deleteCommand = "DELETE FROM datasources where ds_obj_id IN (" + StringUtils.join(staleDataSourceObjIDs, ',') + ")"; //NON-NLS
+                drawablesDbStmt.execute(deleteCommand);
+            }
+            return true;
+
+        } catch (TskCoreException | SQLException ex) {
+            logger.log(Level.SEVERE, "Failed to remove deleted data sources from drawables database", ex); //NON-NLS
+            return false;
+
+        } finally {
+            dbWriteUnlock();
         }
     }
 
@@ -2037,7 +2093,7 @@ public final class DrawableDB {
      *
      * @param dataSourceID The object ID of the data source to delete.
      *
-     * @throws SQLException 
+     * @throws SQLException
      * @throws TskCoreException
      */
     public void deleteDataSource(long dataSourceID) throws SQLException, TskCoreException {
