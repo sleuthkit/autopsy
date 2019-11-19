@@ -43,6 +43,8 @@ from org.sleuthkit.datamodel.Blackboard import BlackboardException
 from org.sleuthkit.autopsy.casemodule import NoCurrentCaseException
 from org.sleuthkit.datamodel import Account
 from org.sleuthkit.datamodel.blackboardutils import CommunicationArtifactsHelper
+from org.sleuthkit.datamodel.blackboardutils import FileAttachment
+from org.sleuthkit.datamodel.blackboardutils import MessageAttachments
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import MessageReadStatus
 from org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper import CommunicationDirection
 from TskContactsParser import TskContactsParser
@@ -117,7 +119,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                             current_case.getSleuthkitCase(), self._PARSER_NAME, 
                             contact_and_message_db.getDBFile(), Account.Type.LINE) 
                 self.parse_contacts(contact_and_message_db, helper)
-                self.parse_messages(contact_and_message_db, helper)
+                self.parse_messages(contact_and_message_db, helper, current_case)
 
             for calllog_db in calllog_dbs:
                 current_case = Case.getCurrentCaseThrows()
@@ -195,22 +197,28 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                     "Error posting Line calllog artifacts to blackboard.", ex)
             self._logger.log(Level.WARNING, traceback.format_exc())   
     
-    def parse_messages(self, messages_db, helper):
+    def parse_messages(self, messages_db, helper, current_case):
         try:
            
             messages_parser = LineMessagesParser(messages_db)
             while messages_parser.next():
-                helper.addMessage(
-                    messages_parser.get_message_type(),
-                    messages_parser.get_message_direction(),
-                    messages_parser.get_phone_number_from(),
-                    messages_parser.get_phone_number_to(),
-                    messages_parser.get_message_date_time(),
-                    messages_parser.get_message_read_status(),
-                    messages_parser.get_message_subject(),
-                    messages_parser.get_message_text(),
-                    messages_parser.get_thread_id() 
-                )
+                message_artifact = helper.addMessage(
+                                       messages_parser.get_message_type(),
+                                       messages_parser.get_message_direction(),
+                                       messages_parser.get_phone_number_from(),
+                                       messages_parser.get_phone_number_to(),
+                                       messages_parser.get_message_date_time(),
+                                       messages_parser.get_message_read_status(),
+                                       messages_parser.get_message_subject(),
+                                       messages_parser.get_message_text(),
+                                       messages_parser.get_thread_id() 
+                                   )
+                if (messages_parser.get_file_attachment() is not None):
+                    file_attachments = ArrayList()
+                    file_attachments.add(FileAttachment(current_case.getSleuthkitCase(), messages_db.getDBFile().getDataSource(), messages_parser.get_file_attachment()))
+                    message_attachments = MessageAttachments(file_attachments, [])
+                    helper.addAttachments(message_artifact, message_attachments)
+
             messages_parser.close()
         except SQLException as ex:
             self._logger.log(Level.WARNING, "Error parsing the Line App Database for messages.", ex)
@@ -357,7 +365,7 @@ class LineMessagesParser(TskMessagesParser):
                            messages.created_time, 
                            messages.attachement_type, 
                            messages.attachement_local_uri, 
-                           messages.status 
+                           messages.status                           
                     FROM   (SELECT id, 
                                    Group_concat(M.m_id) AS members 
                             FROM   membership AS M 
@@ -426,3 +434,14 @@ class LineMessagesParser(TskMessagesParser):
         if members is not None:
             return self.result_set.getString("id")
         return super(LineMessagesParser, self).get_thread_id()
+
+    def get_file_attachment(self):
+        if (self.result_set.getString("attachement_local_uri") is None):
+            return None
+        # If "content:" in the beginning of the string we cannot determine at this point where a file resides. Ignoring for
+        # now unless data can be obtained to determine where the file may reside.
+        elif ("content:" in self.result_set.getString("attachement_local_uri")):
+            return None
+        else:
+            return self.result_set.getString("attachement_local_uri")
+    
