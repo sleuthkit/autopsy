@@ -228,7 +228,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
         return jpgArray
         
     ## Analyzes messages
-    def analyzeMessages(self, threadsDb, threadsDBHelper, dataSource):
+    def analyzeMessages(self, threadsDb, threadsDBHelper):
         try:
 
             ## Messages are found in the messages table.
@@ -487,7 +487,7 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                                         self._MODULE_NAME, threadsDb.getDBFile(),
                                         Account.Type.FACEBOOK)
                 
-                self.analyzeMessages(threadsDb, threadsDBHelper, dataSource)
+                self.analyzeMessages(threadsDb, threadsDBHelper)
                 self.analyzeCallLogs(threadsDb, threadsDBHelper)
                         
             except TskCoreException as ex:
