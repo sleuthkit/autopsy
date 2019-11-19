@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * The map panel. This panel contains the jxmapviewer MapViewer
  */
-final class MapPanel extends javax.swing.JPanel {
+final public class MapPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(MapPanel.class.getName());
 
@@ -76,7 +76,7 @@ final class MapPanel extends javax.swing.JPanel {
     /**
      * Creates new form MapPanel
      */
-    MapPanel() {
+    public MapPanel() {
         initComponents();
         initMap();
 
