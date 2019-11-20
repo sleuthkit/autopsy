@@ -107,10 +107,6 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                             direction = CommunicationDirection.OUTGOING
                             toId = historyResultSet.getString("device_id")
                             
-                        msgBody = ""    # there is no body.
-                        attachments = [historyResultSet.getString("file_path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
-                        
                         timeStamp = historyResultSet.getLong("timestamp") / 1000
                         messageArtifact = historyDbHelper.addMessage(
                                                             self._MESSAGE_TYPE,
@@ -120,7 +116,7 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message text
                                                             None )  # thread id
                                                                                                 
                         # add the file as attachment
