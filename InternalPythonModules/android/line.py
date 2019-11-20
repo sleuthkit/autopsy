@@ -399,11 +399,6 @@ class LineMessagesParser(TskMessagesParser):
 
     def get_message_text(self):
         content = self.result_set.getString("content") 
-        attachment_uri = self.result_set.getString("attachement_local_uri")
-        if attachment_uri is not None and content is not None:
-            return general.appendAttachmentList(content, [attachment_uri])
-        elif attachment_uri is not None and content is None:
-            return general.appendAttachmentList("", [attachment_uri])
         return content
 
     def get_message_direction(self):  
