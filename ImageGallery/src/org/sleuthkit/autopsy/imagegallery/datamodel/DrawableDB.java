@@ -171,6 +171,9 @@ public final class DrawableDB {
 
     /*
      * This class is coupled to the image gallery controller and group manager.
+     *
+     * TODO: It would be better to reduce the coupling so that the controller
+     * and group manager call this class, but this class does not call them.
      */
     private final ImageGalleryController controller;
     private final GroupManager groupManager;
@@ -282,7 +285,7 @@ public final class DrawableDB {
             hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET); //NON-NLS
             pathGroupFilterByDataSrcStmt = prepareFilterByDataSrcStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? AND data_source_obj_id = ?", DrawableAttribute.PATH);
             return true;
-            
+
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to prepare all statements", ex); //NON-NLS
             return false;
