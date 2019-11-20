@@ -110,42 +110,15 @@ public final class DrawableDB {
     private static final VersionNumber IG_SCHEMA_VERSION = new VersionNumber(1, 2, 0);    // IG Schema Current version
 
     private PreparedStatement insertHashSetStmt;
-
     private List<PreparedStatement> preparedStatements = new ArrayList<>();
-
     private PreparedStatement removeFileStmt;
-
     private PreparedStatement selectHashSetStmt;
-
     private PreparedStatement selectHashSetNamesStmt;
-
     private PreparedStatement insertHashHitStmt;
-
     private PreparedStatement removeHashHitStmt;
-
     private PreparedStatement updateDataSourceStmt;
-
     private PreparedStatement updateFileStmt;
     private PreparedStatement insertFileStmt;
-
-    private PreparedStatement pathGroupStmt;
-
-    private PreparedStatement nameGroupStmt;
-
-    private PreparedStatement created_timeGroupStmt;
-
-    private PreparedStatement modified_timeGroupStmt;
-
-    private PreparedStatement makeGroupStmt;
-
-    private PreparedStatement modelGroupStmt;
-
-    private PreparedStatement analyzedGroupStmt;
-
-    private PreparedStatement hashSetGroupStmt;
-
-    private PreparedStatement pathGroupFilterByDataSrcStmt;
-
     private PreparedStatement deleteDataSourceStmt;
 
     /**
@@ -251,15 +224,6 @@ public final class DrawableDB {
                     "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
                     + " VALUES (?,?)"); //NON-NLS
             removeFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?"); //NON-NLS
-            pathGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? ", DrawableAttribute.PATH); //NON-NLS
-            nameGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE  name  = ? ", DrawableAttribute.NAME); //NON-NLS
-            created_timeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE created_time  = ? ", DrawableAttribute.CREATED_TIME); //NON-NLS
-            modified_timeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE  modified_time  = ? ", DrawableAttribute.MODIFIED_TIME); //NON-NLS
-            makeGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE make  = ? ", DrawableAttribute.MAKE); //NON-NLS
-            modelGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE model  = ? ", DrawableAttribute.MODEL); //NON-NLS
-            analyzedGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE analyzed = ?", DrawableAttribute.ANALYZED); //NON-NLS
-            hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET); //NON-NLS
-            pathGroupFilterByDataSrcStmt = prepareFilterByDataSrcStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? AND data_source_obj_id = ?", DrawableAttribute.PATH);
             selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets"); //NON-NLS
             insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"); //NON-NLS
             selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
@@ -267,6 +231,7 @@ public final class DrawableDB {
             removeHashHitStmt = prepareStatement("DELETE FROM hash_set_hits WHERE obj_id = ?"); //NON-NLS
             deleteDataSourceStmt = prepareStatement("DELETE FROM datasources where ds_obj_id = ?"); //NON-NLS
             return true;
+            
         } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to prepare all statements", ex); //NON-NLS
             return false;
@@ -1689,12 +1654,12 @@ public final class DrawableDB {
      */
     public void insertOrUpdateDataSource(long dsObjectId, DrawableDbBuildStatusEnum status) {
         dbWriteLock();
-        try {
+        try {            
             // "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
             updateDataSourceStmt.setLong(1, dsObjectId);
             updateDataSourceStmt.setString(2, status.name());
-
             updateDataSourceStmt.executeUpdate();
+            
         } catch (SQLException | NullPointerException ex) {
             logger.log(Level.SEVERE, "failed to insert/update datasources table", ex); //NON-NLS
         } finally {
