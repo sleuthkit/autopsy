@@ -1716,20 +1716,20 @@ public final class DrawableDB {
     public void insertOrUpdateDataSource(long dataSourceObjectID, DrawableDbBuildStatusEnum status) throws SQLException {
         dbWriteLock();
         try {
+            // SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?
             selectCountDataSourceIDs.setLong(1, dataSourceObjectID);
             try (ResultSet resultSet = selectCountDataSourceIDs.executeQuery()) {
-                if (resultSet.first()) {
-                    if (resultSet.getInt(1) == 0) {
-                        insertDataSourceStmt.setLong(1, dataSourceObjectID);
-                        insertDataSourceStmt.setString(2, status.name());
-                        insertDataSourceStmt.execute();
-                    } else {
-                        updateDataSourceStmt.setString(1, status.name());
-                        updateDataSourceStmt.setLong(2, dataSourceObjectID);
-                        updateDataSourceStmt.executeUpdate();
-                    }
+                resultSet.first();
+                if (resultSet.getInt(1) == 0) {
+                    // INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)
+                    insertDataSourceStmt.setLong(1, dataSourceObjectID);
+                    insertDataSourceStmt.setString(2, status.name());
+                    insertDataSourceStmt.execute();
                 } else {
-                    throw new SQLException("SELECT COUNT(*) query of datasources table failed to return any rows");
+                    // UPDATE datasources SET drawable_db_build_status = ? WHERE ds_obj_id = ?
+                    updateDataSourceStmt.setString(1, status.name());
+                    updateDataSourceStmt.setLong(2, dataSourceObjectID);
+                    updateDataSourceStmt.executeUpdate();
                 }
             }
         } finally {
