@@ -118,10 +118,6 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                             direction = CommunicationDirection.INCOMING
                             fromId = messagesResultSet.getString("s_device_id")                          
 
-                        msgBody = ""    # there is no body.
-                        attachments = [messagesResultSet.getString("f_path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
-                        
                         timeStamp = messagesResultSet.getLong("f_create_time") / 1000
                         messageArtifact = transactionDbHelper.addMessage( 
                                                             self._MESSAGE_TYPE,
@@ -131,7 +127,7 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message text
                                                             messagesResultSet.getString("c_session_id") )
                                                                                                 
                         # add the file as attachment 
