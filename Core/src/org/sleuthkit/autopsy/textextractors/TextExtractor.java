@@ -117,26 +117,4 @@ public interface TextExtractor {
             super(msg);
         }
     }
-
-    static Charset getEncoding(Content content) {
-        InputStream stream = new BufferedInputStream(new ReadContentInputStream(content));
-        Charset detectedCharset = UNKNOWN_CHARSET;
-
-        try {
-            int maxBytes = 100000;
-            int numBytes = Math.min(stream.available(), maxBytes);
-            byte[] targetArray = new byte[numBytes];
-            stream.read(targetArray);
-            List<DecodetectResult> results = Decodetect.DECODETECT.getResults(targetArray);
-            if (results.size() > 0) {
-                DecodetectResult topResult = results.get(0);
-                if (topResult.getConfidence() > 0.4) {
-                    detectedCharset = topResult.getEncoding();
-                }
-            }
-            stream.reset();
-        } catch (IOException ignored) {
-        }
-        return detectedCharset;
-    }
 }

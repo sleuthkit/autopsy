@@ -29,9 +29,9 @@ import java.util.stream.Collectors;
 import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MimeTypes;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextFileExtractor;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -258,7 +258,7 @@ public class FileTypeDetector {
                      * encoding with Decodetect.
                      */
                     if (file.getNameExtension().equals("txt")) {
-                        Charset detectedCharset = TextExtractor.getEncoding(file);
+                        Charset detectedCharset = TextFileExtractor.getEncoding(file);
                         if (detectedCharset != TextExtractor.UNKNOWN_CHARSET) {
                             mimeType = MimeTypes.PLAIN_TEXT;
                         }

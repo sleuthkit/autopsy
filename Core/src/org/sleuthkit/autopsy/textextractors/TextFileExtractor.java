@@ -16,28 +16,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
+
+import com.ethteck.decodetect.core.Decodetect;
+import com.ethteck.decodetect.core.DecodetectResult;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.BufferedInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import org.apache.tika.mime.MimeTypes;
-import org.apache.tika.parser.txt.CharsetDetector;
-import org.apache.tika.parser.txt.CharsetMatch;
-import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import java.util.List;
+import static org.sleuthkit.autopsy.textextractors.TextExtractor.UNKNOWN_CHARSET;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extract text from .txt files
  */
-final class TextFileExtractor {
+public final class TextFileExtractor {
 
     public Reader getReader(AbstractFile source) throws TextFileExtractorException {
-        Charset encoding = TextExtractor.getEncoding(source);
+        Charset encoding = getEncoding(source);
         if (encoding == TextExtractor.UNKNOWN_CHARSET) {
             encoding = StandardCharsets.UTF_8;
         }
@@ -55,5 +57,27 @@ final class TextFileExtractor {
         public TextFileExtractorException(String msg) {
             super(msg);
         }
+    }
+
+    public static Charset getEncoding(Content content) {
+        InputStream stream = new BufferedInputStream(new ReadContentInputStream(content));
+        Charset detectedCharset = UNKNOWN_CHARSET;
+
+        try {
+            int maxBytes = 100000;
+            int numBytes = Math.min(stream.available(), maxBytes);
+            byte[] targetArray = new byte[numBytes];
+            stream.read(targetArray);
+            List<DecodetectResult> results = Decodetect.DECODETECT.getResults(targetArray);
+            if (results.size() > 0) {
+                DecodetectResult topResult = results.get(0);
+                if (topResult.getConfidence() > 0.4) {
+                    detectedCharset = topResult.getEncoding();
+                }
+            }
+            stream.reset();
+        } catch (IOException ignored) {
+        }
+        return detectedCharset;
     }
 }
