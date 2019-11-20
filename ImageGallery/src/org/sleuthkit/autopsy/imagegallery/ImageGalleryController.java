@@ -801,7 +801,11 @@ public final class ImageGalleryController {
                         if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                             Content newDataSource = (Content) event.getNewValue();
                             if (isListeningEnabled()) {
-                                drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
+                                try {
+                                    drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
+                                } catch (SQLException ex) {
+                                    logger.log(Level.SEVERE, String.format("Error updating datasources table (data source object ID = %d, status = %s)", newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN.toString(), ex)); //NON-NLS
+                                }
                             }
                         }
                         break;
@@ -883,7 +887,7 @@ public final class ImageGalleryController {
                     default:
                         break;
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to handle %s event for %s (objId=%d)", dataSourceEvent.getPropertyName(), dataSource.getName(), dataSourceObjId), ex);
             }
         }
@@ -898,7 +902,7 @@ public final class ImageGalleryController {
      * @throws TskCoreException If there is an error adding the data source to
      *                          the database.
      */
-    private void handleDataSourceAnalysisStarted(DataSourceAnalysisEvent event) throws TskCoreException {
+    private void handleDataSourceAnalysisStarted(DataSourceAnalysisEvent event) throws TskCoreException, SQLException {
         if (event.getSourceType() == AutopsyEvent.SourceType.LOCAL && isListeningEnabled()) {
             Content dataSource = event.getDataSource();
             long dataSourceObjId = dataSource.getId();
@@ -919,7 +923,7 @@ public final class ImageGalleryController {
      * @throws TskCoreException If there is an error updating the state ot the
      *                          data source in the database.
      */
-    private void handleDataSourceAnalysisCompleted(DataSourceAnalysisEvent event) throws TskCoreException {
+    private void handleDataSourceAnalysisCompleted(DataSourceAnalysisEvent event) throws TskCoreException, SQLException {
         if (event.getSourceType() == AutopsyEvent.SourceType.LOCAL) {
             Content dataSource = event.getDataSource();
             long dataSourceObjId = dataSource.getId();

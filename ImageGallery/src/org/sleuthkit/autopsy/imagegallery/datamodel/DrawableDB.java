@@ -196,8 +196,8 @@ public final class DrawableDB {
      * to the data sources in the case.
      *
      * IMPORTANT: ADD NEW STATUSES TO THE END OF THE LIST TODO: I'm (RC) not
-     * sure why this is required, it looks like the enum elemnt names are
-     * strored in the image gallery database. Are the raw cardinal values used
+     * sure why this is required, it looks like the enum elemnt names are stored
+     * in the image gallery database. Are the raw cardinal values used
      * somewhere?
      */
     public enum DrawableDbBuildStatusEnum {
@@ -1706,18 +1706,18 @@ public final class DrawableDB {
     /**
      * Inserts the given data source object ID and its status into the
      * datasources table. If a record for the data source already exists, an
-     * update of the status is doen instead.
+     * update of the status is done instead.
      *
      * @param dataSourceObjectID A data source object ID from the case database.
      * @param status             The status of the data source with respect to
      *                           populating the image gallery database.
      */
-    public void insertOrUpdateDataSource(long dataSourceObjectID, DrawableDbBuildStatusEnum status) {
+    public void insertOrUpdateDataSource(long dataSourceObjectID, DrawableDbBuildStatusEnum status) throws SQLException {
         dbWriteLock();
         try {
             selectCountDataSourceIDs.setLong(1, dataSourceObjectID);
             try (ResultSet resultSet = selectCountDataSourceIDs.executeQuery()) {
-                if (resultSet.next()) {
+                if (resultSet.first()) {
                     if (resultSet.getInt(1) == 0) {
                         insertDataSourceStmt.setLong(1, dataSourceObjectID);
                         insertDataSourceStmt.setString(2, status.name());
@@ -1728,11 +1728,9 @@ public final class DrawableDB {
                         updateDataSourceStmt.executeUpdate();
                     }
                 } else {
-                    logger.log(Level.SEVERE, String.format("Error querying datasources table (data source object ID = %d, status = %s)", dataSourceObjectID, status.toString())); //NON-NLS
+                    throw new SQLException("SELECT COUNT(*) query of datasources table failed to return any rows");
                 }
             }
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, String.format("Error querying/updating datasources table (data source object ID = %d, status = %s)", dataSourceObjectID, status.toString()), ex); //NON-NLS
         } finally {
             dbWriteUnlock();
         }
