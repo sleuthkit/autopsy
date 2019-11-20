@@ -98,10 +98,6 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                         else:
                             direction = CommunicationDirection.INCOMING
                             fromId = transfersResultSet.getString("device")
-
-                        msgBody = ""    # there is no body.
-                        attachments = [transfersResultSet.getString("path")]
-                        msgBody = general.appendAttachmentList(msgBody, attachments)
                         
                         timeStamp = transfersResultSet.getLong("createtime") / 1000
                         messageArtifact = transferDbHelper.addMessage( 
@@ -112,7 +108,7 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                                                             timeStamp,
                                                             MessageReadStatus.UNKNOWN,
                                                             None,   # subject
-                                                            msgBody,
+                                                            None,   # message Text
                                                             None )    # thread id
                                                                                                 
                         # add the file as attachment 
