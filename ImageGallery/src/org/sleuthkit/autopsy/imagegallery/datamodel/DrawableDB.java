@@ -195,10 +195,11 @@ public final class DrawableDB {
      * Enum for tracking the status of the image gallery database with respect
      * to the data sources in the case.
      *
-     * IMPORTANT: ADD NEW STATUSES TO THE END OF THE LIST TODO: I'm (RC) not
-     * sure why this is required, it looks like the enum elemnt names are stored
-     * in the image gallery database. Are the raw cardinal values used
-     * somewhere?
+     * IMPORTANT: ADD NEW STATUSES TO THE END OF THE LIST
+     *
+     * TODO: I'm (RC) not sure why this is required, it looks like the enum
+     * elemnt names are stored in the image gallery database. Are the raw
+     * cardinal values used somewhere?
      */
     public enum DrawableDbBuildStatusEnum {
         /**
