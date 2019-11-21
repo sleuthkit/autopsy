@@ -26,5 +26,5 @@ cd ${TSK_HOME}
 export TRAVIS_OS_NAME=$OS
 ./travis_install_libs.sh
 
-./bootstrap && ./configure --prefix=/usr && make
+./bootstrap && ./configure --prefix=/usr/local && make
 cd bindings/java/ && ant -q dist-PostgreSQL
