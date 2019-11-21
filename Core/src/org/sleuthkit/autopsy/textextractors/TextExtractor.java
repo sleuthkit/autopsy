@@ -29,6 +29,7 @@ import org.openide.util.Lookup;
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
 public interface TextExtractor {
+
     /**
      * Determines if this extractor supports the given Content and
      * configurations passed into it in
