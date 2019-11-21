@@ -26,9 +26,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import static org.sleuthkit.autopsy.textextractors.TextExtractor.UNKNOWN_CHARSET;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -37,10 +38,26 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extract text from .txt files
  */
 public final class TextFileExtractor {
+    public static Charset UNKNOWN_CHARSET = new Charset("unknown", null) {
+        @Override
+        public boolean contains(Charset cs) {
+            return false;
+        }
+
+        @Override
+        public CharsetDecoder newDecoder() {
+            return null;
+        }
+
+        @Override
+        public CharsetEncoder newEncoder() {
+            return null;
+        }
+    };
 
     public Reader getReader(AbstractFile source) throws TextFileExtractorException {
         Charset encoding = getEncoding(source);
-        if (encoding == TextExtractor.UNKNOWN_CHARSET) {
+        if (encoding == UNKNOWN_CHARSET) {
             encoding = StandardCharsets.UTF_8;
         }
         return getReader(source, encoding);

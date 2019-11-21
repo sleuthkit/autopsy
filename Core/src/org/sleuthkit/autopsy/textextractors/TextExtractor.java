@@ -40,23 +40,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
 public interface TextExtractor {
-    public static Charset UNKNOWN_CHARSET = new Charset("unknown", null) {
-        @Override
-        public boolean contains(Charset cs) {
-            return false;
-        }
-
-        @Override
-        public CharsetDecoder newDecoder() {
-            return null;
-        }
-
-        @Override
-        public CharsetEncoder newEncoder() {
-            return null;
-        }
-    };
-
     /**
      * Determines if this extractor supports the given Content and
      * configurations passed into it in
