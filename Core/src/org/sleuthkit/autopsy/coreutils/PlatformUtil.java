@@ -177,6 +177,8 @@ public class PlatformUtil {
                             "PlatformUtil.jrePath.jreDir.msg",
                             jrePath.getAbsolutePath()));
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java"; //NON-NLS
+        } else if (System.getenv("JAVA_HOME") != null && !(System.getenv("JAVA_HOME").isEmpty())) {
+            return System.getenv("JAVA_HOME");
         } else {
             //else use system installed java in PATH env variable
             javaPath = "java"; //NON-NLS
