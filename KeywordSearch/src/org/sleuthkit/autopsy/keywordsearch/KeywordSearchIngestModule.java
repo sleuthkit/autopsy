@@ -682,8 +682,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          */
         private boolean indexTextFile(AbstractFile aFile) {
             try {
-                TextFileExtractor textFileExtractor = new TextFileExtractor();
-                Reader textReader = textFileExtractor.getReader(aFile);
+                TextFileExtractor textFileExtractor = new TextFileExtractor(aFile);
+                Reader textReader = textFileExtractor.getReader();
                 if (textReader == null) {
                     logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
                 } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
@@ -692,8 +692,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
             } catch (IngesterException ex) {
                 logger.log(Level.WARNING, "Unable to index " + aFile.getName(), ex);
-            } catch (TextFileExtractorException ex) {
-                logger.log(Level.INFO, "Could not extract text with TextFileExtractor", ex);
             }
             return false;
         }

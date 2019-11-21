@@ -18,21 +18,10 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
-import com.ethteck.decodetect.core.Decodetect;
-import com.ethteck.decodetect.core.DecodetectResult;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extracts the text out of Content instances and exposes them as a Reader.

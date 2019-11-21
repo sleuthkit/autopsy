@@ -35,9 +35,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extract text from .txt files
+ * Extract text from text files
  */
-public final class TextFileExtractor {
+public final class TextFileExtractor implements TextExtractor {
     public static Charset UNKNOWN_CHARSET = new Charset("unknown", null) {
         @Override
         public boolean contains(Charset cs) {
@@ -55,18 +55,29 @@ public final class TextFileExtractor {
         }
     };
 
-    public Reader getReader(AbstractFile source) throws TextFileExtractorException {
-        Charset encoding = getEncoding(source);
+    private final AbstractFile file;
+
+    public TextFileExtractor(AbstractFile file) {
+        this.file = file;
+    }
+
+    public Reader getReader() {
+        Charset encoding = getEncoding(file);
         if (encoding == UNKNOWN_CHARSET) {
             encoding = StandardCharsets.UTF_8;
         }
-        return getReader(source, encoding);
+        return getReader(encoding);
     }
 
-    public Reader getReader(AbstractFile source, Charset encoding) throws TextFileExtractorException {
-        return new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(source)), encoding);
+    public Reader getReader(Charset encoding) {
+        return new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(file)), encoding);
     }
-    
+
+    @Override
+    public boolean isSupported() {
+        return file.getMIMEType().equals("text/plain");
+    }
+
     public class TextFileExtractorException extends Exception {
         public TextFileExtractorException(String msg, Throwable ex) {
             super(msg, ex);
