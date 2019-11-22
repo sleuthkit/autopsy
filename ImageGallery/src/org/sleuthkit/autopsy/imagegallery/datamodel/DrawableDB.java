@@ -1719,7 +1719,7 @@ public final class DrawableDB {
             // SELECT COUNT(*) FROM datasources WHERE ds_obj_id = ?
             selectCountDataSourceIDs.setLong(1, dataSourceObjectID);
             try (ResultSet resultSet = selectCountDataSourceIDs.executeQuery()) {
-                resultSet.first();
+                resultSet.next();
                 if (resultSet.getInt(1) == 0) {
                     // INSERT INTO datasources (ds_obj_id, drawable_db_build_status) VALUES (?,?)
                     insertDataSourceStmt.setLong(1, dataSourceObjectID);
