@@ -87,9 +87,6 @@ public class PoolNode extends AbstractContentNode<Pool> {
         "PoolNode.createSheet.name.name=Name",
         "PoolNode.createSheet.name.displayName=Name",
         "PoolNode.createSheet.name.desc=no description",
-        "PoolNode.createSheet.offset.name=Starting offset",
-        "PoolNode.createSheet.offset.displayName=Starting offset",
-        "PoolNode.createSheet.offset.desc=no description",
         "PoolNode.createSheet.type.name=Type",
         "PoolNode.createSheet.type.displayName=Type",
         "PoolNode.createSheet.type.desc=no description",
@@ -108,10 +105,6 @@ public class PoolNode extends AbstractContentNode<Pool> {
                 Bundle.PoolNode_createSheet_name_displayName(),
                 Bundle.PoolNode_createSheet_name_desc(),
                 this.getDisplayName()));
-        sheetSet.put(new NodeProperty<>(Bundle.PoolNode_createSheet_offset_name(),
-                Bundle.PoolNode_createSheet_offset_displayName(),
-                Bundle.PoolNode_createSheet_offset_desc(),
-                pool.getOffset()));
         sheetSet.put(new NodeProperty<>(Bundle.PoolNode_createSheet_type_name(),
                 Bundle.PoolNode_createSheet_type_displayName(),
                 Bundle.PoolNode_createSheet_type_desc(),
