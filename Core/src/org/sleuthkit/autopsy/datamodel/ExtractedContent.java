@@ -238,8 +238,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE));
-            //doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE));
-            //doNotShow.add(new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {

@@ -215,6 +215,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         return 1;
     }
 
+    /**
+     * Looks for context providing artifacts for the given file and populates
+     * the source context.
+     *
+     * @param sourceFile File for which to show the context.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
     private void populateSourceContextData(AbstractFile sourceFile) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -240,38 +249,68 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.attachmentSource=Attached to: ",
         "ContextViewer.downloadSource=Downloaded from: "
     })
-    private void addSourceEntry(BlackboardArtifact artifact) throws TskCoreException {
 
+    /**
+     * Adds a source context entry for the selected file based on the given context
+     * providing artifact.
+     *
+     * @param artifact Artifact that may provide context.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
+    private void addSourceEntry(BlackboardArtifact artifact) throws TskCoreException {
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
             BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
             if (associatedArtifactAttribute != null) {
                 long artifactId = associatedArtifactAttribute.getValueLong();
                 BlackboardArtifact associatedArtifact = artifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
 
-                //save the artifact id for "Go to Result" button
+                //save the artifact for "Go to Result" button
                 sourceContextArtifact = associatedArtifact;
 
-                if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
-                        || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
-
-                    setSourceName(Bundle.ContextViewer_attachmentSource());
-                    setSourceText(msgArtifactToAbbreiviatedString(associatedArtifact));
-
-                } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
-                        || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
-
-                    setSourceName(Bundle.ContextViewer_downloadSource());
-                    setSourceText(webDownloadArtifactToString(associatedArtifact));
-                }
+                setSourceFields(associatedArtifact);
             }
         }
-
     }
 
+    /**
+     * Sets the source label and text fields based on the given associated
+     * artifact.
+     *
+     * @param associatedArtifact - associated artifact
+     *
+     * @throws TskCoreException
+     */
+    private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
+
+            setSourceName(Bundle.ContextViewer_attachmentSource());
+            setSourceText(msgArtifactToAbbreiviatedString(associatedArtifact));
+
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
+
+            setSourceName(Bundle.ContextViewer_downloadSource());
+            setSourceText(webDownloadArtifactToString(associatedArtifact));
+        }
+    }
+
+    /**
+     * Sets the source label string.
+     *
+     * @param nameLabel String value for source label.
+     */
     private void setSourceName(String nameLabel) {
         jSourceNameLabel.setText(nameLabel);
     }
 
+    /**
+     * Sets the source text string.
+     *
+     * @param nameLabel String value for source text.
+     */
     private void setSourceText(String text) {
         jSourceTextLabel.setText(text);
         showSourceText(true);
@@ -281,6 +320,16 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         jSourceTextLabel.setVisible(isVisible);
     }
 
+    /**
+     * Returns a display string with download source URL from the given
+     * artifact.
+     *
+     * @param artifact artifact to get download source URL from.
+     *
+     * @return Display string with download URL and date/time.
+     *
+     * @throws TskCoreException
+     */
     private String webDownloadArtifactToString(BlackboardArtifact artifact) throws TskCoreException {
         StringBuilder sb = new StringBuilder(1024);
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap = getAttributesMap(artifact);
@@ -293,6 +342,15 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         return sb.toString();
     }
 
+    /**
+     * Returns a abbreviated display string for a message artifact.
+     *
+     * @param artifact artifact to get download source URL from.
+     *
+     * @return Display string for message artifact.
+     *
+     * @throws TskCoreException
+     */
     private String msgArtifactToAbbreiviatedString(BlackboardArtifact artifact) throws TskCoreException {
 
         StringBuilder sb = new StringBuilder(1024);
@@ -312,6 +370,16 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         return sb.toString();
     }
 
+    /**
+     * Looks up specified attribute in the given map and, if found, appends its
+     * value to the given string builder.
+     *
+     * @param sb String builder to append to.
+     * @param attribType Attribute type to look for.
+     * @param attributesMap Attributes map.
+     * @param prependStr Optional string that is prepended before the attribute
+     * value.
+     */
     private void appendAttributeString(StringBuilder sb, BlackboardAttribute.ATTRIBUTE_TYPE attribType,
             Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap, String prependStr) {
 
@@ -320,21 +388,23 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             String attrVal = attribute.getDisplayString();
             if (!StringUtils.isEmpty(attrVal)) {
                 if (!StringUtils.isEmpty(prependStr)) {
-                    sb.append(prependStr).append(" ");
+                    sb.append(prependStr).append(' ');
                 }
-                sb.append(StringUtils.abbreviate(attrVal, 200)).append(" ");
+                sb.append(StringUtils.abbreviate(attrVal, 200)).append(' ');
             }
         }
     }
 
-    private String getAttribNameValue(BlackboardAttribute.ATTRIBUTE_TYPE attribType, Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributesMap) {
-        BlackboardAttribute attribute = attributesMap.get(attribType);
-        if (attribute != null) {
-            return String.format("%s : %s", attribType.getDisplayName(), attribute.getDisplayString());
-        }
-        return null;
-    }
-
+    /**
+     * Gets all attributes for the given artifact, and returns a map of
+     * attributes keyed by attribute type.
+     *
+     * @param artifact Artifact for which to get the attributes.
+     *
+     * @return Map of attribute type and value.
+     *
+     * @throws TskCoreException
+     */
     private Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> getAttributesMap(BlackboardArtifact artifact) throws TskCoreException {
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, BlackboardAttribute> attributeMap = new HashMap<>();
 
