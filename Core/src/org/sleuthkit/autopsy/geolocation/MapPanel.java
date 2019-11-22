@@ -56,7 +56,6 @@ import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
-import org.jxmapviewer.viewer.util.GeoUtil;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -113,7 +112,10 @@ final public class MapPanel extends javax.swing.JPanel {
             @Override
             public void preferenceChange(PreferenceChangeEvent evt) {
                 try {
-                    mapViewer.setTileFactory(new DefaultTileFactory(getTileFactoryInfo()));
+                    // Tell the old factory to cleanup
+                    mapViewer.getTileFactory().dispose();
+                    
+                    mapViewer.setTileFactory(getTileFactory());
                     initializeZoomSlider();
                 } catch (GeoLocationDataException ex) {
                     logger.log(Level.SEVERE, "Failed to connect to new geolocation tile server.", ex); //NON-NLS
@@ -134,8 +136,7 @@ final public class MapPanel extends javax.swing.JPanel {
      */
     void initMap() throws GeoLocationDataException {
 
-        TileFactoryInfo info = getTileFactoryInfo();
-        DefaultTileFactory tileFactory = new DefaultTileFactory(info);
+        TileFactory tileFactory = getTileFactory();
         mapViewer.setTileFactory(tileFactory);
 
         // Add Mouse interactions
@@ -192,21 +193,23 @@ final public class MapPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Create the TileFactoryInfo object based on the user preference.
+     * Create the TileFactory object based on the user preference.
      *
      * @return
      */
-    TileFactoryInfo getTileFactoryInfo() throws GeoLocationDataException {
-        switch (GeolocationSettingsPanel.GeolocationTileOption.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
+    private TileFactory getTileFactory() throws GeoLocationDataException {
+        switch (GeolocationSettingsPanel.GeolocationDataSourceType.getOptionForValue(UserPreferences.getGeolocationtTileOption())) {
             case ONLINE_USER_DEFINED_OSM_SERVER:
-                return createOnlineOSMFactory(UserPreferences.getGeolocationOsmServerAddress());
+                return new DefaultTileFactory(createOnlineOSMFactory(UserPreferences.getGeolocationOsmServerAddress()));
             case OFFLINE_OSM_ZIP:
-                return createOSMZipFactory(UserPreferences.getGeolocationOsmZipPath());
+                return new DefaultTileFactory(createOSMZipFactory(UserPreferences.getGeolocationOsmZipPath()));
+            case OFFILE_MBTILES_FILE:
+                return new MBTilesTileFactory(UserPreferences.getGeolocationMBTilesFilePath());
             default:
-                return new VirtualEarthTileFactoryInfo(VirtualEarthTileFactoryInfo.MAP);
+                return new DefaultTileFactory(new VirtualEarthTileFactoryInfo(VirtualEarthTileFactoryInfo.MAP));
         }
     }
-    
+
     /**
      * Create the TileFactoryInfo for an online OSM tile server.
      * 
@@ -221,9 +224,6 @@ final public class MapPanel extends javax.swing.JPanel {
             throw new GeoLocationDataException("Invalid user preference for OSM user define tile server. Address is an empty string.");
         } else {
             TileFactoryInfo info = new OSMTileFactoryInfo("User Defined Server", address);
-            if (!GeoUtil.isValidTile(1, 1, 1, info)) {
-                throw new GeoLocationDataException(String.format("Invalid OSM user define tile server: %s", address));
-            }
             return info;
         }
     }
