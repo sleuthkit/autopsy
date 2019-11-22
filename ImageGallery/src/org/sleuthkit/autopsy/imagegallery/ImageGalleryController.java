@@ -804,7 +804,7 @@ public final class ImageGalleryController {
                                 try {
                                     drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
                                 } catch (SQLException ex) {
-                                    logger.log(Level.SEVERE, String.format("Error updating datasources table (data source object ID = %d, status = %s)", newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN.toString(), ex)); //NON-NLS
+                                    logger.log(Level.SEVERE, String.format("Error updating datasources table (data source object ID = %d, status = %s)", newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN.toString()), ex); //NON-NLS
                                 }
                             }
                         }
