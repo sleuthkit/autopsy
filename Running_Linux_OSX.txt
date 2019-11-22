@@ -9,33 +9,41 @@ The following need to be done at least once. They do not need to be repeated for
 -- Linux:  % sudo apt-get install testdisk
 -- OS X: % brew install testdisk
 
-- Install a Java 8 JRE and JavaFX 8 and set JAVA_HOME. 
--- Linux: Any Java 8 version of OpenJDK/OpenJFX distribution should suffice. The following instructions use the Zulu Community distribution.
-    1. Download a 64 bit Java 8 JRE for your specific platform from https://www.azul.com/downloads/zulu-community
-    2. Install the JRE. e.g. % sudo apt install ./zulu8.40.0.25-ca-jre8.0.222-linux_amd64.deb
-    3. Download a 64 bit Java 8 JavaFX for your specific platform from the same location.
-    4. Extract the contents of the JavaFX archive into the folder where the JRE was installed.
-        e.g. % sudo tar xzf ~/Downloads/zulu8.40.0.25-ca-fx-jre8.0.222-linux_x64.tar.gz -C /usr/lib/jvm/zre-8-amd64 --strip-components=1
-
+- Install the BellSoft Java 8 JRE and JavaFX 8 distribution and set JAVA_HOME.
+  * The BellSoft distribution bundles OpenJDK and OpenJFX. Other distributions we have tried either don't
+    bundle OpenJFX (AdoptOpenJDK) or don't include all necessary binaries (Amazon Corretto).
+-- Linux:
+    1. Install BellSoft Java 8
+       % wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -
+       % echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
+       % sudo apt-get update
+       % sudo apt-get install bellsoft-java8
+    2. Set JAVA_HOME
+       % export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-amd64
+       
     NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy 
           unix_setup.sh script can see the value. 
 
--- OS X: Any Java 8 version of OpenJDK/OpenJFX distribution should suffice.
-    1. Install a 64 bit Java 8 JRE.
-        % brew tap adoptopenjdk/openjdk
-        % brew cask install adoptopenjdk8
-    2. Download a 64 bit Java 8 JavaFX for macOS from https://www.azul.com/downloads/zulu-community
-    3. Extract the contents of the JavaFX archive into the folder where the JRE was installed.
-        e.g.  % sudo tar xf ~/Downloads/zulu8.40.0.25-ca-fx-jre8.0.222-macosx_x64.tar.gz -C /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home--strip-components=1
-    4. Confirm Java 8 is being found by running 'java -version'
-    5. Set JAVA_HOME environment variable to location of JRE installation.
+-- OS X: 
+    1. Install BellSoft Java 8.
+        % brew tap bell-sw/liberica
+        % brew cask install liberica-jdk8
+    2. Set JAVA_HOME environment variable to location of JRE installation.
+       e.g. add the following to ~/.bashrc 
+           export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
 
+- Confirm your version of Java by running
+  % java -version    
+    openjdk version "1.8.0.232"
+    OpenJDK Runtime Environment (build 1.8.0_232-BellSoft-b10)
+    OpenJDK 64-Bit Server VM (build 25.232-b10, mixed mode)
+  
 * Install The Sleuth Kit Java Bindings *
 
 Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libraries of The Sleuth Kit installed, which is not part of all packages. 
 
 - Linux: Install the sleuthkit-java.deb file that you can download from github.com/sleuthkit/sleuthkit/releases.  This will install libewf, etc. 
--- % sudo apt install ./sleuthkit-java_4.6.0-1_amd64.deb
+-- % sudo apt install ./sleuthkit-java_4.7.0-1_amd64.deb
 
 - OS X: Install The Sleuth Kit from brew.  
 -- % brew install sleuthkit
@@ -55,6 +63,24 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 - Run Autopsy
   % ./autopsy
 
+* Troubleshooting *
+
+- If you see something like "Cannot create case: javafx/scene/paint/Color" it is an indication that Java FX
+  is not being found.
+  Confirm that the file $JAVA_HOME/jre/lib/ext/jfxrt.jar exists. If it does not exist, return to the Java
+  setup steps above.
+- If you see something like "An illegal reflective access operation has occurred" it is an indication that
+  the wrong version of Java is being used to run Autopsy.
+  Check the version of Java reported in the ~/.autopsy/dev/var/log/messages.log file. It should contain lines that looks like:
+    Java; VM; Vendor    = 1.8.0_232; OpenJDK 64-Bit Server V 25.232-b10; BellSoft
+    Runtime             = OpenJDK Runtime Environment 1.8.0_232-BellSoft-b10
+    Java Home           = /usr/lib/jvm/bellsoft-java8-amd64/jre
+
+  If your messages.log file indicates that Java 8 is not being used:
+  (a) confirm that you have a version of Java 8 installed and
+  (b) confirm that your JAVA_HOME environment variable is set correctly:
+      % echo $JAVA_HOME
+  
 * Limitations (Updated May 2018) * 
 - Timeline does not work on OS X
 - Video thumbnails are not generated (need to get a consistent version of OpenCV)

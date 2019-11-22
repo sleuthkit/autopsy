@@ -327,6 +327,7 @@
                 <package>org.sleuthkit.autopsy.datasourceprocessors</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
                 <package>org.sleuthkit.autopsy.events</package>
+                <package>org.sleuthkit.autopsy.exceptions</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
                 <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.healthmonitor</package>
@@ -406,6 +407,10 @@
                 <binary-origin>release/modules/ext/okhttp-2.7.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/libphonenumber-3.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/libphonenumber-3.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.20.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\tika-core-1.20.jar</binary-origin>
             </class-path-extension>
@@ -448,6 +453,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-pool2-2.4.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jxmapviewer2-2.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jxmapviewer2-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
@@ -516,6 +525,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/google-http-client-1.29.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/google-http-client-1.29.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.7.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/bcpkix-jdk15on-1.60.jar</runtime-relative-path>
@@ -604,10 +617,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jbig2-imageio-3.0.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jbig2-imageio-3.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.7.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.7.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-dom-0.8.2.jar</runtime-relative-path>

@@ -103,8 +103,8 @@ public class Services implements Closeable {
     /**
      * Closes the services for the current case.
      *
-     * @throws IOException if there is a problem closing the services.
-     * @deprecated Do not use.
+     * @throws IOException if there is a problem closing the services. 
+    * @deprecated Do not use.
      */
     @Deprecated
     @Override

@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
+import com.google.gson.Gson;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -32,15 +35,18 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.blackboardutils.FileAttachment;
+import org.sleuthkit.datamodel.blackboardutils.MessageAttachments;
 
 /**
  * Factory for creating thumbnail children nodes.
  */
-final class AttachmentsChildren extends Children.Keys<AbstractFile> {
+final class AttachmentThumbnailsChildren extends Children.Keys<AbstractFile> {
 
-    private static final Logger logger = Logger.getLogger(AttachmentsChildren.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AttachmentThumbnailsChildren.class.getName());
 
     private final Set<BlackboardArtifact> artifacts;
 
@@ -51,17 +57,16 @@ final class AttachmentsChildren extends Children.Keys<AbstractFile> {
      * The thumbnails will be initialls sorted by size, then name so that they
      * appear sorted by size by default.
      */
-    AttachmentsChildren(Set<BlackboardArtifact> artifacts) {
+    AttachmentThumbnailsChildren(Set<BlackboardArtifact> artifacts) {
         super(false);
 
         this.artifacts = artifacts;
-
 
     }
 
     @Override
     protected Node[] createNodes(AbstractFile t) {
-        return new Node[]{new AttachementNode(t)};
+        return new Node[]{new AttachementThumbnailNode(t)};
     }
 
     @Override
@@ -77,15 +82,36 @@ final class AttachmentsChildren extends Children.Keys<AbstractFile> {
             return result;
         });
 
-        artifacts.forEach((bba) -> {
-            try {
-                for (Content childContent : bba.getChildren()) {
-                    if (childContent instanceof AbstractFile) {
-                        thumbnails.add((AbstractFile) childContent);
+        artifacts.forEach(new Consumer<BlackboardArtifact>() {
+            @Override
+            public void accept(BlackboardArtifact bba) {
+                try {
+                    // Get the attachments from TSK_ATTACHMENTS attribute.
+                    BlackboardAttribute attachmentsAttr = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
+                    if (attachmentsAttr != null) {
+
+                        String jsonVal = attachmentsAttr.getValueString();
+                        MessageAttachments msgAttachments = new Gson().fromJson(jsonVal, MessageAttachments.class);
+
+                        Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
+                        for (FileAttachment fileAttachment : fileAttachments) {
+                            long attachedFileObjId = fileAttachment.getObjectId();
+                            if (attachedFileObjId >= 0) {
+                                AbstractFile attachedFile = bba.getSleuthkitCase().getAbstractFileById(attachedFileObjId);
+                                thumbnails.add(attachedFile);
+                            }
+                        }
+                    } else {    // backward compatibility - email message attachments are derived files, children of the message.
+                        for (Content childContent : bba.getChildren()) {
+                            if (childContent instanceof AbstractFile) {
+                                thumbnails.add((AbstractFile) childContent);
+                            }
+                        }
                     }
+
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.WARNING, "Unable to get children from artifact.", ex); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get children from artifact.", ex); //NON-NLS
             }
         });
 
@@ -95,9 +121,9 @@ final class AttachmentsChildren extends Children.Keys<AbstractFile> {
     /**
      * A node for representing a thumbnail.
      */
-    static class AttachementNode extends FileNode {
+    static class AttachementThumbnailNode extends FileNode {
 
-        AttachementNode(AbstractFile file) {
+        AttachementThumbnailNode(AbstractFile file) {
             super(file, false);
         }
 
