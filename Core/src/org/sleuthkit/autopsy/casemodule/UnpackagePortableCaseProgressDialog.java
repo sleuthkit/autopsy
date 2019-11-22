@@ -36,7 +36,9 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -46,6 +48,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements PropertyChangeListener {
 
     private UnpackageWorker worker;
+    private final String CASES_OPENED_LOG_FILE = "portable_cases_opened"; //NON-NLS
+    private final String PORTABLE_CASE_NAME = "portable_case_name"; //NON-NLS
+    private final String PORTABLE_CASE_DIR = "portable_case_dir_opened"; //NON-NLS
 
     /**
      * Creates new form UnpackagePortableCaseProgressDialog
@@ -195,7 +200,17 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             try {
                 String caseFileDirectory = FilenameUtils.getBaseName(packagedCase);
                 String caseDirectory = StringUtils.substringBefore(caseFileDirectory, ".zip");
-                Case.openAsCurrentCase(outputFolder + File.separator + caseDirectory + File.separator + caseDirectory + ".aut"); // NON-NLS
+                String caseFileToOpen = outputFolder + File.separator + caseDirectory + File.separator + caseDirectory + ".aut";
+                Case.openAsCurrentCase(caseFileToOpen); // NON-NLS
+                String timestampFileOpened = TimeStampUtils.createTimeStamp();
+                if (ModuleSettings.configExists(CASES_OPENED_LOG_FILE)) {
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_NAME, packagedCase);
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_DIR, caseFileToOpen);
+                } else {
+                    ModuleSettings.makeConfigFile(CASES_OPENED_LOG_FILE);
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_NAME, packagedCase);
+                    ModuleSettings.setConfigSetting(CASES_OPENED_LOG_FILE, timestampFileOpened + "-" + PORTABLE_CASE_DIR, caseFileToOpen);
+                }
             } catch (CaseActionException ex) {
                 throw new TskCoreException("Error opening case after unpacking it.", ex); // NON-NLS
             }
