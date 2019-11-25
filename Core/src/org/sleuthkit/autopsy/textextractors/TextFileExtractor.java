@@ -29,7 +29,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
+import org.apache.tika.parser.txt.CharsetDetector;
+import org.apache.tika.parser.txt.CharsetMatch;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -54,6 +57,18 @@ public final class TextFileExtractor implements TextExtractor {
             return null;
         }
     };
+
+    // This value will be used as a threshold for determining which encoding
+    // detection library to use. If Tika's own confidence is at least
+    // MIN_MATCH_CONFIDENCE, Tika's result will be used for decoding.
+    // Otherwise, Decodetect will be used.
+    static final private int MIN_TIKA_MATCH_CONFIDENCE = 35;
+
+    // This value determines whether we will consider Decodetect's top-scoring
+    // result a legitimate match or if we will disregard its findings
+    //
+    // Possible values are 0 to 1, inclusive
+    static final private double MIN_DECODETECT_MATCH_CONFIDENCE = 0.4;
 
     private final AbstractFile file;
 
@@ -91,6 +106,23 @@ public final class TextFileExtractor implements TextExtractor {
         InputStream stream = new BufferedInputStream(new ReadContentInputStream(content));
         Charset detectedCharset = UNKNOWN_CHARSET;
 
+        // Tika first
+        CharsetDetector detector = new CharsetDetector();
+        CharsetMatch tikaResult = null;
+        try {
+            detector.setText(stream);
+            tikaResult = detector.detect();
+        } catch (IOException ignored) {
+        }
+        if (tikaResult != null && tikaResult.getConfidence() >= MIN_TIKA_MATCH_CONFIDENCE) {
+            try {
+                Charset tikaCharset = Charset.forName(tikaResult.getName());
+                return tikaCharset;
+            } catch (UnsupportedCharsetException ignored) {
+            }
+        }
+
+        // Decodetect if Tika fails or falls below confidence threshold
         try {
             int maxBytes = 100000;
             int numBytes = Math.min(stream.available(), maxBytes);
@@ -99,11 +131,10 @@ public final class TextFileExtractor implements TextExtractor {
             List<DecodetectResult> results = Decodetect.DECODETECT.getResults(targetArray);
             if (results.size() > 0) {
                 DecodetectResult topResult = results.get(0);
-                if (topResult.getConfidence() > 0.4) {
+                if (topResult.getConfidence() >= MIN_DECODETECT_MATCH_CONFIDENCE) {
                     detectedCharset = topResult.getEncoding();
                 }
             }
-            stream.reset();
         } catch (IOException ignored) {
         }
         return detectedCharset;
