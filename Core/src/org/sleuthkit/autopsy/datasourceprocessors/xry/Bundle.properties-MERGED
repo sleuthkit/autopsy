@@ -1,9 +1,9 @@
-XRYDataSourceProcessor.dataSourceType=XRY Logical Report
+XRYDataSourceProcessor.dataSourceType=XRY Text File Export
 XRYDataSourceProcessor.fileAdded=Added %s to the case database
-XRYDataSourceProcessor.ioError=I/O error occured trying to test the XRY report folder
-XRYDataSourceProcessor.noPathSelected=Please select a XRY folder
+XRYDataSourceProcessor.ioError=I/O error occured trying to test the selected folder
+XRYDataSourceProcessor.noPathSelected=Please select a folder containing exported XRY text files
 XRYDataSourceProcessor.notReadable=Could not read from the selected folder
-XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY files
+XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY text files
 XRYDataSourceProcessor.preppingFiles=Preparing to add files to the case database
 XRYDataSourceProcessor.processingFiles=Processing all XRY files...
 XRYDataSourceProcessor.unexpectedError=Internal error occurred while processing XRY report

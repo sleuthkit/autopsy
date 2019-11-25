@@ -67,7 +67,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
 
     @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.dataSourceType=XRY Logical Report"
+        "XRYDataSourceProcessor.dataSourceType=XRY Text File Export"
     })
     public String getDataSourceType() {
         return Bundle.XRYDataSourceProcessor_dataSourceType();
@@ -80,10 +80,10 @@ public class XRYDataSourceProcessor implements DataSourceProcessor {
 
     @Override
     @NbBundle.Messages({
-        "XRYDataSourceProcessor.noPathSelected=Please select a XRY folder",
+        "XRYDataSourceProcessor.noPathSelected=Please select a folder containing exported XRY text files",
         "XRYDataSourceProcessor.notReadable=Could not read from the selected folder",
-        "XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY files",
-        "XRYDataSourceProcessor.ioError=I/O error occured trying to test the XRY report folder"
+        "XRYDataSourceProcessor.notXRYFolder=Selected folder did not contain any XRY text files",
+        "XRYDataSourceProcessor.ioError=I/O error occured trying to test the selected folder"
     })
     public boolean isPanelValid() {
         configPanel.clearErrorText();
