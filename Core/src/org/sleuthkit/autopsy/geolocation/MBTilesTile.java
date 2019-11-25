@@ -24,23 +24,23 @@ import java.lang.ref.SoftReference;
 import org.jxmapviewer.viewer.Tile;
 
 /**
- *  Provides a MBTile specific implementation of Tile.
- * 
+ * Provides a MBTile specific implementation of Tile.
+ *
  * This class borrows functionality from Tile.
  */
 final class MBTilesTile extends Tile {
 
     private SoftReference<BufferedImage> image = new SoftReference<>(null);
     private Priority priority = Priority.High;
-    private boolean loaded = false; 
+    private boolean loaded = false;
     private final String tileID;
 
     /**
      * Construct an empty tile.
-     * 
+     *
      * @param x
      * @param y
-     * @param zoom 
+     * @param zoom
      */
     MBTilesTile(int x, int y, int zoom) {
         super(x, y, zoom);
@@ -49,11 +49,11 @@ final class MBTilesTile extends Tile {
 
     /**
      * Construct a new tile.
-     * 
-     * @param x Tile row
-     * @param y Tile column
-     * @param zoom Tile Zoom level
-     * @param tileID Tile identifier 
+     *
+     * @param x        Tile row
+     * @param y        Tile column
+     * @param zoom     Tile Zoom level
+     * @param tileID   Tile identifier
      * @param priority Priority for loading the tile
      */
     MBTilesTile(int x, int y, int zoom, String tileID, Priority priority) {
@@ -64,8 +64,8 @@ final class MBTilesTile extends Tile {
 
     /**
      * Sets the image for this Tile.
-     * 
-     * @param image 
+     *
+     * @param image
      */
     void setImage(BufferedImage image) {
         this.image = new SoftReference<>(image);
@@ -109,10 +109,10 @@ final class MBTilesTile extends Tile {
     }
 
     /**
-     * Overloading the original version of this function to return
-     * the tileID for this tile.
-     * 
-     * @return tileID or null if none was set 
+     * Overloading the original version of this function to return the tileID
+     * for this tile.
+     *
+     * @return tileID or null if none was set
      */
     @Override
     public String getURL() {

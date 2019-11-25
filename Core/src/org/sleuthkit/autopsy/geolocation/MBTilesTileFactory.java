@@ -43,8 +43,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 
 /**
- *  This TileFactory class borrows from AbstractTileFactory, changing to 
- *  support the getting the tiles from a database instead the web.
+ * This TileFactory class borrows from AbstractTileFactory, changing to support
+ * the getting the tiles from a database instead the web.
  *
  */
 final class MBTilesTileFactory extends TileFactory {
@@ -52,44 +52,47 @@ final class MBTilesTileFactory extends TileFactory {
     private static final Logger logger = Logger.getLogger(MBTilesTileFactory.class.getName());
 
     private volatile int pendingTiles = 0;
-    private int threadPoolSize = 4;
+    private final int threadPoolSize = 4;
     private ExecutorService service;
 
-    private Map<String, Tile> tileMap = new HashMap<>();
+    private final Map<String, Tile> tileMap;
 
-    private TileCache cache = new TileCache();
+    private final TileCache cache;
 
     private MBTilesFileConnector connector;
 
     /**
      * Construct a new TileFactory for the MBTiles file at the given location.
-     * 
+     *
      * @param filePath
-     * @throws GeoLocationDataException 
+     *
+     * @throws GeoLocationDataException
      */
-    MBTilesTileFactory(String filePath) throws GeoLocationDataException{
+    MBTilesTileFactory(String filePath) throws GeoLocationDataException {
         this(new MBTilesFileConnector(filePath));
     }
-    
+
     /**
      * Construct a new TileFacotry.
-     * 
-     * @param connector 
+     *
+     * @param connector
      */
     private MBTilesTileFactory(MBTilesFileConnector connector) {
         super(connector.getInfo());
         this.connector = connector;
+        cache = new TileCache();
+        tileMap = new HashMap<>();
     }
-    
+
     /**
      * Returns the tile that is located at the given tile point for this zoom.
-     * 
-     * @param x Tile column
-     * @param y Tile row
+     *
+     * @param x    Tile column
+     * @param y    Tile row
      * @param zoom Current zoom level
-     * 
+     *
      * @return A new Tile object
-     * 
+     *
      */
     @Override
     public Tile getTile(int x, int y, int zoom) {
@@ -98,13 +101,13 @@ final class MBTilesTileFactory extends TileFactory {
 
     /**
      * Returns the tile object for the given location.
-     * 
+     *
      * @param tpx
      * @param tpy
      * @param zoom
      * @param eagerLoad
-     * 
-     * @return 
+     *
+     * @return
      */
     private Tile getTile(int tpx, int tpy, int zoom, boolean eagerLoad) {
         // wrap the tiles horizontally --> mod the X with the max width
@@ -117,7 +120,7 @@ final class MBTilesTileFactory extends TileFactory {
 
         tileX %= numTilesWide;
         int tileY = tpy;
-        
+
         String url = getInfo().getTileUrl(tileX, tileY, zoom);
 
         Tile.Priority pri = Tile.Priority.High;
@@ -148,7 +151,7 @@ final class MBTilesTileFactory extends TileFactory {
 
     /**
      * Returns the TileCache.
-     * 
+     *
      * @return the tile cache
      */
     TileCache getTileCache() {
@@ -158,7 +161,6 @@ final class MBTilesTileFactory extends TileFactory {
     /**
      * ==== Threaded Tile loading code ===
      */
-    
     /**
      * Thread pool for loading the tiles
      */
@@ -207,8 +209,8 @@ final class MBTilesTileFactory extends TileFactory {
             service.shutdown();
             service = null;
         }
-        
-        if(connector != null) {
+
+        if (connector != null) {
             connector.closeConnection();
             connector = null;
         }
@@ -224,8 +226,8 @@ final class MBTilesTileFactory extends TileFactory {
         try {
             tileQueue.put(tile);
             getService().submit(new TileRunner());
-        } catch(InterruptedException ex) {
-            
+        } catch (InterruptedException ex) {
+
         }
     }
 
@@ -241,7 +243,7 @@ final class MBTilesTileFactory extends TileFactory {
                 tile.setPriority(Tile.Priority.High);
                 tileQueue.put(tile);
             } catch (InterruptedException ex) {
-                
+
             }
         }
     }
@@ -278,10 +280,10 @@ final class MBTilesTileFactory extends TileFactory {
         @Override
         public void run() {
             /*
-             * Attempt to load the tile from . If loading fails, retry
-             * two more times. If all attempts fail, nothing else is done. This
-             * way, if there is some kind of failure, the pooled
-             * thread can try to load other tiles.
+             * Attempt to load the tile from . If loading fails, retry two more
+             * times. If all attempts fail, nothing else is done. This way, if
+             * there is some kind of failure, the pooled thread can try to load
+             * other tiles.
              */
             final Tile tile = tileQueue.remove();
 
@@ -293,10 +295,10 @@ final class MBTilesTileFactory extends TileFactory {
                     BufferedImage img = cache.get(uri);
                     if (img == null) {
                         byte[] bimg = connector.getTileBytes(uri.toString());
-                        if (bimg != null) {
+                        if (bimg != null && bimg.length > 0) {
                             img = ImageIO.read(new ByteArrayInputStream(bimg));
                             cache.put(uri, bimg, img);
-                            img = cache.get(uri);  
+                            img = cache.get(uri);
                         }
                     }
                     if (img == null) {
@@ -316,7 +318,7 @@ final class MBTilesTileFactory extends TileFactory {
                     }
                 } catch (OutOfMemoryError memErr) {
                     cache.needMoreMemory();
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     if (remainingAttempts == 0) {
                         logger.log(Level.SEVERE, String.format("Failed to load a tile at URL: %s, stopping", tile.getURL()), ex);
                     } else {
