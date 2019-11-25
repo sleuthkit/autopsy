@@ -26,7 +26,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Tag;
@@ -35,8 +34,6 @@ import org.sleuthkit.datamodel.Tag;
  * This class is used to represent the "Node" for the pool.
  */
 public class PoolNode extends AbstractContentNode<Pool> {
-
-    private static final Logger logger = Logger.getLogger(PoolNode.class.getName());
 
     /**
      * Helper so that the display name and the name used in building the path
@@ -137,7 +134,7 @@ public class PoolNode extends AbstractContentNode<Pool> {
 
     @Override
     public String getItemType() {
-        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
+        return getClass().getName();
     }
 
     /**
