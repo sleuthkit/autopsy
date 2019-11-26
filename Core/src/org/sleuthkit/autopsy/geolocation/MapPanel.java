@@ -178,6 +178,17 @@ final public class MapPanel extends javax.swing.JPanel {
 
         mapViewer.setOverlayPainter(waypointPainter);
     }
+    
+    /**
+     * Show or hide the waypoint loading progress bar.
+     * 
+     * @param loading 
+     */
+    void setWaypointLoading(boolean loading) {
+        progressBar.setEnabled(true);
+        progressBar.setVisible(loading);
+        progressBar.setString("Loading Waypoints");
+    }
 
     /**
      * Setup the zoom slider based on the current tileFactory.
@@ -265,6 +276,7 @@ final public class MapPanel extends javax.swing.JPanel {
         }
 
         mapViewer.repaint();
+        setWaypointLoading(false);
     }
 
     /**
@@ -486,6 +498,7 @@ final public class MapPanel extends javax.swing.JPanel {
         zoomSlider = new javax.swing.JSlider();
         infoPanel = new javax.swing.JPanel();
         cordLabel = new javax.swing.JLabel();
+        progressBar = new javax.swing.JProgressBar();
 
         setFocusable(false);
         setLayout(new java.awt.BorderLayout());
@@ -553,10 +566,24 @@ final public class MapPanel extends javax.swing.JPanel {
 
         add(mapViewer, java.awt.BorderLayout.CENTER);
 
-        infoPanel.setLayout(new java.awt.BorderLayout());
+        infoPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(cordLabel, org.openide.util.NbBundle.getMessage(MapPanel.class, "MapPanel.cordLabel.text")); // NOI18N
-        infoPanel.add(cordLabel, java.awt.BorderLayout.EAST);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 5);
+        infoPanel.add(cordLabel, gridBagConstraints);
+
+        progressBar.setIndeterminate(true);
+        progressBar.setStringPainted(true);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
+        infoPanel.add(progressBar, gridBagConstraints);
 
         add(infoPanel, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
@@ -594,6 +621,7 @@ final public class MapPanel extends javax.swing.JPanel {
     private javax.swing.JLabel cordLabel;
     private javax.swing.JPanel infoPanel;
     private org.jxmapviewer.JXMapViewer mapViewer;
+    private javax.swing.JProgressBar progressBar;
     private javax.swing.JPanel zoomPanel;
     private javax.swing.JSlider zoomSlider;
     // End of variables declaration//GEN-END:variables

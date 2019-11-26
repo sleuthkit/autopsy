@@ -22,12 +22,15 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -171,6 +174,7 @@ public final class GeolocationTopComponent extends TopComponent {
            logger.log(Level.SEVERE, ex.getMessage(), ex);
            return; // Doen't set the waypoints.
         }
+        mapPanel.setWaypoints(new ArrayList<>());
         updateWaypoints();
     }
 
@@ -213,36 +217,12 @@ public final class GeolocationTopComponent extends TopComponent {
                                         JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                Case currentCase = Case.getCurrentCase();
-                try {
-                    WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(), filters.getDataSources(), filters.showAllWaypoints(), filters.getMostRecentNumDays(), filters.showWaypointsWithoutTimeStamp(), new WaypointFilterQueryCallBack() {
-                        @Override
-                        public void process(List<Waypoint> waypoints) {
-                            // If the list is empty, tell the user and do not change 
-                            // the visible waypoints.
-                            if (waypoints == null || waypoints.isEmpty()) {
-                                JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
-                                        Bundle.GeoTopComponent_no_waypoints_returned_Title(),
-                                        Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
-                                        JOptionPane.INFORMATION_MESSAGE);
-                                        
-                                return;
-                            }
-                            mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
-                        }
-                    });
-                } catch (GeoLocationDataException ex) {
-                    logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
-                    JOptionPane.showMessageDialog(GeolocationTopComponent.this, 
-                                        Bundle.GeoTopComponent_filter_exception_Title(),
-                                        Bundle.GeoTopComponent_filter_exception_msg(),
-                                        JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
+        
+        mapPanel.setWaypointLoading(true);
+        geoFilterPanel.setEnabled(false);
+      
+        Thread thread = new Thread(new WaypointRunner(filters));
+        thread.start();
     }
 
     /**
@@ -269,4 +249,82 @@ public final class GeolocationTopComponent extends TopComponent {
     private org.sleuthkit.autopsy.geolocation.HidingPane filterPane;
     private org.sleuthkit.autopsy.geolocation.MapPanel mapPanel;
     // End of variables declaration//GEN-END:variables
+    
+    /**
+     * A runnable class for getting waypoints based on the current filters.
+     */
+    private class WaypointRunner implements Runnable {
+
+        private final GeoFilter filters;
+
+        /**
+         * Constructs the Waypoint Runner
+         * 
+         * @param filters 
+         */
+        WaypointRunner(GeoFilter filters) {
+            this.filters = filters;
+        }
+
+        @Override
+        public void run() {
+            Case currentCase = Case.getCurrentCase();
+            try {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                
+                WaypointBuilder.getAllWaypoints(currentCase.getSleuthkitCase(),
+                        filters.getDataSources(),
+                        filters.showAllWaypoints(),
+                        filters.getMostRecentNumDays(),
+                        filters.showWaypointsWithoutTimeStamp(),
+                        new WaypointCallBack());
+                
+            } catch (GeoLocationDataException ex) {
+                logger.log(Level.SEVERE, "Failed to filter waypoints.", ex);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                    JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                            Bundle.GeoTopComponent_filter_exception_Title(),
+                            Bundle.GeoTopComponent_filter_exception_msg(),
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+            }
+        }
+
+    }
+
+    /**
+     * Callback for getting waypoints.
+     */
+    private class WaypointCallBack implements WaypointFilterQueryCallBack {
+
+        @Override
+        public void process(List<Waypoint> waypoints) {
+            // Make sure that the waypoints are added to the map panel in
+            // the correct thread.
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    // If the list is empty, tell the user and do not change 
+                    // the visible waypoints.
+                    if (waypoints == null || waypoints.isEmpty()) {
+                        JOptionPane.showMessageDialog(GeolocationTopComponent.this,
+                                Bundle.GeoTopComponent_no_waypoints_returned_Title(),
+                                Bundle.GeoTopComponent_no_waypoints_returned_mgs(),
+                                JOptionPane.INFORMATION_MESSAGE);
+
+                        return;
+                    }
+                    mapPanel.setWaypoints(MapWaypoint.getWaypoints(waypoints));
+                    geoFilterPanel.setEnabled(true);
+                }
+            });
+        }
+    }
 }
